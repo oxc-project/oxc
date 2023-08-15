@@ -445,7 +445,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "ReturnStatementAST" => super::edges::resolve_return_statement_ast_edge(
+            "ReturnAST" | "ReturnStatement" => super::edges::resolve_return_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,

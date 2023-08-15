@@ -701,7 +701,18 @@ type IfStatementAST implements ASTNode & HasSpan {
   span: Span!
 }
 
-type ReturnStatementAST implements ASTNode & HasSpan {
+type ReturnStatement implements Statement & HasSpan {
+  expression: Expression
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type ReturnAST implements ASTNode & HasSpan {
   expression: Expression
 
   # ASTNode

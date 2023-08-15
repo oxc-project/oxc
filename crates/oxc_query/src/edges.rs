@@ -2091,7 +2091,7 @@ mod reassignment {
     }
 }
 
-pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
+pub(super) fn resolve_return_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
     _parameters: &EdgeParameters,
@@ -2099,19 +2099,17 @@ pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => return_statement_ast::ancestor(contexts, resolve_info, adapter),
-        "expression" => return_statement_ast::expression(contexts, resolve_info),
-        "parent" => return_statement_ast::parent(contexts, resolve_info, adapter),
-        "span" => return_statement_ast::span(contexts, resolve_info),
+        "ancestor" => return_::ancestor(contexts, resolve_info, adapter),
+        "expression" => return_::expression(contexts, resolve_info),
+        "parent" => return_::parent(contexts, resolve_info, adapter),
+        "span" => return_::span(contexts, resolve_info),
         _ => {
-            unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'ReturnStatementAST'"
-            )
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Return'")
         }
     }
 }
 
-mod return_statement_ast {
+mod return_ {
     use std::convert::Into;
 
     use trustfall::provider::{
@@ -2136,7 +2134,7 @@ mod return_statement_ast {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             let neighbors = v
-                .as_return_statement_ast()
+                .as_return()
                 .unwrap()
                 .return_statement
                 .argument

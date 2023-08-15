@@ -43,7 +43,7 @@ pub enum Vertex<'a> {
     Type(&'a TSType<'a>),
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
-    ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    Return(Rc<ReturnVertex<'a>>),
     IfStatementAST(Rc<IfStatementVertex<'a>>),
     SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
@@ -89,7 +89,7 @@ impl<'a> Vertex<'a> {
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
-            Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::Return(data) => data.return_statement.span,
             Self::IfStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
             Self::Reassignment(data) => data.assignment_expression.span,
@@ -120,7 +120,7 @@ impl<'a> Vertex<'a> {
             Vertex::TypeAnnotation(data) => data.ast_node.map(|x| x.id()),
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
-            Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Return(data) => data.ast_node.map(|x| x.id()),
             Vertex::IfStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
@@ -229,7 +229,7 @@ impl Typename for Vertex<'_> {
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::Name(name) => name.typename(),
-            Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::Return(ret) => ret.typename(),
             Vertex::IfStatementAST(_) => "IfStatementAST",
             Vertex::SpreadIntoObject(obj) => obj.typename(),
             Vertex::ObjectEntry(entry) => entry.typename(),
@@ -247,9 +247,9 @@ impl Typename for Vertex<'_> {
 impl<'a> From<AstNode<'a>> for Vertex<'a> {
     fn from(ast_node: AstNode<'a>) -> Self {
         match ast_node.kind() {
-            AstKind::ReturnStatement(return_statement) => Self::ReturnStatementAST(
-                ReturnStatementVertex { ast_node: Some(ast_node), return_statement }.into(),
-            ),
+            AstKind::ReturnStatement(return_statement) => {
+                Self::Return(ReturnVertex { ast_node: Some(ast_node), return_statement }.into())
+            }
             AstKind::IfStatement(if_statement) => Self::IfStatementAST(
                 IfStatementVertex { ast_node: Some(ast_node), return_statement: if_statement }
                     .into(),
@@ -327,6 +327,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
 impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
     fn from(stmt: &'a Statement<'a>) -> Self {
         match &stmt {
+            Statement::ReturnStatement(return_statement) => {
+                Vertex::Return(ReturnVertex { ast_node: None, return_statement }.into())
+            }
             _ => Vertex::Statement(stmt),
         }
     }
@@ -481,9 +484,19 @@ pub struct IfStatementVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct ReturnStatementVertex<'a> {
+pub struct ReturnVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub return_statement: &'a ReturnStatement<'a>,
+}
+
+impl<'a> Typename for ReturnVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ReturnAST"
+        } else {
+            "ReturnStatement"
+        }
+    }
 }
 
 #[non_exhaustive]
