@@ -1,18 +1,8 @@
 use std::rc::Rc;
 
 use enum_as_inner::EnumAsInner;
-use oxc_ast::{
-    ast::{
-        AssignmentExpression, BindingPatternKind, CallExpression, Class, Expression, Function,
-        IdentifierName, IdentifierReference, IfStatement, ImportDeclaration,
-        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
-        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
-        ObjectProperty, PropertyDefinition, ReturnStatement, SpreadElement, StaticMemberExpression,
-        TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
-    },
-    AstKind,
-};
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
 use trustfall::provider::Typename;
