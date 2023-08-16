@@ -1,9 +1,16 @@
-use std::{collections::BTreeMap, env, fs, rc::Rc, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    env, fs,
+    path::{Path, PathBuf},
+    rc::Rc,
+    result::Result,
+    sync::Arc,
+};
 
+use ignore::Walk;
 use oxc_diagnostics::miette::{miette, LabeledSpan};
 use oxc_linter::LintContext;
 use oxc_query::Adapter;
-use oxc_semantic::Semantic;
 use serde::Deserialize;
 use trustfall::{execute_query, FieldValue, Schema, TransparentValue, TryIntoStruct};
 
@@ -52,23 +59,16 @@ pub struct LinterPlugin {
 }
 
 impl LinterPlugin {
-    pub fn new(schema: &'static Schema, queries_path: &str) -> Self {
-        let rules = fs::read_dir(queries_path)
-            .expect("to readdir queries_path folder")
-            .filter_map(std::result::Result::ok)
-            .filter(|dir_entry| dir_entry.path().is_dir())
-            .filter(|dir| !dir.path().to_str().map_or_else(|| true, |f| f.contains("ignore_")))
-            .filter_map(|folder| fs::read_dir(folder.path()).ok())
-            .flat_map(std::iter::IntoIterator::into_iter)
-            .filter_map(std::result::Result::ok)
-            .filter(|dir_entry| dir_entry.path().is_file())
+    pub fn new(schema: &'static Schema, queries_path: PathBuf) -> Self {
+        let rules = Walk::new(queries_path)
+            .filter_map(Result::ok)
             .filter(|f| {
-                std::path::Path::new(f.path().as_os_str().to_str().unwrap())
+                Path::new(f.path().as_os_str().to_str().unwrap())
                     .extension()
                     .map_or(false, |ext| ext.eq_ignore_ascii_case("yml"))
             })
             .map(|f| fs::read_to_string(f.path()))
-            .map(std::result::Result::unwrap)
+            .map(Result::unwrap)
             .map(|rule| {
                 serde_yaml::from_str::<InputQuery>(rule.as_str())
                     .unwrap_or_else(|_| panic!("{rule}\n\nQuery above"))
@@ -81,11 +81,10 @@ impl LinterPlugin {
     pub fn run(
         &self,
         ctx: &mut LintContext,
-        semantic: Rc<Semantic<'_>>,
         relative_file_path_parts: Vec<Option<String>>,
         #[cfg(test)] only_run_rule_with_name: &str,
     ) {
-        let inner = Adapter::new(semantic, relative_file_path_parts);
+        let inner = Adapter::new(Rc::clone(ctx.semantic()), relative_file_path_parts);
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             #[cfg(test)]
@@ -174,7 +173,7 @@ impl LinterPlugin {
 
 #[cfg(test)]
 mod test {
-    use std::rc::Rc;
+    use std::{path::Path, rc::Rc};
 
     use oxc_allocator::Allocator;
     use oxc_diagnostics::Report;
@@ -188,7 +187,7 @@ mod test {
 
     #[test]
     fn test_queries() {
-        let plugin = LinterPlugin::new(schema(), "examples/queries");
+        let plugin = LinterPlugin::new(schema(), Path::new("examples/queries").to_path_buf());
 
         for rule in &plugin.rules {
             for (i, test) in rule.tests.pass.iter().enumerate() {
@@ -259,7 +258,6 @@ mod test {
 
         plugin.run(
             &mut lint_ctx,
-            Rc::clone(&semantic),
             test.relative_path.iter().map(|el| Some(el.clone())).collect::<Vec<_>>(),
             rule_name,
         );

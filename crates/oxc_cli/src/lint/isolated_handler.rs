@@ -22,12 +22,12 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use super::options::LintOptions;
-use crate::{CliRunResult, Walk};
+use crate::{plugin::LinterPlugin, CliRunResult, Walk};
 
 pub struct IsolatedLintHandler {
     options: Arc<LintOptions>,
-
     linter: Arc<Linter>,
+    plugin: Arc<LinterPlugin>,
 }
 
 #[derive(Debug, Error, Diagnostic)]
@@ -36,8 +36,12 @@ pub struct IsolatedLintHandler {
 pub struct MinifiedFileError(pub PathBuf);
 
 impl IsolatedLintHandler {
-    pub(super) fn new(options: Arc<LintOptions>, linter: Arc<Linter>) -> Self {
-        Self { options, linter }
+    pub(super) fn new(
+        options: Arc<LintOptions>,
+        linter: Arc<Linter>,
+        plugin: Arc<LinterPlugin>,
+    ) -> Self {
+        Self { options, linter, plugin }
     }
 
     /// # Panics
@@ -84,12 +88,14 @@ impl IsolatedLintHandler {
         });
 
         let linter = Arc::clone(&self.linter);
+        let plugin = Arc::clone(&self.plugin);
         rayon::spawn(move || {
             while let Ok(path) = rx_path.recv() {
                 let tx_error = tx_error.clone();
                 let linter = Arc::clone(&linter);
+                let plugin = Arc::clone(&plugin);
                 rayon::spawn(move || {
-                    if let Some(diagnostics) = Self::lint_path(&linter, &path) {
+                    if let Some(diagnostics) = Self::lint_path(&linter, &plugin, &path) {
                         tx_error.send(diagnostics).unwrap();
                     }
                     drop(tx_error);
@@ -151,7 +157,11 @@ impl IsolatedLintHandler {
         (number_of_warnings, number_of_errors)
     }
 
-    fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
+    fn lint_path(
+        linter: &Linter,
+        plugin: &LinterPlugin,
+        path: &Path,
+    ) -> Option<(PathBuf, Vec<Error>)> {
         let source_text =
             fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"));
         let allocator = Allocator::default();
@@ -176,7 +186,11 @@ impl IsolatedLintHandler {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
-        let lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
+        let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
+
+        // NOTE: `plugin.run()` puts it's errors into lint_ctx, which are read out by `linter.run`
+        plugin.run(&mut lint_ctx, vec![Some("index.tsx".to_owned())]);
+
         let result = linter.run(lint_ctx);
 
         if result.is_empty() {

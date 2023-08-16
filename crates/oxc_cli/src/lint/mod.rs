@@ -7,11 +7,12 @@ use std::{io::BufWriter, sync::Arc, time::Duration};
 
 use oxc_index::assert_impl_all;
 use oxc_linter::{Linter, RuleCategory, RuleEnum, RULES};
+use oxc_query::schema;
 use rustc_hash::FxHashSet;
 
 pub use self::{error::Error, options::LintOptions};
 use self::{isolated_handler::IsolatedLintHandler, options::AllowWarnDeny};
-use crate::{CliRunResult, Runner};
+use crate::{plugin::LinterPlugin, CliRunResult, Runner};
 
 pub struct LintRunner {
     options: Arc<LintOptions>,
@@ -44,8 +45,12 @@ impl Runner for LintRunner {
             return CliRunResult::None;
         }
 
-        let result =
-            IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run();
+        let result = IsolatedLintHandler::new(
+            Arc::clone(&self.options),
+            Arc::clone(&self.linter),
+            Arc::new(LinterPlugin::new(schema(), self.options.plugin_path.clone())),
+        )
+        .run();
 
         if self.options.print_execution_times {
             self.print_execution_times();

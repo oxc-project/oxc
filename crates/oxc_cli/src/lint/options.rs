@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, env, path::PathBuf};
+use std::{
+    collections::BTreeMap,
+    env,
+    path::{Path, PathBuf},
+};
 
 use clap::ArgMatches;
 
@@ -21,6 +25,7 @@ pub struct LintOptions {
     pub ignore_pattern: Vec<String>,
     pub max_warnings: Option<usize>,
     pub print_execution_times: bool,
+    pub plugin_path: PathBuf,
 }
 
 impl Default for LintOptions {
@@ -70,6 +75,10 @@ impl<'a> From<&'a ArgMatches> for LintOptions {
             max_warnings: matches.get_one("max-warnings").copied(),
             list_rules,
             print_execution_times: matches!(env::var("TIMING"), Ok(x) if x == "true" || x == "1"),
+            plugin_path: matches
+                .get_one::<PathBuf>("plugin-path")
+                .cloned()
+                .unwrap_or_else(|| Path::new("./.oxc/plugins").to_path_buf()),
         }
     }
 }

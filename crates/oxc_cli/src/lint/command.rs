@@ -94,4 +94,11 @@ TIMING=1 \"the lint command\"
                 Arg::new("rules")
                     .long("rules")
                     .required(false).action(ArgAction::SetTrue).help("This option allows you to list all the rules that are currently registered."))
+              .arg(
+                Arg::new("plugin-path")
+                    .long("plugin-path")
+                    .required(false)
+                    .required(false)
+                    .value_parser(ValueParser::path_buf())
+                    .help("This option allows you to specify a path to search for linter plugins."))
 }
