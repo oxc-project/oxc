@@ -103,18 +103,8 @@ impl Termination for CliRunResult {
                 // It is also standard to not print anything after success in the *nix world.
                 ExitCode::from(0)
             }
-            Self::TypeCheckResult { duration, number_of_diagnostics } => {
-                let ms = duration.as_millis();
-                println!("Finished in {ms}ms.");
-
-                if number_of_diagnostics > 0 {
-                    println!("Found {number_of_diagnostics} errors.");
-                    return ExitCode::from(1);
-                }
-
-                ExitCode::from(0)
-            }
-            Self::LintPluginTestResult { duration, number_of_diagnostics } => {
+            Self::TypeCheckResult { duration, number_of_diagnostics }
+            | Self::LintPluginTestResult { duration, number_of_diagnostics } => {
                 let ms = duration.as_millis();
                 println!("Finished in {ms}ms.");
 
