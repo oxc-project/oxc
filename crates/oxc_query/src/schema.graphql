@@ -410,7 +410,7 @@ type ArgumentAST implements Argument & HasSpan & ASTNode {
 
 interface FnCall implements Expression & HasSpan {
   callee: Expression!
-  arguments: [Argument!]!
+  argument: [Argument!]!
 
   # Expression
   as_constant_string: String
@@ -421,7 +421,7 @@ interface FnCall implements Expression & HasSpan {
 
 type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
   callee: Expression!
-  arguments: [Argument!]!
+  argument: [Argument!]!
 
   # Expression
   as_constant_string: String

@@ -906,7 +906,7 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
     match edge_name {
         "span" => fn_call::span(contexts, resolve_info),
         "callee" => fn_call::callee(contexts, resolve_info),
-        "arguments" => fn_call::arguments(contexts, resolve_info),
+        "argument" => fn_call::argument(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts),
@@ -943,7 +943,7 @@ mod fn_call {
         })
     }
 
-    pub(super) fn arguments<'a, 'b: 'a>(
+    pub(super) fn argument<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
