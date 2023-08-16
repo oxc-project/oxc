@@ -496,6 +496,7 @@ type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
 
 interface Function implements Expression & HasSpan {
   is_async: Boolean!
+  is_generator: Boolean!
   """
   Does not include rest parameter if it exists.
   """
@@ -535,6 +536,7 @@ type ParameterAST implements ASTNode & HasSpan {
 interface ArrowFunction implements Function & HasSpan & Expression {
   # Function
   is_async: Boolean!
+  is_generator: Boolean!
   """
   Does not include rest parameter if it exists.
   """
@@ -553,6 +555,7 @@ interface ArrowFunction implements Function & HasSpan & Expression {
 type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & Expression {
   # Function
   is_async: Boolean!
+  is_generator: Boolean!
   """
   Does not include rest parameter if it exists.
   """
@@ -583,6 +586,7 @@ interface FnDeclaration implements Function & HasSpan & Expression {
 
   # Function
   is_async: Boolean!
+  is_generator: Boolean!
   """
   Does not include rest parameter if it exists.
   """
@@ -606,6 +610,7 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
 
   # Function
   is_async: Boolean!
+  is_generator: Boolean!
   """
   Does not include rest parameter if it exists.
   """
