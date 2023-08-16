@@ -86,6 +86,7 @@ mod typescript {
     pub mod no_non_null_asserted_optional_chain;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
+    pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
 }
@@ -170,6 +171,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_extra_non_null_assertion,
     typescript::no_non_null_asserted_optional_chain,
     typescript::no_unnecessary_type_constraint,
+    typescript::no_unsafe_declaration_merging,
     typescript::no_misused_new,
     typescript::no_this_alias,
     typescript::no_namespace,

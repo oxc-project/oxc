@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_unsafe_declaration_merging
+---
+  ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:2:1]
+ 2 │             interface Foo {}
+ 3 │             class Foo {}
+   ·             ────────────
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:2:1]
+ 2 │                     class Foo {}
+ 3 │                     interface Foo {}
+   ·                     ────────────────
+ 4 │                           
+   ╰────
+
+  ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
+   ╭─[no_unsafe_declaration_merging.tsx:3:1]
+ 3 │                       interface Foo {}
+ 4 │                       class Foo {}
+   ·                       ────────────
+ 5 │                     }
+   ╰────
+
+
