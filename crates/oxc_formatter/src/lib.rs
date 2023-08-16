@@ -273,3 +273,23 @@ fn get_final_end_of_line(eol: EndOfLine) -> FinalEndOfLine {
         EndOfLine::CR => FinalEndOfLine::CR,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn auto_detects_lf() {
+        assert_eq!(FinalEndOfLine::LF, auto_detect_end_of_line("One\nTwo\nThree"));
+    }
+
+    #[test]
+    fn auto_detects_crlf() {
+        assert_eq!(FinalEndOfLine::CRLF, auto_detect_end_of_line("One\r\nTwo\r\nThree"));
+    }
+
+    #[test]
+    fn auto_detects_cr() {
+        assert_eq!(FinalEndOfLine::CR, auto_detect_end_of_line("One\rTwo\rThree"));
+    }
+}
