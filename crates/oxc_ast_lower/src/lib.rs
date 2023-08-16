@@ -50,7 +50,8 @@ impl<'a> AstLower<'a> {
         name: &Atom,
         reference_flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(span, name.clone(), reference_flag);
+        let reference =
+            Reference::new(span, name.clone(), self.semantic.current_node_id, reference_flag);
         self.semantic.declare_reference(reference)
     }
 
@@ -159,13 +160,13 @@ impl<'a> AstLower<'a> {
         self.hir.program(program.span, directives, hashbang, statements)
     }
 
-    fn lower_hasbang(&mut self, hashbang: &ast::Hashbang<'a>) -> hir::Hashbang<'a> {
-        self.hir.hashbang(hashbang.span, hashbang.value)
+    fn lower_hasbang(&mut self, hashbang: &ast::Hashbang) -> hir::Hashbang {
+        self.hir.hashbang(hashbang.span, hashbang.value.clone())
     }
 
-    fn lower_directive(&mut self, directive: &ast::Directive<'a>) -> hir::Directive<'a> {
+    fn lower_directive(&mut self, directive: &ast::Directive) -> hir::Directive {
         let expression = self.lower_string_literal(&directive.expression);
-        self.hir.directive(directive.span, expression, directive.directive)
+        self.hir.directive(directive.span, expression, directive.directive.clone())
     }
 
     fn lower_statement(&mut self, statement: &ast::Statement<'a>) -> Option<hir::Statement<'a>> {
@@ -1438,7 +1439,6 @@ impl<'a> AstLower<'a> {
         } else {
             (SymbolFlags::empty(), SymbolFlags::empty())
         };
-        let includes = includes | SymbolFlags::Function;
         let id =
             func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
         self.enter_function_scope();

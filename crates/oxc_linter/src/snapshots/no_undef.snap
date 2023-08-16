@@ -1,0 +1,194 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_undef
+---
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ a = 1;
+   · ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ if (typeof anUndefinedVar === 'string') {}
+   ·            ──────────────
+   ╰────
+  help: 'anUndefinedVar' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ var a = b;
+   ·         ─
+   ╰────
+  help: 'b' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ function f() { b; }
+   ·                ─
+   ╰────
+  help: 'b' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ window;
+   · ──────
+   ╰────
+  help: 'window' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ require("a");
+   · ───────
+   ╰────
+  help: 'require' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ var React; React.render(<img attr={a} />);
+   ·                                    ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ var React, App; React.render(<App attr={a} />);
+   ·                                         ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ [a] = [0];
+   ·  ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ ({a} = {});
+   ·   ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ ({b: a} = {});
+   ·      ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ [obj.a, obj.b] = [0, 1];
+   ·  ───
+   ╰────
+  help: 'obj' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ [obj.a, obj.b] = [0, 1];
+   ·         ───
+   ╰────
+  help: 'obj' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ const c = 0; const a = {...b, c};
+   ·                            ─
+   ╰────
+  help: 'b' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { a; } }
+   ·                    ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { { let a; } a; } }
+   ·                               ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { { function a() {} } a; } }
+   ·                                        ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { function foo() { var a; }  a; } }
+   ·                                               ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { var a; } static { a; } }
+   ·                                      ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { let a; } static { a; } }
+   ·                                      ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { function a(){} } static { a; } }
+   ·                                              ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { var a; } foo() { a; } }
+   ·                                     ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { let a; } foo() { a; } }
+   ·                                     ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { var a; } [a]; }
+   ·                              ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { let a; } [a]; }
+   ·                              ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { function a() {} } [a]; }
+   ·                                       ─
+   ╰────
+  help: 'a' is not defined.
+
+  ⚠ eslint(no-undef): Disallow the use of undeclared variables
+   ╭─[no_undef.tsx:1:1]
+ 1 │ class C { static { var a; } } a;
+   ·                               ─
+   ╰────
+  help: 'a' is not defined.
+
+

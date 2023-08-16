@@ -23,7 +23,7 @@ pub struct Adapter<'a> {
     pub path_components: Vec<Option<String>>,
 }
 
-const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
+pub const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
 
 /// Returns the schema from a OnceLock
 ///
@@ -31,7 +31,7 @@ const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
 /// If the schema parse returns an error, which will not happen unless the schema get's corrupted.
 pub fn schema() -> &'static Schema {
     // internal note: this might not parser correctly due to making an incorrect schema during development
-    SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).expect("not a valid schema"))
+    SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).unwrap_or_else(|e| panic!("{}", e)))
 }
 
 impl<'a> Adapter<'a> {
@@ -71,6 +71,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => {
+                super::properties::resolve_arrow_function_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "AssignmentType" => super::properties::resolve_assignment_type_property(
                 contexts,
                 property_name.as_ref(),
@@ -96,7 +103,29 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "DotPropertyAST" | "DotProperty" => super::properties::resolve_dot_property_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "Expression" => super::properties::resolve_expression_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "FnDeclarationAST" | "FnDeclaration" => {
+                super::properties::resolve_fn_declaration_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
+            "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "Function" => super::properties::resolve_function_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -106,7 +135,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "InterfaceExtend" => super::properties::resolve_interface_extend_property(
+            "InterfaceAST" | "Interface" => super::properties::resolve_interface_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -133,11 +162,18 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "MemberExtend" => super::properties::resolve_member_extend_property(
+            "NameAST" | "Name" => super::properties::resolve_name_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "NumberLiteralAST" | "NumberLiteral" => {
+                super::properties::resolve_number_literal_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "ObjectLiteralAST" | "ObjectLiteral" => {
                 super::properties::resolve_object_literal_property(
                     contexts,
@@ -145,18 +181,23 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     resolve_info,
                 )
             }
+            "ParameterAST" | "Parameter" => super::properties::resolve_parameter_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "PathPart" => super::properties::resolve_path_part_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
                 self,
             ),
-            "SearchParameter" => super::properties::resolve_search_parameter_property(
+            "ReassignmentAST" | "Reassignment" => super::properties::resolve_reassignment_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "SimpleExtend" => super::properties::resolve_simple_extend_property(
+            "SearchParameter" => super::properties::resolve_search_parameter_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -165,17 +206,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
+                self,
             ),
             "SpecificImport" => super::properties::resolve_specific_import_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
-            ),
-            "Type" => super::properties::resolve_type_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-                self,
             ),
             _ => {
                 unreachable!(
@@ -195,7 +231,21 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ASTNode" => super::edges::resolve_astnode_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ArgumentAST" | "Argument" => super::edges::resolve_argument_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -227,6 +277,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "DotPropertyAST" | "DotProperty" => super::edges::resolve_dot_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "DefaultImport" => super::edges::resolve_default_import_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -239,7 +296,34 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "Function" => super::edges::resolve_function_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
+            "FunctionBodyAST" | "FunctionBody" => super::edges::resolve_function_body_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "FnDeclarationAST" | "FnDeclaration" => super::edges::resolve_fn_declaration_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "File" => super::edges::resolve_file_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "FnCallAST" | "FnCall" => super::edges::resolve_fn_call_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -251,6 +335,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+            ),
+            "IfStatementAST" => super::edges::resolve_if_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
             ),
             "Import" | "ImportAST" => super::edges::resolve_import_edge(
                 contexts,
@@ -330,12 +421,39 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "NameAST" | "Name" => super::edges::resolve_name_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "NumberLiteralAST" | "NumberLiteral" => super::edges::resolve_number_literal_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ObjectEntryAST" | "ObjectEntry" => super::edges::resolve_object_entry_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ObjectLiteral" | "ObjectLiteralAST" => super::edges::resolve_object_literal_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
                 self,
+            ),
+            "ObjectProperty" => super::edges::resolve_object_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
                 contexts,
@@ -344,7 +462,21 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "ReturnStatementAST" => super::edges::resolve_return_statement_ast_edge(
+            "ParameterAST" | "Parameter" => super::edges::resolve_parameter_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ReassignmentAST" | "Reassignment" => super::edges::resolve_reassignment_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ReturnAST" | "ReturnStatement" => super::edges::resolve_return_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -358,6 +490,21 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "SpecificImport" => super::edges::resolve_specific_import_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
+            "SpreadIntoObjectAST" | "SpreadIntoObject" => {
+                super::edges::resolve_spread_into_object_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
+            "Statement" => super::edges::resolve_statement_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,

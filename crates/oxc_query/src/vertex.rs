@@ -1,20 +1,11 @@
 use std::rc::Rc;
 
 use enum_as_inner::EnumAsInner;
-use oxc_ast::{
-    ast::{
-        BindingPatternKind, Class, Expression, IdentifierReference, ImportDeclaration,
-        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
-        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, ObjectExpression,
-        PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
-        VariableDeclarator,
-    },
-    AstKind,
-};
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
-use trustfall::provider::Typename;
+use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
 use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
@@ -42,6 +33,8 @@ pub enum Vertex<'a> {
     JSXSpreadChild(&'a JSXSpreadChild<'a>),
     JSXText(&'a JSXText),
     ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
+    NumberLiteral(Rc<NumberLiteralVertex<'a>>),
+    Name(Rc<NameVertex<'a>>),
     PathPart(usize),
     SearchParameter(Rc<SearchParameterVertex>),
     Span(Span),
@@ -50,7 +43,19 @@ pub enum Vertex<'a> {
     Type(&'a TSType<'a>),
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
-    ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    Return(Rc<ReturnVertex<'a>>),
+    IfStatementAST(Rc<IfStatementVertex<'a>>),
+    SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
+    ObjectEntry(Rc<ObjectEntryVertex<'a>>),
+    DotProperty(Rc<DotPropertyVertex<'a>>),
+    Reassignment(Rc<ReassignmentVertex<'a>>),
+    FnCall(Rc<FnCallVertex<'a>>),
+    FnDeclaration(Rc<FnDeclarationVertex<'a>>),
+    ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
+    Argument(Rc<ArgumentVertex<'a>>),
+    FunctionBody(Rc<FunctionBodyVertex<'a>>),
+    Statement(&'a Statement<'a>),
+    Parameter(Rc<ParameterVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -74,15 +79,29 @@ impl<'a> Vertex<'a> {
             Self::JSXExpressionContainer(data) => data.span,
             Self::JSXFragment(data) => data.span,
             Self::JSXOpeningElement(data) => data.opening_element.span,
+            Self::DotProperty(data) => data.static_member_expr.span,
             Self::JSXSpreadAttribute(data) => data.span,
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
             Self::ObjectLiteral(data) => data.object_expression.span,
+            Self::SpreadIntoObject(data) => data.property.span,
+            Self::ObjectEntry(data) => data.property.span,
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
-            Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::Return(data) => data.return_statement.span,
+            Self::IfStatementAST(data) => data.return_statement.span,
+            Self::NumberLiteral(data) => data.number_literal.span,
+            Self::Reassignment(data) => data.assignment_expression.span,
+            Self::Name(data) => data.name.span,
+            Self::FnCall(data) => data.call_expression.span,
+            Self::Argument(data) => data.argument.span(),
+            Self::FnDeclaration(data) => data.function.span,
+            Self::ArrowFunction(data) => data.arrow_expression.span,
+            Self::FunctionBody(data) => data.function_body.span,
+            Self::Statement(data) => data.span(),
+            Self::Parameter(data) => data.parameter.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -103,9 +122,23 @@ impl<'a> Vertex<'a> {
             Vertex::TypeAnnotation(data) => data.ast_node.map(|x| x.id()),
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
-            Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Return(data) => data.ast_node.map(|x| x.id()),
+            Vertex::IfStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Name(data) => data.ast_node.map(|x| x.id()),
+            Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
+            Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
+            | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
             | Vertex::Expression(_)
@@ -141,6 +174,58 @@ impl<'a> Vertex<'a> {
             _ => None,
         }
     }
+
+    // todo: remove `Option` when the match covers all the cases
+    pub fn try_from_member_expression(member_expression: &'a MemberExpression<'a>) -> Option<Self> {
+        match &member_expression {
+            MemberExpression::StaticMemberExpression(static_member_expr) => {
+                Some(Vertex::DotProperty(
+                    DotPropertyVertex { ast_node: None, static_member_expr }.into(),
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    // todo: remove `Option` when this doesn't return none
+    pub fn try_from_identifier_reference(
+        _identifier_reference: &'a IdentifierReference,
+    ) -> Option<Self> {
+        None
+    }
+
+    pub fn function_is_async(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.r#async,
+            Vertex::FnDeclaration(data) => data.function.r#async,
+            _ => unreachable!(
+                "'function_is_async' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_is_generator(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.generator,
+            Vertex::FnDeclaration(data) => data.function.generator,
+            _ => unreachable!(
+                "'function_is_generator' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_parameter(&self) -> VertexIterator<'a, Vertex<'a>> {
+        let parameter = match &self {
+            Vertex::ArrowFunction(data) => &data.arrow_expression.params.items,
+            Vertex::FnDeclaration(data) => &data.function.params.items,
+            _ => unreachable!(
+                "'function_parameter' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        };
+        Box::new(parameter.iter().map(|parameter| {
+            Vertex::Parameter(ParameterVertex { ast_node: None, parameter }.into())
+        }))
+    }
 }
 
 impl Typename for Vertex<'_> {
@@ -156,6 +241,8 @@ impl Typename for Vertex<'_> {
             Vertex::File => "File",
             Vertex::Import(import) => import.typename(),
             Vertex::Interface(iface) => iface.typename(),
+            Vertex::NumberLiteral(nlit) => nlit.typename(),
+            Vertex::DotProperty(dot_property) => dot_property.typename(),
             Vertex::InterfaceExtend(iex) => match **iex {
                 InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
                 InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
@@ -177,7 +264,19 @@ impl Typename for Vertex<'_> {
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
-            Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::Name(name) => name.typename(),
+            Vertex::Return(ret) => ret.typename(),
+            Vertex::IfStatementAST(_) => "IfStatementAST",
+            Vertex::SpreadIntoObject(obj) => obj.typename(),
+            Vertex::ObjectEntry(entry) => entry.typename(),
+            Vertex::FnCall(fncall) => fncall.typename(),
+            Vertex::Reassignment(reassignment) => reassignment.typename(),
+            Vertex::Argument(arg) => arg.typename(),
+            Vertex::FnDeclaration(fndecl) => fndecl.typename(),
+            Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
+            Vertex::FunctionBody(fn_body) => fn_body.typename(),
+            Vertex::Parameter(param) => param.typename(),
+            Vertex::Statement(_) => "Statement",
         }
     }
 }
@@ -185,8 +284,12 @@ impl Typename for Vertex<'_> {
 impl<'a> From<AstNode<'a>> for Vertex<'a> {
     fn from(ast_node: AstNode<'a>) -> Self {
         match ast_node.kind() {
-            AstKind::ReturnStatement(return_statement) => Self::ReturnStatementAST(
-                ReturnStatementVertex { ast_node: Some(ast_node), return_statement }.into(),
+            AstKind::ReturnStatement(return_statement) => {
+                Self::Return(ReturnVertex { ast_node: Some(ast_node), return_statement }.into())
+            }
+            AstKind::IfStatement(if_statement) => Self::IfStatementAST(
+                IfStatementVertex { ast_node: Some(ast_node), return_statement: if_statement }
+                    .into(),
             ),
             AstKind::JSXElement(element) => {
                 Self::JSXElement(JSXElementVertex { ast_node: Some(ast_node), element }.into())
@@ -212,7 +315,65 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::JSXOpeningElement(opening_element) => Self::JSXOpeningElement(
                 JSXOpeningElementVertex { ast_node: Some(ast_node), opening_element }.into(),
             ),
+            AstKind::NumberLiteral(number_literal) => Self::NumberLiteral(
+                NumberLiteralVertex { ast_node: Some(ast_node), number_literal }.into(),
+            ),
+            AstKind::IdentifierName(identifier_name) => {
+                Self::Name(NameVertex { ast_node: Some(ast_node), name: identifier_name }.into())
+            }
+            AstKind::ObjectProperty(property) => {
+                Self::ObjectEntry(ObjectEntryVertex { ast_node: Some(ast_node), property }.into())
+            }
+            AstKind::SpreadElement(property) => Self::SpreadIntoObject(
+                SpreadIntoObjectVertex { ast_node: Some(ast_node), property }.into(),
+            ),
+            AstKind::MemberExpression(member_expr)
+                if matches!(member_expr, MemberExpression::StaticMemberExpression(_)) =>
+            {
+                match member_expr {
+                    MemberExpression::StaticMemberExpression(member_expr) => Self::DotProperty(
+                        DotPropertyVertex {
+                            ast_node: Some(ast_node),
+                            static_member_expr: member_expr,
+                        }
+                        .into(),
+                    ),
+                    _ => unreachable!("we should only ever have StaticMemberExpression"),
+                }
+            }
+            AstKind::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
+                ReassignmentVertex { ast_node: Some(ast_node), assignment_expression }.into(),
+            ),
+            AstKind::CallExpression(call_expression) => {
+                Vertex::FnCall(FnCallVertex { ast_node: Some(ast_node), call_expression }.into())
+            }
+            AstKind::Function(function) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: Some(ast_node), function }.into(),
+            ),
+            AstKind::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: Some(ast_node), arrow_expression }.into(),
+            ),
+            AstKind::FunctionBody(function_body) => Vertex::FunctionBody(
+                FunctionBodyVertex { ast_node: Some(ast_node), function_body }.into(),
+            ),
+            AstKind::FormalParameter(parameter) => {
+                Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
+            }
+            AstKind::Argument(argument) => {
+                Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
+        }
+    }
+}
+
+impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
+    fn from(stmt: &'a Statement<'a>) -> Self {
+        match &stmt {
+            Statement::ReturnStatement(return_statement) => {
+                Vertex::Return(ReturnVertex { ast_node: None, return_statement }.into())
+            }
+            _ => Vertex::Statement(stmt),
         }
     }
 }
@@ -222,13 +383,33 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
         // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
 
         // NOTE: When string literal / template literal is added, add to as_constant_string
-        match &expr.get_inner_expression() {
+        match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: None, object_expression }.into(),
             ),
             Expression::JSXElement(element) => {
                 Vertex::JSXElement(JSXElementVertex { ast_node: None, element }.into())
             }
+            Expression::NumberLiteral(number_literal) => {
+                Vertex::NumberLiteral(NumberLiteralVertex { ast_node: None, number_literal }.into())
+            }
+            Expression::MemberExpression(me) => {
+                let vertex = Vertex::try_from_member_expression(me);
+
+                vertex.unwrap_or(Vertex::Expression(expr))
+            }
+            Expression::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
+                ReassignmentVertex { ast_node: None, assignment_expression }.into(),
+            ),
+            Expression::CallExpression(call_expression) => {
+                Vertex::FnCall(FnCallVertex { ast_node: None, call_expression }.into())
+            }
+            Expression::FunctionExpression(fn_expression) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: None, function: fn_expression }.into(),
+            ),
+            Expression::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: None, arrow_expression }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
@@ -339,15 +520,32 @@ impl<'a> Typename for JSXElementVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct ReturnStatementVertex<'a> {
+pub struct IfStatementVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub return_statement: &'a IfStatement<'a>,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ReturnVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub return_statement: &'a ReturnStatement<'a>,
+}
+
+impl<'a> Typename for ReturnVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ReturnAST"
+        } else {
+            "ReturnStatement"
+        }
+    }
 }
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct TypeAnnotationVertex<'a> {
-    ast_node: Option<AstNode<'a>>,
+    pub ast_node: Option<AstNode<'a>>,
     pub type_annotation: &'a TSTypeAnnotation<'a>,
 }
 
@@ -415,6 +613,210 @@ impl<'a> Typename for JSXOpeningElementVertex<'a> {
             "JSXOpeningElementAST"
         } else {
             "JSXOpeningElement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct NumberLiteralVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub number_literal: &'a NumberLiteral<'a>,
+}
+
+impl<'a> Typename for NumberLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "NumberLiteralAST"
+        } else {
+            "NumberLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct NameVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub name: &'a IdentifierName,
+}
+
+impl<'a> Typename for NameVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "NameAST"
+        } else {
+            "Name"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ObjectEntryVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: &'a ObjectProperty<'a>,
+}
+
+impl<'a> Typename for ObjectEntryVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ObjectEntryAST"
+        } else {
+            "ObjectEntry"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct SpreadIntoObjectVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: &'a SpreadElement<'a>,
+}
+
+impl<'a> Typename for SpreadIntoObjectVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "SpreadIntoObjectAST"
+        } else {
+            "SpreadIntoObject"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct DotPropertyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub static_member_expr: &'a StaticMemberExpression<'a>,
+}
+
+impl<'a> Typename for DotPropertyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "DotPropertyAST"
+        } else {
+            "DotProperty"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ReassignmentVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub assignment_expression: &'a AssignmentExpression<'a>,
+}
+
+impl<'a> Typename for ReassignmentVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ReassignmentAST"
+        } else {
+            "Reassignment"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FnCallVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub call_expression: &'a CallExpression<'a>,
+}
+
+impl<'a> Typename for FnCallVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FnCallAST"
+        } else {
+            "FnCall"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FnDeclarationVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function: &'a Function<'a>,
+}
+
+impl<'a> Typename for FnDeclarationVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FnDeclarationAST"
+        } else {
+            "FnDeclaration"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrowFunctionVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub arrow_expression: &'a ArrowExpression<'a>,
+}
+
+impl<'a> Typename for ArrowFunctionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrowFunctionAST"
+        } else {
+            "ArrowFunction"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FunctionBodyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function_body: &'a FunctionBody<'a>,
+}
+
+impl<'a> Typename for FunctionBodyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FunctionBodyAST"
+        } else {
+            "FunctionBody"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ParameterVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub parameter: &'a FormalParameter<'a>,
+}
+
+impl<'a> Typename for ParameterVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ParameterAST"
+        } else {
+            "Parameter"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArgumentVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub argument: &'a Argument<'a>,
+}
+
+impl<'a> Typename for ArgumentVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArgumentAST"
+        } else {
+            "Argument"
         }
     }
 }

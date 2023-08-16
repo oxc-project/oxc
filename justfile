@@ -71,6 +71,9 @@ new-rule name:
 new-jest-rule name:
   cargo run -p rulegen {{name}} jest
 
+new-ts-rule name:
+  cargo run -p rulegen {{name}} typescript
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote

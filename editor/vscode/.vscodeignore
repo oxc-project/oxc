@@ -1,0 +1,14 @@
+.vscode
+node_modules
+out/
+src/
+tsconfig.json
+webpack.config.js
+client/**
+pnpm-lock.yaml
+server
+target
+dist/
+!dist/extension.js
+!target/release/oxc_vscode
+!target/release/oxc_vscode.exe

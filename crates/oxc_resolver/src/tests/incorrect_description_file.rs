@@ -1,19 +1,15 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/incorrect-description-file.test.js>
 
-use std::{env, path::PathBuf};
+use std::env;
 
 use crate::{JSONError, Resolution, ResolveError, ResolveOptions, Resolver};
 
-fn fixture() -> PathBuf {
-    super::fixture().join("incorrect-package")
-}
-
 // TODO: add `ctx with fileDependencies and then check file dependencies
 
+// should not resolve main in incorrect description file #1
 #[test]
 fn incorrect_description_file_1() {
-    // should not resolve main in incorrect description file #1
-    let f = fixture();
+    let f = super::fixture().join("incorrect-package");
     let resolution = Resolver::default().resolve(f.join("pack1"), ".");
     let error = ResolveError::JSON(JSONError {
         path: f.join("pack1/package.json"),
@@ -24,10 +20,10 @@ fn incorrect_description_file_1() {
     assert_eq!(resolution, Err(error));
 }
 
+// should not resolve main in incorrect description file #2
 #[test]
 fn incorrect_description_file_2() {
-    // should not resolve main in incorrect description file #2
-    let f = fixture();
+    let f = super::fixture().join("incorrect-package");
     let resolution = Resolver::default().resolve(f.join("pack2"), ".");
     let error = ResolveError::JSON(JSONError {
         path: f.join("pack2/package.json"),
@@ -38,10 +34,10 @@ fn incorrect_description_file_2() {
     assert_eq!(resolution, Err(error));
 }
 
+// should not resolve main in incorrect description file #3
 #[test]
 fn incorrect_description_file_3() {
-    // should not resolve main in incorrect description file #3
-    let f = fixture();
+    let f = super::fixture().join("incorrect-package");
     let resolution = Resolver::default().resolve(f.join("pack2"), ".");
     assert!(resolution.is_err());
 }
@@ -61,5 +57,5 @@ fn no_description_file() {
     // without description file
     let resolver =
         Resolver::new(ResolveOptions { description_files: vec![], ..ResolveOptions::default() });
-    assert_eq!(resolver.resolve(&f, "."), Err(ResolveError::NotFound(f.into_boxed_path())));
+    assert_eq!(resolver.resolve(&f, "."), Err(ResolveError::NotFound(f)));
 }

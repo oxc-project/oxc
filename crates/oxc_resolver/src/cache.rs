@@ -1,21 +1,36 @@
+use once_cell::sync::OnceCell as OnceLock;
 use std::{
     convert::AsRef,
-    hash::{Hash, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     ops::Deref,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock},
+    sync::Arc,
 };
 
 use dashmap::DashMap;
-use identity_hash::BuildIdentityHasher;
 use rustc_hash::FxHasher;
 
-use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
+use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions};
 
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
-    cache: DashMap<u64, CacheValue, BuildIdentityHasher<u64>>,
+    cache: DashMap<u64, CachedPath, BuildHasherDefault<IdentityHasher>>,
+}
+
+#[derive(Default)]
+struct IdentityHasher(u64);
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, _: &[u8]) {
+        panic!("Invalid use of IdentityHasher")
+    }
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+    fn finish(&self) -> u64 {
+        self.0
+    }
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
@@ -29,18 +44,11 @@ impl<Fs: FileSystem> Cache<Fs> {
         Self { fs, ..Self::default() }
     }
 
-    /// # Panics
-    ///
-    /// * Path is file but does not have a parent
-    pub fn dirname<'a>(&self, cache_value: &'a CacheValue) -> &'a CacheValue {
-        if cache_value.is_file(&self.fs) {
-            cache_value.parent.as_ref().unwrap()
-        } else {
-            cache_value
-        }
+    pub fn clear(&self) {
+        self.cache.clear();
     }
 
-    pub fn value(&self, path: &Path) -> CacheValue {
+    pub fn value(&self, path: &Path) -> CachedPath {
         let hash = {
             let mut hasher = FxHasher::default();
             path.hash(&mut hasher);
@@ -51,40 +59,39 @@ impl<Fs: FileSystem> Cache<Fs> {
         }
         let parent = path.parent().map(|p| self.value(p));
         let data =
-            CacheValue(Arc::new(CacheValueImpl::new(path.to_path_buf().into_boxed_path(), parent)));
+            CachedPath(Arc::new(CachedPathImpl::new(path.to_path_buf().into_boxed_path(), parent)));
         self.cache.insert(hash, data.clone());
         data
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CacheValue(Arc<CacheValueImpl>);
+#[derive(Clone)]
+pub struct CachedPath(Arc<CachedPathImpl>);
 
-impl Deref for CacheValue {
-    type Target = CacheValueImpl;
+impl Deref for CachedPath {
+    type Target = CachedPathImpl;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
     }
 }
 
-impl AsRef<CacheValueImpl> for CacheValue {
-    fn as_ref(&self) -> &CacheValueImpl {
+impl AsRef<CachedPathImpl> for CachedPath {
+    fn as_ref(&self) -> &CachedPathImpl {
         self.0.as_ref()
     }
 }
 
-#[derive(Debug)]
-pub struct CacheValueImpl {
+pub struct CachedPathImpl {
     path: Box<Path>,
-    parent: Option<CacheValue>,
+    parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
-    package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
+    package_json: OnceLock<Option<Arc<PackageJson>>>,
 }
 
-impl CacheValueImpl {
-    fn new(path: Box<Path>, parent: Option<CacheValue>) -> Self {
+impl CachedPathImpl {
+    fn new(path: Box<Path>, parent: Option<CachedPath>) -> Self {
         Self {
             path,
             parent,
@@ -126,6 +133,7 @@ impl CacheValueImpl {
     pub fn find_package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
+        options: &ResolveOptions,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = self;
         // Go up a directory when querying a file, this avoids a file read from example.js/package.json
@@ -136,7 +144,7 @@ impl CacheValueImpl {
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
-            if let Some(package_json) = cv.package_json(fs).transpose()? {
+            if let Some(package_json) = cv.package_json(fs, options)? {
                 return Ok(Some(Arc::clone(&package_json)));
             }
             cache_value = cv.parent.as_deref();
@@ -152,19 +160,20 @@ impl CacheValueImpl {
     pub fn package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
-    ) -> Option<Result<Arc<PackageJson>, ResolveError>> {
-        // Change to `get_or_try_init` once it is stable
+        options: &ResolveOptions,
+    ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
+        // Change to `std::sync::OnceLock::get_or_try_init` when it is stable.
         self.package_json
-            .get_or_init(|| {
+            .get_or_try_init(|| {
                 let package_json_path = self.path.join("package.json");
-                fs.read_to_string(&package_json_path).ok().map(|package_json_string| {
-                    PackageJson::parse(package_json_path.clone(), &package_json_string)
-                        .map(Arc::new)
-                        .map_err(|error| {
-                            ResolveError::from_serde_json_error(package_json_path, &error)
-                        })
-                })
+                let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
+                    return Ok(None)
+                };
+                PackageJson::parse(package_json_path.clone(), &package_json_string, options)
+                    .map(Arc::new)
+                    .map(Some)
+                    .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
             })
-            .clone()
+            .cloned()
     }
 }

@@ -62,6 +62,8 @@ type File {
   import: [ImportAST!]!
   variable_declaration: [VariableDeclarationAST!]!
 
+  function: [Function!]!
+
   ast_node: [ASTNode!]!
 }
 
@@ -179,7 +181,6 @@ interface A extends B.C {}
 B.C is always more than one identifier.
 """
 type MemberExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
@@ -188,19 +189,15 @@ interface A extends B {}
 B is always just one identifier.
 """
 type SimpleExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
 interface InterfaceExtend {
-  """
-  Null if not decidabled such as
-  """
-  str: String
   span: Span!
 }
 
 interface Interface {
+  name: String!
   extend: [InterfaceExtend!]!
   name_span: Span!
   entire_span: Span!
@@ -225,6 +222,7 @@ type ClassMethod {
 }
 
 interface Class {
+  name: String
   is_abstract: Boolean!
 
   """
@@ -246,7 +244,6 @@ interface Class {
 }
 
 interface Type {
-  str: String!
   span: Span!
 }
 
@@ -258,6 +255,7 @@ interface TypeAnnotation implements HasSpan {
 type Span {
   start: Int!
   end: Int!
+  str: String!
 }
 
 type JSXSpreadChild {
@@ -277,6 +275,35 @@ type JSXText {
   span: Span!
 }
 
+"""
+If the number has a negative sign before it, it will not be a `NumberLiteral`
+"""
+interface NumberLiteral implements HasSpan & Expression {
+  span: Span!
+  """
+  Nullable if the number is NaN
+  """
+  number: Float
+
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+}
+
+type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral {
+  span: Span!
+  """
+  Nullable if the number is NaN
+  """
+  number: Float
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+}
+
 # Expression
 
 interface JSXElement implements Expression & HasSpan {
@@ -293,27 +320,361 @@ interface JSXElement implements Expression & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
 
-type ObjectLiteral implements Expression & HasSpan {
-  value(key: String!): [Expression!]!
-
-  # Expression
-  as_constant_string: String
+interface ObjectProperty implements HasSpan {
   # HasSpan
   span: Span!
 }
 
-type ObjectLiteralAST implements Expression & HasSpan & ASTNode {
-  value(key: String!): [Expression!]!
+interface SpreadIntoObject implements ObjectProperty & HasSpan {
+  value: Expression!
 
-  # Expression
-  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+type SpreadIntoObjectAST implements ASTNode & SpreadIntoObject & ObjectProperty & HasSpan {
+  value: Expression!
+
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+interface ObjectEntry implements ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type ObjectEntryAST implements ASTNode & ObjectEntry & ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+interface ObjectLiteral implements Expression & HasSpan {
+  value(key: String!): Expression
+  entry: [ObjectProperty!]!
+
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
+  value(key: String!): Expression
+  entry: [ObjectProperty!]!
+
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface Argument implements HasSpan {
+  value: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ArgumentAST implements Argument & HasSpan & ASTNode {
+  value: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface FnCall implements Expression & HasSpan {
+  callee: Expression!
+  argument: [Argument!]!
+
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
+  callee: Expression!
+  argument: [Argument!]!
+
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+interface Reassignment implements HasSpan & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
+interface Statement implements HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+interface FunctionBody implements HasSpan {
+  statement: [Statement!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
+  statement: [Statement!]!
+
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
+interface Function implements Expression & HasSpan {
+  is_async: Boolean!
+  is_generator: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type Parameter {
+  is_readonly: Boolean!
+  assignment: AssignmentType!
+  type_annotation: TypeAnnotation!
+  # HasSpan
+  span: Span!
+}
+
+type ParameterAST implements ASTNode & HasSpan {
+  is_readonly: Boolean!
+  assignment: AssignmentType!
+  type_annotation: TypeAnnotation!
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
+interface ArrowFunction implements Function & HasSpan & Expression {
+  # Function
+  is_async: Boolean!
+  is_generator: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & Expression {
+  # Function
+  is_async: Boolean!
+  is_generator: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
+"""
+A function defined in the sourcecode.
+"""
+interface FnDeclaration implements Function & HasSpan & Expression {
+  """
+  If this function is used an an expression, the name can be omitted.
+  ie: "const a = function() {};"
+  """
+  name: String
+
+  # Function
+  is_async: Boolean!
+  is_generator: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+"""
+A function defined in the sourcecode.
+"""
+type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & Expression {
+  name: String
+
+  # Function
+  is_async: Boolean!
+  is_generator: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+interface Name implements HasSpan {
+  name: String!
+  # HasSpan
+  span: Span!
+}
+
+type NameAST implements ASTNode & Name & HasSpan {
+  name: String!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface DotProperty implements HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -324,6 +685,7 @@ interface Expression implements HasSpan {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  strip_parens: Expression!
 
   # HasSpan
   span: Span!
@@ -338,6 +700,7 @@ this will fire once per assignment.
 """
 type VariableDeclarationAST implements VariableDeclaration & ASTNode & HasSpan {
   left: AssignmentType!
+  right: Expression
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -355,6 +718,7 @@ type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
 }
 
 type InterfaceAST implements Interface & ASTNode & HasSpan {
+  name: String!
   extend: [InterfaceExtend!]!
   name_span: Span!
   entire_span: Span!
@@ -397,6 +761,7 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -405,6 +770,7 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
 }
 
 type ClassAST implements ASTNode & Class & HasSpan {
+  name: String
   is_abstract: Boolean!
 
   """
@@ -432,7 +798,29 @@ type ClassAST implements ASTNode & Class & HasSpan {
   span: Span!
 }
 
-type ReturnStatementAST implements ASTNode & HasSpan {
+type IfStatementAST implements ASTNode & HasSpan {
+  condition: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type ReturnStatement implements Statement & HasSpan {
+  expression: Expression
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type ReturnAST implements ASTNode & HasSpan {
   expression: Expression
 
   # ASTNode

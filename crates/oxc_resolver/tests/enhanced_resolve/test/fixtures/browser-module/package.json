@@ -4,6 +4,7 @@
     "./lib/replaced.js": "./lib/browser",
     "module-a": "./browser/module-a.js",
     "module-b": "module-c",
+    "module-c": "module-c",
     "./toString": "./lib/toString.js",
     ".": false
   },

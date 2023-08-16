@@ -7,8 +7,8 @@ use crate::ast::*;
 #[derive(Debug, Clone, Copy)]
 pub enum AstKind<'a> {
     Program(&'a Program<'a>),
-    Directive(&'a Directive<'a>),
-    Hashbang(&'a Hashbang<'a>),
+    Directive(&'a Directive),
+    Hashbang(&'a Hashbang),
 
     BlockStatement(&'a BlockStatement<'a>),
     BreakStatement(&'a BreakStatement),
@@ -387,7 +387,7 @@ impl<'a> AstKind<'a> {
     pub fn debug_name(&self) -> std::borrow::Cow<str> {
         match self {
             Self::Program(_) => "Program".into(),
-            Self::Directive(d) => d.directive.into(),
+            Self::Directive(d) => d.directive.as_ref().into(),
             Self::Hashbang(_) => "Hashbang".into(),
 
             Self::BlockStatement(_) => "BlockStatement".into(),

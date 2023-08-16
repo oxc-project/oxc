@@ -1,8 +1,12 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/roots.test.js>
 
-use std::env;
+use std::{env, path::PathBuf};
 
-use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{AliasValue, ResolveError, ResolveOptions, Resolver};
+
+fn dirname() -> PathBuf {
+    env::current_dir().unwrap().join("tests/enhanced_resolve/test")
+}
 
 #[test]
 fn roots() {
@@ -11,7 +15,7 @@ fn roots() {
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
         alias: vec![("foo".into(), vec![AliasValue::Path("/fixtures".into())])],
-        roots: vec![env::current_dir().unwrap().join("tests/enhanced_resolve/test"), f.clone()],
+        roots: vec![dirname(), f.clone()],
         ..ResolveOptions::default()
     });
 
@@ -25,14 +29,13 @@ fn roots() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
     }
 
     #[rustfmt::skip]
     let fail = [
-        // TODO should be "Module Not Found" error
-        ("should not work with relative path", "fixtures/b.js", ResolveError::NotFound(f.clone().into_boxed_path()))
+        ("should not work with relative path", "fixtures/b.js", ResolveError::NotFound(f.clone()))
     ];
 
     for (comment, request, expected) in fail {
@@ -42,17 +45,25 @@ fn roots() {
 }
 
 #[test]
-#[ignore = "resolve_to_context"]
-fn resolve_to_context() {}
+fn resolve_to_context() {
+    let f = super::fixture();
+    let resolver = Resolver::new(ResolveOptions {
+        roots: vec![dirname(), f.clone()],
+        resolve_to_context: true,
+        ..ResolveOptions::default()
+    });
+    let resolved_path = resolver.resolve(&f, "/fixtures/lib").map(|r| r.full_path());
+    let expected = f.join("lib");
+    assert_eq!(resolved_path, Ok(expected));
+}
 
 #[test]
 fn prefer_absolute() {
     let f = super::fixture();
-
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
         alias: vec![("foo".into(), vec![AliasValue::Path("/fixtures".into())])],
-        roots: vec![env::current_dir().unwrap().join("tests/enhanced_resolve/test"), f.clone()],
+        roots: vec![dirname(), f.clone()],
         prefer_absolute: true,
         ..ResolveOptions::default()
     });
@@ -63,7 +74,7 @@ fn prefer_absolute() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, &request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, &request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
     }
 }

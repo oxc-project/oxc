@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
+use crate::{AliasValue, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
 
 use super::memory_fs::MemoryFS;
 
@@ -27,26 +27,37 @@ fn alias() {
         ("/e/dir/file", ""),
     ]);
 
-    #[rustfmt::skip]
-    let options = ResolveOptions {
-        alias: vec![
-            ("aliasA".into(), vec![AliasValue::Path("a".into())]),
-            ("b$".into(), vec![AliasValue::Path("a/index".into())]),
-            ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
-            ("multiAlias".into(), vec![AliasValue::Path("b".into()), AliasValue::Path("c".into()), AliasValue::Path("d".into()), AliasValue::Path("e".into()), AliasValue::Path("a".into())]),
-            ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
-            ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
-            // alias configuration should work
-            ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("ignored".into(), vec![AliasValue::Ignore]),
-        ],
-        modules: vec!["/".into()],
-        ..ResolveOptions::default()
-    };
-
-    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(options, file_system);
+    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
+        file_system,
+        ResolveOptions {
+            alias: vec![
+                ("aliasA".into(), vec![AliasValue::Path("a".into())]),
+                ("b$".into(), vec![AliasValue::Path("a/index".into())]),
+                ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
+                (
+                    "multiAlias".into(),
+                    vec![
+                        AliasValue::Path("b".into()),
+                        AliasValue::Path("c".into()),
+                        AliasValue::Path("d".into()),
+                        AliasValue::Path("e".into()),
+                        AliasValue::Path("a".into()),
+                    ],
+                ),
+                ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
+                ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
+                ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("ignored".into(), vec![AliasValue::Ignore]),
+                // not part of enhanced-resolve, added to make sure query in alias value works
+                ("alias_query".into(), vec![AliasValue::Path("a?query_after".into())]),
+                ("alias_fragment".into(), vec![AliasValue::Path("a#fragment_after".into())]),
+            ],
+            modules: vec!["/".into()],
+            ..ResolveOptions::default()
+        },
+    );
 
     #[rustfmt::skip]
     let pass = [
@@ -64,9 +75,8 @@ fn alias() {
         ("should resolve '@' alias 2", "@/index", "/c/dir/index"),
         ("should resolve a recursive aliased module 1", "recursive", "/recursive/dir/index"),
         ("should resolve a recursive aliased module 2", "recursive/index", "/recursive/dir/index"),
-        // TODO recursive
-        // ("should resolve a recursive aliased module 3", "recursive/dir", "/recursive/dir/index"),
-        // ("should resolve a recursive aliased module 4", "recursive/dir/index", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 3", "recursive/dir", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 4", "recursive/dir/index", "/recursive/dir/index"),
         ("should resolve a file aliased module 1", "b", "/a/index"),
         ("should resolve a file aliased module 2", "c", "/a/index"),
         ("should resolve a file aliased module with a query 1", "b?query", "/a/index?query"),
@@ -77,21 +87,23 @@ fn alias() {
         ("should resolve a path in a file aliased module 4", "c/index", "/c/index"),
         ("should resolve a path in a file aliased module 5", "c/dir", "/c/dir/index"),
         ("should resolve a path in a file aliased module 6", "c/dir/index", "/c/dir/index"),
-        // TODO aliased file
-        // ("should resolve a file aliased file 1", "d", "/c/index"),
-        // ("should resolve a file aliased file 2", "d/dir/index", "/c/dir/index"),
+        ("should resolve a file aliased file 1", "d", "/c/index"),
+        ("should resolve a file aliased file 2", "d/dir/index", "/c/dir/index"),
         ("should resolve a file in multiple aliased dirs 1", "multiAlias/dir/file", "/e/dir/file"),
         ("should resolve a file in multiple aliased dirs 2", "multiAlias/anotherDir", "/e/anotherDir/index"),
+        // not part of enhanced-resolve, added to make sure query in alias value works
+        ("should resolve query in alias value", "alias_query?query_before", "/a/index?query_after"),
+        ("should resolve query in alias value", "alias_fragment#fragment_before", "/a/index#fragment_after"),
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(PathBuf::from(expected)), "{comment} {request}");
     }
 
     #[rustfmt::skip]
     let ignore = [
-        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored").into_boxed_path()))
+        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored")))
     ];
 
     for (comment, request, expected) in ignore {
@@ -101,7 +113,6 @@ fn alias() {
 }
 
 #[test]
-#[ignore = "TODO: absolute path"]
 fn absolute_path() {
     let f = super::fixture();
     let resolver = Resolver::new(ResolveOptions {
@@ -110,5 +121,20 @@ fn absolute_path() {
         ..ResolveOptions::default()
     });
     let resolution = resolver.resolve(&f, "foo/index");
-    assert_eq!(resolution, Err(ResolveError::Ignored(f.into_boxed_path())));
+    assert_eq!(resolution, Err(ResolveError::Ignored(f.join("foo"))));
+}
+
+// Not part of enhanced-resolve
+#[test]
+fn infinite_recursion() {
+    let f = super::fixture();
+    let resolver = Resolver::new(ResolveOptions {
+        alias: vec![
+            ("./a".into(), vec![AliasValue::Path("./b".into())]),
+            ("./b".into(), vec![AliasValue::Path("./a".into())]),
+        ],
+        ..ResolveOptions::default()
+    });
+    let resolution = resolver.resolve(f, "./a");
+    assert_eq!(resolution, Err(ResolveError::Recursion));
 }

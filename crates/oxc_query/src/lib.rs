@@ -6,7 +6,7 @@ mod properties;
 mod util;
 mod vertex;
 
-pub use adapter::{schema, Adapter};
+pub use adapter::{schema, Adapter, SCHEMA_TEXT};
 
 #[cfg(test)]
 mod tests;
