@@ -2067,6 +2067,8 @@ pub(super) fn resolve_parameter_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "span" => parameter::span(contexts, resolve_info),
+        "assignment" => parameter::assignment(contexts, resolve_info),
+        "type_annotation" => parameter::type_annotation(contexts, resolve_info),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Parameter'")
         }
@@ -2074,11 +2076,56 @@ pub(super) fn resolve_parameter_edge<'a, 'b: 'a>(
 }
 
 mod parameter {
+
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
+    use crate::vertex::TypeAnnotationVertex;
+
     use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn assignment<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(Vertex::AssignmentType(
+                &v.as_parameter()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a parameter vertex, instead have: {v:#?}")
+                    })
+                    .parameter
+                    .pattern
+                    .kind,
+            )))
+        })
+    }
+
+    pub(super) fn type_annotation<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_parameter()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a parameter vertex, instead have: {v:#?}")
+                    })
+                    .parameter
+                    .pattern
+                    .type_annotation
+                    .as_ref()
+                    .map(|type_annotation| {
+                        Vertex::TypeAnnotation(
+                            TypeAnnotationVertex { type_annotation, ast_node: None }.into(),
+                        )
+                    })
+                    .into_iter(),
+            )
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,

@@ -493,11 +493,16 @@ interface Function {
 
 type Parameter {
   is_readonly: Boolean!
+  assignment: AssignmentType!
+  type_annotation: TypeAnnotation!
+  # HasSpan
   span: Span!
 }
 
 type ParameterAST implements ASTNode & HasSpan {
   is_readonly: Boolean!
+  assignment: AssignmentType!
+  type_annotation: TypeAnnotation!
   # HasSpan
   span: Span!
   # ASTNode

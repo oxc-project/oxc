@@ -509,7 +509,7 @@ impl<'a> Typename for ReturnVertex<'a> {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct TypeAnnotationVertex<'a> {
-    ast_node: Option<AstNode<'a>>,
+    pub ast_node: Option<AstNode<'a>>,
     pub type_annotation: &'a TSTypeAnnotation<'a>,
 }
 
