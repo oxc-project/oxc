@@ -492,10 +492,12 @@ interface Function {
 }
 
 type Parameter {
+  is_readonly: Boolean!
   span: Span!
 }
 
 type ParameterAST implements ASTNode & HasSpan {
+  is_readonly: Boolean!
   # HasSpan
   span: Span!
   # ASTNode

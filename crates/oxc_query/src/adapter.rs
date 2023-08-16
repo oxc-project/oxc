@@ -181,6 +181,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     resolve_info,
                 )
             }
+            "ParameterAST" | "Parameter" => super::properties::resolve_parameter_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "PathPart" => super::properties::resolve_path_part_property(
                 contexts,
                 property_name.as_ref(),

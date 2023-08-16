@@ -467,6 +467,29 @@ pub(super) fn resolve_object_literal_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_parameter_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_readonly" => resolve_property_with(contexts, |v| {
+            v.as_parameter()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a parameter vertex, instead have: {v:#?}")
+                })
+                .parameter
+                .readonly
+                .into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Parameter'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_path_part_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
