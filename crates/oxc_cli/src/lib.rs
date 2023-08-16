@@ -1,11 +1,13 @@
 // mod git;
 mod lint;
+mod lint_plugin_tester;
 mod plugin;
 mod runner;
 mod type_check;
 mod walk;
 
 use clap::{Arg, Command};
+use lint_plugin_tester::LintPluginTestRunner;
 
 pub use crate::{
     lint::{LintOptions, LintRunner},
@@ -24,6 +26,7 @@ pub fn command() -> Command {
         .arg_required_else_help(true)
         .subcommand(LintRunner::command())
         .subcommand(TypeCheckRunner::command())
+        .subcommand(LintPluginTestRunner::command())
         .arg(
             Arg::new("threads")
                 .long("threads")

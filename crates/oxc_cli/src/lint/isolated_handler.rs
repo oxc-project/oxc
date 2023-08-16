@@ -189,7 +189,11 @@ impl IsolatedLintHandler {
         let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
 
         // NOTE: `plugin.run()` puts it's errors into lint_ctx, which are read out by `linter.run`
-        plugin.run(&mut lint_ctx, vec![Some("index.tsx".to_owned())]);
+        plugin.run_tests(
+            &mut lint_ctx,
+            vec![Some("index.tsx".to_owned())],
+            crate::plugin::RulesToRun::All,
+        );
 
         let result = linter.run(lint_ctx);
 

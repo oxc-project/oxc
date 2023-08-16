@@ -47,6 +47,10 @@ pub enum CliRunResult {
         duration: std::time::Duration,
         number_of_diagnostics: usize,
     },
+    LintPluginTestResult {
+        duration: std::time::Duration,
+        number_of_diagnostics: usize,
+    },
 }
 
 impl Termination for CliRunResult {
@@ -100,6 +104,17 @@ impl Termination for CliRunResult {
                 ExitCode::from(0)
             }
             Self::TypeCheckResult { duration, number_of_diagnostics } => {
+                let ms = duration.as_millis();
+                println!("Finished in {ms}ms.");
+
+                if number_of_diagnostics > 0 {
+                    println!("Found {number_of_diagnostics} errors.");
+                    return ExitCode::from(1);
+                }
+
+                ExitCode::from(0)
+            }
+            Self::LintPluginTestResult { duration, number_of_diagnostics } => {
                 let ms = duration.as_millis();
                 println!("Finished in {ms}ms.");
 
