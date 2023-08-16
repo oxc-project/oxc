@@ -53,9 +53,13 @@ pub(super) fn resolve_argument_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => argument::span(contexts, resolve_info),
+        "value" => argument::value(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Argument'")
         }
@@ -63,11 +67,33 @@ pub(super) fn resolve_argument_edge<'a, 'b: 'a>(
 }
 
 mod argument {
+    use oxc_ast::ast::Argument;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+
+    pub(super) fn value<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            let expr = match v
+                .as_argument()
+                .unwrap_or_else(|| {
+                    panic!("expected to have an argument vertex, instead have: {v:#?}")
+                })
+                .argument
+            {
+                Argument::SpreadElement(spread) => &spread.argument,
+                Argument::Expression(expr) => expr,
+            };
+
+            Box::new(std::iter::once(expr.into()))
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
@@ -891,12 +917,12 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
 }
 
 mod fn_call {
-    use oxc_ast::ast::Argument;
-    use oxc_span::GetSpan;
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
     };
+
+    use crate::vertex::ArgumentVertex;
 
     use super::super::vertex::Vertex;
 
@@ -930,11 +956,8 @@ mod fn_call {
                     .call_expression
                     .arguments
                     .iter()
-                    .map(|x| {
-                        Vertex::Argument(match x {
-                            Argument::SpreadElement(spread) => spread.span,
-                            Argument::Expression(expr) => expr.span(),
-                        })
+                    .map(|argument| {
+                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
                     }),
             )
         })

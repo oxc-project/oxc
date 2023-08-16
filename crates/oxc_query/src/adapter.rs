@@ -245,11 +245,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "Argument" => super::edges::resolve_argument_edge(
+            "ArgumentAST" | "Argument" => super::edges::resolve_argument_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+                self,
             ),
             "AssignmentType" => super::edges::resolve_assignment_type_edge(
                 contexts,

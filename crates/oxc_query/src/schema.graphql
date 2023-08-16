@@ -393,7 +393,18 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
   span: Span!
 }
 
-interface Argument {
+interface Argument implements HasSpan {
+  value: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ArgumentAST implements Argument & HasSpan & ASTNode {
+  value: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
   span: Span!
 }
 

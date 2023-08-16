@@ -52,7 +52,7 @@ pub enum Vertex<'a> {
     FnCall(Rc<FnCallVertex<'a>>),
     FnDeclaration(Rc<FnDeclarationVertex<'a>>),
     ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
-    Argument(Span),
+    Argument(Rc<ArgumentVertex<'a>>),
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
     Statement(&'a Statement<'a>),
     Parameter(Rc<ParameterVertex<'a>>),
@@ -96,7 +96,7 @@ impl<'a> Vertex<'a> {
             Self::Reassignment(data) => data.assignment_expression.span,
             Self::Name(data) => data.name.span,
             Self::FnCall(data) => data.call_expression.span,
-            Self::Argument(data) => *data,
+            Self::Argument(data) => data.argument.span(),
             Self::FnDeclaration(data) => data.function.span,
             Self::ArrowFunction(data) => data.arrow_expression.span,
             Self::FunctionBody(data) => data.function_body.span,
@@ -136,6 +136,7 @@ impl<'a> Vertex<'a> {
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -155,7 +156,6 @@ impl<'a> Vertex<'a> {
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
             | Vertex::SearchParameter(_)
-            | Vertex::Argument(_)
             | Vertex::ClassProperty(_) => None,
         }
     }
@@ -238,7 +238,7 @@ impl Typename for Vertex<'_> {
             Vertex::ObjectEntry(entry) => entry.typename(),
             Vertex::FnCall(fncall) => fncall.typename(),
             Vertex::Reassignment(reassignment) => reassignment.typename(),
-            Vertex::Argument(_) => "Argument",
+            Vertex::Argument(arg) => arg.typename(),
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
             Vertex::FunctionBody(fn_body) => fn_body.typename(),
@@ -325,6 +325,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             ),
             AstKind::FormalParameter(parameter) => {
                 Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
+            }
+            AstKind::Argument(argument) => {
+                Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
             }
             _ => Vertex::ASTNode(ast_node),
         }
@@ -764,6 +767,23 @@ impl<'a> Typename for ParameterVertex<'a> {
             "ParameterAST"
         } else {
             "Parameter"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArgumentVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub argument: &'a Argument<'a>,
+}
+
+impl<'a> Typename for ArgumentVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArgumentAST"
+        } else {
+            "Argument"
         }
     }
 }
