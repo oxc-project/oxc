@@ -671,6 +671,7 @@ pub(super) fn resolve_file_edge<'a, 'b: 'a>(
     match edge_name {
         "ast_node" => file::ast_node(contexts, resolve_info, adapter),
         "class" => file::class(contexts, resolve_info, adapter),
+        "function" => file::function(contexts, resolve_info, adapter),
         "import" => file::import(contexts, resolve_info, adapter),
         "interface" => file::interface(contexts, resolve_info, adapter),
         "jsx_element" => file::jsx_element(contexts, resolve_info, adapter),
@@ -714,6 +715,23 @@ mod file {
                 let AstKind::Class(_) = x.kind() else { return None };
                 Some((*x).into())
             }))
+        })
+    }
+
+    pub(super) fn function<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(
+                adapter
+                    .semantic
+                    .nodes()
+                    .iter()
+                    .map(|node| (*node).into())
+                    .filter(|x: &Vertex<'_>| x.is_arrow_function() || x.is_fn_declaration()),
+            )
         })
     }
 

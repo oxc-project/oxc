@@ -62,6 +62,8 @@ type File {
   import: [ImportAST!]!
   variable_declaration: [VariableDeclarationAST!]!
 
+  function: [Function!]!
+
   ast_node: [ASTNode!]!
 }
 
