@@ -494,12 +494,23 @@ type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
   ancestor: [ASTNode!]!
 }
 
-interface Function {
+interface Function implements Expression & HasSpan {
   is_async: Boolean!
   """
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
 }
 
 type Parameter {
@@ -521,24 +532,38 @@ type ParameterAST implements ASTNode & HasSpan {
   ancestor: [ASTNode!]!
 }
 
-interface ArrowFunction implements Function & HasSpan {
+interface ArrowFunction implements Function & HasSpan & Expression {
   # Function
   is_async: Boolean!
   """
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
 
-type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode {
+type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & Expression {
   # Function
   is_async: Boolean!
   """
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
   # ASTNode
@@ -549,7 +574,7 @@ type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode {
 """
 A function defined in the sourcecode.
 """
-interface FnDeclaration implements Function & HasSpan {
+interface FnDeclaration implements Function & HasSpan & Expression {
   """
   If this function is used an an expression, the name can be omitted.
   ie: "const a = function() {};"
@@ -562,6 +587,13 @@ interface FnDeclaration implements Function & HasSpan {
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -569,7 +601,7 @@ interface FnDeclaration implements Function & HasSpan {
 """
 A function defined in the sourcecode.
 """
-type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan {
+type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & Expression {
   name: String
 
   # Function
@@ -581,6 +613,13 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan {
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }

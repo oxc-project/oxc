@@ -24,6 +24,9 @@ pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'AssignmentType'"
@@ -221,6 +224,9 @@ pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
                 .map_or_else(|| FieldValue::Null, |f| f.name.to_string().into())
         }),
         "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'FnDeclaration'"
@@ -251,8 +257,13 @@ pub(super) fn resolve_function_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
         _ => {
-            unreachable!("attempted to read unexpected property '{property_name}' on type 'FnCall'")
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Function'"
+            )
         }
     }
 }
