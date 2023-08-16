@@ -193,6 +193,39 @@ impl<'a> Vertex<'a> {
     ) -> Option<Self> {
         None
     }
+
+    pub fn function_is_async(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.r#async,
+            Vertex::FnDeclaration(data) => data.function.r#async,
+            _ => unreachable!(
+                "'function_is_async' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_is_generator(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.generator,
+            Vertex::FnDeclaration(data) => data.function.generator,
+            _ => unreachable!(
+                "'function_is_generator' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_parameter(&self) -> VertexIterator<'a, Vertex<'a>> {
+        let parameter = match &self {
+            Vertex::ArrowFunction(data) => &data.arrow_expression.params.items,
+            Vertex::FnDeclaration(data) => &data.function.params.items,
+            _ => unreachable!(
+                "'function_parameter' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        };
+        Box::new(parameter.iter().map(|parameter| {
+            Vertex::Parameter(ParameterVertex { ast_node: None, parameter }.into())
+        }))
+    }
 }
 
 impl Typename for Vertex<'_> {
