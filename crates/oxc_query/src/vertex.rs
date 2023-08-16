@@ -5,7 +5,7 @@ use enum_as_inner::EnumAsInner;
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
-use trustfall::provider::Typename;
+use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
 use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
@@ -52,9 +52,10 @@ pub enum Vertex<'a> {
     FnCall(Rc<FnCallVertex<'a>>),
     FnDeclaration(Rc<FnDeclarationVertex<'a>>),
     ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
-    Argument(Span),
+    Argument(Rc<ArgumentVertex<'a>>),
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
     Statement(&'a Statement<'a>),
+    Parameter(Rc<ParameterVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -95,11 +96,12 @@ impl<'a> Vertex<'a> {
             Self::Reassignment(data) => data.assignment_expression.span,
             Self::Name(data) => data.name.span,
             Self::FnCall(data) => data.call_expression.span,
-            Self::Argument(data) => *data,
+            Self::Argument(data) => data.argument.span(),
             Self::FnDeclaration(data) => data.function.span,
             Self::ArrowFunction(data) => data.arrow_expression.span,
             Self::FunctionBody(data) => data.function_body.span,
             Self::Statement(data) => data.span(),
+            Self::Parameter(data) => data.parameter.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -133,6 +135,8 @@ impl<'a> Vertex<'a> {
             Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -152,7 +156,6 @@ impl<'a> Vertex<'a> {
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
             | Vertex::SearchParameter(_)
-            | Vertex::Argument(_)
             | Vertex::ClassProperty(_) => None,
         }
     }
@@ -189,6 +192,39 @@ impl<'a> Vertex<'a> {
         _identifier_reference: &'a IdentifierReference,
     ) -> Option<Self> {
         None
+    }
+
+    pub fn function_is_async(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.r#async,
+            Vertex::FnDeclaration(data) => data.function.r#async,
+            _ => unreachable!(
+                "'function_is_async' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_is_generator(&self) -> bool {
+        match &self {
+            Vertex::ArrowFunction(data) => data.arrow_expression.generator,
+            Vertex::FnDeclaration(data) => data.function.generator,
+            _ => unreachable!(
+                "'function_is_generator' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        }
+    }
+
+    pub fn function_parameter(&self) -> VertexIterator<'a, Vertex<'a>> {
+        let parameter = match &self {
+            Vertex::ArrowFunction(data) => &data.arrow_expression.params.items,
+            Vertex::FnDeclaration(data) => &data.function.params.items,
+            _ => unreachable!(
+                "'function_parameter' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        };
+        Box::new(parameter.iter().map(|parameter| {
+            Vertex::Parameter(ParameterVertex { ast_node: None, parameter }.into())
+        }))
     }
 }
 
@@ -235,10 +271,11 @@ impl Typename for Vertex<'_> {
             Vertex::ObjectEntry(entry) => entry.typename(),
             Vertex::FnCall(fncall) => fncall.typename(),
             Vertex::Reassignment(reassignment) => reassignment.typename(),
-            Vertex::Argument(_) => "Argument",
+            Vertex::Argument(arg) => arg.typename(),
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
             Vertex::FunctionBody(fn_body) => fn_body.typename(),
+            Vertex::Parameter(param) => param.typename(),
             Vertex::Statement(_) => "Statement",
         }
     }
@@ -319,6 +356,12 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::FunctionBody(function_body) => Vertex::FunctionBody(
                 FunctionBodyVertex { ast_node: Some(ast_node), function_body }.into(),
             ),
+            AstKind::FormalParameter(parameter) => {
+                Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
+            }
+            AstKind::Argument(argument) => {
+                Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -502,7 +545,7 @@ impl<'a> Typename for ReturnVertex<'a> {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct TypeAnnotationVertex<'a> {
-    ast_node: Option<AstNode<'a>>,
+    pub ast_node: Option<AstNode<'a>>,
     pub type_annotation: &'a TSTypeAnnotation<'a>,
 }
 
@@ -740,6 +783,40 @@ impl<'a> Typename for FunctionBodyVertex<'a> {
             "FunctionBodyAST"
         } else {
             "FunctionBody"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ParameterVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub parameter: &'a FormalParameter<'a>,
+}
+
+impl<'a> Typename for ParameterVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ParameterAST"
+        } else {
+            "Parameter"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArgumentVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub argument: &'a Argument<'a>,
+}
+
+impl<'a> Typename for ArgumentVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArgumentAST"
+        } else {
+            "Argument"
         }
     }
 }

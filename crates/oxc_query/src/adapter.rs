@@ -71,6 +71,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => {
+                super::properties::resolve_arrow_function_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "AssignmentType" => super::properties::resolve_assignment_type_property(
                 contexts,
                 property_name.as_ref(),
@@ -114,6 +121,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 )
             }
             "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "Function" => super::properties::resolve_function_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -169,6 +181,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     resolve_info,
                 )
             }
+            "ParameterAST" | "Parameter" => super::properties::resolve_parameter_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "PathPart" => super::properties::resolve_path_part_property(
                 contexts,
                 property_name.as_ref(),
@@ -228,11 +245,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "Argument" => super::edges::resolve_argument_edge(
+            "ArgumentAST" | "Argument" => super::edges::resolve_argument_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+                self,
             ),
             "AssignmentType" => super::edges::resolve_assignment_type_edge(
                 contexts,
@@ -273,6 +291,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "Expression" => super::edges::resolve_expression_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
+            "Function" => super::edges::resolve_function_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -432,6 +456,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ParameterAST" | "Parameter" => super::edges::resolve_parameter_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
