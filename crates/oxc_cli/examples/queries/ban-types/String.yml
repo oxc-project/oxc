@@ -5,7 +5,7 @@ query: |
     File {
       type_annotation {
         type {
-          str @filter(op: "=", value: ["$String"])
+          span { str @filter(op: "=", value: ["$String"]) }
           span_: span {
             start @output
             end @output
