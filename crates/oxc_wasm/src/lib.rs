@@ -199,7 +199,10 @@ impl Oxc {
         }
 
         if run_options.format() {
-            let formatter_options = FormatterOptions { indentation: formatter_options.indentation };
+            let formatter_options = FormatterOptions {
+                indentation: formatter_options.indentation,
+                ..Default::default()
+            };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.formatted_text = printed;
         }

@@ -8,14 +8,25 @@ use oxc_ast::ast::*;
 
 pub use crate::gen::Gen;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EndOfLine {
+    /// Line Feed only (`\n`), common on Linux and macOS as well as inside git repos
+    LF,
+    /// Carriage Return + Line Feed characters (`\r\n`), common on Windows
+    CRLF,
+    /// Carriage Return character only (`\r`), used very rarely
+    CR,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FormatterOptions {
     pub indentation: u8,
+    pub end_of_line: EndOfLine,
 }
 
 impl Default for FormatterOptions {
     fn default() -> Self {
-        Self { indentation: 4 }
+        Self { indentation: 4, end_of_line: EndOfLine::LF }
     }
 }
 
@@ -87,7 +98,18 @@ impl Formatter {
 
     #[inline]
     pub fn print_newline(&mut self) {
-        self.code.push(b'\n');
+        match self.options.end_of_line {
+            EndOfLine::LF => {
+                self.code.push(b'\n');
+            }
+            EndOfLine::CRLF => {
+                self.code.push(b'\r');
+                self.code.push(b'\n');
+            }
+            EndOfLine::CR => {
+                self.code.push(b'\r');
+            }
+        }
     }
 
     #[inline]
@@ -112,7 +134,7 @@ impl Formatter {
 
     fn print_semicolon_after_statement(&mut self) {
         self.print_semicolon();
-        self.print(b'\n');
+        self.print_newline();
     }
 
     fn print_semicolon_if_needed(&mut self) {
