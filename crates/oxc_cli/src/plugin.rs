@@ -115,11 +115,14 @@ impl LinterPlugin {
                     (Some(FieldValue::List(x)), Some(FieldValue::List(y))) if matches!(x[0], FieldValue::Int64(_)) && matches!(y[0], FieldValue::Int64(_)) => {
                         v.try_into_struct::<MultipleSpanInfo>().map(SpanInfo::MultipleSpanInfo).expect("to be able to convert into MultipleSpanInfo")
                     }
-                    (Some(FieldValue::Int64(_)), Some(FieldValue::Int64(_))) => {
-                        v.try_into_struct::<SingleSpanInfo>().map(SpanInfo::SingleSpanInfo).expect("to be able to convert into SingleSpanInfo")
+                    (Some(FieldValue::List(x)), Some(FieldValue::List(y))) if matches!(x[0], FieldValue::Uint64(_)) && matches!(y[0], FieldValue::Uint64(_)) => {
+                        v.try_into_struct::<MultipleSpanInfo>().map(SpanInfo::MultipleSpanInfo).expect("to be able to convert into MultipleSpanInfo")
                     }
+                    (Some(FieldValue::Int64(_)), Some(FieldValue::Int64(_))) | (Some(FieldValue::Uint64(_)), Some(FieldValue::Uint64(_))) => {
+                        v.try_into_struct::<SingleSpanInfo>().map(SpanInfo::SingleSpanInfo).expect("to be able to convert into SingleSpanInfo")
+                    },
                     (None, None) => panic!("No `span_start` and `span_end` were not `@output`'d from query '{}'", input_query.name),
-                    _ => panic!("Wrong type for `span_start` and `span_end` in query '{}'. Expected both to be Int or list of Int.", input_query.name),
+                    (a, b) => panic!("Wrong type for `span_start` and `span_end` in query '{}'. Expected both to be Int or list of Int.\nInstead got:\nspan_start={a:?} & span_end={b:?}", input_query.name),
                 }
             })
             .take(usize::MAX)
@@ -241,9 +244,7 @@ mod test {
 
         let program = allocator.alloc(ret.program);
         let SemanticBuilderReturn { semantic, errors } =
-            SemanticBuilder::new(source_text, source_type)
-                .with_trivias(&ret.trivias)
-                .build(program);
+            SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
 
         assert!(
             errors.is_empty(),
