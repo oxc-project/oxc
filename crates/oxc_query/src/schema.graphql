@@ -485,11 +485,31 @@ type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
 
 interface Function {
   is_async: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
+}
+
+type Parameter {
+  span: Span!
+}
+
+type ParameterAST implements ASTNode & HasSpan {
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
 }
 
 interface ArrowFunction implements Function & HasSpan {
   # Function
   is_async: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
   # HasSpan
   span: Span!
 }
@@ -497,6 +517,10 @@ interface ArrowFunction implements Function & HasSpan {
 type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode {
   # Function
   is_async: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
   # HasSpan
   span: Span!
   # ASTNode
@@ -516,6 +540,10 @@ interface FnDeclaration implements Function & HasSpan {
 
   # Function
   is_async: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
   # HasSpan
   span: Span!
 }
@@ -528,6 +556,10 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan {
 
   # Function
   is_async: Boolean!
+  """
+  Does not include rest parameter if it exists.
+  """
+  parameter: [Parameter]!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

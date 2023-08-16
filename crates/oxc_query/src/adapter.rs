@@ -290,6 +290,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "Function" => super::edges::resolve_function_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
             "FunctionBodyAST" | "FunctionBody" => super::edges::resolve_function_body_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -444,6 +450,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ParameterAST" | "Parameter" => super::edges::resolve_parameter_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,

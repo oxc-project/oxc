@@ -15,6 +15,7 @@ pub(super) fn resolve_arrow_function_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => arrow_function::span(contexts, resolve_info),
+        "parameter" => arrow_function::parameter(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -27,10 +28,18 @@ pub(super) fn resolve_arrow_function_edge<'a, 'b: 'a>(
 
 mod arrow_function {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+
+    pub(super) fn parameter<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
@@ -573,6 +582,36 @@ mod expression {
     }
 }
 
+pub(super) fn resolve_function_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "parameter" => function::parameter(contexts, resolve_info),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Function'")
+        }
+    }
+}
+
+mod function {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn parameter<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
+}
+
 pub(super) fn resolve_function_body_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
@@ -636,6 +675,7 @@ pub(super) fn resolve_fn_declaration_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => fn_declaration::span(contexts, resolve_info),
+        "parameter" => fn_declaration::parameter(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -648,10 +688,18 @@ pub(super) fn resolve_fn_declaration_edge<'a, 'b: 'a>(
 
 mod fn_declaration {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+
+    pub(super) fn parameter<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
@@ -2005,6 +2053,38 @@ mod path_part {
                 Box::new(std::iter::empty())
             }
         })
+    }
+}
+
+pub(super) fn resolve_parameter_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "span" => parameter::span(contexts, resolve_info),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Parameter'")
+        }
+    }
+}
+
+mod parameter {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
     }
 }
 

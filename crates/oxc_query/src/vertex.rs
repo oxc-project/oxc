@@ -5,7 +5,7 @@ use enum_as_inner::EnumAsInner;
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
-use trustfall::provider::Typename;
+use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
 use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
@@ -55,6 +55,7 @@ pub enum Vertex<'a> {
     Argument(Span),
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
     Statement(&'a Statement<'a>),
+    Parameter(Rc<ParameterVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -100,6 +101,7 @@ impl<'a> Vertex<'a> {
             Self::ArrowFunction(data) => data.arrow_expression.span,
             Self::FunctionBody(data) => data.function_body.span,
             Self::Statement(data) => data.span(),
+            Self::Parameter(data) => data.parameter.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -133,6 +135,7 @@ impl<'a> Vertex<'a> {
             Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -239,6 +242,7 @@ impl Typename for Vertex<'_> {
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
             Vertex::FunctionBody(fn_body) => fn_body.typename(),
+            Vertex::Parameter(param) => param.typename(),
             Vertex::Statement(_) => "Statement",
         }
     }
@@ -319,6 +323,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::FunctionBody(function_body) => Vertex::FunctionBody(
                 FunctionBodyVertex { ast_node: Some(ast_node), function_body }.into(),
             ),
+            AstKind::FormalParameter(parameter) => {
+                Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -740,6 +747,23 @@ impl<'a> Typename for FunctionBodyVertex<'a> {
             "FunctionBodyAST"
         } else {
             "FunctionBody"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ParameterVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub parameter: &'a FormalParameter<'a>,
+}
+
+impl<'a> Typename for ParameterVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ParameterAST"
+        } else {
+            "Parameter"
         }
     }
 }
