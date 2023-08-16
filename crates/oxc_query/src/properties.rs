@@ -17,6 +17,21 @@ use crate::{
     Adapter,
 };
 
+pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'AssignmentType'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_assignment_type_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -205,6 +220,7 @@ pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
                 .as_ref()
                 .map_or_else(|| FieldValue::Null, |f| f.name.to_string().into())
         }),
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'FnDeclaration'"
@@ -222,6 +238,19 @@ pub(super) fn resolve_fn_call_property<'a, 'b: 'a>(
         "as_constant_string" => resolve_property_with(contexts, |v| {
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
         }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'FnCall'")
+        }
+    }
+}
+
+pub(super) fn resolve_function_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
         _ => {
             unreachable!("attempted to read unexpected property '{property_name}' on type 'FnCall'")
         }

@@ -481,12 +481,20 @@ type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
   ancestor: [ASTNode!]!
 }
 
-interface ArrowFunction implements HasSpan {
+interface Function {
+  is_async: Boolean!
+}
+
+interface ArrowFunction implements Function & HasSpan {
+  # Function
+  is_async: Boolean!
   # HasSpan
   span: Span!
 }
 
-type ArrowFunctionAST implements HasSpan & ArrowFunction & ASTNode {
+type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode {
+  # Function
+  is_async: Boolean!
   # HasSpan
   span: Span!
   # ASTNode
@@ -497,13 +505,15 @@ type ArrowFunctionAST implements HasSpan & ArrowFunction & ASTNode {
 """
 A function defined in the sourcecode.
 """
-interface FnDeclaration implements HasSpan {
+interface FnDeclaration implements Function & HasSpan {
   """
   If this function is used an an expression, the name can be omitted.
   ie: "const a = function() {};"
   """
   name: String
 
+  # Function
+  is_async: Boolean!
   # HasSpan
   span: Span!
 }
@@ -511,9 +521,11 @@ interface FnDeclaration implements HasSpan {
 """
 A function defined in the sourcecode.
 """
-type FnDeclarationAST implements ASTNode & FnDeclaration & HasSpan {
+type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan {
   name: String
 
+  # Function
+  is_async: Boolean!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

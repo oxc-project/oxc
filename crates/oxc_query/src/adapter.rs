@@ -71,6 +71,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => {
+                super::properties::resolve_arrow_function_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "AssignmentType" => super::properties::resolve_assignment_type_property(
                 contexts,
                 property_name.as_ref(),
@@ -114,6 +121,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 )
             }
             "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "Function" => super::properties::resolve_function_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
