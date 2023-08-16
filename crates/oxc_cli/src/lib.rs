@@ -7,10 +7,10 @@ mod type_check;
 mod walk;
 
 use clap::{Arg, Command};
-use lint_plugin_tester::LintPluginTestRunner;
 
 pub use crate::{
     lint::{LintOptions, LintRunner},
+    lint_plugin_tester::{LintPluginTestOptions, LintPluginTestRunner},
     runner::{CliRunResult, Runner, RunnerOptions},
     type_check::{TypeCheckOptions, TypeCheckRunner},
     walk::Walk,
