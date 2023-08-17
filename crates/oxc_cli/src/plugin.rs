@@ -137,8 +137,7 @@ impl LinterPlugin {
             })
             .take(usize::MAX)
             {
-                ctx.with_rule_name("a rule");
-                // TODO: this isn't how we do this at all, need to make this consistent with the project's miette style
+                ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
                 match data_item {
                     SpanInfo::SingleSpanInfo(SingleSpanInfo {
                         span_start: start,
