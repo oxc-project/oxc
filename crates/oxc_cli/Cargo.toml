@@ -32,19 +32,19 @@ oxc_semantic       = { workspace = true }
 oxc_span           = { workspace = true }
 oxc_type_synthesis = { workspace = true }
 oxc_query          = { workspace = true }
-trustfall          = { workspace = true }
-serde_yaml         = "0.9.22"
-located_yaml       = "0.2.1"
-path-calculate     = "0.1.3"
 
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"
 
-clap       = { workspace = true }
-dashmap    = { workspace = true }
-ignore     = { workspace = true, features = ["simd-accel"] }
-miette     = { workspace = true, features = ["fancy-no-backtrace"] }
-rayon      = { workspace = true }
-serde      = { workspace = true }
-rustc-hash = { workspace = true }
+clap           = { workspace = true }
+dashmap        = { workspace = true }
+ignore         = { workspace = true, features = ["simd-accel"] }
+miette         = { workspace = true, features = ["fancy-no-backtrace"] }
+rayon          = { workspace = true }
+serde          = { workspace = true }
+rustc-hash     = { workspace = true }
+trustfall      = { workspace = true }
+serde_yaml     = "0.9.22"
+located_yaml   = "0.2.1"
+path-calculate = "0.1.3"
 # git2 = { version = "0.16.1", default_features = false }
