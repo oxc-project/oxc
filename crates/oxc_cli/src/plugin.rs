@@ -77,8 +77,15 @@ pub struct ParseError(serde_yaml::Error);
 pub enum ErrorFromLinterPlugin {
     #[error("{0}")]
     PluginGenerated(String, String, #[label("{1}")] Span),
-    #[error("{0}")]
-    Trustfall(String),
+    #[error("{error_message}")]
+    Trustfall {
+        /// Keep this name in sync with the `.contains()` and doc comment in [`self::test_queries`]
+        error_message: String,
+        #[source_code]
+        query: NamedSource,
+        #[label = "This query failed."]
+        err_span: SourceSpan,
+    },
     #[error(transparent)]
     Ignore(ignore::Error),
     #[error(transparent)]
@@ -125,7 +132,12 @@ impl LinterPlugin {
                 &plugin.query,
                 plugin.args.clone(),
             ).map_err(|err| {
-                ErrorFromLinterPlugin::Trustfall(err.to_string())
+                ErrorFromLinterPlugin::Trustfall{
+                    error_message: err.to_string(),
+                    query: NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()),
+                    // NOTE: the 0 is technically wrong, but it's the right file which is enough
+                    err_span: SourceSpan::new(0.into(), plugin.query.len().into())
+                }
             })?
             .map(|v| {
                 if env::var("OXC_PRINT_TRUSTFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
@@ -293,6 +305,7 @@ fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
     SourceSpan::new(start.into(), (end - start).into())
 }
 
+/// keep this function name in sync with the comment at [`ErrorFromLinterPlugin::Trustfall`]
 pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
     let plugin = LinterPlugin::new(schema(), queries_to_test)?;
 
@@ -310,7 +323,15 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                 return Err(ExpectedTestToPassButFailed {
                     errors: errs
                         .into_iter()
-                        .map(|e| e.with_source_code(Arc::clone(&source)))
+                        .map(|e| {
+                            // Don't change the sourcecode of a trustfall error since it has it's own sourcecode
+                            // keep in sync with `ErrorFromLinterPlugin::Trustfall`
+                            if format!("{e:#?}").starts_with("Trustfall") {
+                                e
+                            } else {
+                                e.with_source_code(Arc::clone(&source))
+                            }
+                        })
                         .collect(),
                     err_span: span_of_test_n(&query_text, ix),
                     query: NamedSource::new(rule.path.to_string_lossy(), query_text),

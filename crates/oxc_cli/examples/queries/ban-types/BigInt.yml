@@ -5,7 +5,7 @@ query: |
     File {
       type_annotation {
         type {
-          span { str @filter(op: "=", value: ["$BigInt"]) }
+          span { str @filter(op: "=", value: ["$BigInt"]) } a
           span_: span {
             start @output
             end @output
