@@ -1,7 +1,8 @@
 use std::{
+    borrow::ToOwned,
     fs,
     io::{BufWriter, Write},
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     rc::Rc,
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -20,6 +21,7 @@ use oxc_linter::{Fixer, LintContext, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use path_calculate::Calculate;
 
 use super::options::LintOptions;
 use crate::{plugin::LinterPlugin, CliRunResult, Walk};
@@ -188,14 +190,22 @@ impl IsolatedLintHandler {
 
         let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
 
+        let relative_path_parts = path
+            .related_to(Path::new("."))
+            .expect("to be able to get the relative path parts")
+            .components()
+            .skip_while(|x| !matches!(x, Component::Normal(_)))
+            .map(|path_component| {
+                let Component::Normal(component) =
+            path_component else {unreachable!("there should only be normal path components here")};
+                component.to_str().map(ToOwned::to_owned)
+            })
+            .collect::<Vec<_>>();
+
         // TODO: fix `.unwrap()`, this should instead propagate the error
         // NOTE: `plugin.run()` puts it's errors into lint_ctx, which are read out by `linter.run`
         plugin
-            .run_tests(
-                &mut lint_ctx,
-                vec![Some("index.tsx".to_owned())],
-                crate::plugin::RulesToRun::All,
-            )
+            .run_tests(&mut lint_ctx, relative_path_parts, crate::plugin::RulesToRun::All)
             .unwrap();
 
         let result = linter.run(lint_ctx);
