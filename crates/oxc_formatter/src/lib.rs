@@ -9,6 +9,7 @@ use oxc_ast::ast::*;
 pub use crate::gen::Gen;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+/// @see [prettier](https://prettier.io/docs/en/options.html#end-of-line)
 pub enum EndOfLine {
     /// Line Feed only (`\n`), common on Linux and macOS as well as inside git repos
     LF,
