@@ -305,7 +305,6 @@ fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
     SourceSpan::new(start.into(), (end - start).into())
 }
 
-/// keep this function name in sync with the comment at [`ErrorFromLinterPlugin::Trustfall`]
 pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
     let plugin = LinterPlugin::new(schema(), queries_to_test)?;
 
@@ -324,9 +323,8 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                     errors: errs
                         .into_iter()
                         .map(|e| {
-                            // Don't change the sourcecode of a trustfall error since it has it's own sourcecode
-                            // keep in sync with `ErrorFromLinterPlugin::Trustfall`
-                            if format!("{e:#?}").starts_with("Trustfall") {
+                            // Don't change the sourcecode of errors that already have their own sourcecode
+                            if e.source_code().is_some() {
                                 e
                             } else {
                                 e.with_source_code(Arc::clone(&source))
