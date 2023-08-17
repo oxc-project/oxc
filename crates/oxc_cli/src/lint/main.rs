@@ -9,23 +9,21 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use clap::{Arg, Command};
-use oxc_cli::{CliRunResult, LintOptions, LintRunner, Runner, RunnerOptions};
+use oxc_cli::{CliRunResult, LintRunner, Runner};
 
 pub fn command() -> Command {
-    LintOptions::build_args(
-        Command::new("oxlint")
-            .bin_name("oxlint")
-            .version("alpha")
-            .author("Boshen")
-            .about("Linter for the JavaScript Oxidation Compiler")
-            .arg_required_else_help(true)
-            .arg(
-                Arg::new("threads")
-                    .long("threads")
-                    .value_parser(clap::value_parser!(usize))
-                    .help("Number of threads to use. Set to 1 for using only 1 CPU core."),
-            ),
-    )
+    LintRunner::command()
+        .bin_name("oxlint")
+        .version("alpha")
+        .author("Boshen")
+        .about("Linter for the JavaScript Oxidation Compiler")
+        .arg_required_else_help(true)
+        .arg(
+            Arg::new("threads")
+                .long("threads")
+                .value_parser(clap::value_parser!(usize))
+                .help("Number of threads to use. Set to 1 for using only 1 CPU core."),
+        )
 }
 
 fn main() -> CliRunResult {
@@ -35,7 +33,5 @@ fn main() -> CliRunResult {
         rayon::ThreadPoolBuilder::new().num_threads(*threads).build_global().unwrap();
     }
 
-    let options = LintOptions::from(&matches);
-
-    LintRunner::new(options).run()
+    LintRunner::new(&matches).run()
 }
