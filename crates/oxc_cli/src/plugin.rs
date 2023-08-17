@@ -338,10 +338,10 @@ struct UnexpectedErrorsInFailTest {
     errors: Vec<Report>,
 }
 
-fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
+fn span_of_test_n(yaml_text: &str, test_ix: usize, test_code: &str) -> SourceSpan {
     let yaml = YamlLoader::load_from_str(
         // TODO: Should we just save the string after we read it originally?
-        query_text,
+        yaml_text,
     )
     .expect("to be able to parse yaml for error reporting");
     let YamlElt::Hash(hash) = &yaml.docs[0].yaml else {unreachable!("must be a top level hashmap in the yaml")};
@@ -362,19 +362,27 @@ fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
         .expect("to be able to find pass hash in yaml file");
     let YamlElt::Array(passing_test_arr) = &tests_hash[pass_hash_key].yaml else {unreachable!("there must be a pass array in the yaml")};
     let test_hash_span = &passing_test_arr[test_ix].lines_range();
-    let start = query_text
+    let start = yaml_text
         .char_indices()
         .filter(|a| a.1 == '\n')
         .nth(test_hash_span.0 - 1) // subtract one because span is 1-based
         .map(|a| a.0)
         .expect("to find start of span of test");
-    let end = query_text
+    let start_of_end = yaml_text[start..]
+        .find(&test_code[0..test_code.find('\n').unwrap_or(test_code.len())])
+        .expect("to find start of end")
+        + start;
+
+    let nl = test_code.chars().filter(|a| *a == '\n').count();
+    let end_of_end = yaml_text[start_of_end..]
         .char_indices()
         .filter(|a| a.1 == '\n')
-        .nth(test_hash_span.1 - 1) // subtract one because span is 1-based
+        .nth(nl - 1)
         .map(|a| a.0)
-        .expect("to find start of span of test");
-    SourceSpan::new(start.into(), (end - start).into())
+        .expect("to find end of end of span of test")
+        + start_of_end;
+
+    SourceSpan::new(start.into(), (end_of_end - start).into())
 }
 
 pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
@@ -404,7 +412,7 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                                 }
                             })
                             .collect(),
-                        err_span: span_of_test_n(&query_text, ix),
+                        err_span: span_of_test_n(&query_text, ix, &test.code),
                         query: NamedSource::new(rule.path.to_string_lossy(), query_text),
                     }
                     .into());
@@ -425,13 +433,21 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                         fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
                     return Err(ExpectedTestToFailButPassed {
-                        err_span: span_of_test_n(&query_text, i),
+                        err_span: span_of_test_n(&query_text, i, &test.code),
                         query: NamedSource::new(rule.path.to_string_lossy(), query_text),
                     }
                     .into());
                 }
                 Err(errs) | Ok(errs) => {
-                    return Err(UnexpectedErrorsInFailTest { errors: errs }.into())
+                    let query_text =
+                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+
+                    return Err(UnexpectedErrorsInFailTest {
+                        errors: errs,
+                        err_span: span_of_test_n(&query_text, i, &test.code),
+                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                    }
+                    .into());
                 }
             }
         }
