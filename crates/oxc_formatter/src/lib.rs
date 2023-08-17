@@ -8,8 +8,8 @@ use oxc_ast::ast::*;
 
 pub use crate::gen::Gen;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EndOfLine<'a> {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum EndOfLine {
     /// Line Feed only (`\n`), common on Linux and macOS as well as inside git repos
     LF,
     /// Carriage Return + Line Feed characters (`\r\n`), common on Windows
@@ -17,7 +17,30 @@ pub enum EndOfLine<'a> {
     /// Carriage Return character only (`\r`), used very rarely
     CR,
     /// Maintain existing line endings (mixed values within one file are normalised by looking at what’s used after the first line)
-    Auto(&'a str),
+    Auto(String),
+}
+
+impl EndOfLine {
+    pub fn get_final_end_of_line(&self) -> FinalEndOfLine {
+        match self {
+            Self::Auto(raw_input) => Self::auto_detect_end_of_line(raw_input),
+            Self::LF => FinalEndOfLine::LF,
+            Self::CRLF => FinalEndOfLine::CRLF,
+            Self::CR => FinalEndOfLine::CR,
+        }
+    }
+
+    pub fn auto_detect_end_of_line(raw_input_text: &str) -> FinalEndOfLine {
+        let first_line_feed_pos = raw_input_text.chars().position(|ch| ch == '\n');
+        first_line_feed_pos.map_or(FinalEndOfLine::CR, |first_line_feed_pos| {
+            let char_before_line_feed_pos = first_line_feed_pos.saturating_sub(1);
+            let char_before_line_feed = raw_input_text.chars().nth(char_before_line_feed_pos);
+            match char_before_line_feed {
+                Some('\r') => FinalEndOfLine::CRLF,
+                _ => FinalEndOfLine::LF,
+            }
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -27,20 +50,36 @@ pub enum FinalEndOfLine {
     CR,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct FormatterOptions<'a> {
+#[derive(Debug, Clone)]
+pub struct FormatterOptions {
     pub indentation: u8,
-    pub end_of_line: EndOfLine<'a>,
+    pub end_of_line: EndOfLine,
 }
 
-impl Default for FormatterOptions<'_> {
+impl Default for FormatterOptions {
     fn default() -> Self {
         Self { indentation: 4, end_of_line: EndOfLine::LF }
     }
 }
 
-pub struct Formatter<'a> {
-    options: FormatterOptions<'a>,
+#[derive(Debug)]
+/// processed and reserved for internal use
+pub struct InnerOptions {
+    pub indentation: u8,
+    pub end_of_line: FinalEndOfLine,
+}
+
+impl From<FormatterOptions> for InnerOptions {
+    fn from(options: FormatterOptions) -> Self {
+        Self {
+            indentation: options.indentation,
+            end_of_line: options.end_of_line.get_final_end_of_line(),
+        }
+    }
+}
+
+pub struct Formatter {
+    options: InnerOptions,
 
     /// Output Code
     code: Vec<u8>,
@@ -53,8 +92,6 @@ pub struct Formatter<'a> {
 
     // Quote property with double quotes
     quote_property_with_double_quotes: bool,
-
-    final_end_of_line: FinalEndOfLine,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -65,15 +102,14 @@ pub enum Separator {
 }
 
 /// Codegen interface for pretty print or minification
-impl<'a> Formatter<'a> {
-    pub fn new(source_len: usize, options: FormatterOptions<'a>) -> Self {
+impl Formatter {
+    pub fn new(source_len: usize, options: FormatterOptions) -> Self {
         Self {
-            options,
+            options: options.into(),
             code: Vec::with_capacity(source_len),
             indentation: 0,
             needs_semicolon: false,
             quote_property_with_double_quotes: false,
-            final_end_of_line: get_final_end_of_line(options.end_of_line),
         }
     }
 
@@ -110,7 +146,7 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn print_newline(&mut self) {
-        match self.final_end_of_line {
+        match self.options.end_of_line {
             FinalEndOfLine::LF => {
                 self.code.push(b'\n');
             }
@@ -253,43 +289,22 @@ impl<'a> Formatter<'a> {
     }
 }
 
-fn auto_detect_end_of_line(raw_input_text: &str) -> FinalEndOfLine {
-    let first_line_feed_pos = raw_input_text.chars().position(|ch| ch == '\n');
-    first_line_feed_pos.map_or(FinalEndOfLine::CR, |first_line_feed_pos| {
-        let char_before_line_feed_pos = first_line_feed_pos.saturating_sub(1);
-        let char_before_line_feed = raw_input_text.chars().nth(char_before_line_feed_pos);
-        match char_before_line_feed {
-            Some('\r') => FinalEndOfLine::CRLF,
-            _ => FinalEndOfLine::LF,
-        }
-    })
-}
-
-fn get_final_end_of_line(eol: EndOfLine) -> FinalEndOfLine {
-    match eol {
-        EndOfLine::Auto(raw_input) => auto_detect_end_of_line(raw_input),
-        EndOfLine::LF => FinalEndOfLine::LF,
-        EndOfLine::CRLF => FinalEndOfLine::CRLF,
-        EndOfLine::CR => FinalEndOfLine::CR,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn auto_detects_lf() {
-        assert_eq!(FinalEndOfLine::LF, auto_detect_end_of_line("One\nTwo\nThree"));
+        assert_eq!(FinalEndOfLine::LF, EndOfLine::auto_detect_end_of_line("One\nTwo\nThree"));
     }
 
     #[test]
     fn auto_detects_crlf() {
-        assert_eq!(FinalEndOfLine::CRLF, auto_detect_end_of_line("One\r\nTwo\r\nThree"));
+        assert_eq!(FinalEndOfLine::CRLF, EndOfLine::auto_detect_end_of_line("One\r\nTwo\r\nThree"));
     }
 
     #[test]
     fn auto_detects_cr() {
-        assert_eq!(FinalEndOfLine::CR, auto_detect_end_of_line("One\rTwo\rThree"));
+        assert_eq!(FinalEndOfLine::CR, EndOfLine::auto_detect_end_of_line("One\rTwo\rThree"));
     }
 }
