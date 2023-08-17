@@ -212,7 +212,14 @@ impl LinterPlugin {
                         ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(
                             plugin.summary.clone(),
                             plugin.reason.clone(),
-                            Span { start: start.try_into().unwrap(), end: end.try_into().unwrap() },
+                            Span {
+                                start: start
+                                    .try_into()
+                                    .expect("Int64 or Uint64 of span_start to fit in u32"),
+                                end: end
+                                    .try_into()
+                                    .expect("Int64 or Uint64 of span_end to fit in u32"),
+                            },
                         ));
                     }
                     SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
@@ -224,8 +231,12 @@ impl LinterPlugin {
                                 plugin.summary.clone(),
                                 plugin.reason.clone(),
                                 Span {
-                                    start: start[i].try_into().unwrap(),
-                                    end: end[i].try_into().unwrap(),
+                                    start: start[i]
+                                        .try_into()
+                                        .expect("Int64 or Uint64 of span_start to fit in u32"),
+                                    end: end[i]
+                                        .try_into()
+                                        .expect("Int64 or Uint64 of span_end to fit in u32"),
                                 },
                             ));
                         }
