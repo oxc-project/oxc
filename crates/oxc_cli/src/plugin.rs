@@ -109,11 +109,13 @@ impl LinterPlugin {
         &self,
         ctx: &mut LintContext,
         plugin: &InputQuery,
-        adapter: Arc<&Adapter<'_>>,
+        adapter: &Adapter<'_>,
     ) -> oxc_diagnostics::Result<()> {
+        let arc_adapter = Arc::new(adapter);
+
         for data_item in execute_query(
                 self.schema,
-                Arc::clone(&adapter),
+                Arc::clone(&arc_adapter),
                 &plugin.query,
                 plugin.args.clone(),
             ).map_err(|err| {
@@ -172,11 +174,11 @@ impl LinterPlugin {
         let adapter = Arc::from(&inner);
         if let RulesToRun::Only(this_rule) = rules_to_run {
             for rule in self.rules.iter().filter(|x| x.name == this_rule) {
-                self.run_plugin_rules(ctx, rule, Arc::clone(&adapter))?;
+                self.run_plugin_rules(ctx, rule, &adapter)?;
             }
         } else {
             for rule in &self.rules {
-                self.run_plugin_rules(ctx, rule, Arc::clone(&adapter))?;
+                self.run_plugin_rules(ctx, rule, &adapter)?;
             }
         }
         Ok(())
