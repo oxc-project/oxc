@@ -82,9 +82,9 @@ pub enum ErrorFromLinterPlugin {
         /// Keep this name in sync with the `.contains()` and doc comment in [`self::test_queries`]
         error_message: String,
         #[source_code]
-        query: NamedSource,
+        query_source: Arc<NamedSource>,
         #[label = "This query failed."]
-        err_span: SourceSpan,
+        query_span: SourceSpan,
     },
     #[error(transparent)]
     Ignore(ignore::Error),
@@ -92,6 +92,26 @@ pub enum ErrorFromLinterPlugin {
     ReadFile(std::io::Error),
     #[error("Failed to parse file at path: {0}")]
     QueryParse(PathBuf, #[related] Vec<ParseError>),
+    #[error(
+        "Missing span_start and span_end in query output. Make sure you output the start and end of a span in the query under the names span_start and span_end."
+    )]
+    MissingSpanStartAndSpanEnd {
+        #[source_code]
+        query_source: Arc<NamedSource>,
+        #[label = "This query failed."]
+        query_span: SourceSpan,
+    },
+    #[error(
+        "Expected span_start and span_end to be List of Int or Int, instead got\nspan_start = {span_start}\nspan_end = {span_end}"
+    )]
+    WrongTypeForSpanStartSpanEnd {
+        span_start: String,
+        span_end: String,
+        #[source_code]
+        query_source: Arc<NamedSource>,
+        #[label = "This query failed."]
+        query_span: SourceSpan,
+    },
 }
 
 impl LinterPlugin {
@@ -125,44 +145,66 @@ impl LinterPlugin {
         adapter: &Adapter<'_>,
     ) -> oxc_diagnostics::Result<()> {
         let arc_adapter = Arc::new(adapter);
+        let query_source =
+            Arc::new(NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()));
+        // NOTE: the 0 is technically wrong, but it's the right file which is enough
+        let query_span = SourceSpan::new(0.into(), plugin.query.len().into());
 
-        for data_item in execute_query(
-                self.schema,
-                Arc::clone(&arc_adapter),
-                &plugin.query,
-                plugin.args.clone(),
-            ).map_err(|err| {
-                ErrorFromLinterPlugin::Trustfall{
+        for data_item in
+            execute_query(self.schema, Arc::clone(&arc_adapter), &plugin.query, plugin.args.clone())
+                .map_err(|err| ErrorFromLinterPlugin::Trustfall {
                     error_message: err.to_string(),
-                    query: NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()),
-                    // NOTE: the 0 is technically wrong, but it's the right file which is enough
-                    err_span: SourceSpan::new(0.into(), plugin.query.len().into())
-                }
-            })?
-            .map(|v| {
-                if env::var("OXC_PRINT_TRUSTFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
-                    == "true"
-                {
-                    println!("{v:#?}");
-                }
-                match (v.get("span_start"), v.get("span_end")) {
-                    (Some(FieldValue::List(x)), Some(FieldValue::List(y))) if matches!(x[0], FieldValue::Int64(_)) && matches!(y[0], FieldValue::Int64(_)) => {
-                        v.try_into_struct::<MultipleSpanInfo>().map(SpanInfo::MultipleSpanInfo).expect("to be able to convert into MultipleSpanInfo")
-                    }
-                    (Some(FieldValue::List(x)), Some(FieldValue::List(y))) if matches!(x[0], FieldValue::Uint64(_)) && matches!(y[0], FieldValue::Uint64(_)) => {
-                        v.try_into_struct::<MultipleSpanInfo>().map(SpanInfo::MultipleSpanInfo).expect("to be able to convert into MultipleSpanInfo")
-                    }
-                    (Some(FieldValue::Int64(_)), Some(FieldValue::Int64(_))) | (Some(FieldValue::Uint64(_)), Some(FieldValue::Uint64(_))) => {
-                        v.try_into_struct::<SingleSpanInfo>().map(SpanInfo::SingleSpanInfo).expect("to be able to convert into SingleSpanInfo")
-                    },
-                    (None, None) => panic!("No `span_start` and `span_end` were not `@output`'d from query '{}'", plugin.name),
-                    (a, b) => panic!("Wrong type for `span_start` and `span_end` in query '{}'. Expected both to be Int or list of Int.\nInstead got:\nspan_start={a:?} & span_end={b:?}", plugin.name),
-                }
-            })
-            .take(usize::MAX)
+                    query_source: Arc::clone(&query_source),
+                    query_span,
+                })?
+        {
             {
+                let transformed_data_to_span =
+                    match (data_item.get("span_start"), data_item.get("span_end")) {
+                        (Some(FieldValue::List(x)), Some(FieldValue::List(y)))
+                            if matches!(x[0], FieldValue::Int64(_))
+                                && matches!(y[0], FieldValue::Int64(_)) =>
+                        {
+                            data_item
+                                .try_into_struct::<MultipleSpanInfo>()
+                                .map(SpanInfo::MultipleSpanInfo)
+                                .expect("to be able to convert into MultipleSpanInfo")
+                        }
+                        (Some(FieldValue::List(x)), Some(FieldValue::List(y)))
+                            if matches!(x[0], FieldValue::Uint64(_))
+                                && matches!(y[0], FieldValue::Uint64(_)) =>
+                        {
+                            data_item
+                                .try_into_struct::<MultipleSpanInfo>()
+                                .map(SpanInfo::MultipleSpanInfo)
+                                .expect("to be able to convert into MultipleSpanInfo")
+                        }
+                        (Some(FieldValue::Int64(_)), Some(FieldValue::Int64(_)))
+                        | (Some(FieldValue::Uint64(_)), Some(FieldValue::Uint64(_))) => data_item
+                            .try_into_struct::<SingleSpanInfo>()
+                            .map(SpanInfo::SingleSpanInfo)
+                            .expect("to be able to convert into SingleSpanInfo"),
+                        (None, None) => {
+                            return Err(ErrorFromLinterPlugin::MissingSpanStartAndSpanEnd {
+                                query_source: Arc::clone(&query_source),
+                                query_span,
+                            }
+                            .into())
+                        }
+                        (a, b) => {
+                            return Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
+                                span_start: format!("{a:?}"),
+                                span_end: format!("{b:?}"),
+                                query_source: Arc::clone(&query_source),
+                                query_span,
+                            }
+                            .into())
+                        }
+                    };
+
                 ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
-                match data_item {
+
+                match transformed_data_to_span {
                     SpanInfo::SingleSpanInfo(SingleSpanInfo {
                         span_start: start,
                         span_end: end,
@@ -179,6 +221,7 @@ impl LinterPlugin {
                     }
                 }
             };
+        }
         Ok(())
     }
 
@@ -266,6 +309,13 @@ struct ExpectedTestToFailButPassed {
     err_span: SourceSpan,
 }
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("Unexpected errors in fail test.")]
+struct UnexpectedErrorsInFailTest {
+    #[related]
+    errors: Vec<Report>,
+}
+
 fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
     let yaml = YamlLoader::load_from_str(
         // TODO: Should we just save the string after we read it originally?
@@ -343,15 +393,24 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
 
         for (i, test) in rule.tests.fail.iter().enumerate() {
             let messages = run_test(test, &rule.name, &plugin);
-            if messages.is_ok_and(|x| x.is_empty()) {
-                let query_text =
-                    fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+            match messages {
+                Ok(errs)
+                    if errs.len() == 1
+                        && format!("{:#?}", errs[0]).starts_with("PluginGenerated") =>
+                { /* Success case. */ }
+                Ok(errs) if errs.is_empty() => {
+                    let query_text =
+                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
-                return Err(ExpectedTestToFailButPassed {
-                    err_span: span_of_test_n(&query_text, i),
-                    query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                    return Err(ExpectedTestToFailButPassed {
+                        err_span: span_of_test_n(&query_text, i),
+                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                    }
+                    .into());
                 }
-                .into());
+                Err(errs) | Ok(errs) => {
+                    return Err(UnexpectedErrorsInFailTest { errors: errs }.into())
+                }
             }
         }
 
