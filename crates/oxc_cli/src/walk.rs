@@ -3,7 +3,7 @@ use std::path::Path;
 use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
 use oxc_span::VALID_EXTENSIONS;
 
-use crate::LintOptions;
+use oxc_linter::LintOptions;
 
 pub struct Walk {
     inner: ignore::Walk,

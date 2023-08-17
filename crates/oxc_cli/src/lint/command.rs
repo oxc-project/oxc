@@ -1,7 +1,7 @@
 use clap::{builder::ValueParser, Arg, ArgAction, Command};
 
-pub(super) fn lint_command(command: Command) -> Command {
-    command
+pub(super) fn lint_command() -> Command {
+    Command::new("")
             .arg_required_else_help(true)
             .after_help(
                 "# Rule Selection

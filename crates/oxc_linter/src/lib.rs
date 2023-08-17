@@ -9,6 +9,7 @@ mod disable_directives;
 mod fixer;
 mod globals;
 mod jest_ast_util;
+mod options;
 pub mod rule;
 mod rule_timer;
 mod rules;
@@ -21,6 +22,7 @@ use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
+    options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
 };

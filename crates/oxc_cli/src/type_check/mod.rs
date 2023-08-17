@@ -6,10 +6,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_type_synthesis::synthesize_program;
 
-use crate::{
-    runner::{Runner, RunnerOptions},
-    CliRunResult,
-};
+use crate::{runner::Runner, CliRunResult};
 
 const PRELUDE: &str = "
 type StringOrNumber = string | number;
@@ -59,31 +56,36 @@ impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
         }
     }
 }
-impl RunnerOptions for TypeCheckOptions {
-    fn build_args(cmd: Command) -> Command {
-        cmd.arg(Arg::new("path").value_name("PATH").num_args(1).help("File to type check"))
-            .arg(
-                Arg::new("print_expression_mappings")
-                    .required(false)
-                    .help("Print types of expressions"),
-            )
-            .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
-    }
-}
 
 pub struct TypeCheckRunner {
     options: TypeCheckOptions,
 }
 
 impl Runner for TypeCheckRunner {
-    type Options = TypeCheckOptions;
-
     const ABOUT: &'static str =
         "NOTE: Experimental / work in progress. Check source code for type errors using Ezno";
     const NAME: &'static str = "check";
 
-    fn new(options: TypeCheckOptions) -> Self {
+    fn new(matches: &ArgMatches) -> Self {
+        let options = TypeCheckOptions::from(matches);
         Self { options }
+    }
+
+    fn init_command() -> Command {
+        Command::new(Self::NAME)
+            .arg(
+                Arg::new("path")
+                    .value_name("PATH")
+                    .num_args(1)
+                    .required(true)
+                    .help("File to type check"),
+            )
+            .arg(
+                Arg::new("print_expression_mappings")
+                    .required(false)
+                    .help("Print types of expressions"),
+            )
+            .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
     }
 
     /// # Panics

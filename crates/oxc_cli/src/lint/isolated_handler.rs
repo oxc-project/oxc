@@ -16,12 +16,11 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{Fixer, LintContext, Linter};
+use oxc_linter::{Fixer, LintContext, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use super::options::LintOptions;
 use crate::{CliRunResult, Walk};
 
 pub struct IsolatedLintHandler {

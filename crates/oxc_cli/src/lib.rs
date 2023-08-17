@@ -7,9 +7,9 @@ mod walk;
 use clap::{Arg, Command};
 
 pub use crate::{
-    lint::{LintOptions, LintRunner},
-    runner::{CliRunResult, Runner, RunnerOptions},
-    type_check::{TypeCheckOptions, TypeCheckRunner},
+    lint::LintRunner,
+    runner::{CliRunResult, Runner},
+    type_check::TypeCheckRunner,
     walk::Walk,
 };
 
