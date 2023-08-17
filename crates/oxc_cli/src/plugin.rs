@@ -205,12 +205,9 @@ fn run_test(
     let SemanticBuilderReturn { semantic, errors } =
         SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
 
-    assert!(
-        errors.is_empty(),
-        "In test {rule_name}: Semantic errors: {:?} Code:\n\n{:?}",
-        errors,
-        test.code
-    );
+    if !errors.is_empty() {
+        return Err(errors);
+    }
 
     let semantic = Rc::new(semantic);
 
