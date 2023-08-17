@@ -105,16 +105,15 @@ impl LinterPlugin {
         Self { rules, schema }
     }
 
-    #[allow(clippy::redundant_allocation, clippy::unnecessary_wraps)]
     pub fn run_plugin_rules(
         &self,
         ctx: &mut LintContext,
         plugin: &InputQuery,
-        adapter: &Arc<&Adapter<'_>>,
+        adapter: Arc<&Adapter<'_>>,
     ) -> oxc_diagnostics::Result<()> {
         for data_item in execute_query(
                 self.schema,
-                Arc::clone(adapter),
+                Arc::clone(&adapter),
                 &plugin.query,
                 plugin.args.clone(),
             ).map_err(|err| {
@@ -173,11 +172,11 @@ impl LinterPlugin {
         let adapter = Arc::from(&inner);
         if let RulesToRun::Only(this_rule) = rules_to_run {
             for rule in self.rules.iter().filter(|x| x.name == this_rule) {
-                self.run_plugin_rules(ctx, rule, &adapter)?;
+                self.run_plugin_rules(ctx, rule, Arc::clone(&adapter))?;
             }
         } else {
             for rule in &self.rules {
-                self.run_plugin_rules(ctx, rule, &adapter)?;
+                self.run_plugin_rules(ctx, rule, Arc::clone(&adapter))?;
             }
         }
         Ok(())
