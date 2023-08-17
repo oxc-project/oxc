@@ -13,7 +13,7 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Use `Array.isArray()` instead of `instanceof Array`.")]
-#[diagnostic(severity(warning))]
+#[diagnostic(severity(warning), help("The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js."))]
 struct NoInstanceofArrayDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -43,7 +43,7 @@ impl Rule for NoInstanceofArray {
         }
 
         match &expr.right {
-            Expression::Identifier(identifier) if identifier.name.as_str().eq("Array") => {
+            Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(NoInstanceofArrayDiagnostic(expr.span), || {
                     let modified_code = {
                         let mut formatter = ctx.formatter();
