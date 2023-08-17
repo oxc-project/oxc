@@ -209,14 +209,25 @@ impl LinterPlugin {
                         span_start: start,
                         span_end: end,
                     }) => {
-                        ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start.try_into().unwrap(), end: end.try_into().unwrap() }));
+                        ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(
+                            plugin.summary.clone(),
+                            plugin.reason.clone(),
+                            Span { start: start.try_into().unwrap(), end: end.try_into().unwrap() },
+                        ));
                     }
                     SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
                         span_start: start,
                         span_end: end,
                     }) => {
                         for i in 0..start.len() {
-                            ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start[i].try_into().unwrap(), end: end[i].try_into().unwrap() }));
+                            ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(
+                                plugin.summary.clone(),
+                                plugin.reason.clone(),
+                                Span {
+                                    start: start[i].try_into().unwrap(),
+                                    end: end[i].try_into().unwrap(),
+                                },
+                            ));
                         }
                     }
                 }
