@@ -188,12 +188,15 @@ impl IsolatedLintHandler {
 
         let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
 
+        // TODO: fix `.unwrap()`, this should instead propagate the error
         // NOTE: `plugin.run()` puts it's errors into lint_ctx, which are read out by `linter.run`
-        plugin.run_tests(
-            &mut lint_ctx,
-            vec![Some("index.tsx".to_owned())],
-            crate::plugin::RulesToRun::All,
-        );
+        plugin
+            .run_tests(
+                &mut lint_ctx,
+                vec![Some("index.tsx".to_owned())],
+                crate::plugin::RulesToRun::All,
+            )
+            .unwrap();
 
         let result = linter.run(lint_ctx);
 

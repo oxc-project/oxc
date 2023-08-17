@@ -49,7 +49,9 @@ impl Runner for LintPluginTestRunner {
 
     fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
-        test_queries(self.options.plugin_path.clone());
+        // TODO: We should propagate this error, for now
+        // we unwrap to throw if there is an error
+        test_queries(self.options.plugin_path.clone()).unwrap();
         let duration = now.elapsed();
         // 0 or would have asserted
         CliRunResult::LintPluginTestResult { duration, number_of_diagnostics: 0 }
