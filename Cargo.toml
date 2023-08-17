@@ -39,9 +39,9 @@ oxc_query          = { path = "crates/oxc_query" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
+bpaf               = { version = "0.9.4" }
 bitflags           = { version = "2.4.0" }
 bumpalo            = { version = "3.13.0" }
-clap               = { version = "4.3.19" }
 compact_str        = { version = "0.7.1" }
 convert_case       = { version = "0.6.0" }
 criterion          = { version = "0.5.1", default-features = false }

@@ -3,30 +3,11 @@ use std::{
     process::{ExitCode, Termination},
 };
 
-use clap::{ArgMatches, Command};
-
 /// A trait for exposing functionality to the CLI.
 pub trait Runner: Send + Sync {
-    /// The name of the runner. Used to create a subcommand.
-    const NAME: &'static str;
+    type Options;
 
-    /// A short description about what the runner does
-    const ABOUT: &'static str;
-
-    fn command() -> Command {
-        let mut command = Self::init_command();
-        if command.get_name().is_empty() {
-            command = command.name(Self::NAME);
-        }
-        if command.get_about().is_none() {
-            command = command.about(Self::ABOUT);
-        }
-        command
-    }
-
-    fn new(matches: &ArgMatches) -> Self;
-
-    fn init_command() -> Command;
+    fn new(matches: Self::Options) -> Self;
 
     /// Executes the runner, providing some result to the CLI.
     fn run(&self) -> CliRunResult;
@@ -115,62 +96,5 @@ impl Termination for CliRunResult {
                 ExitCode::from(0)
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use clap::{Arg, ArgAction, ArgMatches, Command};
-
-    use super::*;
-
-    #[derive(Debug)]
-    struct TestRunnerOptions {
-        foo: bool,
-    }
-
-    #[derive(Debug)]
-    struct TestRunner {
-        options: TestRunnerOptions,
-    }
-
-    impl<'a> From<&'a ArgMatches> for TestRunnerOptions {
-        fn from(value: &'a ArgMatches) -> Self {
-            let foo = value.get_flag("foo");
-            Self { foo }
-        }
-    }
-
-    impl Runner for TestRunner {
-        const ABOUT: &'static str = "some description";
-        const NAME: &'static str = "test";
-
-        fn init_command() -> Command {
-            Command::new("")
-                .arg(Arg::new("foo").short('f').action(ArgAction::SetTrue).required(false))
-        }
-
-        fn new(matches: &ArgMatches) -> Self {
-            Self { options: TestRunnerOptions::from(matches) }
-        }
-
-        fn run(&self) -> CliRunResult {
-            CliRunResult::None
-        }
-    }
-
-    #[test]
-    fn check_cmd_validity() {
-        TestRunner::command().debug_assert();
-    }
-
-    #[test]
-    fn smoke_test_runner() {
-        let cmd = TestRunner::command();
-        let matches = cmd.get_matches_from("test -f".split(' '));
-        let runner = TestRunner::new(&matches);
-        assert!(runner.options.foo);
-        let result = runner.run();
-        assert!(matches!(result, CliRunResult::None));
     }
 }
