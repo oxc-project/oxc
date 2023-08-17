@@ -83,7 +83,7 @@ impl Case for FormatterBabelCase {
 fn get_result(source_text: &str, source_type: SourceType, options: FormatterOptions) -> TestResult {
     let allocator = Allocator::default();
     let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
-    let source_text1 = Formatter::new(source_text.len(), options).build(&program1);
+    let source_text1 = Formatter::new(source_text.len(), options.clone()).build(&program1);
     let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
     let source_text2 = Formatter::new(source_text1.len(), options).build(&program2);
     if source_text1 == source_text2 {
