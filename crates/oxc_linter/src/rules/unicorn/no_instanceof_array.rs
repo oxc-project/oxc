@@ -1,12 +1,12 @@
-use oxc_ast::ast::{Expression};
+use oxc_ast::ast::Expression;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{Error},
+    thiserror::Error,
 };
 use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span};
+use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
@@ -39,7 +39,7 @@ impl Rule for NoInstanceofArray {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(expr) = node.kind() else { return };
         if expr.operator != BinaryOperator::Instanceof {
-            return
+            return;
         }
 
         match &expr.right {
@@ -53,7 +53,7 @@ impl Rule for NoInstanceofArray {
                         formatter.into_code()
                     };
                     Fix::new(modified_code, expr.span)
-                })
+                });
             }
             _ => {}
         }
@@ -94,9 +94,12 @@ fn test() {
         ("obj.arr instanceof Array", "Array.isArray(obj.arr)", None),
         ("foo.bar[2] instanceof Array", "Array.isArray(foo.bar[2])", None),
         ("(0, array) instanceof Array", "Array.isArray((0, array))", None),
-        ("function foo(){return [] instanceof Array}", "function foo(){return Array.isArray([])}", None),
+        (
+            "function foo(){return [] instanceof Array}",
+            "function foo(){return Array.isArray([])}",
+            None,
+        ),
     ];
-
 
     let mut tester = Tester::new(NoInstanceofArray::NAME, pass, fail);
     tester.test_and_snapshot();
