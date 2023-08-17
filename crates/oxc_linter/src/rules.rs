@@ -98,6 +98,10 @@ mod jest {
     pub mod valid_describe_callback;
 }
 
+mod unicorn {
+    pub mod no_instanceof_array;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -180,4 +184,5 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_focused_tests,
     jest::valid_describe_callback,
     jest::no_commented_out_tests,
+    unicorn::no_instanceof_array,
 }

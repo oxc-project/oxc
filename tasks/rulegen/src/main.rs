@@ -32,6 +32,9 @@ const JEST_TEST_PATH: &str =
 const TYPESCRIPT_ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
 
+const UNICORN_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
+
 struct TestCase<'a> {
     source_text: &'a str,
     code: Option<Cow<'a, str>>,
@@ -262,6 +265,7 @@ pub enum RuleKind {
     ESLint,
     Jest,
     Typescript,
+    Unicorn,
 }
 
 impl RuleKind {
@@ -269,6 +273,7 @@ impl RuleKind {
         match kind {
             "jest" => Self::Jest,
             "typescript" => Self::Typescript,
+            "unicorn" => Self::Unicorn,
             _ => Self::ESLint,
         }
     }
@@ -280,6 +285,7 @@ impl Display for RuleKind {
             Self::ESLint => write!(f, "eslint"),
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
+            Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
         }
     }
 }
@@ -297,6 +303,7 @@ fn main() {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
     };
     println!("Reading test file from {rule_test_path}");
 

@@ -18,11 +18,13 @@
 mod cache;
 mod error;
 mod file_system;
+mod json_comments;
 mod options;
 mod package_json;
 mod path;
 mod resolution;
 mod specifier;
+mod tsconfig;
 
 #[cfg(test)]
 mod tests;
@@ -44,6 +46,7 @@ use crate::{
     package_json::{ExportsField, ExportsKey, MatchObject},
     path::PathUtil,
     specifier::Specifier,
+    tsconfig::TsConfig,
 };
 pub use crate::{
     error::{JSONError, ResolveError},
@@ -199,6 +202,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
         // enhanced-resolve: try fragment as path
         if let Some(path) = self.try_fragment_as_path(cached_path, specifier, ctx) {
+            return Ok(path);
+        }
+
+        // tsconfig-paths
+        if let Some(path) = self.load_tsconfig_paths(specifier, &ResolveContext::default())? {
             return Ok(path);
         }
 
@@ -794,6 +802,50 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(Some(path));
         }
         Err(ResolveError::ExtensionAlias)
+    }
+
+    fn load_tsconfig_paths(&self, specifier: &str, ctx: &ResolveContext) -> ResolveState {
+        let Some(tsconfig_path) = &self.options.tsconfig else {
+            return Ok(None)
+        };
+        let tsconfig_path = self.cache.value(tsconfig_path);
+        let tsconfig = self.load_tsconfig(&tsconfig_path)?;
+        let paths = tsconfig.resolve_path_alias(specifier);
+        for path in paths {
+            let cached_path = self.cache.value(&path);
+            if let Ok(path) = self.require_relative(&cached_path, ".", ctx) {
+                return Ok(Some(path));
+            }
+        }
+        Ok(None)
+    }
+
+    fn load_tsconfig(&self, cached_path: &CachedPath) -> Result<Arc<TsConfig>, ResolveError> {
+        debug_assert!(cached_path.path().extension().is_some_and(|ext| ext == "json"));
+        self.cache.tsconfig(cached_path.path(), |tsconfig| {
+            if tsconfig.extends().is_empty() {
+                return Ok(());
+            }
+            let resolver = self.clone_with_options(ResolveOptions {
+                extensions: vec![".json".into()],
+                main_files: vec!["tsconfig".into()],
+                ..ResolveOptions::default()
+            });
+            let mut extended_tsconfigs = vec![];
+            for tsconfig_extend_specifier in tsconfig.extends() {
+                let extended_tsconfig_path = resolver.require(
+                    cached_path.parent().unwrap(),
+                    tsconfig_extend_specifier,
+                    &ResolveContext::default(),
+                )?;
+                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
+                extended_tsconfigs.push(extended_tsconfig);
+            }
+            for extended_tsconfig in extended_tsconfigs {
+                tsconfig.extend_tsconfig(&extended_tsconfig);
+            }
+            Ok(())
+        })
     }
 
     /// PACKAGE_RESOLVE(packageSpecifier, parentURL)
