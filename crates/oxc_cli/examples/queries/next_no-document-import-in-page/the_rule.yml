@@ -26,7 +26,8 @@ args:
   underscore_document: "_document"
   zero: 0
 
-reason: "`<Document />` from `next/document` should not be imported outside of `pages/_document.js`."
+summary: "Do not import `<Document />` from `next/document` outside of `pages/_document.js`."
+reason: "This can cause unexpected issues in your application."
 
 tests:
   pass:

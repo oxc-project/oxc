@@ -34,7 +34,8 @@ args:
   pages: "pages"
   underscore_document: "_document"
 
-reason: "`styled-jsx` should not be used in `pages/_document.js"
+summary: "`styled-jsx` should not be used in `pages/_document.js"
+reason: "Custom CSS like `styled-jsx` is not allowed in a Custom Document."
 
 tests:
   pass:

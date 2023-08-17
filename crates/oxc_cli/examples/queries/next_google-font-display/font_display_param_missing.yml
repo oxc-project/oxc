@@ -34,7 +34,8 @@ args:
   display: "display"
   href_value_start: "https://fonts.googleapis.com/css"
 
-reason: "A font-display parameter is missing (adding `&display=optional` is recommended)"
+summary: "A font-display parameter is missing (adding `&display=optional` is recommended)"
+reason: "Specifying display=optional minimizes the risk of invisible text or layout shift. If swapping to the custom font after it has loaded is important to you, then use display=swap instead."
 
 tests:
   pass:

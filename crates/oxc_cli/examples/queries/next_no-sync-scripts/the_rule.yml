@@ -32,7 +32,8 @@ args:
     - "async"
     - "defer"
 
-reason: "Synchronous scripts should not be used."
+summary: "Synchronous scripts should not be used, prefer to use async or defer."
+reason: "A synchronous scripts can impact your webpage performance."
 
 tests:
   pass:

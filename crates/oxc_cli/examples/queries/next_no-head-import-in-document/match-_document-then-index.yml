@@ -30,7 +30,8 @@ args:
   index: "index"
 
 # TODO: replace ${document} with the file name
-reason: "`next/head` should not be imported in `pages${document}`. Use `<Head />` from `next/document` instead."
+summary: "`next/head` should not be imported in `pages${document}`. Use `<Head />` from `next/document` instead."
+reason: "This can cause unexpected issues in your application."
 
 tests:
   pass:

@@ -45,7 +45,8 @@ args:
   nextslashdocument: "next/document"
   Head: "Head"
 
-reason: "Do not include multiple instances of `<Head/>`."
+summary: "Do not include multiple instances of `<Head/>`."
+reason: "This can cause unexpected behavior in your application."
 
 tests:
   pass:

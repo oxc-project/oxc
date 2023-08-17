@@ -17,7 +17,8 @@ query: |
 
 args:
 
-reason: Add access modifier.
+summary: Add access modifier
+reason: Enforces property privacy of members
 
 tests:
   pass:

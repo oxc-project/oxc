@@ -18,7 +18,8 @@ query: |
 args:
   Number: "Number"
 
-reason: Use number instead
+summary: Prefer number type over Number type
+reason: Number is a constructor function, number is a primitive type
 
 tests:
   pass:

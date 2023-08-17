@@ -34,7 +34,8 @@ args:
   stylesheet: "stylesheet"
   https_regex: "^https?"
 
-reason: "Do not include stylesheets manually."
+summary: "Do not include stylesheets manually, prefer `@import` in CSS or CSS modules."
+reason: "A link element was used to link to an external stylesheet. This can negatively affect CSS resource loading on your webpage."
 
 tests:
   pass:

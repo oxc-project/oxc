@@ -39,7 +39,8 @@ args:
   nextslashhead: "next/head"
   nextslashscript: "next/script"
 
-reason: "`next/script` should not be used in `next/head` component. Move `<Script />` outside of `<Head>` instead."
+summary: "Move <Script /> outside of <Head />"
+reason: "The `next/script` component should not be used in a `next/head` component."
 
 tests:
   pass:

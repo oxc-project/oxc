@@ -26,7 +26,11 @@ args:
   head: "head"
   false: false
 
-reason: "Do not use `<head>` element. Use `<Head />` from `next/head` instead."
+summary: "Do not use `<head>` element. Use `<Head />` from `next/head` instead."
+reason: |
+  A `<head>` element was used to include page-level metadata, but this can cause unexpected behavior
+  in a Next.js application. Use Next.js' built-in `next/head` component instead.
+
 
 tests:
   pass:

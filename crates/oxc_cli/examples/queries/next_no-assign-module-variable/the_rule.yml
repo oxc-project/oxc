@@ -18,7 +18,8 @@ query: |
 args:
   module: "module"
 
-reason: "Do not assign to the variable `module`."
+summary: "Do not name this variable `module`"
+reason: "The `module` variable is already used and it is highly likely that assigning to this variable will cause errors."
 
 tests:
   pass:

@@ -38,7 +38,8 @@ args:
     - "block"
     - "fallback"
 
-reason: "{display_value} is not recommended."
+summary: "Replace '{display_value}' with 'optional'"
+reason: "Specifying display=optional minimizes the risk of invisible text or layout shift. If swapping to the custom font after it has loaded is important to you, then use display=swap instead."
 
 tests:
   pass:

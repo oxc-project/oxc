@@ -18,7 +18,8 @@ query: |
 args:
   Symbol: "Symbol"
 
-reason: Use symbol instead
+summary: Prefer symbol type over Symbol type
+reason: Symbol is a constructor function, symbol is a primitive type
 
 tests:
   pass:

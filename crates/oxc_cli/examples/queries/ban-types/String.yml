@@ -18,7 +18,8 @@ query: |
 args:
   String: "String"
 
-reason: Use string instead
+summary: Prefer string type over String type
+reason: String is a constructor function, string is a primitive type
 
 tests:
   pass:

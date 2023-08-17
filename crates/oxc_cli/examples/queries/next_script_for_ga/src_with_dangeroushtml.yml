@@ -34,7 +34,8 @@ args:
   dangerouslySetInnerHTML: "dangerouslySetInnerHTML"
   g_analytics_urls_regex: "(www\\.google-analytics\\.com\\/analytics\\.js)|(www\\.googletagmanager\\.com\\/gtm\\.js)"
 
-reason: "Prefer `next/script` component when using the inline script for Google Analytics."
+summary: "Prefer `next/script` component when using the inline script for Google Analytics."
+reason: "An inline script was used for Google analytics which might impact your webpage's performance."
 
 tests:
   pass:

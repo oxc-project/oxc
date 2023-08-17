@@ -38,7 +38,8 @@ args:
   underscore_document: "_document"
   index: "index"
 
-reason: "`styled-jsx` should not be used in `pages/_document.js"
+summary: "`styled-jsx` should not be used in `pages/_document.js"
+reason: "Custom CSS like `styled-jsx` is not allowed in a Custom Document."
 
 tests:
   pass:

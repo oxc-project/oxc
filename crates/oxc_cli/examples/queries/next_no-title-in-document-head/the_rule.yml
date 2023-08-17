@@ -29,7 +29,8 @@ args:
   title: "title"
   nextslashdocument: "next/document"
 
-reason: "Do not use `<title>` element with `<Head />` component from `next/document`. Titles should defined at the page-level using `<Head />` from `next/head` instead."
+summary: "Do not use `<title>` element with `<Head />` component from `next/document`."
+reason: "Titles should defined at the page-level using `<Head />` from `next/head` instead."
 
 tests:
   pass:

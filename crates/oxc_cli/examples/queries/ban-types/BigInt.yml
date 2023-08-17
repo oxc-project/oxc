@@ -18,7 +18,8 @@ query: |
 args:
   BigInt: "BigInt"
 
-reason: Use bigint instead
+summary: Prefer bigint type over BigInt type
+reason: BigInt is a constructor function, bigint is a primitive type
 
 tests:
   pass:

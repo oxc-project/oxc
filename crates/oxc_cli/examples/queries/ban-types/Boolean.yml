@@ -18,7 +18,8 @@ query: |
 args:
   Boolean: "Boolean"
 
-reason: Use boolean instead
+summary: Prefer boolean type over Boolean type
+reason: Boolean is a constructor function, boolean is a primitive type
 
 tests:
   pass:

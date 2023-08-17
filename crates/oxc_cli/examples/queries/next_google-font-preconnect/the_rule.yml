@@ -34,7 +34,8 @@ args:
   preconnect: "preconnect"
   href_value_start: "https://fonts.gstatic.com"
 
-reason: '`rel="preconnect"` is missing from Google Font.'
+summary: "Add `rel=\"preconnect\"`"
+reason: "Adding preconnect is recommended to initiate an early connection to the origin."
 
 tests:
   pass:

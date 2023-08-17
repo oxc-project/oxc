@@ -27,7 +27,8 @@ args:
   src: "src"
   g_analytics_urls_regex: "(www\\.google-analytics\\.com\\/analytics\\.js)|(www\\.googletagmanager\\.com\\/gtag\\/js)"
 
-reason: "Prefer `next/script` component when using the inline script for Google Analytics."
+summary: "Prefer `next/script` component when using the inline script for Google Analytics."
+reason: "An inline script was used for Google analytics which might impact your webpage's performance."
 
 tests:
   pass:

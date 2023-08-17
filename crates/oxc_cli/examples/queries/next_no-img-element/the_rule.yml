@@ -31,7 +31,8 @@ args:
   picture: "picture"
   zero: 0
 
-reason: "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider."
+summary: "Prefer <Image /> from `next/image` over <img>"
+reason: "Use `next/image` to improve performance with automatic Image Optimization."
 
 tests:
   pass:
