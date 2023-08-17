@@ -204,9 +204,12 @@ impl IsolatedLintHandler {
 
         // TODO: fix `.unwrap()`, this should instead propagate the error
         // NOTE: `plugin.run()` puts it's errors into lint_ctx, which are read out by `linter.run`
-        plugin
-            .run_tests(&mut lint_ctx, relative_path_parts, crate::plugin::RulesToRun::All)
-            .unwrap();
+        let result =
+            plugin.run_tests(&mut lint_ctx, relative_path_parts, crate::plugin::RulesToRun::All);
+
+        if let Err(err) = result {
+            return Some(Self::wrap_diagnostics(path, &source_text, vec![err]));
+        }
 
         let result = linter.run(lint_ctx);
 
