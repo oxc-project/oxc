@@ -1,10 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    env, fs,
-    path::{Path, PathBuf},
-    rc::Rc,
-    sync::Arc,
-};
+use std::{collections::BTreeMap, env, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use ignore::Walk;
 use located_yaml::{YamlElt, YamlLoader};
@@ -76,33 +70,45 @@ pub enum RulesToRun {
 }
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0}")]
-pub struct TrustfallError(String);
+#[error(transparent)]
+pub struct ParseError(serde_yaml::Error);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0}")]
-pub struct LinterPluginError(String, String, #[label("{1}")] Span);
+pub enum ErrorFromLinterPlugin {
+    #[error("{0}")]
+    PluginGenerated(String, String, #[label("{1}")] Span),
+    #[error("{0}")]
+    Trustfall(String),
+    #[error(transparent)]
+    Ignore(ignore::Error),
+    #[error(transparent)]
+    ReadFile(std::io::Error),
+    #[error("Failed to parse file at path: {0}")]
+    QueryParse(PathBuf, #[related] Vec<ParseError>),
+}
 
 impl LinterPlugin {
-    pub fn new(schema: &'static Schema, queries_path: PathBuf) -> Self {
-        let rules = Walk::new(queries_path)
-            .filter_map(Result::ok)
-            .filter(|f| {
-                Path::new(f.path().as_os_str().to_str().unwrap())
-                    .extension()
-                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yml"))
-            })
-            .map(|f| (fs::read_to_string(f.path()), f.into_path()))
-            .map(|(str, pathbuf)| (Result::unwrap(str), pathbuf))
-            .map(|(rule, pathbuf)| {
-                let mut deserialized = serde_yaml::from_str::<InputQuery>(rule.as_str())
-                    .unwrap_or_else(|_| panic!("{rule}\n\nQuery above"));
-                deserialized.path = pathbuf;
-                deserialized
-            })
-            .collect::<Vec<_>>();
+    pub fn new(schema: &'static Schema, queries_path: PathBuf) -> oxc_diagnostics::Result<Self> {
+        let mut deserialized_queries = vec![];
 
-        Self { rules, schema }
+        for dir_entry_found_maybe in Walk::new(queries_path) {
+            let dir_entry_found = dir_entry_found_maybe.map_err(ErrorFromLinterPlugin::Ignore)?;
+
+            let pathbuf = dir_entry_found.path().to_path_buf();
+
+            if pathbuf.extension().map_or(false, |ext| ext.eq_ignore_ascii_case("yml")) {
+                let text = fs::read_to_string(&pathbuf).map_err(ErrorFromLinterPlugin::ReadFile)?;
+
+                let mut deserialized =
+                    serde_yaml::from_str::<InputQuery>(&text).map_err(|err| {
+                        ErrorFromLinterPlugin::QueryParse(pathbuf.clone(), vec![ParseError(err)])
+                    })?;
+                deserialized.path = pathbuf;
+                deserialized_queries.push(deserialized);
+            }
+        }
+
+        Ok(Self { rules: deserialized_queries, schema })
     }
 
     pub fn run_plugin_rules(
@@ -119,7 +125,7 @@ impl LinterPlugin {
                 &plugin.query,
                 plugin.args.clone(),
             ).map_err(|err| {
-                TrustfallError(err.to_string())
+                ErrorFromLinterPlugin::Trustfall(err.to_string())
             })?
             .map(|v| {
                 if env::var("OXC_PRINT_TRUSTFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
@@ -149,14 +155,14 @@ impl LinterPlugin {
                         span_start: start,
                         span_end: end,
                     }) => {
-                        ctx.diagnostic(LinterPluginError(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start.try_into().unwrap(), end: end.try_into().unwrap() }));
+                        ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start.try_into().unwrap(), end: end.try_into().unwrap() }));
                     }
                     SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
                         span_start: start,
                         span_end: end,
                     }) => {
                         for i in 0..start.len() {
-                            ctx.diagnostic(LinterPluginError(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start[i].try_into().unwrap(), end: end[i].try_into().unwrap() }));
+                            ctx.diagnostic(ErrorFromLinterPlugin::PluginGenerated(plugin.summary.clone(), plugin.reason.clone(), Span{ start: start[i].try_into().unwrap(), end: end[i].try_into().unwrap() }));
                         }
                     }
                 }
@@ -288,7 +294,7 @@ fn span_of_test_n(query_text: &str, test_ix: usize) -> SourceSpan {
 }
 
 pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
-    let plugin = LinterPlugin::new(schema(), queries_to_test);
+    let plugin = LinterPlugin::new(schema(), queries_to_test)?;
 
     for rule in &plugin.rules {
         for (ix, test) in rule.tests.pass.iter().enumerate() {
