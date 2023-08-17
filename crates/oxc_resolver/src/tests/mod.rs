@@ -15,6 +15,7 @@ mod roots;
 mod scoped_packages;
 mod simple;
 mod symlink;
+mod tsconfig_paths;
 
 use crate::Resolver;
 use std::{env, path::PathBuf, sync::Arc, thread};
