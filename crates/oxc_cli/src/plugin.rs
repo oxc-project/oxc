@@ -10,14 +10,15 @@ use std::{
 use ignore::Walk;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
-    miette::{miette, LabeledSpan},
+    miette::{self, Diagnostic},
+    thiserror::{self, Error},
     Report,
 };
 use oxc_linter::LintContext;
 use oxc_parser::Parser;
 use oxc_query::{schema, Adapter};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use serde::Deserialize;
 use trustfall::{execute_query, FieldValue, Schema, TransparentValue, TryIntoStruct};
 
@@ -69,6 +70,10 @@ pub enum RulesToRun {
     All,
     Only(String),
 }
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("{0}")]
+pub struct LinterPluginError(String, String, #[label("{1}")] Span);
 
 impl LinterPlugin {
     pub fn new(schema: &'static Schema, queries_path: PathBuf) -> Self {
@@ -138,36 +143,14 @@ impl LinterPlugin {
                         span_start: start,
                         span_end: end,
                     }) => {
-                        ctx.diagnostic(miette!(
-                            labels = vec![LabeledSpan::at(
-                                (
-                                    usize::try_from(start)
-                                        .expect("for start of span to fit in usize"),
-                                    usize::try_from(end - start)
-                                        .expect("for length of span to fit in usize")
-                                ),
-                                plugin.reason.as_str()
-                            )],
-                            "Unexpected error"
-                        ));
+                        ctx.diagnostic(LinterPluginError(plugin.name.clone(), plugin.reason.clone(), Span{ start: start.try_into().unwrap(), end: end.try_into().unwrap() }));
                     }
                     SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
                         span_start: start,
                         span_end: end,
                     }) => {
                         for i in 0..start.len() {
-                            ctx.diagnostic(miette!(
-                                labels = vec![LabeledSpan::at(
-                                    (
-                                        usize::try_from(start[i])
-                                            .expect("for start of span to fit in usize"),
-                                        usize::try_from(end[i] - start[i])
-                                            .expect("for length of span to fit in usize")
-                                    ),
-                                    plugin.reason.as_str()
-                                )],
-                                "Unexpected error"
-                            ));
+                            ctx.diagnostic(LinterPluginError(plugin.name.clone(), plugin.reason.clone(), Span{ start: start[i].try_into().unwrap(), end: end[i].try_into().unwrap() }));
                         }
                     }
                 }
