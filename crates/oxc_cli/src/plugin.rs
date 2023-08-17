@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, fs, path::PathBuf, rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use ignore::Walk;
 use located_yaml::{YamlElt, YamlLoader};
@@ -315,27 +315,30 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
             ));
-            if let Err(errs) = diagnostics_collected {
-                let query_text =
-                    fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+            match diagnostics_collected {
+                Err(errs) | Ok(errs) if !errs.is_empty() => {
+                    let query_text =
+                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
-                return Err(ExpectedTestToPassButFailed {
-                    errors: errs
-                        .into_iter()
-                        .map(|e| {
-                            // Don't change the sourcecode of errors that already have their own sourcecode
-                            if e.source_code().is_some() {
-                                e
-                            } else {
-                                e.with_source_code(Arc::clone(&source))
-                            }
-                        })
-                        .collect(),
-                    err_span: span_of_test_n(&query_text, ix),
-                    query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                    return Err(ExpectedTestToPassButFailed {
+                        errors: errs
+                            .into_iter()
+                            .map(|e| {
+                                // Don't change the sourcecode of errors that already have their own sourcecode
+                                if e.source_code().is_some() {
+                                    e
+                                } else {
+                                    e.with_source_code(Arc::clone(&source))
+                                }
+                            })
+                            .collect(),
+                        err_span: span_of_test_n(&query_text, ix),
+                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                    }
+                    .into());
                 }
-                .into());
-            }
+                _ => {}
+            };
         }
 
         for (i, test) in rule.tests.fail.iter().enumerate() {
