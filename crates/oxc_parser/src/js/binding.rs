@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
                 let binding_identifier = BindingIdentifier {
                     span: ident.span,
                     name: ident.name.clone(),
-                    symbol_id: None,
+                    symbol_id: Default::default(),
                 };
                 let identifier = self.ast.binding_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);

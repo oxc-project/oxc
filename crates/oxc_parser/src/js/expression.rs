@@ -55,7 +55,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(IdentifierReference { span, name, reference_id: None })
+        Ok(IdentifierReference { span, name, reference_id: Default::default() })
     }
 
     /// `BindingIdentifier` : Identifier
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(BindingIdentifier { span, name, symbol_id: None })
+        Ok(BindingIdentifier { span, name, symbol_id: Default::default() })
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier> {

@@ -447,7 +447,7 @@ impl<'a> AstLower<'a> {
                         &ast::IdentifierReference {
                             span: elem.span,
                             name: "undefined".into(),
-                            reference_id: None,
+                            reference_id: Default::default(),
                         },
                         ReferenceFlag::Read,
                     );
@@ -459,7 +459,7 @@ impl<'a> AstLower<'a> {
                         &ast::IdentifierReference {
                             span: elem.span,
                             name: "undefined".into(),
-                            reference_id: None,
+                            reference_id: Default::default(),
                         },
                         ReferenceFlag::Read,
                     );
@@ -861,7 +861,7 @@ impl<'a> AstLower<'a> {
                     &ast::IdentifierReference {
                         span: expr.span(),
                         name: "undefined".into(),
-                        reference_id: None,
+                        reference_id: Default::default(),
                     },
                     ReferenceFlag::Write,
                 );

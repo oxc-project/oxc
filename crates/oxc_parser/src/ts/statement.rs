@@ -434,7 +434,7 @@ impl<'a> Parser<'a> {
         let kind = self.ast.binding_identifier(BindingIdentifier {
             span: ident_span,
             name,
-            symbol_id: None,
+            symbol_id: Default::default(),
         });
         let binding = self.ast.binding_pattern(kind, type_annotation, /* optional */ false);
         Ok(self.ast.formal_parameter(

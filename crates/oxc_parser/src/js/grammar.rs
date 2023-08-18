@@ -153,7 +153,7 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
                 PropertyKey::Identifier(ident) => IdentifierReference {
                     span: ident.span,
                     name: ident.unbox().name,
-                    reference_id: None,
+                    reference_id: Default::default(),
                 },
                 _ => return Err(p.unexpected()),
             };

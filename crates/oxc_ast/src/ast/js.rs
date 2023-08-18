@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, cell::Cell, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
@@ -258,25 +258,39 @@ pub struct IdentifierName {
 }
 
 /// Identifier Reference
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reference_id: Option<ReferenceId>,
+    pub reference_id: Cell<Option<ReferenceId>>,
+}
+
+impl Hash for IdentifierReference {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
 }
 
 /// Binding Identifier
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub symbol_id: Option<SymbolId>,
+    pub symbol_id: Cell<Option<SymbolId>>,
+}
+
+impl Hash for BindingIdentifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
 }
 
 /// Label Identifier
