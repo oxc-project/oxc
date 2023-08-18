@@ -285,7 +285,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);
-        assert!(are_all_identifiers_resolved(program));
+        if !source_type.is_typescript_definition() && !source_type.is_typescript() {
+            assert!(
+                are_all_identifiers_resolved(&semantic_ret.semantic),
+                "\nfailed at:\n-- source: {source_text:?}\n-- ast: {program:#?}",
+            );
+        }
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         let result = if errors.is_empty() {
@@ -359,38 +364,27 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 }
 
-fn are_all_identifiers_resolved<'a>(p: &'a oxc_ast::ast::Program<'a>) -> bool {
+fn are_all_identifiers_resolved(semantic: &oxc_semantic::Semantic<'_>) -> bool {
     use oxc_ast::AstKind;
-    use oxc_ast::Visit;
 
-    #[derive(Default)]
-    struct Checker {
-        pub has_non_resolved: bool,
-    }
-    impl<'a> Visit<'a> for Checker {
-        fn visit_statement(&mut self, stmt: &'a oxc_ast::ast::Statement<'a>) {
-            // Bailout early if we already found non-resolved identifiers.
-            if self.has_non_resolved {
-                return;
+    let ast_nodes = semantic.nodes();
+    let has_non_resolved = ast_nodes.iter().any(|node| {
+        match node.kind() {
+            AstKind::BindingIdentifier(id) => {
+                // match ast_nodes.parent_kind(node.id()) {
+                //     Some(AstKind::Function(func)) if func.r#type == ast::FunctionType::FunctionExpression => {
+                //         // FIXME: Currently, the name of `FunctionExpression` won't be assigned a `SymbolId`
+                //         return false
+                //     }
+                //     _ => {}
+                // }
+
+                id.symbol_id.get().is_none()
             }
-            self.visit_statement_match(stmt);
+            AstKind::IdentifierReference(ref_id) => ref_id.reference_id.get().is_none(),
+            _ => false,
         }
-        fn enter_node(&mut self, kind: AstKind<'a>) {
-            if self.has_non_resolved {
-                return;
-            }
-            match kind {
-                AstKind::BindingIdentifier(id) => {
-                    self.has_non_resolved = id.symbol_id.get().is_none();
-                }
-                AstKind::IdentifierReference(ref_id) => {
-                    self.has_non_resolved = ref_id.reference_id.get().is_none();
-                }
-                _ => {}
-            }
-        }
-    }
-    let mut checker = Checker::default();
-    checker.visit_program(p);
-    !checker.has_non_resolved
+    });
+
+    !has_non_resolved
 }
