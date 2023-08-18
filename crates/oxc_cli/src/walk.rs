@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
 use oxc_span::VALID_EXTENSIONS;
 
-use crate::WalkOptions;
+use crate::IgnoreOptions;
 
 pub struct Walk {
     inner: ignore::Walk,
@@ -11,10 +11,10 @@ pub struct Walk {
 
 impl Walk {
     /// # Panics
-    pub fn new(options: &WalkOptions) -> Self {
-        let mut inner = WalkBuilder::new(&options.paths[0]);
+    pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
+        let mut inner = WalkBuilder::new(&paths[0]);
 
-        if let Some(paths) = options.paths.get(1..) {
+        if let Some(paths) = paths.get(1..) {
             for path in paths {
                 inner.add(path);
             }
