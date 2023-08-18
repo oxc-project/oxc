@@ -56,6 +56,8 @@ pub enum Vertex<'a> {
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
     Statement(&'a Statement<'a>),
     Parameter(Rc<ParameterVertex<'a>>),
+    LogicalExpression(Rc<LogicalExpressionVertex<'a>>),
+    UnaryExpression(Rc<UnaryExpressionVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -102,6 +104,8 @@ impl<'a> Vertex<'a> {
             Self::FunctionBody(data) => data.function_body.span,
             Self::Statement(data) => data.span(),
             Self::Parameter(data) => data.parameter.span,
+            Self::LogicalExpression(data) => data.logical_expression.span,
+            Self::UnaryExpression(data) => data.unary_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -137,6 +141,8 @@ impl<'a> Vertex<'a> {
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
             Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
+            Vertex::LogicalExpression(data) => data.ast_node.map(|x| x.id()),
+            Vertex::UnaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -276,6 +282,8 @@ impl Typename for Vertex<'_> {
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
             Vertex::FunctionBody(fn_body) => fn_body.typename(),
             Vertex::Parameter(param) => param.typename(),
+            Vertex::LogicalExpression(logical_expr) => logical_expr.typename(),
+            Vertex::UnaryExpression(unary_expr) => unary_expr.typename(),
             Vertex::Statement(_) => "Statement",
         }
     }
@@ -362,6 +370,12 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::Argument(argument) => {
                 Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
             }
+            AstKind::LogicalExpression(logical_expression) => Vertex::LogicalExpression(
+                LogicalExpressionVertex { ast_node: Some(ast_node), logical_expression }.into(),
+            ),
+            AstKind::UnaryExpression(unary_expression) => Vertex::UnaryExpression(
+                UnaryExpressionVertex { ast_node: Some(ast_node), unary_expression }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -409,6 +423,12 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             ),
             Expression::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
                 ArrowFunctionVertex { ast_node: None, arrow_expression }.into(),
+            ),
+            Expression::LogicalExpression(logical_expression) => Vertex::LogicalExpression(
+                LogicalExpressionVertex { ast_node: None, logical_expression }.into(),
+            ),
+            Expression::UnaryExpression(unary_expression) => Vertex::UnaryExpression(
+                UnaryExpressionVertex { ast_node: None, unary_expression }.into(),
             ),
             _ => Vertex::Expression(expr),
         }
@@ -817,6 +837,40 @@ impl<'a> Typename for ArgumentVertex<'a> {
             "ArgumentAST"
         } else {
             "Argument"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct LogicalExpressionVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub logical_expression: &'a LogicalExpression<'a>,
+}
+
+impl<'a> Typename for LogicalExpressionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "LogicalExpressionAST"
+        } else {
+            "LogicalExpression"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct UnaryExpressionVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub unary_expression: &'a UnaryExpression<'a>,
+}
+
+impl<'a> Typename for UnaryExpressionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "UnaryExpressionAST"
+        } else {
+            "UnaryExpression"
         }
     }
 }
