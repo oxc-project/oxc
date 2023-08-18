@@ -336,9 +336,9 @@ struct ExpectedTestToFailButPassed {
 struct UnexpectedErrorsInFailTest {
     #[related]
     errors: Vec<Report>,
-    // #[source_code]
+    #[source_code]
     query: NamedSource,
-    // #[label = "This test should have failed but it passed."]
+    #[label = "This test should have failed but it passed."]
     err_span: SourceSpan,
 }
 
