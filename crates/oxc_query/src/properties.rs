@@ -412,6 +412,33 @@ pub(super) fn resolve_jsxtext_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_logical_expression_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "operator" => resolve_property_with(contexts, |v| {
+            v.as_logical_expression()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a logicalexpression vertex, instead have: {v:#?}")
+                })
+                .logical_expression
+                .operator
+                .as_str()
+                .into()
+        }),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'LogicalExpression'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_name_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,

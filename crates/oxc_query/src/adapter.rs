@@ -162,6 +162,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "LogicalExpressionAST" | "LogicalExpression" => {
+                super::properties::resolve_logical_expression_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "NameAST" | "Name" => super::properties::resolve_name_property(
                 contexts,
                 property_name.as_ref(),
@@ -415,6 +422,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "LogicalExpressionAST" | "LogicalExpression" => {
+                super::edges::resolve_logical_expression_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "MemberExtend" => super::edges::resolve_member_extend_edge(
                 contexts,
                 edge_name.as_ref(),

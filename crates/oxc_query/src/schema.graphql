@@ -514,6 +514,52 @@ interface Function implements Expression & HasSpan {
   span: Span!
 }
 
+interface LogicalExpression implements HasSpan & Expression {
+  """
+  '||' | '&&' | '??'
+  """
+  operator: String!
+
+  left: Expression!
+  right: Expression!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type LogicalExpressionAST implements ASTNode & HasSpan & Expression {
+  """
+  '||' | '&&' | '??'
+  """
+  operator: String!
+
+  left: Expression!
+  right: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
 type Parameter implements HasSpan {
   is_readonly: Boolean!
   assignment: AssignmentType!
