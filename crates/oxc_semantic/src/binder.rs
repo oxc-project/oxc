@@ -28,6 +28,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
         };
         self.id.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            ident.symbol_id.set(Some(symbol_id));
             if self.kind == VariableDeclarationKind::Var
                 && !builder.scope.get_flags(current_scope_id).is_var()
             {
@@ -59,12 +60,13 @@ impl<'a> Binder for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let Some(ident) = &self.id else { return };
         if !self.modifiers.contains(ModifierKind::Declare) {
-            builder.declare_symbol(
+            let symbol_id = builder.declare_symbol(
                 ident.span,
                 &ident.name,
                 SymbolFlags::Class,
                 SymbolFlags::ClassExcludes,
             );
+            ident.symbol_id.set(Some(symbol_id));
         }
     }
 }
@@ -108,13 +110,14 @@ impl<'a> Binder for Function<'a> {
                         )
                     };
 
-                builder.declare_symbol_on_scope(
+                let symbol_id = builder.declare_symbol_on_scope(
                     ident.span,
                     &ident.name,
                     parent_scope_id,
                     includes,
                     excludes,
                 );
+                ident.symbol_id.set(Some(symbol_id))
             }
         }
 
@@ -152,7 +155,8 @@ impl<'a> Binder for FormalParameters<'a> {
         let is_signature = self.kind == FormalParameterKind::Signature;
         self.bound_names(&mut |ident| {
             if !is_signature {
-                builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                ident.symbol_id.set(Some(symbol_id));
             }
         });
     }
@@ -167,15 +171,17 @@ impl<'a> Binder for CatchClause<'a> {
             // unless CatchParameter is CatchParameter : BindingIdentifier
             if let BindingPatternKind::BindingIdentifier(ident) = &param.kind {
                 let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
-                builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+                let symbol_id = builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+                ident.symbol_id.set(Some(symbol_id));
             } else {
                 param.bound_names(&mut |ident| {
-                    builder.declare_symbol(
+                    let symbol_id = builder.declare_symbol(
                         ident.span,
                         &ident.name,
                         SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                         SymbolFlags::BlockScopedVariableExcludes,
                     );
+                    ident.symbol_id.set(Some(symbol_id));
                 });
             }
         }
@@ -185,35 +191,38 @@ impl<'a> Binder for CatchClause<'a> {
 impl<'a> Binder for ModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         self.bound_names(&mut |ident| {
-            builder.declare_symbol(
+            let symbol_id = builder.declare_symbol(
                 ident.span,
                 &ident.name,
                 SymbolFlags::ImportBinding,
                 SymbolFlags::ImportBindingExcludes,
             );
+            ident.symbol_id.set(Some(symbol_id));
         });
     }
 }
 
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        builder.declare_symbol(
+        let symbol_id = builder.declare_symbol(
             self.id.span,
             &self.id.name,
             SymbolFlags::TypeAlias,
             SymbolFlags::TypeAliasExcludes,
         );
+        self.id.symbol_id.set(Some(symbol_id))
     }
 }
 
 impl<'a> Binder for TSInterfaceDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        builder.declare_symbol(
+        let symbol_id = builder.declare_symbol(
             self.id.span,
             &self.id.name,
             SymbolFlags::Interface,
             SymbolFlags::InterfaceExcludes,
         );
+        self.id.symbol_id.set(Some(symbol_id))
     }
 }
 
@@ -226,7 +235,8 @@ impl<'a> Binder for TSEnumDeclaration<'a> {
         } else {
             SymbolFlags::RegularEnumExcludes
         };
-        builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
+        self.id.symbol_id.set(Some(symbol_id));
     }
 }
 
@@ -271,11 +281,12 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
 
 impl<'a> Binder for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        builder.declare_symbol(
+        let symbol_id = builder.declare_symbol(
             self.name.span,
             &self.name.name,
             SymbolFlags::TypeParameter,
             SymbolFlags::TypeParameterExcludes,
         );
+        self.name.symbol_id.set(Some(symbol_id));
     }
 }
