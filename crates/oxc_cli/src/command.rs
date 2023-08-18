@@ -1,4 +1,4 @@
-use bpaf::{any, Bpaf, Parser};
+use bpaf::Bpaf;
 use std::{ffi::OsString, path::PathBuf};
 
 #[derive(Debug, Clone, Bpaf)]
@@ -100,6 +100,9 @@ The default category is "-D correctness".
 
 #[derive(Debug, Clone, Bpaf)]
 pub struct LintOptions {
+    #[bpaf(external(lint_filter), many, group_help(FILTER_HELP))]
+    pub filter: Vec<LintFilter>,
+
     /// Fix as many issues as possible. Only unfixed issues are reported in the output
     #[bpaf(switch)]
     pub fix: bool,
@@ -117,38 +120,20 @@ pub struct LintOptions {
 
     #[bpaf(external(walk_options), hide_usage)]
     pub walk: WalkOptions,
-
-    #[bpaf(external(filter_value), many, group_help(FILTER_HELP))]
-    pub filter: Vec<FilterValue>,
 }
 
 #[derive(Debug, Clone, Bpaf)]
-pub struct FilterValue {
-    #[bpaf(external(filter_type))]
-    pub ty: FilterType,
-
-    #[bpaf(any("NAME", identity), help("Rule or Category"))]
-    pub value: String,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum FilterType {
-    Allow,
-    Deny,
-}
-
-fn filter_type() -> impl Parser<FilterType> {
-    any("TOGGLE", |s: String| match s.as_str() {
-        "-A" | "--allow" => Some(FilterType::Allow),
-        "-D" | "--deny" => Some(FilterType::Deny),
-        _ => None,
-    })
-    .help("-A | --allow | -D | --deny")
-}
-
-#[allow(clippy::unnecessary_wraps)]
-fn identity(s: String) -> Option<String> {
-    Some(s)
+pub enum LintFilter {
+    Allow(
+        /// Allow the rule or category
+        #[bpaf(short('A'), long("allow"), argument("RULE|CATEGORY"))]
+        String,
+    ),
+    Deny(
+        /// Deny the rule or category
+        #[bpaf(short('D'), long("deny"), argument("RULE|CATEGORY"))]
+        String,
+    ),
 }
 
 #[derive(Debug, Clone, Bpaf)]

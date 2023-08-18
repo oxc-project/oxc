@@ -154,7 +154,7 @@ jobs:
         run: cargo build --release -p oxc_cli --bin oxlint
 
       - name: Run oxlint on VSCode and throw output to a temp file
-        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore ./vscode/ --allow no-control-regex > ./log.tmp
+        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./log.tmp
 
       - name: Using grep to check if oxlint panic
         run: >

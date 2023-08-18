@@ -9,9 +9,8 @@ use oxc_index::assert_impl_all;
 use oxc_linter::{AllowWarnDeny, LintOptions, Linter, RuleCategory, RuleEnum, RULES};
 use rustc_hash::FxHashSet;
 
-use crate::FilterType;
 use crate::{
-    command::{LintOptions as CliLintOptions, WalkOptions},
+    command::{LintFilter, LintOptions as CliLintOptions, WalkOptions},
     CliRunResult, Runner,
 };
 
@@ -154,9 +153,9 @@ fn get_rules(options: &CliLintOptions) -> Vec<(AllowWarnDeny, String)> {
         options
             .filter
             .iter()
-            .map(|f| match f.ty {
-                FilterType::Allow => (AllowWarnDeny::Allow, f.value.clone()),
-                FilterType::Deny => (AllowWarnDeny::Deny, f.value.clone()),
+            .map(|f| match f {
+                LintFilter::Allow(allow) => (AllowWarnDeny::Allow, allow.clone()),
+                LintFilter::Deny(deny) => (AllowWarnDeny::Deny, deny.clone()),
             })
             .collect()
     }
@@ -184,7 +183,7 @@ mod test {
     #[test]
     fn rules_with_deny_and_allow() {
         let options =
-            get_lint_options("src -D suspicious --deny pedantic -A no-debugger --allow no-var");
+            get_lint_options("-D suspicious --deny pedantic -A no-debugger --allow no-var src");
         assert_eq!(
             options.rules,
             vec![
