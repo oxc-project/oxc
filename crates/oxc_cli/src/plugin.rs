@@ -336,6 +336,10 @@ struct ExpectedTestToFailButPassed {
 struct UnexpectedErrorsInFailTest {
     #[related]
     errors: Vec<Report>,
+    // #[source_code]
+    query: NamedSource,
+    // #[label = "This test should have failed but it passed."]
+    err_span: SourceSpan,
 }
 
 fn span_of_test_n(yaml_text: &str, test_ix: usize, test_code: &str) -> SourceSpan {
@@ -395,9 +399,10 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
             ));
+
             match diagnostics_collected {
                 Err(errs) | Ok(errs) if !errs.is_empty() => {
-                    let query_text =
+                    let yaml_text =
                         fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
                     return Err(ExpectedTestToPassButFailed {
@@ -412,8 +417,8 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
                                 }
                             })
                             .collect(),
-                        err_span: span_of_test_n(&query_text, ix, &test.code),
-                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                        err_span: span_of_test_n(&yaml_text, ix, &test.code),
+                        query: NamedSource::new(rule.path.to_string_lossy(), yaml_text),
                     }
                     .into());
                 }
@@ -422,30 +427,45 @@ pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
         }
 
         for (i, test) in rule.tests.fail.iter().enumerate() {
-            let messages = run_test(test, &rule.name, &plugin);
-            match messages {
+            let diagnostics_collected = run_test(test, &rule.name, &plugin);
+            let source = Arc::new(NamedSource::new(
+                format!("./{}", test.relative_path.join("/")),
+                test.code.clone(),
+            ));
+
+            match diagnostics_collected {
                 Ok(errs)
                     if errs.len() == 1
                         && format!("{:#?}", errs[0]).starts_with("PluginGenerated") =>
                 { /* Success case. */ }
                 Ok(errs) if errs.is_empty() => {
-                    let query_text =
+                    let yaml_text =
                         fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
                     return Err(ExpectedTestToFailButPassed {
-                        err_span: span_of_test_n(&query_text, i, &test.code),
-                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                        err_span: span_of_test_n(&yaml_text, i, &test.code),
+                        query: NamedSource::new(rule.path.to_string_lossy(), yaml_text),
                     }
                     .into());
                 }
                 Err(errs) | Ok(errs) => {
-                    let query_text =
+                    let yaml_text =
                         fs::read_to_string(&rule.path).expect("to be able to get text of rule");
 
                     return Err(UnexpectedErrorsInFailTest {
-                        errors: errs,
-                        err_span: span_of_test_n(&query_text, i, &test.code),
-                        query: NamedSource::new(rule.path.to_string_lossy(), query_text),
+                        errors: errs
+                            .into_iter()
+                            .map(|e| {
+                                // Don't change the sourcecode of errors that already have their own sourcecode
+                                if e.source_code().is_some() {
+                                    e
+                                } else {
+                                    e.with_source_code(Arc::clone(&source))
+                                }
+                            })
+                            .collect(),
+                        err_span: span_of_test_n(&yaml_text, i, &test.code),
+                        query: NamedSource::new(rule.path.to_string_lossy(), yaml_text),
                     }
                     .into());
                 }
