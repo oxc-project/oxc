@@ -16,17 +16,17 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{Fixer, LintContext, LintOptions, Linter};
+use oxc_linter::{Fixer, LintContext, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use crate::{CliRunResult, Walk, WalkOptions};
+use crate::{CliOptions, CliRunResult, Walk, WalkOptions};
 
 pub struct IsolatedLintHandler {
-    walk_options: Arc<WalkOptions>,
+    cli_options: Arc<CliOptions>,
 
-    options: Arc<LintOptions>,
+    walk_options: Arc<WalkOptions>,
 
     linter: Arc<Linter>,
 }
@@ -38,11 +38,11 @@ pub struct MinifiedFileError(pub PathBuf);
 
 impl IsolatedLintHandler {
     pub(super) fn new(
+        cli_options: Arc<CliOptions>,
         walk_options: Arc<WalkOptions>,
-        options: Arc<LintOptions>,
         linter: Arc<Linter>,
     ) -> Self {
-        Self { walk_options, options, linter }
+        Self { cli_options, walk_options, linter }
     }
 
     /// # Panics
@@ -64,7 +64,7 @@ impl IsolatedLintHandler {
             number_of_warnings,
             number_of_errors,
             max_warnings_exceeded: self
-                .options
+                .cli_options
                 .max_warnings
                 .map_or(false, |max_warnings| number_of_warnings > max_warnings),
         }
@@ -127,11 +127,11 @@ impl IsolatedLintHandler {
                     }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    if self.options.quiet {
+                    if self.cli_options.quiet {
                         continue;
                     }
 
-                    if let Some(max_warnings) = self.options.max_warnings {
+                    if let Some(max_warnings) = self.cli_options.max_warnings {
                         if number_of_warnings > max_warnings {
                             continue;
                         }
@@ -188,7 +188,7 @@ impl IsolatedLintHandler {
             return None;
         }
 
-        if linter.has_fix() {
+        if linter.options().fix {
             let fix_result = Fixer::new(&source_text, result).fix();
             fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
             let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
