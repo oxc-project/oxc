@@ -12,11 +12,8 @@ use crate::options::LintOptions;
 use crate::walk::Walk;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{
-    miette::{self},
-    Error, Severity,
-};
-use oxc_linter::{LintContext, Linter, RuleCategory, RULES};
+use oxc_diagnostics::{miette, Error, Severity};
+use oxc_linter::{LintContext, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -258,7 +255,7 @@ impl IsolatedLintHandler {
             return None;
         }
 
-        if linter.has_fix() {
+        if linter.options().fix {
             let reports = result
                 .into_iter()
                 .map(|msg| {
@@ -322,15 +319,7 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new() -> Self {
-        let linter = Linter::from_rules(
-            RULES
-                .iter()
-                .cloned()
-                .filter(|rule| rule.category() != RuleCategory::Nursery)
-                .collect::<Vec<_>>(),
-        )
-        .with_fix(true);
-
+        let linter = Linter::new().with_fix(true);
         Self { linter: Arc::new(linter) }
     }
 

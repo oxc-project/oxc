@@ -24,14 +24,13 @@ pub use crate::{
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
-    rules::{RuleEnum, RULES},
 };
+pub(crate) use rules::{RuleEnum, RULES};
 
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
-    fix: bool,
-    print_execution_times: bool,
+    options: LintOptions,
 }
 
 impl Linter {
@@ -45,15 +44,20 @@ impl Linter {
     }
 
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules, fix: false, print_execution_times: false }
+        Self { rules, options: LintOptions::default() }
+    }
+
+    pub fn from_options(options: LintOptions) -> Self {
+        let rules = options.derive_rules();
+        Self { rules, options }
     }
 
     pub fn rules(&self) -> &Vec<RuleEnum> {
         &self.rules
     }
 
-    pub fn has_fix(&self) -> bool {
-        self.fix
+    pub fn options(&self) -> &LintOptions {
+        &self.options
     }
 
     pub fn number_of_rules(&self) -> usize {
@@ -62,13 +66,13 @@ impl Linter {
 
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
-        self.fix = yes;
+        self.options.fix = yes;
         self
     }
 
     #[must_use]
     pub fn with_print_execution_times(mut self, yes: bool) -> Self {
-        self.print_execution_times = yes;
+        self.options.timing = yes;
         self
     }
 
@@ -94,25 +98,26 @@ impl Linter {
     }
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
+        let timing = self.options.timing;
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.fix);
+        let mut ctx = ctx.with_fix(self.options.fix);
 
         for rule in &self.rules {
             ctx.with_rule_name(rule.name());
-            rule.run_once(&ctx, self.print_execution_times);
+            rule.run_once(&ctx, timing);
         }
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run(node, &ctx, self.print_execution_times);
+                rule.run(node, &ctx, timing);
             }
         }
 
         for symbol in semantic.symbols().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run_on_symbol(symbol, &ctx, self.print_execution_times);
+                rule.run_on_symbol(symbol, &ctx, timing);
             }
         }
 

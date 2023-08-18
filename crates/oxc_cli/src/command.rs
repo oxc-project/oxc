@@ -1,4 +1,5 @@
 use bpaf::Bpaf;
+use oxc_linter::AllowWarnDeny;
 use std::{ffi::OsString, path::PathBuf};
 
 #[derive(Debug, Clone, Bpaf)]
@@ -100,8 +101,8 @@ The default category is "-D correctness".
 
 #[derive(Debug, Clone, Bpaf)]
 pub struct LintOptions {
-    #[bpaf(external(lint_filter), many, group_help(FILTER_HELP))]
-    pub filter: Vec<LintFilter>,
+    #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many, group_help(FILTER_HELP))]
+    pub filter: Vec<(AllowWarnDeny, String)>,
 
     /// Fix as many issues as possible. Only unfixed issues are reported in the output
     #[bpaf(switch)]
@@ -136,6 +137,15 @@ pub enum LintFilter {
     ),
 }
 
+impl LintFilter {
+    fn into_tuple(self) -> (AllowWarnDeny, String) {
+        match self {
+            Self::Allow(s) => (AllowWarnDeny::Allow, s),
+            Self::Deny(s) => (AllowWarnDeny::Deny, s),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Bpaf)]
 pub struct CheckOptions {
     #[bpaf(external(cli_options), hide_usage)]
@@ -155,12 +165,86 @@ pub struct CheckOptions {
 }
 
 #[cfg(test)]
+mod cli_options {
+    use super::{lint_command, CliOptions};
+
+    fn get_cli_options(arg: &str) -> CliOptions {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        lint_command().run_inner(args.as_slice()).unwrap().lint_options.cli
+    }
+
+    #[test]
+    fn default() {
+        let options = get_cli_options(".");
+        assert!(!options.quiet);
+        assert_eq!(options.max_warnings, None);
+    }
+
+    #[test]
+    fn quiet() {
+        let options = get_cli_options("--quiet .");
+        assert!(options.quiet);
+    }
+
+    #[test]
+    fn max_warnings() {
+        let options = get_cli_options("--max-warnings 10 .");
+        assert_eq!(options.max_warnings, Some(10));
+    }
+}
+
+#[cfg(test)]
+mod lint_options {
+    use super::{lint_command, LintOptions};
+    use oxc_linter::AllowWarnDeny;
+
+    fn get_lint_options(arg: &str) -> LintOptions {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        lint_command().run_inner(args.as_slice()).unwrap().lint_options
+    }
+
+    #[test]
+    fn default() {
+        let options = get_lint_options(".");
+        assert!(!options.fix);
+        assert!(!options.rules);
+    }
+
+    #[test]
+    fn list_rules() {
+        let options = get_lint_options("--rules");
+        assert!(options.rules);
+    }
+
+    #[test]
+    fn fix() {
+        let options = get_lint_options("--fix test.js");
+        assert!(options.fix);
+    }
+
+    #[test]
+    fn filter() {
+        let options =
+            get_lint_options("-D suspicious --deny pedantic -A no-debugger --allow no-var src");
+        assert_eq!(
+            options.filter,
+            [
+                (AllowWarnDeny::Deny, "suspicious".into()),
+                (AllowWarnDeny::Deny, "pedantic".into()),
+                (AllowWarnDeny::Allow, "no-debugger".into()),
+                (AllowWarnDeny::Allow, "no-var".into())
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
 mod walk_options {
     use super::{lint_command, WalkOptions};
     use std::{ffi::OsString, path::PathBuf};
 
     fn get_walk_options(arg: &str) -> WalkOptions {
-        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<String>>();
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
         lint_command().run_inner(args.as_slice()).unwrap().lint_options.walk
     }
 
