@@ -514,6 +514,50 @@ interface Function implements Expression & HasSpan {
   span: Span!
 }
 
+interface UnaryExpression implements HasSpan & Expression {
+  """
+  '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete'
+  """
+  operator: String!
+
+  value: Expression!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type UnaryExpressionAST implements ASTNode & HasSpan & Expression {
+  """
+  '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete'
+  """
+  operator: String!
+
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # Expression
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+  strip_parens: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
 interface LogicalExpression implements HasSpan & Expression {
   """
   '||' | '&&' | '??'

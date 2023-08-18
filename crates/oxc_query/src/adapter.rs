@@ -220,6 +220,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "UnaryExpressionAST" | "UnaryExpression" => {
+                super::properties::resolve_unary_expression_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             _ => {
                 unreachable!(
                     "attempted to read property '{property_name}' on unexpected type: {type_name}"
@@ -539,6 +546,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "UnaryExpressionAST" | "UnaryExpression" => {
+                super::edges::resolve_unary_expression_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "URL" => super::edges::resolve_url_edge(
                 contexts,
                 edge_name.as_ref(),
