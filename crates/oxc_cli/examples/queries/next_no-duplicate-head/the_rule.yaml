@@ -63,7 +63,7 @@ query: |
   }
 
 args:
-  one: 1
+  zero: 0
   nextslashdocument: "next/document"
   Head: "Head"
 
