@@ -534,7 +534,7 @@ interface UnaryExpression implements HasSpan & Expression {
   span: Span!
 }
 
-type UnaryExpressionAST implements ASTNode & HasSpan & Expression {
+type UnaryExpressionAST implements UnaryExpression & ASTNode & HasSpan & Expression {
   """
   '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete'
   """
@@ -579,7 +579,7 @@ interface LogicalExpression implements HasSpan & Expression {
   span: Span!
 }
 
-type LogicalExpressionAST implements ASTNode & HasSpan & Expression {
+type LogicalExpressionAST implements LogicalExpression & ASTNode & HasSpan & Expression {
   """
   '||' | '&&' | '??'
   """
