@@ -48,7 +48,7 @@ impl Runner for LintRunner {
         let result = IsolatedLintHandler::new(
             Arc::clone(&self.options),
             Arc::clone(&self.linter),
-            Arc::new(LinterPlugin::new(schema(), self.options.plugin_path.clone()).unwrap()), // TODO: Propagate the unwrap
+            Arc::new(LinterPlugin::new(schema(), &self.options.plugin_path).unwrap()), // TODO: Propagate the unwrap
         )
         .run();
 

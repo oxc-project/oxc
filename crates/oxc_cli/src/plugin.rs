@@ -115,7 +115,7 @@ pub enum ErrorFromLinterPlugin {
 }
 
 impl LinterPlugin {
-    pub fn new(schema: &'static Schema, queries_path: PathBuf) -> oxc_diagnostics::Result<Self> {
+    pub fn new(schema: &'static Schema, queries_path: &PathBuf) -> oxc_diagnostics::Result<Self> {
         let mut deserialized_queries = vec![];
 
         for dir_entry_found_maybe in Walk::new(queries_path) {
@@ -389,7 +389,7 @@ fn span_of_test_n(yaml_text: &str, test_ix: usize, test_code: &str) -> SourceSpa
     SourceSpan::new(start.into(), (end_of_end - start).into())
 }
 
-pub fn test_queries(queries_to_test: PathBuf) -> oxc_diagnostics::Result<()> {
+pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
     let plugin = LinterPlugin::new(schema(), queries_to_test)?;
 
     for rule in &plugin.rules {
