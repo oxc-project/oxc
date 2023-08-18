@@ -21,9 +21,11 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use crate::{CliRunResult, Walk};
+use crate::{CliRunResult, Walk, WalkOptions};
 
 pub struct IsolatedLintHandler {
+    walk_options: Arc<WalkOptions>,
+
     options: Arc<LintOptions>,
 
     linter: Arc<Linter>,
@@ -35,8 +37,12 @@ pub struct IsolatedLintHandler {
 pub struct MinifiedFileError(pub PathBuf);
 
 impl IsolatedLintHandler {
-    pub(super) fn new(options: Arc<LintOptions>, linter: Arc<Linter>) -> Self {
-        Self { options, linter }
+    pub(super) fn new(
+        walk_options: Arc<WalkOptions>,
+        options: Arc<LintOptions>,
+        linter: Arc<Linter>,
+    ) -> Self {
+        Self { walk_options, options, linter }
     }
 
     /// # Panics
@@ -71,7 +77,7 @@ impl IsolatedLintHandler {
     ) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
-        let walk = Walk::new(&self.options);
+        let walk = Walk::new(&self.walk_options);
         let number_of_files = Arc::clone(number_of_files);
         rayon::spawn(move || {
             let mut count = 0;

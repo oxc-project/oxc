@@ -1,5 +1,5 @@
 use bpaf::{any, Bpaf, Parser};
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options)]
@@ -63,18 +63,22 @@ pub struct CliOptions {
 }
 
 #[derive(Debug, Clone, Bpaf)]
-pub struct IgnoreOptions {
+pub struct WalkOptions {
     /// Disables excluding of files from .eslintignore files
     #[bpaf(switch)]
     pub no_ignore: bool,
 
     /// Specify the file to use as your .eslintignore
-    #[bpaf(argument("PATH"), optional)]
-    pub ignore_path: Option<PathBuf>,
+    #[bpaf(argument("PATH"), fallback(".eslintignore".into()))]
+    pub ignore_path: OsString,
 
     /// Specify patterns of files to ignore (in addition to those in .eslintignore)
     #[bpaf(argument("PATTERN"), many)]
     pub ignore_pattern: Vec<String>,
+
+    /// Single file, single path or list of paths
+    #[bpaf(positional("PATH"), many)]
+    pub paths: Vec<PathBuf>,
 }
 
 static FILTER_HELP: &str = r#"
@@ -100,9 +104,6 @@ pub struct LintOptions {
     #[bpaf(switch)]
     pub fix: bool,
 
-    #[bpaf(external(ignore_options), hide_usage)]
-    pub ignore: IgnoreOptions,
-
     /// Display the execution time of each lint rule
     #[bpaf(switch, env("TIMING"), hide_usage)]
     pub timing: bool,
@@ -114,9 +115,8 @@ pub struct LintOptions {
     #[bpaf(external(cli_options), hide_usage)]
     pub cli: CliOptions,
 
-    /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many)]
-    pub paths: Vec<PathBuf>,
+    #[bpaf(external(walk_options), hide_usage)]
+    pub walk: WalkOptions,
 
     #[bpaf(external(filter_value), many, group_help(FILTER_HELP))]
     pub filter: Vec<FilterValue>,
@@ -167,4 +167,57 @@ pub struct CheckOptions {
     /// File to type check
     #[bpaf(positional("PATH"))]
     pub path: PathBuf,
+}
+
+#[cfg(test)]
+mod walk_options {
+    use super::{lint_command, WalkOptions};
+    use std::{ffi::OsString, path::PathBuf};
+
+    fn get_walk_options(arg: &str) -> WalkOptions {
+        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<String>>();
+        lint_command().run_inner(args.as_slice()).unwrap().lint_options.walk
+    }
+
+    #[test]
+    fn default() {
+        let options = get_walk_options(".");
+        assert_eq!(options.paths, vec![PathBuf::from(".")]);
+        assert_eq!(options.ignore_path, OsString::from(".eslintignore"));
+        assert!(!options.no_ignore);
+        assert!(options.ignore_pattern.is_empty());
+    }
+
+    #[test]
+    fn multiple_paths() {
+        let options = get_walk_options("foo bar baz");
+        assert_eq!(
+            options.paths,
+            [PathBuf::from("foo"), PathBuf::from("bar"), PathBuf::from("baz")]
+        );
+    }
+
+    #[test]
+    fn ignore_path() {
+        let options = get_walk_options("--ignore-path .xxx foo.js");
+        assert_eq!(options.ignore_path, PathBuf::from(".xxx"));
+    }
+
+    #[test]
+    fn no_ignore() {
+        let options = get_walk_options("--no-ignore foo.js");
+        assert!(options.no_ignore);
+    }
+
+    #[test]
+    fn single_ignore_pattern() {
+        let options = get_walk_options("--ignore-pattern ./test foo.js");
+        assert_eq!(options.ignore_pattern, vec![String::from("./test")]);
+    }
+
+    #[test]
+    fn multiple_ignore_pattern() {
+        let options = get_walk_options("--ignore-pattern ./test --ignore-pattern bar.js foo.js");
+        assert_eq!(options.ignore_pattern, vec![String::from("./test"), String::from("bar.js")]);
+    }
 }
