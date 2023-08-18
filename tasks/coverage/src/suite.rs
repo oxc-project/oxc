@@ -285,6 +285,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);
+        assert!(are_all_identifiers_resolved(program));
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         let result = if errors.is_empty() {
@@ -356,4 +357,40 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         }
         Ok(())
     }
+}
+
+fn are_all_identifiers_resolved<'a>(p: &'a oxc_ast::ast::Program<'a>) -> bool {
+    use oxc_ast::AstKind;
+    use oxc_ast::Visit;
+
+    #[derive(Default)]
+    struct Checker {
+        pub has_non_resolved: bool,
+    }
+    impl<'a> Visit<'a> for Checker {
+        fn visit_statement(&mut self, stmt: &'a oxc_ast::ast::Statement<'a>) {
+            // Bailout early if we already found non-resolved identifiers.
+            if self.has_non_resolved {
+                return;
+            }
+            self.visit_statement_match(stmt);
+        }
+        fn enter_node(&mut self, kind: AstKind<'a>) {
+            if self.has_non_resolved {
+                return;
+            }
+            match kind {
+                AstKind::BindingIdentifier(id) => {
+                    self.has_non_resolved = id.symbol_id.get().is_none();
+                }
+                AstKind::IdentifierReference(ref_id) => {
+                    self.has_non_resolved = ref_id.reference_id.get().is_none();
+                }
+                _ => {}
+            }
+        }
+    }
+    let mut checker = Checker::default();
+    checker.visit_program(p);
+    !checker.has_non_resolved
 }
