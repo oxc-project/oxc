@@ -22,12 +22,34 @@ query: |
           expression {
             strip_parens {
               ... on JSXElement {
-                child_element @fold @transform(op: "count") @filter(op: ">", value: ["$one"]) {
+                # Select a `Head` element.
+                child_element {
                   opening_element {
                     name @filter(op: "=", value: ["$Head"])
-                    # NOTE: Slight bug in that if we find 3 we report 3, not just the 2 error'ed ones
                     span_: span {
-                      start @output
+                      start @tag
+                    }
+                  }
+                }
+
+                # Ensure that selected `Head` element is the earliest one.
+                # This is so that if there are e.g. 3 such elements,
+                # we don't report the combo of the second and third as an additional violation.
+                child_element @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+                  opening_element {
+                    name @filter(op: "=", value: ["$Head"])
+                    span_: span {
+                      start @filter(op: "<", value: ["%start"])
+                    }
+                  }
+                }
+
+                # Ensure there are more `Head` elements after the selected one.
+                child_element @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+                  opening_element {
+                    name @filter(op: "=", value: ["$Head"])
+                    span_: span {
+                      start @output @filter(op: ">", value: ["%start"])
                       end @output
                     }
                   }
