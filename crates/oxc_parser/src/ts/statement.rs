@@ -431,7 +431,11 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let (ident_span, name) = self.parse_identifier_kind(Kind::This);
         let type_annotation = self.parse_ts_type_annotation()?;
-        let kind = self.ast.binding_identifier(BindingIdentifier { span: ident_span, name, symbol_id: None });
+        let kind = self.ast.binding_identifier(BindingIdentifier {
+            span: ident_span,
+            name,
+            symbol_id: None,
+        });
         let binding = self.ast.binding_pattern(kind, type_annotation, /* optional */ false);
         Ok(self.ast.formal_parameter(
             self.end_span(span),

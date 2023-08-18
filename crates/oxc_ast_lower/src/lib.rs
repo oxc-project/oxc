@@ -444,7 +444,11 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXElement(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into(), reference_id: None},
+                        &ast::IdentifierReference {
+                            span: elem.span,
+                            name: "undefined".into(),
+                            reference_id: None,
+                        },
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -452,7 +456,11 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXFragment(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into(), reference_id: None },
+                        &ast::IdentifierReference {
+                            span: elem.span,
+                            name: "undefined".into(),
+                            reference_id: None,
+                        },
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -850,7 +858,11 @@ impl<'a> AstLower<'a> {
             expr => {
                 // return undefined because this is invalid syntax
                 let ident = self.lower_identifier_reference(
-                    &ast::IdentifierReference { span: expr.span(), name: "undefined".into(), reference_id: None },
+                    &ast::IdentifierReference {
+                        span: expr.span(),
+                        name: "undefined".into(),
+                        reference_id: None,
+                    },
                     ReferenceFlag::Write,
                 );
                 self.hir.assignment_target_identifier(ident)

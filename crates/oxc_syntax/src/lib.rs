@@ -4,9 +4,9 @@ pub mod identifier;
 pub mod module_record;
 pub mod operator;
 pub mod precedence;
+pub mod reference;
 pub mod scope;
 pub mod symbol;
-pub mod reference;
 
 pub use unicode_id_start;
 

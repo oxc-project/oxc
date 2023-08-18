@@ -150,9 +150,11 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut Parser<'a>) -> Result<Self> {
         if property.shorthand {
             let binding = match property.key {
-                PropertyKey::Identifier(ident) => {
-                    IdentifierReference { span: ident.span, name: ident.unbox().name, reference_id: None }
-                }
+                PropertyKey::Identifier(ident) => IdentifierReference {
+                    span: ident.span,
+                    name: ident.unbox().name,
+                    reference_id: None,
+                },
                 _ => return Err(p.unexpected()),
             };
             // convert `CoverInitializedName`

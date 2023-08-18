@@ -2,9 +2,13 @@ use std::fmt;
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-}, reference::ReferenceId, symbol::SymbolId};
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    reference::ReferenceId,
+    symbol::SymbolId,
+};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
