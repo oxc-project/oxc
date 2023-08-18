@@ -514,7 +514,7 @@ interface Function implements Expression & HasSpan {
   span: Span!
 }
 
-type Parameter {
+type Parameter implements HasSpan {
   is_readonly: Boolean!
   assignment: AssignmentType!
   type_annotation: TypeAnnotation!
