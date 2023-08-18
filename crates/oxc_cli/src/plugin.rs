@@ -494,7 +494,7 @@ mod test {
 
     #[test]
     fn query_tests() -> Result<()> {
-        test_queries(Path::new("examples/queries").to_path_buf())?;
+        test_queries(&Path::new("examples/queries").to_path_buf())?;
         Ok(())
     }
 }
