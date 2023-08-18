@@ -3,7 +3,7 @@ use std::path::Path;
 use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
 use oxc_span::VALID_EXTENSIONS;
 
-use oxc_linter::LintOptions;
+use crate::WalkOptions;
 
 pub struct Walk {
     inner: ignore::Walk,
@@ -11,7 +11,7 @@ pub struct Walk {
 
 impl Walk {
     /// # Panics
-    pub fn new(options: &LintOptions) -> Self {
+    pub fn new(options: &WalkOptions) -> Self {
         let mut inner = WalkBuilder::new(&options.paths[0]);
 
         if let Some(paths) = options.paths.get(1..) {

@@ -1,7 +1,6 @@
 mod error;
 mod isolated_handler;
 
-use std::path::PathBuf;
 use std::{io::BufWriter, sync::Arc, time::Duration};
 
 pub use self::{error::Error, isolated_handler::IsolatedLintHandler};
@@ -11,9 +10,13 @@ use oxc_linter::{AllowWarnDeny, LintOptions, Linter, RuleCategory, RuleEnum, RUL
 use rustc_hash::FxHashSet;
 
 use crate::FilterType;
-use crate::{command::LintOptions as CliLintOptions, CliRunResult, Runner};
+use crate::{
+    command::{LintOptions as CliLintOptions, WalkOptions},
+    CliRunResult, Runner,
+};
 
 pub struct LintRunner {
+    walk_options: Arc<WalkOptions>,
     options: Arc<LintOptions>,
     linter: Arc<Linter>,
 }
@@ -23,11 +26,15 @@ impl Runner for LintRunner {
     type Options = CliLintOptions;
 
     fn new(options: Self::Options) -> Self {
-        let options = parse_cli_options(options);
-        let linter = Linter::from_rules(Self::derive_rules(&options))
-            .with_fix(options.fix)
-            .with_print_execution_times(options.print_execution_times);
-        Self { options: Arc::new(options), linter: Arc::new(linter) }
+        let lint_options = parse_cli_options(&options);
+        let linter = Linter::from_rules(Self::derive_rules(&lint_options))
+            .with_fix(lint_options.fix)
+            .with_print_execution_times(lint_options.print_execution_times);
+        Self {
+            walk_options: Arc::new(options.walk),
+            options: Arc::new(lint_options),
+            linter: Arc::new(linter),
+        }
     }
 
     fn run(&self) -> CliRunResult {
@@ -36,8 +43,12 @@ impl Runner for LintRunner {
             return CliRunResult::None;
         }
 
-        let result =
-            IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run();
+        let result = IsolatedLintHandler::new(
+            Arc::clone(&self.walk_options),
+            Arc::clone(&self.options),
+            Arc::clone(&self.linter),
+        )
+        .run();
 
         if self.options.print_execution_times {
             self.print_execution_times();
@@ -121,16 +132,12 @@ impl LintRunner {
     }
 }
 
-fn parse_cli_options(options: CliLintOptions) -> LintOptions {
-    let rules = get_rules(&options);
+fn parse_cli_options(options: &CliLintOptions) -> LintOptions {
+    let rules = get_rules(options);
     LintOptions {
-        paths: options.paths,
         rules,
         fix: options.fix,
         quiet: options.cli.quiet,
-        ignore_path: options.ignore.ignore_path.unwrap_or_else(|| PathBuf::from(".eslintignore")),
-        no_ignore: options.ignore.no_ignore,
-        ignore_pattern: options.ignore.ignore_pattern,
         max_warnings: options.cli.max_warnings,
         list_rules: options.rules,
         print_execution_times: options.timing,
@@ -157,36 +164,21 @@ fn get_rules(options: &CliLintOptions) -> Vec<(AllowWarnDeny, String)> {
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
-
     use super::{parse_cli_options, AllowWarnDeny, LintOptions};
     use crate::lint_command;
 
     fn get_lint_options(arg: &str) -> LintOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<String>>();
         let options = lint_command().run_inner(args.as_slice()).unwrap();
-        parse_cli_options(options.lint_options)
+        parse_cli_options(&options.lint_options)
     }
 
     #[test]
     fn default() {
         let options = get_lint_options(".");
-        assert_eq!(options.paths, vec![PathBuf::from(".")]);
         assert!(!options.fix);
         assert!(!options.quiet);
-        assert_eq!(options.ignore_path, PathBuf::from(".eslintignore"));
-        assert!(!options.no_ignore);
-        assert!(options.ignore_pattern.is_empty());
         assert_eq!(options.max_warnings, None);
-    }
-
-    #[test]
-    fn multiple_paths() {
-        let options = get_lint_options("foo bar baz");
-        assert_eq!(
-            options.paths,
-            [PathBuf::from("foo"), PathBuf::from("bar"), PathBuf::from("baz")]
-        );
     }
 
     #[test]
@@ -223,33 +215,8 @@ mod test {
     }
 
     #[test]
-    fn ignore_path() {
-        let options = get_lint_options("--ignore-path .xxx foo.js");
-        assert_eq!(options.ignore_path, PathBuf::from(".xxx"));
-    }
-
-    #[test]
-    fn no_ignore() {
-        let options = get_lint_options("--no-ignore foo.js");
-        assert!(options.no_ignore);
-    }
-
-    #[test]
-    fn single_ignore_pattern() {
-        let options = get_lint_options("--ignore-pattern ./test foo.js");
-        assert_eq!(options.ignore_pattern, vec![String::from("./test")]);
-    }
-
-    #[test]
-    fn multiple_ignore_pattern() {
-        let options = get_lint_options("--ignore-pattern ./test --ignore-pattern bar.js foo.js");
-        assert_eq!(options.ignore_pattern, vec![String::from("./test"), String::from("bar.js")]);
-    }
-
-    #[test]
     fn list_rules_true() {
         let options = get_lint_options("--rules");
-        assert!(options.paths.is_empty());
         assert!(options.list_rules);
     }
 }
