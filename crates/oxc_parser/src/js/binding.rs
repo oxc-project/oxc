@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
             if let PropertyKey::Identifier(ident) = &key {
                 shorthand = true;
                 let binding_identifier =
-                    BindingIdentifier { span: ident.span, name: ident.name.clone() };
+                    BindingIdentifier { span: ident.span, name: ident.name.clone(), symbol_id: None };
                 let identifier = self.ast.binding_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
                 self.parse_initializer(span, left)?

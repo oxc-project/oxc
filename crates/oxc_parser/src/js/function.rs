@@ -332,7 +332,7 @@ impl<'a> Parser<'a> {
         let id = self.cur_kind().is_binding_identifier().then(|| {
             let (span, name) = self.parse_identifier_kind(Kind::Ident);
             self.check_identifier(span, &name);
-            BindingIdentifier { span, name }
+            BindingIdentifier { span, name, symbol_id: None }
         });
         self.ctx = ctx;
 

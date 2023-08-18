@@ -2,9 +2,9 @@ use std::fmt;
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::operator::{
+use oxc_syntax::{operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-};
+}, reference::ReferenceId, symbol::SymbolId};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -260,6 +260,8 @@ pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_id: Option<ReferenceId>,
 }
 
 /// Binding Identifier
@@ -269,6 +271,8 @@ pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub symbol_id: Option<SymbolId>,
 }
 
 /// Label Identifier
