@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -434,7 +436,7 @@ impl<'a> Parser<'a> {
         let kind = self.ast.binding_identifier(BindingIdentifier {
             span: ident_span,
             name,
-            symbol_id: Default::default(),
+            symbol_id: Cell::default(),
         });
         let binding = self.ast.binding_pattern(kind, type_annotation, /* optional */ false);
         Ok(self.ast.formal_parameter(

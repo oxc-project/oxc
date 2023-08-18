@@ -1,5 +1,7 @@
 #![allow(clippy::unused_self)]
 
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
@@ -371,6 +373,7 @@ impl<'a> AstLower<'a> {
         self.hir.with_statement(stmt.span, object, body)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn lower_expression(&mut self, expr: &ast::Expression<'a>) -> hir::Expression<'a> {
         ensure_sufficient_stack(|| {
             match expr {
@@ -447,7 +450,7 @@ impl<'a> AstLower<'a> {
                         &ast::IdentifierReference {
                             span: elem.span,
                             name: "undefined".into(),
-                            reference_id: Default::default(),
+                            reference_id: Cell::default(),
                         },
                         ReferenceFlag::Read,
                     );
@@ -459,7 +462,7 @@ impl<'a> AstLower<'a> {
                         &ast::IdentifierReference {
                             span: elem.span,
                             name: "undefined".into(),
-                            reference_id: Default::default(),
+                            reference_id: Cell::default(),
                         },
                         ReferenceFlag::Read,
                     );
@@ -861,7 +864,7 @@ impl<'a> AstLower<'a> {
                     &ast::IdentifierReference {
                         span: expr.span(),
                         name: "undefined".into(),
-                        reference_id: Default::default(),
+                        reference_id: Cell::default(),
                     },
                     ReferenceFlag::Write,
                 );

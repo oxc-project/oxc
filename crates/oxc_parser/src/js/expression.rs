@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -55,7 +57,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(IdentifierReference { span, name, reference_id: Default::default() })
+        Ok(IdentifierReference { span, name, reference_id: Cell::default() })
     }
 
     /// `BindingIdentifier` : Identifier
@@ -65,7 +67,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(BindingIdentifier { span, name, symbol_id: Default::default() })
+        Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier> {

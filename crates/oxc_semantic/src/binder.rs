@@ -117,7 +117,7 @@ impl<'a> Binder for Function<'a> {
                     includes,
                     excludes,
                 );
-                ident.symbol_id.set(Some(symbol_id))
+                ident.symbol_id.set(Some(symbol_id));
             }
         }
 
@@ -171,7 +171,12 @@ impl<'a> Binder for CatchClause<'a> {
             // unless CatchParameter is CatchParameter : BindingIdentifier
             if let BindingPatternKind::BindingIdentifier(ident) = &param.kind {
                 let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
-                let symbol_id = builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+                let symbol_id = builder.declare_shadow_symbol(
+                    &ident.name,
+                    ident.span,
+                    current_scope_id,
+                    includes,
+                );
                 ident.symbol_id.set(Some(symbol_id));
             } else {
                 param.bound_names(&mut |ident| {
@@ -210,7 +215,7 @@ impl<'a> Binder for TSTypeAliasDeclaration<'a> {
             SymbolFlags::TypeAlias,
             SymbolFlags::TypeAliasExcludes,
         );
-        self.id.symbol_id.set(Some(symbol_id))
+        self.id.symbol_id.set(Some(symbol_id));
     }
 }
 
@@ -222,7 +227,7 @@ impl<'a> Binder for TSInterfaceDeclaration<'a> {
             SymbolFlags::Interface,
             SymbolFlags::InterfaceExcludes,
         );
-        self.id.symbol_id.set(Some(symbol_id))
+        self.id.symbol_id.set(Some(symbol_id));
     }
 }
 

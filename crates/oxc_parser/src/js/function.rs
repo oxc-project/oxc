@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::Box;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_diagnostics::Result;
@@ -332,7 +334,7 @@ impl<'a> Parser<'a> {
         let id = self.cur_kind().is_binding_identifier().then(|| {
             let (span, name) = self.parse_identifier_kind(Kind::Ident);
             self.check_identifier(span, &name);
-            BindingIdentifier { span, name, symbol_id: Default::default() }
+            BindingIdentifier { span, name, symbol_id: Cell::default() }
         });
         self.ctx = ctx;
 

@@ -1,4 +1,4 @@
-use std::{fmt, cell::Cell, hash::Hash};
+use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
