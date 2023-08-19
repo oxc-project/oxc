@@ -609,6 +609,62 @@ mod expression {
     }
 }
 
+pub(super) fn resolve_expression_statement_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => expression_statement::span(contexts, resolve_info),
+        "expression" => expression_statement::expression(contexts, resolve_info),
+        "strip_parens" => strip_parens(contexts),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ExpressionStatement'"
+            )
+        }
+    }
+}
+
+mod expression_statement {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn expression<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_expression_statement()
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "expected to have an expression_statement vertex, instead have: {v:#?}"
+                        )
+                    })
+                    .expression_statement
+                    .expression)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_function_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

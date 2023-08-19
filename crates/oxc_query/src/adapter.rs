@@ -113,6 +113,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "ExpressionStatementAST" | "ExpressionStatement" => {
+                super::properties::resolve_expression_statement_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "FnDeclarationAST" | "FnDeclaration" => {
                 super::properties::resolve_fn_declaration_property(
                     contexts,
@@ -310,6 +317,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "ExpressionStatementAST" | "ExpressionStatement" => {
+                super::edges::resolve_expression_statement_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "Function" => super::edges::resolve_function_edge(
                 contexts,
                 edge_name.as_ref(),

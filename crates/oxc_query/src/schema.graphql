@@ -781,7 +781,26 @@ interface Expression implements HasSpan {
   span: Span!
 }
 
-# ASTNode
+interface ExpressionStatement implements Statement & HasSpan {
+  expression: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ExpressionStatementAST implements Statement & HasSpan & ASTNode {
+  expression: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
 
 """
 A single VariableDeclarator. (const/let/var)!

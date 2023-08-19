@@ -58,6 +58,7 @@ pub enum Vertex<'a> {
     Parameter(Rc<ParameterVertex<'a>>),
     LogicalExpression(Rc<LogicalExpressionVertex<'a>>),
     UnaryExpression(Rc<UnaryExpressionVertex<'a>>),
+    ExpressionStatement(Rc<ExpressionStatementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -106,6 +107,7 @@ impl<'a> Vertex<'a> {
             Self::Parameter(data) => data.parameter.span,
             Self::LogicalExpression(data) => data.logical_expression.span,
             Self::UnaryExpression(data) => data.unary_expression.span,
+            Self::ExpressionStatement(data) => data.expression_statement.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -143,6 +145,7 @@ impl<'a> Vertex<'a> {
             Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::LogicalExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::UnaryExpression(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ExpressionStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -285,6 +288,7 @@ impl Typename for Vertex<'_> {
             Vertex::LogicalExpression(logical_expr) => logical_expr.typename(),
             Vertex::UnaryExpression(unary_expr) => unary_expr.typename(),
             Vertex::Statement(_) => "Statement",
+            Vertex::ExpressionStatement(expr_stmt) => expr_stmt.typename(),
         }
     }
 }
@@ -376,6 +380,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::UnaryExpression(unary_expression) => Vertex::UnaryExpression(
                 UnaryExpressionVertex { ast_node: Some(ast_node), unary_expression }.into(),
             ),
+            AstKind::ExpressionStatement(expression_statement) => Vertex::ExpressionStatement(
+                ExpressionStatementVertex { ast_node: Some(ast_node), expression_statement }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -387,6 +394,9 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
             Statement::ReturnStatement(return_statement) => {
                 Vertex::Return(ReturnVertex { ast_node: None, return_statement }.into())
             }
+            Statement::ExpressionStatement(expression_statement) => Vertex::ExpressionStatement(
+                ExpressionStatementVertex { ast_node: None, expression_statement }.into(),
+            ),
             _ => Vertex::Statement(stmt),
         }
     }
@@ -871,6 +881,23 @@ impl<'a> Typename for UnaryExpressionVertex<'a> {
             "UnaryExpressionAST"
         } else {
             "UnaryExpression"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ExpressionStatementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub expression_statement: &'a ExpressionStatement<'a>,
+}
+
+impl<'a> Typename for ExpressionStatementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ExpressionStatementAST"
+        } else {
+            "ExpressionStatement"
         }
     }
 }
