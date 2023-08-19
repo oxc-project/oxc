@@ -708,3 +708,26 @@ pub(super) fn resolve_unary_expression_property<'a, 'b: 'a>(
         }
     }
 }
+
+pub(super) fn resolve_var_ref_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_var_ref()
+                .unwrap_or_else(|| panic!("expected to have a varref vertex, instead have: {v:#?}"))
+                .identifier_reference
+                .name
+                .to_string()
+                .into()
+        }),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'VarRef'")
+        }
+    }
+}

@@ -719,6 +719,27 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   span: Span!
 }
 
+interface VarRef implements HasSpan & Expression {
+  name: String!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
+  name: String!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan
@@ -781,7 +802,52 @@ interface Expression implements HasSpan {
   span: Span!
 }
 
-# ASTNode
+interface ExpressionStatement implements Statement & HasSpan {
+  expression: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ExpressionStatementAST implements Statement & HasSpan & ASTNode & ExpressionStatement {
+  expression: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+ interface WhileStatement implements Statement & HasSpan {
+  condition: Expression!
+  body: Statement!
+  # HasSpan
+  span: Span!
+}
+
+type WhileStatementAST implements Statement & HasSpan & ASTNode & WhileStatement {
+  condition: Expression!
+  body: Statement!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface BlockStatement implements Statement & HasSpan {
+  statement: [Statement!]
+  # HasSpan
+  span: Span!
+}
+
+type BlockStatementAST implements Statement & HasSpan & ASTNode & BlockStatement {
+  statement: [Statement!]
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
 
 """
 A single VariableDeclarator. (const/let/var)!
