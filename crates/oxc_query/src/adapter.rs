@@ -227,6 +227,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     resolve_info,
                 )
             }
+            "VarRefAST" | "VarRef" => super::properties::resolve_var_ref_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             _ => {
                 unreachable!(
                     "attempted to read property '{property_name}' on unexpected type: {type_name}"
@@ -586,6 +591,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     self,
                 )
             }
+            "VarRefAST" | "VarRef" => super::edges::resolve_var_ref_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "WhileStatement" | "WhileStatementAST" => super::edges::resolve_while_statement_edge(
                 contexts,
                 edge_name.as_ref(),

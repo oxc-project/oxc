@@ -61,6 +61,7 @@ pub enum Vertex<'a> {
     ExpressionStatement(Rc<ExpressionStatementVertex<'a>>),
     WhileStatement(Rc<WhileStatementVertex<'a>>),
     BlockStatement(Rc<BlockStatementVertex<'a>>),
+    VarRef(Rc<VarRefVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -112,6 +113,7 @@ impl<'a> Vertex<'a> {
             Self::ExpressionStatement(data) => data.expression_statement.span,
             Self::WhileStatement(data) => data.while_statement.span,
             Self::BlockStatement(data) => data.block_statement.span,
+            Self::VarRef(data) => data.identifier_reference.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -152,6 +154,7 @@ impl<'a> Vertex<'a> {
             Vertex::ExpressionStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::WhileStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::BlockStatement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::VarRef(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -202,11 +205,8 @@ impl<'a> Vertex<'a> {
         }
     }
 
-    // todo: remove `Option` when this doesn't return none
-    pub fn try_from_identifier_reference(
-        _identifier_reference: &'a IdentifierReference,
-    ) -> Option<Self> {
-        None
+    pub fn try_from_identifier_reference(identifier_reference: &'a IdentifierReference) -> Self {
+        Vertex::VarRef(VarRefVertex { ast_node: None, identifier_reference }.into())
     }
 
     pub fn function_is_async(&self) -> bool {
@@ -297,10 +297,12 @@ impl Typename for Vertex<'_> {
             Vertex::ExpressionStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::WhileStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
+            Vertex::VarRef(var_ref) => var_ref.typename(),
         }
     }
 }
 
+#[allow(clippy::too_many_lines)]
 impl<'a> From<AstNode<'a>> for Vertex<'a> {
     fn from(ast_node: AstNode<'a>) -> Self {
         match ast_node.kind() {
@@ -401,6 +403,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::BlockStatement(block_statement) => Vertex::BlockStatement(
                 BlockStatementVertex { ast_node: Some(ast_node), block_statement }.into(),
             ),
+            AstKind::IdentifierReference(identifier_reference) => Vertex::VarRef(
+                VarRefVertex { ast_node: Some(ast_node), identifier_reference }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -464,6 +469,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::UnaryExpression(unary_expression) => Vertex::UnaryExpression(
                 UnaryExpressionVertex { ast_node: None, unary_expression }.into(),
             ),
+            Expression::Identifier(identifier_reference) => {
+                Vertex::VarRef(VarRefVertex { ast_node: None, identifier_reference }.into())
+            }
             _ => Vertex::Expression(expr),
         }
     }
@@ -956,6 +964,23 @@ impl<'a> Typename for BlockStatementVertex<'a> {
             "BlockStatementAST"
         } else {
             "BlockStatement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct VarRefVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub identifier_reference: &'a IdentifierReference,
+}
+
+impl<'a> Typename for VarRefVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "VarRefAST"
+        } else {
+            "VarRef"
         }
     }
 }

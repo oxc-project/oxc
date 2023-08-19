@@ -719,6 +719,27 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   span: Span!
 }
 
+interface VarRef implements HasSpan & Expression {
+  name: String!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type VarRefAST implements HasSpan & Expression & VarRef {
+  name: String!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan
