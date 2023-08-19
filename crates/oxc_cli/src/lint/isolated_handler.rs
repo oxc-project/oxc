@@ -1,6 +1,5 @@
 use std::{
     fs,
-    io::{BufWriter, Write},
     path::{Path, PathBuf},
     rc::Rc,
     sync::{
@@ -9,13 +8,8 @@ use std::{
     },
 };
 
-use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-    Error, GraphicalReportHandler, Severity,
-};
+use oxc_diagnostics::{DiagnosticService, Error};
 use oxc_linter::{Fixer, LintContext, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -24,19 +18,16 @@ use oxc_span::SourceType;
 use crate::{CliRunResult, Walk, WarningOptions};
 
 pub struct IsolatedLintHandler {
-    warning_options: Arc<WarningOptions>,
-
     linter: Arc<Linter>,
+    diagnostic_service: DiagnosticService,
 }
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("File is too long to fit on the screen")]
-#[diagnostic(help("{0:?} seems like a minified file"))]
-pub struct MinifiedFileError(pub PathBuf);
-
 impl IsolatedLintHandler {
-    pub(super) fn new(warning_options: Arc<WarningOptions>, linter: Arc<Linter>) -> Self {
-        Self { warning_options, linter }
+    pub(super) fn new(warning_options: &WarningOptions, linter: Arc<Linter>) -> Self {
+        let diagnostic_service = DiagnosticService::default()
+            .with_quiet(warning_options.quiet)
+            .with_max_warnings(warning_options.max_warnings);
+        Self { linter, diagnostic_service }
     }
 
     /// # Panics
@@ -46,30 +37,21 @@ impl IsolatedLintHandler {
         let now = std::time::Instant::now();
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
-        let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
 
-        self.process_paths(walk, &number_of_files, tx_error);
-        let (number_of_warnings, number_of_errors) = self.process_diagnostics(&rx_error);
+        self.process_paths(walk, &number_of_files);
+        self.diagnostic_service.run();
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
             number_of_rules: self.linter.number_of_rules(),
             number_of_files: number_of_files.load(Ordering::Relaxed),
-            number_of_warnings,
-            number_of_errors,
-            max_warnings_exceeded: self
-                .warning_options
-                .max_warnings
-                .map_or(false, |max_warnings| number_of_warnings > max_warnings),
+            number_of_warnings: self.diagnostic_service.warnings_count(),
+            number_of_errors: self.diagnostic_service.errors_count(),
+            max_warnings_exceeded: self.diagnostic_service.max_warnings_exceeded(),
         }
     }
 
-    fn process_paths(
-        &self,
-        walk: Walk,
-        number_of_files: &Arc<AtomicUsize>,
-        tx_error: mpsc::Sender<(PathBuf, Vec<Error>)>,
-    ) {
+    fn process_paths(&self, walk: Walk, number_of_files: &Arc<AtomicUsize>) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
         let number_of_files = Arc::clone(number_of_files);
@@ -82,72 +64,25 @@ impl IsolatedLintHandler {
             number_of_files.store(count, Ordering::Relaxed);
         });
 
+        let mut processing = 0;
         let linter = Arc::clone(&self.linter);
+        let tx_error = self.diagnostic_service.sender().clone();
         rayon::spawn(move || {
             while let Ok(path) = rx_path.recv() {
+                processing += 1;
                 let tx_error = tx_error.clone();
                 let linter = Arc::clone(&linter);
                 rayon::spawn(move || {
                     if let Some(diagnostics) = Self::lint_path(&linter, &path) {
-                        tx_error.send(diagnostics).unwrap();
+                        tx_error.send(Some(diagnostics)).unwrap();
                     }
-                    drop(tx_error);
+                    processing -= 1;
+                    if processing == 0 {
+                        tx_error.send(None).unwrap();
+                    }
                 });
             }
         });
-    }
-
-    fn process_diagnostics(
-        &self,
-        rx_error: &mpsc::Receiver<(PathBuf, Vec<Error>)>,
-    ) -> (usize, usize) {
-        let mut number_of_warnings = 0;
-        let mut number_of_errors = 0;
-        let mut buf_writer = BufWriter::new(std::io::stdout());
-        let handler = GraphicalReportHandler::new();
-
-        while let Ok((path, diagnostics)) = rx_error.recv() {
-            let mut output = String::new();
-            for diagnostic in diagnostics {
-                let severity = diagnostic.severity();
-                let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity.is_none() || severity == Some(Severity::Error);
-                if is_warning || is_error {
-                    if is_warning {
-                        number_of_warnings += 1;
-                    }
-                    if is_error {
-                        number_of_errors += 1;
-                    }
-                    // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-                    // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    if self.warning_options.quiet {
-                        continue;
-                    }
-
-                    if let Some(max_warnings) = self.warning_options.max_warnings {
-                        if number_of_warnings > max_warnings {
-                            continue;
-                        }
-                    }
-                }
-
-                let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
-                // Skip large output and print only once
-                if err.lines().any(|line| line.len() >= 400) {
-                    let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
-                    err = format!("{minified_diagnostic:?}");
-                    output = err;
-                    break;
-                }
-                output.push_str(&err);
-            }
-            buf_writer.write_all(output.as_bytes()).unwrap();
-        }
-
-        buf_writer.flush().unwrap();
-        (number_of_warnings, number_of_errors)
     }
 
     fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
@@ -161,7 +96,7 @@ impl IsolatedLintHandler {
             .parse();
 
         if !ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
+            return Some(DiagnosticService::wrap_diagnostics(path, &source_text, ret.errors));
         };
 
         let program = allocator.alloc(ret.program);
@@ -172,7 +107,11 @@ impl IsolatedLintHandler {
             .build(program);
 
         if !semantic_ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
+            return Some(DiagnosticService::wrap_diagnostics(
+                path,
+                &source_text,
+                semantic_ret.errors,
+            ));
         };
 
         let lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
@@ -186,23 +125,10 @@ impl IsolatedLintHandler {
             let fix_result = Fixer::new(&source_text, result).fix();
             fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
             let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
-            return Some(Self::wrap_diagnostics(path, &source_text, errors));
+            return Some(DiagnosticService::wrap_diagnostics(path, &source_text, errors));
         }
 
         let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
-        Some(Self::wrap_diagnostics(path, &source_text, errors))
-    }
-
-    fn wrap_diagnostics(
-        path: &Path,
-        source_text: &str,
-        diagnostics: Vec<Error>,
-    ) -> (PathBuf, Vec<Error>) {
-        let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
-        let diagnostics = diagnostics
-            .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
-            .collect();
-        (path.to_path_buf(), diagnostics)
+        Some(DiagnosticService::wrap_diagnostics(path, &source_text, errors))
     }
 }
