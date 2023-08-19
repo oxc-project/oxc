@@ -619,7 +619,6 @@ pub(super) fn resolve_expression_statement_edge<'a, 'b: 'a>(
     match edge_name {
         "span" => expression_statement::span(contexts, resolve_info),
         "expression" => expression_statement::expression(contexts, resolve_info),
-        "strip_parens" => strip_parens(contexts),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
