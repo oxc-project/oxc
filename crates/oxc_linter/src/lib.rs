@@ -14,7 +14,7 @@ pub mod rule;
 mod rule_timer;
 mod rules;
 
-use std::{self, fs, io::Write, rc::Rc};
+use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
@@ -146,6 +146,26 @@ impl Linter {
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
+    }
+
+    pub fn print_execution_times_if_enable(&self) {
+        if !self.options.timing {
+            return;
+        }
+        let mut timings =
+            self.rules().iter().map(|rule| (rule.name(), rule.execute_time())).collect::<Vec<_>>();
+
+        timings.sort_by_key(|x| x.1);
+        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
+
+        println!("Rule timings in milliseconds:");
+        println!("Total: {:.2}ms", total * 1000.0);
+        println!("{:>7} | {:>5} | Rule", "Time", "%");
+        for (name, duration) in timings.iter().rev() {
+            let millis = duration.as_secs_f64() * 1000.0;
+            let relative = duration.as_secs_f64() / total * 100.0;
+            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
+        }
     }
 }
 

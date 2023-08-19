@@ -10,7 +10,7 @@ pub trait Runner: Send + Sync {
     fn new(matches: Self::Options) -> Self;
 
     /// Executes the runner, providing some result to the CLI.
-    fn run(&self) -> CliRunResult;
+    fn run(self) -> CliRunResult;
 }
 
 #[derive(Debug)]

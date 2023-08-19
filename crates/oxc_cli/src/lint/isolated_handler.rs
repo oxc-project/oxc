@@ -21,12 +21,10 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use crate::{CliOptions, CliRunResult, Walk, WalkOptions};
+use crate::{CliRunResult, Walk, WarningOptions};
 
 pub struct IsolatedLintHandler {
-    cli_options: Arc<CliOptions>,
-
-    walk_options: Arc<WalkOptions>,
+    warning_options: Arc<WarningOptions>,
 
     linter: Arc<Linter>,
 }
@@ -37,24 +35,20 @@ pub struct IsolatedLintHandler {
 pub struct MinifiedFileError(pub PathBuf);
 
 impl IsolatedLintHandler {
-    pub(super) fn new(
-        cli_options: Arc<CliOptions>,
-        walk_options: Arc<WalkOptions>,
-        linter: Arc<Linter>,
-    ) -> Self {
-        Self { cli_options, walk_options, linter }
+    pub(super) fn new(warning_options: Arc<WarningOptions>, linter: Arc<Linter>) -> Self {
+        Self { warning_options, linter }
     }
 
     /// # Panics
     ///
     /// * When `mpsc::channel` fails to send.
-    pub(super) fn run(&self) -> CliRunResult {
+    pub(super) fn run(&self, walk: Walk) -> CliRunResult {
         let now = std::time::Instant::now();
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
 
-        self.process_paths(&number_of_files, tx_error);
+        self.process_paths(walk, &number_of_files, tx_error);
         let (number_of_warnings, number_of_errors) = self.process_diagnostics(&rx_error);
 
         CliRunResult::LintResult {
@@ -64,7 +58,7 @@ impl IsolatedLintHandler {
             number_of_warnings,
             number_of_errors,
             max_warnings_exceeded: self
-                .cli_options
+                .warning_options
                 .max_warnings
                 .map_or(false, |max_warnings| number_of_warnings > max_warnings),
         }
@@ -72,12 +66,12 @@ impl IsolatedLintHandler {
 
     fn process_paths(
         &self,
+        walk: Walk,
         number_of_files: &Arc<AtomicUsize>,
         tx_error: mpsc::Sender<(PathBuf, Vec<Error>)>,
     ) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
-        let walk = Walk::new(&self.walk_options);
         let number_of_files = Arc::clone(number_of_files);
         rayon::spawn(move || {
             let mut count = 0;
@@ -127,11 +121,11 @@ impl IsolatedLintHandler {
                     }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    if self.cli_options.quiet {
+                    if self.warning_options.quiet {
                         continue;
                     }
 
-                    if let Some(max_warnings) = self.cli_options.max_warnings {
+                    if let Some(max_warnings) = self.warning_options.max_warnings {
                         if number_of_warnings > max_warnings {
                             continue;
                         }

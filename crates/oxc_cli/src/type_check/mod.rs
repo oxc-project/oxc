@@ -62,7 +62,7 @@ impl Runner for TypeCheckRunner {
     }
 
     /// # Panics
-    fn run(&self) -> CliRunResult {
+    fn run(self) -> CliRunResult {
         let now = std::time::Instant::now();
 
         let path = Path::new(&self.options.path);
