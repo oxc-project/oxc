@@ -9,8 +9,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
-        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
+        ExpressionStatement, MemberExpression, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, Program, PropertyKey, Statement, StringLiteral,
+        TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -58,7 +59,10 @@ impl<'a> TestCase<'a> {
                     Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
                 });
             if test_code.contains('\n') {
-                Cow::Owned(format!(r#"("{}", {option_code})"#, test_code.replace('\n', "\n\t\t\t")))
+                Cow::Owned(format!(
+                    r#"("{}", {option_code})"#,
+                    test_code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+                ))
             } else {
                 Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
             }
@@ -122,6 +126,37 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                            }
+                            // handle code like ["{", "a: 1", "}"].join("\n")
+                            Expression::CallExpression(call_expr) => {
+                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::Expression(Expression::StringLiteral(string)) if string.value == "\n")) {
+                                    continue;
+                                }
+                                let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+                                    continue;
+                                };
+                                let MemberExpression::StaticMemberExpression(member) = &member_expr.0 else {
+                                    continue;
+                                };
+                                if member.property.name != "join" {
+                                    continue;
+                                }
+                                let Expression::ArrayExpression(array_expr) = &member.object else {
+                                    continue;
+                                };
+                                Some(Cow::Owned(
+                                    array_expr
+                                        .elements
+                                        .iter()
+                                        .map(|arg| match arg {
+                                            ArrayExpressionElement::Expression(
+                                                Expression::StringLiteral(string),
+                                            ) => string.value.as_str(),
+                                            _ => "",
+                                        })
+                                        .collect::<Vec<_>>()
+                                        .join("\n"),
+                                ))
                             }
                             _ => continue,
                         }
@@ -321,10 +356,20 @@ fn main() {
             let mut state = State::new(&body);
             state.visit_program(program);
 
-            pass_cases =
-                state.pass_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
-            fail_cases =
-                state.fail_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
+            pass_cases = state
+                .pass_cases()
+                .iter()
+                .map(TestCase::to_code)
+                .filter(|t| !t.is_empty())
+                .collect::<Vec<_>>()
+                .join(",\n");
+            fail_cases = state
+                .fail_cases()
+                .iter()
+                .map(TestCase::to_code)
+                .filter(|t| !t.is_empty())
+                .collect::<Vec<_>>()
+                .join(",\n");
 
             Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases)
         }
