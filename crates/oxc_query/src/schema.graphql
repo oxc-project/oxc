@@ -796,14 +796,14 @@ type ExpressionStatementAST implements Statement & HasSpan & ASTNode {
   span: Span!
 }
 
-interface WhileStatement implements Statement & HasSpan {
+ interface WhileStatement implements Statement & HasSpan {
   condition: Expression!
   body: Statement!
   # HasSpan
   span: Span!
 }
 
-type WhileStatementAST implements Statement & HasSpan & ASTNode {
+type WhileStatementAST implements Statement & HasSpan & ASTNode & WhileStatement {
   condition: Expression!
   body: Statement!
   # ASTNode
