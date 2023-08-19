@@ -834,6 +834,23 @@ type WhileStatementAST implements Statement & HasSpan & ASTNode & WhileStatement
   span: Span!
 }
 
+interface DoWhileStatement implements Statement & HasSpan {
+  condition: Expression!
+  body: Statement!
+  # HasSpan
+  span: Span!
+}
+
+type DoWhileStatementAST implements Statement & HasSpan & ASTNode & DoWhileStatement {
+  condition: Expression!
+  body: Statement!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 interface BlockStatement implements Statement & HasSpan {
   statement: [Statement!]
   # HasSpan

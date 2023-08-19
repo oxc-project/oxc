@@ -555,6 +555,77 @@ mod default_import {
     }
 }
 
+pub(super) fn resolve_do_while_statement_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "condition" => do_while_statement::condition(contexts, resolve_info),
+        "body" => do_while_statement::body(contexts, resolve_info),
+        "span" => do_while_statement::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'DoWhileStatement'"
+            )
+        }
+    }
+}
+
+mod do_while_statement {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_do_while_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a dowhilestatement vertex, instead have: {v:#?}")
+                    })
+                    .do_while_statement
+                    .test)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_do_while_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a dowhilestatement vertex, instead have: {v:#?}")
+                    })
+                    .do_while_statement
+                    .body)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

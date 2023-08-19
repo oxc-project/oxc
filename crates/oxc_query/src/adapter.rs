@@ -316,6 +316,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "DoWhileStatementAST" | "DoWhileStatement" => {
+                super::edges::resolve_do_while_statement_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "Expression" => super::edges::resolve_expression_edge(
                 contexts,
                 edge_name.as_ref(),

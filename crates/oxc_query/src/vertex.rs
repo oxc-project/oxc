@@ -62,6 +62,7 @@ pub enum Vertex<'a> {
     WhileStatement(Rc<WhileStatementVertex<'a>>),
     BlockStatement(Rc<BlockStatementVertex<'a>>),
     VarRef(Rc<VarRefVertex<'a>>),
+    DoWhileStatement(Rc<DoWhileStatementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -112,6 +113,7 @@ impl<'a> Vertex<'a> {
             Self::UnaryExpression(data) => data.unary_expression.span,
             Self::ExpressionStatement(data) => data.expression_statement.span,
             Self::WhileStatement(data) => data.while_statement.span,
+            Self::DoWhileStatement(data) => data.do_while_statement.span,
             Self::BlockStatement(data) => data.block_statement.span,
             Self::VarRef(data) => data.identifier_reference.span,
             Self::File
@@ -155,6 +157,7 @@ impl<'a> Vertex<'a> {
             Vertex::WhileStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::BlockStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::VarRef(data) => data.ast_node.map(|x| x.id()),
+            Vertex::DoWhileStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -296,6 +299,7 @@ impl Typename for Vertex<'_> {
             Vertex::Statement(_) => "Statement",
             Vertex::ExpressionStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::WhileStatement(expr_stmt) => expr_stmt.typename(),
+            Vertex::DoWhileStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
             Vertex::VarRef(var_ref) => var_ref.typename(),
         }
@@ -406,6 +410,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::IdentifierReference(identifier_reference) => Vertex::VarRef(
                 VarRefVertex { ast_node: Some(ast_node), identifier_reference }.into(),
             ),
+            AstKind::DoWhileStatement(do_while_statement) => Vertex::DoWhileStatement(
+                DoWhileStatementVertex { ast_node: Some(ast_node), do_while_statement }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -422,6 +429,9 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
             ),
             Statement::WhileStatement(while_statement) => Vertex::WhileStatement(
                 WhileStatementVertex { ast_node: None, while_statement }.into(),
+            ),
+            Statement::DoWhileStatement(do_while_statement) => Vertex::DoWhileStatement(
+                DoWhileStatementVertex { ast_node: None, do_while_statement }.into(),
             ),
             Statement::BlockStatement(block_statement) => Vertex::BlockStatement(
                 BlockStatementVertex { ast_node: None, block_statement }.into(),
@@ -981,6 +991,23 @@ impl<'a> Typename for VarRefVertex<'a> {
             "VarRefAST"
         } else {
             "VarRef"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct DoWhileStatementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub do_while_statement: &'a DoWhileStatement<'a>,
+}
+
+impl<'a> Typename for DoWhileStatementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "DoWhileStatementAST"
+        } else {
+            "DoWhileStatement"
         }
     }
 }
