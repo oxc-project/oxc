@@ -1,9 +1,13 @@
-use std::fmt;
+use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    reference::ReferenceId,
+    symbol::SymbolId,
 };
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -254,21 +258,51 @@ pub struct IdentifierName {
 }
 
 /// Identifier Reference
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_id: Cell<Option<ReferenceId>>,
+}
+
+impl Hash for IdentifierReference {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl IdentifierReference {
+    pub fn new(name: Atom, span: Span) -> Self {
+        Self { name, span, reference_id: Cell::default() }
+    }
 }
 
 /// Binding Identifier
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub symbol_id: Cell<Option<SymbolId>>,
+}
+
+impl Hash for BindingIdentifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl BindingIdentifier {
+    pub fn new(name: Atom, span: Span) -> Self {
+        Self { name, span, symbol_id: Cell::default() }
+    }
 }
 
 /// Label Identifier
