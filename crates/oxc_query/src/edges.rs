@@ -2977,7 +2977,7 @@ pub(super) fn resolve_while_statement_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'WhileStateent'"
+                "attempted to resolve unexpected edge '{edge_name}' on type 'WhileStatement'"
             )
         }
     }
