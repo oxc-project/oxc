@@ -60,6 +60,7 @@ pub enum Vertex<'a> {
     UnaryExpression(Rc<UnaryExpressionVertex<'a>>),
     ExpressionStatement(Rc<ExpressionStatementVertex<'a>>),
     WhileStatement(Rc<WhileStatementVertex<'a>>),
+    BlockStatement(Rc<BlockStatementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -110,6 +111,7 @@ impl<'a> Vertex<'a> {
             Self::UnaryExpression(data) => data.unary_expression.span,
             Self::ExpressionStatement(data) => data.expression_statement.span,
             Self::WhileStatement(data) => data.while_statement.span,
+            Self::BlockStatement(data) => data.block_statement.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -149,6 +151,7 @@ impl<'a> Vertex<'a> {
             Vertex::UnaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::ExpressionStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::WhileStatement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::BlockStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -293,6 +296,7 @@ impl Typename for Vertex<'_> {
             Vertex::Statement(_) => "Statement",
             Vertex::ExpressionStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::WhileStatement(expr_stmt) => expr_stmt.typename(),
+            Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
         }
     }
 }
@@ -394,6 +398,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
                 }
                 .into(),
             ),
+            AstKind::BlockStatement(block_statement) => Vertex::BlockStatement(
+                BlockStatementVertex { ast_node: Some(ast_node), block_statement }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -410,6 +417,9 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
             ),
             Statement::WhileStatement(while_statement) => Vertex::WhileStatement(
                 WhileStatementVertex { ast_node: None, while_statement }.into(),
+            ),
+            Statement::BlockStatement(block_statement) => Vertex::BlockStatement(
+                BlockStatementVertex { ast_node: None, block_statement }.into(),
             ),
             _ => Vertex::Statement(stmt),
         }
@@ -929,6 +939,23 @@ impl<'a> Typename for WhileStatementVertex<'a> {
             "WhileStatementAST"
         } else {
             "WhileStatement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct BlockStatementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub block_statement: &'a BlockStatement<'a>,
+}
+
+impl<'a> Typename for BlockStatementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "BlockStatementAST"
+        } else {
+            "BlockStatement"
         }
     }
 }

@@ -272,6 +272,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "BlockStatementAST" | "BlockStatement" => super::edges::resolve_block_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "Class" | "ClassAST" => super::edges::resolve_class_edge(
                 contexts,
                 edge_name.as_ref(),
