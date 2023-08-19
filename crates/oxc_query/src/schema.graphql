@@ -796,6 +796,23 @@ type ExpressionStatementAST implements Statement & HasSpan & ASTNode {
   span: Span!
 }
 
+interface WhileStatement implements Statement & HasSpan {
+  condition: Expression!
+  body: Statement!
+  # HasSpan
+  span: Span!
+}
+
+type WhileStatementAST implements Statement & HasSpan & ASTNode {
+  condition: Expression!
+  body: Statement!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 """
 A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,

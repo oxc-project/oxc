@@ -579,6 +579,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     self,
                 )
             }
+            "WhileStatement" | "WhileStatementAST" => super::edges::resolve_while_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             _ => {
                 unreachable!(
                     "attempted to resolve edge '{edge_name}' on unexpected type: {type_name}"
