@@ -285,11 +285,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);
-        if !source_type.is_typescript_definition() && !source_type.is_typescript() {
-            assert!(
-                are_all_identifiers_resolved(&semantic_ret.semantic),
-                "\nfailed at:\n-- source: {source_text:?}\n-- ast: {program:#?}",
-            );
+        if !source_type.is_typescript_definition()
+            && !source_type.is_typescript()
+            && !are_all_identifiers_resolved(&semantic_ret.semantic)
+        {
+            return TestResult::ParseError("Unset symbol / reference".to_string(), true);
         }
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
