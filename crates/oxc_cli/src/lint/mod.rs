@@ -42,8 +42,7 @@ impl Runner for LintRunner {
         let lint_options =
             LintOptions { filter, fix: fix_options.fix, timing: misc_options.timing };
         let linter = Arc::new(Linter::from_options(lint_options));
-        let result =
-            IsolatedLintHandler::new(Arc::new(warning_options), Arc::clone(&linter)).run(walk);
+        let result = IsolatedLintHandler::new(&warning_options, Arc::clone(&linter)).run(walk);
 
         linter.print_execution_times_if_enable();
 
