@@ -787,7 +787,7 @@ interface ExpressionStatement implements Statement & HasSpan {
   span: Span!
 }
 
-type ExpressionStatementAST implements Statement & HasSpan & ASTNode {
+type ExpressionStatementAST implements Statement & HasSpan & ASTNode & ExpressionStatement {
   expression: Expression!
   # ASTNode
   parent: ASTNode
