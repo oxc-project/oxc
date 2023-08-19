@@ -728,7 +728,7 @@ interface VarRef implements HasSpan & Expression {
   span: Span!
 }
 
-type VarRefAST implements HasSpan & Expression & VarRef {
+type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   name: String!
   # ASTNode
   parent: ASTNode
