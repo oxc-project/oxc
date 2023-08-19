@@ -1,7 +1,5 @@
 //! Cover Grammar for Destructuring Assignment
 
-use std::cell::Cell;
-
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
@@ -152,11 +150,10 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
     fn cover(property: ObjectProperty<'a>, p: &mut Parser<'a>) -> Result<Self> {
         if property.shorthand {
             let binding = match property.key {
-                PropertyKey::Identifier(ident) => IdentifierReference {
-                    span: ident.span,
-                    name: ident.unbox().name,
-                    reference_id: Cell::default(),
-                },
+                PropertyKey::Identifier(ident) => {
+                    let ident = ident.unbox();
+                    IdentifierReference::new(ident.name, ident.span)
+                }
                 _ => return Err(p.unexpected()),
             };
             // convert `CoverInitializedName`

@@ -1,7 +1,5 @@
 #![allow(clippy::unused_self)]
 
-use std::cell::Cell;
-
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
@@ -447,11 +445,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXElement(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference {
-                            span: elem.span,
-                            name: "undefined".into(),
-                            reference_id: Cell::default(),
-                        },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -459,11 +453,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXFragment(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference {
-                            span: elem.span,
-                            name: "undefined".into(),
-                            reference_id: Cell::default(),
-                        },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -861,11 +851,7 @@ impl<'a> AstLower<'a> {
             expr => {
                 // return undefined because this is invalid syntax
                 let ident = self.lower_identifier_reference(
-                    &ast::IdentifierReference {
-                        span: expr.span(),
-                        name: "undefined".into(),
-                        reference_id: Cell::default(),
-                    },
+                    &ast::IdentifierReference::new("undefined".into(), expr.span()),
                     ReferenceFlag::Write,
                 );
                 self.hir.assignment_target_identifier(ident)

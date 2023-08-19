@@ -275,6 +275,12 @@ impl Hash for IdentifierReference {
     }
 }
 
+impl IdentifierReference {
+    pub fn new(name: Atom, span: Span) -> Self {
+        Self { name, span, reference_id: Cell::default() }
+    }
+}
+
 /// Binding Identifier
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -290,6 +296,12 @@ impl Hash for BindingIdentifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.span.hash(state);
         self.name.hash(state);
+    }
+}
+
+impl BindingIdentifier {
+    pub fn new(name: Atom, span: Span) -> Self {
+        Self { name, span, symbol_id: Cell::default() }
     }
 }
 

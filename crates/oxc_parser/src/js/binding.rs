@@ -1,5 +1,3 @@
-use std::cell::Cell;
-
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -92,11 +90,7 @@ impl<'a> Parser<'a> {
             //       ^ BindingIdentifier
             if let PropertyKey::Identifier(ident) = &key {
                 shorthand = true;
-                let binding_identifier = BindingIdentifier {
-                    span: ident.span,
-                    name: ident.name.clone(),
-                    symbol_id: Cell::default(),
-                };
+                let binding_identifier = BindingIdentifier::new(ident.name.clone(), ident.span);
                 let identifier = self.ast.binding_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
                 self.parse_initializer(span, left)?
