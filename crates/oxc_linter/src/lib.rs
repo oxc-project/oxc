@@ -13,6 +13,7 @@ mod options;
 pub mod rule;
 mod rule_timer;
 mod rules;
+mod service;
 
 use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
@@ -24,6 +25,7 @@ pub use crate::{
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
+    service::LintService,
 };
 pub(crate) use rules::{RuleEnum, RULES};
 
