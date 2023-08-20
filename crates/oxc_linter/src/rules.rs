@@ -92,6 +92,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod expect_expect;
     pub mod no_commented_out_tests;
     pub mod no_disabled_tests;
     pub mod no_focused_tests;
@@ -186,5 +187,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_focused_tests,
     jest::valid_describe_callback,
     jest::no_commented_out_tests,
+    jest::expect_expect,
     unicorn::no_instanceof_array,
 }

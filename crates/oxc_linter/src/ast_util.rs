@@ -265,3 +265,14 @@ pub fn get_name_from_property_key(key: &PropertyKey<'_>) -> Option<Atom> {
         },
     }
 }
+
+pub fn get_node_by_ident<'a, 'b>(
+    ident: &IdentifierReference,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b AstNode<'a>> {
+    let symbol_table = ctx.semantic().symbols();
+    let reference_id = ident.reference_id.get()?;
+    let reference = symbol_table.get_reference(reference_id);
+    let symbol_id = reference.symbol_id()?;
+    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+}
