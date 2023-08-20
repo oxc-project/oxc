@@ -2801,6 +2801,96 @@ mod resolve_spread_into_object_edge {
     }
 }
 
+pub(super) fn resolve_ternary_expression_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => ternary_expression::span(contexts, resolve_info),
+        "condition" => ternary_expression::condition(contexts, resolve_info),
+        "if_true" => ternary_expression::if_true(contexts, resolve_info),
+        "if_false" => ternary_expression::if_false(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'TernaryExpression'"
+            )
+        }
+    }
+}
+
+mod ternary_expression {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .test)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn if_true<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .consequent)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn if_false<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .alternate)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_type_annotation_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

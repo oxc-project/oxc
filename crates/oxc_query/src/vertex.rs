@@ -64,6 +64,7 @@ pub enum Vertex<'a> {
     VarRef(Rc<VarRefVertex<'a>>),
     DoWhileStatement(Rc<DoWhileStatementVertex<'a>>),
     ForStatement(Rc<ForStatementVertex<'a>>),
+    TernaryExpression(Rc<TernaryExpressionVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -118,6 +119,7 @@ impl<'a> Vertex<'a> {
             Self::BlockStatement(data) => data.block_statement.span,
             Self::VarRef(data) => data.identifier_reference.span,
             Self::ForStatement(data) => data.for_statement.span,
+            Self::TernaryExpression(data) => data.conditional_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -161,6 +163,7 @@ impl<'a> Vertex<'a> {
             Vertex::VarRef(data) => data.ast_node.map(|x| x.id()),
             Vertex::DoWhileStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::ForStatement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::TernaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -306,6 +309,7 @@ impl Typename for Vertex<'_> {
             Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
             Vertex::VarRef(var_ref) => var_ref.typename(),
             Vertex::ForStatement(for_stmt) => for_stmt.typename(),
+            Vertex::TernaryExpression(ternary_expr) => ternary_expr.typename(),
         }
     }
 }
@@ -420,6 +424,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ForStatement(for_statement) => Vertex::ForStatement(
                 ForStatementVertex { ast_node: Some(ast_node), for_statement }.into(),
             ),
+            AstKind::ConditionalExpression(conditional_expression) => Vertex::TernaryExpression(
+                TernaryExpressionVertex { ast_node: Some(ast_node), conditional_expression }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -492,6 +499,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::Identifier(identifier_reference) => {
                 Vertex::VarRef(VarRefVertex { ast_node: None, identifier_reference }.into())
             }
+            Expression::ConditionalExpression(conditional_expression) => Vertex::TernaryExpression(
+                TernaryExpressionVertex { ast_node: None, conditional_expression }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
@@ -1035,6 +1045,23 @@ impl<'a> Typename for ForStatementVertex<'a> {
             "ForStatementAST"
         } else {
             "ForStatement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct TernaryExpressionVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub conditional_expression: &'a ConditionalExpression<'a>,
+}
+
+impl<'a> Typename for TernaryExpressionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "TernaryExpressionAST"
+        } else {
+            "TernaryExpression"
         }
     }
 }

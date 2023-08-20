@@ -885,6 +885,31 @@ type BlockStatementAST implements Statement & HasSpan & ASTNode & BlockStatement
   span: Span!
 }
 
+interface TernaryExpression implements Expression & HasSpan {
+  condition: Expression!
+  if_true: Expression!
+  if_false: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type TernaryExpressionAST implements Expression & HasSpan & ASTNode {
+  condition: Expression!
+  if_true: Expression!
+  if_false: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
 """
 A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,
