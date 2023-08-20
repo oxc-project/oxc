@@ -287,7 +287,10 @@ interface NumberLiteral implements HasSpan & Expression {
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 }
 
 type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral {
@@ -301,7 +304,10 @@ type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral 
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 }
 
 # Expression
@@ -320,7 +326,10 @@ interface JSXElement implements Expression & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -374,7 +383,10 @@ interface ObjectLiteral implements Expression & HasSpan {
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -385,7 +397,10 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -419,7 +434,10 @@ interface FnCall implements Expression & HasSpan {
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -430,7 +448,10 @@ type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -451,7 +472,10 @@ interface Reassignment implements HasSpan & Expression {
   right: Expression!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -469,7 +493,10 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   right: Expression!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
   # ASTNode
@@ -513,7 +540,10 @@ interface Function implements Expression & HasSpan {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -533,7 +563,10 @@ interface UnaryExpression implements HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -557,7 +590,10 @@ type UnaryExpressionAST implements UnaryExpression & ASTNode & HasSpan & Express
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -578,7 +614,10 @@ interface LogicalExpression implements HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -603,7 +642,10 @@ type LogicalExpressionAST implements LogicalExpression & ASTNode & HasSpan & Exp
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -642,7 +684,10 @@ interface ArrowFunction implements Function & HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -661,7 +706,10 @@ type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & 
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
   # ASTNode
@@ -692,7 +740,10 @@ interface FnDeclaration implements Function & HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -719,7 +770,10 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -728,7 +782,10 @@ interface VarRef implements HasSpan & Expression {
   name: String!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -740,7 +797,10 @@ type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -771,7 +831,10 @@ interface DotProperty implements HasSpan & Expression {
   accessed_property: Name!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -790,7 +853,10 @@ type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -801,7 +867,10 @@ interface Expression implements HasSpan {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
 
   # HasSpan
   span: Span!
@@ -896,7 +965,10 @@ interface TernaryExpression implements Expression & HasSpan {
   if_false: Expression!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -910,7 +982,10 @@ type TernaryExpressionAST implements Expression & HasSpan & ASTNode & TernaryExp
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -920,7 +995,10 @@ interface New implements Expression & HasSpan {
   argument: [Argument!]
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -933,7 +1011,10 @@ type NewAST implements Expression & HasSpan & New & ASTNode {
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -942,7 +1023,10 @@ interface Throw implements Expression & HasSpan {
   to_throw: Expression!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -954,7 +1038,10 @@ type ThrowAST implements Expression & HasSpan & Throw & ASTNode {
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # HasSpan
   span: Span!
 }
@@ -1027,7 +1114,10 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
