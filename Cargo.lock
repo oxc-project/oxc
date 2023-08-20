@@ -1251,9 +1251,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "2.13.2"
+version = "2.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ede2d12cd6fce44da537a4be1f5510c73be2506c2e32dfaaafd1f36968f3a0e"
+checksum = "fd063c93b900149304e3ba96ce5bf210cd4f81ef5eb80ded0d100df3e85a3ac0"
 dependencies = [
  "bitflags 2.4.0",
  "ctor",
@@ -1483,7 +1483,6 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
  "ryu-js",
  "serde",
  "serde_json",
@@ -1665,7 +1664,6 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "num-bigint",
- "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_lower",
@@ -1736,7 +1734,6 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "serde",
- "serde_json",
  "trustfall",
  "url",
 ]
@@ -1823,7 +1820,6 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "serde_json",
 ]
 
 [[package]]
@@ -1843,8 +1839,6 @@ dependencies = [
  "oxc_span",
  "rayon",
  "ropey",
- "serde",
- "serde_json",
  "tokio",
  "tower-lsp",
 ]

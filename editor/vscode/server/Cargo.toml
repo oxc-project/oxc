@@ -28,7 +28,5 @@ ignore          = { workspace = true, features = ["simd-accel"] }
 miette          = { workspace = true, features = ["fancy-no-backtrace"] }
 rayon           = { workspace = true }
 ropey           = { workspace = true }
-serde_json      = { workspace = true }
-serde           = { workspace = true, features = ["derive"] }
 tokio           = { workspace = true, features = ["full"] }
 tower-lsp       = { workspace = true, features = ["proposed"]}
