@@ -17,6 +17,21 @@ use crate::{
     Adapter,
 };
 
+pub(super) fn resolve_array_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Array'")
+        }
+    }
+}
+
 pub(super) fn resolve_argument_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,

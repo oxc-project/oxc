@@ -67,6 +67,7 @@ pub enum Vertex<'a> {
     TernaryExpression(Rc<TernaryExpressionVertex<'a>>),
     New(Rc<NewVertex<'a>>),
     Throw(Rc<ThrowVertex<'a>>),
+    Array(Rc<ArrayVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -124,6 +125,7 @@ impl<'a> Vertex<'a> {
             Self::TernaryExpression(data) => data.conditional_expression.span,
             Self::New(data) => data.new_expression.span,
             Self::Throw(data) => data.throw_statement.span,
+            Self::Array(data) => data.array_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -170,6 +172,7 @@ impl<'a> Vertex<'a> {
             Vertex::TernaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::New(data) => data.ast_node.map(|x| x.id()),
             Vertex::Throw(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Array(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -318,6 +321,7 @@ impl Typename for Vertex<'_> {
             Vertex::TernaryExpression(ternary_expr) => ternary_expr.typename(),
             Vertex::New(new) => new.typename(),
             Vertex::Throw(throw) => throw.typename(),
+            Vertex::Array(array) => array.typename(),
         }
     }
 }
@@ -521,6 +525,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             ),
             Expression::NewExpression(new_expression) => {
                 Vertex::New(NewVertex { ast_node: None, new_expression }.into())
+            }
+            Expression::ArrayExpression(array_expression) => {
+                Vertex::Array(ArrayVertex { ast_node: None, array_expression }.into())
             }
             _ => Vertex::Expression(expr),
         }
@@ -1116,6 +1123,23 @@ impl<'a> Typename for ThrowVertex<'a> {
             "ThrowAST"
         } else {
             "Throw"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrayVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub array_expression: &'a ArrayExpression<'a>,
+}
+
+impl<'a> Typename for ArrayVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrayAST"
+        } else {
+            "Array"
         }
     }
 }

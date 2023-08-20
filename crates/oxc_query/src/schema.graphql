@@ -275,6 +275,33 @@ type JSXText {
   span: Span!
 }
 
+interface Array implements HasSpan & Expression {
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type ArrayAST implements HasSpan & Expression & Array & ASTNode {
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+
+  # HasSpan
+  span: Span!
+}
+
 """
 If the number has a negative sign before it, it will not be a `NumberLiteral`
 """

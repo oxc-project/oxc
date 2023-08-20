@@ -71,6 +71,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
+            "ArrayAST" | "Array" => super::properties::resolve_array_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "ArgumentAST" | "Argument" => super::properties::resolve_argument_property(
                 contexts,
                 property_name.as_ref(),
@@ -272,6 +277,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match type_name.as_ref() {
+            "ArrayAST" | "Array" => super::edges::resolve_array_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
                 contexts,
                 edge_name.as_ref(),
