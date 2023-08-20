@@ -938,6 +938,27 @@ type NewAST implements Expression & HasSpan & New & ASTNode {
   span: Span!
 }
 
+interface Throw implements Expression & HasSpan {
+  to_throw: Expression!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ThrowAST implements Expression & HasSpan & Throw & ASTNode {
+  to_throw: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  strip_parens: Expression!
+  # HasSpan
+  span: Span!
+}
+
 """
 A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,

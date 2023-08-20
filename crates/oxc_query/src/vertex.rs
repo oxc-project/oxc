@@ -66,6 +66,7 @@ pub enum Vertex<'a> {
     ForStatement(Rc<ForStatementVertex<'a>>),
     TernaryExpression(Rc<TernaryExpressionVertex<'a>>),
     New(Rc<NewVertex<'a>>),
+    Throw(Rc<ThrowVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -122,6 +123,7 @@ impl<'a> Vertex<'a> {
             Self::ForStatement(data) => data.for_statement.span,
             Self::TernaryExpression(data) => data.conditional_expression.span,
             Self::New(data) => data.new_expression.span,
+            Self::Throw(data) => data.throw_statement.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -167,6 +169,7 @@ impl<'a> Vertex<'a> {
             Vertex::ForStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::TernaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::New(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Throw(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -314,6 +317,7 @@ impl Typename for Vertex<'_> {
             Vertex::ForStatement(for_stmt) => for_stmt.typename(),
             Vertex::TernaryExpression(ternary_expr) => ternary_expr.typename(),
             Vertex::New(new) => new.typename(),
+            Vertex::Throw(throw) => throw.typename(),
         }
     }
 }
@@ -434,6 +438,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::NewExpression(new_expression) => {
                 Vertex::New(NewVertex { ast_node: Some(ast_node), new_expression }.into())
             }
+            AstKind::ThrowStatement(throw_statement) => {
+                Vertex::Throw(ThrowVertex { ast_node: Some(ast_node), throw_statement }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -459,6 +466,9 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
             ),
             Statement::ForStatement(for_statement) => {
                 Vertex::ForStatement(ForStatementVertex { ast_node: None, for_statement }.into())
+            }
+            Statement::ThrowStatement(throw_statement) => {
+                Vertex::Throw(ThrowVertex { ast_node: None, throw_statement }.into())
             }
             _ => Vertex::Statement(stmt),
         }
@@ -1089,6 +1099,23 @@ impl<'a> Typename for NewVertex<'a> {
             "NewAST"
         } else {
             "New"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ThrowVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub throw_statement: &'a ThrowStatement<'a>,
+}
+
+impl<'a> Typename for ThrowVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ThrowAST"
+        } else {
+            "Throw"
         }
     }
 }

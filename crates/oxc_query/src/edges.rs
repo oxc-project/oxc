@@ -2966,6 +2966,58 @@ mod ternary_expression {
     }
 }
 
+pub(super) fn resolve_throw_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => throw::span(contexts, resolve_info),
+        "to_throw" => throw::to_throw(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Throw'")
+        }
+    }
+}
+
+mod throw {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn to_throw<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_throw()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a throw vertex, instead have: {v:#?}")
+                    })
+                    .throw_statement
+                    .argument)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_type_annotation_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

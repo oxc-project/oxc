@@ -230,6 +230,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "ThrowAST" | "Throw" => super::properties::resolve_throw_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "TernaryExpressionAST" | "TernaryExpression" => {
                 super::properties::resolve_ternary_expression_property(
                     contexts,
@@ -603,6 +608,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     self,
                 )
             }
+            "Throw" | "ThrowAST" => super::edges::resolve_throw_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "TypeAnnotation" | "TypeAnnotationAST" => super::edges::resolve_type_annotation_edge(
                 contexts,
                 edge_name.as_ref(),
