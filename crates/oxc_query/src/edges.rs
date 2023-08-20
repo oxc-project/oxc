@@ -645,9 +645,7 @@ pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, _parameters),
         _ => {
-            unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'ClassProperty'"
-            )
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'DotProperty'")
         }
     }
 }
@@ -3146,7 +3144,9 @@ pub(super) fn resolve_unary_expression_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, _parameters),
         _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Type_'")
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'UnaryExpression'"
+            )
         }
     }
 }
