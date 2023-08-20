@@ -275,7 +275,21 @@ type JSXText {
   span: Span!
 }
 
+interface ArrayElement implements HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+type ArrayElementAST implements HasSpan {
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 interface Array implements HasSpan & Expression {
+  elements: [ArrayElement!]
   # Expression
   as_constant_string: String
   """
@@ -288,6 +302,7 @@ interface Array implements HasSpan & Expression {
 }
 
 type ArrayAST implements HasSpan & Expression & Array & ASTNode {
+  elements: [ArrayElement!]
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

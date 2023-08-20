@@ -68,6 +68,7 @@ pub enum Vertex<'a> {
     New(Rc<NewVertex<'a>>),
     Throw(Rc<ThrowVertex<'a>>),
     Array(Rc<ArrayVertex<'a>>),
+    ArrayElement(Rc<ArrayElementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -126,6 +127,7 @@ impl<'a> Vertex<'a> {
             Self::New(data) => data.new_expression.span,
             Self::Throw(data) => data.throw_statement.span,
             Self::Array(data) => data.array_expression.span,
+            Self::ArrayElement(data) => data.array_expression_element.span(),
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -173,6 +175,7 @@ impl<'a> Vertex<'a> {
             Vertex::New(data) => data.ast_node.map(|x| x.id()),
             Vertex::Throw(data) => data.ast_node.map(|x| x.id()),
             Vertex::Array(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ArrayElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -322,6 +325,7 @@ impl Typename for Vertex<'_> {
             Vertex::New(new) => new.typename(),
             Vertex::Throw(throw) => throw.typename(),
             Vertex::Array(array) => array.typename(),
+            Vertex::ArrayElement(array_el) => array_el.typename(),
         }
     }
 }
@@ -445,6 +449,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ThrowStatement(throw_statement) => {
                 Vertex::Throw(ThrowVertex { ast_node: Some(ast_node), throw_statement }.into())
             }
+            AstKind::ArrayExpressionElement(array_expression_element) => Vertex::ArrayElement(
+                ArrayElementVertex { ast_node: Some(ast_node), array_expression_element }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -1140,6 +1147,23 @@ impl<'a> Typename for ArrayVertex<'a> {
             "ArrayAST"
         } else {
             "Array"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrayElementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub array_expression_element: &'a ArrayExpressionElement<'a>,
+}
+
+impl<'a> Typename for ArrayElementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrayElementAST"
+        } else {
+            "ArrayElement"
         }
     }
 }
