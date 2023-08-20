@@ -2129,6 +2129,81 @@ mod name {
     }
 }
 
+pub(super) fn resolve_new_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => new::span(contexts, resolve_info),
+        "callee" => new::callee(contexts, resolve_info),
+        "argument" => new::argument(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'New'")
+        }
+    }
+}
+
+mod new {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use crate::vertex::ArgumentVertex;
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn callee<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_new()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a new vertex, instead have: {v:#?}")
+                    })
+                    .new_expression
+                    .callee)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn argument<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_new()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a new vertex, instead have: {v:#?}")
+                    })
+                    .new_expression
+                    .arguments
+                    .iter()
+                    .map(|argument| {
+                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    }),
+            )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_number_literal_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

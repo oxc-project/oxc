@@ -179,6 +179,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "NewAST" | "New" => super::properties::resolve_new_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "NumberLiteralAST" | "NumberLiteral" => {
                 super::properties::resolve_number_literal_property(
                     contexts,
@@ -494,6 +499,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "NameAST" | "Name" => super::edges::resolve_name_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "NewAST" | "New" => super::edges::resolve_new_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
