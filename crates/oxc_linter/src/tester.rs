@@ -1,13 +1,14 @@
-use std::{borrow::Cow, path::PathBuf, rc::Rc};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use serde_json::Value;
 
-use crate::{rules::RULES, Fixer, LintContext, Linter, Message};
+use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, Message};
 
 pub struct Tester {
     rule_name: &'static str,
@@ -123,28 +124,18 @@ impl Tester {
     fn run_rules<'a>(
         &mut self,
         allocator: &'a Allocator,
-        path: &PathBuf,
+        path: &Path,
         source_text: &'a str,
         config: Option<Value>,
         is_fix: bool,
     ) -> Vec<Message<'a>> {
-        let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
-        let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
-            .parse();
-        assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
-        let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
-            .with_module_record_builder(true)
-            .build(program);
-        assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
-        let lint_context = LintContext::new(&Rc::new(semantic_ret.semantic));
-        Linter::from_rules(vec![rule]).with_fix(is_fix).run(lint_context)
+        let options = LintOptions::default().with_fix(is_fix);
+        let linter = Arc::new(Linter::from_options(options).with_rules(vec![rule]));
+        LintService::run_source(&linter, path, allocator, source_text, false)
     }
 }

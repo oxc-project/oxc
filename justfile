@@ -32,7 +32,7 @@ update:
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
 watch command:
-  cargo watch --no-vcs-ignores -x '{{command}}'
+  cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
 
 # Format all files
 fmt:

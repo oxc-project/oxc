@@ -1,7 +1,6 @@
 mod error;
 
 use std::{
-    fs,
     io::BufWriter,
     path::Path,
     sync::{
@@ -48,10 +47,10 @@ impl Runner for LintRunner {
 
         let now = std::time::Instant::now();
 
-        let filter = if filter.is_empty() { LintOptions::default().filter } else { filter };
-
-        let lint_options =
-            LintOptions { filter, fix: fix_options.fix, timing: misc_options.timing };
+        let lint_options = LintOptions::default()
+            .with_filter(filter)
+            .with_fix(fix_options.fix)
+            .with_timing(misc_options.timing);
 
         let linter = Arc::new(Linter::from_options(lint_options));
 
@@ -60,6 +59,7 @@ impl Runner for LintRunner {
             .with_max_warnings(warning_options.max_warnings);
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
+
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
         rayon::spawn({
@@ -75,35 +75,12 @@ impl Runner for LintRunner {
             }
         });
 
-        let processing = Arc::new(AtomicUsize::new(0));
         rayon::spawn({
-            let linter = Arc::clone(&linter);
+            let lint_service = oxc_linter::LintService::new(Arc::clone(&linter));
             let tx_error = diagnostic_service.sender().clone();
-            let processing = Arc::clone(&processing);
             move || {
                 while let Ok(path) = rx_path.recv() {
-                    processing.fetch_add(1, Ordering::Relaxed);
-                    let tx_error = tx_error.clone();
-                    let linter = Arc::clone(&linter);
-                    let processing = Arc::clone(&processing);
-                    rayon::spawn(move || {
-                        let source_text = fs::read_to_string(&path)
-                            .unwrap_or_else(|_| panic!("Failed to read {path:?}"));
-
-                        let diagnostics = oxc_linter::LintService::new(linter)
-                            .run(&path, &source_text)
-                            .map(|errors| {
-                                DiagnosticService::wrap_diagnostics(&path, &source_text, errors)
-                            });
-
-                        if let Some(diagnostics) = diagnostics {
-                            tx_error.send(Some(diagnostics)).unwrap();
-                        }
-                        processing.fetch_sub(1, Ordering::Relaxed);
-                        if processing.load(Ordering::Relaxed) == 0 {
-                            tx_error.send(None).unwrap();
-                        }
-                    });
+                    lint_service.run_path(path, &tx_error);
                 }
             }
         });

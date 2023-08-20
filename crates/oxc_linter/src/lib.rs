@@ -42,16 +42,18 @@ impl Linter {
             .cloned()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
             .collect::<Vec<_>>();
-        Self::from_rules(rules)
-    }
-
-    pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules, options: LintOptions::default() }
     }
 
     pub fn from_options(options: LintOptions) -> Self {
         let rules = options.derive_rules();
         Self { rules, options }
+    }
+
+    #[must_use]
+    pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
+        self.rules = rules;
+        self
     }
 
     pub fn rules(&self) -> &Vec<RuleEnum> {
@@ -76,27 +78,6 @@ impl Linter {
     pub fn with_print_execution_times(mut self, yes: bool) -> Self {
         self.options.timing = yes;
         self
-    }
-
-    pub fn from_json_str(s: &str) -> Self {
-        let rules = serde_json::from_str(s)
-            .ok()
-            .and_then(|v: serde_json::Value| v.get("rules").cloned())
-            .and_then(|v| v.as_object().cloned())
-            .map_or_else(
-                || RULES.to_vec(),
-                |rules_config| {
-                    RULES
-                        .iter()
-                        .map(|rule| {
-                            let value = rules_config.get(rule.name());
-                            rule.read_json(value.cloned())
-                        })
-                        .collect()
-                },
-            );
-
-        Self::from_rules(rules)
     }
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
