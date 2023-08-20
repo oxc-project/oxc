@@ -374,6 +374,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
+            "ForStatementAST" | "ForStatement" => super::edges::resolve_for_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "HasSpan" => super::edges::resolve_has_span_edge(
                 contexts,
                 edge_name.as_ref(),

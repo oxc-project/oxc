@@ -63,6 +63,7 @@ pub enum Vertex<'a> {
     BlockStatement(Rc<BlockStatementVertex<'a>>),
     VarRef(Rc<VarRefVertex<'a>>),
     DoWhileStatement(Rc<DoWhileStatementVertex<'a>>),
+    ForStatement(Rc<ForStatementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -116,6 +117,7 @@ impl<'a> Vertex<'a> {
             Self::DoWhileStatement(data) => data.do_while_statement.span,
             Self::BlockStatement(data) => data.block_statement.span,
             Self::VarRef(data) => data.identifier_reference.span,
+            Self::ForStatement(data) => data.for_statement.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -158,6 +160,7 @@ impl<'a> Vertex<'a> {
             Vertex::BlockStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::VarRef(data) => data.ast_node.map(|x| x.id()),
             Vertex::DoWhileStatement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ForStatement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -302,6 +305,7 @@ impl Typename for Vertex<'_> {
             Vertex::DoWhileStatement(expr_stmt) => expr_stmt.typename(),
             Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
             Vertex::VarRef(var_ref) => var_ref.typename(),
+            Vertex::ForStatement(for_stmt) => for_stmt.typename(),
         }
     }
 }
@@ -413,6 +417,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::DoWhileStatement(do_while_statement) => Vertex::DoWhileStatement(
                 DoWhileStatementVertex { ast_node: Some(ast_node), do_while_statement }.into(),
             ),
+            AstKind::ForStatement(for_statement) => Vertex::ForStatement(
+                ForStatementVertex { ast_node: Some(ast_node), for_statement }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -436,6 +443,9 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
             Statement::BlockStatement(block_statement) => Vertex::BlockStatement(
                 BlockStatementVertex { ast_node: None, block_statement }.into(),
             ),
+            Statement::ForStatement(for_statement) => {
+                Vertex::ForStatement(ForStatementVertex { ast_node: None, for_statement }.into())
+            }
             _ => Vertex::Statement(stmt),
         }
     }
@@ -1008,6 +1018,23 @@ impl<'a> Typename for DoWhileStatementVertex<'a> {
             "DoWhileStatementAST"
         } else {
             "DoWhileStatement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ForStatementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub for_statement: &'a ForStatement<'a>,
+}
+
+impl<'a> Typename for ForStatementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ForStatementAST"
+        } else {
+            "ForStatement"
         }
     }
 }
