@@ -55,7 +55,7 @@ pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
         }),
         _ => {
             unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'AssignmentType'"
+                "attempted to read unexpected property '{property_name}' on type 'ArrowFunction'"
             )
         }
     }
