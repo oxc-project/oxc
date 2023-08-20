@@ -17,6 +17,31 @@ use crate::{
     Adapter,
 };
 
+pub(super) fn resolve_argument_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_spread" => resolve_property_with(contexts, |v| {
+            matches!(
+                v.as_argument()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have an argument vertex, instead have: {v:#?}")
+                    })
+                    .argument,
+                oxc_ast::ast::Argument::SpreadElement(_)
+            )
+            .into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Argument'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
