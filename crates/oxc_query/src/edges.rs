@@ -164,7 +164,7 @@ fn strip_parens<'a, 'b: 'a>(
     trustfall::provider::resolve_neighbors_with(contexts, move |v| {
         Box::new(std::iter::once(match v {
             Vertex::Expression(Expression::ParenthesizedExpression(e)) => {
-                (strip_parens_from_expr(&e.expression, strip_all)).into()
+                strip_parens_from_expr(&e.expression, strip_all).into()
             }
             _ => v.clone(),
         }))
