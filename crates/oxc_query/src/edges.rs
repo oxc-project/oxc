@@ -4,19 +4,19 @@ use trustfall::provider::{
 };
 
 use super::vertex::Vertex;
-use crate::Adapter;
+use crate::{util::strip_parens_from_expr, Adapter};
 
 pub(super) fn resolve_arrow_function_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => arrow_function::span(contexts, resolve_info),
         "parameter" => arrow_function::parameter(contexts, resolve_info),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -158,10 +158,14 @@ fn parents<'a, 'b: 'a>(
 
 fn strip_parens<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
+    parameters: &EdgeParameters,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-    trustfall::provider::resolve_neighbors_with(contexts, |v| {
+    let strip_all = parameters["strip_all"].as_bool().unwrap_or(true);
+    trustfall::provider::resolve_neighbors_with(contexts, move |v| {
         Box::new(std::iter::once(match v {
-            Vertex::Expression(Expression::ParenthesizedExpression(e)) => (&e.expression).into(),
+            Vertex::Expression(Expression::ParenthesizedExpression(e)) => {
+                strip_parens_from_expr(&e.expression, strip_all).into()
+            }
             _ => v.clone(),
         }))
     })
@@ -555,10 +559,81 @@ mod default_import {
     }
 }
 
-pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
+pub(super) fn resolve_do_while_statement_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
     _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "condition" => do_while_statement::condition(contexts, resolve_info),
+        "body" => do_while_statement::body(contexts, resolve_info),
+        "span" => do_while_statement::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'DoWhileStatement'"
+            )
+        }
+    }
+}
+
+mod do_while_statement {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_do_while_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a dowhilestatement vertex, instead have: {v:#?}")
+                    })
+                    .do_while_statement
+                    .test)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_do_while_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a dowhilestatement vertex, instead have: {v:#?}")
+                    })
+                    .do_while_statement
+                    .body)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -568,11 +643,9 @@ pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
         "accessed_property" => dot_property::accessed_property(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
-            unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'ClassProperty'"
-            )
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'DotProperty'")
         }
     }
 }
@@ -636,12 +709,12 @@ mod dot_property {
 pub(super) fn resolve_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => expression::span(contexts, resolve_info),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Expression'")
         }
@@ -721,13 +794,13 @@ mod expression_statement {
 pub(super) fn resolve_function_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "parameter" => function::parameter(contexts, resolve_info),
         "span" => function::span(contexts, resolve_info),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Function'")
         }
@@ -814,14 +887,14 @@ mod function_body {
 pub(super) fn resolve_fn_declaration_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => fn_declaration::span(contexts, resolve_info),
         "parameter" => fn_declaration::parameter(contexts, resolve_info),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -1019,7 +1092,7 @@ mod file {
 pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -1029,7 +1102,7 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
         "argument" => fn_call::argument(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'FnCall'")
         }
@@ -1080,6 +1153,101 @@ mod fn_call {
                         Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
                     }),
             )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_for_statement_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => for_statement::span(contexts, resolve_info),
+        "condition" => for_statement::condition(contexts, resolve_info),
+        "step" => for_statement::step(contexts, resolve_info),
+        "body" => for_statement::body(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ForStatement'"
+            )
+        }
+    }
+}
+
+mod for_statement {
+    use std::convert::Into;
+
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_for_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a forstatement vertex, instead have: {v:#?}")
+                    })
+                    .for_statement
+                    .test
+                    .as_ref()
+                    .map(Into::into)
+                    .into_iter(),
+            )
+        })
+    }
+
+    pub(super) fn step<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_for_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a forstatement vertex, instead have: {v:#?}")
+                    })
+                    .for_statement
+                    .update
+                    .as_ref()
+                    .map(Into::into)
+                    .into_iter(),
+            )
+        })
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_for_statement()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a forstatement vertex, instead have: {v:#?}")
+                    })
+                    .for_statement
+                    .body)
+                    .into(),
+            ))
         })
     }
 
@@ -1462,7 +1630,7 @@ mod jsxattribute {
 pub(super) fn resolve_jsxelement_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -1478,7 +1646,7 @@ pub(super) fn resolve_jsxelement_edge<'a, 'b: 'a>(
         "span" => jsxelement::span(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'JSXElement'")
         }
@@ -1831,7 +1999,7 @@ mod jsxtext {
 pub(super) fn resolve_logical_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -1841,7 +2009,7 @@ pub(super) fn resolve_logical_expression_edge<'a, 'b: 'a>(
         "right" => logical_expression::right(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'LogicalExpression'"
@@ -1963,10 +2131,85 @@ mod name {
     }
 }
 
+pub(super) fn resolve_new_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => new::span(contexts, resolve_info),
+        "callee" => new::callee(contexts, resolve_info),
+        "argument" => new::argument(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts, parameters),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'New'")
+        }
+    }
+}
+
+mod new {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use crate::vertex::ArgumentVertex;
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn callee<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_new()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a new vertex, instead have: {v:#?}")
+                    })
+                    .new_expression
+                    .callee)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn argument<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_new()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a new vertex, instead have: {v:#?}")
+                    })
+                    .new_expression
+                    .arguments
+                    .iter()
+                    .map(|argument| {
+                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    }),
+            )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_number_literal_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -1974,7 +2217,7 @@ pub(super) fn resolve_number_literal_edge<'a, 'b: 'a>(
         "span" => number_literal::span(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'NumberLiteral'"
@@ -2095,7 +2338,7 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
         "entry" => object_literal::entry(contexts, parameters, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'ObjectLiteral'"
@@ -2353,7 +2596,7 @@ mod parameter {
 pub(super) fn resolve_reassignment_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -2363,7 +2606,7 @@ pub(super) fn resolve_reassignment_edge<'a, 'b: 'a>(
         "right" => reassignment::right(contexts, resolve_info),
         "parent" => parents(contexts, adapter),
         "ancestor" => ancestors(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'Reassignment'"
@@ -2635,6 +2878,148 @@ mod resolve_spread_into_object_edge {
     }
 }
 
+pub(super) fn resolve_ternary_expression_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => ternary_expression::span(contexts, resolve_info),
+        "condition" => ternary_expression::condition(contexts, resolve_info),
+        "if_true" => ternary_expression::if_true(contexts, resolve_info),
+        "if_false" => ternary_expression::if_false(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts, parameters),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'TernaryExpression'"
+            )
+        }
+    }
+}
+
+mod ternary_expression {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .test)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn if_true<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .consequent)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn if_false<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_ternary_expression()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a ternaryexpression vertex, instead have: {v:#?}")
+                    })
+                    .conditional_expression
+                    .alternate)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_throw_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => throw::span(contexts, resolve_info),
+        "to_throw" => throw::to_throw(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts, parameters),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Throw'")
+        }
+    }
+}
+
+mod throw {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn to_throw<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_throw()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a throw vertex, instead have: {v:#?}")
+                    })
+                    .throw_statement
+                    .argument)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_type_annotation_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
@@ -2748,7 +3133,7 @@ mod type_ {
 pub(super) fn resolve_unary_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -2757,9 +3142,11 @@ pub(super) fn resolve_unary_expression_edge<'a, 'b: 'a>(
         "value" => unary_expression::value(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Type_'")
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'UnaryExpression'"
+            )
         }
     }
 }
@@ -2932,7 +3319,7 @@ mod variable_declaration {
 pub(super) fn resolve_var_ref_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    _parameters: &EdgeParameters,
+    parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -2940,7 +3327,7 @@ pub(super) fn resolve_var_ref_edge<'a, 'b: 'a>(
         "span" => var_ref::span(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
-        "strip_parens" => strip_parens(contexts),
+        "strip_parens" => strip_parens(contexts, parameters),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'VarRef'")
         }
@@ -2977,7 +3364,7 @@ pub(super) fn resolve_while_statement_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'WhileStateent'"
+                "attempted to resolve unexpected edge '{edge_name}' on type 'WhileStatement'"
             )
         }
     }

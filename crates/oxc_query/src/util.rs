@@ -85,3 +85,16 @@ pub fn jsx_attribute_name_to_string(jsx_attribute_name: &JSXAttributeName) -> St
         JSXAttributeName::NamespacedName(nsn) => jsx_namespaced_name_to_string(nsn),
     }
 }
+
+pub fn strip_parens_from_expr<'a, 'b: 'a>(
+    to_strip: &'b Expression<'a>,
+    strip_all: bool,
+) -> &'b Expression<'a> {
+    match to_strip {
+        Expression::ParenthesizedExpression(paren_expr) if strip_all => {
+            strip_parens_from_expr(&paren_expr.expression, true)
+        }
+        Expression::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
+        _ => to_strip,
+    }
+}
