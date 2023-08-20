@@ -1525,7 +1525,6 @@ version = "0.0.0"
 dependencies = [
  "bpaf",
  "codespan-reporting",
- "dashmap",
  "ignore",
  "jemallocator",
  "miette",
@@ -1535,11 +1534,9 @@ dependencies = [
  "oxc_index",
  "oxc_linter",
  "oxc_parser",
- "oxc_semantic",
  "oxc_span",
  "oxc_type_synthesis",
  "rayon",
- "rustc-hash",
 ]
 
 [[package]]
@@ -1641,6 +1638,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "rayon",
  "regex",
  "rust-lapper",
  "rustc-hash",

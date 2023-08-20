@@ -21,6 +21,28 @@ impl Default for LintOptions {
     }
 }
 
+impl LintOptions {
+    #[must_use]
+    pub fn with_filter(mut self, filter: Vec<(AllowWarnDeny, String)>) -> Self {
+        if !filter.is_empty() {
+            self.filter = filter;
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_fix(mut self, yes: bool) -> Self {
+        self.fix = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_timing(mut self, yes: bool) -> Self {
+        self.timing = yes;
+        self
+    }
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum AllowWarnDeny {
     Allow,
