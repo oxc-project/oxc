@@ -77,7 +77,7 @@ impl Rule for NoExtraBooleanCast {
                 let Some(parent) = get_real_parent(node, ctx) else { return };
                 if matches!(parent.kind(), AstKind::UnaryExpression(p) if p.operator == UnaryOperator::LogicalNot && is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands))
                 {
-                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(unary.span));
+                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(parent.kind().span()));
                 }
             }
             _ => {}

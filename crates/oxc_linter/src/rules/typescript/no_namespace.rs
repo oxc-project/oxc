@@ -80,7 +80,15 @@ impl Rule for NoNamespace {
             return;
         }
 
-        ctx.diagnostic(NoNamespaceDiagnostic(declaration.span));
+        let start = declaration.span.start;
+        let span = Span::new(start, declaration.span.start + 6); // "module".len()
+        let modifier = span.source_text(ctx.source_text());
+        let span = if modifier == "module" {
+            span
+        } else {
+            Span::new(start, declaration.span.start + 9) // "namespace".len()
+        };
+        ctx.diagnostic(NoNamespaceDiagnostic(span));
     }
 }
 
