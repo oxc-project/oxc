@@ -28,7 +28,7 @@ impl LintService {
 
     /// # Panics
     pub fn run_path(&self, path: Box<Path>, tx_error: &DiagnosticSender) {
-        self.processing.fetch_add(1, Ordering::Relaxed);
+        self.processing.fetch_add(1, Ordering::SeqCst);
         let linter = Arc::clone(&self.linter);
         let tx_error = tx_error.clone();
         let processing = Arc::clone(&self.processing);
@@ -52,8 +52,8 @@ impl LintService {
                 tx_error.send(Some(diagnostics)).unwrap();
             }
 
-            processing.fetch_sub(1, Ordering::Relaxed);
-            if processing.load(Ordering::Relaxed) == 0 {
+            processing.fetch_sub(1, Ordering::SeqCst);
+            if processing.load(Ordering::SeqCst) == 0 {
                 tx_error.send(None).unwrap();
             }
         });

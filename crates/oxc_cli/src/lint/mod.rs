@@ -13,7 +13,7 @@ pub use self::error::Error;
 
 use oxc_diagnostics::DiagnosticService;
 use oxc_index::assert_impl_all;
-use oxc_linter::{LintOptions, Linter};
+use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Runner};
 
@@ -62,27 +62,25 @@ impl Runner for LintRunner {
 
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
-        rayon::spawn({
-            let walk = Walk::new(&paths, &ignore_options);
+        let tx_error = diagnostic_service.sender().clone();
+        rayon::scope(|s| {
+            let lint_service = LintService::new(Arc::clone(&linter));
+            s.spawn(move |_| {
+                while let Ok(path) = rx_path.recv() {
+                    lint_service.run_path(path, &tx_error);
+                }
+            });
+
             let number_of_files = Arc::clone(&number_of_files);
-            move || {
+            let walk = Walk::new(&paths, &ignore_options);
+            s.spawn(move |_| {
                 let mut count = 0;
                 walk.iter().for_each(|path| {
                     count += 1;
                     tx_path.send(path).unwrap();
                 });
-                number_of_files.store(count, Ordering::Relaxed);
-            }
-        });
-
-        rayon::spawn({
-            let lint_service = oxc_linter::LintService::new(Arc::clone(&linter));
-            let tx_error = diagnostic_service.sender().clone();
-            move || {
-                while let Ok(path) = rx_path.recv() {
-                    lint_service.run_path(path, &tx_error);
-                }
-            }
+                number_of_files.store(count, Ordering::SeqCst);
+            });
         });
 
         diagnostic_service.run();
@@ -90,7 +88,7 @@ impl Runner for LintRunner {
         CliRunResult::LintResult {
             duration: now.elapsed(),
             number_of_rules: linter.number_of_rules(),
-            number_of_files: number_of_files.load(Ordering::Relaxed),
+            number_of_files: number_of_files.load(Ordering::SeqCst),
             number_of_warnings: diagnostic_service.warnings_count(),
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
