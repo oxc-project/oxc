@@ -901,7 +901,7 @@ interface TernaryExpression implements Expression & HasSpan {
   span: Span!
 }
 
-type TernaryExpressionAST implements Expression & HasSpan & ASTNode {
+type TernaryExpressionAST implements Expression & HasSpan & ASTNode & TernaryExpression {
   condition: Expression!
   if_true: Expression!
   if_false: Expression!
