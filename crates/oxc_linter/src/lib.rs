@@ -25,7 +25,7 @@ pub use crate::{
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
-    service::LintService,
+    service::{LintService, PathWork},
 };
 pub(crate) use rules::{RuleEnum, RULES};
 

@@ -8,9 +8,9 @@ use std::{
 
 use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
 
-pub type DiagnosticTuple = Option<(PathBuf, Vec<Error>)>;
-pub type DiagnosticSender = mpsc::Sender<DiagnosticTuple>;
-pub type DiagnosticReceiver = mpsc::Receiver<DiagnosticTuple>;
+pub type DiagnosticTuple = (PathBuf, Vec<Error>);
+pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
+pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
 pub struct DiagnosticService {
     /// Disable reporting on warnings, only errors are reported

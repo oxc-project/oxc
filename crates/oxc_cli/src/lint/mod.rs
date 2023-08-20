@@ -2,10 +2,9 @@ mod error;
 
 use std::{
     io::BufWriter,
-    path::Path,
     sync::{
         atomic::{AtomicUsize, Ordering},
-        mpsc, Arc,
+        Arc,
     },
 };
 
@@ -13,7 +12,7 @@ pub use self::error::Error;
 
 use oxc_diagnostics::DiagnosticService;
 use oxc_index::assert_impl_all;
-use oxc_linter::{LintOptions, LintService, Linter};
+use oxc_linter::{LintOptions, LintService, Linter, PathWork};
 
 use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Runner};
 
@@ -60,27 +59,22 @@ impl Runner for LintRunner {
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
 
-        let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
+        let lint_service = LintService::new(Arc::clone(&linter));
+        let tx_path = lint_service.tx_path.clone();
+        lint_service.run(&diagnostic_service.sender().clone());
 
-        let tx_error = diagnostic_service.sender().clone();
-        rayon::scope(|s| {
-            let lint_service = LintService::new(Arc::clone(&linter));
-            s.spawn(move |_| {
-                while let Ok(path) = rx_path.recv() {
-                    lint_service.run_path(path, &tx_error);
-                }
-            });
-
+        rayon::spawn({
             let number_of_files = Arc::clone(&number_of_files);
             let walk = Walk::new(&paths, &ignore_options);
-            s.spawn(move |_| {
+            move || {
                 let mut count = 0;
-                walk.iter().for_each(|path| {
+                for path in walk.iter() {
                     count += 1;
-                    tx_path.send(path).unwrap();
-                });
+                    tx_path.send(PathWork::Begin(path)).unwrap();
+                }
+                tx_path.send(PathWork::Done).unwrap();
                 number_of_files.store(count, Ordering::SeqCst);
-            });
+            }
         });
 
         diagnostic_service.run();

@@ -1,37 +1,74 @@
 use std::{
+    collections::HashSet,
     fs,
     path::Path,
     rc::Rc,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
+    sync::{mpsc, Arc},
 };
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use crate::{Fixer, LintContext, Linter, Message};
 
+#[derive(Debug)]
+pub enum PathWork {
+    Begin(Box<Path>),
+    Finish(DiagnosticTuple),
+    Done,
+}
+
 pub struct LintService {
     linter: Arc<Linter>,
-    processing: Arc<AtomicUsize>,
+    pub tx_path: mpsc::Sender<PathWork>,
+    pub rx_path: mpsc::Receiver<PathWork>,
 }
 
 impl LintService {
     pub fn new(linter: Arc<Linter>) -> Self {
-        Self { linter, processing: Arc::new(AtomicUsize::new(0)) }
+        let (tx_path, rx_path) = mpsc::channel();
+        Self { linter, tx_path, rx_path }
     }
 
     /// # Panics
-    pub fn run_path(&self, path: Box<Path>, tx_error: &DiagnosticSender) {
-        self.processing.fetch_add(1, Ordering::SeqCst);
-        let linter = Arc::clone(&self.linter);
+    pub fn run(self, tx_error: &DiagnosticSender) {
         let tx_error = tx_error.clone();
-        let processing = Arc::clone(&self.processing);
+        rayon::spawn(move || {
+            let mut processing: HashSet<Box<Path>> = HashSet::new();
+            let mut done = false;
+            while let Ok(work) = self.rx_path.recv() {
+                match work {
+                    PathWork::Done => {
+                        done = true;
+                    }
+                    PathWork::Begin(path) => {
+                        processing.insert(path.clone());
+                        self.run_path(path);
+                    }
+                    PathWork::Finish(diagnostics) => {
+                        processing.remove(&diagnostics.0.clone().into_boxed_path());
+
+                        if !diagnostics.1.is_empty() {
+                            tx_error.send(Some(diagnostics)).unwrap();
+                        }
+
+                        if done && processing.is_empty() {
+                            tx_error.send(None).unwrap();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /// # Panics
+    pub fn run_path(&self, path: Box<Path>) {
+        let linter = Arc::clone(&self.linter);
+        let tx_path = self.tx_path.clone();
         rayon::spawn(move || {
             let allocator = Allocator::default();
             let source_text =
@@ -48,14 +85,7 @@ impl LintService {
             let errors = messages.into_iter().map(|m| m.error).collect();
             let diagnostics = DiagnosticService::wrap_diagnostics(&path, &source_text, errors);
 
-            if !diagnostics.1.is_empty() {
-                tx_error.send(Some(diagnostics)).unwrap();
-            }
-
-            processing.fetch_sub(1, Ordering::SeqCst);
-            if processing.load(Ordering::SeqCst) == 0 {
-                tx_error.send(None).unwrap();
-            }
+            tx_path.send(PathWork::Finish(diagnostics)).unwrap();
         });
     }
 
