@@ -184,7 +184,5 @@ fn test() {
         // ("class foo { foo = <'bar'>'bar'; }", "class foo { foo = <const>'bar'; }", None),
     ];
 
-    let mut tester = Tester::new_without_config(PreferAsConst::NAME, pass, fail);
-    tester.test_and_snapshot();
-    tester.test_fix(fix);
+    Tester::new_without_config(PreferAsConst::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

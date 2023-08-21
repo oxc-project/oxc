@@ -237,7 +237,5 @@ fn test() {
         ("a == b", "a == b", None),
     ];
 
-    let mut tester = Tester::new(EqEqEq::NAME, pass, fail);
-    tester.test_and_snapshot();
-    tester.test_fix(fix);
+    Tester::new(EqEqEq::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -143,7 +143,5 @@ fn test() {
         ("fdescribe('foo', () => {})", "describe('foo', () => {})", None),
     ];
 
-    let mut tester = Tester::new(NoFocusedTests::NAME, pass, fail);
-    tester.test_and_snapshot();
-    tester.test_fix(fix);
+    Tester::new(NoFocusedTests::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
