@@ -9,5 +9,12 @@
     "index.js"
   ],
   "license": "MIT",
-  "repository": "git@github.com:Boshen/oxc.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/web-infra-dev/oxc",
+    "directory": "npm/napi"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  }
 }

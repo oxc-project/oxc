@@ -9,11 +9,13 @@ mod disable_directives;
 mod fixer;
 mod globals;
 mod jest_ast_util;
+mod options;
 pub mod rule;
 mod rule_timer;
 mod rules;
+mod service;
 
-use std::{self, fs, io::Write, rc::Rc};
+use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
@@ -21,15 +23,16 @@ use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
+    options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
-    rules::{RuleEnum, RULES},
+    service::{LintService, PathWork},
 };
+pub(crate) use rules::{RuleEnum, RULES};
 
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
-    fix: bool,
-    print_execution_times: bool,
+    options: LintOptions,
 }
 
 impl Linter {
@@ -39,19 +42,26 @@ impl Linter {
             .cloned()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
             .collect::<Vec<_>>();
-        Self::from_rules(rules)
+        Self { rules, options: LintOptions::default() }
     }
 
-    pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules, fix: false, print_execution_times: false }
+    pub fn from_options(options: LintOptions) -> Self {
+        let rules = options.derive_rules();
+        Self { rules, options }
+    }
+
+    #[must_use]
+    pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
+        self.rules = rules;
+        self
     }
 
     pub fn rules(&self) -> &Vec<RuleEnum> {
         &self.rules
     }
 
-    pub fn has_fix(&self) -> bool {
-        self.fix
+    pub fn options(&self) -> &LintOptions {
+        &self.options
     }
 
     pub fn number_of_rules(&self) -> usize {
@@ -60,57 +70,37 @@ impl Linter {
 
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
-        self.fix = yes;
+        self.options.fix = yes;
         self
     }
 
     #[must_use]
     pub fn with_print_execution_times(mut self, yes: bool) -> Self {
-        self.print_execution_times = yes;
+        self.options.timing = yes;
         self
     }
 
-    pub fn from_json_str(s: &str) -> Self {
-        let rules = serde_json::from_str(s)
-            .ok()
-            .and_then(|v: serde_json::Value| v.get("rules").cloned())
-            .and_then(|v| v.as_object().cloned())
-            .map_or_else(
-                || RULES.to_vec(),
-                |rules_config| {
-                    RULES
-                        .iter()
-                        .map(|rule| {
-                            let value = rules_config.get(rule.name());
-                            rule.read_json(value.cloned())
-                        })
-                        .collect()
-                },
-            );
-
-        Self::from_rules(rules)
-    }
-
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
+        let timing = self.options.timing;
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.fix);
+        let mut ctx = ctx.with_fix(self.options.fix);
 
         for rule in &self.rules {
             ctx.with_rule_name(rule.name());
-            rule.run_once(&ctx, self.print_execution_times);
+            rule.run_once(&ctx, timing);
         }
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run(node, &ctx, self.print_execution_times);
+                rule.run(node, &ctx, timing);
             }
         }
 
         for symbol in semantic.symbols().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run_on_symbol(symbol, &ctx, self.print_execution_times);
+                rule.run_on_symbol(symbol, &ctx, timing);
             }
         }
 
@@ -139,6 +129,26 @@ impl Linter {
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
+    }
+
+    pub fn print_execution_times_if_enable(&self) {
+        if !self.options.timing {
+            return;
+        }
+        let mut timings =
+            self.rules().iter().map(|rule| (rule.name(), rule.execute_time())).collect::<Vec<_>>();
+
+        timings.sort_by_key(|x| x.1);
+        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
+
+        println!("Rule timings in milliseconds:");
+        println!("Total: {:.2}ms", total * 1000.0);
+        println!("{:>7} | {:>5} | Rule", "Time", "%");
+        for (name, duration) in timings.iter().rev() {
+            let millis = duration.as_secs_f64() * 1000.0;
+            let relative = duration.as_secs_f64() / total * 100.0;
+            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
+        }
     }
 }
 

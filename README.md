@@ -193,3 +193,6 @@ This project partially copies code from the following projects:
 | [evanw/esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/evanw/esbuild/blob/main/LICENSE.md) |
 | [google/closure-compiler](https://github.com/google/closure-compiler) | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license) |
 | [tdewolff/minify](https://github.com/tdewolff/minify) | [MIT](https://github.com/tdewolff/minify/blob/master/LICENSE) |
+| [parcel-bundler/parcel](https://github.com/parcel-bundler/parcel) | [MIT](https://github.com/parcel-bundler/parcel/blob/v2/LICENSE) |
+| [dividab/tsconfig-paths](https://github.com/dividab/tsconfig-paths) | [MIT](https://github.com/dividab/tsconfig-paths/blob/master/LICENSE) |
+| [tmccombs/json-comments-rs](https://github.com/tmccombs/json-comments-rs) | [Apache 2.0](https://github.com/tmccombs/json-comments-rs/blob/main/LICENSE) |

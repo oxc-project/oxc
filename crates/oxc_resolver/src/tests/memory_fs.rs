@@ -5,15 +5,9 @@ use std::{
 
 use crate::{FileMetadata, FileSystem};
 
+#[derive(Default)]
 pub struct MemoryFS {
     fs: vfs::MemoryFS,
-}
-
-impl Default for MemoryFS {
-    fn default() -> Self {
-        let fs = vfs::MemoryFS::new();
-        Self { fs }
-    }
 }
 
 impl MemoryFS {
@@ -22,20 +16,26 @@ impl MemoryFS {
     /// * Fails to create directory
     /// * Fails to write file
     pub fn new(data: &[(&'static str, &'static str)]) -> Self {
-        use vfs::FileSystem;
-        let fs = vfs::MemoryFS::default();
-        for (path, string) in data {
-            // Create all parent directories
-            for path in Path::new(path).ancestors().collect::<Vec<_>>().iter().rev() {
-                let path = path.to_string_lossy();
-                if !fs.exists(path.as_ref()).unwrap() {
-                    fs.create_dir(path.as_ref()).unwrap();
-                }
-            }
-            let mut file = fs.create_file(path).unwrap();
-            file.write_all(string.as_bytes()).unwrap();
+        let mut fs = Self { fs: vfs::MemoryFS::default() };
+        for (path, content) in data {
+            fs.add_file(Path::new(path), content);
         }
-        Self { fs }
+        fs
+    }
+
+    pub fn add_file(&mut self, path: &Path, content: &str) {
+        use vfs::FileSystem;
+        let fs = &mut self.fs;
+        // Create all parent directories
+        for path in path.ancestors().collect::<Vec<_>>().iter().rev() {
+            let path = path.to_string_lossy();
+            if !fs.exists(path.as_ref()).unwrap() {
+                fs.create_dir(path.as_ref()).unwrap();
+            }
+        }
+        // Create file
+        let mut file = fs.create_file(path.to_string_lossy().as_ref()).unwrap();
+        file.write_all(content.as_bytes()).unwrap();
     }
 }
 

@@ -8,6 +8,11 @@ use std::{fmt, path::PathBuf};
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
+    /// Path to TypeScript configuration file.
+    ///
+    /// Default `None`
+    pub tsconfig: Option<PathBuf>,
+
     /// Create aliases to import or require certain modules more easily.
     /// A trailing $ can also be added to the given object's keys to signify an exact match.
     pub alias: Alias,
@@ -162,6 +167,7 @@ pub enum Restriction {
 impl Default for ResolveOptions {
     fn default() -> Self {
         Self {
+            tsconfig: None,
             alias: vec![],
             alias_fields: vec![],
             condition_names: vec![],
@@ -203,6 +209,9 @@ impl ResolveOptions {
 // For tracing
 impl fmt::Display for ResolveOptions {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(tsconfig) = &self.tsconfig {
+            write!(f, "tsconfig:{tsconfig:?},")?;
+        }
         if !self.alias.is_empty() {
             write!(f, "alias:{:?},", self.alias)?;
         }
@@ -284,6 +293,7 @@ mod test {
     #[test]
     fn display() {
         let options = ResolveOptions {
+            tsconfig: Some(PathBuf::from("tsconfig.json")),
             alias: vec![("a".into(), vec![AliasValue::Ignore])],
             alias_fields: vec!["browser".into()],
             condition_names: vec!["require".into()],
@@ -300,7 +310,7 @@ mod test {
             ..ResolveOptions::default()
         };
 
-        let expected = r#"alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
+        let expected = r#"tsconfig:"tsconfig.json",alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
         assert_eq!(format!("{options}"), expected);
     }
 }

@@ -22,7 +22,6 @@ oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
 
 bitflags   = { workspace = true }
-rustc-hash = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 

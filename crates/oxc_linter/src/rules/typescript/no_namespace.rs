@@ -12,8 +12,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("ES2015 module syntax is preferred over namespaces.")]
-#[diagnostic(severity(warning), help("Replace the namespace with an ES2015 module"))]
+#[error("typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.")]
+#[diagnostic(
+    severity(warning),
+    help("Replace the namespace with an ES2015 module or use `declare module`")
+)]
 struct NoNamespaceDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -80,7 +83,15 @@ impl Rule for NoNamespace {
             return;
         }
 
-        ctx.diagnostic(NoNamespaceDiagnostic(declaration.span));
+        let start = declaration.span.start;
+        let span = Span::new(start, declaration.span.start + 6); // "module".len()
+        let modifier = span.source_text(ctx.source_text());
+        let span = if modifier == "module" {
+            span
+        } else {
+            Span::new(start, declaration.span.start + 9) // "namespace".len()
+        };
+        ctx.diagnostic(NoNamespaceDiagnostic(span));
     }
 }
 

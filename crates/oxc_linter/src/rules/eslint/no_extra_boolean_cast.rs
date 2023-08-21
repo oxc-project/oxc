@@ -66,33 +66,21 @@ impl Rule for NoExtraBooleanCast {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(expr) = node.kind() {
-            if expr
-                .callee
-                .without_parenthesized()
-                .get_identifier_reference()
-                .is_some_and(|ident| ident.name != "Boolean")
+        match node.kind() {
+            AstKind::CallExpression(expr)
+                if expr.callee.is_specific_id("Boolean")
+                    && is_flagged_ctx(node, ctx, self.enforce_for_logical_operands) =>
             {
-                return;
-            }
-            if is_flagged_ctx(node, ctx, self.enforce_for_logical_operands) {
                 ctx.diagnostic(NoExtraBooleanCastDiagnostic(expr.span));
             }
-        }
-
-        let Some(parent) = get_real_parent(node, ctx) else { return };
-
-        if let (AstKind::UnaryExpression(expr), AstKind::UnaryExpression(parent_expr)) =
-            (node.kind(), parent.kind())
-        {
-            match (expr.operator, parent_expr.operator) {
-                (UnaryOperator::LogicalNot, UnaryOperator::LogicalNot)
-                    if is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands) =>
+            AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+                let Some(parent) = get_real_parent(node, ctx) else { return };
+                if matches!(parent.kind(), AstKind::UnaryExpression(p) if p.operator == UnaryOperator::LogicalNot && is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands))
                 {
-                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(parent_expr.span));
+                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(parent.kind().span()));
                 }
-                _ => (),
             }
+            _ => {}
         }
     }
 }
@@ -299,6 +287,8 @@ fn test() {
             Some(serde_json::json!([{ "enforceForLogicalOperands": true }])),
         ),
         ("if (!!foo ?? bar) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
+        ("if (x.y()) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": true }]))),
+        ("if (x.y()) {}", Some(serde_json::json!([{ "enforceForLogicalOperands": false }]))),
     ];
 
     let fail = vec![

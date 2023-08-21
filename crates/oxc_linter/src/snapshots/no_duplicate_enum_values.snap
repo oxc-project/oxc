@@ -1,38 +1,49 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 80
 expression: no_duplicate_enum_values
 ---
-  ⚠ Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:3:1]
+  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:2:1]
+ 2 │             enum E {
  3 │               A = 1,
+   ·                   ─
  4 │               B = 1,
    ·                   ─
  5 │             }
    ╰────
+  help: Duplicate values can lead to bugs that are hard to track down
 
-  ⚠ Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:3:1]
+  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:2:1]
+ 2 │             enum E {
  3 │               A = 'A',
+   ·                   ───
  4 │               B = 'A',
    ·                   ───
  5 │             }
    ╰────
+  help: Duplicate values can lead to bugs that are hard to track down
 
-  ⚠ Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:3:1]
+  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:2:1]
+ 2 │             enum E {
  3 │               A = 'A',
+   ·                   ───
  4 │               B = 'A',
    ·                   ───
  5 │               C = 1,
    ╰────
+  help: Duplicate values can lead to bugs that are hard to track down
 
-  ⚠ Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:5:1]
+  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:4:1]
+ 4 │               B = 'A',
  5 │               C = 1,
+   ·                   ─
  6 │               D = 1,
    ·                   ─
  7 │             }
    ╰────
+  help: Duplicate values can lead to bugs that are hard to track down
 
 

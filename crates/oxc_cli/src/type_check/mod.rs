@@ -1,15 +1,11 @@
 use std::path::{Path, PathBuf};
 
-use clap::{Arg, ArgMatches, Command};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_type_synthesis::synthesize_program;
 
-use crate::{
-    runner::{Runner, RunnerOptions},
-    CliRunResult,
-};
+use crate::{command::CheckOptions, runner::Runner, CliRunResult};
 
 const PRELUDE: &str = "
 type StringOrNumber = string | number;
@@ -49,45 +45,24 @@ pub struct TypeCheckOptions {
     pub print_called_functions: bool,
 }
 
-#[allow(clippy::fallible_impl_from)]
-impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
-    fn from(matches: &'a ArgMatches) -> Self {
-        Self {
-            path: PathBuf::from(matches.get_one::<String>("path").unwrap()),
-            print_called_functions: matches.contains_id("print_called_functions"),
-            print_expression_mappings: matches.contains_id("print_expression_mappings"),
-        }
-    }
-}
-impl RunnerOptions for TypeCheckOptions {
-    fn build_args(cmd: Command) -> Command {
-        cmd.arg(Arg::new("path").value_name("PATH").num_args(1).help("File to type check"))
-            .arg(
-                Arg::new("print_expression_mappings")
-                    .required(false)
-                    .help("Print types of expressions"),
-            )
-            .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
-    }
-}
-
 pub struct TypeCheckRunner {
     options: TypeCheckOptions,
 }
 
 impl Runner for TypeCheckRunner {
-    type Options = TypeCheckOptions;
+    type Options = CheckOptions;
 
-    const ABOUT: &'static str =
-        "NOTE: Experimental / work in progress. Check source code for type errors using Ezno";
-    const NAME: &'static str = "check";
-
-    fn new(options: TypeCheckOptions) -> Self {
+    fn new(options: Self::Options) -> Self {
+        let options = TypeCheckOptions {
+            path: options.path,
+            print_expression_mappings: options.print_expression_mappings,
+            print_called_functions: options.print_called_functions,
+        };
         Self { options }
     }
 
     /// # Panics
-    fn run(&self) -> CliRunResult {
+    fn run(self) -> CliRunResult {
         let now = std::time::Instant::now();
 
         let path = Path::new(&self.options.path);

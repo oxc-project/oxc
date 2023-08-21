@@ -32,7 +32,7 @@ update:
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
 watch command:
-  cargo watch --no-vcs-ignores -x '{{command}}'
+  cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
 
 # Format all files
 fmt:
@@ -73,6 +73,9 @@ new-jest-rule name:
 
 new-ts-rule name:
   cargo run -p rulegen {{name}} typescript
+
+new-unicorn-rule name:
+  cargo run -p rulegen {{name}} unicorn
 
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:

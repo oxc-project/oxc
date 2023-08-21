@@ -17,7 +17,6 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_allocator = { workspace = true }
-serde_json    = { workspace = true }
 
 ezno-checker = { version = "0.0.4" }
 

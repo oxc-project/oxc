@@ -573,7 +573,8 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let reference = Reference::new(ident.span, ident.name.clone(), self.current_node_id, flag);
-        self.declare_reference(reference);
+        let reference_id = self.declare_reference(reference);
+        ident.reference_id.set(Some(reference_id));
     }
 
     /// Resolve reference flags for the current ast node.

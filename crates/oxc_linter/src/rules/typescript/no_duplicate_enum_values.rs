@@ -6,14 +6,17 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Disallow duplicate enum member values")]
-#[diagnostic(severity(warning))]
-struct NoDuplicateEnumValuesDiagnostic(#[label] pub Span);
+#[error("typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values")]
+#[diagnostic(
+    severity(warning),
+    help("Duplicate values can lead to bugs that are hard to track down")
+)]
+struct NoDuplicateEnumValuesDiagnostic(#[label] Span, #[label] Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicateEnumValues;
@@ -37,24 +40,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateEnumValues {
+    #[allow(clippy::float_cmp)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumBody(enum_body) = node.kind() else { return };
-        let mut seen_number_values: Vec<f64> = Vec::new();
-        let mut seen_string_values: FxHashSet<&Atom> = FxHashSet::default();
+        let mut seen_number_values: Vec<(f64, Span)> = vec![];
+        let mut seen_string_values: FxHashMap<&Atom, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else { continue };
             match initializer {
                 Expression::NumberLiteral(num) => {
-                    if seen_number_values.contains(&num.value) {
-                        ctx.diagnostic(NoDuplicateEnumValuesDiagnostic(num.span));
+                    if let Some((_, old_span)) =
+                        seen_number_values.iter().find(|(v, _)| *v == num.value)
+                    {
+                        ctx.diagnostic(NoDuplicateEnumValuesDiagnostic(*old_span, num.span));
+                    } else {
+                        seen_number_values.push((num.value, num.span));
                     }
-                    seen_number_values.push(num.value);
                 }
-                Expression::StringLiteral(str) => {
-                    if seen_string_values.contains(&str.value) {
-                        ctx.diagnostic(NoDuplicateEnumValuesDiagnostic(str.span));
+                Expression::StringLiteral(s) => {
+                    if let Some(old_span) = seen_string_values.insert(&s.value, s.span) {
+                        ctx.diagnostic(NoDuplicateEnumValuesDiagnostic(old_span, s.span));
                     }
-                    seen_string_values.insert(&str.value);
                 }
                 _ => {}
             }

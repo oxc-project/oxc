@@ -17,7 +17,7 @@ const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Ref
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
-#[diagnostic(severity(error), help("{0} is not a function."))]
+#[diagnostic(severity(warning), help("{0} is not a function."))]
 struct NoObjCallsDiagnostic(Atom, #[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]

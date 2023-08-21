@@ -39,6 +39,48 @@ fn run_query<T: for<'de> serde::Deserialize<'de> + std::cmp::Ord>(
 }
 
 #[test]
+fn test_expr_stmt() {
+    #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
+    struct Output {
+        __typename: String,
+    }
+
+    let not_ast = run_query::<Output>(
+        "function a() { y = 2; }",
+        r#"
+        query {
+            File {
+                ast_node {
+                    ... on FunctionBodyAST {
+                        statement {
+                            __typename @output
+                        }
+                    }
+                }
+            }
+        }
+        "#,
+    );
+    assert_eq!(vec![Output { __typename: "ExpressionStatement".to_owned() },], not_ast);
+
+    let ast = run_query::<Output>(
+        "function a() { y = 2; }",
+        r#"
+        query {
+            File {
+                ast_node {
+                    ... on ExpressionStatementAST {
+                        __typename @output
+                    }
+                }
+            }
+        }
+        "#,
+    );
+    assert_eq!(vec![Output { __typename: "ExpressionStatementAST".to_owned() },], ast);
+}
+
+#[test]
 fn test_path_query() {
     #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
     struct Output {

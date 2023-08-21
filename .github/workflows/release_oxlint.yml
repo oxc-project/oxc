@@ -119,6 +119,9 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # for softprops/action-gh-release@v1
+      id-token: write # for `npm publish --provenance`
     needs:
       - build
     steps:
@@ -127,7 +130,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download Artifacts
@@ -150,10 +153,16 @@ jobs:
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 
       - name: Publish npm packages as latest
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
-        run: for package in npm/oxlint*; do npm publish $package/ --tag latest --access public; done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: |
+          for package in npm/oxlint*
+          do
+            npm publish $package/ --tag latest --provenance --access public
+            echo '----'
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

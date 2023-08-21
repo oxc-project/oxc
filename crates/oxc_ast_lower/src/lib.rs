@@ -371,6 +371,7 @@ impl<'a> AstLower<'a> {
         self.hir.with_statement(stmt.span, object, body)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn lower_expression(&mut self, expr: &ast::Expression<'a>) -> hir::Expression<'a> {
         ensure_sufficient_stack(|| {
             match expr {
@@ -444,7 +445,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXElement(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -452,7 +453,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXFragment(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -850,7 +851,7 @@ impl<'a> AstLower<'a> {
             expr => {
                 // return undefined because this is invalid syntax
                 let ident = self.lower_identifier_reference(
-                    &ast::IdentifierReference { span: expr.span(), name: "undefined".into() },
+                    &ast::IdentifierReference::new("undefined".into(), expr.span()),
                     ReferenceFlag::Write,
                 );
                 self.hir.assignment_target_identifier(ident)

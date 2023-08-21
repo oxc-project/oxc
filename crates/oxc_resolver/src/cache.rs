@@ -10,12 +10,16 @@ use std::{
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 
-use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions};
+use crate::{
+    package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions, TsConfig,
+};
 
+#[derive(Default)]
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
     cache: DashMap<u64, CachedPath, BuildHasherDefault<IdentityHasher>>,
+    tsconfigs: DashMap<u64, Arc<TsConfig>, BuildHasherDefault<IdentityHasher>>,
 }
 
 #[derive(Default)]
@@ -33,12 +37,6 @@ impl Hasher for IdentityHasher {
     }
 }
 
-impl<Fs: FileSystem> Default for Cache<Fs> {
-    fn default() -> Self {
-        Self { fs: Fs::default(), cache: DashMap::default() }
-    }
-}
-
 impl<Fs: FileSystem> Cache<Fs> {
     pub fn new(fs: Fs) -> Self {
         Self { fs, ..Self::default() }
@@ -46,6 +44,7 @@ impl<Fs: FileSystem> Cache<Fs> {
 
     pub fn clear(&self) {
         self.cache.clear();
+        self.tsconfigs.clear();
     }
 
     pub fn value(&self, path: &Path) -> CachedPath {
@@ -62,6 +61,33 @@ impl<Fs: FileSystem> Cache<Fs> {
             CachedPath(Arc::new(CachedPathImpl::new(path.to_path_buf().into_boxed_path(), parent)));
         self.cache.insert(hash, data.clone());
         data
+    }
+
+    pub fn tsconfig(
+        &self,
+        tsconfig_path: &Path,
+        callback: impl FnOnce(&mut TsConfig) -> Result<(), ResolveError>, // callback for modifying tsconfig with `extends`
+    ) -> Result<Arc<TsConfig>, ResolveError> {
+        let hash = {
+            let mut hasher = FxHasher::default();
+            tsconfig_path.hash(&mut hasher);
+            hasher.finish()
+        };
+        self.tsconfigs
+            .entry(hash)
+            .or_try_insert_with(|| {
+                let mut tsconfig_string = self
+                    .fs
+                    .read_to_string(tsconfig_path)
+                    .map_err(|_| ResolveError::NotFound(tsconfig_path.to_path_buf()))?;
+                let mut tsconfig =
+                    TsConfig::parse(tsconfig_path, &mut tsconfig_string).map_err(|error| {
+                        ResolveError::from_serde_json_error(tsconfig_path.to_path_buf(), &error)
+                    })?;
+                callback(&mut tsconfig)?;
+                Ok(Arc::new(tsconfig))
+            })
+            .map(|r| Arc::clone(r.value()))
     }
 }
 
@@ -107,6 +133,10 @@ impl CachedPathImpl {
 
     pub fn to_path_buf(&self) -> PathBuf {
         self.path.to_path_buf()
+    }
+
+    pub fn parent(&self) -> Option<&CachedPath> {
+        self.parent.as_ref()
     }
 
     fn meta<Fs: FileSystem>(&self, fs: &Fs) -> Option<FileMetadata> {

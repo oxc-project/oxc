@@ -1,5 +1,8 @@
 # Oxc Resolver
 
+* [enhanced-resolve](https://github.com/webpack/enhanced-resolve) configurations
+* built-in [tsconfig-paths-webpack-plugin](https://github.com/dividab/tsconfig-paths-webpack-plugin)
+
 ## TODO
 
 - [ ] use `thiserror` for better error messages
@@ -36,7 +39,10 @@
 
 ## Test
 
-Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+Tests ported from
+* [enhanced-resolve](https://github.com/webpack/enhanced-resolve/tree/main/test)
+* [tsconfig-path](https://github.com/dividab/tsconfig-paths/blob/master/src/__tests__/data/match-path-data.ts) and [parcel-resolver](https://github.com/parcel-bundler/parcel/tree/v2/packages/utils/node-resolver-core/test/fixture/tsconfig) for tsconfig-paths
+
 Test cases are located in `./src/tests`, fixtures are located in `./tests`
 
 Crossed out test files are irrelevant.

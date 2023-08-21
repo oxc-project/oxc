@@ -1,12 +1,9 @@
 use bitflags::bitflags;
-use oxc_index::define_index_type;
 use oxc_span::{Atom, Span};
 
 use crate::{symbol::SymbolId, AstNodeId};
 
-define_index_type! {
-    pub struct ReferenceId = u32;
-}
+pub use oxc_syntax::reference::ReferenceId;
 
 #[derive(Debug, Clone)]
 pub struct Reference {
