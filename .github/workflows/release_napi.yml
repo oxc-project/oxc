@@ -126,7 +126,7 @@ jobs:
     name: Publish NAPI
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
     needs:
       - build
