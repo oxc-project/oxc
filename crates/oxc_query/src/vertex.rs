@@ -549,8 +549,6 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
 
 impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     fn from(expr: &'a Expression<'a>) -> Self {
-        // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
-
         // NOTE: When string literal / template literal is added, add to as_constant_string
         match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
