@@ -262,6 +262,67 @@ impl<'a> Vertex<'a> {
             Vertex::Parameter(ParameterVertex { ast_node: None, parameter }.into())
         }))
     }
+
+    pub fn is_expr(&self) -> bool {
+        match &self {
+            Vertex::ObjectLiteral(..)
+            | Vertex::JSXElement(..)
+            | Vertex::NumberLiteral(..)
+            | Vertex::Expression(..)
+            | Vertex::Reassignment(..)
+            | Vertex::FnCall(..)
+            | Vertex::FnDeclaration(..)
+            | Vertex::ArrowFunction(..)
+            | Vertex::LogicalExpression(..)
+            | Vertex::UnaryExpression(..)
+            | Vertex::VarRef(..)
+            | Vertex::TernaryExpression(..)
+            | Vertex::New(..)
+            | Vertex::Array(..) => true,
+            Vertex::ASTNode(..)
+            | Vertex::AssignmentType(..)
+            | Vertex::Class(..)
+            | Vertex::ClassMethod(..)
+            | Vertex::ClassProperty(..)
+            | Vertex::DefaultImport(..)
+            | Vertex::File
+            | Vertex::Import(..)
+            | Vertex::Interface(..)
+            | Vertex::InterfaceExtend(..)
+            | Vertex::JSXAttribute(..)
+            | Vertex::JSXExpressionContainer(..)
+            | Vertex::JSXFragment(..)
+            | Vertex::JSXOpeningElement(..)
+            | Vertex::JSXSpreadAttribute(..)
+            | Vertex::JSXSpreadChild(..)
+            | Vertex::JSXText(..)
+            | Vertex::Name(..)
+            | Vertex::PathPart(..)
+            | Vertex::SearchParameter(..)
+            | Vertex::Span(..)
+            | Vertex::SpecificImport(..)
+            | Vertex::TypeAnnotation(..)
+            | Vertex::Type(..)
+            | Vertex::Url(..)
+            | Vertex::VariableDeclaration(..)
+            | Vertex::Return(..)
+            | Vertex::IfStatementAST(..)
+            | Vertex::SpreadIntoObject(..)
+            | Vertex::ObjectEntry(..)
+            | Vertex::DotProperty(..)
+            | Vertex::Argument(..)
+            | Vertex::FunctionBody(..)
+            | Vertex::Statement(..)
+            | Vertex::Parameter(..)
+            | Vertex::ExpressionStatement(..)
+            | Vertex::WhileStatement(..)
+            | Vertex::BlockStatement(..)
+            | Vertex::DoWhileStatement(..)
+            | Vertex::ForStatement(..)
+            | Vertex::Throw(..)
+            | Vertex::ArrayElement(..) => false,
+        }
+    }
 }
 
 impl Typename for Vertex<'_> {

@@ -1039,6 +1039,7 @@ pub(super) fn resolve_file_edge<'a, 'b: 'a>(
         "path_part" => file::path_part(contexts, resolve_info, adapter),
         "type_annotation" => file::type_annotation(contexts, resolve_info, adapter),
         "variable_declaration" => file::variable_declaration(contexts, resolve_info, adapter),
+        "expression" => file::expression(contexts, resolve_info, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'File'")
         }
@@ -1053,7 +1054,7 @@ mod file {
     };
 
     use super::super::vertex::Vertex;
-    use crate::Adapter;
+    use crate::{vertex, Adapter};
 
     pub(super) fn ast_node<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
@@ -1091,6 +1092,23 @@ mod file {
                     .iter()
                     .map(|node| (*node).into())
                     .filter(|x: &Vertex<'_>| x.is_arrow_function() || x.is_fn_declaration()),
+            )
+        })
+    }
+
+    pub(super) fn expression<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(
+                adapter
+                    .semantic
+                    .nodes()
+                    .iter()
+                    .map(|node| (*node).into())
+                    .filter(vertex::Vertex::is_expr),
             )
         })
     }

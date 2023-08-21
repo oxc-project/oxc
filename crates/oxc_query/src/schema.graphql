@@ -63,6 +63,7 @@ type File {
   variable_declaration: [VariableDeclarationAST!]!
 
   function: [Function!]!
+  expression: [Expression!]
 
   ast_node: [ASTNode!]!
 }
