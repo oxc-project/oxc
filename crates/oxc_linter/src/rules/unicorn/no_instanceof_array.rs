@@ -101,7 +101,5 @@ fn test() {
         ),
     ];
 
-    let mut tester = Tester::new(NoInstanceofArray::NAME, pass, fail);
-    tester.test_and_snapshot();
-    tester.test_fix(fix);
+    Tester::new(NoInstanceofArray::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
