@@ -848,6 +848,37 @@ type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   span: Span!
 }
 
+"""
+Only includes strings declared with ' or " not `
+"""
+interface StringLiteral implements HasSpan & Expression {
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
+"""
+Only includes strings declared with ' or " not `
+"""
+type StringLiteralAST implements HasSpan & Expression & ASTNode & StringLiteral {
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan
