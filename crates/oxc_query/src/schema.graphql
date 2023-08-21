@@ -281,7 +281,7 @@ interface ArrayElement implements HasSpan {
   span: Span!
 }
 
-type ArrayElementAST implements HasSpan {
+type ArrayElementAST implements HasSpan & ASTNode {
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
