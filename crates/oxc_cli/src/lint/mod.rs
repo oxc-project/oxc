@@ -78,6 +78,7 @@ impl Runner for LintRunner {
         });
 
         diagnostic_service.run();
+        linter.print_execution_times_if_enable();
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
