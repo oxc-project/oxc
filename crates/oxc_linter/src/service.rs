@@ -54,12 +54,12 @@ impl LintService {
                         if !diagnostics.1.is_empty() {
                             tx_error.send(Some(diagnostics)).unwrap();
                         }
-
-                        if done && processing.is_empty() {
-                            tx_error.send(None).unwrap();
-                            break;
-                        }
                     }
+                }
+
+                if done && processing.is_empty() {
+                    tx_error.send(None).unwrap();
+                    break;
                 }
             }
         });
