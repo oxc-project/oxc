@@ -879,6 +879,31 @@ type StringLiteralAST implements HasSpan & Expression & ASTNode & StringLiteral 
   span: Span!
 }
 
+interface TemplateLiteral implements HasSpan & Expression {
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
+type TemplateLiteralAST implements HasSpan & Expression & TemplateLiteral & ASTNode {
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan

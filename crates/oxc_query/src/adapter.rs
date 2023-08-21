@@ -240,6 +240,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "TemplateLiteralAST" | "TemplateLiteral" => {
+                super::properties::resolve_template_literal_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "ThrowAST" | "Throw" => super::properties::resolve_throw_property(
                 contexts,
                 property_name.as_ref(),
@@ -632,6 +639,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             ),
             "TernaryExpression" | "TernaryExpressionAST" => {
                 super::edges::resolve_ternary_expression_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
+            "TemplateLiteral" | "TemplateLiteralAST" => {
+                super::edges::resolve_template_literal_edge(
                     contexts,
                     edge_name.as_ref(),
                     parameters,
