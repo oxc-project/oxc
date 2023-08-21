@@ -119,6 +119,9 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # for `npm publish --provenance`
     needs:
       - build
     steps:
