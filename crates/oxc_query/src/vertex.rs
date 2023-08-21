@@ -8,7 +8,9 @@ use oxc_span::{GetSpan, Span};
 use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
-use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
+use crate::util::{
+    jsx_attribute_to_constant_string, try_get_constant_string_field_value_from_template_lit,
+};
 
 #[non_exhaustive]
 #[derive(Debug, Clone, EnumAsInner)]
@@ -67,6 +69,10 @@ pub enum Vertex<'a> {
     TernaryExpression(Rc<TernaryExpressionVertex<'a>>),
     New(Rc<NewVertex<'a>>),
     Throw(Rc<ThrowVertex<'a>>),
+    Array(Rc<ArrayVertex<'a>>),
+    ArrayElement(Rc<ArrayElementVertex<'a>>),
+    StringLiteral(Rc<StringLiteralVertex<'a>>),
+    TemplateLiteral(Rc<TemplateLiteralVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -124,6 +130,10 @@ impl<'a> Vertex<'a> {
             Self::TernaryExpression(data) => data.conditional_expression.span,
             Self::New(data) => data.new_expression.span,
             Self::Throw(data) => data.throw_statement.span,
+            Self::Array(data) => data.array_expression.span,
+            Self::ArrayElement(data) => data.array_expression_element.span(),
+            Self::StringLiteral(data) => data.string.span,
+            Self::TemplateLiteral(data) => data.template.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -170,6 +180,10 @@ impl<'a> Vertex<'a> {
             Vertex::TernaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::New(data) => data.ast_node.map(|x| x.id()),
             Vertex::Throw(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Array(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ArrayElement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::StringLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::TemplateLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -203,7 +217,10 @@ impl<'a> Vertex<'a> {
 
     pub fn as_constant_string(&self) -> Option<String> {
         match &self {
-            Vertex::Expression(expr) => expr_to_maybe_const_string(expr),
+            Vertex::StringLiteral(slit) => Some(slit.string.value.to_string()),
+            Vertex::TemplateLiteral(tlit) => {
+                try_get_constant_string_field_value_from_template_lit(tlit.template)
+            }
             _ => None,
         }
     }
@@ -256,6 +273,69 @@ impl<'a> Vertex<'a> {
             Vertex::Parameter(ParameterVertex { ast_node: None, parameter }.into())
         }))
     }
+
+    pub fn is_expr(&self) -> bool {
+        match &self {
+            Vertex::ObjectLiteral(..)
+            | Vertex::JSXElement(..)
+            | Vertex::NumberLiteral(..)
+            | Vertex::Expression(..)
+            | Vertex::Reassignment(..)
+            | Vertex::FnCall(..)
+            | Vertex::FnDeclaration(..)
+            | Vertex::ArrowFunction(..)
+            | Vertex::LogicalExpression(..)
+            | Vertex::UnaryExpression(..)
+            | Vertex::VarRef(..)
+            | Vertex::TernaryExpression(..)
+            | Vertex::New(..)
+            | Vertex::StringLiteral(..)
+            | Vertex::TemplateLiteral(..)
+            | Vertex::Array(..) => true,
+            Vertex::ASTNode(..)
+            | Vertex::AssignmentType(..)
+            | Vertex::Class(..)
+            | Vertex::ClassMethod(..)
+            | Vertex::ClassProperty(..)
+            | Vertex::DefaultImport(..)
+            | Vertex::File
+            | Vertex::Import(..)
+            | Vertex::Interface(..)
+            | Vertex::InterfaceExtend(..)
+            | Vertex::JSXAttribute(..)
+            | Vertex::JSXExpressionContainer(..)
+            | Vertex::JSXFragment(..)
+            | Vertex::JSXOpeningElement(..)
+            | Vertex::JSXSpreadAttribute(..)
+            | Vertex::JSXSpreadChild(..)
+            | Vertex::JSXText(..)
+            | Vertex::Name(..)
+            | Vertex::PathPart(..)
+            | Vertex::SearchParameter(..)
+            | Vertex::Span(..)
+            | Vertex::SpecificImport(..)
+            | Vertex::TypeAnnotation(..)
+            | Vertex::Type(..)
+            | Vertex::Url(..)
+            | Vertex::VariableDeclaration(..)
+            | Vertex::Return(..)
+            | Vertex::IfStatementAST(..)
+            | Vertex::SpreadIntoObject(..)
+            | Vertex::ObjectEntry(..)
+            | Vertex::DotProperty(..)
+            | Vertex::Argument(..)
+            | Vertex::FunctionBody(..)
+            | Vertex::Statement(..)
+            | Vertex::Parameter(..)
+            | Vertex::ExpressionStatement(..)
+            | Vertex::WhileStatement(..)
+            | Vertex::BlockStatement(..)
+            | Vertex::DoWhileStatement(..)
+            | Vertex::ForStatement(..)
+            | Vertex::Throw(..)
+            | Vertex::ArrayElement(..) => false,
+        }
+    }
 }
 
 impl Typename for Vertex<'_> {
@@ -263,61 +343,65 @@ impl Typename for Vertex<'_> {
         match self {
             Vertex::ASTNode(_) => "ASTNode",
             Vertex::AssignmentType(_) => "AssignmentType",
-            Vertex::Class(class) => class.typename(),
+            Vertex::Class(data) => data.typename(),
             Vertex::ClassMethod(_) => "ClassMethod",
             Vertex::ClassProperty(_) => "ClassProperty",
             Vertex::DefaultImport(_) => "DefaultImport",
             Vertex::Expression(_) => "Expression",
             Vertex::File => "File",
-            Vertex::Import(import) => import.typename(),
-            Vertex::Interface(iface) => iface.typename(),
-            Vertex::NumberLiteral(nlit) => nlit.typename(),
-            Vertex::DotProperty(dot_property) => dot_property.typename(),
-            Vertex::InterfaceExtend(iex) => match **iex {
+            Vertex::Import(data) => data.typename(),
+            Vertex::Interface(data) => data.typename(),
+            Vertex::NumberLiteral(data) => data.typename(),
+            Vertex::DotProperty(data) => data.typename(),
+            Vertex::InterfaceExtend(data) => match **data {
                 InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
                 InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
             },
             Vertex::JSXAttribute(_) => "JSXAttribute",
-            Vertex::JSXElement(jsx) => jsx.typename(),
+            Vertex::JSXElement(data) => data.typename(),
             Vertex::JSXExpressionContainer(_) => "JSXExpressionContainer",
             Vertex::JSXFragment(_) => "JSXFragment",
-            Vertex::JSXOpeningElement(jsx) => jsx.typename(),
+            Vertex::JSXOpeningElement(data) => data.typename(),
             Vertex::JSXSpreadAttribute(_) => "JSXSpreadAttribute",
             Vertex::JSXSpreadChild(_) => "JSXSpreadChild",
             Vertex::JSXText(_) => "JSXText",
-            Vertex::ObjectLiteral(objlit) => objlit.typename(),
+            Vertex::ObjectLiteral(data) => data.typename(),
             Vertex::PathPart(_) => "PathPart",
             Vertex::SearchParameter(_) => "SearchParameter",
             Vertex::Span(_) => "Span",
             Vertex::SpecificImport(_) => "SpecificImport",
-            Vertex::TypeAnnotation(tn) => tn.typename(),
+            Vertex::TypeAnnotation(data) => data.typename(),
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
-            Vertex::VariableDeclaration(vd) => vd.typename(),
-            Vertex::Name(name) => name.typename(),
-            Vertex::Return(ret) => ret.typename(),
+            Vertex::VariableDeclaration(datat) => datat.typename(),
+            Vertex::Name(data) => data.typename(),
+            Vertex::Return(data) => data.typename(),
             Vertex::IfStatementAST(_) => "IfStatementAST",
-            Vertex::SpreadIntoObject(obj) => obj.typename(),
-            Vertex::ObjectEntry(entry) => entry.typename(),
-            Vertex::FnCall(fncall) => fncall.typename(),
-            Vertex::Reassignment(reassignment) => reassignment.typename(),
-            Vertex::Argument(arg) => arg.typename(),
-            Vertex::FnDeclaration(fndecl) => fndecl.typename(),
-            Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
-            Vertex::FunctionBody(fn_body) => fn_body.typename(),
-            Vertex::Parameter(param) => param.typename(),
-            Vertex::LogicalExpression(logical_expr) => logical_expr.typename(),
-            Vertex::UnaryExpression(unary_expr) => unary_expr.typename(),
+            Vertex::SpreadIntoObject(data) => data.typename(),
+            Vertex::ObjectEntry(data) => data.typename(),
+            Vertex::FnCall(data) => data.typename(),
+            Vertex::Reassignment(data) => data.typename(),
+            Vertex::Argument(data) => data.typename(),
+            Vertex::FnDeclaration(data) => data.typename(),
+            Vertex::ArrowFunction(data) => data.typename(),
+            Vertex::FunctionBody(data) => data.typename(),
+            Vertex::Parameter(data) => data.typename(),
+            Vertex::LogicalExpression(data) => data.typename(),
+            Vertex::UnaryExpression(datat) => datat.typename(),
             Vertex::Statement(_) => "Statement",
-            Vertex::ExpressionStatement(expr_stmt) => expr_stmt.typename(),
-            Vertex::WhileStatement(expr_stmt) => expr_stmt.typename(),
-            Vertex::DoWhileStatement(expr_stmt) => expr_stmt.typename(),
-            Vertex::BlockStatement(blk_stmt) => blk_stmt.typename(),
-            Vertex::VarRef(var_ref) => var_ref.typename(),
-            Vertex::ForStatement(for_stmt) => for_stmt.typename(),
-            Vertex::TernaryExpression(ternary_expr) => ternary_expr.typename(),
-            Vertex::New(new) => new.typename(),
-            Vertex::Throw(throw) => throw.typename(),
+            Vertex::ExpressionStatement(data) => data.typename(),
+            Vertex::WhileStatement(data) => data.typename(),
+            Vertex::DoWhileStatement(data) => data.typename(),
+            Vertex::BlockStatement(data) => data.typename(),
+            Vertex::VarRef(data) => data.typename(),
+            Vertex::ForStatement(data) => data.typename(),
+            Vertex::TernaryExpression(data) => data.typename(),
+            Vertex::New(data) => data.typename(),
+            Vertex::Throw(data) => data.typename(),
+            Vertex::Array(data) => data.typename(),
+            Vertex::ArrayElement(data) => data.typename(),
+            Vertex::StringLiteral(data) => data.typename(),
+            Vertex::TemplateLiteral(data) => data.typename(),
         }
     }
 }
@@ -441,6 +525,16 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ThrowStatement(throw_statement) => {
                 Vertex::Throw(ThrowVertex { ast_node: Some(ast_node), throw_statement }.into())
             }
+            AstKind::ArrayExpressionElement(array_expression_element) => Vertex::ArrayElement(
+                ArrayElementVertex { ast_node: Some(ast_node), array_expression_element }.into(),
+            ),
+            AstKind::StringLiteral(string_literal) => Vertex::StringLiteral(
+                StringLiteralVertex { ast_node: Some(ast_node), string: string_literal }.into(),
+            ),
+            AstKind::TemplateLiteral(template_literal) => Vertex::TemplateLiteral(
+                TemplateLiteralVertex { ast_node: Some(ast_node), template: template_literal }
+                    .into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -477,9 +571,6 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
 
 impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     fn from(expr: &'a Expression<'a>) -> Self {
-        // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
-
-        // NOTE: When string literal / template literal is added, add to as_constant_string
         match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: None, object_expression }.into(),
@@ -522,6 +613,15 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::NewExpression(new_expression) => {
                 Vertex::New(NewVertex { ast_node: None, new_expression }.into())
             }
+            Expression::ArrayExpression(array_expression) => {
+                Vertex::Array(ArrayVertex { ast_node: None, array_expression }.into())
+            }
+            Expression::StringLiteral(string_literal) => Vertex::StringLiteral(
+                StringLiteralVertex { ast_node: None, string: string_literal }.into(),
+            ),
+            Expression::TemplateLiteral(template_literal) => Vertex::TemplateLiteral(
+                TemplateLiteralVertex { ast_node: None, template: template_literal }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
@@ -1116,6 +1216,74 @@ impl<'a> Typename for ThrowVertex<'a> {
             "ThrowAST"
         } else {
             "Throw"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrayVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub array_expression: &'a ArrayExpression<'a>,
+}
+
+impl<'a> Typename for ArrayVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrayAST"
+        } else {
+            "Array"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrayElementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub array_expression_element: &'a ArrayExpressionElement<'a>,
+}
+
+impl<'a> Typename for ArrayElementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrayElementAST"
+        } else {
+            "ArrayElement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct StringLiteralVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub string: &'a StringLiteral,
+}
+
+impl<'a> Typename for StringLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "StringLiteralAST"
+        } else {
+            "StringLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct TemplateLiteralVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub template: &'a TemplateLiteral<'a>,
+}
+
+impl<'a> Typename for TemplateLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "TemplateLiteralAST"
+        } else {
+            "TemplateLiteral"
         }
     }
 }

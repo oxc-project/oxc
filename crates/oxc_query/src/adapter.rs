@@ -71,6 +71,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
             return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
+            "ArrayAST" | "Array" => super::properties::resolve_array_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "ArgumentAST" | "Argument" => super::properties::resolve_argument_property(
                 contexts,
                 property_name.as_ref(),
@@ -230,6 +235,18 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "StringLiteralAST" | "StringLiteral" => super::properties::resolve_string_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "TemplateLiteralAST" | "TemplateLiteral" => {
+                super::properties::resolve_template_literal_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "ThrowAST" | "Throw" => super::properties::resolve_throw_property(
                 contexts,
                 property_name.as_ref(),
@@ -272,6 +289,20 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match type_name.as_ref() {
+            "ArrayAST" | "Array" => super::edges::resolve_array_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ArrayElementAST" | "ArrayElement" => super::edges::resolve_array_element_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -599,8 +630,24 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "StringLiteral" | "StringLiteralAST" => super::edges::resolve_string_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "TernaryExpression" | "TernaryExpressionAST" => {
                 super::edges::resolve_ternary_expression_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
+            "TemplateLiteral" | "TemplateLiteralAST" => {
+                super::edges::resolve_template_literal_edge(
                     contexts,
                     edge_name.as_ref(),
                     parameters,
