@@ -55,14 +55,14 @@ type File {
   last_path_part: PathPart!
   path_part: [PathPart!]!
 
-  class: [ClassAST!]!
-  type_annotation: [TypeAnnotationAST!]!
-  interface: [InterfaceAST!]!
-  jsx_element: [JSXElementAST!]!
-  import: [ImportAST!]!
-  variable_declaration: [VariableDeclarationAST!]!
+  class: [ClassAST!]
+  type_annotation: [TypeAnnotationAST!]
+  interface: [InterfaceAST!]
+  jsx_element: [JSXElementAST!]
+  import: [ImportAST!]
+  variable_declaration: [VariableDeclarationAST!]
 
-  function: [Function!]!
+  function: [Function!]
   expression: [Expression!]
 
   ast_node: [ASTNode!]!
