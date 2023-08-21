@@ -12,7 +12,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Use `Array.isArray()` instead of `instanceof Array`.")]
+#[error("eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.")]
 #[diagnostic(severity(warning), help("The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js."))]
 struct NoInstanceofArrayDiagnostic(#[label] pub Span);
 

@@ -1,58 +1,57 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 80
 expression: no_instanceof_array
 ---
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ arr instanceof Array
    · ────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ [] instanceof Array
    · ───────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ [1,2,3] instanceof Array === true
    · ────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ fun.call(1, 2, 3) instanceof Array
    · ──────────────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ obj.arr instanceof Array
    · ────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ foo.bar[2] instanceof Array
    · ───────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ (0, array) instanceof Array
    · ───────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
 
-  ⚠ Use `Array.isArray()` instead of `instanceof Array`.
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
  1 │ function foo(){return [] instanceof Array}
    ·                       ───────────────────
