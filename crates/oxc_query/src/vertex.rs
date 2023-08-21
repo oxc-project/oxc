@@ -9,8 +9,7 @@ use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
 use crate::util::{
-    expr_to_maybe_const_string, jsx_attribute_to_constant_string,
-    try_get_constant_string_field_value_from_template_lit,
+    jsx_attribute_to_constant_string, try_get_constant_string_field_value_from_template_lit,
 };
 
 #[non_exhaustive]
