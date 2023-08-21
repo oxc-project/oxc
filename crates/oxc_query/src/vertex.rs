@@ -8,7 +8,10 @@ use oxc_span::{GetSpan, Span};
 use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
-use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
+use crate::util::{
+    expr_to_maybe_const_string, jsx_attribute_to_constant_string,
+    try_get_constant_string_field_value_from_template_lit,
+};
 
 #[non_exhaustive]
 #[derive(Debug, Clone, EnumAsInner)]
@@ -215,7 +218,10 @@ impl<'a> Vertex<'a> {
 
     pub fn as_constant_string(&self) -> Option<String> {
         match &self {
-            Vertex::Expression(expr) => expr_to_maybe_const_string(expr),
+            Vertex::StringLiteral(slit) => Some(slit.string.value.to_string()),
+            Vertex::TemplateLiteral(tlit) => {
+                try_get_constant_string_field_value_from_template_lit(tlit.template)
+            }
             _ => None,
         }
     }
@@ -566,7 +572,6 @@ impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
 
 impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     fn from(expr: &'a Expression<'a>) -> Self {
-        // NOTE: When string literal / template literal is added, add to as_constant_string
         match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: None, object_expression }.into(),
