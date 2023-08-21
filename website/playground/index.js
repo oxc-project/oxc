@@ -75,6 +75,7 @@ const setStringToStorage = (whatToSet, value) => {
 
 class Playground {
   oxc;
+  sourceTextUtf8 // source text in Uint8Array, for converting from utf8 to utf16 span
 
   runOptions;
   parserOptions;
@@ -119,6 +120,7 @@ class Playground {
     const sourceText = text;
     this.urlParams.updateCode(sourceText);
     this.oxc.sourceText = sourceText;
+    this.sourceTextUtf8 = new TextEncoder().encode(sourceText);
     this.updateView();
   }
 
@@ -639,11 +641,15 @@ query {
       }
     }
     // if we didn't find a start or an end, return early
-    if (start === undefined || end === undefined) return;
+    if (start == undefined || end == undefined) return;
+
+    // convert utf8 to utf16 span so they show correctly in the editor
+    start = new TextDecoder().decode(this.sourceTextUtf8.slice(0, start)).length;
+    end = new TextDecoder().decode(this.sourceTextUtf8.slice(0, end)).length;
 
     this.highlightEditorRange(
       this.editor,
-      EditorSelection.range(Number(start), Number(end))
+      EditorSelection.range(start, end)
     );
   }
 }
