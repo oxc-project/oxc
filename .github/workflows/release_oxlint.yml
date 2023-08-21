@@ -150,10 +150,16 @@ jobs:
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 
       - name: Publish npm packages as latest
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
-        run: for package in npm/oxlint*; do npm publish $package/ --tag latest --access public; done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: |
+          for package in npm/oxlint*
+          do
+            npm publish $package/ --tag latest --provenance --access public
+            echo '----'
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

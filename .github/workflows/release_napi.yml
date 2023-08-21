@@ -172,6 +172,6 @@ jobs:
         run: |
           for package in npm/napi*
           do
-            npm publish $package/ --tag latest --access public
+            npm publish $package/ --tag latest --provenance --access public
             echo '----'
           done
