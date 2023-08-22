@@ -823,6 +823,7 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
 
 interface VarRef implements HasSpan & Expression {
   name: String!
+  declaration: ASTNode
   # Expression
   as_constant_string: String
   """
@@ -835,6 +836,7 @@ interface VarRef implements HasSpan & Expression {
 
 type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   name: String!
+  declaration: ASTNode
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

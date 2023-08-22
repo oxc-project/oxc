@@ -3504,6 +3504,7 @@ pub(super) fn resolve_var_ref_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => var_ref::span(contexts, resolve_info),
+        "declaration" => var_ref::declaration(contexts, resolve_info, adapter),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
@@ -3515,10 +3516,34 @@ pub(super) fn resolve_var_ref_edge<'a, 'b: 'a>(
 
 mod var_ref {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
+    use crate::Adapter;
+
     use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn declaration<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            let var_ref = v
+                .as_var_ref()
+                .unwrap_or_else(|| panic!("expected to have a varref vertex, instead have: {v:#?}"))
+                .identifier_reference;
+            let v = var_ref
+                .reference_id
+                .get()
+                .and_then(|x| adapter.semantic.symbols().references.get(x))
+                .and_then(oxc_semantic::Reference::symbol_id)
+                .map(|x| adapter.semantic.symbol_declaration(x));
+
+            Box::new(v.into_iter().map(|x| (*x).into()))
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
