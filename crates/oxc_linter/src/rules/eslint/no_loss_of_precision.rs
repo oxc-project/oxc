@@ -127,9 +127,10 @@ impl<'a> RawNum<'a> {
         let scientific = self.exp != 0;
         let precision = self.frac.len();
         if self.int.starts_with('0') {
+            let frac_zeros = self.frac.chars().take_while(|&ch| ch == '0').count();
             #[allow(clippy::cast_possible_wrap)]
-            let exp = self.exp - 1 - self.frac.chars().take_while(|&ch| ch == '0').count() as isize;
-            self.frac = self.frac.trim_start_matches('0');
+            let exp = self.exp - 1 - frac_zeros as isize;
+            self.frac = &self.frac[frac_zeros..];
 
             match self.frac.len() {
                 0 => ScientificNotation {
@@ -166,17 +167,17 @@ impl<'a> RawNum<'a> {
                     precision,
                 }
             } else {
-                ScientificNotation {
-                    int: &self.int[..1],
-                    frac: Cow::Owned(
+                let frac = if self.frac.is_empty() {
+                    Cow::Borrowed(&self.int[1..])
+                } else {
+                    Cow::Owned(
                         format!("{}{}", &self.int[1..], self.frac)
                             .trim_end_matches('0')
                             .to_string(),
-                    ),
-                    exp,
-                    scientific,
-                    precision,
-                }
+                    )
+                };
+
+                ScientificNotation { int: &self.int[..1], frac, exp, scientific, precision }
             }
         }
     }
@@ -208,17 +209,17 @@ impl NoLossOfPrecision {
 
     fn base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
         let raw = Self::get_raw(node);
-        let raw = if let Some(s) = Self::normalize(&raw) { s } else { return true };
+        let Some(raw) = Self::normalize(&raw) else { return true };
 
         if raw.frac.len() >= 100 {
             return true;
         }
         let stored = match (raw.scientific, raw.precision) {
             (true, _) => format!("{:.1$e}", node.value, raw.frac.len()),
-            (false, 0) => format!("{}", node.value),
+            (false, 0) => node.value.to_string(),
             (false, precision) => format!("{:.1$}", node.value, precision),
         };
-        let stored = if let Some(s) = Self::normalize(&stored) { s } else { return true };
+        let Some(stored) = Self::normalize(&stored) else { return true };
         raw != stored
     }
 
