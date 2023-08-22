@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use oxc_ast::ast::NumberLiteral;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
@@ -7,7 +6,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 use std::borrow::Cow;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -77,26 +75,52 @@ impl PartialEq for ScientificNotation<'_> {
     }
 }
 
-static RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?").unwrap()
-});
-
 impl<'a> RawNum<'a> {
     fn new(num: &str) -> Option<RawNum<'_>> {
-        if let Some(captures) = RE.captures(num) {
-            let int = captures.name("int").map_or("0", |m| m.as_str());
-            let frac = captures.name("frac").map_or("", |m| m.as_str());
-            let exp = captures.name("exp").map_or("0", |m| m.as_str());
+        // remove sign
+        let num = num.trim_start_matches(['+', '-']);
 
-            let exp = match exp.parse::<isize>() {
-                Ok(x) => x,
-                Err(_) => return None,
-            };
+        let (int, num_without_int) = {
+            // skip leading zeros
+            let num_without_zeros = num.trim_start_matches('0');
 
-            Some(RawNum { int, frac, exp })
-        } else {
-            None
-        }
+            // read the integer part and store the end index
+            let int_end = num_without_zeros
+                .chars()
+                .position(|ch| !ch.is_ascii_digit())
+                .unwrap_or(num_without_zeros.len());
+
+            // if no integer part was found, default to 0
+            let int = if int_end == 0 { "0" } else { &num_without_zeros[..int_end] };
+
+            // make a slice of the rest of the string
+            let num_without_int = &num_without_zeros[int_end..];
+
+            (int, num_without_int)
+        };
+
+        // if next char is a dot, parse the fractional part
+        let (frac, num_without_frac) =
+            num_without_int.strip_prefix('.').map_or(("", num_without_int), |num_without_dot| {
+                let frac_end = num_without_dot
+                    .chars()
+                    .position(|ch| !ch.is_ascii_digit())
+                    .unwrap_or(num_without_dot.len());
+
+                // slice the fractional part and the rest of the string
+                let frac = &num_without_dot[..frac_end];
+                let num_without_frac = &num_without_dot[frac_end..];
+
+                (frac, num_without_frac)
+            });
+
+        // if next char is an e, treat the rest as the exponent
+        let exp =
+            num_without_frac.strip_prefix(['e', 'E']).map_or("0", |num_without_e| num_without_e);
+
+        let Ok(exp) = exp.parse::<isize>() else { return None; };
+
+        Some(RawNum { int, frac, exp })
     }
 
     fn normalize(&mut self) -> ScientificNotation<'a> {
