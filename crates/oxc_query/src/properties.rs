@@ -640,6 +640,34 @@ pub(super) fn resolve_reassignment_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_regexp_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "pattern" => resolve_property_with(contexts, |v| {
+            v.as_reg_exp_literal()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a regexpliteral vertex, instead have: {v:#?}")
+                })
+                .regexp
+                .regex
+                .pattern
+                .to_string()
+                .into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'RegExpLiteral'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_search_parameter_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,

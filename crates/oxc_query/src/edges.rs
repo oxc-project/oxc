@@ -2804,6 +2804,41 @@ mod reassignment {
     }
 }
 
+pub(super) fn resolve_regexp_literal_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => regexp_literal::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts, parameters),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'RegExpLiteral'"
+            )
+        }
+    }
+}
+
+mod regexp_literal {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_return_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

@@ -219,6 +219,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "RegExpLiteralAST" | "RegExpLiteral" => {
+                super::properties::resolve_regexp_literal_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "SearchParameter" => super::properties::resolve_search_parameter_property(
                 contexts,
                 property_name.as_ref(),
@@ -590,6 +597,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 self,
             ),
             "ReassignmentAST" | "Reassignment" => super::edges::resolve_reassignment_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "RegExpLiteralAST" | "RegExpLiteral" => super::edges::resolve_regexp_literal_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
