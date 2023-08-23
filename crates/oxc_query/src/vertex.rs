@@ -543,6 +543,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::RegExpLiteral(regexp_literal) => Vertex::RegExpLiteral(
                 RegExpLiteralVertex { ast_node: Some(ast_node), regexp: regexp_literal }.into(),
             ),
+            AstKind::ArrayExpression(array_expression) => {
+                Vertex::Array(ArrayVertex { ast_node: Some(ast_node), array_expression }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
