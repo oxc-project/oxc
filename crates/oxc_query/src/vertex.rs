@@ -73,6 +73,7 @@ pub enum Vertex<'a> {
     ArrayElement(Rc<ArrayElementVertex<'a>>),
     StringLiteral(Rc<StringLiteralVertex<'a>>),
     TemplateLiteral(Rc<TemplateLiteralVertex<'a>>),
+    RegExpLiteral(Rc<RegExpLiteralVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -134,6 +135,7 @@ impl<'a> Vertex<'a> {
             Self::ArrayElement(data) => data.array_expression_element.span(),
             Self::StringLiteral(data) => data.string.span,
             Self::TemplateLiteral(data) => data.template.span,
+            Self::RegExpLiteral(data) => data.regexp.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -184,6 +186,7 @@ impl<'a> Vertex<'a> {
             Vertex::ArrayElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::StringLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::TemplateLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::RegExpLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -291,6 +294,7 @@ impl<'a> Vertex<'a> {
             | Vertex::New(..)
             | Vertex::StringLiteral(..)
             | Vertex::TemplateLiteral(..)
+            | Vertex::RegExpLiteral(..)
             | Vertex::Array(..) => true,
             Vertex::ASTNode(..)
             | Vertex::AssignmentType(..)
@@ -402,6 +406,7 @@ impl Typename for Vertex<'_> {
             Vertex::ArrayElement(data) => data.typename(),
             Vertex::StringLiteral(data) => data.typename(),
             Vertex::TemplateLiteral(data) => data.typename(),
+            Vertex::RegExpLiteral(data) => data.typename(),
         }
     }
 }
@@ -535,6 +540,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
                 TemplateLiteralVertex { ast_node: Some(ast_node), template: template_literal }
                     .into(),
             ),
+            AstKind::RegExpLiteral(regexp_literal) => Vertex::RegExpLiteral(
+                RegExpLiteralVertex { ast_node: Some(ast_node), regexp: regexp_literal }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -621,6 +629,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             ),
             Expression::TemplateLiteral(template_literal) => Vertex::TemplateLiteral(
                 TemplateLiteralVertex { ast_node: None, template: template_literal }.into(),
+            ),
+            Expression::RegExpLiteral(regexp_literal) => Vertex::RegExpLiteral(
+                RegExpLiteralVertex { ast_node: None, regexp: regexp_literal }.into(),
             ),
             _ => Vertex::Expression(expr),
         }
@@ -1284,6 +1295,23 @@ impl<'a> Typename for TemplateLiteralVertex<'a> {
             "TemplateLiteralAST"
         } else {
             "TemplateLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct RegExpLiteralVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub regexp: &'a RegExpLiteral,
+}
+
+impl<'a> Typename for RegExpLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "RegExpLiteralAST"
+        } else {
+            "RegExpLiteral"
         }
     }
 }
