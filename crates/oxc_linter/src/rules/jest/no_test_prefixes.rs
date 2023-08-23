@@ -75,7 +75,6 @@ impl Rule for NoTestPrefixes {
         let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
         let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
         let Some(kind) = kind.to_general() else {return};
-        dbg!(name);
 
         if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
             return;
