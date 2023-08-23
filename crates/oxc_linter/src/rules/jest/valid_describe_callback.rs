@@ -203,7 +203,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -213,17 +213,17 @@ fn test() {
                     expect(await Promise.resolve(42)).toBe(42)
                 })
             })
-        ",
+            ",
             None,
         ),
         ("if (hasOwnProperty(obj, key)) {}", None),
         (
             "
-        describe.each`
-            foo  | foe
-            ${'1'} | ${'2'}
-        `('$something', ({ foo, foe }) => {});
-        ",
+            describe.each`
+                foo  | foe
+                ${'1'} | ${'2'}
+            `('$something', ({ foo, foe }) => {});
+            ",
             None,
         ),
     ];
