@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{CallExpression, Expression, IdentifierName, IdentifierReference, MemberExpression},
+    ast::{
+        CallExpression, Expression, IdentifierName, IdentifierReference,
+        ImportDeclarationSpecifier, MemberExpression, ModuleDeclaration,
+    },
     AstKind,
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{Atom, Span};
 
 use crate::context::LintContext;
@@ -12,7 +15,7 @@ use crate::context::LintContext;
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
-    ctx: &LintContext,
+    ctx: &LintContext<'a>,
 ) -> Option<ParsedGeneralJestFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx)?;
 
@@ -25,7 +28,7 @@ pub fn parse_general_jest_fn_call<'a>(
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
-    ctx: &LintContext,
+    ctx: &LintContext<'a>,
 ) -> Option<ParsedJestFnCall<'a>> {
     let callee = &call_expr.callee;
 
@@ -55,7 +58,7 @@ pub fn parse_jest_fn_call<'a>(
         return None;
     }
 
-    if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
+    if let Some(last) = chain.last() {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last.is_name_equal("each")
             && !matches!(
@@ -70,8 +73,9 @@ pub fn parse_jest_fn_call<'a>(
         {
             return None;
         }
-        let Some(first_name )= first.name() else { return None };
-        let kind = JestFnKind::from(&first_name);
+
+        let name = resolved.original.unwrap_or(resolved.local).as_str();
+        let kind = JestFnKind::from(name);
         let mut members = Vec::new();
         let iter = chain.into_iter().skip(1);
         let rest = iter;
@@ -82,7 +86,6 @@ pub fn parse_jest_fn_call<'a>(
             members.push(member);
         }
 
-        let name = resolved.local.as_str();
         let is_valid_jest_call = if members.is_empty() {
             VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
         } else if members.len() == 1 {
@@ -109,10 +112,11 @@ pub fn parse_jest_fn_call<'a>(
         if !is_valid_jest_call {
             return None;
         }
+
         return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
             kind,
             members,
-            raw: first_name,
+            name: Cow::Borrowed(name),
         }));
     }
 
@@ -120,14 +124,49 @@ pub fn parse_jest_fn_call<'a>(
 }
 
 fn resolve_to_jest_fn<'a>(
-    call_expr: &'a CallExpression,
-    ctx: &'a LintContext,
+    call_expr: &'a CallExpression<'a>,
+    ctx: &LintContext<'a>,
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
     if ctx.semantic().is_reference_to_global_variable(ident) {
-        return Some(ResolvedJestFn { local: &ident.name });
+        return Some(ResolvedJestFn {
+            local: &ident.name,
+            kind: JestFnFrom::Global,
+            original: None,
+        });
     }
 
+    let node_id = get_import_decl_node_id(ident, ctx)?;
+    let node = ctx.nodes().get_node(node_id);
+    let AstKind::ModuleDeclaration(module_decl) = node.kind() else { return None; };
+    let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else { return None; };
+
+    if import_decl.source.value == "@jest/globals" {
+        let original = import_decl.specifiers.iter().find_map(|specifier| match specifier {
+            ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+                Some(import_specifier.imported.name())
+            }
+            _ => None,
+        });
+
+        return Some(ResolvedJestFn { local: &ident.name, kind: JestFnFrom::Import, original });
+    }
+    None
+}
+
+fn get_import_decl_node_id(ident: &IdentifierReference, ctx: &LintContext) -> Option<AstNodeId> {
+    let symbol_table = ctx.semantic().symbols();
+    let reference_id = ident.reference_id.get()?;
+    let reference = symbol_table.get_reference(reference_id);
+    // import binding is not a write reference
+    if reference.is_write() {
+        return None;
+    }
+    let symbol_id = reference.symbol_id()?;
+    if symbol_table.get_flag(symbol_id).is_import_binding() {
+        return Some(symbol_table.get_declaration(symbol_id))
+    }
+    
     None
 }
 
@@ -187,19 +226,28 @@ pub enum ParsedJestFnCall<'a> {
 pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
-    pub raw: Cow<'a, str>,
+    pub name: Cow<'a, str>,
 }
 
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub raw: Cow<'a, str>,
+    pub name: Cow<'a, str>,
     // pub args: Vec<&'a Expression<'a>>
     // TODO: add `modifiers`, `matcher` for this struct.
 }
 
 struct ResolvedJestFn<'a> {
     pub local: &'a Atom,
+    pub original: Option<&'a Atom>,
+    #[allow(unused)]
+    kind: JestFnFrom,
+}
+
+pub enum JestFnFrom {
+    Global,
+    Import,
 }
 
 pub struct KnownMemberExpressionProperty<'a> {
