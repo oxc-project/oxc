@@ -164,9 +164,9 @@ fn get_import_decl_node_id(ident: &IdentifierReference, ctx: &LintContext) -> Op
     }
     let symbol_id = reference.symbol_id()?;
     if symbol_table.get_flag(symbol_id).is_import_binding() {
-        return Some(symbol_table.get_declaration(symbol_id))
+        return Some(symbol_table.get_declaration(symbol_id));
     }
-    
+
     None
 }
 
