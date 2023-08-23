@@ -5,7 +5,6 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/master/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-mod constants;
 mod kind;
 mod number;
 mod string_builder;
@@ -20,9 +19,8 @@ use oxc_diagnostics::Error;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::{
     identifier::{
-        is_identifier_part, is_identifier_start_all, is_identifier_start_ascii,
-        is_irregular_line_terminator, is_irregular_whitespace, is_line_terminator, CR, EOF, FF, LF,
-        LS, PS, TAB, VT,
+        is_identifier_part, is_identifier_start_all, is_irregular_line_terminator,
+        is_irregular_whitespace, is_line_terminator, CR, EOF, FF, LF, LS, PS, TAB, VT,
     },
     unicode_id_start::is_id_start_unicode,
 };
@@ -30,7 +28,6 @@ pub use token::{RegExp, Token, TokenValue};
 
 pub use self::kind::Kind;
 use self::{
-    constants::SINGLE_CHAR_TOKENS,
     number::{parse_big_int, parse_float, parse_int},
     string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
@@ -249,6 +246,12 @@ impl<'a> Lexer<'a> {
         Span::new(self.current.token.start, self.offset())
     }
 
+    /// Consume the current char
+    #[inline]
+    fn consume_char(&mut self) -> char {
+        self.current.chars.next().unwrap()
+    }
+
     /// Peek the next char without advancing the position
     #[inline]
     fn peek(&self) -> char {
@@ -327,10 +330,9 @@ impl<'a> Lexer<'a> {
         loop {
             let offset = self.offset();
             self.current.token.start = offset;
-            let builder = AutoCow::new(self);
 
-            if let Some(c) = self.current.chars.next() {
-                let kind = self.match_char(c, builder);
+            if let Some(c) = self.current.chars.clone().next() {
+                let kind = self.match_char(c);
                 if !kind.is_trivia() {
                     return kind;
                 }
@@ -340,111 +342,32 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    #[allow(clippy::too_many_lines)]
-    fn match_char(&mut self, c: char, mut builder: AutoCow<'a>) -> Kind {
-        // fast path for single character tokens
-        // '{'  '}'  '('  ')'  '['  ']'  ';' ',' ':' '~'
+    #[inline]
+    fn match_char(&mut self, c: char) -> Kind {
         let size = c as usize;
+
         if size < 128 {
-            let kind = SINGLE_CHAR_TOKENS[size];
-            if kind != Kind::Undetermined {
-                return kind;
-            }
-            // fast path for identifiers
-            if is_identifier_start_ascii(c) {
-                builder.push_matching(c);
-                return self.identifier_name_or_keyword(builder);
-            }
+            return BYTE_HANDLERS[size](self);
         }
-        // NOTE: matching order is significant here, by real world occurrences
-        // see https://blog.mozilla.org/nnethercote/2011/07/01/faster-javascript-parsing/
-        // > the rough order of frequency for different token kinds is as follows:
-        // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
+
         match c {
-            ' ' | '\t' => Kind::WhiteSpace,
-            '\r' | '\n' => {
-                self.current.token.is_on_new_line = true;
-                Kind::NewLine
-            }
-            '.' => {
-                let kind = self.read_dot(&mut builder);
-                if kind.is_number() {
-                    self.set_numeric_value(kind, builder.finish(self));
-                }
-                kind
-            }
-            '=' => self.read_equal(),
-            '"' | '\'' => {
-                if self.context == LexerContext::JsxAttributeValue {
-                    self.read_jsx_string_literal(c)
-                } else {
-                    self.read_string_literal(c)
-                }
-            }
-            '1'..='9' => {
-                let kind = self.decimal_literal_after_first_digit(&mut builder);
-                self.set_numeric_value(kind, builder.finish(self));
-                kind
-            }
-            '+' => self.read_plus(),
-            '-' => self.read_minus().map_or_else(|| self.skip_single_line_comment(), |kind| kind),
-            '0' => {
-                let kind = self.read_zero(&mut builder);
-                self.set_numeric_value(kind, builder.finish(self));
-                kind
-            }
-            '/' => {
-                match self.peek() {
-                    '/' => {
-                        self.current.chars.next();
-                        self.skip_single_line_comment()
-                    }
-                    '*' => {
-                        self.current.chars.next();
-                        self.skip_multi_line_comment()
-                    }
-                    _ => {
-                        // regex is handled separately, see `next_regex`
-                        self.read_slash()
-                    }
-                }
-            }
-            '`' => self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate),
-            '!' => self.read_exclamation(),
-            '%' => self.read_percent(),
-            '*' => self.read_star(),
-            '&' => self.read_ampersand(),
-            '|' => self.read_pipe(),
-            '?' => self.read_question(),
-            '<' => {
-                self.read_left_angle().map_or_else(|| self.skip_single_line_comment(), |kind| kind)
-            }
-            '^' => self.read_caret(),
-            '#' => {
-                // HashbangComment ::
-                //     `#!` SingleLineCommentChars?
-                if self.current.token.start == 0 && self.next_eq('!') {
-                    self.read_hashbang_comment()
-                } else {
-                    builder.get_mut_string_without_current_ascii_char(self);
-                    self.private_identifier(builder)
-                }
-            }
-            '\\' => {
-                builder.force_allocation_without_current_ascii_char(self);
-                self.identifier_unicode_escape_sequence(&mut builder, true);
-                self.identifier_name_or_keyword(builder)
-            }
             c if is_id_start_unicode(c) => {
+                let mut builder = AutoCow::new(self);
+                let c = self.consume_char();
                 builder.push_matching(c);
                 self.identifier_name_or_keyword(builder)
             }
-            c if is_irregular_whitespace(c) => Kind::WhiteSpace,
+            c if is_irregular_whitespace(c) => {
+                self.consume_char();
+                Kind::WhiteSpace
+            }
             c if is_irregular_line_terminator(c) => {
+                self.consume_char();
                 self.current.token.is_on_new_line = true;
                 Kind::NewLine
             }
             _ => {
+                self.consume_char();
                 self.error(diagnostics::InvalidCharacter(c, self.unterminated_range()));
                 Kind::Undetermined
             }
@@ -574,42 +497,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_equal(&mut self) -> Kind {
-        if self.next_eq('=') {
-            if self.next_eq('=') {
-                Kind::Eq3
-            } else {
-                Kind::Eq2
-            }
-        } else if self.next_eq('>') {
-            Kind::Arrow
-        } else {
-            Kind::Eq
-        }
-    }
-
-    fn read_exclamation(&mut self) -> Kind {
-        if self.next_eq('=') {
-            if self.next_eq('=') {
-                Kind::Neq2
-            } else {
-                Kind::Neq
-            }
-        } else {
-            Kind::Bang
-        }
-    }
-
-    fn read_plus(&mut self) -> Kind {
-        if self.next_eq('+') {
-            Kind::Plus2
-        } else if self.next_eq('=') {
-            Kind::PlusEq
-        } else {
-            Kind::Plus
-        }
-    }
-
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
     fn read_minus(&mut self) -> Option<Kind> {
         if self.next_eq('-') {
@@ -626,92 +513,6 @@ impl<'a> Lexer<'a> {
             Some(Kind::MinusEq)
         } else {
             Some(Kind::Minus)
-        }
-    }
-
-    fn read_caret(&mut self) -> Kind {
-        if self.next_eq('=') {
-            Kind::CaretEq
-        } else {
-            Kind::Caret
-        }
-    }
-
-    fn read_percent(&mut self) -> Kind {
-        if self.next_eq('=') {
-            Kind::PercentEq
-        } else {
-            Kind::Percent
-        }
-    }
-
-    fn read_star(&mut self) -> Kind {
-        if self.next_eq('*') {
-            if self.next_eq('=') {
-                Kind::Star2Eq
-            } else {
-                Kind::Star2
-            }
-        } else if self.next_eq('=') {
-            Kind::StarEq
-        } else {
-            Kind::Star
-        }
-    }
-
-    fn read_ampersand(&mut self) -> Kind {
-        if self.next_eq('&') {
-            if self.next_eq('=') {
-                Kind::Amp2Eq
-            } else {
-                Kind::Amp2
-            }
-        } else if self.next_eq('=') {
-            Kind::AmpEq
-        } else {
-            Kind::Amp
-        }
-    }
-
-    fn read_pipe(&mut self) -> Kind {
-        if self.next_eq('|') {
-            if self.next_eq('=') {
-                Kind::Pipe2Eq
-            } else {
-                Kind::Pipe2
-            }
-        } else if self.next_eq('=') {
-            Kind::PipeEq
-        } else {
-            Kind::Pipe
-        }
-    }
-
-    fn read_question(&mut self) -> Kind {
-        if self.next_eq('?') {
-            if self.next_eq('=') {
-                Kind::Question2Eq
-            } else {
-                Kind::Question2
-            }
-        } else if self.peek() == '.' {
-            // parse `?.1` as `?` `.1`
-            if self.peek2().is_ascii_digit() {
-                Kind::Question
-            } else {
-                self.current.chars.next();
-                Kind::QuestionDot
-            }
-        } else {
-            Kind::Question
-        }
-    }
-
-    fn read_slash(&mut self) -> Kind {
-        if self.next_eq('=') {
-            Kind::SlashEq
-        } else {
-            Kind::Slash
         }
     }
 
@@ -1478,3 +1279,359 @@ enum SurrogatePair {
     // invalid \u Hex4Digits \u Hex4Digits
     HighLow(u32, u32),
 }
+
+type ByteHandler = fn(&mut Lexer<'_>) -> Kind;
+
+/// Lookup table mapping any incoming byte to a handler function defined below.
+/// <https://github.com/ratel-rust/ratel-core/blob/master/ratel/src/lexer/mod.rs>
+#[rustfmt::skip]
+static BYTE_HANDLERS: [ByteHandler; 128] = [
+//  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
+    ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, SPS, SPS, LIN, ERR, ERR, // 0
+    ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
+    SPS, EXL, QOT, HAS, IDT, PRC, AMP, QOT, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
+    ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
+    AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
+    IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
+    TPL, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 6
+    IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BEO, PIP, BEC, TLD, ERR, // 7
+];
+
+const ERR: ByteHandler = |lexer| {
+    let c = lexer.consume_char();
+    lexer.error(diagnostics::InvalidCharacter(c, lexer.unterminated_range()));
+    Kind::Undetermined
+};
+
+// <TAB> <VT> <FF>
+const SPS: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::WhiteSpace
+};
+
+// '\r' '\n'
+const LIN: ByteHandler = |lexer| {
+    lexer.consume_char();
+    lexer.current.token.is_on_new_line = true;
+    Kind::NewLine
+};
+
+// !
+const EXL: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('=') {
+        if lexer.next_eq('=') {
+            Kind::Neq2
+        } else {
+            Kind::Neq
+        }
+    } else {
+        Kind::Bang
+    }
+};
+
+// ' "
+const QOT: ByteHandler = |lexer| {
+    let c = lexer.consume_char();
+    if lexer.context == LexerContext::JsxAttributeValue {
+        lexer.read_jsx_string_literal(c)
+    } else {
+        lexer.read_string_literal(c)
+    }
+};
+
+// #
+const HAS: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    // HashbangComment ::
+    //     `#!` SingleLineCommentChars?
+    if lexer.current.token.start == 0 && lexer.next_eq('!') {
+        lexer.read_hashbang_comment()
+    } else {
+        builder.get_mut_string_without_current_ascii_char(lexer);
+        lexer.private_identifier(builder)
+    }
+};
+
+const IDT: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    lexer.identifier_name_or_keyword(builder)
+};
+
+// %
+const PRC: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('=') {
+        Kind::PercentEq
+    } else {
+        Kind::Percent
+    }
+};
+
+// &
+const AMP: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('&') {
+        if lexer.next_eq('=') {
+            Kind::Amp2Eq
+        } else {
+            Kind::Amp2
+        }
+    } else if lexer.next_eq('=') {
+        Kind::AmpEq
+    } else {
+        Kind::Amp
+    }
+};
+
+// (
+const PNO: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::LParen
+};
+
+// )
+const PNC: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::RParen
+};
+
+// *
+const ATR: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('*') {
+        if lexer.next_eq('=') {
+            Kind::Star2Eq
+        } else {
+            Kind::Star2
+        }
+    } else if lexer.next_eq('=') {
+        Kind::StarEq
+    } else {
+        Kind::Star
+    }
+};
+
+// +
+const PLS: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('+') {
+        Kind::Plus2
+    } else if lexer.next_eq('=') {
+        Kind::PlusEq
+    } else {
+        Kind::Plus
+    }
+};
+
+// ,
+const COM: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::Comma
+};
+
+// -
+const MIN: ByteHandler = |lexer| {
+    lexer.consume_char();
+    lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment())
+};
+
+// .
+const PRD: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    let kind = lexer.read_dot(&mut builder);
+    if kind.is_number() {
+        lexer.set_numeric_value(kind, builder.finish(lexer));
+    }
+    kind
+};
+
+// /
+const SLH: ByteHandler = |lexer| {
+    lexer.consume_char();
+    match lexer.peek() {
+        '/' => {
+            lexer.current.chars.next();
+            lexer.skip_single_line_comment()
+        }
+        '*' => {
+            lexer.current.chars.next();
+            lexer.skip_multi_line_comment()
+        }
+        _ => {
+            // regex is handled separately, see `next_regex`
+            if lexer.next_eq('=') {
+                Kind::SlashEq
+            } else {
+                Kind::Slash
+            }
+        }
+    }
+};
+
+// 0
+const ZER: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    let kind = lexer.read_zero(&mut builder);
+    lexer.set_numeric_value(kind, builder.finish(lexer));
+    kind
+};
+
+// 1 to 9
+const DIG: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    let kind = lexer.decimal_literal_after_first_digit(&mut builder);
+    lexer.set_numeric_value(kind, builder.finish(lexer));
+    kind
+};
+
+// :
+const COL: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::Colon
+};
+
+// ;
+const SEM: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::Semicolon
+};
+
+// <
+const LSS: ByteHandler = |lexer| {
+    lexer.consume_char();
+    lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment())
+};
+
+// =
+const EQL: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('=') {
+        if lexer.next_eq('=') {
+            Kind::Eq3
+        } else {
+            Kind::Eq2
+        }
+    } else if lexer.next_eq('>') {
+        Kind::Arrow
+    } else {
+        Kind::Eq
+    }
+};
+
+// >
+const GTR: ByteHandler = |lexer| {
+    lexer.consume_char();
+    // `>=` is re-lexed with [Lexer::next_jsx_child]
+    Kind::RAngle
+};
+
+// ?
+const QST: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('?') {
+        if lexer.next_eq('=') {
+            Kind::Question2Eq
+        } else {
+            Kind::Question2
+        }
+    } else if lexer.peek() == '.' {
+        // parse `?.1` as `?` `.1`
+        if lexer.peek2().is_ascii_digit() {
+            Kind::Question
+        } else {
+            lexer.current.chars.next();
+            Kind::QuestionDot
+        }
+    } else {
+        Kind::Question
+    }
+};
+
+// @
+const AT_: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::At
+};
+
+// [
+const BTO: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::LBrack
+};
+
+// \
+const ESC: ByteHandler = |lexer| {
+    let mut builder = AutoCow::new(lexer);
+    let c = lexer.consume_char();
+    builder.push_matching(c);
+    builder.force_allocation_without_current_ascii_char(lexer);
+    lexer.identifier_unicode_escape_sequence(&mut builder, true);
+    lexer.identifier_name_or_keyword(builder)
+};
+
+// ]
+const BTC: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::RBrack
+};
+
+// ^
+const CRT: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('=') {
+        Kind::CaretEq
+    } else {
+        Kind::Caret
+    }
+};
+
+// `
+const TPL: ByteHandler = |lexer| {
+    lexer.consume_char();
+    lexer.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
+};
+
+// {
+const BEO: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::LCurly
+};
+
+// |
+const PIP: ByteHandler = |lexer| {
+    lexer.consume_char();
+    if lexer.next_eq('|') {
+        if lexer.next_eq('=') {
+            Kind::Pipe2Eq
+        } else {
+            Kind::Pipe2
+        }
+    } else if lexer.next_eq('=') {
+        Kind::PipeEq
+    } else {
+        Kind::Pipe
+    }
+};
+
+// }
+const BEC: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::RCurly
+};
+
+// ~
+const TLD: ByteHandler = |lexer| {
+    lexer.consume_char();
+    Kind::Tilde
+};
