@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::Ordering};
 
 use oxc_ast::{
     ast::{
@@ -86,30 +86,9 @@ pub fn parse_jest_fn_call<'a>(
             members.push(member);
         }
 
-        let is_valid_jest_call = if members.is_empty() {
-            VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
-        } else if members.len() == 1 {
-            VALID_JEST_FN_CALL_CHAINS_2
-                .iter()
-                .any(|chain| chain[0] == name && members[0].is_name_equal(chain[1]))
-        } else if members.len() == 2 {
-            VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| {
-                chain[0] == name
-                    && members[0].is_name_equal(chain[1])
-                    && members[1].is_name_equal(chain[2])
-            })
-        } else if members.len() == 3 {
-            VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| {
-                chain[0] == name
-                    && members[0].is_name_equal(chain[1])
-                    && members[1].is_name_equal(chain[2])
-                    && members[2].is_name_equal(chain[3])
-            })
-        } else {
-            false
-        };
-
-        if !is_valid_jest_call {
+        let mut call_chains = Vec::from([Cow::Borrowed(name)]);
+        call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+        if !is_valid_jest_call(&call_chains) {
             return None;
         }
 
@@ -121,6 +100,25 @@ pub fn parse_jest_fn_call<'a>(
     }
 
     None
+}
+
+// If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
+fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
+    VALID_JEST_FN_CALL_CHAINS
+        .binary_search_by(|chain| {
+            chain
+                .iter()
+                .zip(members.iter())
+                .find_map(|(&chain, member)| {
+                    let ordering = chain.cmp(member.as_ref());
+                    if ordering != Ordering::Equal {
+                        return Some(ordering);
+                    }
+                    None
+                })
+                .unwrap_or(Ordering::Equal)
+        })
+        .is_ok()
 }
 
 fn resolve_to_jest_fn<'a>(
@@ -360,65 +358,57 @@ fn get_node_chain<'a>(
     chain
 }
 
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 1]; 12] = [
-    ["afterAll"],
-    ["afterEach"],
-    ["beforeAll"],
-    ["beforeEach"],
-    ["describe"],
-    ["fdescribe"],
-    ["xdescribe"],
-    ["it"],
-    ["fit"],
-    ["xit"],
-    ["test"],
-    ["xtest"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_2: [[&str; 2]; 23] = [
-    ["describe", "each"],
-    ["describe", "only"],
-    ["describe", "skip"],
-    ["fdescribe", "each"],
-    ["xdescribe", "each"],
-    ["it", "concurrent"],
-    ["it", "each"],
-    ["it", "failing"],
-    ["it", "only"],
-    ["it", "skip"],
-    ["it", "todo"],
-    ["fit", "each"],
-    ["fit", "failing"],
-    ["xit", "each"],
-    ["xit", "failing"],
-    ["test", "concurrent"],
-    ["test", "each"],
-    ["test", "failing"],
-    ["test", "only"],
-    ["test", "skip"],
-    ["test", "todo"],
-    ["xtest", "each"],
-    ["xtest", "failing"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_3: [[&str; 3]; 12] = [
-    ["describe", "only", "each"],
-    ["describe", "skip", "each"],
-    ["it", "concurrent", "each"],
-    ["it", "only", "each"],
-    ["it", "only", "failing"],
-    ["it", "skip", "each"],
-    ["it", "skip", "failing"],
-    ["test", "concurrent", "each"],
-    ["test", "only", "each"],
-    ["test", "only", "failing"],
-    ["test", "skip", "each"],
-    ["test", "skip", "failing"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_4: [[&str; 4]; 4] = [
+// sorted list for binary search.
+const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
+    ["afterAll", "", "", ""],
+    ["afterEach", "", "", ""],
+    ["beforeAll", "", "", ""],
+    ["beforeEach", "", "", ""],
+    ["describe", "", "", ""],
+    ["describe", "each", "", ""],
+    ["describe", "only", "", ""],
+    ["describe", "only", "each", ""],
+    ["describe", "skip", "", ""],
+    ["describe", "skip", "each", ""],
+    ["fdescribe", "", "", ""],
+    ["fdescribe", "each", "", ""],
+    ["fit", "", "", ""],
+    ["fit", "each", "", ""],
+    ["fit", "failing", "", ""],
+    ["it", "", "", ""],
+    ["it", "concurrent", "", ""],
+    ["it", "concurrent", "each", ""],
     ["it", "concurrent", "only", "each"],
     ["it", "concurrent", "skip", "each"],
+    ["it", "each", "", ""],
+    ["it", "failing", "", ""],
+    ["it", "only", "", ""],
+    ["it", "only", "each", ""],
+    ["it", "only", "failing", ""],
+    ["it", "skip", "", ""],
+    ["it", "skip", "each", ""],
+    ["it", "skip", "failing", ""],
+    ["it", "todo", "", ""],
+    ["test", "", "", ""],
+    ["test", "concurrent", "", ""],
+    ["test", "concurrent", "each", ""],
     ["test", "concurrent", "only", "each"],
     ["test", "concurrent", "skip", "each"],
+    ["test", "each", "", ""],
+    ["test", "failing", "", ""],
+    ["test", "only", "", ""],
+    ["test", "only", "each", ""],
+    ["test", "only", "failing", ""],
+    ["test", "skip", "", ""],
+    ["test", "skip", "each", ""],
+    ["test", "skip", "failing", ""],
+    ["test", "todo", "", ""],
+    ["xdescribe", "", "", ""],
+    ["xdescribe", "each", "", ""],
+    ["xit", "", "", ""],
+    ["xit", "each", "", ""],
+    ["xit", "failing", "", ""],
+    ["xtest", "", "", ""],
+    ["xtest", "each", "", ""],
+    ["xtest", "failing", "", ""],
 ];

@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0:?}")]
+#[error("eslint(jest/valid-describe-callback): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidDescribeCallbackDiagnostic(&'static str, &'static str, #[label] pub Span);
 
@@ -253,7 +253,7 @@ fn test() {
             "
             import { fdescribe } from '@jest/globals';
             fdescribe('foo', async function () {})
-        ",
+            ",
             None,
         ),
         ("describe.only('foo', async function () {})", None),
@@ -271,7 +271,7 @@ fn test() {
                     });
                 });
             });
-        ",
+            ",
             None,
         ),
         (
@@ -283,7 +283,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -302,7 +302,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -318,7 +318,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         ("describe('foo', () => test('bar', () => {})) ", None),
