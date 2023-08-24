@@ -2386,6 +2386,8 @@ mod object_entry {
         VertexIterator,
     };
 
+    use crate::vertex::NameVertex;
+
     use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
@@ -2409,7 +2411,9 @@ mod object_entry {
                 .key;
 
             let vertex: Vertex<'_> = match &key {
-                oxc_ast::ast::PropertyKey::Identifier(_) => return Box::new(std::iter::empty()), // TODO: FINISH
+                oxc_ast::ast::PropertyKey::Identifier(identifier_reference) => {
+                    Vertex::Name(NameVertex { ast_node: None, name: &identifier_reference }.into())
+                }
                 oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => unreachable!(
                     "private identifiers don't exist in objects, so this should never be called"
                 ),
