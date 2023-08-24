@@ -249,7 +249,7 @@ fn test() {
             "
             import { fdescribe } from '@jest/globals';
             fdescribe('foo', async function () {})
-        ",
+            ",
             None,
         ),
         ("describe.only('foo', async function () {})", None),
@@ -267,7 +267,7 @@ fn test() {
                     });
                 });
             });
-        ",
+            ",
             None,
         ),
         (
@@ -279,7 +279,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -298,7 +298,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -314,7 +314,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         ("describe('foo', () => test('bar', () => {})) ", None),
