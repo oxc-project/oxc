@@ -86,30 +86,7 @@ pub fn parse_jest_fn_call<'a>(
             members.push(member);
         }
 
-        let is_valid_jest_call = if members.is_empty() {
-            VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
-        } else if members.len() == 1 {
-            VALID_JEST_FN_CALL_CHAINS_2
-                .iter()
-                .any(|chain| chain[0] == name && members[0].is_name_equal(chain[1]))
-        } else if members.len() == 2 {
-            VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| {
-                chain[0] == name
-                    && members[0].is_name_equal(chain[1])
-                    && members[1].is_name_equal(chain[2])
-            })
-        } else if members.len() == 3 {
-            VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| {
-                chain[0] == name
-                    && members[0].is_name_equal(chain[1])
-                    && members[1].is_name_equal(chain[2])
-                    && members[2].is_name_equal(chain[3])
-            })
-        } else {
-            false
-        };
-
-        if !is_valid_jest_call {
+        if !is_valid_jest_call(&members, name) {
             return None;
         }
 
@@ -121,6 +98,18 @@ pub fn parse_jest_fn_call<'a>(
     }
 
     None
+}
+
+fn is_valid_jest_call(members: &[KnownMemberExpressionProperty], name: &str) -> bool {
+    VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| {
+        let mut chain_iter = chain.iter();
+        let first_chain = chain_iter.next().unwrap();
+        if name != *first_chain {
+            return false;
+        }
+
+        members.iter().zip(chain_iter).all(|(member, chain)| member.is_name_equal(chain))
+    })
 }
 
 fn resolve_to_jest_fn<'a>(
@@ -356,63 +345,55 @@ fn get_node_chain<'a>(
     chain
 }
 
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 1]; 12] = [
-    ["afterAll"],
-    ["afterEach"],
-    ["beforeAll"],
-    ["beforeEach"],
-    ["describe"],
-    ["fdescribe"],
-    ["xdescribe"],
-    ["it"],
-    ["fit"],
-    ["xit"],
-    ["test"],
-    ["xtest"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_2: [[&str; 2]; 23] = [
-    ["describe", "each"],
-    ["describe", "only"],
-    ["describe", "skip"],
-    ["fdescribe", "each"],
-    ["xdescribe", "each"],
-    ["it", "concurrent"],
-    ["it", "each"],
-    ["it", "failing"],
-    ["it", "only"],
-    ["it", "skip"],
-    ["it", "todo"],
-    ["fit", "each"],
-    ["fit", "failing"],
-    ["xit", "each"],
-    ["xit", "failing"],
-    ["test", "concurrent"],
-    ["test", "each"],
-    ["test", "failing"],
-    ["test", "only"],
-    ["test", "skip"],
-    ["test", "todo"],
-    ["xtest", "each"],
-    ["xtest", "failing"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_3: [[&str; 3]; 12] = [
-    ["describe", "only", "each"],
-    ["describe", "skip", "each"],
-    ["it", "concurrent", "each"],
-    ["it", "only", "each"],
-    ["it", "only", "failing"],
-    ["it", "skip", "each"],
-    ["it", "skip", "failing"],
-    ["test", "concurrent", "each"],
-    ["test", "only", "each"],
-    ["test", "only", "failing"],
-    ["test", "skip", "each"],
-    ["test", "skip", "failing"],
-];
-
-const VALID_JEST_FN_CALL_CHAINS_4: [[&str; 4]; 4] = [
+const EMPTY_STR: &str = "";
+const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
+    ["afterAll", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["afterEach", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["beforeAll", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["beforeEach", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["describe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["fdescribe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["xdescribe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["it", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["fit", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["xit", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["test", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["xtest", EMPTY_STR, EMPTY_STR, EMPTY_STR],
+    ["describe", "each", EMPTY_STR, EMPTY_STR],
+    ["describe", "only", EMPTY_STR, EMPTY_STR],
+    ["describe", "skip", EMPTY_STR, EMPTY_STR],
+    ["fdescribe", "each", EMPTY_STR, EMPTY_STR],
+    ["xdescribe", "each", EMPTY_STR, EMPTY_STR],
+    ["it", "concurrent", EMPTY_STR, EMPTY_STR],
+    ["it", "each", EMPTY_STR, EMPTY_STR],
+    ["it", "failing", EMPTY_STR, EMPTY_STR],
+    ["it", "only", EMPTY_STR, EMPTY_STR],
+    ["it", "skip", EMPTY_STR, EMPTY_STR],
+    ["it", "todo", EMPTY_STR, EMPTY_STR],
+    ["fit", "each", EMPTY_STR, EMPTY_STR],
+    ["fit", "failing", EMPTY_STR, EMPTY_STR],
+    ["xit", "each", EMPTY_STR, EMPTY_STR],
+    ["xit", "failing", EMPTY_STR, EMPTY_STR],
+    ["test", "concurrent", EMPTY_STR, EMPTY_STR],
+    ["test", "each", EMPTY_STR, EMPTY_STR],
+    ["test", "failing", EMPTY_STR, EMPTY_STR],
+    ["test", "only", EMPTY_STR, EMPTY_STR],
+    ["test", "skip", EMPTY_STR, EMPTY_STR],
+    ["test", "todo", EMPTY_STR, EMPTY_STR],
+    ["xtest", "each", EMPTY_STR, EMPTY_STR],
+    ["xtest", "failing", EMPTY_STR, EMPTY_STR],
+    ["describe", "only", "each", EMPTY_STR],
+    ["describe", "skip", "each", EMPTY_STR],
+    ["it", "concurrent", "each", EMPTY_STR],
+    ["it", "only", "each", EMPTY_STR],
+    ["it", "only", "failing", EMPTY_STR],
+    ["it", "skip", "each", EMPTY_STR],
+    ["it", "skip", "failing", EMPTY_STR],
+    ["test", "concurrent", "each", EMPTY_STR],
+    ["test", "only", "each", EMPTY_STR],
+    ["test", "only", "failing", EMPTY_STR],
+    ["test", "skip", "each", EMPTY_STR],
+    ["test", "skip", "failing", EMPTY_STR],
     ["it", "concurrent", "only", "each"],
     ["it", "concurrent", "skip", "each"],
     ["test", "concurrent", "only", "each"],

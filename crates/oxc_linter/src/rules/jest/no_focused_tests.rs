@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected focused test.")]
+#[error("eslint(jest/no-focused-tests): Unexpected focused test.")]
 #[diagnostic(severity(warning), help("Remove focus from test."))]
 struct NoFocusedTestsDiagnostic(#[label] pub Span);
 
