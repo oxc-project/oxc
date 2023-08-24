@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::Ordering};
 
 use oxc_ast::{
     ast::{
@@ -86,7 +86,9 @@ pub fn parse_jest_fn_call<'a>(
             members.push(member);
         }
 
-        if !is_valid_jest_call(&members, name) {
+        let mut call_chains = Vec::from([Cow::Borrowed(name)]);
+        call_chains.extend(members.iter().filter_map(|member| member.name()));
+        if !is_valid_jest_call(&call_chains) {
             return None;
         }
 
@@ -100,16 +102,23 @@ pub fn parse_jest_fn_call<'a>(
     None
 }
 
-fn is_valid_jest_call(members: &[KnownMemberExpressionProperty], name: &str) -> bool {
-    VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| {
-        let mut chain_iter = chain.iter();
-        let first_chain = chain_iter.next().unwrap();
-        if name != *first_chain {
-            return false;
-        }
-
-        members.iter().zip(chain_iter).all(|(member, chain)| member.is_name_equal(chain))
-    })
+// If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
+fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
+    VALID_JEST_FN_CALL_CHAINS
+        .binary_search_by(|chain| {
+            chain
+                .iter()
+                .zip(members.iter())
+                .find_map(|(&chain, member)| {
+                    let ordering = chain.cmp(member.as_ref());
+                    if ordering != Ordering::Equal {
+                        return Some(ordering);
+                    }
+                    return None;
+                })
+                .unwrap_or(Ordering::Equal)
+        })
+        .is_ok()
 }
 
 fn resolve_to_jest_fn<'a>(
@@ -345,57 +354,57 @@ fn get_node_chain<'a>(
     chain
 }
 
-const EMPTY_STR: &str = "";
+// sorted list for binary search.
 const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
-    ["afterAll", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["afterEach", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["beforeAll", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["beforeEach", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["describe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["fdescribe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["xdescribe", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["it", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["fit", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["xit", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["test", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["xtest", EMPTY_STR, EMPTY_STR, EMPTY_STR],
-    ["describe", "each", EMPTY_STR, EMPTY_STR],
-    ["describe", "only", EMPTY_STR, EMPTY_STR],
-    ["describe", "skip", EMPTY_STR, EMPTY_STR],
-    ["fdescribe", "each", EMPTY_STR, EMPTY_STR],
-    ["xdescribe", "each", EMPTY_STR, EMPTY_STR],
-    ["it", "concurrent", EMPTY_STR, EMPTY_STR],
-    ["it", "each", EMPTY_STR, EMPTY_STR],
-    ["it", "failing", EMPTY_STR, EMPTY_STR],
-    ["it", "only", EMPTY_STR, EMPTY_STR],
-    ["it", "skip", EMPTY_STR, EMPTY_STR],
-    ["it", "todo", EMPTY_STR, EMPTY_STR],
-    ["fit", "each", EMPTY_STR, EMPTY_STR],
-    ["fit", "failing", EMPTY_STR, EMPTY_STR],
-    ["xit", "each", EMPTY_STR, EMPTY_STR],
-    ["xit", "failing", EMPTY_STR, EMPTY_STR],
-    ["test", "concurrent", EMPTY_STR, EMPTY_STR],
-    ["test", "each", EMPTY_STR, EMPTY_STR],
-    ["test", "failing", EMPTY_STR, EMPTY_STR],
-    ["test", "only", EMPTY_STR, EMPTY_STR],
-    ["test", "skip", EMPTY_STR, EMPTY_STR],
-    ["test", "todo", EMPTY_STR, EMPTY_STR],
-    ["xtest", "each", EMPTY_STR, EMPTY_STR],
-    ["xtest", "failing", EMPTY_STR, EMPTY_STR],
-    ["describe", "only", "each", EMPTY_STR],
-    ["describe", "skip", "each", EMPTY_STR],
-    ["it", "concurrent", "each", EMPTY_STR],
-    ["it", "only", "each", EMPTY_STR],
-    ["it", "only", "failing", EMPTY_STR],
-    ["it", "skip", "each", EMPTY_STR],
-    ["it", "skip", "failing", EMPTY_STR],
-    ["test", "concurrent", "each", EMPTY_STR],
-    ["test", "only", "each", EMPTY_STR],
-    ["test", "only", "failing", EMPTY_STR],
-    ["test", "skip", "each", EMPTY_STR],
-    ["test", "skip", "failing", EMPTY_STR],
+    ["afterAll", "", "", ""],
+    ["afterEach", "", "", ""],
+    ["beforeAll", "", "", ""],
+    ["beforeEach", "", "", ""],
+    ["describe", "", "", ""],
+    ["describe", "each", "", ""],
+    ["describe", "only", "", ""],
+    ["describe", "only", "each", ""],
+    ["describe", "skip", "", ""],
+    ["describe", "skip", "each", ""],
+    ["fdescribe", "", "", ""],
+    ["fdescribe", "each", "", ""],
+    ["fit", "", "", ""],
+    ["fit", "each", "", ""],
+    ["fit", "failing", "", ""],
+    ["it", "", "", ""],
+    ["it", "concurrent", "", ""],
+    ["it", "concurrent", "each", ""],
     ["it", "concurrent", "only", "each"],
     ["it", "concurrent", "skip", "each"],
+    ["it", "each", "", ""],
+    ["it", "failing", "", ""],
+    ["it", "only", "", ""],
+    ["it", "only", "each", ""],
+    ["it", "only", "failing", ""],
+    ["it", "skip", "", ""],
+    ["it", "skip", "each", ""],
+    ["it", "skip", "failing", ""],
+    ["it", "todo", "", ""],
+    ["test", "", "", ""],
+    ["test", "concurrent", "", ""],
+    ["test", "concurrent", "each", ""],
     ["test", "concurrent", "only", "each"],
     ["test", "concurrent", "skip", "each"],
+    ["test", "each", "", ""],
+    ["test", "failing", "", ""],
+    ["test", "only", "", ""],
+    ["test", "only", "each", ""],
+    ["test", "only", "failing", ""],
+    ["test", "skip", "", ""],
+    ["test", "skip", "each", ""],
+    ["test", "skip", "failing", ""],
+    ["test", "todo", "", ""],
+    ["xdescribe", "", "", ""],
+    ["xdescribe", "each", "", ""],
+    ["xit", "", "", ""],
+    ["xit", "each", "", ""],
+    ["xit", "failing", "", ""],
+    ["xtest", "", "", ""],
+    ["xtest", "each", "", ""],
+    ["xtest", "failing", "", ""],
 ];

@@ -2,142 +2,142 @@
 source: crates/oxc_linter/src/tester.rs
 expression: valid_describe_callback
 ---
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each()()
    · ─────────────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe['each']()()
    · ────────────────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each(() => {})()
    · ─────────────────────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each(() => {})('foo')
    ·                         ─────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each()(() => {})
    ·                 ────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe['each']()(() => {})
    ·                    ────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each('foo')(() => {})
    ·                      ────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.only.each('foo')(() => {})
    ·                           ────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe(() => {})
    ·          ────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo')
    ·          ─────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "Second argument must be a function"
+  ⚠ eslint(jest/valid-describe-callback): "Second argument must be a function"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', 'foo2')
    ·                 ──────
    ╰────
   help: "Replace second argument with a function"
 
-  ⚠ "Describe requires name and callback arguments"
+  ⚠ eslint(jest/valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe()
    · ──────────
    ╰────
   help: "Add name as first argument and callback as second argument"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', async () => {})
    ·                 ──────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', async function () {})
    ·                 ────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ xdescribe('foo', async function () {})
    ·                  ────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ fdescribe('foo', async function () {})
    ·                  ────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:2:1]
  2 │             import { fdescribe } from '@jest/globals';
  3 │             fdescribe('foo', async function () {})
    ·                              ────────────────────
- 4 │         
+ 4 │             
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.only('foo', async function () {})
    ·                      ────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.skip('foo', async function () {})
    ·                      ────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
     ╭─[valid_describe_callback.tsx:5:1]
   5 │                     });
   6 │ ╭─▶                 describe('async', async () => {
@@ -150,7 +150,7 @@ expression: valid_describe_callback
     ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "Unexpected return statement in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected return statement in describe callback"
    ╭─[valid_describe_callback.tsx:2:1]
  2 │                 describe('foo', function () {
  3 │ ╭─▶                 return Promise.resolve().then(() => {
@@ -162,7 +162,7 @@ expression: valid_describe_callback
    ╰────
   help: "Remove return statement in your describe callback"
 
-  ⚠ "Unexpected return statement in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected return statement in describe callback"
    ╭─[valid_describe_callback.tsx:2:1]
  2 │                 describe('foo', () => {
  3 │ ╭─▶                 return Promise.resolve().then(() => {
@@ -174,7 +174,7 @@ expression: valid_describe_callback
    ╰────
   help: "Remove return statement in your describe callback"
 
-  ⚠ "Unexpected return statement in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected return statement in describe callback"
     ╭─[valid_describe_callback.tsx:8:1]
   8 │                     describe('nested', () => {
   9 │ ╭─▶                     return Promise.resolve().then(() => {
@@ -186,7 +186,7 @@ expression: valid_describe_callback
     ╰────
   help: "Remove return statement in your describe callback"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
     ╭─[valid_describe_callback.tsx:1:1]
   1 │     
   2 │ ╭─▶             describe('foo', async () => {
@@ -200,11 +200,11 @@ expression: valid_describe_callback
  10 │ │                       })
  11 │ │                   })
  12 │ ╰─▶             })
- 13 │             
+ 13 │                 
     ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "Unexpected return statement in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected return statement in describe callback"
     ╭─[valid_describe_callback.tsx:5:1]
   5 │                     describe('nested', () => {
   6 │ ╭─▶                     return Promise.resolve().then(() => {
@@ -216,42 +216,42 @@ expression: valid_describe_callback
     ╰────
   help: "Remove return statement in your describe callback"
 
-  ⚠ "Unexpected return statement in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected return statement in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', () => test('bar', () => {})) 
    ·                       ─────────────────────
    ╰────
   help: "Remove return statement in your describe callback"
 
-  ⚠ "Unexpected argument(s) in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected argument(s) in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', done => {})
    ·                 ──────────
    ╰────
   help: "Remove argument(s) of describe callback"
 
-  ⚠ "Unexpected argument(s) in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected argument(s) in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', function (done) {})
    ·                 ──────────────────
    ╰────
   help: "Remove argument(s) of describe callback"
 
-  ⚠ "Unexpected argument(s) in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected argument(s) in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', function (one, two, three) {})
    ·                 ─────────────────────────────
    ╰────
   help: "Remove argument(s) of describe callback"
 
-  ⚠ "No async describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', async function (done) {})
    ·                 ────────────────────────
    ╰────
   help: "Remove `async` keyword"
 
-  ⚠ "Unexpected argument(s) in describe callback"
+  ⚠ eslint(jest/valid-describe-callback): "Unexpected argument(s) in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe('foo', async function (done) {})
    ·                 ────────────────────────
