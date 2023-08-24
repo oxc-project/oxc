@@ -393,6 +393,14 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     self,
                 )
             }
+            "ElidedArrayElementAST" | "ElidedArrayElement" => {
+                super::edges::resolve_elided_array_element_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                )
+            }
             "Expression" => super::edges::resolve_expression_edge(
                 contexts,
                 edge_name.as_ref(),

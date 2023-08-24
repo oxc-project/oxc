@@ -276,6 +276,24 @@ type JSXText {
   span: Span!
 }
 
+"""
+The element in this array would be elided: [,]
+The element in the middle of this array is elided: [1,,3]
+"""
+interface ElidedArrayElement implements ArrayElement & HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+"""
+The element in this array would be elided: [,]
+The element in the middle of this array is elided: [1,,3]
+"""
+type ElidedArrayElementAST implements ArrayElement & HasSpan & ElidedArrayElement {
+  # HasSpan
+  span: Span!
+}
+
 interface ArrayElement implements HasSpan {
   # HasSpan
   span: Span!

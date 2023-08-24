@@ -802,6 +802,37 @@ mod dot_property {
     }
 }
 
+pub(super) fn resolve_elided_array_element_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => elided_array_element::span(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ElidedArrayElement'"
+            )
+        }
+    }
+}
+
+mod elided_array_element {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
