@@ -290,9 +290,10 @@ impl Oxc {
         let arc_adapter = Arc::from(&adapter);
 
         let Ok(arguments): Result<BTreeMap<Arc<str>, TransparentValue>, _> =
-            serde_json::from_str(query_arguments) else {
-                return "Query arguments is not valid json string, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".serialize(&self.serializer)
-            };
+            serde_json::from_str(query_arguments)
+        else {
+            return "Query arguments is not valid json string, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".serialize(&self.serializer);
+        };
 
         execute_query(schema(), arc_adapter, query, arguments).map_or_else(
             |e| e.to_string().serialize(&self.serializer),

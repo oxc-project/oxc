@@ -56,25 +56,40 @@ impl Rule for ConstructorSuper {
         // In cases where there's no super-class, calling 'super()' inside the constructor
         // is handled by the parser.
         if let Some(super_class) = &class.super_class {
-            ctor.value.body.as_ref().map_or_else(|| {
-                ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
-            }, |function_body| {
-                function_body.statements.iter().find_map(|stmt| {
-                    let Statement::ExpressionStatement(expr) = stmt else { return None };
-                    let Expression::CallExpression(call_expr) = &expr.expression else { return None };
-                    if matches!(call_expr.callee, Expression::Super(_)) {
-                        Some(call_expr.span)
-                    } else {
-                        None
-                    }
-                }).map_or_else(|| {
+            ctor.value.body.as_ref().map_or_else(
+                || {
                     ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
-                }, |span| {
-                    if let Some(super_class_span) = super_class.span() {
-                        ctx.diagnostic(SuperNotConstructorDiagnostic(span, super_class_span));
-                    }
-                });
-            });
+                },
+                |function_body| {
+                    function_body
+                        .statements
+                        .iter()
+                        .find_map(|stmt| {
+                            let Statement::ExpressionStatement(expr) = stmt else { return None };
+                            let Expression::CallExpression(call_expr) = &expr.expression else {
+                                return None;
+                            };
+                            if matches!(call_expr.callee, Expression::Super(_)) {
+                                Some(call_expr.span)
+                            } else {
+                                None
+                            }
+                        })
+                        .map_or_else(
+                            || {
+                                ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
+                            },
+                            |span| {
+                                if let Some(super_class_span) = super_class.span() {
+                                    ctx.diagnostic(SuperNotConstructorDiagnostic(
+                                        span,
+                                        super_class_span,
+                                    ));
+                                }
+                            },
+                        );
+                },
+            );
         }
     }
 }

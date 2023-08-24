@@ -47,9 +47,7 @@ impl MissingThrow {
     fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         let mut node_ancestors = ctx.nodes().ancestors(node.id()).skip(1);
 
-        let Some(node_id) = node_ancestors.next() else {
-            return false
-        };
+        let Some(node_id) = node_ancestors.next() else { return false };
 
         if matches!(ctx.nodes().kind(node_id), AstKind::ExpressionStatement(_)) {
             for node_id in node_ancestors {

@@ -138,8 +138,12 @@ fn resolve_to_jest_fn<'a>(
 
     let node_id = get_import_decl_node_id(ident, ctx)?;
     let node = ctx.nodes().get_node(node_id);
-    let AstKind::ModuleDeclaration(module_decl) = node.kind() else { return None; };
-    let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else { return None; };
+    let AstKind::ModuleDeclaration(module_decl) = node.kind() else {
+        return None;
+    };
+    let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else {
+        return None;
+    };
 
     if import_decl.source.value == "@jest/globals" {
         let original = import_decl.specifiers.iter().find_map(|specifier| match specifier {

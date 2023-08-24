@@ -1084,11 +1084,14 @@ impl<'a> ArgumentVertex<'a> {
             ArgumentData::Index(index) => *index,
             ArgumentData::AstNode(ast_node) => {
                 let AstKind::CallExpression(call_expr) = adapter
-                .semantic
-                .nodes()
-                .parent_node(ast_node.id())
-                .expect("argument should have parent")
-                .kind() else {unreachable!("Argument's parent should always be a CallExpression")};
+                    .semantic
+                    .nodes()
+                    .parent_node(ast_node.id())
+                    .expect("argument should have parent")
+                    .kind()
+                else {
+                    unreachable!("Argument's parent should always be a CallExpression")
+                };
                 call_expr
                     .arguments
                     .iter()

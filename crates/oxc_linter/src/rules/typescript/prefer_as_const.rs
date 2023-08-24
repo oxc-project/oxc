@@ -43,8 +43,12 @@ impl Rule for PreferAsConst {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
-                let Some(type_annotation) = &variable_declarator.id.type_annotation else { return; };
-                let Some(initial_value_expression) = &variable_declarator.init else { return; };
+                let Some(type_annotation) = &variable_declarator.id.type_annotation else {
+                    return;
+                };
+                let Some(initial_value_expression) = &variable_declarator.init else {
+                    return;
+                };
                 check_and_report(
                     &type_annotation.type_annotation,
                     initial_value_expression,
@@ -53,8 +57,12 @@ impl Rule for PreferAsConst {
                 );
             }
             AstKind::PropertyDefinition(property_definition) => {
-                let Some(type_annotation) = &property_definition.type_annotation else { return; };
-                let Some(initial_value_expression) = &property_definition.value else { return; };
+                let Some(type_annotation) = &property_definition.type_annotation else {
+                    return;
+                };
+                let Some(initial_value_expression) = &property_definition.value else {
+                    return;
+                };
                 check_and_report(
                     &type_annotation.type_annotation,
                     initial_value_expression,

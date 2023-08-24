@@ -62,7 +62,7 @@ fn binding_pattern_is_global_obj(pat: &BindingPattern) -> Option<(Atom, Span)> {
                 .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument))
         }
         oxc_ast::ast::BindingPatternKind::ArrayPattern(boxed_arr_pat) => {
-            for element in boxed_arr_pat.elements.iter() {
+            for element in &boxed_arr_pat.elements {
                 if let Some(value) = element.as_ref().and_then(binding_pattern_is_global_obj) {
                     return Some(value);
                 }

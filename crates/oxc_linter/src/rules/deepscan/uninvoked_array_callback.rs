@@ -64,7 +64,11 @@ impl Rule for UninvokedArrayCallback {
             return;
         };
 
-        let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(member_expr_node.id()) else { return };
+        let Some(AstKind::CallExpression(call_expr)) =
+            ctx.nodes().parent_kind(member_expr_node.id())
+        else {
+            return;
+        };
         if !matches!(call_expr.arguments.get(0), Some(Argument::Expression(arg_expr)) if arg_expr.is_function())
         {
             return;

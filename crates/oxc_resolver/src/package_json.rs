@@ -19,11 +19,11 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 pub struct PackageJson {
     /// Path to `package.json`. Contains the `package.json` filename.
     #[serde(skip)]
-    path: PathBuf,
+    pub path: PathBuf,
 
     #[serde(skip)]
     #[serde(default)]
-    raw_json: Arc<serde_json::Value>,
+    pub raw_json: Arc<serde_json::Value>,
 
     /// The "name" field defines your package's name.
     /// The "name" field can be used in addition to the "exports" field to self-reference a package using its name.

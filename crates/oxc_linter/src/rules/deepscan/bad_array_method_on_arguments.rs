@@ -52,7 +52,9 @@ impl Rule for BadArrayMethodOnArguments {
             return;
         }
         let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else { return };
-        let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else { return };
+        let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else {
+            return;
+        };
         let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else { return };
         let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else { return };
         match member_expr {

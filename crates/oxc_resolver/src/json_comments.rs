@@ -137,7 +137,7 @@ where
 }
 
 fn strip_buf(state: &mut State, buf: &mut [u8], settings: CommentSettings) -> Result<()> {
-    for c in buf.iter_mut() {
+    for c in &mut *buf {
         *state = match state {
             Top => top(c, settings),
             InString => in_string(*c),

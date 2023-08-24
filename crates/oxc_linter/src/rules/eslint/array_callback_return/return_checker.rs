@@ -262,7 +262,9 @@ mod tests {
         let program = ret.program;
         let Program { body, .. } = program;
         let stmt = body.first().unwrap();
-        let Statement::Declaration(Declaration::FunctionDeclaration(func)) = stmt else { unreachable!() };
+        let Statement::Declaration(Declaration::FunctionDeclaration(func)) = stmt else {
+            unreachable!()
+        };
 
         let first_statement = &func.body.as_ref().unwrap().statements[0];
 

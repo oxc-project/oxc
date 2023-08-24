@@ -95,7 +95,9 @@ impl Rule for ValidDescribeCallback {
                         diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
                     }
 
-                    let Some(ref body) = fn_expr.body else { return;};
+                    let Some(ref body) = fn_expr.body else {
+                        return;
+                    };
                     if let Some(span) = find_first_return_stmt_span(body) {
                         diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
                     }
@@ -112,7 +114,9 @@ impl Rule for ValidDescribeCallback {
 
                     if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
                         let stmt = &arrow_expr.body.statements[0];
-                        let Statement::ExpressionStatement(expr_stmt) = stmt else { return; };
+                        let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                            return;
+                        };
                         if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
                             diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                         }

@@ -103,9 +103,7 @@ impl TsConfig {
             .as_ref()
             .map_or_else(Vec::new, |base_url| vec![base_url.normalize_with(specifier)]);
 
-        let Some(paths_map) = &self.compiler_options.paths else {
-            return base_url_iter
-        };
+        let Some(paths_map) = &self.compiler_options.paths else { return base_url_iter };
 
         let paths = paths_map.get(specifier).map_or_else(
             || {

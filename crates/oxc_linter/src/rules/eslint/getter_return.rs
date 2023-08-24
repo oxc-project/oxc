@@ -87,14 +87,20 @@ impl GetterReturn {
 
     fn check_property(&self, call: &CallExpression) -> Option<Span> {
         let Some(Argument::Expression(Expression::ObjectExpression(object))) =
-            call.arguments.get(2) else { return None };
+            call.arguments.get(2)
+        else {
+            return None;
+        };
 
         self.check_object_descriptor(object)
     }
 
     fn check_properties(&self, call: &CallExpression) -> Option<Vec<Span>> {
         let Some(Argument::Expression(Expression::ObjectExpression(object))) =
-            call.arguments.get(1) else { return None };
+            call.arguments.get(1)
+        else {
+            return None;
+        };
 
         let error_spans = object
             .properties
@@ -137,16 +143,24 @@ impl Rule for GetterReturn {
             AstKind::CallExpression(call) => {
                 let member = match call.callee.get_inner_expression() {
                     Expression::ChainExpression(chain) => {
-                        let ChainElement::MemberExpression(member) = &chain.expression else { return };
+                        let ChainElement::MemberExpression(member) = &chain.expression else {
+                            return;
+                        };
                         member
                     }
                     Expression::MemberExpression(member) => member,
                     _ => return,
                 };
 
-                let MemberExpression::StaticMemberExpression(static_member) = &member.0 else { return };
+                let MemberExpression::StaticMemberExpression(static_member) = &member.0 else {
+                    return;
+                };
 
-                let Expression::Identifier(object_ident) = &static_member.object.get_inner_expression() else { return };
+                let Expression::Identifier(object_ident) =
+                    &static_member.object.get_inner_expression()
+                else {
+                    return;
+                };
 
                 match (object_ident.name.as_str(), static_member.property.name.as_str()) {
                     ("Object" | "Reflect", "defineProperty") => {
