@@ -19,6 +19,12 @@ pub enum ResolveError {
     /// Path not found
     NotFound(PathBuf),
 
+    /// Node.js builtin modules
+    ///
+    /// This is an error due to not being a Node.js runtime.
+    /// The `alias` option can be used to resolve a builtin module to a polyfill.
+    Builtin(String),
+
     /// All of the aliased extension are not found
     ExtensionAlias,
 

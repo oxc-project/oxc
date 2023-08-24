@@ -31,7 +31,7 @@ fn data() -> Vec<(PathBuf, &'static str)> {
         (cwd.join("test/fixtures"), "m1/a.js?query#fragment"),
         // extensions
         (cwd.join("test/fixtures/extensions"), "./foo"),
-        (cwd.join("test/fixtures/extensions/module"), "module"),
+        (cwd.join("test/fixtures/extensions/module"), "module/"),
         // browserField
         (cwd.join("test/fixtures/browser-module"), "./lib/replaced"),
         (cwd.join("test/fixtures/browser-module/lib"), "./replaced"),

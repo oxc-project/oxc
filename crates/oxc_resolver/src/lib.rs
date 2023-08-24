@@ -15,6 +15,7 @@
 //! [ECMAScript Module Resolution Algorithm]: https://nodejs.org/api/esm.html#resolution-algorithm-specification
 //! [parcel-resolver]: https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs
 
+mod builtins;
 mod cache;
 mod error;
 mod file_system;
@@ -41,6 +42,7 @@ use std::{
 };
 
 use crate::{
+    builtins::BUILTINS,
     cache::{Cache, CachedPath},
     file_system::FileSystemOs,
     package_json::{ExportsField, ExportsKey, MatchObject},
@@ -190,8 +192,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     /// require(X) from module at path Y
+    ///
     /// X: specifier
     /// Y: path
+    ///
+    /// <https://nodejs.org/api/modules.html#all-together>
     fn require(
         &self,
         cached_path: &CachedPath,
@@ -218,9 +223,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         match specifier.as_bytes()[0] {
-            // 1. If X is a core module,
-            //    a. return the core module
-            //    b. STOP
             // 2. If X begins with '/'
             //    a. set Y to be the file system root
             b'/' => self.require_absolute(cached_path, specifier, ctx),
@@ -228,11 +230,26 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             b'.' => self.require_relative(cached_path, specifier, ctx),
             // 4. If X begins with '#'
             b'#' => self.require_hash(cached_path, specifier, ctx),
-            // (ESM) 5. Otherwise,
-            // Note: specifier is now a bare specifier.
-            // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
-            _ => self.require_bare(cached_path, specifier, ctx),
+            _ => {
+                // 1. If X is a core module,
+                //   a. return the core module
+                //   b. STOP
+                self.require_core(specifier)?;
+
+                // (ESM) 5. Otherwise,
+                // Note: specifier is now a bare specifier.
+                // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
+                self.require_bare(cached_path, specifier, ctx)
+            }
         }
+    }
+
+    #[allow(clippy::unused_self)]
+    fn require_core(&self, specifier: &str) -> Result<(), ResolveError> {
+        if specifier.starts_with("node:") || BUILTINS.binary_search(&specifier).is_ok() {
+            return Err(ResolveError::Builtin(specifier.to_string()));
+        }
+        Ok(())
     }
 
     fn require_absolute(

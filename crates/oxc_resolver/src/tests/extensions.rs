@@ -16,7 +16,8 @@ fn extensions() {
         ("should resolve according to order of provided extensions", "./foo", "foo.ts"),
         ("should resolve according to order of provided extensions (dir index)", "./dir", "dir/index.ts"),
         ("should resolve according to main field in module root", ".", "index.js"),
-        ("should resolve single file module before directory", "module", "node_modules/module.js"),
+        // This is a core module
+        // ("should resolve single file module before directory", "module", "node_modules/module.js"),
         ("should resolve trailing slash directory before single file", "module/", "node_modules/module/index.ts"),
     ];
 
