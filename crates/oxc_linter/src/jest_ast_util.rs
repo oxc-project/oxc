@@ -87,7 +87,7 @@ pub fn parse_jest_fn_call<'a>(
         }
 
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-        call_chains.extend(members.iter().filter_map(|member| member.name()));
+        call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
         if !is_valid_jest_call(&call_chains) {
             return None;
         }
@@ -114,7 +114,7 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
                     if ordering != Ordering::Equal {
                         return Some(ordering);
                     }
-                    return None;
+                    None
                 })
                 .unwrap_or(Ordering::Equal)
         })
