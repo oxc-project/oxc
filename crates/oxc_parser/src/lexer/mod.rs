@@ -1645,170 +1645,170 @@ const TLD: ByteHandler = |lexer| {
     Kind::Tilde
 };
 
-const L_A: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "abstract" => Kind::Abstract,
-    "accessor" => Kind::Accessor,
-    "any" => Kind::Any,
-    "as" => Kind::As,
-    "assert" => Kind::Assert,
-    "asserts" => Kind::Asserts,
-    "async" => Kind::Async,
-    "await" => Kind::Await,
+const L_A: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "wait" => Kind::Await,
+    "sync" => Kind::Async,
+    "bstract" => Kind::Abstract,
+    "ccessor" => Kind::Accessor,
+    "ny" => Kind::Any,
+    "s" => Kind::As,
+    "ssert" => Kind::Assert,
+    "sserts" => Kind::Asserts,
     _ => Kind::Ident,
 };
 
-const L_B: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "bigint" => Kind::BigInt,
-    "boolean" => Kind::Boolean,
-    "break" => Kind::Break,
+const L_B: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "reak" => Kind::Break,
+    "oolean" => Kind::Boolean,
+    "igint" => Kind::BigInt,
     _ => Kind::Ident,
 };
 
-const L_C: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "case" => Kind::Case,
-    "catch" => Kind::Catch,
-    "class" => Kind::Class,
-    "const" => Kind::Const,
-    "constructor" => Kind::Constructor,
-    "continue" => Kind::Continue,
+const L_C: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "onst" => Kind::Const,
+    "lass" => Kind::Class,
+    "ontinue" => Kind::Continue,
+    "atch" => Kind::Catch,
+    "ase" => Kind::Case,
+    "onstructor" => Kind::Constructor,
     _ => Kind::Ident,
 };
 
-const L_D: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "debugger" => Kind::Debugger,
-    "declare" => Kind::Declare,
-    "default" => Kind::Default,
-    "delete" => Kind::Delete,
-    "do" => Kind::Do,
+const L_D: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "o" => Kind::Do,
+    "elete" => Kind::Delete,
+    "eclare" => Kind::Declare,
+    "efault" => Kind::Default,
+    "ebugger" => Kind::Debugger,
     _ => Kind::Ident,
 };
 
-const L_E: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "else" => Kind::Else,
-    "enum" => Kind::Enum,
-    "export" => Kind::Export,
-    "extends" => Kind::Extends,
+const L_E: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "lse" => Kind::Else,
+    "num" => Kind::Enum,
+    "xport" => Kind::Export,
+    "xtends" => Kind::Extends,
     _ => Kind::Ident,
 };
 
-const L_F: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "false" => Kind::False,
-    "finally" => Kind::Finally,
-    "for" => Kind::For,
-    "from" => Kind::From,
-    "function" => Kind::Function,
+const L_F: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "unction" => Kind::Function,
+    "alse" => Kind::False,
+    "or" => Kind::For,
+    "inally" => Kind::Finally,
+    "rom" => Kind::From,
     _ => Kind::Ident,
 };
 
-const L_G: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "get" => Kind::Get,
-    "global" => Kind::Global,
+const L_G: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "et" => Kind::Get,
+    "lobal" => Kind::Global,
     _ => Kind::Ident,
 };
 
-const L_I: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "if" => Kind::If,
-    "implements" => Kind::Implements,
-    "import" => Kind::Import,
-    "in" => Kind::In,
-    "infer" => Kind::Infer,
-    "instanceof" => Kind::Instanceof,
-    "interface" => Kind::Interface,
-    "intrinsic" => Kind::Intrinsic,
-    "is" => Kind::Is,
+const L_I: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "f" => Kind::If,
+    "nstanceof" => Kind::Instanceof,
+    "n" => Kind::In,
+    "mplements" => Kind::Implements,
+    "mport" => Kind::Import,
+    "nfer" => Kind::Infer,
+    "nterface" => Kind::Interface,
+    "ntrinsic" => Kind::Intrinsic,
+    "s" => Kind::Is,
     _ => Kind::Ident,
 };
 
-const L_K: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "keyof" => Kind::KeyOf,
+const L_K: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "eyof" => Kind::KeyOf,
     _ => Kind::Ident,
 };
 
-const L_L: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "let" => Kind::Let,
+const L_L: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "et" => Kind::Let,
     _ => Kind::Ident,
 };
 
-const L_M: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "meta" => Kind::Meta,
-    "module" => Kind::Module,
+const L_M: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "eta" => Kind::Meta,
+    "odule" => Kind::Module,
     _ => Kind::Ident,
 };
 
-const L_N: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "namespace" => Kind::Namespace,
-    "never" => Kind::Never,
-    "new" => Kind::New,
-    "null" => Kind::Null,
-    "number" => Kind::Number,
+const L_N: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "ull" => Kind::Null,
+    "ew" => Kind::New,
+    "umber" => Kind::Number,
+    "amespace" => Kind::Namespace,
+    "ever" => Kind::Never,
     _ => Kind::Ident,
 };
 
-const L_O: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "object" => Kind::Object,
-    "of" => Kind::Of,
-    "out" => Kind::Out,
-    "override" => Kind::Override,
+const L_O: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "f" => Kind::Of,
+    "bject" => Kind::Object,
+    "ut" => Kind::Out,
+    "verride" => Kind::Override,
     _ => Kind::Ident,
 };
 
-const L_P: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "package" => Kind::Package,
-    "private" => Kind::Private,
-    "protected" => Kind::Protected,
-    "public" => Kind::Public,
+const L_P: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "ackage" => Kind::Package,
+    "rivate" => Kind::Private,
+    "rotected" => Kind::Protected,
+    "ublic" => Kind::Public,
     _ => Kind::Ident,
 };
 
-const L_R: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "readonly" => Kind::Readonly,
-    "require" => Kind::Require,
-    "return" => Kind::Return,
+const L_R: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "eturn" => Kind::Return,
+    "equire" => Kind::Require,
+    "eadonly" => Kind::Readonly,
     _ => Kind::Ident,
 };
 
-const L_S: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "satisfies" => Kind::Satisfies,
-    "set" => Kind::Set,
-    "static" => Kind::Static,
-    "string" => Kind::String,
-    "super" => Kind::Super,
-    "switch" => Kind::Switch,
-    "symbol" => Kind::Symbol,
+const L_S: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "et" => Kind::Set,
+    "uper" => Kind::Super,
+    "witch" => Kind::Switch,
+    "tatic" => Kind::Static,
+    "ymbol" => Kind::Symbol,
+    "tring" => Kind::String,
+    "atisfies" => Kind::Satisfies,
     _ => Kind::Ident,
 };
 
-const L_T: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "target" => Kind::Target,
-    "this" => Kind::This,
-    "throw" => Kind::Throw,
-    "true" => Kind::True,
-    "try" => Kind::Try,
-    "type" => Kind::Type,
-    "typeof" => Kind::Typeof,
+const L_T: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "his" => Kind::This,
+    "rue" => Kind::True,
+    "hrow" => Kind::Throw,
+    "ry" => Kind::Try,
+    "ypeof" => Kind::Typeof,
+    "arget" => Kind::Target,
+    "ype" => Kind::Type,
     _ => Kind::Ident,
 };
 
-const L_U: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "undefined" => Kind::Undefined,
-    "unique" => Kind::Unique,
-    "unknown" => Kind::Unknown,
+const L_U: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "ndefined" => Kind::Undefined,
+    "nique" => Kind::Unique,
+    "nknown" => Kind::Unknown,
     _ => Kind::Ident,
 };
 
-const L_V: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "var" => Kind::Var,
-    "void" => Kind::Void,
+const L_V: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "ar" => Kind::Var,
+    "oid" => Kind::Void,
     _ => Kind::Ident,
 };
 
-const L_W: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "while" => Kind::While,
-    "with" => Kind::With,
+const L_W: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "hile" => Kind::While,
+    "ith" => Kind::With,
     _ => Kind::Ident,
 };
 
-const L_Y: ByteHandler = |lexer| match lexer.identifier_name_handler() {
-    "yield" => Kind::Yield,
+const L_Y: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
+    "ield" => Kind::Yield,
     _ => Kind::Ident,
 };
