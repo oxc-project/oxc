@@ -1708,6 +1708,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "rustc-hash",
  "serde",
  "trustfall",
  "url",

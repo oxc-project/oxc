@@ -259,6 +259,9 @@ fn strip_parens<'a, 'b: 'a>(
             Vertex::Expression(Expression::ParenthesizedExpression(e)) => {
                 strip_parens_from_expr(&e.expression, strip_all).into()
             }
+            Vertex::ParenthesizedExpression(data) => {
+                strip_parens_from_expr(&data.parenthesized_expression.expression, strip_all).into()
+            }
             _ => v.clone(),
         }))
     })
@@ -1260,8 +1263,15 @@ mod fn_call {
                     .call_expression
                     .arguments
                     .iter()
-                    .map(|argument| {
-                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    .enumerate()
+                    .map(|(index, argument)| {
+                        Vertex::Argument(
+                            ArgumentVertex {
+                                argument,
+                                data: crate::vertex::ArgumentData::Index(index),
+                            }
+                            .into(),
+                        )
                     }),
             )
         })
@@ -2302,8 +2312,15 @@ mod new {
                     .new_expression
                     .arguments
                     .iter()
-                    .map(|argument| {
-                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    .enumerate()
+                    .map(|(index, argument)| {
+                        Vertex::Argument(
+                            ArgumentVertex {
+                                argument,
+                                data: crate::vertex::ArgumentData::Index(index),
+                            }
+                            .into(),
+                        )
                     }),
             )
         })
@@ -2377,6 +2394,8 @@ mod object_entry {
         VertexIterator,
     };
 
+    use crate::vertex::NameVertex;
+
     use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
@@ -2400,7 +2419,9 @@ mod object_entry {
                 .key;
 
             let vertex: Vertex<'_> = match &key {
-                oxc_ast::ast::PropertyKey::Identifier(_) => return Box::new(std::iter::empty()), // TODO: FINISH
+                oxc_ast::ast::PropertyKey::Identifier(identifier_reference) => {
+                    Vertex::Name(NameVertex { ast_node: None, name: identifier_reference }.into())
+                }
                 oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => unreachable!(
                     "private identifiers don't exist in objects, so this should never be called"
                 ),
@@ -2693,6 +2714,60 @@ mod parameter {
                     })
                     .into_iter(),
             )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_parenthesized_expression_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => parenthesized_expression::span(contexts, resolve_info),
+        "expression" => parenthesized_expression::expression(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "strip_parens" => strip_parens(contexts, parameters),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'ParenthesizedExpression'")
+        }
+    }
+}
+
+mod parenthesized_expression {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn expression<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_parenthesized_expression()
+                    .unwrap_or_else(|| {
+                        panic!(
+                        "expected to have a parenthesizedexpression vertex, instead have: {v:#?}"
+                    )
+                    })
+                    .parenthesized_expression
+                    .expression)
+                    .into(),
+            ))
         })
     }
 

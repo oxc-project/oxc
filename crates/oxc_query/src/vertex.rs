@@ -8,8 +8,12 @@ use oxc_span::{GetSpan, Span};
 use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
-use crate::util::{
-    jsx_attribute_to_constant_string, try_get_constant_string_field_value_from_template_lit,
+use crate::{
+    util::{
+        calculate_hash, jsx_attribute_to_constant_string,
+        try_get_constant_string_field_value_from_template_lit,
+    },
+    Adapter,
 };
 
 #[non_exhaustive]
@@ -74,6 +78,7 @@ pub enum Vertex<'a> {
     StringLiteral(Rc<StringLiteralVertex<'a>>),
     TemplateLiteral(Rc<TemplateLiteralVertex<'a>>),
     RegExpLiteral(Rc<RegExpLiteralVertex<'a>>),
+    ParenthesizedExpression(Rc<ParenthesizedExpressionVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -136,6 +141,7 @@ impl<'a> Vertex<'a> {
             Self::StringLiteral(data) => data.string.span,
             Self::TemplateLiteral(data) => data.template.span,
             Self::RegExpLiteral(data) => data.regexp.span,
+            Self::ParenthesizedExpression(data) => data.parenthesized_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -149,6 +155,10 @@ impl<'a> Vertex<'a> {
     pub fn ast_node_id(&self) -> Option<AstNodeId> {
         match &self {
             Vertex::ASTNode(data) => Some(data.id()),
+            Vertex::Argument(data) => match data.data {
+                ArgumentData::Index(_) => None,
+                ArgumentData::AstNode(ast_node) => Some(ast_node.id()),
+            },
             Vertex::Class(data) => data.ast_node.map(|x| x.id()),
             Vertex::Import(data) => data.ast_node.map(|x| x.id()),
             Vertex::Interface(data) => data.ast_node.map(|x| x.id()),
@@ -170,7 +180,6 @@ impl<'a> Vertex<'a> {
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
-            Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::LogicalExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::UnaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::ExpressionStatement(data) => data.ast_node.map(|x| x.id()),
@@ -187,6 +196,7 @@ impl<'a> Vertex<'a> {
             Vertex::StringLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::TemplateLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::RegExpLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ParenthesizedExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -295,6 +305,7 @@ impl<'a> Vertex<'a> {
             | Vertex::StringLiteral(..)
             | Vertex::TemplateLiteral(..)
             | Vertex::RegExpLiteral(..)
+            | Vertex::ParenthesizedExpression(..)
             | Vertex::Array(..) => true,
             Vertex::ASTNode(..)
             | Vertex::AssignmentType(..)
@@ -407,6 +418,7 @@ impl Typename for Vertex<'_> {
             Vertex::StringLiteral(data) => data.typename(),
             Vertex::TemplateLiteral(data) => data.typename(),
             Vertex::RegExpLiteral(data) => data.typename(),
+            Vertex::ParenthesizedExpression(data) => data.typename(),
         }
     }
 }
@@ -490,9 +502,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::FormalParameter(parameter) => {
                 Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
             }
-            AstKind::Argument(argument) => {
-                Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
-            }
+            AstKind::Argument(argument) => Vertex::Argument(
+                ArgumentVertex { argument, data: ArgumentData::AstNode(ast_node) }.into(),
+            ),
             AstKind::LogicalExpression(logical_expression) => Vertex::LogicalExpression(
                 LogicalExpressionVertex { ast_node: Some(ast_node), logical_expression }.into(),
             ),
@@ -545,6 +557,15 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             ),
             AstKind::ArrayExpression(array_expression) => {
                 Vertex::Array(ArrayVertex { ast_node: Some(ast_node), array_expression }.into())
+            }
+            AstKind::ParenthesizedExpression(parenthesized_expression) => {
+                Vertex::ParenthesizedExpression(
+                    ParenthesizedExpressionVertex {
+                        ast_node: Some(ast_node),
+                        parenthesized_expression,
+                    }
+                    .into(),
+                )
             }
             _ => Vertex::ASTNode(ast_node),
         }
@@ -636,6 +657,12 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::RegExpLiteral(regexp_literal) => Vertex::RegExpLiteral(
                 RegExpLiteralVertex { ast_node: None, regexp: regexp_literal }.into(),
             ),
+            Expression::ParenthesizedExpression(parenthesized_expression) => {
+                Vertex::ParenthesizedExpression(
+                    ParenthesizedExpressionVertex { ast_node: None, parenthesized_expression }
+                        .into(),
+                )
+            }
             _ => Vertex::Expression(expr),
         }
     }
@@ -1033,13 +1060,48 @@ impl<'a> Typename for ParameterVertex<'a> {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ArgumentVertex<'a> {
-    pub ast_node: Option<AstNode<'a>>,
+    /// Represents data from when the vertex is created
+    /// If the vertex is created from an AST node, this will be the AST node
+    /// Otherwise, it will be the index of the argument in the arguments vec
+    pub data: ArgumentData<'a>,
     pub argument: &'a Argument<'a>,
+}
+
+/// Data used to find the index of the argument in the arguments vec and sometimes holds the [`AstNode`]
+#[derive(Debug, Clone)]
+pub enum ArgumentData<'a> {
+    /// If the vertex is created from a [`CallExpression`], this will be the index of the argument in the arguments vec
+    Index(usize),
+    /// If the vertex is created from an [`AstNode`], this will be the AST node, which can be used to find the index of the argument
+    /// in the arguments vec by finding the astnode's parent node which will be a [`CallExpression`], then finding the index of the
+    /// argument in the arguments vec
+    AstNode(AstNode<'a>),
+}
+
+impl<'a> ArgumentVertex<'a> {
+    pub fn index<'c, 'b: 'c>(&self, adapter: &'c Adapter<'b>) -> usize {
+        match &self.data {
+            ArgumentData::Index(index) => *index,
+            ArgumentData::AstNode(ast_node) => {
+                let AstKind::CallExpression(call_expr) = adapter
+                .semantic
+                .nodes()
+                .parent_node(ast_node.id())
+                .expect("argument should have parent")
+                .kind() else {unreachable!("Argument's parent should always be a CallExpression")};
+                call_expr
+                    .arguments
+                    .iter()
+                    .position(|x| calculate_hash(x) == calculate_hash(self.argument))
+                    .expect("to find index of this argument in it's parent's arguments vec")
+            }
+        }
+    }
 }
 
 impl<'a> Typename for ArgumentVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
+        if let ArgumentData::AstNode(_) = self.data {
             "ArgumentAST"
         } else {
             "Argument"
@@ -1315,6 +1377,23 @@ impl<'a> Typename for RegExpLiteralVertex<'a> {
             "RegExpLiteralAST"
         } else {
             "RegExpLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ParenthesizedExpressionVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub parenthesized_expression: &'a ParenthesizedExpression<'a>,
+}
+
+impl<'a> Typename for ParenthesizedExpressionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ParenthesizedExpressionAST"
+        } else {
+            "ParenthesizedExpression"
         }
     }
 }

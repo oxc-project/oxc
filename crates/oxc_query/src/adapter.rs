@@ -80,6 +80,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
+                self,
             ),
             "ArrowFunctionAST" | "ArrowFunction" => {
                 super::properties::resolve_arrow_function_property(
@@ -208,6 +209,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "ParenthesizedExpressionAST" | "ParenthesizedExpression" => {
+                super::properties::resolve_parenthesized_expression_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "PathPart" => super::properties::resolve_path_part_property(
                 contexts,
                 property_name.as_ref(),
@@ -596,6 +604,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
+            "ParenthesizedExpressionAST" | "ParenthesizedExpression" => {
+                super::edges::resolve_parenthesized_expression_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "ReassignmentAST" | "Reassignment" => super::edges::resolve_reassignment_edge(
                 contexts,
                 edge_name.as_ref(),
