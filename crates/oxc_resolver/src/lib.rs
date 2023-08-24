@@ -633,7 +633,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             );
         }
         // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
-        let Some(subpath) = package_json.name.as_ref().and_then(|package_json_name| specifier.strip_prefix(package_json_name)) else {
+        let Some(subpath) = package_json.name.as_ref().and_then(|package_json_name| package_json_name.strip_prefix(specifier)) else {
             return Ok(None);
         };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
