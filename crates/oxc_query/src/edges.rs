@@ -2420,7 +2420,7 @@ mod object_entry {
 
             let vertex: Vertex<'_> = match &key {
                 oxc_ast::ast::PropertyKey::Identifier(identifier_reference) => {
-                    Vertex::Name(NameVertex { ast_node: None, name: &identifier_reference }.into())
+                    Vertex::Name(NameVertex { ast_node: None, name: identifier_reference }.into())
                 }
                 oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => unreachable!(
                     "private identifiers don't exist in objects, so this should never be called"
