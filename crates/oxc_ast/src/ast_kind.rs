@@ -81,6 +81,7 @@ pub enum AstKind<'a> {
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
     Elision(Span),
+    ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
     RestElement(&'a RestElement<'a>),
 
@@ -314,6 +315,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::AssignmentTargetWithDefault(x) => x.span,
             Self::SpreadElement(x) => x.span,
             Self::Elision(span) => *span,
+            Self::ExpressionArrayElement(x) => x.span(),
             Self::RestElement(x) => x.span,
 
             Self::Function(x) => x.span,
@@ -466,6 +468,7 @@ impl<'a> AstKind<'a> {
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
+            Self::ExpressionArrayElement(_) => "ExpressionArrayElement".into(),
             Self::RestElement(_) => "RestElement".into(),
 
             Self::Function(x) => format!(
