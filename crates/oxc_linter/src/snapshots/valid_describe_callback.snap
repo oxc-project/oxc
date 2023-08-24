@@ -115,6 +115,15 @@ expression: valid_describe_callback
   help: "Remove `async` keyword"
 
   ⚠ "No async describe callback"
+   ╭─[valid_describe_callback.tsx:2:1]
+ 2 │             import { fdescribe } from '@jest/globals';
+ 3 │             fdescribe('foo', async function () {})
+   ·                              ────────────────────
+ 4 │         
+   ╰────
+  help: "Remove `async` keyword"
+
+  ⚠ "No async describe callback"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.only('foo', async function () {})
    ·                      ────────────────────

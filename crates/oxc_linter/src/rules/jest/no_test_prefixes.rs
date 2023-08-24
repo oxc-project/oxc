@@ -48,19 +48,19 @@ declare_oxc_lint!(
     /// xdescribe('foo'); // invalid
     /// ```
     NoTestPrefixes,
-    nursery
+    correctness
 );
 
 fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
-    let ParsedGeneralJestFnCall { members, raw, .. } = jest_fn_call;
+    let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
 
-    let preferred_modifier = if raw.starts_with('f') { "only" } else { "skip" };
+    let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
     let member_names = members
         .iter()
         .filter_map(KnownMemberExpressionProperty::name)
         .collect::<Vec<_>>()
         .join(".");
-    let name_slice = &raw[1..];
+    let name_slice = &name[1..];
 
     if member_names.is_empty() {
         Atom::from(format!("{name_slice}.{preferred_modifier}"))
@@ -73,14 +73,14 @@ impl Rule for NoTestPrefixes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
         let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
-        let ParsedGeneralJestFnCall { kind, raw, .. } = &jest_fn_call;
+        let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
         let Some(kind) = kind.to_general() else {return};
 
         if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
             return;
         }
 
-        if !raw.starts_with('f') && !raw.starts_with('x') {
+        if !name.starts_with('f') && !name.starts_with('x') {
             return;
         }
 
@@ -136,13 +136,27 @@ fn test() {
         ("xtest.each``('foo', function () {})", None),
         ("xit.each([])('foo', function () {})", None),
         ("xtest.each([])('foo', function () {})", None),
-        // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
-        // (r#"import { xit } from '@jest/globals';
-        // xit("foo", function () {})"#, None),
-        // (r#"import { xit as skipThis } from '@jest/globals';
-        // skipThis("foo", function () {})"#, None),
-        // (r#"import { fit as onlyThis } from '@jest/globals';
-        // onlyThis("foo", function () {})"#, None)
+        (
+            "
+                import { xit } from '@jest/globals';
+                xit('foo', function () {})
+            ",
+            None,
+        ),
+        (
+            "
+                import { xit as skipThis } from '@jest/globals';
+                skipThis('foo', function () {})
+            ",
+            None,
+        ),
+        (
+            "
+                import { fit as onlyThis } from '@jest/globals';
+                onlyThis('foo', function () {})
+            ",
+            None,
+        ),
     ];
 
     Tester::new(NoTestPrefixes::NAME, pass, fail).test_and_snapshot();

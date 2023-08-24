@@ -60,7 +60,7 @@ declare_oxc_lint!(
     /// ```
     ValidDescribeCallback,
     // Because this rule has one test case not passed, will set to correctness when finished.
-    nursery
+    correctness
 );
 
 impl Rule for ValidDescribeCallback {
@@ -203,7 +203,7 @@ fn test() {
                     })
                 })
             })
-        ",
+            ",
             None,
         ),
         (
@@ -213,17 +213,17 @@ fn test() {
                     expect(await Promise.resolve(42)).toBe(42)
                 })
             })
-        ",
+            ",
             None,
         ),
         ("if (hasOwnProperty(obj, key)) {}", None),
         (
             "
-        describe.each`
-            foo  | foe
-            ${'1'} | ${'2'}
-        `('$something', ({ foo, foe }) => {});
-        ",
+            describe.each`
+                foo  | foe
+                ${'1'} | ${'2'}
+            `('$something', ({ foo, foe }) => {});
+            ",
             None,
         ),
     ];
@@ -245,11 +245,13 @@ fn test() {
         ("describe('foo', async function () {})", None),
         ("xdescribe('foo', async function () {})", None),
         ("fdescribe('foo', async function () {})", None),
-        // TODO
-        // ("
-        //     import { fdescribe } from '@jest/globals';
-        //     fdescribe('foo', async function () {})
-        // ", None),
+        (
+            "
+            import { fdescribe } from '@jest/globals';
+            fdescribe('foo', async function () {})
+        ",
+            None,
+        ),
         ("describe.only('foo', async function () {})", None),
         ("describe.skip('foo', async function () {})", None),
         (

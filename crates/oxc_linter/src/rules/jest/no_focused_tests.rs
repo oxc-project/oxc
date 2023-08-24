@@ -61,7 +61,7 @@ impl Rule for NoFocusedTests {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
         let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
-        let ParsedGeneralJestFnCall { kind, members, raw } = jest_fn_call;
+        let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
         if !matches!(
             kind,
             JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
@@ -69,7 +69,7 @@ impl Rule for NoFocusedTests {
             return;
         }
 
-        if raw.starts_with('f') {
+        if name.starts_with('f') {
             ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
                 let start = call_expr.span.start;
                 Fix::delete(Span { start, end: start + 1 })
