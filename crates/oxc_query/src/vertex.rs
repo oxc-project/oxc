@@ -1060,13 +1060,21 @@ impl<'a> Typename for ParameterVertex<'a> {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ArgumentVertex<'a> {
+    /// Represents data from when the vertex is created
+    /// If the vertex is created from an AST node, this will be the AST node
+    /// Otherwise, it will be the index of the argument in the arguments vec
     pub data: ArgumentData<'a>,
     pub argument: &'a Argument<'a>,
 }
 
+/// Data used to find the index of the argument in the arguments vec and sometimes holds the [`AstNode`]
 #[derive(Debug, Clone)]
 pub enum ArgumentData<'a> {
+    /// If the vertex is created from a [`CallExpression`], this will be the index of the argument in the arguments vec
     Index(usize),
+    /// If the vertex is created from an [`AstNode`], this will be the AST node, which can be used to find the index of the argument
+    /// in the arguments vec by finding the astnode's parent node which will be a [`CallExpression`], then finding the index of the
+    /// argument in the arguments vec
     AstNode(AstNode<'a>),
 }
 
