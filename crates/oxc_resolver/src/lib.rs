@@ -371,7 +371,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
-        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? else {
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)?
+        else {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "imports" is null or undefined, return.
@@ -620,7 +621,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
-        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? else {
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)?
+        else {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "exports" is null or undefined, return.
@@ -633,7 +635,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             );
         }
         // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
-        let Some(subpath) = package_json.name.as_ref().and_then(|package_json_name| package_json_name.strip_prefix(specifier)) else {
+        let Some(subpath) = package_json
+            .name
+            .as_ref()
+            .and_then(|package_json_name| package_json_name.strip_prefix(specifier))
+        else {
             return Ok(None);
         };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
@@ -791,8 +797,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
     fn load_extension_alias(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
         let Some(path_extension) = cached_path.path().extension() else { return Ok(None) };
-        let Some((_, extensions)) =
-            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext.trim_start_matches('.')) == path_extension)
+        let Some((_, extensions)) = self
+            .options
+            .extension_alias
+            .iter()
+            .find(|(ext, _)| OsStr::new(ext.trim_start_matches('.')) == path_extension)
         else {
             return Ok(None);
         };
@@ -805,9 +814,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_tsconfig_paths(&self, specifier: &str, ctx: &ResolveContext) -> ResolveState {
-        let Some(tsconfig_path) = &self.options.tsconfig else {
-            return Ok(None)
-        };
+        let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
         let tsconfig_path = self.cache.value(tsconfig_path);
         let tsconfig = self.load_tsconfig(&tsconfig_path)?;
         let paths = tsconfig.resolve_path_alias(specifier);

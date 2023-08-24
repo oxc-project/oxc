@@ -106,7 +106,9 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
 }
 
 fn is_mistype_option_fallback(node: &AstNode) -> bool {
-    let AstKind::BinaryExpression(binary_expr) = node.kind() else { return false; };
+    let AstKind::BinaryExpression(binary_expr) = node.kind() else {
+        return false;
+    };
     if binary_expr.operator == BinaryOperator::BitwiseOR {
         if let Expression::Identifier(_) = &binary_expr.left {
             return !is_numeric_expr(&binary_expr.right, true);

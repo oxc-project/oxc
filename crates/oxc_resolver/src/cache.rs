@@ -197,7 +197,7 @@ impl CachedPathImpl {
             .get_or_try_init(|| {
                 let package_json_path = self.path.join("package.json");
                 let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
-                    return Ok(None)
+                    return Ok(None);
                 };
                 PackageJson::parse(package_json_path.clone(), &package_json_string, options)
                     .map(Arc::new)

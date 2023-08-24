@@ -39,7 +39,9 @@ declare_oxc_lint!(
 
 impl Rule for NoCompareNegZero {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.kind() else { return; };
+        let AstKind::BinaryExpression(expr) = node.kind() else {
+            return;
+        };
         if Self::should_check(expr.operator) {
             let op = expr.operator.as_str();
             if is_neg_zero(&expr.left) || is_neg_zero(&expr.right) {
@@ -58,8 +60,8 @@ impl NoCompareNegZero {
 fn is_neg_zero(expr: &Expression) -> bool {
     use num_traits::Zero;
     let Expression::UnaryExpression(unary) = expr.get_inner_expression() else {
-    return false;
-  };
+        return false;
+    };
     if unary.operator != UnaryOperator::UnaryNegation {
         return false;
     }

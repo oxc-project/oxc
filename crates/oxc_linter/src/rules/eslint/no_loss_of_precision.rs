@@ -118,7 +118,9 @@ impl<'a> RawNum<'a> {
         let exp =
             num_without_frac.strip_prefix(['e', 'E']).map_or("0", |num_without_e| num_without_e);
 
-        let Ok(exp) = exp.parse::<isize>() else { return None; };
+        let Ok(exp) = exp.parse::<isize>() else {
+            return None;
+        };
 
         Some(RawNum { int, frac, exp })
     }

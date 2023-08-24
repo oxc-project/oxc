@@ -132,10 +132,13 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                 if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::Expression(Expression::StringLiteral(string)) if string.value == "\n")) {
                                     continue;
                                 }
-                                let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+                                let Expression::MemberExpression(member_expr) = &call_expr.callee
+                                else {
                                     continue;
                                 };
-                                let MemberExpression::StaticMemberExpression(member) = &member_expr.0 else {
+                                let MemberExpression::StaticMemberExpression(member) =
+                                    &member_expr.0
+                                else {
                                     continue;
                                 };
                                 if member.property.name != "join" {
