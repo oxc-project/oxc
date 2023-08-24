@@ -201,10 +201,6 @@ impl Kind {
         matches!(self, Eof)
     }
 
-    pub fn is_trivia(self) -> bool {
-        matches!(self, WhiteSpace | NewLine | Comment | MultiLineComment)
-    }
-
     pub fn is_number(self) -> bool {
         matches!(
             self,

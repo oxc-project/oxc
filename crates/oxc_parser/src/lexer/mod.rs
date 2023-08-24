@@ -333,7 +333,10 @@ impl<'a> Lexer<'a> {
 
             if let Some(c) = self.current.chars.clone().next() {
                 let kind = self.match_char(c);
-                if !kind.is_trivia() {
+                if !matches!(
+                    kind,
+                    Kind::WhiteSpace | Kind::NewLine | Kind::Comment | Kind::MultiLineComment
+                ) {
                     return kind;
                 }
             } else {
