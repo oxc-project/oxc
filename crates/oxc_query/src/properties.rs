@@ -36,6 +36,7 @@ pub(super) fn resolve_argument_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "is_spread" => resolve_property_with(contexts, |v| {
@@ -48,6 +49,17 @@ pub(super) fn resolve_argument_property<'a, 'b: 'a>(
                 oxc_ast::ast::Argument::SpreadElement(_)
             )
             .into()
+        }),
+        "index" => resolve_property_with(contexts, |v| {
+            let arg_index: u64 = v
+                .as_argument()
+                .unwrap_or_else(|| {
+                    panic!("expected to have an argument vertex, instead have: {v:#?}")
+                })
+                .index(adapter)
+                .try_into()
+                .expect("to index of argument into u64");
+            arg_index.into()
         }),
         _ => {
             unreachable!(

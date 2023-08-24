@@ -452,6 +452,10 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
 }
 
 interface Argument implements HasSpan {
+  """
+  0-indexed
+  """
+  index: Int!
   is_spread: Boolean!
   """
   Will be VarRef if `is_spread` is `true`
@@ -462,6 +466,10 @@ interface Argument implements HasSpan {
 }
 
 type ArgumentAST implements Argument & HasSpan & ASTNode {
+  """
+  0-indexed
+  """
+  index: Int!
   is_spread: Boolean!
   value: Expression!
   # ASTNode

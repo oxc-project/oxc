@@ -8,8 +8,12 @@ use oxc_span::{GetSpan, Span};
 use trustfall::provider::{Typename, VertexIterator};
 use url::Url;
 
-use crate::util::{
-    jsx_attribute_to_constant_string, try_get_constant_string_field_value_from_template_lit,
+use crate::{
+    util::{
+        calculate_hash, jsx_attribute_to_constant_string,
+        try_get_constant_string_field_value_from_template_lit,
+    },
+    Adapter,
 };
 
 #[non_exhaustive]
@@ -495,9 +499,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::FormalParameter(parameter) => {
                 Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
             }
-            AstKind::Argument(argument) => {
-                Vertex::Argument(ArgumentVertex { ast_node: Some(ast_node), argument }.into())
-            }
+            AstKind::Argument(argument) => Vertex::Argument(
+                ArgumentVertex { ast_node: Some(ast_node), argument, index: None }.into(),
+            ),
             AstKind::LogicalExpression(logical_expression) => Vertex::LogicalExpression(
                 LogicalExpressionVertex { ast_node: Some(ast_node), logical_expression }.into(),
             ),
@@ -1055,6 +1059,25 @@ impl<'a> Typename for ParameterVertex<'a> {
 pub struct ArgumentVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub argument: &'a Argument<'a>,
+    pub index: Option<usize>,
+}
+
+impl<'a> ArgumentVertex<'a> {
+    pub fn index<'c, 'b: 'c>(&self, adapter: &'c Adapter<'b>) -> usize {
+        self.index.unwrap_or_else(|| self.ast_node.map_or_else(|| unreachable!("Should always either have an index or an ast_node, any other situation is an invariant"), |ast_node| {
+            let AstKind::CallExpression(call_expr) = adapter
+                .semantic
+                .nodes()
+                .parent_node(ast_node.id())
+                .expect("argument should have parent")
+                .kind() else {unreachable!("Argument's parent should always be a CallExpression")};
+            call_expr
+                .arguments
+                .iter()
+                .position(|x| calculate_hash(x) == calculate_hash(self.argument))
+                .unwrap()
+        }))
+    }
 }
 
 impl<'a> Typename for ArgumentVertex<'a> {

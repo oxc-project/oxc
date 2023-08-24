@@ -80,6 +80,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
+                self,
             ),
             "ArrowFunctionAST" | "ArrowFunction" => {
                 super::properties::resolve_arrow_function_property(

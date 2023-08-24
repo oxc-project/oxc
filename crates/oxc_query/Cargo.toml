@@ -19,6 +19,7 @@ oxc_span     = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
 url          = { workspace = true }
 trustfall    = { workspace = true }
+rustc-hash   = { workspace = true }
 
 enum-as-inner = "0.6.0"
 

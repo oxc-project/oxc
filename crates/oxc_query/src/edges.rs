@@ -1263,8 +1263,11 @@ mod fn_call {
                     .call_expression
                     .arguments
                     .iter()
-                    .map(|argument| {
-                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    .enumerate()
+                    .map(|(index, argument)| {
+                        Vertex::Argument(
+                            ArgumentVertex { ast_node: None, argument, index: Some(index) }.into(),
+                        )
                     }),
             )
         })
@@ -2305,8 +2308,11 @@ mod new {
                     .new_expression
                     .arguments
                     .iter()
-                    .map(|argument| {
-                        Vertex::Argument(ArgumentVertex { ast_node: None, argument }.into())
+                    .enumerate()
+                    .map(|(index, argument)| {
+                        Vertex::Argument(
+                            ArgumentVertex { ast_node: None, argument, index: Some(index) }.into(),
+                        )
                     }),
             )
         })
