@@ -422,7 +422,8 @@ impl<'a> Lexer<'a> {
         loop {
             let c = self.peek();
             if !is_identifier_part(c) {
-                if self.next_eq('\\') {
+                if c == '\\' {
+                    self.current.chars.next();
                     builder.force_allocation_without_current_ascii_char(self);
                     self.identifier_unicode_escape_sequence(&mut builder, false);
                     continue;
