@@ -1266,7 +1266,11 @@ mod fn_call {
                     .enumerate()
                     .map(|(index, argument)| {
                         Vertex::Argument(
-                            ArgumentVertex { ast_node: None, argument, index: Some(index) }.into(),
+                            ArgumentVertex {
+                                argument,
+                                data: crate::vertex::ArgumentData::Index(index),
+                            }
+                            .into(),
                         )
                     }),
             )
@@ -2311,7 +2315,11 @@ mod new {
                     .enumerate()
                     .map(|(index, argument)| {
                         Vertex::Argument(
-                            ArgumentVertex { ast_node: None, argument, index: Some(index) }.into(),
+                            ArgumentVertex {
+                                argument,
+                                data: crate::vertex::ArgumentData::Index(index),
+                            }
+                            .into(),
                         )
                     }),
             )

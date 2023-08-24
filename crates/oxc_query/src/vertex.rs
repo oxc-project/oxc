@@ -155,6 +155,10 @@ impl<'a> Vertex<'a> {
     pub fn ast_node_id(&self) -> Option<AstNodeId> {
         match &self {
             Vertex::ASTNode(data) => Some(data.id()),
+            Vertex::Argument(data) => match data.data {
+                ArgumentData::Index(_) => None,
+                ArgumentData::AstNode(ast_node) => Some(ast_node.id()),
+            },
             Vertex::Class(data) => data.ast_node.map(|x| x.id()),
             Vertex::Import(data) => data.ast_node.map(|x| x.id()),
             Vertex::Interface(data) => data.ast_node.map(|x| x.id()),
@@ -176,7 +180,6 @@ impl<'a> Vertex<'a> {
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::Parameter(data) => data.ast_node.map(|x| x.id()),
-            Vertex::Argument(data) => data.ast_node.map(|x| x.id()),
             Vertex::LogicalExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::UnaryExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::ExpressionStatement(data) => data.ast_node.map(|x| x.id()),
@@ -500,7 +503,7 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
                 Vertex::Parameter(ParameterVertex { ast_node: Some(ast_node), parameter }.into())
             }
             AstKind::Argument(argument) => Vertex::Argument(
-                ArgumentVertex { ast_node: Some(ast_node), argument, index: None }.into(),
+                ArgumentVertex { argument, data: ArgumentData::AstNode(ast_node) }.into(),
             ),
             AstKind::LogicalExpression(logical_expression) => Vertex::LogicalExpression(
                 LogicalExpressionVertex { ast_node: Some(ast_node), logical_expression }.into(),
@@ -1057,32 +1060,40 @@ impl<'a> Typename for ParameterVertex<'a> {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ArgumentVertex<'a> {
-    pub ast_node: Option<AstNode<'a>>,
+    pub data: ArgumentData<'a>,
     pub argument: &'a Argument<'a>,
-    pub index: Option<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ArgumentData<'a> {
+    Index(usize),
+    AstNode(AstNode<'a>),
 }
 
 impl<'a> ArgumentVertex<'a> {
     pub fn index<'c, 'b: 'c>(&self, adapter: &'c Adapter<'b>) -> usize {
-        self.index.unwrap_or_else(|| self.ast_node.map_or_else(|| unreachable!("Should always either have an index or an ast_node, any other situation is an invariant"), |ast_node| {
-            let AstKind::CallExpression(call_expr) = adapter
+        match &self.data {
+            ArgumentData::Index(index) => *index,
+            ArgumentData::AstNode(ast_node) => {
+                let AstKind::CallExpression(call_expr) = adapter
                 .semantic
                 .nodes()
                 .parent_node(ast_node.id())
                 .expect("argument should have parent")
                 .kind() else {unreachable!("Argument's parent should always be a CallExpression")};
-            call_expr
-                .arguments
-                .iter()
-                .position(|x| calculate_hash(x) == calculate_hash(self.argument))
-                .unwrap()
-        }))
+                call_expr
+                    .arguments
+                    .iter()
+                    .position(|x| calculate_hash(x) == calculate_hash(self.argument))
+                    .expect("to find index of this argument in it's parent's arguments vec")
+            }
+        }
     }
 }
 
 impl<'a> Typename for ArgumentVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
+        if let ArgumentData::AstNode(_) = self.data {
             "ArgumentAST"
         } else {
             "Argument"
