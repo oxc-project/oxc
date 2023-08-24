@@ -614,7 +614,10 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_chain_expression(&mut self, expr: &'a ChainExpression<'a>) {
+        let kind = AstKind::ChainExpression(expr);
+        self.enter_node(kind);
         self.visit_chain_element(&expr.expression);
+        self.leave_node(kind);
     }
 
     fn visit_chain_element(&mut self, elem: &'a ChainElement<'a>) {
