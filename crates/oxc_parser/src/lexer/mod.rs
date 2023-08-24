@@ -355,7 +355,8 @@ impl<'a> Lexer<'a> {
                 let mut builder = AutoCow::new(self);
                 let c = self.consume_char();
                 builder.push_matching(c);
-                self.identifier_name_or_keyword(builder)
+                self.identifier_name(builder);
+                Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
                 self.consume_char();
@@ -413,7 +414,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.6.1 Identifier Names
-    fn identifier_name(&mut self, mut builder: AutoCow<'a>) -> (bool, &'a str) {
+    fn identifier_tail(&mut self, mut builder: AutoCow<'a>) -> (bool, &'a str) {
         // ident tail
         loop {
             let c = self.peek();
@@ -429,16 +430,21 @@ impl<'a> Lexer<'a> {
             builder.push_matching(c);
         }
         let has_escape = builder.has_escape();
-
         (has_escape, builder.finish(self))
     }
 
-    fn identifier_name_or_keyword(&mut self, builder: AutoCow<'a>) -> Kind {
-        let (has_escape, text) = self.identifier_name(builder);
-        let kind = Kind::match_keyword(text);
+    fn identifier_name(&mut self, builder: AutoCow<'a>) -> &'a str {
+        let (has_escape, text) = self.identifier_tail(builder);
         self.current.token.escaped = has_escape;
         self.current.token.value = TokenValue::String(text);
-        kind
+        text
+    }
+
+    fn identifier_name_handler(&mut self) -> &'a str {
+        let mut builder = AutoCow::new(self);
+        let c = self.consume_char();
+        builder.push_matching(c);
+        self.identifier_name(builder)
     }
 
     /// Section 12.7 Punctuators
@@ -539,7 +545,7 @@ impl<'a> Lexer<'a> {
                 return Kind::Undetermined;
             }
         }
-        let (_, name) = self.identifier_name(builder);
+        let (_, name) = self.identifier_tail(builder);
         self.current.token.value = self.string_to_token_value(name);
         Kind::PrivateIdentifier
     }
@@ -1293,8 +1299,8 @@ static BYTE_HANDLERS: [ByteHandler; 128] = [
     ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
     AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
     IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
-    TPL, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 6
-    IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BEO, PIP, BEC, TLD, ERR, // 7
+    TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
+    L_P, IDT, L_R, L_S, L_T, L_U, L_V, L_W, IDT, L_Y, IDT, BEO, PIP, BEC, TLD, ERR, // 7
 ];
 
 const ERR: ByteHandler = |lexer| {
@@ -1356,10 +1362,8 @@ const HAS: ByteHandler = |lexer| {
 };
 
 const IDT: ByteHandler = |lexer| {
-    let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
-    lexer.identifier_name_or_keyword(builder)
+    lexer.identifier_name_handler();
+    Kind::Ident
 };
 
 // %
@@ -1577,7 +1581,8 @@ const ESC: ByteHandler = |lexer| {
     builder.push_matching(c);
     builder.force_allocation_without_current_ascii_char(lexer);
     lexer.identifier_unicode_escape_sequence(&mut builder, true);
-    lexer.identifier_name_or_keyword(builder)
+    let text = lexer.identifier_name(builder);
+    Kind::match_keyword(text)
 };
 
 // ]
@@ -1634,4 +1639,172 @@ const BEC: ByteHandler = |lexer| {
 const TLD: ByteHandler = |lexer| {
     lexer.consume_char();
     Kind::Tilde
+};
+
+const L_A: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "abstract" => Kind::Abstract,
+    "accessor" => Kind::Accessor,
+    "any" => Kind::Any,
+    "as" => Kind::As,
+    "assert" => Kind::Assert,
+    "asserts" => Kind::Asserts,
+    "async" => Kind::Async,
+    "await" => Kind::Await,
+    _ => Kind::Ident,
+};
+
+const L_B: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "bigint" => Kind::BigInt,
+    "boolean" => Kind::Boolean,
+    "break" => Kind::Break,
+    _ => Kind::Ident,
+};
+
+const L_C: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "case" => Kind::Case,
+    "catch" => Kind::Catch,
+    "class" => Kind::Class,
+    "const" => Kind::Const,
+    "constructor" => Kind::Constructor,
+    "continue" => Kind::Continue,
+    _ => Kind::Ident,
+};
+
+const L_D: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "debugger" => Kind::Debugger,
+    "declare" => Kind::Declare,
+    "default" => Kind::Default,
+    "delete" => Kind::Delete,
+    "do" => Kind::Do,
+    _ => Kind::Ident,
+};
+
+const L_E: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "else" => Kind::Else,
+    "enum" => Kind::Enum,
+    "export" => Kind::Export,
+    "extends" => Kind::Extends,
+    _ => Kind::Ident,
+};
+
+const L_F: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "false" => Kind::False,
+    "finally" => Kind::Finally,
+    "for" => Kind::For,
+    "from" => Kind::From,
+    "function" => Kind::Function,
+    _ => Kind::Ident,
+};
+
+const L_G: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "get" => Kind::Get,
+    "global" => Kind::Global,
+    _ => Kind::Ident,
+};
+
+const L_I: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "if" => Kind::If,
+    "implements" => Kind::Implements,
+    "import" => Kind::Import,
+    "in" => Kind::In,
+    "infer" => Kind::Infer,
+    "instanceof" => Kind::Instanceof,
+    "interface" => Kind::Interface,
+    "intrinsic" => Kind::Intrinsic,
+    "is" => Kind::Is,
+    _ => Kind::Ident,
+};
+
+const L_K: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "keyof" => Kind::KeyOf,
+    _ => Kind::Ident,
+};
+
+const L_L: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "let" => Kind::Let,
+    _ => Kind::Ident,
+};
+
+const L_M: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "meta" => Kind::Meta,
+    "module" => Kind::Module,
+    _ => Kind::Ident,
+};
+
+const L_N: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "namespace" => Kind::Namespace,
+    "never" => Kind::Never,
+    "new" => Kind::New,
+    "null" => Kind::Null,
+    "number" => Kind::Number,
+    _ => Kind::Ident,
+};
+
+const L_O: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "object" => Kind::Object,
+    "of" => Kind::Of,
+    "out" => Kind::Out,
+    "override" => Kind::Override,
+    _ => Kind::Ident,
+};
+
+const L_P: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "package" => Kind::Package,
+    "private" => Kind::Private,
+    "protected" => Kind::Protected,
+    "public" => Kind::Public,
+    _ => Kind::Ident,
+};
+
+const L_R: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "readonly" => Kind::Readonly,
+    "require" => Kind::Require,
+    "return" => Kind::Return,
+    _ => Kind::Ident,
+};
+
+const L_S: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "satisfies" => Kind::Satisfies,
+    "set" => Kind::Set,
+    "static" => Kind::Static,
+    "string" => Kind::String,
+    "super" => Kind::Super,
+    "switch" => Kind::Switch,
+    "symbol" => Kind::Symbol,
+    _ => Kind::Ident,
+};
+
+const L_T: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "target" => Kind::Target,
+    "this" => Kind::This,
+    "throw" => Kind::Throw,
+    "true" => Kind::True,
+    "try" => Kind::Try,
+    "type" => Kind::Type,
+    "typeof" => Kind::Typeof,
+    _ => Kind::Ident,
+};
+
+const L_U: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "undefined" => Kind::Undefined,
+    "unique" => Kind::Unique,
+    "unknown" => Kind::Unknown,
+    _ => Kind::Ident,
+};
+
+const L_V: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "var" => Kind::Var,
+    "void" => Kind::Void,
+    _ => Kind::Ident,
+};
+
+const L_W: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "while" => Kind::While,
+    "with" => Kind::With,
+    _ => Kind::Ident,
+};
+
+const L_Y: ByteHandler = |lexer| match lexer.identifier_name_handler() {
+    "yield" => Kind::Yield,
+    _ => Kind::Ident,
 };
