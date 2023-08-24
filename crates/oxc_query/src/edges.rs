@@ -15,7 +15,7 @@ pub(super) fn resolve_array_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => array::span(contexts, resolve_info),
-        "elements" => array::elements(contexts, resolve_info),
+        "element" => array::element(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
@@ -35,7 +35,7 @@ mod array {
 
     use super::super::vertex::Vertex;
 
-    pub(super) fn elements<'a, 'b: 'a>(
+    pub(super) fn element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {

@@ -290,7 +290,7 @@ type ArrayElementAST implements HasSpan & ASTNode {
 }
 
 interface Array implements HasSpan & Expression {
-  elements: [ArrayElement!]
+  element: [ArrayElement!]
   # Expression
   as_constant_string: String
   """
@@ -303,7 +303,7 @@ interface Array implements HasSpan & Expression {
 }
 
 type ArrayAST implements HasSpan & Expression & Array & ASTNode {
-  elements: [ArrayElement!]
+  element: [ArrayElement!]
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
