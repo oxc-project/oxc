@@ -74,6 +74,7 @@ pub enum Vertex<'a> {
     StringLiteral(Rc<StringLiteralVertex<'a>>),
     TemplateLiteral(Rc<TemplateLiteralVertex<'a>>),
     RegExpLiteral(Rc<RegExpLiteralVertex<'a>>),
+    ParenthesizedExpression(Rc<ParenthesizedExpressionVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -136,6 +137,7 @@ impl<'a> Vertex<'a> {
             Self::StringLiteral(data) => data.string.span,
             Self::TemplateLiteral(data) => data.template.span,
             Self::RegExpLiteral(data) => data.regexp.span,
+            Self::ParenthesizedExpression(data) => data.parenthesized_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -187,6 +189,7 @@ impl<'a> Vertex<'a> {
             Vertex::StringLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::TemplateLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::RegExpLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ParenthesizedExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -295,6 +298,7 @@ impl<'a> Vertex<'a> {
             | Vertex::StringLiteral(..)
             | Vertex::TemplateLiteral(..)
             | Vertex::RegExpLiteral(..)
+            | Vertex::ParenthesizedExpression(..)
             | Vertex::Array(..) => true,
             Vertex::ASTNode(..)
             | Vertex::AssignmentType(..)
@@ -407,6 +411,7 @@ impl Typename for Vertex<'_> {
             Vertex::StringLiteral(data) => data.typename(),
             Vertex::TemplateLiteral(data) => data.typename(),
             Vertex::RegExpLiteral(data) => data.typename(),
+            Vertex::ParenthesizedExpression(data) => data.typename(),
         }
     }
 }
@@ -546,6 +551,15 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ArrayExpression(array_expression) => {
                 Vertex::Array(ArrayVertex { ast_node: Some(ast_node), array_expression }.into())
             }
+            AstKind::ParenthesizedExpression(parenthesized_expression) => {
+                Vertex::ParenthesizedExpression(
+                    ParenthesizedExpressionVertex {
+                        ast_node: Some(ast_node),
+                        parenthesized_expression,
+                    }
+                    .into(),
+                )
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -636,6 +650,12 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::RegExpLiteral(regexp_literal) => Vertex::RegExpLiteral(
                 RegExpLiteralVertex { ast_node: None, regexp: regexp_literal }.into(),
             ),
+            Expression::ParenthesizedExpression(parenthesized_expression) => {
+                Vertex::ParenthesizedExpression(
+                    ParenthesizedExpressionVertex { ast_node: None, parenthesized_expression }
+                        .into(),
+                )
+            }
             _ => Vertex::Expression(expr),
         }
     }
@@ -1315,6 +1335,23 @@ impl<'a> Typename for RegExpLiteralVertex<'a> {
             "RegExpLiteralAST"
         } else {
             "RegExpLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ParenthesizedExpressionVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub parenthesized_expression: &'a ParenthesizedExpression<'a>,
+}
+
+impl<'a> Typename for ParenthesizedExpressionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ParenthesizedExpressionAST"
+        } else {
+            "ParenthesizedExpression"
         }
     }
 }

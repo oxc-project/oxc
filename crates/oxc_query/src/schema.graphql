@@ -933,6 +933,33 @@ type RegExpLiteralAST implements HasSpan & Expression & RegExpLiteral & ASTNode 
   span: Span!
 }
 
+interface ParenthesizedExpression implements HasSpan & Expression {
+  expression: Expression!
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ParenthesizedExpressionAST implements HasSpan & Expression & ASTNode & ParenthesizedExpression {
+  expression: Expression!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  """
+  Strips infinite levels of parens unless `strip_all` is `false`.
+  """
+  strip_parens(strip_all: Boolean): Expression!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan
