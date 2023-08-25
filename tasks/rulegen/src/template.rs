@@ -32,6 +32,8 @@ impl<'a> Template<'a> {
         let path = match rule_kind {
             RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
             RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
+            RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
+            RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
         };
 
         let out_path = path.join(format!("{}.rs", self.context.rule_name));

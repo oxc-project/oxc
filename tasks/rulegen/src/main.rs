@@ -9,8 +9,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
-        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TemplateLiteral,
+        ExpressionStatement, MemberExpression, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, Program, PropertyKey, Statement, StringLiteral,
+        TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -20,6 +21,7 @@ use serde::Serialize;
 use ureq::Response;
 
 mod json;
+mod request;
 mod template;
 
 const ESLINT_TEST_PATH: &str =
@@ -27,6 +29,12 @@ const ESLINT_TEST_PATH: &str =
 
 const JEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules/__tests__";
+
+const TYPESCRIPT_ESLINT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
+
+const UNICORN_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
 
 struct TestCase<'a> {
     source_text: &'a str,
@@ -50,7 +58,14 @@ impl<'a> TestCase<'a> {
                 self.test_code.as_ref().map_or(Cow::Borrowed("None"), |option_code| {
                     Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
                 });
-            Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
+            if test_code.contains('\n') {
+                Cow::Owned(format!(
+                    r#"("{}", {option_code})"#,
+                    test_code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+                ))
+            } else {
+                Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
+            }
         })
     }
 
@@ -66,6 +81,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
             Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
             Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
+            Expression::TaggedTemplateExpression(tag_expr) => {
+                self.visit_tagged_template_expression(tag_expr);
+            }
             _ => {}
         }
     }
@@ -98,11 +116,50 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
                             // eslint-plugin-jest use dedent to strips indentation from multi-line strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                let Expression::Identifier(ident) = &tag_expr.tag else {continue;};
+                                let Expression::Identifier(ident) = &tag_expr.tag else {
+                                    continue;
+                                };
                                 if ident.name != "dedent" {
                                     continue;
                                 }
                                 tag_expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                            }
+                            Expression::TemplateLiteral(tag_expr) => {
+                                tag_expr.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                            }
+                            // handle code like ["{", "a: 1", "}"].join("\n")
+                            Expression::CallExpression(call_expr) => {
+                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::Expression(Expression::StringLiteral(string)) if string.value == "\n")) {
+                                    continue;
+                                }
+                                let Expression::MemberExpression(member_expr) = &call_expr.callee
+                                else {
+                                    continue;
+                                };
+                                let MemberExpression::StaticMemberExpression(member) =
+                                    &member_expr.0
+                                else {
+                                    continue;
+                                };
+                                if member.property.name != "join" {
+                                    continue;
+                                }
+                                let Expression::ArrayExpression(array_expr) = &member.object else {
+                                    continue;
+                                };
+                                Some(Cow::Owned(
+                                    array_expr
+                                        .elements
+                                        .iter()
+                                        .map(|arg| match arg {
+                                            ArrayExpressionElement::Expression(
+                                                Expression::StringLiteral(string),
+                                            ) => string.value.as_str(),
+                                            _ => "",
+                                        })
+                                        .collect::<Vec<_>>()
+                                        .join("\n"),
+                                ))
                             }
                             _ => continue,
                         }
@@ -127,6 +184,17 @@ impl<'a> Visit<'a> for TestCase<'a> {
 
     fn visit_string_literal(&mut self, lit: &'a StringLiteral) {
         self.code = Some(Cow::Borrowed(lit.value.as_str()));
+        self.test_code = None;
+    }
+
+    fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
+        let Expression::Identifier(ident) = &expr.tag else {
+            return;
+        };
+        if ident.name != "dedent" {
+            return;
+        }
+        self.code = expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()));
         self.test_code = None;
     }
 }
@@ -234,12 +302,16 @@ impl<'a> Visit<'a> for State<'a> {
 pub enum RuleKind {
     ESLint,
     Jest,
+    Typescript,
+    Unicorn,
 }
 
 impl RuleKind {
     fn from(kind: &str) -> Self {
         match kind {
             "jest" => Self::Jest,
+            "typescript" => Self::Typescript,
+            "unicorn" => Self::Unicorn,
             _ => Self::ESLint,
         }
     }
@@ -249,7 +321,9 @@ impl Display for RuleKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::ESLint => write!(f, "eslint"),
+            Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
+            Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
         }
     }
 }
@@ -266,10 +340,12 @@ fn main() {
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
     };
     println!("Reading test file from {rule_test_path}");
 
-    let body = ureq::get(&rule_test_path).call().map(Response::into_string);
+    let body = request::agent().get(&rule_test_path).call().map(Response::into_string);
     let pass_cases;
     let fail_cases;
     let context = match body {
@@ -283,10 +359,20 @@ fn main() {
             let mut state = State::new(&body);
             state.visit_program(program);
 
-            pass_cases =
-                state.pass_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
-            fail_cases =
-                state.fail_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
+            pass_cases = state
+                .pass_cases()
+                .iter()
+                .map(TestCase::to_code)
+                .filter(|t| !t.is_empty())
+                .collect::<Vec<_>>()
+                .join(",\n");
+            fail_cases = state
+                .fail_cases()
+                .iter()
+                .map(TestCase::to_code)
+                .filter(|t| !t.is_empty())
+                .collect::<Vec<_>>()
+                .join(",\n");
 
             Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases)
         }

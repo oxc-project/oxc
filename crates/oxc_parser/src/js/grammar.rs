@@ -151,7 +151,8 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
         if property.shorthand {
             let binding = match property.key {
                 PropertyKey::Identifier(ident) => {
-                    IdentifierReference { span: ident.span, name: ident.unbox().name }
+                    let ident = ident.unbox();
+                    IdentifierReference::new(ident.name, ident.span)
                 }
                 _ => return Err(p.unexpected()),
             };

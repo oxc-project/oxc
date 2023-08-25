@@ -41,7 +41,7 @@ if (binPath) {
 } else {
   console.error(
     "The oxlint CLI package doesn't ship with prebuilt binaries for your platform yet. " +
-    "You can create an issue at https://github.com/Boshen/oxc/issues for support."
+    "You can create an issue at https://github.com/web-infra-dev/oxc/issues for support."
   );
   process.exitCode = 1;
 }

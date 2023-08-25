@@ -1,0 +1,93 @@
+name: Reusable Benchmark
+
+
+on:
+  workflow_call:
+    inputs:
+      os: # ubuntu-latest | windows-latest
+        required: true
+        type: string
+
+jobs:
+  # Compile the binaries separately for main and pr branch to reduce CI time
+  compile:
+    strategy:
+      matrix:
+        branch: [main, pr]
+    name: Build ${{ matrix.branch }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch == 'main' && 'main' || '' }}
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
+
+      - name: Compile
+        shell: bash
+        run: cargo build --release -p oxc_benchmark
+
+      - name: Fix Permission Loss
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mv ./target/release/oxc_benchmark.exe benchmark_${{ matrix.branch }}.exe
+          tar czf benchmark_${{ matrix.branch }}.tar.gz benchmark_${{ matrix.branch }}.exe
+
+      - name: Fix Permission Loss
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mv ./target/release/oxc_benchmark benchmark_${{ matrix.branch }}
+          tar czf benchmark_${{ matrix.branch }}.tar.gz benchmark_${{ matrix.branch }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries_${{ inputs.os }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  # Run the binaries on the same machine for consistent result
+  run:
+    needs: compile
+    name: Run
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries_${{ inputs.os }}
+
+      - name: Untar
+        shell: bash
+        run: ls *.gz | xargs -i tar xvf {}
+
+      - name: Run Benchmark
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir target
+          ./benchmark_main.exe --save-baseline main
+          ./benchmark_pr.exe --save-baseline pr
+
+      - name: Run Benchmark
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir target
+          ./benchmark_main --save-baseline main
+          ./benchmark_pr --save-baseline pr
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results-${{ inputs.os }}
+          path: ./target/criterion

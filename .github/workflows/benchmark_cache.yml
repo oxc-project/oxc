@@ -6,6 +6,17 @@ on:
       - main
     paths-ignore:
       - '**/*.md'
+      - '**/*.yml'
+      - 'npm/**'
+      - 'website/**'
+      - 'crates/oxc/**'
+      - 'crates/oxc_cli/**'
+      - 'crates/oxc_formatter/**'
+      - 'crates/oxc_linter/**'
+      - 'crates/oxc_napi/**'
+      - 'crates/oxc_query/**'
+      - 'crates/oxc_type_synthesis/**'
+      - 'crates/oxc_wasm/**'
 
 jobs:
   cache: # Warm cache factory for the benchmark job

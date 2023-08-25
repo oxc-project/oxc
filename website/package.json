@@ -10,6 +10,8 @@
     "wasm-build": "wasm-pack build --out-dir ../../npm/wasm-web --target web --release --scope oxc ../crates/oxc_wasm"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.9.0",
+    "@codemirror/commands": "^6.2.4",
     "@codemirror/lang-javascript": "^6.1.8",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-rust": "^6.0.1",
@@ -19,7 +21,9 @@
     "@codemirror/view": "^6.12.0",
     "@ddietr/codemirror-themes": "^1.4.1",
     "@replit/codemirror-vscode-keymap": "^6.0.2",
+    "cm6-graphql": "^0.0.9",
     "codemirror": "^6.0.1",
+    "graphql": "^16.7.1",
     "lodash.throttle": "^4.1.1"
   },
   "devDependencies": {
@@ -32,5 +36,11 @@
     "node": ">=16.13.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.2.0"
+  "packageManager": "pnpm@8.2.0",
+  "pnpm": {
+    "patchedDependencies": {
+      "graphql-language-service@5.1.7": "patches/graphql-language-service@5.1.7.patch",
+      "@ddietr/codemirror-themes@1.4.1": "patches/@ddietr__codemirror-themes@1.4.1.patch"
+    }
+  }
 }

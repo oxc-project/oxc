@@ -62,9 +62,7 @@ impl Rule for NoMixedOperators {
             return;
         }
 
-        let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else {
-            return
-        };
+        let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else { return };
 
         if !matches!(
             parent_kind,
@@ -99,11 +97,9 @@ impl NoMixedOperators {
                     if let Some(group_config) = group_config.as_array() {
                         let mut group = vec![];
                         for val in group_config {
-                            let Some(val) = val.as_str() else {
-                              continue 'outer
-                            };
+                            let Some(val) = val.as_str() else { continue 'outer };
                             let Some((operator, _)) = operator_and_precedence(val) else {
-                                continue 'outer
+                                continue 'outer;
                             };
                             group.push(operator);
                         }

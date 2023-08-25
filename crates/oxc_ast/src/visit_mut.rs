@@ -193,7 +193,7 @@ pub trait VisitMut<'a, 'b>: Sized {
         self.visit_statement(&mut stmt.body);
     }
 
-    fn visit_directive(&mut self, directive: &'b mut Directive<'a>) {
+    fn visit_directive(&mut self, directive: &'b mut Directive) {
         self.visit_string_literal(&mut directive.expression);
     }
 
@@ -401,7 +401,7 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_array_expression_element(&mut self, arg: &'b mut ArrayExpressionElement<'a>) {
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => self.visit_spread_element(spread),
-            ArrayExpressionElement::Expression(expr) => self.visit_expression(expr),
+            ArrayExpressionElement::Expression(expr) => self.visit_expression_array_element(expr),
             ArrayExpressionElement::Elision(span) => self.visit_elision(*span),
         }
     }
@@ -415,6 +415,10 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_spread_element(&mut self, elem: &'b mut SpreadElement<'a>) {
         self.visit_expression(&mut elem.argument);
+    }
+
+    fn visit_expression_array_element(&mut self, expr: &'b mut Expression<'a>) {
+        self.visit_expression(expr);
     }
 
     fn visit_elision(&mut self, _span: Span) {}

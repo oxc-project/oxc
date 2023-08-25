@@ -2,55 +2,124 @@
 //!
 //! Node.js Module Resolution.
 //!
+//! All configuration options are aligned with [enhanced-resolve]
+//!
 //! ## References:
 //!
-//! * Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve)
-//! * Algorithm adapted from [Node.js Module Resolution Algorithm](https://nodejs.org/api/modules.html#all-together) and [cjs loader](https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js)
-//! * Some code adapted from [parcel-resolver](https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs)
+//! * Tests ported from [enhanced-resolve]
+//! * Algorithm adapted from Node.js [CommonJS Module Resolution Algorithm] and [ECMAScript Module Resolution Algorithm]
+//! * Some code adapted from [parcel-resolver]
+//!
+//! [enhanced-resolve]: https://github.com/webpack/enhanced-resolve
+//! [CommonJS Module Resolution Algorithm]: https://nodejs.org/api/modules.html#all-together
+//! [ECMAScript Module Resolution Algorithm]: https://nodejs.org/api/esm.html#resolution-algorithm-specification
+//! [parcel-resolver]: https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs
 
 mod cache;
 mod error;
 mod file_system;
+mod json_comments;
 mod options;
 mod package_json;
 mod path;
-mod request;
 mod resolution;
+mod specifier;
+mod tsconfig;
 
 #[cfg(test)]
 mod tests;
 
 use std::{
     borrow::Cow,
+    cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
+    fmt,
+    ops::Deref,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use crate::{
-    cache::{Cache, CacheValue},
+    cache::{Cache, CachedPath},
     file_system::FileSystemOs,
-    package_json::{ExportsField, MatchObject},
-    package_json::{ExportsKey, PackageJson},
+    package_json::{ExportsField, ExportsKey, MatchObject},
     path::PathUtil,
-    request::{Request, RequestPath},
+    specifier::Specifier,
+    tsconfig::TsConfig,
 };
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
-    options::{Alias, AliasValue, ResolveOptions},
+    options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
+    package_json::PackageJson,
     resolution::Resolution,
 };
-
-type ResolveState = Result<Option<CacheValue>, ResolveError>;
 
 /// Resolver with the current operating system as the file system
 pub type Resolver = ResolverGeneric<FileSystemOs>;
 
-/// Generic implementation of the resolver, backed by a cached file system.
+/// Generic implementation of the resolver, can be configured by the [FileSystem] trait.
 pub struct ResolverGeneric<Fs> {
     options: ResolveOptions,
-    cache: Cache<Fs>,
+    cache: Arc<Cache<Fs>>,
+}
+
+impl<Fs> fmt::Debug for ResolverGeneric<Fs> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.options.fmt(f)
+    }
+}
+
+type ResolveState = Result<Option<CachedPath>, ResolveError>;
+
+#[derive(Debug, Default, Clone)]
+struct ResolveContext(RefCell<ResolveContextImpl>);
+
+impl Deref for ResolveContext {
+    type Target = RefCell<ResolveContextImpl>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ResolveContext {
+    fn with_fully_specified(&self, yes: bool) {
+        self.borrow_mut().fully_specified = yes;
+    }
+
+    fn with_query_fragment(&self, query: Option<&str>, fragment: Option<&str>) {
+        if let Some(query) = query {
+            self.borrow_mut().query.replace(query.to_string());
+        }
+        if let Some(fragment) = fragment {
+            self.borrow_mut().fragment.replace(fragment.to_string());
+        }
+    }
+
+    fn with_resolving_alias(&self, alias: String) {
+        self.borrow_mut().resolving_alias = Some(alias);
+    }
+
+    fn test_for_infinite_recursion(&self) -> Result<(), ResolveError> {
+        self.borrow_mut().depth += 1;
+        // 64 should be more than enough for detecting infinite recursion.
+        if self.borrow().depth > 64 {
+            return Err(ResolveError::Recursion);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+struct ResolveContextImpl {
+    fully_specified: bool,
+    query: Option<String>,
+    fragment: Option<String>,
+    /// The current resolving alias for bailing recursion alias.
+    resolving_alias: Option<String>,
+    /// For avoiding infinite recursion, which will cause stack overflow.
+    depth: u8,
 }
 
 impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
@@ -61,14 +130,27 @@ impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
 
 impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
-        Self { options: options.sanitize(), cache: Cache::default() }
+        Self { options: options.sanitize(), cache: Arc::new(Cache::default()) }
     }
 
-    pub fn new_with_file_system(options: ResolveOptions, file_system: Fs) -> Self {
-        Self { cache: Cache::new(file_system), ..Self::new(options) }
+    pub fn new_with_file_system(file_system: Fs, options: ResolveOptions) -> Self {
+        Self { cache: Arc::new(Cache::new(file_system)), ..Self::new(options) }
     }
 
-    /// Resolve `request` at `path`
+    #[must_use]
+    pub fn clone_with_options(&self, options: ResolveOptions) -> Self {
+        Self { options: options.sanitize(), cache: Arc::clone(&self.cache) }
+    }
+
+    pub fn options(&self) -> &ResolveOptions {
+        &self.options
+    }
+
+    pub fn clear_cache(&self) {
+        self.cache.clear();
+    }
+
+    /// Resolve `specifier` at `path`
     ///
     /// # Errors
     ///
@@ -76,262 +158,412 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn resolve<P: AsRef<Path>>(
         &self,
         path: P,
-        request: &str,
+        specifier: &str,
     ) -> Result<Resolution, ResolveError> {
-        let path = path.as_ref();
-        let request = Request::parse(request).map_err(ResolveError::Request)?;
-        let cache_value = self.cache.value(path);
-        let cache_value = if let Some(path) =
-            self.load_alias(&cache_value, request.path.as_str(), &self.options.alias)?
-        {
-            path
-        } else {
-            let result = self.require(&cache_value, &request);
-            if result.as_ref().is_err_and(ResolveError::is_not_found) {
-                if let Some(path) =
-                    self.load_alias(&cache_value, request.path.as_str(), &self.options.fallback)?
-                {
-                    path
-                } else {
-                    result?
-                }
-            } else {
-                result?
-            }
-        };
-        let path = self.load_symlink(&cache_value).unwrap_or_else(|| cache_value.to_path_buf());
+        self.resolve_impl(path.as_ref(), specifier)
+    }
+
+    #[tracing::instrument(name = "resolve", level = "DEBUG", ret, skip(self), fields(options = %self.options))]
+    fn resolve_impl(&self, path: &Path, specifier: &str) -> Result<Resolution, ResolveError> {
+        let ctx = ResolveContext(RefCell::new(ResolveContextImpl {
+            fully_specified: self.options.fully_specified,
+            ..ResolveContextImpl::default()
+        }));
+        let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
+        ctx.with_query_fragment(specifier.query, specifier.fragment);
+        let cached_path = self.cache.value(path);
+        let cached_path = self.require(&cached_path, specifier.path(), &ctx).or_else(|err| {
+            // enhanced-resolve: try fallback
+            self.load_alias(&cached_path, Some(specifier.path()), &self.options.fallback, &ctx)
+                .and_then(|value| value.ok_or(err))
+        })?;
+        let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
+        // enhanced-resolve: restrictions
+        self.check_restrictions(&path)?;
+        let mut ctx = ctx.borrow_mut();
         Ok(Resolution {
             path,
-            query: request.query.map(ToString::to_string),
-            fragment: request.fragment.map(ToString::to_string),
+            query: ctx.query.take(),
+            fragment: ctx.fragment.take(),
+            package_json: cached_path.find_package_json(&self.cache.fs, &self.options)?,
         })
     }
 
     /// require(X) from module at path Y
-    /// X: request
+    /// X: specifier
     /// Y: path
     fn require(
         &self,
-        cache_value: &CacheValue,
-        request: &Request,
-    ) -> Result<CacheValue, ResolveError> {
-        let path = match request.path {
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        ctx.test_for_infinite_recursion()?;
+
+        // enhanced-resolve: try fragment as path
+        if let Some(path) = self.try_fragment_as_path(cached_path, specifier, ctx) {
+            return Ok(path);
+        }
+
+        // tsconfig-paths
+        if let Some(path) = self.load_tsconfig_paths(specifier, &ResolveContext::default())? {
+            return Ok(path);
+        }
+
+        // enhanced-resolve: try alias
+        if let Some(path) =
+            self.load_alias(cached_path, Some(specifier), &self.options.alias, ctx)?
+        {
+            return Ok(path);
+        }
+
+        match specifier.as_bytes()[0] {
             // 1. If X is a core module,
             //    a. return the core module
             //    b. STOP
             // 2. If X begins with '/'
             //    a. set Y to be the file system root
-            RequestPath::Absolute(absolute_path) => {
-                if !self.options.prefer_relative && self.options.prefer_absolute {
-                    if let Ok(path) = self.package_resolve(cache_value, absolute_path) {
-                        return Ok(path);
-                    }
-                }
-                self.load_roots(cache_value, absolute_path)
-            }
+            b'/' => self.require_absolute(cached_path, specifier, ctx),
             // 3. If X begins with './' or '/' or '../'
-            RequestPath::Relative(relative_path) => {
-                self.require_relative(cache_value, relative_path)
-            }
+            b'.' => self.require_relative(cached_path, specifier, ctx),
             // 4. If X begins with '#'
-            RequestPath::Hash(specifier) => {
-                // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
-                self.package_imports_resolve(cache_value, specifier)
-            }
+            b'#' => self.require_hash(cached_path, specifier, ctx),
             // (ESM) 5. Otherwise,
             // Note: specifier is now a bare specifier.
             // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
-            RequestPath::Bare(bare_specifier) => {
-                if self.options.prefer_relative {
-                    if let Ok(path) = self.require_relative(cache_value, bare_specifier) {
-                        return Ok(path);
-                    }
-                }
-                self.package_resolve(cache_value, bare_specifier)
-            }
-        }?;
-
-        if !path.is_file(&self.cache.fs) {
-            // TODO: Throw a Module Not Found error. Or better error message
-            return Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()));
+            _ => self.require_bare(cached_path, specifier, ctx),
         }
+    }
 
-        Ok(path)
+    fn require_absolute(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        debug_assert!(specifier.starts_with('/'));
+        if !self.options.prefer_relative && self.options.prefer_absolute {
+            if let Ok(path) = self.load_package_self_or_node_modules(cached_path, specifier, ctx) {
+                return Ok(path);
+            }
+        }
+        if self.options.roots.is_empty() {
+            let cached_path = self.cache.value(Path::new("/"));
+            self.load_package_self_or_node_modules(&cached_path, specifier, ctx)
+        } else {
+            for root in &self.options.roots {
+                let cached_path = self.cache.value(root);
+                if let Ok(path) =
+                    self.require_relative(&cached_path, specifier.trim_start_matches('/'), ctx)
+                {
+                    return Ok(path);
+                }
+            }
+            Err(ResolveError::NotFound(cached_path.to_path_buf()))
+        }
     }
 
     // 3. If X begins with './' or '/' or '../'
     fn require_relative(
         &self,
-        cache_value: &CacheValue,
-        request: &str,
-    ) -> Result<CacheValue, ResolveError> {
-        let path = cache_value.path().normalize_with(request);
-        let cache_value = self.cache.value(&path);
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        let path = cached_path.path().normalize_with(specifier);
+        let cached_path = self.cache.value(&path);
         // a. LOAD_AS_FILE(Y + X)
-        if !request.ends_with('/') {
-            if let Some(path) = self.load_as_file(&cache_value)? {
+        if !specifier.ends_with('/') {
+            if let Some(path) = self.load_as_file(&cached_path, ctx)? {
                 return Ok(path);
             }
         }
         // b. LOAD_AS_DIRECTORY(Y + X)
-        if let Some(path) = self.load_as_directory(&cache_value)? {
-            return Ok(path);
+        if cached_path.is_dir(&self.cache.fs) {
+            if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
+                return Ok(path);
+            }
         }
         // c. THROW "not found"
-        Err(ResolveError::NotFound(path.into_boxed_path()))
+        Err(ResolveError::NotFound(path))
     }
 
-    /// PACKAGE_RESOLVE(packageSpecifier, parentURL)
-    fn package_resolve(
+    fn require_hash(
         &self,
-        cache_value: &CacheValue,
-        request: &str,
-    ) -> Result<CacheValue, ResolveError> {
-        let dirname = self.cache.dirname(cache_value);
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
+        if let Some(path) = self.load_package_imports(cached_path, specifier, ctx)? {
+            return Ok(path);
+        }
+        self.load_package_self_or_node_modules(cached_path, specifier, ctx)
+    }
+
+    fn require_bare(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        if self.options.prefer_relative {
+            if let Ok(path) = self.require_relative(cached_path, specifier, ctx) {
+                return Ok(path);
+            }
+        }
+        self.load_package_self_or_node_modules(cached_path, specifier, ctx)
+    }
+
+    /// Try fragment as part of the path
+    ///
+    /// It's allowed to escape # as \0# to avoid parsing it as fragment.
+    /// enhanced-resolve will try to resolve requests containing `#` as path and as fragment,
+    /// so it will automatically figure out if `./some#thing` means `.../some.js#thing` or `.../some#thing.js`.
+    /// When a # is resolved as path it will be escaped in the result. Here: `.../some\0#thing.js`.
+    ///
+    /// <https://github.com/webpack/enhanced-resolve#escaping>
+    fn try_fragment_as_path(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Option<CachedPath> {
+        if ctx.borrow().fragment.is_some() && ctx.borrow().query.is_none() {
+            let fragment = ctx.borrow_mut().fragment.take().unwrap();
+            let path = format!("{specifier}{fragment}");
+            if let Ok(path) = self.require(cached_path, &path, ctx) {
+                return Some(path);
+            }
+            ctx.borrow_mut().fragment.replace(fragment);
+        }
+        None
+    }
+
+    fn load_package_self_or_node_modules(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
+        let (_, subpath) = Self::parse_package_specifier(specifier);
+        if subpath.is_empty() {
+            ctx.with_fully_specified(false);
+        }
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(dirname, request)? {
+        if let Some(path) = self.load_package_self(cached_path, specifier, ctx)? {
             return Ok(path);
         }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(dirname, request)? {
+        if let Some(path) = self.load_node_modules(cached_path, specifier, ctx)? {
             return Ok(path);
         }
         // 7. THROW "not found"
-        Err(ResolveError::NotFound(cache_value.to_path_buf().into_boxed_path()))
+        Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
 
-    fn load_as_file(&self, cache_value: &CacheValue) -> ResolveState {
+    /// LOAD_PACKAGE_IMPORTS(X, DIR)
+    fn load_package_imports(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        // 1. Find the closest package scope SCOPE to DIR.
+        // 2. If no scope was found, return.
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)?
+        else {
+            return Ok(None);
+        };
+        // 3. If the SCOPE/package.json "imports" is null or undefined, return.
+        if package_json.imports.is_empty() {
+            return Ok(None);
+        }
+        // 4. let MATCH = PACKAGE_IMPORTS_RESOLVE(X, pathToFileURL(SCOPE), ["node", "require"]) defined in the ESM resolver.
+        let package_url = self.cache.value(package_json.directory());
+        let path = self.package_imports_resolve(&package_url, specifier, ctx)?;
+        // 5. RESOLVE_ESM_MATCH(MATCH).
+        self.resolve_esm_match(&path, &package_json, ctx)
+    }
+
+    fn load_as_file(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
         // enhanced-resolve feature: extension_alias
-        if let Some(path) = self.load_extension_alias(cache_value)? {
+        if let Some(path) = self.load_extension_alias(cached_path, ctx)? {
             return Ok(Some(path));
         }
         // 1. If X is a file, load X as its file extension format. STOP
-        // let cache_value = self.cache.cache_value(&path);
-        if let Some(path) = self.load_alias_or_file(cache_value)? {
+        if let Some(path) = self.load_alias_or_file(cached_path, ctx)? {
             return Ok(Some(path));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
-        if let Some(path) = self.load_extensions(cache_value, &self.options.extensions)? {
+        if let Some(path) =
+            self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+        {
             return Ok(Some(path));
         }
         Ok(None)
     }
 
-    fn load_extensions(&self, cache_value: &CacheValue, extensions: &[String]) -> ResolveState {
-        let mut path_with_extension = cache_value.path().to_path_buf();
+    fn load_extensions(
+        &self,
+        path: &Path,
+        extensions: &[String],
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        if ctx.borrow().fully_specified {
+            return Ok(None);
+        }
         for extension in extensions {
-            path_with_extension.set_extension(extension);
-            let cache_value = self.cache.value(&path_with_extension);
-            if let Some(path) = self.load_alias_or_file(&cache_value)? {
+            let mut path_with_extension = path.to_path_buf().into_os_string();
+            path_with_extension.reserve_exact(extension.len());
+            path_with_extension.push(extension);
+            let path_with_extension = PathBuf::from(path_with_extension);
+            let cached_path = self.cache.value(&path_with_extension);
+            if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                 return Ok(Some(path));
             }
         }
         Ok(None)
     }
 
-    fn load_symlink(&self, cache_value: &CacheValue) -> Option<PathBuf> {
+    fn load_realpath(&self, cached_path: &CachedPath) -> Option<PathBuf> {
         if self.options.symlinks {
-            cache_value.symlink(&self.cache.fs)
+            cached_path.symlink(&self.cache.fs)
         } else {
             None
         }
     }
 
-    fn load_index(&self, cache_value: &CacheValue) -> ResolveState {
+    fn check_restrictions(&self, path: &Path) -> Result<(), ResolveError> {
+        // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/lib/RestrictionsPlugin.js#L19-L24
+        fn is_inside(path: &Path, parent: &Path) -> bool {
+            if !path.starts_with(parent) {
+                return false;
+            }
+            if path.as_os_str().len() == parent.as_os_str().len() {
+                return true;
+            }
+            path.strip_prefix(parent).is_ok_and(|p| p == Path::new("./"))
+        }
+        for restriction in &self.options.restrictions {
+            match restriction {
+                Restriction::Path(restricted_path) => {
+                    if !is_inside(path, restricted_path) {
+                        return Err(ResolveError::Restriction(path.to_path_buf()));
+                    }
+                }
+                Restriction::RegExp(_) => {
+                    return Err(ResolveError::Unimplemented(
+                        "Restriction with regex is unimplemented.",
+                    ))
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn load_index(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
         for main_file in &self.options.main_files {
-            let main_path = cache_value.path().join(main_file);
-            let cache_value = self.cache.value(&main_path);
-            if self.options.enforce_extension == Some(false) {
-                if let Some(path) = self.load_alias_or_file(&cache_value)? {
+            let main_path = cached_path.path().join(main_file);
+            let cached_path = self.cache.value(&main_path);
+            if self.options.enforce_extension.is_disabled() {
+                if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                     return Ok(Some(path));
                 }
             }
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
             // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
-            if let Some(path) = self.load_extensions(&cache_value, &self.options.extensions)? {
+            if let Some(path) =
+                self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+            {
                 return Ok(Some(path));
             }
         }
         Ok(None)
     }
 
-    fn load_alias_or_file(&self, cache_value: &CacheValue) -> ResolveState {
-        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
-            let path = cache_value.path();
-            if let Some(path) = self.load_browser_field(path, None, &package_json)? {
+    fn load_alias_or_file(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? {
+            let path = cached_path.path();
+            if let Some(path) = self.load_browser_field(path, None, &package_json, ctx)? {
                 return Ok(Some(path));
             }
         }
-        if cache_value.is_file(&self.cache.fs) {
-            return Ok(Some(cache_value.clone()));
+        // enhanced-resolve: try file as alias
+        if let Some(path) = self.load_alias(cached_path, None, &self.options.alias, ctx)? {
+            return Ok(Some(path));
+        }
+        if cached_path.is_file(&self.cache.fs) {
+            return Ok(Some(cached_path.clone()));
         }
         Ok(None)
     }
 
-    fn load_as_directory(&self, cache_value: &CacheValue) -> ResolveState {
+    fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+        if self.options.resolve_to_context {
+            return Ok(Some(cached_path.clone()));
+        }
         // TODO: Only package.json is supported, so warn about having other values
         // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
         if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? {
+            if let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? {
                 // b. If "main" is a falsy value, GOTO 2.
-                if let Some(main_field) = &package_json.main {
+                for main_field in &package_json.main_fields {
                     // c. let M = X + (json main field)
-                    let main_field_path = cache_value.path().normalize_with(main_field);
+                    let main_field_path = cached_path.path().normalize_with(main_field);
                     // d. LOAD_AS_FILE(M)
-                    let cache_value = self.cache.value(&main_field_path);
-                    if let Some(path) = self.load_as_file(&cache_value)? {
+                    let cached_path = self.cache.value(&main_field_path);
+                    if let Some(path) = self.load_as_file(&cached_path, ctx)? {
                         return Ok(Some(path));
                     }
                     // e. LOAD_INDEX(M)
-                    if let Some(path) = self.load_index(&cache_value)? {
+                    if let Some(path) = self.load_index(&cached_path, ctx)? {
                         return Ok(Some(path));
                     }
-                    // f. LOAD_INDEX(X) DEPRECATED
-                    // g. THROW "not found"
-                    return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
-
-                if let Some(path) = self.load_index(cache_value)? {
-                    return Ok(Some(path));
-                }
+                // f. LOAD_INDEX(X) DEPRECATED
+                // g. THROW "not found"
             }
         }
         // 2. LOAD_INDEX(X)
-        self.load_index(cache_value)
+        self.load_index(cached_path, ctx)
     }
 
-    fn load_node_modules(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
+    fn load_node_modules(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         // Use a buffer to reduce total memory allocation.
-        let mut node_module_path = cache_value.path().to_path_buf();
+        let mut node_module_path = cached_path.path().to_path_buf();
         // 2. for each DIR in DIRS:
         loop {
             for module_name in &self.options.modules {
                 node_module_path.push(module_name);
                 // a. LOAD_PACKAGE_EXPORTS(X, DIR)
-                if let Some(path) = self.load_package_exports(&node_module_path, request)? {
+                if let Some(path) = self.load_package_exports(&node_module_path, specifier, ctx)? {
                     return Ok(Some(path));
                 }
 
-                // Using `join` because `request` can be `/` separated.
-                let node_module_file = node_module_path.join(request);
-                let cache_value = self.cache.value(&node_module_file);
+                // Using `join` because `specifier` can be `/` separated.
+                let node_module_file = node_module_path.join(specifier);
+                let cached_path = self.cache.value(&node_module_file);
                 // b. LOAD_AS_FILE(DIR/X)
-                if !request.ends_with('/') {
-                    if let Some(path) = self.load_as_file(&cache_value)? {
+                if !specifier.ends_with('/') {
+                    if let Some(path) = self.load_as_file(&cached_path, ctx)? {
                         return Ok(Some(path));
                     }
                 }
                 // c. LOAD_AS_DIRECTORY(DIR/X)
-                if cache_value.is_dir(&self.cache.fs) {
-                    if let Some(path) = self.load_as_directory(&cache_value)? {
-                        return Ok(Some(path));
-                    }
+                if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
+                    return Ok(Some(path));
                 }
                 node_module_path.pop();
             }
@@ -343,156 +575,214 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    // Returns (module, subpath)
-    // https://github.com/nodejs/node/blob/8f0f17e1e3b6c4e58ce748e06343c5304062c491/lib/internal/modules/esm/resolve.js#L688
-    fn parse_package_specifier(specifier: &str) -> (&str, &str) {
-        let mut separator_index = specifier.as_bytes().iter().position(|b| *b == b'/');
-        // let mut valid_package_name = true;
-        // let mut is_scoped = false;
-        if specifier.starts_with('@') {
-            // is_scoped = true;
-            if separator_index.is_none() || specifier.is_empty() {
-                // valid_package_name = false;
-            } else if let Some(index) = &separator_index {
-                separator_index = specifier[*index + 1..]
-                    .as_bytes()
-                    .iter()
-                    .position(|b| *b == b'/')
-                    .map(|i| i + *index + 1);
-            }
-        }
-        let package_name =
-            separator_index.map_or(specifier, |separator_index| &specifier[..separator_index]);
-
-        // TODO: https://github.com/nodejs/node/blob/8f0f17e1e3b6c4e58ce748e06343c5304062c491/lib/internal/modules/esm/resolve.js#L705C1-L714C1
-        // Package name cannot have leading . and cannot have percent-encoding or
-        // \\ separators.
-        // if (RegExpPrototypeExec(invalidPackageNameRegEx, packageName) !== null)
-        // validPackageName = false;
-
-        // if (!validPackageName) {
-        // throw new ERR_INVALID_MODULE_SPECIFIER(
-        // specifier, 'is not a valid package name', fileURLToPath(base));
-        // }
-        let package_subpath =
-            separator_index.map_or("", |separator_index| &specifier[separator_index..]);
-        (package_name, package_subpath)
-    }
-
-    fn load_package_exports(&self, path: &Path, request: &str) -> ResolveState {
+    fn load_package_exports(
+        &self,
+        path: &Path,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
         // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
         //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
         //    return.
-        let (name, subpath) = Self::parse_package_specifier(request);
-        let cache_value = self.cache.value(&path.join(name));
-        let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? else {
+        let (name, subpath) = Self::parse_package_specifier(specifier);
+        let cached_path = self.cache.value(&path.join(name));
+        let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? else {
             return Ok(None);
         };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
         // 4. If "exports" is null or undefined, return.
-        if package_json.exports.is_none() {
+        if package_json.exports.is_empty() {
             return Ok(None);
         };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
         //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
         // Note: The subpath is not prepended with a dot on purpose
-        if let Some(path) = self.package_exports_resolve(
-            cache_value.path(),
-            subpath,
-            &package_json.exports,
-            &self.options.condition_names,
-        )? {
-            if let Some(path) = self.load_browser_field(path.path(), None, &package_json)? {
-                return Ok(Some(path));
-            }
-            return Ok(Some(path));
+        for exports in &package_json.exports {
+            if let Some(path) = self.package_exports_resolve(
+                cached_path.path(),
+                subpath,
+                exports,
+                &self.options.condition_names,
+                ctx,
+            )? {
+                // 6. RESOLVE_ESM_MATCH(MATCH)
+                return self.resolve_esm_match(&path, &package_json, ctx);
+            };
         }
-        // 6. RESOLVE_ESM_MATCH(MATCH)
         Ok(None)
     }
 
-    fn load_package_self(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
+    fn load_package_self(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
-        let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? else {
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)?
+        else {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "exports" is null or undefined, return.
-        if !package_json.exports.is_none() {
-            // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
-            if let Some(package_name) = &package_json.name {
-                if let Some(subpath) = package_name.strip_prefix(request) {
-                    // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
-                    // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
-                    // defined in the ESM resolver.
-                    let package_url = package_json.path.parent().unwrap();
-                    // Note: The subpath is not prepended with a dot on purpose
-                    // because `package_exports_resolve` matches subpath without the leading dot.
-                    if let Some(path) = self.package_exports_resolve(
-                        package_url,
-                        subpath,
-                        &package_json.exports,
-                        &self.options.condition_names,
-                    )? {
-                        return Ok(Some(path));
-                    }
-                }
+        if package_json.exports.is_empty() {
+            return self.load_browser_field(
+                cached_path.path(),
+                Some(specifier),
+                &package_json,
+                ctx,
+            );
+        }
+        // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
+        let Some(subpath) = package_json
+            .name
+            .as_ref()
+            .and_then(|package_json_name| package_json_name.strip_prefix(specifier))
+        else {
+            return Ok(None);
+        };
+        // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
+        // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
+        // defined in the ESM resolver.
+        let package_url = package_json.directory();
+        // Note: The subpath is not prepended with a dot on purpose
+        // because `package_exports_resolve` matches subpath without the leading dot.
+        for exports in &package_json.exports {
+            if let Some(cached_path) = self.package_exports_resolve(
+                package_url,
+                subpath,
+                exports,
+                &self.options.condition_names,
+                ctx,
+            )? {
+                // 6. RESOLVE_ESM_MATCH(MATCH)
+                return self.resolve_esm_match(&cached_path, &package_json, ctx);
             }
         }
-        // 6. RESOLVE_ESM_MATCH(MATCH)
+        Ok(None)
+    }
 
-        // Try non-spec-compliant "browser" field since its another form of export
-        self.load_browser_field(cache_value.path(), Some(request), &package_json)
+    /// RESOLVE_ESM_MATCH(MATCH)
+    fn resolve_esm_match(
+        &self,
+        cached_path: &CachedPath,
+        package_json: &PackageJson,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        if let Some(path) = self.load_browser_field(cached_path.path(), None, package_json, ctx)? {
+            return Ok(Some(path));
+        }
+        // 1. let RESOLVED_PATH = fileURLToPath(MATCH)
+        // 2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension format. STOP
+        if let Some(path) = self.load_as_file(cached_path, ctx)? {
+            return Ok(Some(path));
+        }
+        // 3. THROW "not found"
+        Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
 
     fn load_browser_field(
         &self,
         path: &Path,
-        request: Option<&str>,
+        specifier: Option<&str>,
         package_json: &PackageJson,
+        ctx: &ResolveContext,
     ) -> ResolveState {
-        if self.options.alias_fields.iter().any(|field| field == "browser") {
-            if let Some(request) = package_json.resolve(path, request)? {
-                let request = Request::parse(request).map_err(ResolveError::Request)?;
-                debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
-                // TODO: Do we need to pass query and fragment?
-                let cache_value = self.cache.value(package_json.path.parent().unwrap());
-                return self.require(&cache_value, &request).map(Some);
+        let Some(specifier) = package_json.resolve_browser_field(path, specifier)? else {
+            return Ok(None);
+        };
+        if ctx.borrow().resolving_alias.as_ref().is_some_and(|s| s == specifier) {
+            return Ok(None);
+        }
+        let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
+        ctx.with_query_fragment(specifier.query, specifier.fragment);
+        ctx.with_resolving_alias(specifier.path().to_string());
+        ctx.with_fully_specified(false);
+        let cached_path = self.cache.value(package_json.directory());
+        self.require(&cached_path, specifier.path(), ctx).map(Some)
+    }
+
+    /// enhanced-resolve: AliasPlugin for [ResolveOptions::alias] and [ResolveOptions::fallback].
+    fn load_alias(
+        &self,
+        cached_path: &CachedPath,
+        specifier: Option<&str>,
+        aliases: &Alias,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        let inner_request =
+            specifier.map_or_else(|| cached_path.path().to_string_lossy(), Cow::Borrowed);
+        for (alias_key_raw, specifiers) in aliases {
+            let from = alias_key_raw.strip_suffix('$');
+            let only_module = from.is_some();
+            let alias_key = from.unwrap_or(alias_key_raw);
+            let exact_match = only_module && inner_request == alias_key;
+            if !(exact_match || inner_request.starts_with(alias_key)) {
+                continue;
+            }
+            for r in specifiers {
+                match r {
+                    AliasValue::Path(alias_value) => {
+                        let specifier =
+                            Specifier::parse(alias_value).map_err(ResolveError::Specifier)?;
+
+                        // `#` can be a fragment or a path, try fragment as path first
+                        if specifier.query.is_none() && specifier.fragment.is_some() {
+                            if let Some(path) = self.load_alias_value(
+                                cached_path,
+                                alias_key,
+                                alias_value, // pass in original alias value, not parsed
+                                inner_request.as_ref(),
+                                ctx,
+                            )? {
+                                return Ok(Some(path));
+                            }
+                        }
+
+                        // Then try path without query and fragment
+                        let old_query = ctx.borrow().query.clone();
+                        let old_fragment = ctx.borrow().fragment.clone();
+                        ctx.with_query_fragment(specifier.query, specifier.fragment);
+                        if let Some(path) = self.load_alias_value(
+                            cached_path,
+                            alias_key,
+                            specifier.path(), // pass in passed alias value
+                            inner_request.as_ref(),
+                            ctx,
+                        )? {
+                            return Ok(Some(path));
+                        }
+                        ctx.with_query_fragment(old_query.as_deref(), old_fragment.as_deref());
+                    }
+                    AliasValue::Ignore => {
+                        let path = cached_path.path().normalize_with(alias_key);
+                        return Err(ResolveError::Ignored(path));
+                    }
+                }
             }
         }
         Ok(None)
     }
 
-    fn load_alias(&self, cache_value: &CacheValue, request: &str, alias: &Alias) -> ResolveState {
-        for (alias, requests) in alias {
-            let exact_match = alias.strip_prefix(request).is_some_and(|c| c == "$");
-            if request.starts_with(alias) || exact_match {
-                for r in requests {
-                    match r {
-                        AliasValue::Path(new_request) => {
-                            let new_request = if exact_match {
-                                Cow::Borrowed(new_request)
-                            } else {
-                                Cow::Owned(request.replacen(alias, new_request, 1))
-                            };
-                            let new_request =
-                                Request::parse(&new_request).map_err(ResolveError::Request)?;
-                            match self.require(cache_value, &new_request) {
-                                Err(ResolveError::NotFound(_)) => { /* noop */ }
-                                Ok(path) => return Ok(Some(path)),
-                                Err(err) => return Err(err),
-                            }
-                        }
-                        AliasValue::Ignore => {
-                            return Err(ResolveError::Ignored(
-                                cache_value.path().join(alias).into_boxed_path(),
-                            ));
-                        }
-                    }
-                }
-                return Err(ResolveError::Alias(alias.clone()));
-            }
+    fn load_alias_value(
+        &self,
+        cached_path: &CachedPath,
+        alias_key: &str,
+        alias_value: &str,
+        request: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        if request != alias_value
+            && !request.strip_prefix(alias_value).is_some_and(|prefix| prefix.starts_with('/'))
+        {
+            let new_specifier = format!("{alias_value}{}", &request[alias_key.len()..]);
+            ctx.with_fully_specified(false);
+            return match self.require(cached_path, &new_specifier, ctx) {
+                Err(ResolveError::NotFound(_)) => Ok(None),
+                Ok(path) => return Ok(Some(path)),
+                Err(err) => return Err(err),
+            };
         }
         Ok(None)
     }
@@ -505,36 +795,132 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Errors
     ///
     /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
-    fn load_extension_alias(&self, cache_value: &CacheValue) -> ResolveState {
-        let Some(path_extension) = cache_value.path().extension() else { return Ok(None) };
-        let Some((_, extensions)) =
-            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
+    fn load_extension_alias(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+        let Some(path_extension) = cached_path.path().extension() else { return Ok(None) };
+        let Some((_, extensions)) = self
+            .options
+            .extension_alias
+            .iter()
+            .find(|(ext, _)| OsStr::new(ext.trim_start_matches('.')) == path_extension)
         else {
             return Ok(None);
         };
-        if let Some(path) = self.load_extensions(cache_value, extensions)? {
+        let path = cached_path.path().with_extension("");
+        ctx.with_fully_specified(false);
+        if let Some(path) = self.load_extensions(&path, extensions, ctx)? {
             return Ok(Some(path));
         }
         Err(ResolveError::ExtensionAlias)
     }
 
-    fn load_roots(
-        &self,
-        cache_value: &CacheValue,
-        request: &str,
-    ) -> Result<CacheValue, ResolveError> {
-        debug_assert!(request.starts_with('/'));
-        if self.options.roots.is_empty() {
-            let cache_value = self.cache.value(Path::new("/"));
-            return self.package_resolve(&cache_value, request);
-        }
-        for root in &self.options.roots {
-            let cache_value = self.cache.value(root);
-            if let Ok(path) = self.require_relative(&cache_value, request.trim_start_matches('/')) {
-                return Ok(path);
+    fn load_tsconfig_paths(&self, specifier: &str, ctx: &ResolveContext) -> ResolveState {
+        let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
+        let tsconfig_path = self.cache.value(tsconfig_path);
+        let tsconfig = self.load_tsconfig(&tsconfig_path)?;
+        let paths = tsconfig.resolve_path_alias(specifier);
+        for path in paths {
+            let cached_path = self.cache.value(&path);
+            if let Ok(path) = self.require_relative(&cached_path, ".", ctx) {
+                return Ok(Some(path));
             }
         }
-        Err(ResolveError::NotFound(cache_value.to_path_buf().into_boxed_path()))
+        Ok(None)
+    }
+
+    fn load_tsconfig(&self, cached_path: &CachedPath) -> Result<Arc<TsConfig>, ResolveError> {
+        debug_assert!(cached_path.path().extension().is_some_and(|ext| ext == "json"));
+        self.cache.tsconfig(cached_path.path(), |tsconfig| {
+            if tsconfig.extends().is_empty() {
+                return Ok(());
+            }
+            let resolver = self.clone_with_options(ResolveOptions {
+                extensions: vec![".json".into()],
+                main_files: vec!["tsconfig".into()],
+                ..ResolveOptions::default()
+            });
+            let mut extended_tsconfigs = vec![];
+            for tsconfig_extend_specifier in tsconfig.extends() {
+                let extended_tsconfig_path = resolver.require(
+                    cached_path.parent().unwrap(),
+                    tsconfig_extend_specifier,
+                    &ResolveContext::default(),
+                )?;
+                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
+                extended_tsconfigs.push(extended_tsconfig);
+            }
+            for extended_tsconfig in extended_tsconfigs {
+                tsconfig.extend_tsconfig(&extended_tsconfig);
+            }
+            Ok(())
+        })
+    }
+
+    /// PACKAGE_RESOLVE(packageSpecifier, parentURL)
+    fn package_resolve(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        let (name, subpath) = Self::parse_package_specifier(specifier);
+        // 11. While parentURL is not the file system root,
+        let mut parent_url = cached_path.path().to_path_buf();
+        loop {
+            for module_name in &self.options.modules {
+                // 1. Let packageURL be the URL resolution of "node_modules/" concatenated with packageSpecifier, relative to parentURL.
+                parent_url.push(module_name);
+                let package_path = parent_url.join(name);
+                // 2. Set parentURL to the parent folder URL of parentURL.
+                let cached_path = self.cache.value(&package_path);
+                // 3. If the folder at packageURL does not exist, then
+                //   1. Continue the next loop iteration.
+                if cached_path.is_dir(&self.cache.fs) {
+                    // 4. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
+                    if let Some(package_json) =
+                        cached_path.package_json(&self.cache.fs, &self.options)?
+                    {
+                        // 5. If pjson is not null and pjson.exports is not null or undefined, then
+                        if !package_json.exports.is_empty() {
+                            // 1. Return the result of PACKAGE_EXPORTS_RESOLVE(packageURL, packageSubpath, pjson.exports, defaultConditions).
+                            for exports in &package_json.exports {
+                                if let Some(path) = self.package_exports_resolve(
+                                    cached_path.path(),
+                                    subpath,
+                                    exports,
+                                    &self.options.condition_names,
+                                    ctx,
+                                )? {
+                                    return Ok(Some(path));
+                                }
+                            }
+                        }
+                        // 6. Otherwise, if packageSubpath is equal to ".", then
+                        if subpath == "." {
+                            // 1. If pjson.main is a string, then
+                            for main_field in &package_json.main_fields {
+                                // 1. Return the URL resolution of main in packageURL.
+                                let path = cached_path.path().normalize_with(main_field);
+                                let cached_path = self.cache.value(&path);
+                                if cached_path.is_file(&self.cache.fs) {
+                                    return Ok(Some(cached_path));
+                                }
+                            }
+                        }
+                    }
+                    let subpath = format!(".{subpath}");
+                    let specifier = Specifier::parse(&subpath).map_err(ResolveError::Specifier)?;
+                    ctx.with_fully_specified(false);
+                    ctx.with_query_fragment(specifier.query, specifier.fragment);
+                    return self.require(&cached_path, specifier.path(), ctx).map(Some);
+                }
+                parent_url.pop();
+            }
+            if !parent_url.pop() {
+                break;
+            }
+        }
+
+        Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
 
     /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
@@ -544,6 +930,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         subpath: &str,
         exports: &ExportsField,
         conditions: &[String],
+        ctx: &ResolveContext,
     ) -> ResolveState {
         // 1. If exports is an Object with both a key starting with "." and a key not starting with ".", throw an Invalid Package Configuration error.
         if let ExportsField::Map(map) = exports {
@@ -562,6 +949,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If subpath is equal to ".", then
         // Note: subpath is not prepended with a dot when passed in.
         if subpath.is_empty() {
+            // enhanced-resolve appends query and fragment when resolving exports field
+            // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/lib/ExportsFieldPlugin.js#L57-L62
+            // This is only need when querying the main export, otherwise ctx is passed through.
+            if ctx.borrow().query.is_some() || ctx.borrow().fragment.is_some() {
+                let query = ctx.borrow().query.clone().unwrap_or_default();
+                let fragment = ctx.borrow().fragment.clone().unwrap_or_default();
+                return Err(ResolveError::PackagePathNotExported(format!(
+                    "./{subpath}{query}{fragment}"
+                )));
+            }
             // 1. Let mainExport be undefined.
             let main_export = match exports {
                 ExportsField::None => None,
@@ -595,6 +992,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     None,
                     /* is_imports */ false,
                     conditions,
+                    ctx,
                 )?;
                 // 2. If resolved is not null or undefined, return resolved.
                 if let Some(path) = resolved {
@@ -606,7 +1004,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let ExportsField::Map(exports) = exports {
             // 1. Let matchKey be the string "./" concatenated with subpath.
             // Note: `package_imports_exports_resolve` does not require the leading dot.
-            let match_key = subpath;
+            let match_key = &subpath;
             // 2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
             if let Some(path) = self.package_imports_exports_resolve(
                 match_key,
@@ -614,6 +1012,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 package_url,
                 /* is_imports */ false,
                 conditions,
+                ctx,
             )? {
                 // 3. If resolved is not null or undefined, return resolved.
                 return Ok(Some(path));
@@ -626,9 +1025,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions)
     fn package_imports_resolve(
         &self,
-        cache_value: &CacheValue,
+        cached_path: &CachedPath,
         specifier: &str,
-    ) -> Result<CacheValue, ResolveError> {
+        ctx: &ResolveContext,
+    ) -> Result<CachedPath, ResolveError> {
         // 1. Assert: specifier begins with "#".
         debug_assert!(specifier.starts_with('#'), "{specifier}");
         // 2. If specifier is exactly equal to "#" or starts with "#/", then
@@ -638,18 +1038,19 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         // 3. Let packageURL be the result of LOOKUP_PACKAGE_SCOPE(parentURL).
         // 4. If packageURL is not null, then
-        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? {
             // 1. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
             // 2. If pjson.imports is a non-null Object, then
             if !package_json.imports.is_empty() {
                 // 1. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( specifier, pjson.imports, packageURL, true, conditions).
-                let package_url = package_json.path.parent().unwrap();
+                let package_url = package_json.directory();
                 if let Some(path) = self.package_imports_exports_resolve(
                     specifier,
                     &package_json.imports,
                     package_url,
                     /* is_imports */ true,
                     &self.options.condition_names,
+                    ctx,
                 )? {
                     // 2. If resolved is not null or undefined, return resolved.
                     return Ok(path);
@@ -668,9 +1069,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         package_url: &Path,
         is_imports: bool,
         conditions: &[String],
+        ctx: &ResolveContext,
     ) -> ResolveState {
-        // enhanced_resolve behaves differently, it throws
-        // Error: Resolving to directories is not possible with the exports field (request was ./dist/)
+        // enhanced-resolve behaves differently, it throws
+        // Error: CachedPath to directories is not possible with the exports field (specifier was ./dist/)
         if match_key.ends_with('/') {
             return Ok(None);
         }
@@ -686,6 +1088,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     None,
                     is_imports,
                     conditions,
+                    ctx,
                 );
             }
         }
@@ -736,6 +1139,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 Some(best_match),
                 is_imports,
                 conditions,
+                ctx,
             );
         }
         // 4. Return null.
@@ -743,6 +1147,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     /// PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions)
+    #[allow(clippy::too_many_arguments)]
     fn package_target_resolve(
         &self,
         package_url: &Path,
@@ -751,6 +1156,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         pattern_match: Option<&str>,
         is_imports: bool,
         conditions: &[String],
+        ctx: &ResolveContext,
     ) -> ResolveState {
         fn normalize_string_target<'a>(
             target_key: &'a str,
@@ -760,7 +1166,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ) -> Result<Cow<'a, str>, ResolveError> {
             let target = if let Some(pattern_match) = pattern_match {
                 if !target_key.contains('*') && !target.contains('*') {
-                    // enhanced_resolve behaviour
+                    // enhanced-resolve behaviour
                     // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
                     if target_key.ends_with('/') && target.ends_with('/') {
                         Cow::Owned(format!("{target}{pattern_match}"))
@@ -797,7 +1203,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         normalize_string_target(target_key, target, pattern_match, package_url)?;
                     let package_url = self.cache.value(package_url);
                     // // 3. Return PACKAGE_RESOLVE(target, packageURL + "/").
-                    return self.package_resolve(&package_url, &target).map(Some);
+                    return self.package_resolve(&package_url, &target, ctx);
                 }
 
                 // 2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
@@ -812,7 +1218,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 let resolved_target = package_url.join(target.as_ref()).normalize();
                 // 6. If patternMatch split on "/" or "\" contains any "", ".", "..", or "node_modules" segments, case insensitive and including percent encoded variants, throw an Invalid Module Specifier error.
                 // 7. Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
-                return Ok(Some(self.cache.value(&resolved_target)));
+                let value = self.cache.value(&resolved_target);
+                return Ok(Some(value));
             }
             // 2. Otherwise, if target is a non-null Object, then
             ExportsField::Map(target) => {
@@ -821,7 +1228,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 for (i, (key, target_value)) in target.iter().enumerate() {
                     // https://nodejs.org/api/packages.html#conditional-exports
                     // "default" - the generic fallback that always matches. Can be a CommonJS or ES module file. This condition should always come last.
-                    // Note: node.js does not throw this but enhanced_resolve does.
+                    // Note: node.js does not throw this but enhanced-resolve does.
                     let is_default = matches!(key, ExportsKey::CustomCondition(condition) if condition == "default");
                     if i < target.len() - 1 && is_default {
                         return Err(ResolveError::InvalidPackageConfigDefault(
@@ -842,6 +1249,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                             pattern_match,
                             is_imports,
                             conditions,
+                            ctx,
                         );
                         // 3. If resolved is equal to undefined, continue the loop.
                         if let Some(path) = resolved? {
@@ -873,6 +1281,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         pattern_match,
                         is_imports,
                         conditions,
+                        ctx,
                     );
 
                     if resolved.is_err() && i == targets.len() {
@@ -892,6 +1301,42 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 4. Otherwise, if target is null, return null.
         Ok(None)
         // 5. Otherwise throw an Invalid Package Target error.
+    }
+
+    // Returns (module, subpath)
+    // https://github.com/nodejs/node/blob/8f0f17e1e3b6c4e58ce748e06343c5304062c491/lib/internal/modules/esm/resolve.js#L688
+    fn parse_package_specifier(specifier: &str) -> (&str, &str) {
+        let mut separator_index = specifier.as_bytes().iter().position(|b| *b == b'/');
+        // let mut valid_package_name = true;
+        // let mut is_scoped = false;
+        if specifier.starts_with('@') {
+            // is_scoped = true;
+            if separator_index.is_none() || specifier.is_empty() {
+                // valid_package_name = false;
+            } else if let Some(index) = &separator_index {
+                separator_index = specifier[*index + 1..]
+                    .as_bytes()
+                    .iter()
+                    .position(|b| *b == b'/')
+                    .map(|i| i + *index + 1);
+            }
+        }
+        let package_name =
+            separator_index.map_or(specifier, |separator_index| &specifier[..separator_index]);
+
+        // TODO: https://github.com/nodejs/node/blob/8f0f17e1e3b6c4e58ce748e06343c5304062c491/lib/internal/modules/esm/resolve.js#L705C1-L714C1
+        // Package name cannot have leading . and cannot have percent-encoding or
+        // \\ separators.
+        // if (RegExpPrototypeExec(invalidPackageNameRegEx, packageName) !== null)
+        // validPackageName = false;
+
+        // if (!validPackageName) {
+        // throw new ERR_INVALID_MODULE_SPECIFIER(
+        // specifier, 'is not a valid package name', fileURLToPath(base));
+        // }
+        let package_subpath =
+            separator_index.map_or("", |separator_index| &specifier[separator_index..]);
+        (package_name, package_subpath)
     }
 
     /// PATTERN_KEY_COMPARE(keyA, keyB)

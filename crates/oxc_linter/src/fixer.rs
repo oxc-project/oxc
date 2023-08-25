@@ -31,7 +31,7 @@ pub struct Message<'a> {
     pub error: Error,
     start: u32,
     end: u32,
-    fix: Option<Fix<'a>>,
+    pub fix: Option<Fix<'a>>,
     fixed: bool,
 }
 

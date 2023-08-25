@@ -45,6 +45,7 @@ mod eslint {
     pub mod no_empty_pattern;
     pub mod no_eval;
     pub mod no_ex_assign;
+    pub mod no_extra_boolean_cast;
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_import_assign;
@@ -61,6 +62,7 @@ mod eslint {
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
+    pub mod no_undef;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
@@ -74,21 +76,32 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
+    pub mod ban_ts_comment;
     pub mod consistent_type_exports;
     pub mod isolated_declaration;
+    pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
     pub mod no_extra_non_null_assertion;
     pub mod no_misused_new;
+    pub mod no_namespace;
     pub mod no_non_null_asserted_optional_chain;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
+    pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
+    pub mod prefer_as_const;
 }
 
 mod jest {
+    pub mod no_commented_out_tests;
     pub mod no_disabled_tests;
     pub mod no_focused_tests;
     pub mod no_test_prefixes;
+    pub mod valid_describe_callback;
+}
+
+mod unicorn {
+    pub mod no_instanceof_array;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -128,6 +141,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_pattern,
     eslint::no_eval,
     eslint::no_ex_assign,
+    eslint::no_extra_boolean_cast,
     eslint::no_func_assign,
     eslint::no_global_assign,
     eslint::no_import_assign,
@@ -144,6 +158,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
+    eslint::no_undef,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
@@ -154,16 +169,24 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::ban_ts_comment,
     typescript::consistent_type_exports,
     typescript::isolated_declaration,
+    typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
     typescript::no_extra_non_null_assertion,
     typescript::no_non_null_asserted_optional_chain,
     typescript::no_unnecessary_type_constraint,
+    typescript::no_unsafe_declaration_merging,
     typescript::no_misused_new,
     typescript::no_this_alias,
+    typescript::no_namespace,
     typescript::no_var_requires,
+    typescript::prefer_as_const,
     jest::no_disabled_tests,
     jest::no_test_prefixes,
     jest::no_focused_tests,
+    jest::valid_describe_callback,
+    jest::no_commented_out_tests,
+    unicorn::no_instanceof_array,
 }

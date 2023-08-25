@@ -62,4 +62,28 @@ expression: no_test_prefixes
    · ──────────
    ╰────
 
+  ⚠ eslint(jest/no-test-prefixes): Use "it.skip" instead.
+   ╭─[no_test_prefixes.tsx:2:1]
+ 2 │                 import { xit } from '@jest/globals';
+ 3 │                 xit('foo', function () {})
+   ·                 ───
+ 4 │             
+   ╰────
+
+  ⚠ eslint(jest/no-test-prefixes): Use "it.skip" instead.
+   ╭─[no_test_prefixes.tsx:2:1]
+ 2 │                 import { xit as skipThis } from '@jest/globals';
+ 3 │                 skipThis('foo', function () {})
+   ·                 ────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint(jest/no-test-prefixes): Use "it.only" instead.
+   ╭─[no_test_prefixes.tsx:2:1]
+ 2 │                 import { fit as onlyThis } from '@jest/globals';
+ 3 │                 onlyThis('foo', function () {})
+   ·                 ────────
+ 4 │             
+   ╰────
+
 

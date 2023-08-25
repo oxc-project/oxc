@@ -113,8 +113,8 @@ impl<'a> Semantic<'a> {
         self.symbols.get_resolved_references(symbol_id)
     }
 
-    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
-        self.symbols.get_declaration(symbol_id)
+    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
+        self.nodes.get_node(self.symbols.get_declaration(symbol_id))
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
@@ -165,7 +165,7 @@ mod tests {
             .unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
-        match semantic.nodes().get_node(decl).kind() {
+        match decl.kind() {
             AstKind::VariableDeclarator(decl) => {
                 assert_eq!(decl.kind, VariableDeclarationKind::Let);
             }

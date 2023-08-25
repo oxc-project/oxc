@@ -1,7 +1,6 @@
 use std::convert::Into;
 
-use oxc_ast::ast::{BindingPatternKind, Expression, MemberExpression};
-use oxc_span::GetSpan;
+use oxc_ast::ast::{BindingPatternKind, Expression};
 use trustfall::{
     provider::{
         field_property, resolve_property_with, ContextIterator, ContextOutcomeIterator, ResolveInfo,
@@ -15,47 +14,78 @@ use crate::{
         accessibility_to_string, jsx_attribute_name_to_string, jsx_attribute_to_constant_string,
         jsx_element_name_to_string,
     },
-    vertex::InterfaceExtendVertex,
     Adapter,
 };
 
-fn interface_extend_implem<'a, 'b: 'a>(
+pub(super) fn resolve_array_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
-    resolve_property_with(contexts, |v| {
-        match v
-            .as_interface_extend()
-            .unwrap_or_else(|| {
-                panic!("expected to have an interfaceextend vertex, instead have: {v:#?}")
-            })
-            .as_ref()
-        {
-            InterfaceExtendVertex::Identifier(ident) => ident.name.to_string(),
-            InterfaceExtendVertex::MemberExpression(first_membexpr) => {
-                let MemberExpression::StaticMemberExpression(static_membexpr) = first_membexpr
-                else {
-                    unreachable!("TS:2499")
-                };
-                let mut parts = vec![static_membexpr.property.name.to_string()];
-                let mut membexpr = first_membexpr.object();
-                while let Expression::MemberExpression(expr) = membexpr {
-                    let MemberExpression::StaticMemberExpression(static_membexpr) = &expr.0 else {
-                        unreachable!("TS:2499")
-                    };
-                    parts.push(static_membexpr.property.name.to_string());
-                    membexpr = expr.object();
-                }
-
-                let Expression::Identifier(ident) = membexpr else { unreachable!("TS:2499") };
-                parts.push(ident.name.to_string());
-
-                parts.reverse();
-
-                parts.join(".")
-            }
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Array'")
         }
-        .into()
-    })
+    }
+}
+
+pub(super) fn resolve_argument_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_spread" => resolve_property_with(contexts, |v| {
+            matches!(
+                v.as_argument()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have an argument vertex, instead have: {v:#?}")
+                    })
+                    .argument,
+                oxc_ast::ast::Argument::SpreadElement(_)
+            )
+            .into()
+        }),
+        "index" => resolve_property_with(contexts, |v| {
+            let arg_index: u64 = v
+                .as_argument()
+                .unwrap_or_else(|| {
+                    panic!("expected to have an argument vertex, instead have: {v:#?}")
+                })
+                .index(adapter)
+                .try_into()
+                .expect("to index of argument into u64");
+            arg_index.into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Argument'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'ArrowFunction'"
+            )
+        }
+    }
 }
 
 pub(super) fn resolve_assignment_type_property<'a, 'b: 'a>(
@@ -95,6 +125,14 @@ pub(super) fn resolve_class_property<'a, 'b: 'a>(
                     _ => None,
                 })
                 .unwrap_or(FieldValue::Null)
+        }),
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_class()
+                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
+                .class
+                .id
+                .as_ref()
+                .map_or_else(|| FieldValue::Null, |x| x.name.to_string().into())
         }),
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class()
@@ -188,6 +226,23 @@ pub(super) fn resolve_default_import_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_dot_property_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'DotProperty'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_expression_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -200,6 +255,69 @@ pub(super) fn resolve_expression_property<'a, 'b: 'a>(
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'Expression'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_fn_declaration()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a fndeclaration vertex, instead have: {v:#?}")
+                })
+                .function
+                .id
+                .as_ref()
+                .map_or_else(|| FieldValue::Null, |f| f.name.to_string().into())
+        }),
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'FnDeclaration'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_fn_call_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'FnCall'")
+        }
+    }
+}
+
+pub(super) fn resolve_function_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
+        "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Function'"
             )
         }
     }
@@ -228,13 +346,15 @@ pub(super) fn resolve_import_property<'a, 'b: 'a>(
     }
 }
 
-pub(super) fn resolve_interface_extend_property<'a, 'b: 'a>(
+pub(super) fn resolve_interface_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
-        "str" => interface_extend_implem(contexts),
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_interface().unwrap().interface.id.name.to_string().into()
+        }),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'InterfaceExtend'"
@@ -344,16 +464,95 @@ pub(super) fn resolve_jsxtext_property<'a, 'b: 'a>(
     }
 }
 
-pub(super) fn resolve_member_extend_property<'a, 'b: 'a>(
+pub(super) fn resolve_logical_expression_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
-        "str" => interface_extend_implem(contexts),
+        "operator" => resolve_property_with(contexts, |v| {
+            v.as_logical_expression()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a logicalexpression vertex, instead have: {v:#?}")
+                })
+                .logical_expression
+                .operator
+                .as_str()
+                .into()
+        }),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
         _ => {
             unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"
+                "attempted to read unexpected property '{property_name}' on type 'LogicalExpression'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_name_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_name()
+                .unwrap_or_else(|| panic!("expected to have a name vertex, instead have: {v:#?}"))
+                .name
+                .name
+                .to_string()
+                .into()
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Name'")
+        }
+    }
+}
+
+pub(super) fn resolve_new_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'New'")
+        }
+    }
+}
+
+pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "number" => resolve_property_with(contexts, |v| {
+            let number = v
+                .as_number_literal()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a numberliteral vertex, instead have: {v:#?}")
+                })
+                .number_literal
+                .value;
+
+            if number.is_finite() {
+                FieldValue::Float64(number)
+            } else {
+                FieldValue::Null
+            }
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'NumberLiteral'"
             )
         }
     }
@@ -371,6 +570,46 @@ pub(super) fn resolve_object_literal_property<'a, 'b: 'a>(
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'ObjectLiteral'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_parameter_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "is_readonly" => resolve_property_with(contexts, |v| {
+            v.as_parameter()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a parameter vertex, instead have: {v:#?}")
+                })
+                .parameter
+                .readonly
+                .into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Parameter'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_parenthesized_expression_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'ParenthesizedExpression'"
             )
         }
     }
@@ -413,6 +652,51 @@ pub(super) fn resolve_path_part_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_reassignment_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'Reassignment'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_regexp_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "pattern" => resolve_property_with(contexts, |v| {
+            v.as_reg_exp_literal()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a regexpliteral vertex, instead have: {v:#?}")
+                })
+                .regexp
+                .regex
+                .pattern
+                .to_string()
+                .into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'RegExpLiteral'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_search_parameter_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -445,27 +729,19 @@ pub(super) fn resolve_search_parameter_property<'a, 'b: 'a>(
     }
 }
 
-pub(super) fn resolve_simple_extend_property<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    property_name: &str,
-    _resolve_info: &ResolveInfo,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
-    match property_name {
-        "str" => interface_extend_implem(contexts),
-        _ => {
-            unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'SimpleExtend'"
-            )
-        }
-    }
-}
-
 pub(super) fn resolve_span_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
+        "str" => resolve_property_with(contexts, |v| {
+            let span = v
+                .as_span()
+                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"));
+            adapter.semantic.source_text()[span.start as usize..span.end as usize].into()
+        }),
         "end" => resolve_property_with(contexts, |v| {
             v.as_span()
                 .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"))
@@ -518,22 +794,144 @@ pub(super) fn resolve_specific_import_property<'a, 'b: 'a>(
     }
 }
 
-pub(super) fn resolve_type_property<'a, 'b: 'a>(
+pub(super) fn resolve_string_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
-    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
-        "str" => resolve_property_with(contexts, |v| {
-            let span = v
-                .as_type()
-                .unwrap_or_else(|| panic!("expected to have a type vertex, instead have: {v:#?}"))
-                .span();
-            adapter.semantic.source_text()[span.start as usize..span.end as usize].into()
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
         }),
         _ => {
-            unreachable!("attempted to read unexpected property '{property_name}' on type 'Type'")
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'String'")
+        }
+    }
+}
+
+pub(super) fn resolve_template_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'TemplateLiteral'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_throw_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Throw'")
+        }
+    }
+}
+
+pub(super) fn resolve_ternary_expression_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'TernaryExpression'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_unary_expression_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "operator" => resolve_property_with(contexts, |v| {
+            v.as_logical_expression()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a logicalexpression vertex, instead have: {v:#?}")
+                })
+                .logical_expression
+                .operator
+                .as_str()
+                .into()
+        }),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'LogicalExpression'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_variable_declaration_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "kind" => resolve_property_with(contexts, |v| {
+            match v
+                .as_variable_declaration()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a variabledeclaration vertex, instead have: {v:#?}",)
+                })
+                .variable_declaration
+                .kind
+            {
+                oxc_ast::ast::VariableDeclarationKind::Var => "var".into(),
+                oxc_ast::ast::VariableDeclarationKind::Const => "const".into(),
+                oxc_ast::ast::VariableDeclarationKind::Let => "let".into(),
+            }
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'LogicalExpression'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_var_ref_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_var_ref()
+                .unwrap_or_else(|| panic!("expected to have a varref vertex, instead have: {v:#?}"))
+                .identifier_reference
+                .name
+                .to_string()
+                .into()
+        }),
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'VarRef'")
         }
     }
 }

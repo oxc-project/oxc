@@ -8,8 +8,6 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::time::Duration;
-
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
 use oxc_minifier::{Minifier, MinifierOptions};
@@ -33,8 +31,7 @@ pub fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
 
     let baseline: Option<String> = args.opt_value_from_str("--save-baseline").unwrap();
-    let measurement_time = Duration::new(/* seconds */ 15, 0);
-    let mut criterion = Criterion::default().without_plots().measurement_time(measurement_time);
+    let mut criterion = Criterion::default().without_plots();
     if let Some(ref baseline) = baseline {
         criterion = criterion.save_baseline(baseline.to_string());
     }

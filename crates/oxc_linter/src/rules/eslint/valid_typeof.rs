@@ -68,7 +68,10 @@ impl Rule for ValidTypeof {
         };
 
         let ((Expression::UnaryExpression(_), sibling) | (sibling, Expression::UnaryExpression(_))) =
-            (&binary_expr.left, &binary_expr.right) else { return  };
+            (&binary_expr.left, &binary_expr.right)
+        else {
+            return;
+        };
 
         if let Expression::StringLiteral(lit) = sibling {
             if !VALID_TYPES.contains(lit.value.as_str()) {

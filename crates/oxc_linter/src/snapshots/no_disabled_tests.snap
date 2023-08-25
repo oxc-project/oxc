@@ -177,4 +177,11 @@ expression: no_disabled_tests
    ╰────
   help: "Remove pending() call"
 
+  ⚠ eslint(jest/no-disabled-tests): "Test is missing function argument"
+   ╭─[no_disabled_tests.tsx:1:1]
+ 1 │ import { test } from '@jest/globals';test('something');
+   ·                                      ─────────────────
+   ╰────
+  help: "Add function argument"
+
 

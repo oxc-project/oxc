@@ -1,18 +1,16 @@
 use bitflags::bitflags;
-use oxc_index::define_index_type;
 use oxc_span::{Atom, Span};
 
-use crate::symbol::SymbolId;
+use crate::{symbol::SymbolId, AstNodeId};
 
-define_index_type! {
-    pub struct ReferenceId = u32;
-}
+pub use oxc_syntax::reference::ReferenceId;
 
 #[derive(Debug, Clone)]
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to
     name: Atom,
+    node_id: AstNodeId,
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
     /// be reads, writes, or both.
@@ -20,8 +18,8 @@ pub struct Reference {
 }
 
 impl Reference {
-    pub fn new(span: Span, name: Atom, flag: ReferenceFlag) -> Self {
-        Self { span, name, symbol_id: None, flag }
+    pub fn new(span: Span, name: Atom, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
+        Self { span, name, node_id, symbol_id: None, flag }
     }
 
     pub fn span(&self) -> Span {
@@ -30,6 +28,10 @@ impl Reference {
 
     pub fn name(&self) -> &Atom {
         &self.name
+    }
+
+    pub fn node_id(&self) -> AstNodeId {
+        self.node_id
     }
 
     pub fn symbol_id(&self) -> Option<SymbolId> {

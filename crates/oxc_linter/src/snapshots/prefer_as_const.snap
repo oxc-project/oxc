@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 80
+expression: prefer_as_const
+---
+  ⚠ Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:1]
+ 1 │ let []: 'bar' = 'bar';
+   ·         ─────
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:1]
+ 1 │ let foo: 'bar' = 'bar';
+   ·          ─────
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:1]
+ 1 │ let foo: 2 = 2;
+   ·          ─
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:1]
+ 1 │ class foo { bar: 'baz' = 'baz';}
+   ·                  ─────
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:1]
+ 1 │ class foo { bar: 2 = 2;}
+   ·                  ─
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+

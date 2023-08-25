@@ -66,7 +66,7 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         directives: Vec<'a, Directive>,
-        hashbang: Option<Hashbang<'a>>,
+        hashbang: Option<Hashbang>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
         Program { span, directives, hashbang, body }
@@ -209,12 +209,12 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         expression: StringLiteral,
-        directive: &'a str,
-    ) -> Directive<'a> {
+        directive: Atom,
+    ) -> Directive {
         Directive { hir_id: self.next_id(), span, expression, directive }
     }
 
-    pub fn hashbang(&mut self, span: Span, value: &'a str) -> Hashbang<'a> {
+    pub fn hashbang(&mut self, span: Span, value: Atom) -> Hashbang {
         Hashbang { hir_id: self.next_id(), span, value }
     }
 

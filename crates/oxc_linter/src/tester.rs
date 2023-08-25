@@ -1,18 +1,26 @@
-use std::{borrow::Cow, path::PathBuf, rc::Rc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use serde_json::Value;
 
-use crate::{rules::RULES, Fixer, LintContext, Linter, Message};
+use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, Message};
+
+#[derive(Eq, PartialEq)]
+enum TestResult {
+    Passed,
+    Failed,
+    Fixed(String),
+}
 
 pub struct Tester {
     rule_name: &'static str,
     expect_pass: Vec<(String, Option<Value>)>,
     expect_fail: Vec<(String, Option<Value>)>,
+    expect_fix: Vec<(String, String, Option<Value>)>,
     snapshot: String,
 }
 
@@ -24,7 +32,7 @@ impl Tester {
     ) -> Self {
         let expect_pass = expect_pass.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
-        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
+        Self { rule_name, expect_pass, expect_fail, expect_fix: vec![], snapshot: String::new() }
     }
 
     pub fn new_without_config<S: Into<String>>(
@@ -34,12 +42,19 @@ impl Tester {
     ) -> Self {
         let expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
-        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
+        Self::new(rule_name, expect_pass, expect_fail)
+    }
+
+    pub fn expect_fix<S: Into<String>>(mut self, expect_fix: Vec<(S, S, Option<Value>)>) -> Self {
+        self.expect_fix =
+            expect_fix.into_iter().map(|(s1, s2, r)| (s1.into(), s2.into(), r)).collect::<Vec<_>>();
+        self
     }
 
     pub fn test(&mut self) {
         self.test_pass();
         self.test_fail();
+        self.test_fix();
     }
 
     pub fn test_and_snapshot(&mut self) {
@@ -49,27 +64,27 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for (test, config) in self.expect_pass.clone() {
-            let passed = self.run(&test, config);
+            let result = self.run(&test, config, false);
+            let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {test} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
         for (test, config) in self.expect_fail.clone() {
-            let passed = self.run(&test, config);
-            assert!(!passed, "expect test to fail: {test}");
+            let result = self.run(&test, config, false);
+            let failed = result == TestResult::Failed;
+            assert!(failed, "expect test to fail: {test}");
         }
     }
 
-    pub fn test_fix<S: Into<String>>(&mut self, expect_fix: Vec<(S, S, Option<Value>)>) {
-        let allocator = Allocator::default();
-        let expect_fix =
-            expect_fix.into_iter().map(|(s1, s2, r)| (s1.into(), s2.into(), r)).collect::<Vec<_>>();
-
-        for (source_text, expected, config) in expect_fix {
-            let fixed_str = self.run_with_fix(&allocator, &source_text, config);
-            if let Some(fixed_str) = fixed_str {
+    fn test_fix(&mut self) {
+        for (test, expected, config) in self.expect_fix.clone() {
+            let result = self.run(&test, config, true);
+            if let TestResult::Fixed(fixed_str) = result {
                 assert_eq!(expected, fixed_str);
+            } else {
+                unreachable!()
             }
         }
     }
@@ -81,13 +96,19 @@ impl Tester {
         });
     }
 
-    fn run(&mut self, source_text: &str, config: Option<Value>) -> bool {
+    fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
         let name = self.rule_name.replace('-', "_");
         let path = PathBuf::from(name).with_extension("tsx");
         let allocator = Allocator::default();
-        let result = self.run_rules(&allocator, &path, source_text, config, false);
+        let result = self.run_rules(&allocator, &path, source_text, config, is_fix);
+
         if result.is_empty() {
-            return true;
+            return TestResult::Passed;
+        }
+
+        if is_fix {
+            let fix_result = Fixer::new(source_text, result).fix();
+            return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
@@ -100,51 +121,24 @@ impl Tester {
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
             self.snapshot.push('\n');
         }
-        false
-    }
-
-    fn run_with_fix<'a>(
-        &mut self,
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        config: Option<Value>,
-    ) -> Option<Cow<'a, str>> {
-        let name = self.rule_name.replace('-', "_");
-        let path = PathBuf::from(name).with_extension("tsx");
-        let result = self.run_rules(allocator, &path, source_text, config, true);
-        if result.is_empty() {
-            return None;
-        }
-
-        let fix_result = Fixer::new(source_text, result).fix();
-        Some(fix_result.fixed_code)
+        TestResult::Failed
     }
 
     fn run_rules<'a>(
         &mut self,
         allocator: &'a Allocator,
-        path: &PathBuf,
+        path: &Path,
         source_text: &'a str,
         config: Option<Value>,
         is_fix: bool,
     ) -> Vec<Message<'a>> {
-        let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
-        let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
-            .parse();
-        assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
-        let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(&ret.trivias)
-            .with_module_record_builder(true)
-            .build(program);
-        assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
-        let lint_context = LintContext::new(&Rc::new(semantic_ret.semantic));
-        Linter::from_rules(vec![rule]).with_fix(is_fix).run(lint_context)
+        let options = LintOptions::default().with_fix(is_fix);
+        let linter = Arc::new(Linter::from_options(options).with_rules(vec![rule]));
+        LintService::run_source(&linter, path, allocator, source_text, false)
     }
 }

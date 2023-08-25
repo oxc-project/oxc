@@ -50,7 +50,8 @@ impl<'a> AstLower<'a> {
         name: &Atom,
         reference_flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(span, name.clone(), reference_flag);
+        let reference =
+            Reference::new(span, name.clone(), self.semantic.current_node_id, reference_flag);
         self.semantic.declare_reference(reference)
     }
 
@@ -159,13 +160,13 @@ impl<'a> AstLower<'a> {
         self.hir.program(program.span, directives, hashbang, statements)
     }
 
-    fn lower_hasbang(&mut self, hashbang: &ast::Hashbang<'a>) -> hir::Hashbang<'a> {
-        self.hir.hashbang(hashbang.span, hashbang.value)
+    fn lower_hasbang(&mut self, hashbang: &ast::Hashbang) -> hir::Hashbang {
+        self.hir.hashbang(hashbang.span, hashbang.value.clone())
     }
 
-    fn lower_directive(&mut self, directive: &ast::Directive<'a>) -> hir::Directive<'a> {
+    fn lower_directive(&mut self, directive: &ast::Directive) -> hir::Directive {
         let expression = self.lower_string_literal(&directive.expression);
-        self.hir.directive(directive.span, expression, directive.directive)
+        self.hir.directive(directive.span, expression, directive.directive.clone())
     }
 
     fn lower_statement(&mut self, statement: &ast::Statement<'a>) -> Option<hir::Statement<'a>> {
@@ -370,6 +371,7 @@ impl<'a> AstLower<'a> {
         self.hir.with_statement(stmt.span, object, body)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn lower_expression(&mut self, expr: &ast::Expression<'a>) -> hir::Expression<'a> {
         ensure_sufficient_stack(|| {
             match expr {
@@ -443,7 +445,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXElement(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -451,7 +453,7 @@ impl<'a> AstLower<'a> {
                 ast::Expression::JSXFragment(elem) => {
                     // TODO: implement JSX
                     let ident = self.lower_identifier_reference(
-                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        &ast::IdentifierReference::new("undefined".into(), elem.span),
                         ReferenceFlag::Read,
                     );
                     self.hir.identifier_reference_expression(ident)
@@ -849,7 +851,7 @@ impl<'a> AstLower<'a> {
             expr => {
                 // return undefined because this is invalid syntax
                 let ident = self.lower_identifier_reference(
-                    &ast::IdentifierReference { span: expr.span(), name: "undefined".into() },
+                    &ast::IdentifierReference::new("undefined".into(), expr.span()),
                     ReferenceFlag::Write,
                 );
                 self.hir.assignment_target_identifier(ident)
@@ -1438,7 +1440,6 @@ impl<'a> AstLower<'a> {
         } else {
             (SymbolFlags::empty(), SymbolFlags::empty())
         };
-        let includes = includes | SymbolFlags::Function;
         let id =
             func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
         self.enter_function_scope();

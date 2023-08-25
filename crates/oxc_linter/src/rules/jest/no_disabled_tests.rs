@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDisabledTests,
-    nursery
+    correctness
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -86,7 +86,7 @@ impl Rule for NoDisabledTests {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
-                let ParsedGeneralJestFnCall { kind, members, raw } = jest_fn_call;
+                let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
                 // `test('foo')`
                 let kind = match kind {
                     JestFnKind::Expect | JestFnKind::Unknown => return,
@@ -103,7 +103,7 @@ impl Rule for NoDisabledTests {
 
                 // the only jest functions that are with "x" are "xdescribe", "xtest", and "xit"
                 // `xdescribe('foo', () => {})`
-                if raw.starts_with('x') {
+                if name.starts_with('x') {
                     let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
                         Message::DisabledSuiteWithX.details()
                     } else {
@@ -205,8 +205,7 @@ fn test() {
         ("it('contains a call to pending', function () { pending() })", None),
         ("pending()", None),
         ("describe('contains a call to pending', function () { pending() })", None),
-        // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
-        // ("import { test } from '@jest/globals';test('something');", None),
+        ("import { test } from '@jest/globals';test('something');", None),
     ];
 
     Tester::new(NoDisabledTests::NAME, pass, fail).test_and_snapshot();

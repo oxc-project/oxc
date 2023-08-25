@@ -83,7 +83,7 @@ mod test {
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(&ret.trivias)
+            .with_trivias(ret.trivias)
             .build(program)
             .semantic;
         let jsdoc = semantic.jsdoc();

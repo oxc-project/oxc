@@ -1,7 +1,10 @@
+use std::hash::{Hash, Hasher};
+
 use oxc_ast::ast::{
     Expression, JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXElementName, JSXIdentifier,
     JSXMemberExpression, JSXNamespacedName, TSAccessibility, TemplateLiteral,
 };
+use rustc_hash::FxHasher;
 
 pub fn jsx_attribute_to_constant_string<'a>(attr: &'a JSXAttribute<'a>) -> Option<String> {
     attr.value.as_ref().and_then(|attr_value| match attr_value {
@@ -84,4 +87,23 @@ pub fn jsx_attribute_name_to_string(jsx_attribute_name: &JSXAttributeName) -> St
         JSXAttributeName::Identifier(ident) => jsx_identifier_to_string(ident),
         JSXAttributeName::NamespacedName(nsn) => jsx_namespaced_name_to_string(nsn),
     }
+}
+
+pub fn strip_parens_from_expr<'a, 'b: 'a>(
+    to_strip: &'b Expression<'a>,
+    strip_all: bool,
+) -> &'b Expression<'a> {
+    match to_strip {
+        Expression::ParenthesizedExpression(paren_expr) if strip_all => {
+            strip_parens_from_expr(&paren_expr.expression, true)
+        }
+        Expression::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
+        _ => to_strip,
+    }
+}
+
+pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut hasher = FxHasher::default();
+    t.hash(&mut hasher);
+    hasher.finish()
 }

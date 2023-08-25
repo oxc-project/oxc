@@ -151,7 +151,8 @@ pub fn get_array_method_name<'a>(
             AstKind::LogicalExpression(_)
             | AstKind::ConditionalExpression(_)
             | AstKind::Argument(_)
-            | AstKind::ParenthesizedExpression(_) => {
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::ChainExpression(_) => {
                 current_node = parent;
             }
 

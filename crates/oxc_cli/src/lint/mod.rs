@@ -1,130 +1,92 @@
-mod command;
 mod error;
-mod isolated_handler;
-mod options;
 
-use std::{io::BufWriter, sync::Arc, time::Duration};
+use std::{
+    io::BufWriter,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
 
+pub use self::error::Error;
+
+use oxc_diagnostics::DiagnosticService;
 use oxc_index::assert_impl_all;
-use oxc_linter::{Linter, RuleCategory, RuleEnum, RULES};
-use rustc_hash::FxHashSet;
+use oxc_linter::{LintOptions, LintService, Linter, PathWork};
 
-pub use self::{error::Error, options::LintOptions};
-use self::{isolated_handler::IsolatedLintHandler, options::AllowWarnDeny};
-use crate::{CliRunResult, Runner};
+use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Runner};
 
 pub struct LintRunner {
-    options: Arc<LintOptions>,
-    linter: Arc<Linter>,
+    options: CliLintOptions,
 }
 assert_impl_all!(LintRunner: Send, Sync);
 
-impl Default for LintRunner {
-    fn default() -> Self {
-        Self::new(LintOptions::default())
-    }
-}
-
 impl Runner for LintRunner {
-    type Options = LintOptions;
+    type Options = CliLintOptions;
 
-    const ABOUT: &'static str = "Lint this repository.";
-    const NAME: &'static str = "lint";
-
-    fn new(options: LintOptions) -> Self {
-        let linter = Linter::from_rules(Self::derive_rules(&options))
-            .with_fix(options.fix)
-            .with_print_execution_times(options.print_execution_times);
-        Self { options: Arc::new(options), linter: Arc::new(linter) }
+    fn new(options: Self::Options) -> Self {
+        Self { options }
     }
 
-    fn run(&self) -> CliRunResult {
-        if self.options.list_rules {
-            Self::print_rules();
+    fn run(self) -> CliRunResult {
+        if self.options.misc_options.rules {
+            let mut stdout = BufWriter::new(std::io::stdout());
+            Linter::print_rules(&mut stdout);
             return CliRunResult::None;
         }
 
-        let result =
-            IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run();
+        let CliLintOptions {
+            paths,
+            filter,
+            warning_options,
+            ignore_options,
+            fix_options,
+            misc_options,
+        } = self.options;
 
-        if self.options.print_execution_times {
-            self.print_execution_times();
-        }
+        let now = std::time::Instant::now();
 
-        result
-    }
-}
+        let lint_options = LintOptions::default()
+            .with_filter(filter)
+            .with_fix(fix_options.fix)
+            .with_timing(misc_options.timing);
 
-impl LintRunner {
-    fn print_rules() {
-        let mut stdout = BufWriter::new(std::io::stdout());
-        Linter::print_rules(&mut stdout);
-    }
+        let linter = Arc::new(Linter::from_options(lint_options));
 
-    fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
-        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+        let diagnostic_service = DiagnosticService::default()
+            .with_quiet(warning_options.quiet)
+            .with_max_warnings(warning_options.max_warnings);
 
-        for (allow_warn_deny, name_or_category) in &options.rules {
-            let maybe_category = RuleCategory::from(name_or_category.as_str());
-            match allow_warn_deny {
-                AllowWarnDeny::Deny => {
-                    match maybe_category {
-                        Some(category) => rules.extend(
-                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
-                        ),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.extend(RULES.iter().cloned());
-                            } else {
-                                rules.extend(
-                                    RULES
-                                        .iter()
-                                        .filter(|rule| rule.name() == name_or_category)
-                                        .cloned(),
-                                );
-                            }
-                        }
-                    };
+        let number_of_files = Arc::new(AtomicUsize::new(0));
+
+        let lint_service = LintService::new(Arc::clone(&linter));
+        let tx_path = lint_service.tx_path.clone();
+        lint_service.run(&diagnostic_service.sender().clone());
+
+        rayon::spawn({
+            let number_of_files = Arc::clone(&number_of_files);
+            let walk = Walk::new(&paths, &ignore_options);
+            move || {
+                let mut count = 0;
+                for path in walk.iter() {
+                    count += 1;
+                    tx_path.send(PathWork::Begin(path)).unwrap();
                 }
-                AllowWarnDeny::Allow => {
-                    match maybe_category {
-                        Some(category) => rules.retain(|rule| rule.category() != category),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.clear();
-                            } else {
-                                rules.retain(|rule| rule.name() == name_or_category);
-                            }
-                        }
-                    };
-                }
+                tx_path.send(PathWork::Done).unwrap();
+                number_of_files.store(count, Ordering::SeqCst);
             }
-        }
+        });
 
-        let mut rules = rules.into_iter().collect::<Vec<_>>();
-        // for stable diagnostics output ordering
-        rules.sort_unstable_by_key(|rule| rule.name());
-        rules
-    }
+        diagnostic_service.run();
+        linter.print_execution_times_if_enable();
 
-    fn print_execution_times(&self) {
-        let mut timings = self
-            .linter
-            .rules()
-            .iter()
-            .map(|rule| (rule.name(), rule.execute_time()))
-            .collect::<Vec<_>>();
-
-        timings.sort_by_key(|x| x.1);
-        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
-
-        println!("Rule timings in milliseconds:");
-        println!("Total: {:.2}ms", total * 1000.0);
-        println!("{:>7} | {:>5} | Rule", "Time", "%");
-        for (name, duration) in timings.iter().rev() {
-            let millis = duration.as_secs_f64() * 1000.0;
-            let relative = duration.as_secs_f64() / total * 100.0;
-            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
+        CliRunResult::LintResult {
+            duration: now.elapsed(),
+            number_of_rules: linter.number_of_rules(),
+            number_of_files: number_of_files.load(Ordering::SeqCst),
+            number_of_warnings: diagnostic_service.warnings_count(),
+            number_of_errors: diagnostic_service.errors_count(),
+            max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
         }
     }
 }

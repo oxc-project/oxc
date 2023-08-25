@@ -56,7 +56,9 @@ impl Rule for NoDupeElseIf {
         // if (a) {} else if (a) {}
         //                ^^ get this if statement
         let AstKind::IfStatement(if_stmt) = node.kind() else { return };
-        let Some(AstKind::IfStatement(parent_if_stmt)) = ctx.nodes().parent_kind(node.id()) else { return };
+        let Some(AstKind::IfStatement(parent_if_stmt)) = ctx.nodes().parent_kind(node.id()) else {
+            return;
+        };
         let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else { return };
         if child_if_stmt.span != if_stmt.span {
             return;

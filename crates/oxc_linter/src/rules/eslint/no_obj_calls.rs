@@ -17,7 +17,7 @@ const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Ref
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
-#[diagnostic(severity(error), help("{0} is not a function."))]
+#[diagnostic(severity(warning), help("{0} is not a function."))]
 struct NoObjCallsDiagnostic(Atom, #[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -88,11 +88,13 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let scope = ctx.scopes();
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
-        scope.get_binding(scope_id, &ident.name).map_or_else(
+        scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
             || {
-                // panic!("No binding id found for {}, but this IdentifierReference
-                // is not a global", &ident.name);
-                None
+                panic!(
+                    "No binding id found for {}, but this IdentifierReference
+                is not a global",
+                    &ident.name
+                );
             },
             |binding_id| {
                 let decl = nodes.get_node(symbols.get_declaration(binding_id));
@@ -174,6 +176,8 @@ fn test() {
             }",
             None,
         ),
+        // https://github.com/web-infra-dev/oxc/pull/508#issuecomment-1618850742
+        ("{const Math = () => {}; {let obj = new Math();}}", None),
     ];
 
     let fail = vec![

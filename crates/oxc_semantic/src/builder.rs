@@ -122,9 +122,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn with_trivias(mut self, trivias: &Rc<Trivias>) -> Self {
-        self.trivias = Rc::clone(trivias);
-        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+    pub fn with_trivias(mut self, trivias: Trivias) -> Self {
+        let trivias = Rc::new(trivias);
+        self.trivias = Rc::clone(&trivias);
+        self.jsdoc = JSDocBuilder::new(self.source_text, &trivias);
         self
     }
 
@@ -638,8 +639,9 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, ident.name.clone(), flag);
-        self.declare_reference(reference);
+        let reference = Reference::new(ident.span, ident.name.clone(), self.current_node_id, flag);
+        let reference_id = self.declare_reference(reference);
+        ident.reference_id.set(Some(reference_id));
     }
 
     /// Resolve reference flags for the current ast node.
@@ -722,8 +724,12 @@ impl<'a> SemanticBuilder<'a> {
                 JSXElementName::MemberExpression(expr) => Some(expr.get_object_identifier()),
                 _ => None,
             } {
-                let reference =
-                    Reference::new(ident.span, ident.name.clone(), ReferenceFlag::read());
+                let reference = Reference::new(
+                    ident.span,
+                    ident.name.clone(),
+                    self.current_node_id,
+                    ReferenceFlag::read(),
+                );
                 self.declare_reference(reference);
             }
         }

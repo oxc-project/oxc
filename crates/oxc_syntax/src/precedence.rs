@@ -1,5 +1,3 @@
-use std::fmt;
-
 pub trait GetPrecedence {
     fn precedence(&self) -> Precedence;
 }
@@ -45,17 +43,7 @@ impl Precedence {
         Self::Comma
     }
 
-    pub fn highest() -> Self {
-        Self::Grouping
-    }
-
     pub fn is_right_associative(&self) -> bool {
         matches!(self, Self::Exponential)
-    }
-}
-
-impl fmt::Display for Precedence {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}({})", self, (*self) as u8)
     }
 }

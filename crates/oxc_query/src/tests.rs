@@ -17,7 +17,7 @@ fn run_query<T: for<'de> serde::Deserialize<'de> + std::cmp::Ord>(
     let ret = Parser::new(&allocator, code, source_type).parse();
     let program = allocator.alloc(ret.program);
     let semantic_ret =
-        SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
+        SemanticBuilder::new(code, source_type).with_trivias(ret.trivias).build(program);
 
     let adapter = Adapter {
         path_components: vec![Some("index".to_string())],
@@ -36,6 +36,48 @@ fn run_query<T: for<'de> serde::Deserialize<'de> + std::cmp::Ord>(
     results.sort_unstable();
 
     results
+}
+
+#[test]
+fn test_expr_stmt() {
+    #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
+    struct Output {
+        __typename: String,
+    }
+
+    let not_ast = run_query::<Output>(
+        "function a() { y = 2; }",
+        r#"
+        query {
+            File {
+                ast_node {
+                    ... on FunctionBodyAST {
+                        statement {
+                            __typename @output
+                        }
+                    }
+                }
+            }
+        }
+        "#,
+    );
+    assert_eq!(vec![Output { __typename: "ExpressionStatement".to_owned() },], not_ast);
+
+    let ast = run_query::<Output>(
+        "function a() { y = 2; }",
+        r#"
+        query {
+            File {
+                ast_node {
+                    ... on ExpressionStatementAST {
+                        __typename @output
+                    }
+                }
+            }
+        }
+        "#,
+    );
+    assert_eq!(vec![Output { __typename: "ExpressionStatementAST".to_owned() },], ast);
 }
 
 #[test]
@@ -142,7 +184,7 @@ fn test_object_literal_ast() {
     assert_eq!(
         vec![Output {
             __typename: "ObjectLiteralAST".to_owned(),
-            value_typename: "Expression".to_owned()
+            value_typename: "NumberLiteral".to_owned()
         }],
         results
     );
@@ -164,7 +206,9 @@ fn test_parent_query() {
                 ast_node {
                     ... on TypeAnnotationAST {
                         type {
-                            type_: str @output
+                            span {
+                                type_: str @output
+                            }
                         }
                         parent {
                             tn1: __typename @output
@@ -199,7 +243,7 @@ fn test_invariants() {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let semantic_ret =
-        SemanticBuilder::new(source_text, source_type).with_trivias(&ret.trivias).build(program);
+        SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
 
     let adapter = Adapter { path_components: vec![], semantic: Rc::new(semantic_ret.semantic) };
     check_adapter_invariants(schema(), &adapter);

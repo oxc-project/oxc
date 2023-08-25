@@ -281,10 +281,13 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(&parser_ret.trivias)
+            .with_trivias(parser_ret.trivias)
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);
+        if let Some(res) = self.check_semantic(&semantic_ret.semantic) {
+            return res;
+        }
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         let result = if errors.is_empty() {
@@ -355,5 +358,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             )?;
         }
         Ok(())
+    }
+
+    fn check_semantic(&self, _semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
+        None
     }
 }

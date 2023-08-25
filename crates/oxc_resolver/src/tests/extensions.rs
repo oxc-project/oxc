@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/extensions.test.js>
 
-use std::path::PathBuf;
-
-use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("extensions")
-}
+use crate::{EnforceExtension, Resolution, ResolveError, ResolveOptions, Resolver};
 
 #[test]
 fn extensions() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), ".js".into()],
@@ -27,7 +21,7 @@ fn extensions() {
     ];
 
     for (comment, request, expected_path) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         let expected = f.join(expected_path);
         assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
     }
@@ -39,15 +33,15 @@ fn extensions() {
 
     for (comment, request, expected_error) in fail {
         let resolution = resolver.resolve(&f, request);
-        let error = ResolveError::NotFound(expected_error.into_boxed_path());
+        let error = ResolveError::NotFound(expected_error);
         assert_eq!(resolution, Err(error), "{comment} {request} {resolution:?}");
     }
 }
 
-#[test]
 // should default enforceExtension to true when extensions includes an empty string
+#[test]
 fn default_enforce_extension() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolved = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), String::new(), ".js".into()],
@@ -55,21 +49,55 @@ fn default_enforce_extension() {
     })
     .resolve(&f, "./foo");
 
-    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo").into_boxed_path())));
+    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo"))));
     // TODO: need to match missingDependencies returned from the resolve function
 }
 
-#[test]
 // should respect enforceExtension when extensions includes an empty string
+#[test]
 fn respect_enforce_extension() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolved = Resolver::new(ResolveOptions {
-        enforce_extension: Some(false),
+        enforce_extension: EnforceExtension::Disabled,
         extensions: vec![".ts".into(), String::new(), ".js".into()],
         ..ResolveOptions::default()
     })
     .resolve(&f, "./foo");
     assert_eq!(resolved.map(Resolution::into_path_buf), Ok(f.join("foo.ts")));
     // TODO: need to match missingDependencies returned from the resolve function
+}
+
+#[test]
+fn multi_dot_extension() {
+    let f = super::fixture().join("extensions");
+
+    let resolver = Resolver::new(ResolveOptions {
+        // Test for `.d.ts`, not part of enhanced-resolve.
+        extensions: vec![".a.b.c".into(), ".d.ts".into(), ".ts".into(), ".js".into()],
+        ..ResolveOptions::default()
+    });
+
+    #[rustfmt::skip]
+    let pass = [
+        ("should resolve according to order of provided extensions", "./foo", "foo.ts"),
+        ("should resolve file with extension", "./app.module", "app.module.js")
+    ];
+
+    for (comment, request, expected_path) in pass {
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
+        let expected = f.join(expected_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
+    }
+
+    #[rustfmt::skip]
+    let fail = [
+        ("not resolve to file", "./index.", f.join("index."))
+    ];
+
+    for (comment, request, expected_error) in fail {
+        let resolution = resolver.resolve(&f, request);
+        let error = ResolveError::NotFound(expected_error);
+        assert_eq!(resolution, Err(error), "{comment} {request} {resolution:?}");
+    }
 }

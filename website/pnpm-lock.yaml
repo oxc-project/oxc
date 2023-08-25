@@ -1,6 +1,20 @@
 lockfileVersion: '6.0'
 
+patchedDependencies:
+  '@ddietr/codemirror-themes@1.4.1':
+    hash: yiqcshcf2sgzcw3iuyryzsfwbe
+    path: patches/@ddietr__codemirror-themes@1.4.1.patch
+  graphql-language-service@5.1.7:
+    hash: i445yvp5m23mbfkfcxtdtgt27e
+    path: patches/graphql-language-service@5.1.7.patch
+
 dependencies:
+  '@codemirror/autocomplete':
+    specifier: ^6.9.0
+    version: 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+  '@codemirror/commands':
+    specifier: ^6.2.4
+    version: 6.2.4
   '@codemirror/lang-javascript':
     specifier: ^6.1.8
     version: 6.1.8
@@ -24,13 +38,19 @@ dependencies:
     version: 6.12.0
   '@ddietr/codemirror-themes':
     specifier: ^1.4.1
-    version: 1.4.1
+    version: 1.4.1(patch_hash=yiqcshcf2sgzcw3iuyryzsfwbe)
   '@replit/codemirror-vscode-keymap':
     specifier: ^6.0.2
-    version: 6.0.2(@codemirror/autocomplete@6.7.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)
+    version: 6.0.2(@codemirror/autocomplete@6.9.0)(@codemirror/commands@6.2.4)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)
+  cm6-graphql:
+    specifier: ^0.0.9
+    version: 0.0.9(@codemirror/autocomplete@6.9.0)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/highlight@1.1.6)(graphql@16.7.1)
   codemirror:
     specifier: ^6.0.1
     version: 6.0.1(@lezer/common@1.0.2)
+  graphql:
+    specifier: ^16.7.1
+    version: 16.7.1
   lodash.throttle:
     specifier: ^4.1.1
     version: 4.1.1
@@ -58,8 +78,8 @@ packages:
       regenerator-runtime: 0.13.11
     dev: true
 
-  /@codemirror/autocomplete@6.7.1(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2):
-    resolution: {integrity: sha512-hSxf9S0uB+GV+gBsjY1FZNo53e1FFdzPceRfCfD1gWOnV6o21GfB5J5Wg9G/4h76XZMPrF0A6OCK/Rz5+V1egg==}
+  /@codemirror/autocomplete@6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2):
+    resolution: {integrity: sha512-Fbwm0V/Wn3BkEJZRhr0hi5BhCo5a7eBL6LYaliPjOSwCyfOpnjXY59HruSxOUNV+1OYer0Tgx1zRNQttjXyDog==}
     peerDependencies:
       '@codemirror/language': ^6.0.0
       '@codemirror/state': ^6.0.0
@@ -84,7 +104,7 @@ packages:
   /@codemirror/lang-javascript@6.1.8:
     resolution: {integrity: sha512-5cIA6IOkslTu1DtldcYnj7hsBm3p+cD37qSaKvW1kV16M6q9ysKvKrveCOWgbrj4+ilSWRL2JtSLudbeB158xg==}
     dependencies:
-      '@codemirror/autocomplete': 6.7.1(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+      '@codemirror/autocomplete': 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
       '@codemirror/language': 6.7.0
       '@codemirror/lint': 6.2.1
       '@codemirror/state': 6.2.1
@@ -146,7 +166,7 @@ packages:
       w3c-keyname: 2.2.7
     dev: false
 
-  /@ddietr/codemirror-themes@1.4.1:
+  /@ddietr/codemirror-themes@1.4.1(patch_hash=yiqcshcf2sgzcw3iuyryzsfwbe):
     resolution: {integrity: sha512-2exPoRk/VlJMIceQXLRHE6N+81JszN1mDO+exwakYvwfK4BhpyIYaKzN+uEsph0g1qLI0PdHXBI9Yqg5WxyKAw==}
     dependencies:
       '@codemirror/language': 6.7.0
@@ -154,6 +174,7 @@ packages:
       '@codemirror/view': 6.12.0
       '@lezer/highlight': 1.1.6
     dev: false
+    patched: true
 
   /@esbuild/android-arm64@0.17.19:
     resolution: {integrity: sha512-KBMWvEZooR7+kzY0BtbTQn0OAYY7CsiydT63pVEaPtVYF0hXbUaOyZog37DKxK7NF3XacBJOpYT4adIJh+avxA==}
@@ -390,7 +411,7 @@ packages:
       '@lezer/lr': 1.3.5
     dev: false
 
-  /@replit/codemirror-vscode-keymap@6.0.2(@codemirror/autocomplete@6.7.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0):
+  /@replit/codemirror-vscode-keymap@6.0.2(@codemirror/autocomplete@6.9.0)(@codemirror/commands@6.2.4)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0):
     resolution: {integrity: sha512-j45qTwGxzpsv82lMD/NreGDORFKSctMDVkGRopaP+OrzSzv+pXDQuU3LnFvKpasyjVT0lf+PKG1v2DSCn/vxxg==}
     peerDependencies:
       '@codemirror/autocomplete': ^6.0.0
@@ -401,7 +422,7 @@ packages:
       '@codemirror/state': ^6.0.0
       '@codemirror/view': ^6.0.0
     dependencies:
-      '@codemirror/autocomplete': 6.7.1(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+      '@codemirror/autocomplete': 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
       '@codemirror/commands': 6.2.4
       '@codemirror/language': 6.7.0
       '@codemirror/lint': 6.2.1
@@ -474,10 +495,31 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
+  /cm6-graphql@0.0.9(@codemirror/autocomplete@6.9.0)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/highlight@1.1.6)(graphql@16.7.1):
+    resolution: {integrity: sha512-MhdQMuVGwnyEk3I1BiLhpMEhOC7sTxmbq205cjdDtHysB0EtNLBoccy+7+h/+So90otjwJcSaty6vwp22WN6kw==}
+    peerDependencies:
+      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/language': ^6.0.0
+      '@codemirror/lint': ^6.0.0
+      '@codemirror/state': ^6.1.0
+      '@codemirror/view': ^6.1.2
+      '@lezer/highlight': ^1.0.0
+      graphql: ^16.5.0
+    dependencies:
+      '@codemirror/autocomplete': 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+      '@codemirror/language': 6.7.0
+      '@codemirror/lint': 6.2.1
+      '@codemirror/state': 6.2.1
+      '@codemirror/view': 6.12.0
+      '@lezer/highlight': 1.1.6
+      graphql: 16.7.1
+      graphql-language-service: 5.1.7(patch_hash=i445yvp5m23mbfkfcxtdtgt27e)(graphql@16.7.1)
+    dev: false
+
   /codemirror@6.0.1(@lezer/common@1.0.2):
     resolution: {integrity: sha512-J8j+nZ+CdWmIeFIGXEFbFPtpiYacFMDR8GlHK3IyHQJMCaVRfGx9NT+Hxivv1ckLWPvNdZqndbr/7lVhrf/Svg==}
     dependencies:
-      '@codemirror/autocomplete': 6.7.1(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+      '@codemirror/autocomplete': 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
       '@codemirror/commands': 6.2.4
       '@codemirror/language': 6.7.0
       '@codemirror/lint': 6.2.1
@@ -614,6 +656,23 @@ packages:
       path-is-absolute: 1.0.1
     dev: true
 
+  /graphql-language-service@5.1.7(patch_hash=i445yvp5m23mbfkfcxtdtgt27e)(graphql@16.7.1):
+    resolution: {integrity: sha512-xkawYMJeoNYGhT+SpSH3c2qf6HpGHQ/duDmrseVHBpVCrXAiGnliXGSCC4jyMGgZQ05GytsZ12p0nUo7s6lSSw==}
+    hasBin: true
+    peerDependencies:
+      graphql: ^15.5.0 || ^16.0.0
+    dependencies:
+      graphql: 16.7.1
+      nullthrows: 1.1.1
+      vscode-languageserver-types: 3.17.3
+    dev: false
+    patched: true
+
+  /graphql@16.7.1:
+    resolution: {integrity: sha512-DRYR9tf+UGU0KOsMcKAlXeFfX89UiiIZ0dRU3mR0yJfu6OjZqUcp68NnFLnqQU5RexygFoDy1EW+ccOYcPfmHg==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+    dev: false
+
   /has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
@@ -680,6 +739,10 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  /nullthrows@1.1.1:
+    resolution: {integrity: sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==}
+    dev: false
 
   /once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
@@ -834,6 +897,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
+
+  /vscode-languageserver-types@3.17.3:
+    resolution: {integrity: sha512-SYU4z1dL0PyIMd4Vj8YOqFvHu7Hz/enbWtpfnVbJHU4Nd1YNYx8u0ennumc6h48GQNeOLxmwySmnADouT/AuZA==}
+    dev: false
 
   /w3c-keyname@2.2.7:
     resolution: {integrity: sha512-XB8aa62d4rrVfoZYQaYNy3fy+z4nrfy2ooea3/0BnBzXW0tSdZ+lRgjzBZhk0La0H6h8fVyYCxx/qkQcAIuvfg==}

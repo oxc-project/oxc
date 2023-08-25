@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/browserField.test.js>
 
-use std::path::PathBuf;
-
-use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("browser-module")
-}
+use crate::{ResolveError, ResolveOptions, Resolver};
 
 #[test]
 fn ignore() {
-    let f = fixture();
+    let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into(), "innerBrowser1".into(), "innerBrowser2".into()],
@@ -27,17 +21,19 @@ fn ignore() {
 
     for (path, request, expected) in data {
         let resolution = resolver.resolve(&path, request);
-        let expected = ResolveError::Ignored(expected.into());
+        let expected = ResolveError::Ignored(expected);
         assert_eq!(resolution, Err(expected), "{path:?} {request}");
     }
 }
 
 #[test]
 fn replace_file() {
-    let f = fixture();
+    let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into()],
+        // Not part of enhanced-resolve. Added to make sure no interaction between these two fields.
+        main_fields: vec!["browser".into()],
         ..ResolveOptions::default()
     });
 
@@ -56,10 +52,12 @@ fn replace_file() {
         // TODO: resolve `innerBrowser2` field in `browser-module/pakckage.json`
         // ("should resolve in nested property 2", f.clone(), "./lib/main2.js", f.join("lib/browser.js")),
         ("should check only alias field properties", f.clone(), "./toString", f.join("lib/toString.js")),
+        // not part of enhanced-resolve
+        ("recursion", f.clone(), "module-c", f.join("node_modules/module-c.js")),
     ];
 
     for (comment, path, request, expected) in data {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }

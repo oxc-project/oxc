@@ -8,7 +8,6 @@ edition = "2018"
 cargo-fuzz = true
 
 [dependencies]
-oxc_ast       = { path = "../../oxc_ast" }
 oxc_allocator = { path = "../../oxc_allocator" }
 libfuzzer-sys = "0.4"
 

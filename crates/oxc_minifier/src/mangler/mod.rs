@@ -90,7 +90,12 @@ impl<'a> Visit<'a> for ManglerBuilder<'a> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
-        let reference = Reference::new(ident.span, ident.name.clone(), ReferenceFlag::read());
+        let reference = Reference::new(
+            ident.span,
+            ident.name.clone(),
+            self.semantic.current_node_id,
+            ReferenceFlag::read(),
+        );
         let reference_id = self.semantic.declare_reference(reference);
         ident.reference_id.replace(reference_id);
     }

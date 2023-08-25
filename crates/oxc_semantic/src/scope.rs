@@ -87,6 +87,12 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, Atom)> + '_ {
+        self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
+            bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name.clone()))
+        })
+    }
+
     pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
         &mut self.bindings[scope_id]
     }

@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use crate::{Resolution, ResolveOptions, Resolver};
+use crate::{ResolveOptions, Resolver};
 
 #[test]
 fn resolve() {
@@ -37,20 +37,22 @@ fn resolve() {
         ("find node_modules outside of node_modules", f.join("browser-module/node_modules"), "m1/a", f.join("node_modules/m1/a.js")),
         ("don't crash on main field pointing to self", f.clone(), "./main-field-self", f.join("./main-field-self/index.js")),
         ("don't crash on main field pointing to self (2)", f.clone(), "./main-field-self2", f.join("./main-field-self2/index.js")),
-        // ("handle fragment edge case (no fragment)", f.clone(), "./no#fragment/#/#", f.join("no\0#fragment/\0#/\0#.js")),
-        // ("handle fragment edge case (fragment)", f.clone(), "./no#fragment/#/", f.join("no.js#fragment/#/")),
-        // ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no\0#fragment/\0#\0#.js#fragment")),
+        // enhanced-resolve has `#` prepended with a `\0`, they are removed from the
+        // following 3 expected test results.
+        // See https://github.com/webpack/enhanced-resolve#escaping
+        ("handle fragment edge case (no fragment)", f.clone(), "./no#fragment/#/#", f.join("no#fragment/#/#.js")),
+        ("handle fragment edge case (fragment)", f.clone(), "./no#fragment/#/", f.join("no.js#fragment/#/")),
+        ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no#fragment/#/#.js#fragment")),
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }
 
-#[test]
-#[ignore = "issue238Resolve"]
-fn issue238_resolve() {}
+// #[test]
+// fn issue238_resolve() {}
 
 #[test]
 fn prefer_relative() {
@@ -66,27 +68,27 @@ fn prefer_relative() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
     }
 }
 
 #[test]
-#[ignore = "add resolveToContext option"]
 fn resolve_context() {
     let f = super::fixture();
-    let resolver = Resolver::default();
+    let resolver =
+        Resolver::new(ResolveOptions { resolve_to_context: true, ..ResolveOptions::default() });
 
     #[rustfmt::skip]
     let data = [
         ("context for fixtures", f.clone(), "./", f.clone()),
         ("context for fixtures/lib", f.clone(), "./lib", f.join("lib")),
         ("context for fixtures with ..", f.clone(), "./lib/../../fixtures/./lib/..", f.clone()),
-        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("?query")),
+        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("fixtures?query")),
     ];
 
     for (comment, path, request, expected) in data {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }

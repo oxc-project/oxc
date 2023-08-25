@@ -41,7 +41,7 @@ declare_oxc_lint!(
 impl Rule for BadMinMaxFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
-            return ;
+            return;
         };
 
         if let Some((out_min_max, inner_exprs)) = Self::min_max(call_expr) {
