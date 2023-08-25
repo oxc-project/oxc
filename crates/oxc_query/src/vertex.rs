@@ -956,9 +956,9 @@ pub struct SpreadVertex<'a> {
 impl<'a> Typename for SpreadVertex<'a> {
     fn typename(&self) -> &'static str {
         if self.ast_node.is_some() {
-            "SpreadIntoObjectAST"
+            "SpreadAST"
         } else {
-            "SpreadIntoObject"
+            "Spread"
         }
     }
 }
