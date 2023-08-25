@@ -19,9 +19,10 @@ pub struct ResolveOptions {
 
     /// A list of alias fields in description files.
     /// Specify a field, such as `browser`, to be parsed according to [this specification](https://github.com/defunctzombie/package-browser-field-spec).
+    /// Can be a path to json object such as `["path", "to", "exports"]`.
     ///
     /// Default `[]`
-    pub alias_fields: Vec<String>,
+    pub alias_fields: Vec<Vec<String>>,
 
     /// Condition names for exports field which defines entry points of a package.
     /// The key order in the exports field is significant. During condition matching, earlier entries have higher priority and take precedence over later entries.
@@ -295,7 +296,7 @@ mod test {
         let options = ResolveOptions {
             tsconfig: Some(PathBuf::from("tsconfig.json")),
             alias: vec![("a".into(), vec![AliasValue::Ignore])],
-            alias_fields: vec!["browser".into()],
+            alias_fields: vec![vec!["browser".into()]],
             condition_names: vec!["require".into()],
             enforce_extension: EnforceExtension::Enabled,
             extension_alias: vec![(".js".into(), vec![".ts".into()])],
@@ -310,7 +311,7 @@ mod test {
             ..ResolveOptions::default()
         };
 
-        let expected = r#"tsconfig:"tsconfig.json",alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
+        let expected = r#"tsconfig:"tsconfig.json",alias:[("a", [Ignore])],alias_fields:[["browser"]],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
         assert_eq!(format!("{options}"), expected);
     }
 }

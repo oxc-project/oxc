@@ -62,7 +62,7 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
     use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
     Resolver::new(ResolveOptions {
         alias: vec![("/absolute/path".into(), vec![AliasValue::Path("./".into())])],
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
             (".mjs".into(), vec![".mts".into()]),
