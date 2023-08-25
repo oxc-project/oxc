@@ -13,7 +13,7 @@ categories.workspace   = true
 
 [dependencies]
 thiserror = { workspace = true }
-miette    = { workspace = true }
+miette    = { workspace = true, features = ["fancy"] }
 
 unicode-width = "0.1.10"
 owo-colors    = { version = "3.5.0" }
