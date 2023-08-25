@@ -192,7 +192,10 @@ fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&
     for (_, parent) in
         ctx.nodes().iter_parents(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
     {
-        if let AstKind::Argument(_) | AstKind::ParenthesizedExpression(_) = parent.kind() {
+        if let AstKind::Argument(_)
+        | AstKind::ParenthesizedExpression(_)
+        | AstKind::ChainExpression(_) = parent.kind()
+        {
             continue;
         }
 
