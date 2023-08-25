@@ -26,11 +26,13 @@ impl Walk {
             if !options.ignore_pattern.is_empty() {
                 let mut override_builder = OverrideBuilder::new(Path::new("/"));
                 for pattern in &options.ignore_pattern {
-                    // TODO: check this command arg parser
-                    override_builder.add(pattern).unwrap();
+                    // Meaning of ignore pattern is reversed
+                    // <https://docs.rs/ignore/latest/ignore/overrides/struct.OverrideBuilder.html#method.add>
+                    let pattern = format!("!{pattern}");
+                    override_builder.add(&pattern).unwrap();
                 }
-                let r#override = override_builder.build().unwrap();
-                inner.overrides(r#override);
+                let overrides = override_builder.build().unwrap();
+                inner.overrides(overrides);
             }
         }
         // Turning off `follow_links` because:
