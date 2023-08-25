@@ -1,3 +1,5 @@
+# Note: macos-latest is too unstable to be useful for benchmark, the variance is always huge.
+
 name: Benchmark
 
 on:
@@ -24,80 +26,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  benchmark:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest] # `macos-latest` is too unstable to be useful for benchmark, the variance is always huge.
-    name: Run benchmark on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout Main Branch
-        uses: actions/checkout@v3
-        with:
-          ref: main # Checkout main first because the cache is warm
+  benchmark_ubuntu:
+    name: Benchmark Linux
+    uses: ./.github/workflows/reusable_benchmark.yml
+    with:
+      os: ubuntu-latest
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: benchmark
+  benchmark_windows:
+    name: Benchmark Windows
+    uses: ./.github/workflows/reusable_benchmark.yml
+    with:
+      os: windows-latest
 
-      - name: Compile
-        run: cargo build --release -p oxc_benchmark
-
-      - name: Sleep for CPU cooldown (windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: Start-Sleep -s 15
-
-      - name: Sleep for CPU cooldown
-        if: runner.os != 'Windows'
-        shell: bash
-        run: sleep 15s
-
-      - name: Run Bench on Main Branch
-        run: cargo benchmark --save-baseline main
-
-      - name: Checkout PR Branch
-        uses: actions/checkout@v3
-        with:
-          clean: false
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Compile
-        run: cargo build --release -p oxc_benchmark
-
-      - name: Sleep for CPU cooldown (windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: Start-Sleep -s 15
-
-      - name: Sleep for CPU cooldown
-        if: runner.os != 'Windows'
-        shell: bash
-        run: sleep 15s
-
-      - name: Run Bench on PR Branch
-        run: cargo benchmark --save-baseline pr
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
-        with:
-          name: benchmark-results-${{ matrix.os }}
-          path: ./target/criterion
-
-  benchmark-compare:
+  compare:
     runs-on: ubuntu-latest
     name: Compare Benchmarks
-    needs:
-      - benchmark
-
+    needs: [benchmark_ubuntu, benchmark_windows]
     steps:
       - name: Install critcmp
         uses: taiki-e/install-action@v2
         with:
           tool: critcmp
 
-      - name: Linux | Download PR benchmark results
+      - name: Linux | Download benchmark results
         uses: actions/download-artifact@v3
         with:
           name: benchmark-results-ubuntu-latest
