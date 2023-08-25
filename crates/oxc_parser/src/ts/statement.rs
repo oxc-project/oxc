@@ -30,7 +30,7 @@ impl<'a> Parser<'a> {
         span: Span,
         modifiers: Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
-        self.expect(Kind::Enum)?;
+        self.bump_any(); // bump `enum`
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;

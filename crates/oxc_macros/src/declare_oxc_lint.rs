@@ -6,20 +6,6 @@ use syn::{
     Attribute, Error, Ident, Lit, LitStr, Meta, Result, Token,
 };
 
-fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
-    if let Meta::NameValue(name_value) = attr.parse_meta().ok()? {
-        let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
-
-        if itertools::equal(path_idents, path) {
-            if let Lit::Str(lit) = name_value.lit {
-                return Some(lit);
-            }
-        }
-    }
-
-    None
-}
-
 pub struct LintRuleMeta {
     name: Ident,
     category: Ident,
@@ -89,4 +75,17 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     };
 
     output
+}
+
+fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
+    if let Meta::NameValue(name_value) = attr.parse_meta().ok()? {
+        let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
+
+        if itertools::equal(path_idents, path) {
+            if let Lit::Str(lit) = name_value.lit {
+                return Some(lit);
+            }
+        }
+    }
+    unreachable!()
 }
