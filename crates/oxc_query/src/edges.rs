@@ -26,12 +26,12 @@ pub(super) fn resolve_array_edge<'a, 'b: 'a>(
 }
 
 mod array {
+    use std::convert::Into;
+
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
     };
-
-    use crate::vertex::{ArrayElementVertex, ElidedArrayElementVertex, SpreadArrayElementVertex};
 
     use super::super::vertex::Vertex;
 
@@ -48,29 +48,60 @@ mod array {
                     .array_expression
                     .elements
                     .iter()
-                    .map(|x| match x {
-                        oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
-                            Vertex::SpreadArrayElement(
-                                SpreadArrayElementVertex {
-                                    ast_node: None,
-                                    spread: &spread.argument,
-                                }
-                                .into(),
-                            )
-                        }
-                        oxc_ast::ast::ArrayExpressionElement::Elision(span) => {
-                            Vertex::ElidedArrayElement(
-                                ElidedArrayElementVertex { ast_node: None, span: *span }.into(),
-                            )
-                        }
-                        oxc_ast::ast::ArrayExpressionElement::Expression(_) => {
-                            Vertex::ArrayElement(
-                                ArrayElementVertex { array_expression_element: x, ast_node: None }
-                                    .into(),
-                            )
-                        }
-                    }),
+                    .map(Into::into),
             )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_expression_array_element_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => expression_array_element::span(contexts, resolve_info),
+        "expression" => expression_array_element::expression(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'ExpressionArrayElement'")
+        }
+    }
+}
+
+mod expression_array_element {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn expression<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (v.as_expression_array_element()
+                    .unwrap_or_else(|| {
+                        panic!(
+                        "expected to have an expression_array_element vertex, instead have: {v:#?}"
+                    )
+                    })
+                    .expression)
+                    .into(),
+            ))
         })
     }
 
@@ -87,14 +118,13 @@ pub(super) fn resolve_array_element_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
-    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => array_element::span(contexts, resolve_info),
-        "ancestor" => ancestors(contexts, adapter),
-        "parent" => parents(contexts, adapter),
         _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Array'")
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ArrayElement'"
+            )
         }
     }
 }

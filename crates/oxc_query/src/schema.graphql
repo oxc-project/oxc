@@ -288,6 +288,18 @@ type SpreadArrayElementAST implements ArrayElement & HasSpan & SpreadArrayElemen
   span: Span!
 }
 
+interface ExpressionArrayElement implements ArrayElement & HasSpan {
+  expression: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type ExpressionArrayElementAST implements ArrayElement & HasSpan & ExpressionArrayElement {
+  expression: Expression!
+  # HasSpan
+  span: Span!
+}
+
 """
 The element in this array would be elided: [,]
 The element in the middle of this array is elided: [1,,3]
@@ -307,14 +319,6 @@ type ElidedArrayElementAST implements ArrayElement & HasSpan & ElidedArrayElemen
 }
 
 interface ArrayElement implements HasSpan {
-  # HasSpan
-  span: Span!
-}
-
-type ArrayElementAST implements HasSpan & ASTNode {
-  # ASTNode
-  parent: ASTNode
-  ancestor: [ASTNode!]!
   # HasSpan
   span: Span!
 }
