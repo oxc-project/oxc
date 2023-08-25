@@ -1,0 +1,152 @@
+name: "unicorn:throw-new-error:throw-fncall-on-ident"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on ThrowAST {
+          to_throw @fold @transform(op: "count") @filter(op: "!=", value: ["$zero"]) {
+            strip_parens {
+              ... on FnCall {
+                callee {
+                  strip_parens {
+                    ... on VarRef {
+                      name @filter(op: "regex", value: ["$allow_throws_from_these_fn_calls"])
+                    }
+                  }
+                }
+              }
+            }
+          }
+          span_: span { start @output end @output }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  allow_throws_from_these_fn_calls: "^(?:[A-Z][\\da-z]*)*Error$"
+
+summary: Prefer new'ing errors
+reason: While it's possible to create a new error without using the new keyword, it's better to be explicit.
+
+tests:
+  pass:
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new Error()
+  - relative_path:
+      - "index.ts"
+    code: |
+      new Error()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new TypeError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new EvalError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new RangeError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new ReferenceError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new SyntaxError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new URIError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new CustomError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new FooBarBazError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw new ABCError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw getError()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw CustomError
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw getErrorConstructor()()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw lib[Error]()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw lib["Error"]()
+  - relative_path:
+      - "index.ts"
+    code: |
+      throw lib.getError()
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw Error()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw (Error)()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw Error('foo')
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw CustomError('foo')
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw FooBarBazError('foo')
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw ABCError('foo')
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw TypeError()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw RangeError()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw ReferenceError()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw SyntaxError()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw URIError()
+    - relative_path:
+        - "index.ts"
+      code: |
+        throw (( URIError() ))

@@ -1,0 +1,157 @@
+name: "unicorn:prefer-set-size:direct"
+# This rule checks for the direct use of spreading a set into an array to use .length, it will not handle previously declared sets
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on DotPropertyAST {
+          span_: span {
+            str @filter(op: "not_has_substring", value: ["$questionmark"])
+            start @output
+            end @output
+          }
+          accessed_property {
+            name @filter(op: "=", value: ["$length"])
+          }
+          called_on {
+            strip_parens {
+              ... on Array {
+                element @fold @transform(op: "count") @filter(op: "=", value: ["$one"])
+                element {
+                  ... on Spread {
+                    expression {
+                      strip_parens {
+                        ... on New {
+                          callee {
+                            strip_parens {
+                              ... on VarRef {
+                                name @filter(op: "=", value: ["$set"])
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  length: "length"
+  set: "Set"
+  one: 1
+  questionmark: "?"
+
+summary: Prefer Set#size over spreading then Array#length
+reason: Prefer using Set#size directly instead of first converting it to an array and then using its .length property.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        new Set(foo).size
+    - relative_path:
+        - "index.ts"
+      code: |
+        for (const foo of bar) console.log([...foo].length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array), foo].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [foo, ...new Set(array), ].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array)].notLength
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array)]?.length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array)][length]
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array)]["length"]
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new NotSet(array)].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...Set(array)].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo = new NotSet([]);[...foo].length;
+    - relative_path:
+        - "index.ts"
+      code: |
+        let foo = new Set([]);[...foo].length;
+    - relative_path:
+        - "index.ts"
+      code: |
+        const {foo} = new Set([]);[...foo].length;
+    - relative_path:
+        - "index.ts"
+      code: |
+        const [foo] = new Set([]);[...foo].length;
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...foo].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        var foo = new Set(); var foo = new Set(); [...foo].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [,].length
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array)].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        function isUnique(array) { return[...new Set(array)].length === array.length }
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new Set(array),].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...(( new Set(array) ))].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        (( [...new Set(array)] )).length
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo;[...new Set(array)].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [/* comment */...new Set(array)].length
+    - relative_path:
+        - "index.ts"
+      code: |
+        [...new /* comment */ Set(array)].length

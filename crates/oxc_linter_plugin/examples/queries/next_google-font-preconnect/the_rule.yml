@@ -1,0 +1,74 @@
+name: "next:google-font-preconnect:rule"
+
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$link"])
+
+          span_: span {
+            start @output
+            end @output
+          }
+
+          attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$rel"])
+            value_as_constant_string @filter(op: "=", value: ["$preconnect"])
+          }
+
+          attribute {
+            name @output @filter(op: "=", value: ["$href"])
+            value_as_constant_string @output @filter(op: "has_prefix", value: ["$href_value_start"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  link: "link"
+  href: "href"
+  rel: "rel"
+  preconnect: "preconnect"
+  href_value_start: "https://fonts.gstatic.com"
+
+summary: "Add `rel=\"preconnect\"`"
+reason: "Adding preconnect is recommended to initiate an early connection to the origin."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        export const Test = () => (
+          <div>
+            <link rel="preconnect" href="https://fonts.gstatic.com"/>
+            <link
+              href={process.env.NEXT_PUBLIC_CANONICAL_URL}
+              rel="canonical"
+            />
+            <link
+              href={new URL("../public/favicon.ico", import.meta.url).toString()}
+              rel="icon"
+            />
+          </div>
+        )
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        export const Test = () => (
+          <div>
+            <link href="https://fonts.gstatic.com"/>
+          </div>
+        )
+    - relative_path:
+        - "index.tsx"
+      code: |
+        export const Test = () => (
+          <div>
+            <link rel="preload" href="https://fonts.gstatic.com"/>
+          </div>
+        )

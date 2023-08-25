@@ -1,0 +1,34 @@
+name: "eslint-no-extra-boolean-cast:unnecessary-boolean-ctor"
+
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          span { str @filter(op: "=", value: ["$BigInt"]) }
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  BigInt: "BigInt"
+
+summary: Prefer bigint type over BigInt type
+reason: BigInt is a constructor function, bigint is a primitive type
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: bigint = 10n;
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: BigInt = 10n;

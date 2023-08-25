@@ -1,0 +1,157 @@
+name: "next:no-duplicate-head:rule"
+
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashdocument"])
+
+        default_import {
+          local_name @tag(name: "default_imported_class_name")
+        }
+      }
+
+      ast_node {
+        ... on ReturnAST {
+          ancestor {
+            ... on ClassAST {
+              extended_class_name @filter(op: "=", value: ["%default_imported_class_name"])
+            }
+          }
+
+          expression {
+            strip_parens {
+              ... on JSXElement {
+                # Select a `Head` element.
+                child_element {
+                  opening_element {
+                    name @filter(op: "=", value: ["$Head"])
+                    span_: span {
+                      start @tag
+                    }
+                  }
+                }
+
+                # Ensure that selected `Head` element is the earliest one.
+                # This is so that if there are e.g. 3 such elements,
+                # we don't report the combo of the second and third as an additional violation.
+                child_element @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+                  opening_element {
+                    name @filter(op: "=", value: ["$Head"])
+                    span_: span {
+                      start @filter(op: "<", value: ["%start"])
+                    }
+                  }
+                }
+
+                # Ensure there are more `Head` elements after the selected one.
+                child_element @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+                  opening_element {
+                    name @filter(op: "=", value: ["$Head"])
+                    span_: span {
+                      start @output @filter(op: ">", value: ["%start"])
+                      end @output
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  nextslashdocument: "next/document"
+  Head: "Head"
+
+summary: "Do not include multiple instances of `<Head/>`."
+reason: "This can cause unexpected behavior in your application."
+
+tests:
+  pass:
+    - relative_path:
+        - "pages"
+        - "_document.tsx"
+
+      code: |
+        import Document, { Html, Head, Main, NextScript } from 'next/document'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <meta charSet="utf-8" />
+                  <link
+                    href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+                    rel="stylesheet"
+                  />
+                </Head>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+
+  fail:
+    - relative_path:
+        - "pages"
+        - "_document.js"
+
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Head from 'next/head'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head />
+                <Head />
+                <Head />
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - relative_path:
+        - "pages"
+        - "_document.page.tsx"
+
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Head from 'next/head'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <meta charSet="utf-8" />
+                  <link
+                    href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+                    rel="stylesheet"
+                  />
+                </Head>
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+                <Head>
+                  <script
+                    dangerouslySetInnerHTML={{
+                      __html: '',
+                    }}
+                  />
+                </Head>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument

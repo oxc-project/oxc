@@ -1,0 +1,193 @@
+name: "unicorn:require-array-join-separator:arraydotjoindotcall"
+
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on FnCallAST {
+          callee {
+            ... on DotProperty {
+              accessed_property { name @filter(op: "=", value: ["$call"]) }
+              called_on {
+                ... on DotProperty {
+                  accessed_property {
+                    name @filter(op: "=", value: ["$join"])
+                  }
+                  called_on {
+                    ... on Array {
+                      element @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
+                    }
+                  }
+                }
+              }
+            }
+          }
+          argument @fold @transform(op: "count") @filter(op: "=", value: ["$one"])
+          argument {
+            value {
+              ... on VarRef {
+                __typename # don't need
+              }
+            }
+          }
+          span_: span {
+            str @filter(op: "not_has_substring", value: ["$questionmark"])  # should be just checking for ChainExpression when that's added
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+
+args:
+  call: "call"
+  join: "join"
+  zero: 0
+  one: 1
+  questionmark: "?"
+
+summary: Add an argument for the separator
+reason: It's better to make it clear what the separator is when calling Array#join(), instead of relying on the default comma (',') separator.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.join(",")
+    - relative_path:
+        - "index.ts"
+      code: |
+        join()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.join(...[])
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.join?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.join?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo[join]()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo["join"]()
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call(foo, ",")
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call()
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call(...[foo])
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join?.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        []?.join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join[call](foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [][join].call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [,].join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.notCall(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].notJoin.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join.call(foo, "")
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join.call()
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join.call(...[foo])
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join?.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype?.join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array?.prototype.join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join[call](foo, "")
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype[join].call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array[prototype].join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.join.notCall(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.notJoin.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.notPrototype.join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        NotArray.prototype.join.call(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        path.join(__dirname, "./foo.js")
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call(foo);
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call(foo,);
+    - relative_path:
+        - "index.ts"
+      code: |
+        [].join.call(foo , );
