@@ -187,8 +187,9 @@ pub struct CheckOptions {
     #[bpaf(positional("PATH"))]
     pub path: PathBuf,
 }
-#[cfg(all(test, not(target_os = "windows")))] // windows binary has an`.exe` extension, which
-                                              // invalidates the snapshots
+
+// windows binary has an`.exe` extension, which invalidates the snapshots
+#[cfg(all(test, not(target_os = "windows")))]
 mod snapshot {
     use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
     use std::process::Command;
