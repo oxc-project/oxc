@@ -7,7 +7,7 @@ fn scoped_packages() {
     let f = super::fixture().join("scoped");
 
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         ..ResolveOptions::default()
     });
 

@@ -50,7 +50,7 @@ Crossed out test files are irrelevant.
 - [x] ~CachedInputFileSystem.test.js~
 - [x] ~SyncAsyncFileSystemDecorator.test.js~
 - [x] alias.test.js
-- [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
+- [x] browserField.test.js
 - [ ] dependencies.test.js
 - [x] exportsField.test.js
 - [x] extension-alias.test.js
