@@ -68,7 +68,9 @@ fn check(ctx: &LintContext<'_>, start: u32, offsets: &[usize]) {
     for offset in offsets {
         let offset = start as usize + offset;
         let c = source_text[offset..].chars().next().unwrap();
-        ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset as u32, offset as u32)));
+        let offset = offset as u32;
+        let len = c.len_utf8() as u32;
+        ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset - 1, offset + len)));
     }
 }
 
