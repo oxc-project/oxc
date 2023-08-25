@@ -84,3 +84,52 @@ impl Runner for LintRunner {
         }
     }
 }
+
+#[cfg(all(test, not(target_os = "windows")))]
+mod test {
+    use super::LintRunner;
+    use crate::{lint_command, CliRunResult, Runner};
+
+    fn test(args: &[&str]) -> CliRunResult {
+        let options = lint_command().run_inner(args).unwrap().lint_options;
+        LintRunner::new(options).run()
+    }
+
+    #[test]
+    fn dir() {
+        let args = &["--quiet", "fixtures"];
+        let CliRunResult::LintResult {
+            number_of_rules,
+            number_of_files,
+            number_of_warnings,
+            number_of_errors,
+            ..
+        } = test(args)
+        else {
+            unreachable!()
+        };
+        assert!(number_of_rules > 0);
+        assert_eq!(number_of_files, 1);
+        assert_eq!(number_of_warnings, 1);
+        assert_eq!(number_of_errors, 0);
+    }
+
+    #[test]
+    fn file() {
+        let args = &["--quiet", "fixtures/debugger.js"];
+        let CliRunResult::LintResult {
+            number_of_rules,
+            number_of_files,
+            number_of_warnings,
+            number_of_errors,
+            ..
+        } = test(args)
+        else {
+            unreachable!()
+        };
+        assert!(number_of_rules > 0);
+        assert_eq!(number_of_files, 1);
+        assert_eq!(number_of_warnings, 1);
+        assert_eq!(number_of_errors, 0);
+    }
+}
