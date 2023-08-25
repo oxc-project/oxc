@@ -23,6 +23,7 @@ use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
+    fixer::Fix,
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
     service::{LintService, PathWork},

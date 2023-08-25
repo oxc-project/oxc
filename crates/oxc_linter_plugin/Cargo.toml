@@ -1,0 +1,31 @@
+[package]
+name                   = "oxc_linter_plugin"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
+
+[dependencies]
+oxc_span        = { workspace = true }
+oxc_query       = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_semantic    = { workspace = true }
+oxc_linter      = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_allocator   = { workspace = true }
+ignore          = { workspace = true }
+
+serde     = { workspace = true, features = ["derive"] }
+trustfall = { workspace = true }
+
+mini-v8        = { git = "https://github.com/u9g/mini-v8" }
+serde_yaml     = "0.9.22"
+located_yaml   = "0.2.1"
+path-calculate = "0.1.3"
