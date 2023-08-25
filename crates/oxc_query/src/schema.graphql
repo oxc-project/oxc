@@ -276,6 +276,18 @@ type JSXText {
   span: Span!
 }
 
+interface SpreadArrayElement implements ArrayElement & HasSpan {
+  spread: Expression!
+  # HasSpan
+  span: Span!
+}
+
+type SpreadArrayElementAST implements ArrayElement & HasSpan & SpreadArrayElement {
+  spread: Expression!
+  # HasSpan
+  span: Span!
+}
+
 """
 The element in this array would be elided: [,]
 The element in the middle of this array is elided: [1,,3]

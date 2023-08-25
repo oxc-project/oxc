@@ -31,7 +31,7 @@ mod array {
         VertexIterator,
     };
 
-    use crate::vertex::ArrayElementVertex;
+    use crate::vertex::{ArrayElementVertex, ElidedArrayElementVertex, SpreadArrayElementVertex};
 
     use super::super::vertex::Vertex;
 
@@ -3068,6 +3068,55 @@ mod specific_import {
     };
 
     use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_spread_array_element_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => spread_array_element::span(contexts, resolve_info),
+        "spread" => spread_array_element::spread(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'SpreadArrayElement'"
+            )
+        }
+    }
+}
+
+mod spread_array_element {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn spread<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (v.as_spread_array_element()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a spreadarrayelement vertex, instead have: {v:#?}")
+                    })
+                    .spread)
+                    .into(),
+            ))
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,

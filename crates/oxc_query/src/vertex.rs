@@ -80,6 +80,7 @@ pub enum Vertex<'a> {
     RegExpLiteral(Rc<RegExpLiteralVertex<'a>>),
     ParenthesizedExpression(Rc<ParenthesizedExpressionVertex<'a>>),
     ElidedArrayElement(Rc<ElidedArrayElementVertex<'a>>),
+    SpreadArrayElement(Rc<SpreadArrayElementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -144,6 +145,7 @@ impl<'a> Vertex<'a> {
             Self::RegExpLiteral(data) => data.regexp.span,
             Self::ParenthesizedExpression(data) => data.parenthesized_expression.span,
             Self::ElidedArrayElement(data) => data.span,
+            Self::SpreadArrayElement(data) => data.spread.span(),
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -200,6 +202,7 @@ impl<'a> Vertex<'a> {
             Vertex::RegExpLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ParenthesizedExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::ElidedArrayElement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::SpreadArrayElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -313,6 +316,7 @@ impl<'a> Vertex<'a> {
             Vertex::ASTNode(..)
             | Vertex::AssignmentType(..)
             | Vertex::ElidedArrayElement(..)
+            | Vertex::SpreadArrayElement(..)
             | Vertex::Class(..)
             | Vertex::ClassMethod(..)
             | Vertex::ClassProperty(..)
@@ -424,6 +428,7 @@ impl Typename for Vertex<'_> {
             Vertex::RegExpLiteral(data) => data.typename(),
             Vertex::ParenthesizedExpression(data) => data.typename(),
             Vertex::ElidedArrayElement(data) => data.typename(),
+            Vertex::SpreadArrayElement(data) => data.typename(),
         }
     }
 }
@@ -1422,6 +1427,23 @@ impl<'a> Typename for ElidedArrayElementVertex<'a> {
             "ElidedArrayElementAST"
         } else {
             "ElidedArrayElement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct SpreadArrayElementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub spread: &'a Expression<'a>,
+}
+
+impl<'a> Typename for SpreadArrayElementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "SpreadArrayElementAST"
+        } else {
+            "SpreadArrayElement"
         }
     }
 }
