@@ -9,7 +9,7 @@ use std::{
 use oxc_diagnostics::DiagnosticService;
 use oxc_linter::{LintOptions, LintService, Linter, PathWork};
 
-use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Runner};
+use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, LintResult, Runner};
 
 pub struct LintRunner {
     options: CliLintOptions,
@@ -74,62 +74,73 @@ impl Runner for LintRunner {
         diagnostic_service.run();
         linter.print_execution_times_if_enable();
 
-        CliRunResult::LintResult {
+        CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
             number_of_rules: linter.number_of_rules(),
             number_of_files: number_of_files.load(Ordering::SeqCst),
             number_of_warnings: diagnostic_service.warnings_count(),
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
-        }
+        })
     }
 }
 
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
     use super::LintRunner;
-    use crate::{lint_command, CliRunResult, Runner};
+    use crate::{lint_command, CliRunResult, LintResult, Runner};
 
-    fn test(args: &[&str]) -> CliRunResult {
+    fn test(args: &[&str]) -> LintResult {
         let options = lint_command().run_inner(args).unwrap().lint_options;
-        LintRunner::new(options).run()
+        let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
+            unreachable!()
+        };
+        lint_result
     }
 
     #[test]
     fn dir() {
         let args = &["--quiet", "fixtures"];
-        let CliRunResult::LintResult {
-            number_of_rules,
-            number_of_files,
-            number_of_warnings,
-            number_of_errors,
-            ..
-        } = test(args)
-        else {
-            unreachable!()
-        };
-        assert!(number_of_rules > 0);
-        assert_eq!(number_of_files, 1);
-        assert_eq!(number_of_warnings, 1);
-        assert_eq!(number_of_errors, 0);
+        let result = test(args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]
     fn file() {
         let args = &["--quiet", "fixtures/debugger.js"];
-        let CliRunResult::LintResult {
-            number_of_rules,
-            number_of_files,
-            number_of_warnings,
-            number_of_errors,
-            ..
-        } = test(args)
-        else {
-            unreachable!()
-        };
-        assert!(number_of_rules > 0);
-        assert_eq!(number_of_files, 1);
-        assert_eq!(number_of_warnings, 1);
-        assert_eq!(number_of_errors, 0);
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn multi_files() {
+        let args = &["--quiet", "fixtures/debugger.js", "fixtures/nan.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn wrong_extension() {
+        let args = &["--quiet", "foo.asdf"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn ignore_pattern() {
+        let args = &["--quiet", "--ignore-pattern", "**/*.js", "fixtures"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
     }
 }
