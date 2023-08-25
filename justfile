@@ -19,6 +19,7 @@ ready:
   typos
   cargo fmt
   just check
+  cargo build -p oxc_cli --bin oxlint # for cli snapshots
   just test
   just lint
   git status

@@ -951,9 +951,21 @@ dependencies = [
  "globset",
  "lazy_static",
  "linked-hash-map",
+ "serde",
  "similar",
  "walkdir",
  "yaml-rust",
+]
+
+[[package]]
+name = "insta-cmd"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48dee4ceca7bb4634484c679a445b96d1cf1e454b956540ce18dba18e922d8d0"
+dependencies = [
+ "insta",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1500,6 +1512,7 @@ dependencies = [
  "bpaf",
  "codespan-reporting",
  "ignore",
+ "insta-cmd",
  "jemallocator",
  "miette",
  "mimalloc",
