@@ -1,15 +1,11 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 mod test_file;
 
 pub use self::test_file::*;
 
 /// # Panics
-///
-/// * Invalid current_dir
+/// Invalid Project Root
 pub fn project_root() -> PathBuf {
-    project_root::get_project_root().unwrap_or_else(|e| {
-        eprintln!("Using current working directory because {e}");
-        env::current_dir().unwrap()
-    })
+    project_root::get_project_root().unwrap()
 }
