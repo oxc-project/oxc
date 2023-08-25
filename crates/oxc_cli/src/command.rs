@@ -187,6 +187,29 @@ pub struct CheckOptions {
     #[bpaf(positional("PATH"))]
     pub path: PathBuf,
 }
+#[cfg(all(test, not(target_os = "windows")))] // windows binary has an`.exe` extension, which
+                                              // invalidates the snapshots
+mod snapshot {
+    use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
+    use std::process::Command;
+
+    fn test(name: &str, args: &[&str]) {
+        let bin = get_cargo_bin("oxlint");
+        let mut command = Command::new(bin);
+        command.args(args);
+        assert_cmd_snapshot!(name, command);
+    }
+
+    #[test]
+    fn default() {
+        test("default", &[]);
+    }
+
+    #[test]
+    fn help_help() {
+        test("help_help", &["--help", "--help"]);
+    }
+}
 
 #[cfg(test)]
 mod misc_options {

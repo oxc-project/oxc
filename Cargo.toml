@@ -86,6 +86,8 @@ stacker            = { version = "0.1.15" }
 tracing            = { version = "0.1" }
 tracing-subscriber = { version = "0.3" }
 trustfall          = { version = "0.6.1" }
+insta              = { version = "1.31.0", features = ["glob"] }
+insta-cmd          = { version = "0.3.0" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
