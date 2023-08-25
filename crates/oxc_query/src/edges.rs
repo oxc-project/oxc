@@ -48,11 +48,27 @@ mod array {
                     .array_expression
                     .elements
                     .iter()
-                    .map(|x| {
-                        Vertex::ArrayElement(
-                            ArrayElementVertex { array_expression_element: x, ast_node: None }
+                    .map(|x| match x {
+                        oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
+                            Vertex::SpreadArrayElement(
+                                SpreadArrayElementVertex {
+                                    ast_node: None,
+                                    spread: &spread.argument,
+                                }
                                 .into(),
-                        )
+                            )
+                        }
+                        oxc_ast::ast::ArrayExpressionElement::Elision(span) => {
+                            Vertex::ElidedArrayElement(
+                                ElidedArrayElementVertex { ast_node: None, span: *span }.into(),
+                            )
+                        }
+                        oxc_ast::ast::ArrayExpressionElement::Expression(_) => {
+                            Vertex::ArrayElement(
+                                ArrayElementVertex { array_expression_element: x, ast_node: None }
+                                    .into(),
+                            )
+                        }
                     }),
             )
         })
