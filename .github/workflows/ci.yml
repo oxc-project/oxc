@@ -133,22 +133,21 @@ jobs:
         run: cargo lint -- -D warnings
 
   ecosystem-test:
-    needs: cache
     name: Testing Linter with VSCode Repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: benchmark
 
       - name: Clone VSCode
         uses: actions/checkout@v3
         with:
           repository: microsoft/vscode
           path: ./vscode
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
 
       - name: Build oxlint
         run: cargo build --release -p oxc_cli --bin oxlint
