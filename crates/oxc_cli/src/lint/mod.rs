@@ -1,5 +1,3 @@
-mod error;
-
 use std::{
     io::BufWriter,
     sync::{
@@ -8,10 +6,7 @@ use std::{
     },
 };
 
-pub use self::error::Error;
-
 use oxc_diagnostics::DiagnosticService;
-use oxc_index::assert_impl_all;
 use oxc_linter::{LintOptions, LintService, Linter, PathWork};
 
 use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Runner};
@@ -19,7 +14,6 @@ use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, Ru
 pub struct LintRunner {
     options: CliLintOptions,
 }
-assert_impl_all!(LintRunner: Send, Sync);
 
 impl Runner for LintRunner {
     type Options = CliLintOptions;
