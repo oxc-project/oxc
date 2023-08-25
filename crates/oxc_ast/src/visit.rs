@@ -530,7 +530,7 @@ pub trait Visit<'a>: Sized {
         self.enter_node(kind);
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => self.visit_spread_element(spread),
-            ArrayExpressionElement::Expression(expr) => self.visit_expression(expr),
+            ArrayExpressionElement::Expression(expr) => self.visit_expression_array_element(expr),
             ArrayExpressionElement::Elision(span) => self.visit_elision(*span),
         }
         self.leave_node(kind);
@@ -550,6 +550,13 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::SpreadElement(elem);
         self.enter_node(kind);
         self.visit_expression(&elem.argument);
+        self.leave_node(kind);
+    }
+
+    fn visit_expression_array_element(&mut self, expr: &'a Expression<'a>) {
+        let kind = AstKind::ExpressionArrayElement(expr);
+        self.enter_node(kind);
+        self.visit_expression(expr);
         self.leave_node(kind);
     }
 
@@ -607,7 +614,10 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_chain_expression(&mut self, expr: &'a ChainExpression<'a>) {
+        let kind = AstKind::ChainExpression(expr);
+        self.enter_node(kind);
         self.visit_chain_element(&expr.expression);
+        self.leave_node(kind);
     }
 
     fn visit_chain_element(&mut self, elem: &'a ChainElement<'a>) {

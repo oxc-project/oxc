@@ -60,6 +60,7 @@ pub enum AstKind<'a> {
     AwaitExpression(&'a AwaitExpression<'a>),
     BinaryExpression(&'a BinaryExpression<'a>),
     CallExpression(&'a CallExpression<'a>),
+    ChainExpression(&'a ChainExpression<'a>),
     ConditionalExpression(&'a ConditionalExpression<'a>),
     LogicalExpression(&'a LogicalExpression<'a>),
     MemberExpression(&'a MemberExpression<'a>),
@@ -81,6 +82,7 @@ pub enum AstKind<'a> {
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
     Elision(Span),
+    ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
     RestElement(&'a RestElement<'a>),
 
@@ -292,6 +294,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::AwaitExpression(x) => x.span,
             Self::BinaryExpression(x) => x.span,
             Self::CallExpression(x) => x.span,
+            Self::ChainExpression(x) => x.span,
             Self::ConditionalExpression(x) => x.span,
             Self::LogicalExpression(x) => x.span,
             Self::MemberExpression(x) => x.span(),
@@ -314,6 +317,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::AssignmentTargetWithDefault(x) => x.span,
             Self::SpreadElement(x) => x.span,
             Self::Elision(span) => *span,
+            Self::ExpressionArrayElement(x) => x.span(),
             Self::RestElement(x) => x.span,
 
             Self::Function(x) => x.span,
@@ -444,6 +448,7 @@ impl<'a> AstKind<'a> {
             Self::AwaitExpression(_) => "AwaitExpression".into(),
             Self::BinaryExpression(b) => format!("BinaryExpression{}", b.operator.as_str()).into(),
             Self::CallExpression(_) => "CallExpression".into(),
+            Self::ChainExpression(_) => "ChainExpression".into(),
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
             Self::LogicalExpression(_) => "LogicalExpression".into(),
             Self::MemberExpression(_) => "MemberExpression".into(),
@@ -466,6 +471,7 @@ impl<'a> AstKind<'a> {
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
+            Self::ExpressionArrayElement(_) => "ExpressionArrayElement".into(),
             Self::RestElement(_) => "RestElement".into(),
 
             Self::Function(x) => format!(
