@@ -1247,6 +1247,10 @@ this will fire once per assignment.
 type VariableDeclarationAST implements VariableDeclaration & ASTNode & HasSpan {
   left: AssignmentType!
   right: Expression
+  """
+  'let' | 'var' | 'const'
+  """
+  kind: String!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

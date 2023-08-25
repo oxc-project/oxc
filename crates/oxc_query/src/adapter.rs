@@ -281,6 +281,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     resolve_info,
                 )
             }
+            "VariableDeclarationAST" | "VariableDeclaration" => {
+                super::properties::resolve_variable_declaration_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "VarRefAST" | "VarRef" => super::properties::resolve_var_ref_property(
                 contexts,
                 property_name.as_ref(),
