@@ -15,7 +15,7 @@ pub(super) fn resolve_array_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => array::span(contexts, resolve_info),
-        "elements" => array::elements(contexts, resolve_info),
+        "element" => array::element(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
@@ -31,11 +31,11 @@ mod array {
         VertexIterator,
     };
 
-    use crate::vertex::ArrayElementVertex;
+    use crate::vertex::{ArrayElementVertex, ElidedArrayElementVertex, SpreadArrayElementVertex};
 
     use super::super::vertex::Vertex;
 
-    pub(super) fn elements<'a, 'b: 'a>(
+    pub(super) fn element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -48,11 +48,27 @@ mod array {
                     .array_expression
                     .elements
                     .iter()
-                    .map(|x| {
-                        Vertex::ArrayElement(
-                            ArrayElementVertex { array_expression_element: x, ast_node: None }
+                    .map(|x| match x {
+                        oxc_ast::ast::ArrayExpressionElement::SpreadElement(spread) => {
+                            Vertex::SpreadArrayElement(
+                                SpreadArrayElementVertex {
+                                    ast_node: None,
+                                    spread: &spread.argument,
+                                }
                                 .into(),
-                        )
+                            )
+                        }
+                        oxc_ast::ast::ArrayExpressionElement::Elision(span) => {
+                            Vertex::ElidedArrayElement(
+                                ElidedArrayElementVertex { ast_node: None, span: *span }.into(),
+                            )
+                        }
+                        oxc_ast::ast::ArrayExpressionElement::Expression(_) => {
+                            Vertex::ArrayElement(
+                                ArrayElementVertex { array_expression_element: x, ast_node: None }
+                                    .into(),
+                            )
+                        }
                     }),
             )
         })
@@ -799,6 +815,37 @@ mod dot_property {
                 .into(),
             )))
         })
+    }
+}
+
+pub(super) fn resolve_elided_array_element_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => elided_array_element::span(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ElidedArrayElement'"
+            )
+        }
+    }
+}
+
+mod elided_array_element {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
     }
 }
 
@@ -3037,6 +3084,55 @@ mod specific_import {
     };
 
     use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
+pub(super) fn resolve_spread_array_element_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => spread_array_element::span(contexts, resolve_info),
+        "spread" => spread_array_element::spread(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'SpreadArrayElement'"
+            )
+        }
+    }
+}
+
+mod spread_array_element {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn spread<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (v.as_spread_array_element()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a spreadarrayelement vertex, instead have: {v:#?}")
+                    })
+                    .spread)
+                    .into(),
+            ))
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
