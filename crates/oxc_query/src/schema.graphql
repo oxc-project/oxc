@@ -276,18 +276,6 @@ type JSXText {
   span: Span!
 }
 
-interface SpreadArrayElement implements ArrayElement & HasSpan {
-  spread: Expression!
-  # HasSpan
-  span: Span!
-}
-
-type SpreadArrayElementAST implements ArrayElement & HasSpan & SpreadArrayElement {
-  spread: Expression!
-  # HasSpan
-  span: Span!
-}
-
 interface ExpressionArrayElement implements ArrayElement & HasSpan {
   expression: Expression!
   # HasSpan
@@ -416,15 +404,21 @@ interface ObjectProperty implements HasSpan {
   span: Span!
 }
 
-interface SpreadIntoObject implements ObjectProperty & HasSpan {
-  value: Expression!
+"""
+Array Spread ([...x]) or Object spread ({...y})
+"""
+interface Spread implements ObjectProperty & ArrayElement & HasSpan {
+  expression: Expression!
 
   # HasSpan
   span: Span!
 }
 
-type SpreadIntoObjectAST implements ASTNode & SpreadIntoObject & ObjectProperty & HasSpan {
-  value: Expression!
+"""
+Array Spread ([...x]) or Object spread ({...y})
+"""
+type SpreadAST implements ASTNode & Spread & ObjectProperty & ArrayElement & HasSpan {
+  expression: Expression!
 
   # ASTNode
   parent: ASTNode

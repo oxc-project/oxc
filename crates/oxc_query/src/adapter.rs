@@ -669,23 +669,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "SpreadArrayElementAST" | "SpreadArrayElement" => {
-                super::edges::resolve_spread_array_element_edge(
-                    contexts,
-                    edge_name.as_ref(),
-                    parameters,
-                    resolve_info,
-                )
-            }
-            "SpreadIntoObjectAST" | "SpreadIntoObject" => {
-                super::edges::resolve_spread_into_object_edge(
-                    contexts,
-                    edge_name.as_ref(),
-                    parameters,
-                    resolve_info,
-                    self,
-                )
-            }
+            "SpreadAST" | "Spread" => super::edges::resolve_spread_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "Statement" => super::edges::resolve_statement_edge(
                 contexts,
                 edge_name.as_ref(),
