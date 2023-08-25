@@ -276,14 +276,14 @@ type JSXText {
   span: Span!
 }
 
-interface SpreadArrayElement implements ArrayElement & HasSpan {
-  spread: Expression!
+interface ExpressionArrayElement implements ArrayElement & HasSpan {
+  expression: Expression!
   # HasSpan
   span: Span!
 }
 
-type SpreadArrayElementAST implements ArrayElement & HasSpan & SpreadArrayElement {
-  spread: Expression!
+type ExpressionArrayElementAST implements ArrayElement & HasSpan & ExpressionArrayElement {
+  expression: Expression!
   # HasSpan
   span: Span!
 }
@@ -311,14 +311,6 @@ interface ArrayElement implements HasSpan {
   span: Span!
 }
 
-type ArrayElementAST implements HasSpan & ASTNode {
-  # ASTNode
-  parent: ASTNode
-  ancestor: [ASTNode!]!
-  # HasSpan
-  span: Span!
-}
-
 interface Array implements HasSpan & Expression {
   element: [ArrayElement!]
   # Expression
@@ -336,7 +328,7 @@ type ArrayAST implements HasSpan & Expression & Array & ASTNode {
   element: [ArrayElement!]
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -374,7 +366,7 @@ type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral 
   number: Float
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -412,19 +404,25 @@ interface ObjectProperty implements HasSpan {
   span: Span!
 }
 
-interface SpreadIntoObject implements ObjectProperty & HasSpan {
-  value: Expression!
+"""
+Array Spread ([...x]) or Object spread ({...y})
+"""
+interface Spread implements ObjectProperty & ArrayElement & HasSpan {
+  expression: Expression!
 
   # HasSpan
   span: Span!
 }
 
-type SpreadIntoObjectAST implements ASTNode & SpreadIntoObject & ObjectProperty & HasSpan {
-  value: Expression!
+"""
+Array Spread ([...x]) or Object spread ({...y})
+"""
+type SpreadAST implements ASTNode & Spread & ObjectProperty & ArrayElement & HasSpan {
+  expression: Expression!
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -444,7 +442,7 @@ type ObjectEntryAST implements ASTNode & ObjectEntry & ObjectProperty & HasSpan 
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -476,7 +474,7 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
   strip_parens(strip_all: Boolean): Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -504,7 +502,7 @@ type ArgumentAST implements Argument & HasSpan & ASTNode {
   value: Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -535,7 +533,7 @@ type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
   strip_parens(strip_all: Boolean): Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -582,7 +580,7 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   span: Span!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 }
 
 interface Statement implements HasSpan {
@@ -604,7 +602,7 @@ type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
   span: Span!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 }
 
 interface Function implements Expression & HasSpan {
@@ -663,7 +661,7 @@ type UnaryExpressionAST implements UnaryExpression & ASTNode & HasSpan & Express
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # Expression
   """
@@ -715,7 +713,7 @@ type LogicalExpressionAST implements LogicalExpression & ASTNode & HasSpan & Exp
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # Expression
   """
@@ -748,7 +746,7 @@ type ParameterAST implements ASTNode & HasSpan {
   span: Span!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 }
 
 interface ArrowFunction implements Function & HasSpan & Expression {
@@ -795,7 +793,7 @@ type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & 
   span: Span!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 }
 
 """
@@ -844,7 +842,7 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   parameter: [Parameter]!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   """
   Only non-null if the string can be trivially coerced to a constant string
@@ -877,7 +875,7 @@ type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   declaration: ASTNode
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -908,7 +906,7 @@ Only includes strings declared with ' or " not `
 type StringLiteralAST implements HasSpan & Expression & ASTNode & StringLiteral {
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -933,7 +931,7 @@ interface TemplateLiteral implements HasSpan & Expression {
 type TemplateLiteralAST implements HasSpan & Expression & TemplateLiteral & ASTNode {
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -960,7 +958,7 @@ type RegExpLiteralAST implements HasSpan & Expression & RegExpLiteral & ASTNode 
   pattern: String!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -987,7 +985,7 @@ type ParenthesizedExpressionAST implements HasSpan & Expression & ASTNode & Pare
   expression: Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -1008,7 +1006,7 @@ type NameAST implements ASTNode & Name & HasSpan {
   name: String!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1043,7 +1041,7 @@ type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
   accessed_property: Name!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -1079,7 +1077,7 @@ type ExpressionStatementAST implements Statement & HasSpan & ASTNode & Expressio
   expression: Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1096,7 +1094,7 @@ type WhileStatementAST implements Statement & HasSpan & ASTNode & WhileStatement
   body: Statement!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1113,7 +1111,7 @@ type DoWhileStatementAST implements Statement & HasSpan & ASTNode & DoWhileState
   body: Statement!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1132,7 +1130,7 @@ type ForStatementAST implements Statement & HasSpan & ForStatement & ASTNode {
   body: Statement!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1147,7 +1145,7 @@ type BlockStatementAST implements Statement & HasSpan & ASTNode & BlockStatement
   statement: [Statement!]
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1172,7 +1170,7 @@ type TernaryExpressionAST implements Expression & HasSpan & ASTNode & TernaryExp
   if_false: Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -1201,7 +1199,7 @@ type NewAST implements Expression & HasSpan & New & ASTNode {
   argument: [Argument!]
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -1228,7 +1226,7 @@ type ThrowAST implements Expression & HasSpan & Throw & ASTNode {
   to_throw: Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
   """
@@ -1253,7 +1251,7 @@ type VariableDeclarationAST implements VariableDeclaration & ASTNode & HasSpan {
   kind: String!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1262,7 +1260,7 @@ type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
   type: Type!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1274,7 +1272,7 @@ type InterfaceAST implements Interface & ASTNode & HasSpan {
   entire_span: Span!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1292,7 +1290,7 @@ type ImportAST implements Import & ASTNode & HasSpan {
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1317,7 +1315,7 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
   strip_parens(strip_all: Boolean): Expression!
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   # HasSpan
   span: Span!
 }
@@ -1345,7 +1343,7 @@ type ClassAST implements ASTNode & Class & HasSpan {
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -1356,7 +1354,7 @@ type IfStatementAST implements ASTNode & HasSpan {
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -1367,7 +1365,7 @@ type ReturnStatement implements Statement & HasSpan {
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -1378,7 +1376,7 @@ type ReturnAST implements ASTNode & HasSpan {
 
   # ASTNode
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
 
   # HasSpan
   span: Span!
@@ -1387,7 +1385,7 @@ type ReturnAST implements ASTNode & HasSpan {
 # MAKE SURE TO KEEP ANCESTOR&CHILD IN SYNC
 interface ASTNode implements HasSpan {
   parent: ASTNode
-  ancestor: [ASTNode!]!
+  ancestor: [ASTNode!]
   span: Span!
 }
 

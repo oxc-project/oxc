@@ -318,12 +318,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "ArrayElementAST" | "ArrayElement" => super::edges::resolve_array_element_edge(
+            "ArrayElement" => super::edges::resolve_array_element_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
-                self,
             ),
             "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
                 contexts,
@@ -414,6 +413,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "ExpressionArrayElementAST" | "ExpressionArrayElement" => {
+                super::edges::resolve_expression_array_element_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "ExpressionStatementAST" | "ExpressionStatement" => {
                 super::edges::resolve_expression_statement_edge(
                     contexts,
@@ -661,23 +669,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "SpreadArrayElementAST" | "SpreadArrayElement" => {
-                super::edges::resolve_spread_array_element_edge(
-                    contexts,
-                    edge_name.as_ref(),
-                    parameters,
-                    resolve_info,
-                )
-            }
-            "SpreadIntoObjectAST" | "SpreadIntoObject" => {
-                super::edges::resolve_spread_into_object_edge(
-                    contexts,
-                    edge_name.as_ref(),
-                    parameters,
-                    resolve_info,
-                    self,
-                )
-            }
+            "SpreadAST" | "Spread" => super::edges::resolve_spread_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "Statement" => super::edges::resolve_statement_edge(
                 contexts,
                 edge_name.as_ref(),

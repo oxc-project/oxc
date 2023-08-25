@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use enum_as_inner::EnumAsInner;
+use oxc_ast::ast::ArrayExpressionElement;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
@@ -51,7 +52,7 @@ pub enum Vertex<'a> {
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     Return(Rc<ReturnVertex<'a>>),
     IfStatementAST(Rc<IfStatementVertex<'a>>),
-    SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
+    Spread(Rc<SpreadVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
     DotProperty(Rc<DotPropertyVertex<'a>>),
     Reassignment(Rc<ReassignmentVertex<'a>>),
@@ -74,13 +75,12 @@ pub enum Vertex<'a> {
     New(Rc<NewVertex<'a>>),
     Throw(Rc<ThrowVertex<'a>>),
     Array(Rc<ArrayVertex<'a>>),
-    ArrayElement(Rc<ArrayElementVertex<'a>>),
     StringLiteral(Rc<StringLiteralVertex<'a>>),
     TemplateLiteral(Rc<TemplateLiteralVertex<'a>>),
     RegExpLiteral(Rc<RegExpLiteralVertex<'a>>),
     ParenthesizedExpression(Rc<ParenthesizedExpressionVertex<'a>>),
     ElidedArrayElement(Rc<ElidedArrayElementVertex<'a>>),
-    SpreadArrayElement(Rc<SpreadArrayElementVertex<'a>>),
+    ExpressionArrayElement(Rc<ExpressionArrayElementVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -109,7 +109,7 @@ impl<'a> Vertex<'a> {
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
             Self::ObjectLiteral(data) => data.object_expression.span,
-            Self::SpreadIntoObject(data) => data.property.span,
+            Self::Spread(data) => data.spread.span,
             Self::ObjectEntry(data) => data.property.span,
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
@@ -139,13 +139,12 @@ impl<'a> Vertex<'a> {
             Self::New(data) => data.new_expression.span,
             Self::Throw(data) => data.throw_statement.span,
             Self::Array(data) => data.array_expression.span,
-            Self::ArrayElement(data) => data.array_expression_element.span(),
             Self::StringLiteral(data) => data.string.span,
             Self::TemplateLiteral(data) => data.template.span,
             Self::RegExpLiteral(data) => data.regexp.span,
             Self::ParenthesizedExpression(data) => data.parenthesized_expression.span,
             Self::ElidedArrayElement(data) => data.span,
-            Self::SpreadArrayElement(data) => data.spread.span(),
+            Self::ExpressionArrayElement(data) => data.expression.span(),
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -175,7 +174,7 @@ impl<'a> Vertex<'a> {
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::Name(data) => data.ast_node.map(|x| x.id()),
-            Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Spread(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
             Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
@@ -196,13 +195,12 @@ impl<'a> Vertex<'a> {
             Vertex::New(data) => data.ast_node.map(|x| x.id()),
             Vertex::Throw(data) => data.ast_node.map(|x| x.id()),
             Vertex::Array(data) => data.ast_node.map(|x| x.id()),
-            Vertex::ArrayElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::StringLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::TemplateLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::RegExpLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ParenthesizedExpression(data) => data.ast_node.map(|x| x.id()),
             Vertex::ElidedArrayElement(data) => data.ast_node.map(|x| x.id()),
-            Vertex::SpreadArrayElement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ExpressionArrayElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
@@ -316,7 +314,6 @@ impl<'a> Vertex<'a> {
             Vertex::ASTNode(..)
             | Vertex::AssignmentType(..)
             | Vertex::ElidedArrayElement(..)
-            | Vertex::SpreadArrayElement(..)
             | Vertex::Class(..)
             | Vertex::ClassMethod(..)
             | Vertex::ClassProperty(..)
@@ -343,7 +340,7 @@ impl<'a> Vertex<'a> {
             | Vertex::VariableDeclaration(..)
             | Vertex::Return(..)
             | Vertex::IfStatementAST(..)
-            | Vertex::SpreadIntoObject(..)
+            | Vertex::Spread(..)
             | Vertex::ObjectEntry(..)
             | Vertex::DotProperty(..)
             | Vertex::Argument(..)
@@ -356,7 +353,7 @@ impl<'a> Vertex<'a> {
             | Vertex::DoWhileStatement(..)
             | Vertex::ForStatement(..)
             | Vertex::Throw(..)
-            | Vertex::ArrayElement(..) => false,
+            | Vertex::ExpressionArrayElement(..) => false,
         }
     }
 }
@@ -400,7 +397,7 @@ impl Typename for Vertex<'_> {
             Vertex::Name(data) => data.typename(),
             Vertex::Return(data) => data.typename(),
             Vertex::IfStatementAST(_) => "IfStatementAST",
-            Vertex::SpreadIntoObject(data) => data.typename(),
+            Vertex::Spread(data) => data.typename(),
             Vertex::ObjectEntry(data) => data.typename(),
             Vertex::FnCall(data) => data.typename(),
             Vertex::Reassignment(data) => data.typename(),
@@ -422,13 +419,12 @@ impl Typename for Vertex<'_> {
             Vertex::New(data) => data.typename(),
             Vertex::Throw(data) => data.typename(),
             Vertex::Array(data) => data.typename(),
-            Vertex::ArrayElement(data) => data.typename(),
             Vertex::StringLiteral(data) => data.typename(),
             Vertex::TemplateLiteral(data) => data.typename(),
             Vertex::RegExpLiteral(data) => data.typename(),
             Vertex::ParenthesizedExpression(data) => data.typename(),
             Vertex::ElidedArrayElement(data) => data.typename(),
-            Vertex::SpreadArrayElement(data) => data.typename(),
+            Vertex::ExpressionArrayElement(data) => data.typename(),
         }
     }
 }
@@ -477,9 +473,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ObjectProperty(property) => {
                 Self::ObjectEntry(ObjectEntryVertex { ast_node: Some(ast_node), property }.into())
             }
-            AstKind::SpreadElement(property) => Self::SpreadIntoObject(
-                SpreadIntoObjectVertex { ast_node: Some(ast_node), property }.into(),
-            ),
+            AstKind::SpreadElement(property) => {
+                Self::Spread(SpreadVertex { ast_node: Some(ast_node), spread: property }.into())
+            }
             AstKind::MemberExpression(member_expr)
                 if matches!(member_expr, MemberExpression::StaticMemberExpression(_)) =>
             {
@@ -552,9 +548,6 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::ThrowStatement(throw_statement) => {
                 Vertex::Throw(ThrowVertex { ast_node: Some(ast_node), throw_statement }.into())
             }
-            AstKind::ArrayExpressionElement(array_expression_element) => Vertex::ArrayElement(
-                ArrayElementVertex { ast_node: Some(ast_node), array_expression_element }.into(),
-            ),
             AstKind::StringLiteral(string_literal) => Vertex::StringLiteral(
                 StringLiteralVertex { ast_node: Some(ast_node), string: string_literal }.into(),
             ),
@@ -579,6 +572,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             }
             AstKind::Elision(span) => Vertex::ElidedArrayElement(
                 ElidedArrayElementVertex { span, ast_node: Some(ast_node) }.into(),
+            ),
+            AstKind::ExpressionArrayElement(expression) => Vertex::ExpressionArrayElement(
+                ExpressionArrayElementVertex { expression, ast_node: Some(ast_node) }.into(),
             ),
             _ => Vertex::ASTNode(ast_node),
         }
@@ -677,6 +673,22 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
                 )
             }
             _ => Vertex::Expression(expr),
+        }
+    }
+}
+
+impl<'a> From<&'a ArrayExpressionElement<'a>> for Vertex<'a> {
+    fn from(array_element: &'a ArrayExpressionElement<'a>) -> Self {
+        match &array_element {
+            ArrayExpressionElement::SpreadElement(spread) => {
+                Vertex::Spread(SpreadVertex { ast_node: None, spread }.into())
+            }
+            ArrayExpressionElement::Elision(span) => Vertex::ElidedArrayElement(
+                ElidedArrayElementVertex { ast_node: None, span: *span }.into(),
+            ),
+            ArrayExpressionElement::Expression(expression) => Vertex::ExpressionArrayElement(
+                ExpressionArrayElementVertex { expression, ast_node: None }.into(),
+            ),
         }
     }
 }
@@ -936,12 +948,12 @@ impl<'a> Typename for ObjectEntryVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct SpreadIntoObjectVertex<'a> {
+pub struct SpreadVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
-    pub property: &'a SpreadElement<'a>,
+    pub spread: &'a SpreadElement<'a>,
 }
 
-impl<'a> Typename for SpreadIntoObjectVertex<'a> {
+impl<'a> Typename for SpreadVertex<'a> {
     fn typename(&self) -> &'static str {
         if self.ast_node.is_some() {
             "SpreadIntoObjectAST"
@@ -1331,23 +1343,6 @@ impl<'a> Typename for ArrayVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct ArrayElementVertex<'a> {
-    pub ast_node: Option<AstNode<'a>>,
-    pub array_expression_element: &'a ArrayExpressionElement<'a>,
-}
-
-impl<'a> Typename for ArrayElementVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "ArrayElementAST"
-        } else {
-            "ArrayElement"
-        }
-    }
-}
-
-#[non_exhaustive]
-#[derive(Debug, Clone)]
 pub struct StringLiteralVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub string: &'a StringLiteral,
@@ -1433,17 +1428,17 @@ impl<'a> Typename for ElidedArrayElementVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct SpreadArrayElementVertex<'a> {
+pub struct ExpressionArrayElementVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
-    pub spread: &'a Expression<'a>,
+    pub expression: &'a Expression<'a>,
 }
 
-impl<'a> Typename for SpreadArrayElementVertex<'a> {
+impl<'a> Typename for ExpressionArrayElementVertex<'a> {
     fn typename(&self) -> &'static str {
         if self.ast_node.is_some() {
-            "SpreadArrayElementAST"
+            "ExpressionArrayElementAST"
         } else {
-            "SpreadArrayElement"
+            "ExpressionArrayElement"
         }
     }
 }
