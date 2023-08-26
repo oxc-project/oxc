@@ -6,5 +6,9 @@ mod type_check;
 mod walk;
 
 pub use crate::{
-    command::*, lint::LintRunner, result::CliRunResult, runner::Runner, type_check::TypeCheckRunner,
+    command::*,
+    lint::LintRunner,
+    result::{CliRunResult, LintResult},
+    runner::Runner,
+    type_check::TypeCheckRunner,
 };

@@ -8,7 +8,7 @@ define_index_type! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Debug, Clone, Copy)]
     pub struct SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter

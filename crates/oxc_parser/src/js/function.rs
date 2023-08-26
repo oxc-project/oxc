@@ -16,14 +16,14 @@ type ArrowFunctionHead<'a> = (
     Span,
 );
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum IsParenthesizedArrowFunction {
     True,
     False,
     Maybe,
 }
 
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FunctionKind {
     Declaration { single_statement: bool },
     Expression,
