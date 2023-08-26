@@ -88,7 +88,6 @@ pub enum ErrorFromLinterPlugin {
     PluginGenerated(String, String, #[label("{1}")] Span),
     #[error("{error_message}")]
     Trustfall {
-        /// Keep this name in sync with the `.contains()` and doc comment in [`self::test_queries`]
         error_message: String,
         #[source_code]
         query_source: Arc<NamedSource>,
