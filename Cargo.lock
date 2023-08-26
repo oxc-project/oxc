@@ -1253,8 +1253,9 @@ dependencies = [
 
 [[package]]
 name = "mini-v8"
-version = "0.4.0"
-source = "git+https://github.com/u9g/mini-v8#c56b23057ad5114228c1c02957f488e074d0ddf3"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19424f296921cfd9ada5f25ea368ed13399cd1b15038c089e4d6feaa032d08e2"
 dependencies = [
  "v8",
 ]

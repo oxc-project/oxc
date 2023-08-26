@@ -25,7 +25,7 @@ ignore          = { workspace = true }
 serde     = { workspace = true, features = ["derive"] }
 trustfall = { workspace = true }
 
-mini-v8        = { git = "https://github.com/u9g/mini-v8" }
+mini-v8        = "0.4.1"
 serde_yaml     = "0.9.22"
 located_yaml   = "0.2.1"
 path-calculate = "0.1.3"
