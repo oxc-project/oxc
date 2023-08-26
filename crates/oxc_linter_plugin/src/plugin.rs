@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
     Report,
 };
-use oxc_linter::{Fix, Fixer, LintContext};
+use oxc_linter::{Fix, LintContext};
 use oxc_parser::Parser;
 use oxc_query::{schema, Adapter};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
