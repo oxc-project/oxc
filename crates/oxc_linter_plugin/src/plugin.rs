@@ -1,4 +1,11 @@
-use std::{collections::BTreeMap, fmt::Debug, fs, path::PathBuf, rc::Rc, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    fmt::{Debug, Display},
+    fs,
+    path::PathBuf,
+    rc::Rc,
+    sync::Arc,
+};
 
 use ignore::Walk;
 use located_yaml::{YamlElt, YamlLoader};
@@ -82,6 +89,29 @@ pub enum RulesToRun {
 #[error(transparent)]
 pub struct ParseError(serde_yaml::Error);
 
+pub enum SpanStartOrEnd {
+    SpanStart,
+    SpanEnd,
+}
+
+impl Debug for SpanStartOrEnd {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SpanStart => write!(f, "SpanStart"),
+            Self::SpanEnd => write!(f, "SpanEnd"),
+        }
+    }
+}
+
+impl Display for SpanStartOrEnd {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SpanStart => write!(f, "span_start"),
+            Self::SpanEnd => write!(f, "span_end"),
+        }
+    }
+}
+
 #[derive(Debug, Error, Diagnostic)]
 pub enum ErrorFromLinterPlugin {
     #[error("{0}")]
@@ -106,6 +136,14 @@ pub enum ErrorFromLinterPlugin {
     WrongTypeForSpanStartSpanEnd {
         span_start: String,
         span_end: String,
+        #[source_code]
+        query_source: Arc<NamedSource>,
+        #[label = "This query failed."]
+        query_span: SourceSpan,
+    },
+    #[error("Expected {which_span} to be an integer, instead got a float.")]
+    UnexpectedFloatFromJS {
+        which_span: SpanStartOrEnd,
         #[source_code]
         query_source: Arc<NamedSource>,
         #[label = "This query failed."]
@@ -217,8 +255,30 @@ impl LinterPlugin {
                 object_returned.get("span_end").unwrap(),
             ) {
                 (Value::Number(a), Value::Number(b)) => SpanInfo::SingleSpanInfo(SingleSpanInfo {
-                    span_start: a as u64,
-                    span_end: b as u64,
+                    span_start: {
+                        if a.fract() == 0. {
+                            a as u64
+                        } else {
+                            return Err(ErrorFromLinterPlugin::UnexpectedFloatFromJS {
+                                which_span: SpanStartOrEnd::SpanStart,
+                                query_source,
+                                query_span,
+                            }
+                            .into());
+                        }
+                    },
+                    span_end: {
+                        if b.fract() == 0. {
+                            b as u64
+                        } else {
+                            return Err(ErrorFromLinterPlugin::UnexpectedFloatFromJS {
+                                which_span: SpanStartOrEnd::SpanEnd,
+                                query_source,
+                                query_span,
+                            }
+                            .into());
+                        }
+                    },
                     fix: match object_returned.get("fix").unwrap() {
                         Value::String(fix) => Some(fix.to_string()),
                         _ => None,
