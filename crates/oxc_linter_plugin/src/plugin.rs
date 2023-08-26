@@ -137,22 +137,24 @@ impl LinterPlugin {
         Ok(Self { rules: deserialized_queries, schema })
     }
 
-    #[allow(clippy::too_many_lines)]
+    // allow clippy::redundant_allocation which is upset we need the Arc<&'_ Adapter>
+    // and not a Arc<Adapter> however we need the reference to be arc'd because
+    // the Adapter trait is implemented for a &Adapter, not just Adapter
+    #[allow(clippy::too_many_lines, clippy::redundant_allocation)]
     pub fn run_plugin_rules(
         &self,
         ctx: &mut LintContext,
         plugin: &InputQuery,
-        adapter: &Adapter<'_>,
+        adapter: &Arc<&Adapter<'_>>,
         mv8: &mini_v8::MiniV8,
     ) -> oxc_diagnostics::Result<()> {
-        let arc_adapter = Arc::new(adapter);
         let query_source =
             Arc::new(NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()));
         // NOTE: the 0 is technically wrong, but it's the right file which is enough
         let query_span = SourceSpan::new(0.into(), plugin.query.len().into());
 
         for data_item in
-            execute_query(self.schema, Arc::clone(&arc_adapter), &plugin.query, plugin.args.clone())
+            execute_query(self.schema, Arc::clone(adapter), &plugin.query, plugin.args.clone())
                 .map_err(|err| ErrorFromLinterPlugin::Trustfall {
                     error_message: err.to_string(),
                     query_source: Arc::clone(&query_source),
