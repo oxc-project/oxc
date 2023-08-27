@@ -1,14 +1,6 @@
-use std::{
-    collections::BTreeMap,
-    fmt::{Debug, Display},
-    fs,
-    path::PathBuf,
-    rc::Rc,
-    sync::Arc,
-};
+use std::{collections::BTreeMap, fmt::Debug, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use ignore::Walk;
-use located_yaml::{YamlElt, YamlLoader};
 use miette::{NamedSource, SourceSpan};
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
@@ -29,8 +21,11 @@ use crate::{
         SpanStartOrEnd, UnexpectedErrorsInFailTest,
     },
     raw_diagnostic::RawPluginDiagnostic,
+    spans::{span_of_test_n, PassOrFail},
 };
 
+/// Represents a single parsed yaml plugin file. Includes
+/// the query, tests, and metadata about the query.
 #[derive(Deserialize, Clone, Debug)]
 pub struct InputQuery {
     pub name: String,
@@ -44,27 +39,34 @@ pub struct InputQuery {
     pub tests: QueryTests,
 }
 
+/// Represents all of the tests for a plugin.
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct QueryTests {
     pub pass: Vec<SingleTest>,
     pub fail: Vec<SingleTest>,
 }
 
+/// Represents a single test for a plugin.
 #[derive(Deserialize, Clone, Debug)]
 pub struct SingleTest {
     pub relative_path: Vec<String>,
     pub code: String,
 }
 
+/// Holds multiple parsed rules.
 #[derive(Debug)]
 pub struct LinterPlugin {
-    pub(super) rules: Vec<InputQuery>,
+    rules: Vec<InputQuery>,
     schema: &'static Schema,
 }
 
+/// Whether to run all rules or only a specific rule.
 #[allow(dead_code)]
 pub enum RulesToRun {
+    /// Execute all rules.
     All,
+    /// The rules to run will be the rules whose names are equal
+    /// to the string stored in the variant.
     Only(String),
 }
 
@@ -134,7 +136,7 @@ impl LinterPlugin {
             let transformed_data_to_span = match (result.get("span_start"), result.get("span_end"))
             {
                 (Some(FieldValue::Uint64(span_start)), Some(FieldValue::Uint64(span_end))) => {
-                    let transformed: Result<RawPluginDiagnostic, _> =
+                    let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
                         (*span_start, *span_end).try_into();
 
                     vec![transformed.map_err(|which_span| {
@@ -151,7 +153,7 @@ impl LinterPlugin {
                     })?]
                 }
                 (Some(FieldValue::Int64(span_start)), Some(FieldValue::Int64(span_end))) => {
-                    let transformed: Result<RawPluginDiagnostic, _> =
+                    let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
                         (*span_start, *span_end).try_into();
 
                     vec![transformed.map_err(|which_span| {
@@ -266,78 +268,6 @@ fn run_individual_test(
 
     // Return plugin made errors
     Ok(lint_ctx.into_message().into_iter().map(|m| m.error).collect::<Vec<_>>())
-}
-
-enum PassOrFail {
-    Pass,
-    Fail,
-}
-
-impl Display for PassOrFail {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Pass => write!(f, "pass"),
-            Self::Fail => write!(f, "fail"),
-        }
-    }
-}
-
-fn span_of_test_n(
-    yaml_text: &str,
-    test_ix: usize,
-    test_code: &str,
-    pass_or_fail: &PassOrFail,
-) -> SourceSpan {
-    let yaml = YamlLoader::load_from_str(
-        // TODO: Should we just save the string after we read it originally?
-        yaml_text,
-    )
-    .expect("to be able to parse yaml for error reporting");
-    let YamlElt::Hash(hash) = &yaml.docs[0].yaml else {
-        unreachable!("must be a top level hashmap in the yaml")
-    };
-    let tests_hash_key = hash
-        .keys()
-        .find(|x| {
-            let YamlElt::String(str) = &x.yaml else { return false };
-            str == "tests"
-        })
-        .expect("to be able to find tests hash in yaml file");
-    let YamlElt::Hash(tests_hash) = &hash[tests_hash_key].yaml else {
-        unreachable!("there must be a tests hashmap in the yaml")
-    };
-    let pass_hash_key = tests_hash
-        .keys()
-        .find(|x| {
-            let YamlElt::String(str) = &x.yaml else { return false };
-            *str == pass_or_fail.to_string()
-        })
-        .expect("to be able to find pass hash in yaml file");
-    let YamlElt::Array(test_arr) = &tests_hash[pass_hash_key].yaml else {
-        unreachable!("there must be a pass array in the yaml")
-    };
-    let test_hash_span = &test_arr[test_ix].lines_range();
-    let start = yaml_text
-        .char_indices()
-        .filter(|a| a.1 == '\n')
-        .nth(test_hash_span.0 - 1) // subtract one because span is 1-based
-        .map(|a| a.0)
-        .expect("to find start of span of test");
-    let start_of_end = yaml_text[start..]
-        .find(&test_code[0..test_code.find('\n').unwrap_or(test_code.len())])
-        .expect("to find start of end")
-        + start;
-
-    let nl = test_code.chars().filter(|a| *a == '\n').count();
-    let end_of_end = yaml_text[start_of_end..]
-        .char_indices()
-        .filter(|a| a.1 == '\n')
-        .nth(nl - 1)
-        .map(|a| a.0)
-        .expect("to find end of end of span of test")
-        + start_of_end;
-
-    SourceSpan::new(start.into(), (end_of_end - start).into())
 }
 
 /// Enumerates and tests all queries at the path given.
