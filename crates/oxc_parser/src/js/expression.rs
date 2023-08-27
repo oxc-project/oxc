@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         let reference_id = Cell::default();
-        Ok(IdentifierReference{ span, name, reference_id })
+        Ok(IdentifierReference { span, name, reference_id })
     }
 
     /// Parse keyword kind as identifier
