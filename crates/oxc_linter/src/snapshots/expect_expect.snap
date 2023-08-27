@@ -1,0 +1,126 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: expect_expect
+---
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", () => {});
+   · ───────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", myTest); function myTest() {}
+   · ─────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test("should fail", () => {});
+   · ─────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test.skip("should fail", () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ afterEach(() => {});
+   · ───────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             theoretically('the number {input} is correctly translated to string', theories, theory => {
+ 3 │ │               const output = NumberToLongString(theory.input);
+ 4 │ ╰─▶             })
+ 5 │             
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", () => { somePromise.then(() => {}); });
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test("should fail", () => { foo(true).toBe(true); })
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should also fail",() => expectSaga(mySaga).returns());
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().expect(456));
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().bar().expect(456));
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => tester.request(123));
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ───────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ───────────────────────────────────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:3:1]
+ 3 │     
+ 4 │ ╭─▶             checkThat('this passes', () => {
+ 5 │ │               // ...
+ 6 │ ╰─▶             });
+ 7 │             
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint(jest/expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:3:1]
+ 3 │     
+ 4 │ ╭─▶             checkThat.skip('this passes', () => {
+ 5 │ │               // ...
+ 6 │ ╰─▶             });
+ 7 │             
+   ╰────
+  help: Add assertion(s) in this Test
+
+
