@@ -231,10 +231,10 @@ fn test() {
             "test('verifies expect method call', () => expect$(123));",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }])),
         ),
-        // (
-        //     "test('verifies expect method call', () => new Foo().expect(123));",
-        //     Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }])),
-        // ),
+        (
+            "test('verifies expect method call', () => new Foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }])),
+        ),
         (
             "
         	test('verifies deep expect method call', () => {
