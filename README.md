@@ -39,7 +39,7 @@ To start using, install [oxlint][npm-oxlint] or via `npx`:
 npx oxlint@latest .
 ```
 
-To give you an idea of its capabilities, here’s an example from the [vscode] repository, which finishes linting 4000+ files in 0.5 seconds.
+To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4000+ files in 0.5 seconds.
 
 <p float="left" align="left">
   <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
@@ -63,7 +63,7 @@ Individual crates are published, you may use them to build your own JavaScript t
 
 * The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
 * The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
-* See `crates/*/examples` for example usage
+* See `crates/*/examples` for example usage.
 
 While Rust has gained a reputation for its comparatively slower compilation speed,
 we have dedicated significant effort to fine-tune the Rust compilation speed.
@@ -141,7 +141,7 @@ larger monorepos. See [bench-javascript-linter](https://github.com/Boshen/bench-
 As an upside, the binary is approximately 3MB, whereas [ESLint] and its associated plugin dependencies can easily exceed 100.
 
 You may also download the linter binary from the [latest release tag](https://github.com/web-infra-dev/oxc/releases/latest) as a standalone binary,
-which means you can run the linter without a Node.js installation in your CI.
+this lets you run the linter without a Node.js installation in your CI.
 
 <details>
   <summary>How is it so fast?</summary>
@@ -173,8 +173,9 @@ JavaScript minification plays a crucial role in optimizing website performance a
 resulting in faster page loads.
 This holds tremendous economic value, particularly for e-commerce websites, where every second can equate to millions of dollars.
 
-However, existing minifiers typically require a trade-off between compression quality and speed. You have to choose between the slowest for the best compression or the fastest for less compression.
-But what if we could develop a faster minifier without compromising on compression efficiency?
+However, existing minifiers typically require a trade-off between compression quality and speed.
+You have to choose between the slowest for the best compression or the fastest for less compression.
+But what if we could develop a faster minifier without compromising on compression?
 
 We are actively working on a prototype that aims to achieve this goal,
 by porting all test cases from well-known minifiers such as [google-closure-compiler], [terser], [esbuild], and [tdewolff-minify].
@@ -193,7 +194,7 @@ Creating a robust transpiler requires significant investment in terms of time, e
 It necessitates deep knowledge of ECMAScript specifications, compatibility analysis, and code transformation techniques.
 Unfortunately, we currently lack the necessary resources to embark on this endeavor.
 
-If there is any interest, the project will be limited to an esnext to es6 transpiler.
+If there is any interest, this project will be limited to an esnext to es6 transpiler.
 
 ### 🔸 Ezno Type Checker
 
