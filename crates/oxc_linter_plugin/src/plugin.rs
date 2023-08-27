@@ -390,7 +390,10 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
             match diagnostics_collected {
                 Ok(errs)
                     if errs.len() == 1
-                        && format!("{:#?}", errs[0]).starts_with("PluginGenerated") =>
+                        && matches!(
+                            errs[0].downcast_ref::<ErrorFromLinterPlugin>(),
+                            Some(ErrorFromLinterPlugin::PluginGenerated(..))
+                        ) =>
                 { /* Success case. */ }
                 Ok(errs) if errs.is_empty() => {
                     let yaml_text =
