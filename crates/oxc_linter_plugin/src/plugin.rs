@@ -389,7 +389,7 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
 
             match diagnostics_collected {
                 Ok(errs)
-                    if errs.len() == 1
+                    if errs.len() == 1 // TODO: Handle more than one error
                         && matches!(
                             errs[0].downcast_ref::<ErrorFromLinterPlugin>(),
                             Some(ErrorFromLinterPlugin::PluginGenerated(..))
