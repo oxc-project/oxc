@@ -4,7 +4,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**/*.md'
+      - '**/*.html'
   pull_request:
+    paths:
+      - '**/*.md'
+      - '**/*.html'
   schedule:
     - cron: "0 0 * * *" # 00:00 every day
   workflow_dispatch:
