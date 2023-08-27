@@ -92,6 +92,9 @@ impl From<serde_yaml::Error> for ParseError {
     }
 }
 
+/// Represents either the start or the end of a span, which is used
+/// for error messages that need to point to a specific part of a
+/// span that failed to be used for some reason.
 pub enum SpanStartOrEnd {
     Start,
     End,
