@@ -42,10 +42,10 @@ impl Rule for NoVarRequires {
         let AstKind::CallExpression(expr) = node.kind() else { return };
 
         if expr.is_require_call()
-            && !ctx
+            && ctx
                 .scopes()
                 .ancestors(node.scope_id())
-                .any(|scope_id| ctx.scopes().get_bindings(scope_id).contains_key("require"))
+                .all(|scope_id| !ctx.scopes().get_bindings(scope_id).contains_key("require"))
         {
             // If the parent is an expression statement => this is a top level require()
             // Or, if the parent is a chain expression (require?.()) and
