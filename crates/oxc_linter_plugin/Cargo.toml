@@ -28,3 +28,6 @@ trustfall = { workspace = true }
 serde_yaml     = "0.9.22"
 located_yaml   = "0.2.1"
 path-calculate = "0.1.3"
+
+[dev_dependencies]
+miette = { workspace = true, features = ["fancy"] }
