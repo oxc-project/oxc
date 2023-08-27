@@ -10,7 +10,7 @@ use std::{
 use ignore::Walk;
 use located_yaml::{YamlElt, YamlLoader};
 use miette::{NamedSource, SourceSpan};
-use mini_v8::{Value, Values};
+use mini_v8::Value;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -23,29 +23,18 @@ use oxc_query::{schema, Adapter};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::{SourceType, Span};
 use serde::Deserialize;
-use trustfall::{execute_query, FieldValue, Schema, TransparentValue};
+use trustfall::{execute_query, Schema, TransparentValue};
 
-enum SpanInfo {
-    SingleSpanInfo(SingleSpanInfo),
-    MultipleSpanInfo(MultipleSpanInfo),
-}
+use crate::convert::{
+    from_js_to_multiple_span_info, js_number_to_u32, trustfall_results_to_js_arguments,
+};
 
-#[derive(Debug, Deserialize)]
-struct SingleSpanInfo {
-    span_start: u64,
-    span_end: u64,
-    fix: Option<String>,
-    summary: Option<String>,
-    reason: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct MultipleSpanInfo {
-    span_start: Vec<u64>,
-    span_end: Vec<u64>,
-    fix: Vec<Option<String>>,
-    summary: Vec<Option<String>>,
-    reason: Vec<Option<String>>,
+pub struct RawPluginDiagnostic {
+    pub start: u32,
+    pub end: u32,
+    pub fix: Option<String>,
+    pub summary: Option<String>,
+    pub reason: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -90,15 +79,15 @@ pub enum RulesToRun {
 pub struct ParseError(serde_yaml::Error);
 
 pub enum SpanStartOrEnd {
-    SpanStart,
-    SpanEnd,
+    Start,
+    End,
 }
 
 impl Debug for SpanStartOrEnd {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::SpanStart => write!(f, "SpanStart"),
-            Self::SpanEnd => write!(f, "SpanEnd"),
+            Self::Start => write!(f, "SpanStart"),
+            Self::End => write!(f, "SpanEnd"),
         }
     }
 }
@@ -106,8 +95,8 @@ impl Debug for SpanStartOrEnd {
 impl Display for SpanStartOrEnd {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::SpanStart => write!(f, "span_start"),
-            Self::SpanEnd => write!(f, "span_end"),
+            Self::Start => write!(f, "span_start"),
+            Self::End => write!(f, "span_end"),
         }
     }
 }
@@ -178,7 +167,7 @@ impl LinterPlugin {
     // allow clippy::redundant_allocation which is upset we need the Arc<&'_ Adapter>
     // and not a Arc<Adapter> however we need the reference to be arc'd because
     // the Adapter trait is implemented for a &Adapter, not just Adapter
-    #[allow(clippy::too_many_lines, clippy::redundant_allocation)]
+    #[allow(clippy::redundant_allocation)]
     pub fn run_plugin_rules(
         &self,
         ctx: &mut LintContext,
@@ -191,56 +180,23 @@ impl LinterPlugin {
         // NOTE: the 0 is technically wrong, but it's the right file which is enough
         let query_span = SourceSpan::new(0.into(), plugin.query.len().into());
 
-        for data_item in
+        let query_results =
             execute_query(self.schema, Arc::clone(adapter), &plugin.query, plugin.args.clone())
                 .map_err(|err| ErrorFromLinterPlugin::Trustfall {
                     error_message: err.to_string(),
                     query_source: Arc::clone(&query_source),
                     query_span,
-                })?
-        {
+                })?;
+
+        for data_item in query_results {
             let transformer: mini_v8::Function = mv8
                 .eval(plugin.post_transform.clone().unwrap_or_else(|| "(data) => data".to_string()))
                 .unwrap_or_else(|err| panic!("{err}"));
 
-            let data = mv8.create_object();
-
-            for (k, v) in data_item.clone() {
-                fn to_v8(mv8: &mini_v8::MiniV8, fv: FieldValue) -> Value {
-                    match fv {
-                        FieldValue::Null => Value::Null,
-                        FieldValue::Boolean(b) => Value::Boolean(b),
-                        FieldValue::Int64(int) => {
-                            let as_i32: i32 = int
-                                .try_into()
-                                .expect("for int64 number from trustfall to fit into i32 for js");
-                            Value::Number(as_i32.into())
-                        }
-                        FieldValue::Uint64(int) => {
-                            let as_u32: u32 = int
-                                .try_into()
-                                .expect("for Uint64 number from trustfall to fit into u32 for js");
-                            Value::Number(as_u32.into())
-                        }
-                        FieldValue::Float64(f64) => Value::Number(f64),
-                        FieldValue::String(str) => Value::String(mv8.create_string(&str)),
-                        FieldValue::List(list) => {
-                            let arr = mv8.create_array();
-                            for el in &*list {
-                                arr.push(to_v8(mv8, el.clone())).expect(
-                                    "to be able to put elements from trustfall list into js list",
-                                );
-                            }
-                            Value::Array(arr)
-                        }
-                        _ => unreachable!(),
-                    }
-                }
-                data.set(k.to_string(), to_v8(mv8, v)).unwrap();
-            }
+            let arguments = trustfall_results_to_js_arguments(mv8, data_item.clone());
 
             let fn_return: Value =
-                transformer.call(Values::from_vec(vec![Value::Object(data)])).unwrap();
+                transformer.call(arguments).unwrap_or_else(|err| panic!("{err}"));
 
             let object_returned = match fn_return {
                 Value::Null => continue,
@@ -250,87 +206,37 @@ impl LinterPlugin {
                 ),
             };
 
-            let transformed_data_to_span: SpanInfo = match (
+            let transformed_data_to_span = match (
                 object_returned.get("span_start").unwrap(),
                 object_returned.get("span_end").unwrap(),
             ) {
-                (Value::Number(a), Value::Number(b)) => SpanInfo::SingleSpanInfo(SingleSpanInfo {
-                    span_start: {
-                        if a.fract() == 0. {
-                            a as u64
-                        } else {
-                            return Err(ErrorFromLinterPlugin::UnexpectedFloatFromJS {
-                                which_span: SpanStartOrEnd::SpanStart,
-                                query_source,
-                                query_span,
-                            }
-                            .into());
-                        }
-                    },
-                    span_end: {
-                        if b.fract() == 0. {
-                            b as u64
-                        } else {
-                            return Err(ErrorFromLinterPlugin::UnexpectedFloatFromJS {
-                                which_span: SpanStartOrEnd::SpanEnd,
-                                query_source,
-                                query_span,
-                            }
-                            .into());
-                        }
-                    },
-                    fix: match object_returned.get("fix").unwrap() {
-                        Value::String(fix) => Some(fix.to_string()),
-                        _ => None,
-                    },
-                    summary: match object_returned.get("summary").unwrap() {
-                        Value::String(summary) => Some(summary.to_string()),
-                        _ => None,
-                    },
-                    reason: match object_returned.get("reason").unwrap() {
-                        Value::String(reason) => Some(reason.to_string()),
-                        _ => None,
-                    },
-                }),
-                (Value::Array(a), Value::Array(b)) => {
-                    let a_count = a.len();
-                    SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
-                        span_start: a
-                            .elements()
-                            .map(std::result::Result::unwrap)
-                            .collect::<Vec<u64>>(),
-                        span_end: b
-                            .elements()
-                            .map(std::result::Result::unwrap)
-                            .collect::<Vec<u64>>(),
-                        fix: match object_returned.get("fix").unwrap() {
-                            Value::Array(fix_array) => (0..a_count)
-                                .map(|i| match fix_array.get(i).unwrap() {
-                                    Value::String(fix) => Some(fix.to_string()),
-                                    _ => None,
-                                })
-                                .collect(),
-                            _ => Vec::with_capacity(a_count as usize),
-                        },
-                        summary: match object_returned.get("summary").unwrap() {
-                            Value::Array(summary_array) => (0..a_count)
-                                .map(|i| match summary_array.get(i).unwrap() {
-                                    Value::String(summary) => Some(summary.to_string()),
-                                    _ => None,
-                                })
-                                .collect(),
-                            _ => Vec::with_capacity(a_count as usize),
-                        },
-                        reason: match object_returned.get("reason").unwrap() {
-                            Value::Array(reason_array) => (0..a_count)
-                                .map(|i| match reason_array.get(i).unwrap() {
-                                    Value::String(reason) => Some(reason.to_string()),
-                                    _ => None,
-                                })
-                                .collect(),
-                            _ => Vec::with_capacity(a_count as usize),
-                        },
-                    })
+                (Value::Number(span_start), Value::Number(span_end)) => {
+                    vec![RawPluginDiagnostic {
+                        start: js_number_to_u32(
+                            span_start,
+                            SpanStartOrEnd::Start,
+                            Arc::clone(&query_source),
+                            query_span,
+                        )?,
+                        end: js_number_to_u32(
+                            span_end,
+                            SpanStartOrEnd::End,
+                            Arc::clone(&query_source),
+                            query_span,
+                        )?,
+                        fix: object_returned.get("fix").unwrap(),
+                        summary: object_returned.get("summary").unwrap(),
+                        reason: object_returned.get("reason").unwrap(),
+                    }]
+                }
+                (Value::Array(start_spans), Value::Array(end_spans)) => {
+                    from_js_to_multiple_span_info(
+                        start_spans,
+                        end_spans,
+                        object_returned.get("fix").unwrap(),
+                        object_returned.get("summary").unwrap(),
+                        object_returned.get("summary").unwrap(),
+                    )
                 }
                 (a, b) => {
                     return Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
@@ -345,61 +251,20 @@ impl LinterPlugin {
 
             ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
 
-            match transformed_data_to_span {
-                SpanInfo::SingleSpanInfo(SingleSpanInfo {
-                    span_start: start,
-                    span_end: end,
-                    fix,
-                    summary,
-                    reason,
-                }) => {
-                    let start =
-                        start.try_into().expect("Int64 or Uint64 of span_start to fit in u32");
-                    let end = end.try_into().expect("Int64 or Uint64 of span_end to fit in u32");
+            for RawPluginDiagnostic { start, end, fix, summary, reason } in transformed_data_to_span
+            {
+                let span = Span::new(start, end);
 
-                    let span = Span::new(start, end);
+                let error = ErrorFromLinterPlugin::PluginGenerated(
+                    summary.unwrap_or_else(|| plugin.summary.clone()),
+                    reason.unwrap_or_else(|| plugin.reason.clone()),
+                    span,
+                );
 
-                    let error = ErrorFromLinterPlugin::PluginGenerated(
-                        summary.unwrap_or_else(|| plugin.summary.clone()),
-                        reason.unwrap_or_else(|| plugin.reason.clone()),
-                        span,
-                    );
-
-                    if let Some(fix) = fix.map(|fixed_txt| Fix::new(fixed_txt, span)) {
-                        ctx.diagnostic_with_fix(error, || fix);
-                    } else {
-                        ctx.diagnostic(error);
-                    }
-                }
-                SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
-                    span_start: start,
-                    span_end: end,
-                    mut fix,
-                    summary,
-                    reason,
-                }) => {
-                    for i in 0..start.len() {
-                        let start = start[i]
-                            .try_into()
-                            .expect("Int64 or Uint64 of span_start to fit in u32");
-                        let end =
-                            end[i].try_into().expect("Int64 or Uint64 of span_end to fit in u32");
-
-                        let span = Span::new(start, end);
-
-                        let error = ErrorFromLinterPlugin::PluginGenerated(
-                            summary[i].clone().unwrap_or_else(|| plugin.summary.clone()),
-                            reason[i].clone().unwrap_or_else(|| plugin.reason.clone()),
-                            span,
-                        );
-
-                        if let Some(fix) = fix[i].take().map(|fixed_txt| Fix::new(fixed_txt, span))
-                        {
-                            ctx.diagnostic_with_fix(error, || fix);
-                        } else {
-                            ctx.diagnostic(error);
-                        }
-                    }
+                if let Some(fix) = fix.map(|fixed_txt| Fix::new(fixed_txt, span)) {
+                    ctx.diagnostic_with_fix(error, || fix);
+                } else {
+                    ctx.diagnostic(error);
                 }
             }
         }
