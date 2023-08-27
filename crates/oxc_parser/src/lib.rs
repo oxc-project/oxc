@@ -8,7 +8,7 @@
 //! * No other heap allocations are done except the above two
 //! * [oxc_span::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
-//! they are deligated to the [semantic analyzer](https://docs.rs/oxc_semantic)
+//! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
 //! # Conformance
 //! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
