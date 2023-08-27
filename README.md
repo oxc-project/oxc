@@ -62,10 +62,15 @@ To give you an idea of its capabilities, here’s an example from the [vscode] r
 Individual crates are published, you may use them to build your own JavaScript tools.
 
 * The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
-* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are ready for use.
+* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are ready for you to develop your own JavaScript tools.
 * See `crates/*/examples` for example usage
 
-The crates are lightweight and tuned for compilation speed. This is demonstrated by our [CI runs](https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=branch%3Amain),
+While Rust has gained a reputation for its comparatively slower compilation speed,
+we have dedicated significant effort to fine-tune the Rust compilation speed.
+Our aim is to minimize any impact on your development workflow,
+ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
+
+This is demonstrated by our [CI runs](https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=branch%3Amain),
 where warm runs complete in 5 minutes.
 
 ### Node.js
@@ -86,17 +91,20 @@ where warm runs complete in 5 minutes.
 
 ### 🔸 AST and Parser
 
-Oxc incorporates its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser developed in Rust.
+Oxc maintains its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser developed in Rust.
 
 As the parser often represents a key performance bottleneck in JavaScript tooling,
 any minor improvements can have a cascading effect on our downstream tools.
 By developing our parser, we have the opportunity to explore and implement well-researched performance techniques.
 
-To ensure an optimal authoring experience with downstream tools,
-the AST deviates from [estree] and conforms to the ECMAScript specification.
-Notably, the AST eliminates any ambiguous nodes.
-For instance, Oxc distinguishes between `BindingIdentifier`, `IdentifierReference`, and `IdentifierName` instead of using a generic [estree] `Identifier`.
-These distinctions greatly improve the experience for developers who have previously worked with [estree].
+While many existing JavaScript tools rely on [estree] as their AST specification,
+a notable drawback is its abundance of ambiguous nodes.
+This ambiguity often leads to confusion during development with [estree].
+
+The Oxc AST differs slightly from the [estree] AST by removing ambiguous nodes and introducing distinct types.
+For example, instead of using a generic [estree] `Identifier`,
+the Oxc AST provides specific types such as `BindingIdentifier`, `IdentifierReference`, and `IdentifierName`.
+This clear distinction greatly enhances the development experience by aligning more closely with the ECMAScript specification.
 
 #### 🏆 Parser Performance
 
@@ -105,10 +113,10 @@ Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the spee
 <details>
   <summary>How is it so fast?</summary>
   <ul>
-    <li>AST is allocated in a memory arena ([bumpalo]) for fast AST memory allocation and deallocation</li>
-    <li>Short strings are inlined by [CompactString]</li>
+    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation</li>
+    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a></li>
     <li>No other heap allocations are done except the above two</li>
-    <li>Scope binding, symbol resolution and complicated syntax errors are not done in the parser, they are delegated to the semantic analyzer</li>
+    <li>Scope binding, symbol resolution and many syntax errors are not done in the parser, they are delegated to the semantic analyzer</li>
   </ul>
 </details>
 
@@ -126,7 +134,7 @@ We also plan to port essential plugins such as [eslint-plugin-import] and [eslin
 
 #### 🏆 Linter Performance
 
-The linter is 50 - 100 times faster than [ESLint] depending on the number of cores used.
+The linter is 50 - 100 times faster than [ESLint] depending on the number of rules and number of CPU cores used.
 It completes in less than a second for most codebases with a few hundred files and completes in a few seconds for
 larger monorepos. See [bench-javascript-linter](https://github.com/Boshen/bench-javascript-linter) for details.
 
@@ -140,7 +148,7 @@ which means you can run the linter without a Node.js installation in your CI.
   <ul>
     <li>Oxc parser is used</li>
     <li>AST visit is fast operation due to linear memory scan from the memory arena</li>
-    <li>Files are linted in parallel, so scales with the total number of CPU cores</li>
+    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores</li>
     <li>Every single lint rule is tuned for performance</li>
   </ul>
 </details>
