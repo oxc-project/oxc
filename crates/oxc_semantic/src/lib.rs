@@ -187,6 +187,15 @@ mod tests {
             }
         }
     }
+    
+    #[test]
+    fn type_alias_gets_reference() {
+        let source = "type A = 1; type B = A";
+        let allocator = Allocator::default();
+        let source_type: SourceType = SourceType::default().with_typescript(true);
+        let semantic = get_semantic(&allocator, source, source_type);
+        assert!(semantic.symbols().references.len()==1);
+    }
 
     #[test]
     fn test_reference_resolutions_simple_read_write() {
