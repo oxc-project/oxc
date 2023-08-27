@@ -62,7 +62,7 @@ To give you an idea of its capabilities, here’s an example from the [vscode] r
 Individual crates are published, you may use them to build your own JavaScript tools.
 
 * The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
-* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are ready for you to develop your own JavaScript tools.
+* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
 * See `crates/*/examples` for example usage
 
 While Rust has gained a reputation for its comparatively slower compilation speed,
@@ -113,10 +113,10 @@ Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the spee
 <details>
   <summary>How is it so fast?</summary>
   <ul>
-    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation</li>
-    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a></li>
-    <li>No other heap allocations are done except the above two</li>
-    <li>Scope binding, symbol resolution and many syntax errors are not done in the parser, they are delegated to the semantic analyzer</li>
+    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation.</li>
+    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a>.</li>
+    <li>No other heap allocations are done except the above two.</li>
+    <li>Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer.</li>
   </ul>
 </details>
 
@@ -146,10 +146,10 @@ which means you can run the linter without a Node.js installation in your CI.
 <details>
   <summary>How is it so fast?</summary>
   <ul>
-    <li>Oxc parser is used</li>
-    <li>AST visit is fast operation due to linear memory scan from the memory arena</li>
-    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores</li>
-    <li>Every single lint rule is tuned for performance</li>
+    <li>Oxc parser is used.</li>
+    <li>AST visit is a fast operation due to linear memory scan from the memory arena.</li>
+    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores.</li>
+    <li>Every single lint rule is tuned for performance.</li>
   </ul>
 </details>
 
