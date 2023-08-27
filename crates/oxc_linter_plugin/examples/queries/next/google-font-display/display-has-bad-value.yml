@@ -1,4 +1,4 @@
-name: "next:google-font-display:display_has_bad_value"
+name: "next:google-font-display:display-has-bad-value"
 query: |
   query {
     File {

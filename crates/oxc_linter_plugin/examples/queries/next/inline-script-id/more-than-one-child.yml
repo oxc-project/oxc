@@ -1,4 +1,4 @@
-name: "next:inline-script-id:more_than_one_child"
+name: "next:inline-script-id:more-than-one-child"
 
 query: |
   query {
