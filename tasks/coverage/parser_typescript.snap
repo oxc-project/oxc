@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
 Positive Passed: 5051/5063 (99.76%)
-Negative Passed: 995/4761 (20.90%)
+Negative Passed: 996/4761 (20.92%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3158,7 +3158,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser50966
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509693.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser553699.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser618973.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
@@ -8667,6 +8666,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × The keyword 'public' is reserved
+   ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:6:1]
+ 6 │     }
+ 7 │     public banana(x: public) { }
+   ·                      ──────
+ 8 │ }
+   ╰────
+
+  × The keyword 'public' is reserved
     ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:10:1]
  10 │ class C {
  11 │     constructor(public public, let) {
@@ -11280,7 +11287,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │     }
     ╰────
 
-  × Invalid Character ``
+  × Invalid Character `
+`
    ╭─[conformance/classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
@@ -16893,6 +16901,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·              ─
    ╰────
   help: Try insert a semicolon here
+
+  × The keyword 'public' is reserved
+   ╭─[conformance/parser/ecmascript5/RegressionTests/parser553699.ts:2:1]
+ 2 │   constructor() { }
+ 3 │   public banana (x: public) { }
+   ·                     ──────
+ 4 │ }
+   ╰────
 
   × Empty parenthesized expression
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser566700.ts:1:1]
