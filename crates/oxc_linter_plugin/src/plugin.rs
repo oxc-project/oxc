@@ -10,32 +10,26 @@ use std::{
 use ignore::Walk;
 use located_yaml::{YamlElt, YamlLoader};
 use miette::{NamedSource, SourceSpan};
-use mini_v8::Value;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    miette::{self},
     Report,
 };
-use oxc_linter::{Fix, LintContext};
+use oxc_linter::LintContext;
 use oxc_parser::Parser;
 use oxc_query::{schema, Adapter};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::{SourceType, Span};
 use serde::Deserialize;
-use trustfall::{execute_query, Schema, TransparentValue};
+use trustfall::{execute_query, FieldValue, Schema, TransparentValue};
 
-use crate::convert::{
-    from_js_to_multiple_span_info, js_number_to_u32, trustfall_results_to_js_arguments,
+use crate::{
+    errors::{
+        ErrorFromLinterPlugin, ExpectedTestToFailButPassed, ExpectedTestToPassButFailed,
+        SpanStartOrEnd, UnexpectedErrorsInFailTest,
+    },
+    raw_diagnostic::RawPluginDiagnostic,
 };
-
-pub struct RawPluginDiagnostic {
-    pub start: u32,
-    pub end: u32,
-    pub fix: Option<String>,
-    pub summary: Option<String>,
-    pub reason: Option<String>,
-}
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct InputQuery {
@@ -74,72 +68,6 @@ pub enum RulesToRun {
     Only(String),
 }
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(transparent)]
-pub struct ParseError(serde_yaml::Error);
-
-pub enum SpanStartOrEnd {
-    Start,
-    End,
-}
-
-impl Debug for SpanStartOrEnd {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Start => write!(f, "SpanStart"),
-            Self::End => write!(f, "SpanEnd"),
-        }
-    }
-}
-
-impl Display for SpanStartOrEnd {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Start => write!(f, "span_start"),
-            Self::End => write!(f, "span_end"),
-        }
-    }
-}
-
-#[derive(Debug, Error, Diagnostic)]
-pub enum ErrorFromLinterPlugin {
-    #[error("{0}")]
-    PluginGenerated(String, String, #[label("{1}")] Span),
-    #[error("{error_message}")]
-    Trustfall {
-        error_message: String,
-        #[source_code]
-        query_source: Arc<NamedSource>,
-        #[label = "This query failed."]
-        query_span: SourceSpan,
-    },
-    #[error(transparent)]
-    Ignore(ignore::Error),
-    #[error(transparent)]
-    ReadFile(std::io::Error),
-    #[error("Failed to parse file at path: {0}")]
-    QueryParse(PathBuf, #[related] Vec<ParseError>),
-    #[error(
-        "Expected span_start and span_end to be List of Int or Int, instead got\nspan_start = {span_start}\nspan_end = {span_end}"
-    )]
-    WrongTypeForSpanStartSpanEnd {
-        span_start: String,
-        span_end: String,
-        #[source_code]
-        query_source: Arc<NamedSource>,
-        #[label = "This query failed."]
-        query_span: SourceSpan,
-    },
-    #[error("Expected {which_span} to be an integer, instead got a float.")]
-    UnexpectedFloatFromJS {
-        which_span: SpanStartOrEnd,
-        #[source_code]
-        query_source: Arc<NamedSource>,
-        #[label = "This query failed."]
-        query_span: SourceSpan,
-    },
-}
-
 impl LinterPlugin {
     pub fn new(schema: &'static Schema, queries_path: &PathBuf) -> oxc_diagnostics::Result<Self> {
         let mut deserialized_queries = vec![];
@@ -154,7 +82,7 @@ impl LinterPlugin {
 
                 let mut deserialized =
                     serde_yaml::from_str::<InputQuery>(&text).map_err(|err| {
-                        ErrorFromLinterPlugin::QueryParse(pathbuf.clone(), vec![ParseError(err)])
+                        ErrorFromLinterPlugin::QueryParse(pathbuf.clone(), vec![err.into()])
                     })?;
                 deserialized.path = pathbuf;
                 deserialized_queries.push(deserialized);
@@ -173,7 +101,6 @@ impl LinterPlugin {
         ctx: &mut LintContext,
         plugin: &InputQuery,
         adapter: &Arc<&Adapter<'_>>,
-        mv8: &mini_v8::MiniV8,
     ) -> oxc_diagnostics::Result<()> {
         let query_source =
             Arc::new(NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()));
@@ -188,55 +115,42 @@ impl LinterPlugin {
                     query_span,
                 })?;
 
-        for data_item in query_results {
-            let transformer: mini_v8::Function = mv8
-                .eval(plugin.post_transform.clone().unwrap_or_else(|| "(data) => data".to_string()))
-                .unwrap_or_else(|err| panic!("{err}"));
+        for result in query_results {
+            let transformed_data_to_span = match (result.get("span_start"), result.get("span_end"))
+            {
+                (Some(FieldValue::Uint64(span_start)), Some(FieldValue::Uint64(span_end))) => {
+                    let transformed: Result<RawPluginDiagnostic, _> =
+                        (*span_start, *span_end).try_into();
 
-            let arguments = trustfall_results_to_js_arguments(mv8, data_item.clone());
-
-            let fn_return: Value =
-                transformer.call(arguments).unwrap_or_else(|err| panic!("{err}"));
-
-            let object_returned = match fn_return {
-                Value::Null => continue,
-                Value::Object(object) => object,
-                _ => unimplemented!(
-                    "You should not return values that aren't objects or nulls from js."
-                ),
-            };
-
-            let transformed_data_to_span = match (
-                object_returned.get("span_start").unwrap(),
-                object_returned.get("span_end").unwrap(),
-            ) {
-                (Value::Number(span_start), Value::Number(span_end)) => {
-                    vec![RawPluginDiagnostic {
-                        start: js_number_to_u32(
-                            span_start,
-                            SpanStartOrEnd::Start,
-                            Arc::clone(&query_source),
+                    vec![transformed.map_err(|which_span| {
+                        ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
+                            number: match which_span {
+                                SpanStartOrEnd::Start => *span_start,
+                                SpanStartOrEnd::End => *span_end,
+                            }
+                            .into(),
                             query_span,
-                        )?,
-                        end: js_number_to_u32(
-                            span_end,
-                            SpanStartOrEnd::End,
-                            Arc::clone(&query_source),
-                            query_span,
-                        )?,
-                        fix: object_returned.get("fix").unwrap(),
-                        summary: object_returned.get("summary").unwrap(),
-                        reason: object_returned.get("reason").unwrap(),
-                    }]
+                            which_span,
+                            query_source: Arc::clone(&query_source),
+                        }
+                    })?]
                 }
-                (Value::Array(start_spans), Value::Array(end_spans)) => {
-                    from_js_to_multiple_span_info(
-                        start_spans,
-                        end_spans,
-                        object_returned.get("fix").unwrap(),
-                        object_returned.get("summary").unwrap(),
-                        object_returned.get("summary").unwrap(),
-                    )
+                (Some(FieldValue::Int64(span_start)), Some(FieldValue::Int64(span_end))) => {
+                    let transformed: Result<RawPluginDiagnostic, _> =
+                        (*span_start, *span_end).try_into();
+
+                    vec![transformed.map_err(|which_span| {
+                        ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
+                            number: match which_span {
+                                SpanStartOrEnd::Start => *span_start,
+                                SpanStartOrEnd::End => *span_end,
+                            }
+                            .into(),
+                            query_span,
+                            which_span,
+                            query_source: Arc::clone(&query_source),
+                        }
+                    })?]
                 }
                 (a, b) => {
                     return Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
@@ -251,21 +165,16 @@ impl LinterPlugin {
 
             ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
 
-            for RawPluginDiagnostic { start, end, fix, summary, reason } in transformed_data_to_span
-            {
+            for RawPluginDiagnostic { start, end } in transformed_data_to_span {
                 let span = Span::new(start, end);
 
                 let error = ErrorFromLinterPlugin::PluginGenerated(
-                    summary.unwrap_or_else(|| plugin.summary.clone()),
-                    reason.unwrap_or_else(|| plugin.reason.clone()),
+                    plugin.summary.clone(),
+                    plugin.reason.clone(),
                     span,
                 );
 
-                if let Some(fix) = fix.map(|fixed_txt| Fix::new(fixed_txt, span)) {
-                    ctx.diagnostic_with_fix(error, || fix);
-                } else {
-                    ctx.diagnostic(error);
-                }
+                ctx.diagnostic(error);
             }
         }
         Ok(())
@@ -276,17 +185,16 @@ impl LinterPlugin {
         ctx: &mut LintContext,
         relative_file_path_parts: Vec<Option<String>>,
         rules_to_run: RulesToRun,
-        mini_v8: &mini_v8::MiniV8,
     ) -> oxc_diagnostics::Result<()> {
         let inner = Adapter::new(Rc::clone(ctx.semantic()), relative_file_path_parts);
         let adapter = Arc::from(&inner);
         if let RulesToRun::Only(this_rule) = rules_to_run {
             for rule in self.rules.iter().filter(|x| x.name == this_rule) {
-                self.run_plugin_rules(ctx, rule, &adapter, mini_v8)?;
+                self.run_plugin_rules(ctx, rule, &adapter)?;
             }
         } else {
             for rule in &self.rules {
-                self.run_plugin_rules(ctx, rule, &adapter, mini_v8)?;
+                self.run_plugin_rules(ctx, rule, &adapter)?;
             }
         }
         Ok(())
@@ -297,7 +205,6 @@ fn run_test(
     test: &SingleTest,
     rule_name: &str,
     plugin: &LinterPlugin,
-    mini_v8: &mini_v8::MiniV8,
 ) -> std::result::Result<Vec<Report>, Vec<Report>> {
     let file_path = &test.relative_path.last().expect("there to be atleast 1 path part");
     let source_text = &test.code;
@@ -328,7 +235,6 @@ fn run_test(
         &mut lint_ctx,
         test.relative_path.iter().map(|el| Some(el.clone())).collect::<Vec<_>>(),
         RulesToRun::Only(rule_name.to_string()),
-        mini_v8,
     );
 
     if let Some(err) = result.err() {
@@ -338,40 +244,18 @@ fn run_test(
     Ok(lint_ctx.into_message().into_iter().map(|m| m.error).collect::<Vec<_>>())
 }
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Test expected to pass, but failed.")]
-struct ExpectedTestToPassButFailed {
-    #[source_code]
-    query: NamedSource,
-    #[label = "This test failed."]
-    err_span: SourceSpan,
-    #[related]
-    errors: Vec<Report>,
-}
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Test expected to fail, but passed.")]
-struct ExpectedTestToFailButPassed {
-    #[source_code]
-    query: NamedSource,
-    #[label = "This test should have failed but it passed."]
-    err_span: SourceSpan,
-}
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected errors in fail test.")]
-struct UnexpectedErrorsInFailTest {
-    #[related]
-    errors: Vec<Report>,
-    #[source_code]
-    query: NamedSource,
-    #[label = "This test should have failed but it passed."]
-    err_span: SourceSpan,
-}
-
 enum PassOrFail {
     Pass,
     Fail,
+}
+
+impl Display for PassOrFail {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pass => write!(f, "pass"),
+            Self::Fail => write!(f, "fail"),
+        }
+    }
 }
 
 fn span_of_test_n(
@@ -402,7 +286,7 @@ fn span_of_test_n(
         .keys()
         .find(|x| {
             let YamlElt::String(str) = &x.yaml else { return false };
-            str == if matches!(pass_or_fail, PassOrFail::Pass) { "pass" } else { "fail" }
+            *str == pass_or_fail.to_string()
         })
         .expect("to be able to find pass hash in yaml file");
     let YamlElt::Array(test_arr) = &tests_hash[pass_hash_key].yaml else {
@@ -434,11 +318,10 @@ fn span_of_test_n(
 
 pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
     let plugin = LinterPlugin::new(schema(), queries_to_test)?;
-    let mini_v8 = mini_v8::MiniV8::new();
 
     for rule in &plugin.rules {
         for (ix, test) in rule.tests.pass.iter().enumerate() {
-            let diagnostics_collected = run_test(test, &rule.name, &plugin, &mini_v8);
+            let diagnostics_collected = run_test(test, &rule.name, &plugin);
             let source = Arc::new(NamedSource::new(
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
@@ -471,7 +354,7 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
         }
 
         for (i, test) in rule.tests.fail.iter().enumerate() {
-            let diagnostics_collected = run_test(test, &rule.name, &plugin, &mini_v8);
+            let diagnostics_collected = run_test(test, &rule.name, &plugin);
             let source = Arc::new(NamedSource::new(
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
