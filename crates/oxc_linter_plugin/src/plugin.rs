@@ -69,6 +69,10 @@ pub enum RulesToRun {
 }
 
 impl LinterPlugin {
+    /// Parses all queries in the directory provided, going down into nested directories looking for .yml files.
+    ///
+    /// # Errors
+    /// This function will error if it can't read a file, or if it can't parse a query
     pub fn new(schema: &'static Schema, queries_path: &PathBuf) -> oxc_diagnostics::Result<Self> {
         let mut deserialized_queries = vec![];
 
@@ -92,11 +96,17 @@ impl LinterPlugin {
         Ok(Self { rules: deserialized_queries, schema })
     }
 
+    /// Run specific plugin rule by reference on parsed code.
+    ///
+    /// # Errors
+    /// If the query fails to execute, if the query's output types are wrong, or if query
+    /// execution has an error.
+    //
     // allow clippy::redundant_allocation which is upset we need the Arc<&'_ Adapter>
     // and not a Arc<Adapter> however we need the reference to be arc'd because
     // the Adapter trait is implemented for a &Adapter, not just Adapter
     #[allow(clippy::redundant_allocation)]
-    pub fn run_plugin_rules(
+    fn run_specific_plugin_rule(
         &self,
         ctx: &mut LintContext,
         plugin: &InputQuery,
@@ -180,7 +190,13 @@ impl LinterPlugin {
         Ok(())
     }
 
-    pub fn run_tests(
+    /// Run specific plugin rule by name or multiple plugin rules on parsed code.
+    ///
+    /// # Errors
+    /// Any errors that occur while linting the file, such as if the file can't be read,
+    /// or if the file can't be parsed, or if the query can't be executed, or if the query's
+    /// output types are wrong.
+    pub fn lint_file(
         &self,
         ctx: &mut LintContext,
         relative_file_path_parts: Vec<Option<String>>,
@@ -190,18 +206,19 @@ impl LinterPlugin {
         let adapter = Arc::from(&inner);
         if let RulesToRun::Only(this_rule) = rules_to_run {
             for rule in self.rules.iter().filter(|x| x.name == this_rule) {
-                self.run_plugin_rules(ctx, rule, &adapter)?;
+                self.run_specific_plugin_rule(ctx, rule, &adapter)?;
             }
         } else {
             for rule in &self.rules {
-                self.run_plugin_rules(ctx, rule, &adapter)?;
+                self.run_specific_plugin_rule(ctx, rule, &adapter)?;
             }
         }
         Ok(())
     }
 }
 
-fn run_test(
+/// Run one individual test on unparsed code.
+fn run_individual_test(
     test: &SingleTest,
     rule_name: &str,
     plugin: &LinterPlugin,
@@ -214,7 +231,6 @@ fn run_test(
     let ret = Parser::new(&allocator, source_text, source_type).parse();
 
     // Handle parser errors
-
     if !ret.errors.is_empty() {
         return Err(ret.errors);
     }
@@ -223,6 +239,7 @@ fn run_test(
     let SemanticBuilderReturn { semantic, errors } =
         SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
 
+    // Handle semantic errors
     if !errors.is_empty() {
         return Err(errors);
     }
@@ -231,16 +248,18 @@ fn run_test(
 
     let mut lint_ctx = LintContext::new(&Rc::clone(&semantic));
 
-    let result = plugin.run_tests(
+    let result = plugin.lint_file(
         &mut lint_ctx,
         test.relative_path.iter().map(|el| Some(el.clone())).collect::<Vec<_>>(),
         RulesToRun::Only(rule_name.to_string()),
     );
 
+    // Handle query errors
     if let Some(err) = result.err() {
         return Err(vec![err]);
     }
 
+    // Return plugin made errors
     Ok(lint_ctx.into_message().into_iter().map(|m| m.error).collect::<Vec<_>>())
 }
 
@@ -316,12 +335,17 @@ fn span_of_test_n(
     SourceSpan::new(start.into(), (end_of_end - start).into())
 }
 
+/// # Errors
+/// Unable to read any of the yaml rule files or unable to parse any of the yaml rule files,
+/// or if any test expected to pass but failed, or if any test expected to fail but passed,
+/// or query execution errors such as if the `span_start` and `span_end` are not both
+/// understood types by the error reporting system.
 pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
     let plugin = LinterPlugin::new(schema(), queries_to_test)?;
 
     for rule in &plugin.rules {
         for (ix, test) in rule.tests.pass.iter().enumerate() {
-            let diagnostics_collected = run_test(test, &rule.name, &plugin);
+            let diagnostics_collected = run_individual_test(test, &rule.name, &plugin);
             let source = Arc::new(NamedSource::new(
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
@@ -330,31 +354,34 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
             match diagnostics_collected {
                 Err(errs) | Ok(errs) if !errs.is_empty() => {
                     let yaml_text =
-                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+                        fs::read_to_string(&rule.path).map_err(ErrorFromLinterPlugin::ReadFile)?;
+
+                    let errors_with_code = errs
+                        .into_iter()
+                        .map(|e| {
+                            // Don't change the sourcecode of errors that already have their own sourcecode
+                            if e.source_code().is_some() {
+                                e
+                            } else {
+                                // Add js code to errors that don't have code yet
+                                e.with_source_code(Arc::clone(&source))
+                            }
+                        })
+                        .collect();
 
                     return Err(ExpectedTestToPassButFailed {
-                        errors: errs
-                            .into_iter()
-                            .map(|e| {
-                                // Don't change the sourcecode of errors that already have their own sourcecode
-                                if e.source_code().is_some() {
-                                    e
-                                } else {
-                                    e.with_source_code(Arc::clone(&source))
-                                }
-                            })
-                            .collect(),
+                        errors: errors_with_code,
                         err_span: span_of_test_n(&yaml_text, ix, &test.code, &PassOrFail::Pass),
                         query: NamedSource::new(rule.path.to_string_lossy(), yaml_text),
                     }
                     .into());
                 }
-                _ => {}
+                _ => { /* Ignore the empty diagnostics, as it means the test passed. */ }
             };
         }
 
         for (i, test) in rule.tests.fail.iter().enumerate() {
-            let diagnostics_collected = run_test(test, &rule.name, &plugin);
+            let diagnostics_collected = run_individual_test(test, &rule.name, &plugin);
             let source = Arc::new(NamedSource::new(
                 format!("./{}", test.relative_path.join("/")),
                 test.code.clone(),
@@ -367,7 +394,7 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
                 { /* Success case. */ }
                 Ok(errs) if errs.is_empty() => {
                     let yaml_text =
-                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+                        fs::read_to_string(&rule.path).map_err(ErrorFromLinterPlugin::ReadFile)?;
 
                     return Err(ExpectedTestToFailButPassed {
                         err_span: span_of_test_n(&yaml_text, i, &test.code, &PassOrFail::Fail),
@@ -377,7 +404,7 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
                 }
                 Err(errs) | Ok(errs) => {
                     let yaml_text =
-                        fs::read_to_string(&rule.path).expect("to be able to get text of rule");
+                        fs::read_to_string(&rule.path).map_err(ErrorFromLinterPlugin::ReadFile)?;
 
                     return Err(UnexpectedErrorsInFailTest {
                         errors: errs

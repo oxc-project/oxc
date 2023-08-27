@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod errors;
 #[cfg(test)]
-mod plugin;
+pub mod plugin;
 #[cfg(test)]
 mod raw_diagnostic;
