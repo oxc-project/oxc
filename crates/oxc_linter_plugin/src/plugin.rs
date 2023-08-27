@@ -335,6 +335,7 @@ fn span_of_test_n(
     SourceSpan::new(start.into(), (end_of_end - start).into())
 }
 
+/// Enumerates and tests all queries at the path given.
 /// # Errors
 /// Unable to read any of the yaml rule files or unable to parse any of the yaml rule files,
 /// or if any test expected to pass but failed, or if any test expected to fail but passed,
