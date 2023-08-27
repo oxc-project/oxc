@@ -26,12 +26,12 @@ Oxc is a parser, linter, formatter, transpiler, minifier, resolver ... all writt
 
 This project adheres to philosophies from [Rome][rome] and [Ruff][ruff].
 
-1. JavaScript tooling could be rewritten in a more performant language
-2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools
+1. JavaScript tooling could be rewritten in a more performant language.
+2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools.
 
 ## ⚡️ Quick Start
 
-The linter is ready to use. It comes with over 60 default rules and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with over 60 default rules and no configuration is required.
 
 To start using, install [oxlint][npm-oxlint] or via `npx`:
 
