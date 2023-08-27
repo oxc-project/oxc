@@ -1,4 +1,4 @@
-name: "next:no-head-element:rule"
+name: "next:no-head-element"
 
 query: |
   query {

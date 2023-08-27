@@ -1,4 +1,4 @@
-name: "next:no-title-in-document-head:rule"
+name: "next:no-title-in-document-head"
 
 query: |
   query {

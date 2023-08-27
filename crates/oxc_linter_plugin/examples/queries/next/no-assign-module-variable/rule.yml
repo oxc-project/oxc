@@ -1,4 +1,4 @@
-name: "next:inline-script-id:no-assign-module-variable:rule"
+name: "next:inline-script-id:no-assign-module-variable"
 
 query: |
   query {

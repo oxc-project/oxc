@@ -1,4 +1,4 @@
-name: "next:no-duplicate-head:rule"
+name: "next:no-duplicate-head"
 
 # We don't run this lint now beacuause it outputs a List<Int> for span_start and span_end which we don't support yet
 

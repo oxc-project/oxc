@@ -1,4 +1,4 @@
-name: "next:no-script-component-in-head:rule"
+name: "next:no-script-component-in-head"
 
 query: |
   query {

@@ -1,4 +1,4 @@
-name: "next:no-css-tags:rule"
+name: "next:no-css-tags"
 
 query: |
   query {

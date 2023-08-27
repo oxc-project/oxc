@@ -1,4 +1,4 @@
-name: "next:no-document-import-in-page:rule"
+name: "next:no-document-import-in-page"
 
 query: |
   query {

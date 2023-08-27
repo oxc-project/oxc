@@ -1,4 +1,4 @@
-name: "next:no-img-element:rule"
+name: "next:no-img-element"
 
 query: |
   query {

@@ -1,4 +1,4 @@
-name: "next:no-sync-scripts:rule"
+name: "next:no-sync-scripts"
 
 query: |
   query {

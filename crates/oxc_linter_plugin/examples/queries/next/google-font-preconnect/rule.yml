@@ -1,4 +1,4 @@
-name: "next:google-font-preconnect:rule"
+name: "next:google-font-preconnect"
 
 query: |
   query {

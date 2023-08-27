@@ -1,4 +1,4 @@
-name: "next:no-before-interactive-script-outside-document:rule"
+name: "next:no-before-interactive-script-outside-document"
 
 query: |
   query {
