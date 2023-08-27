@@ -11,7 +11,7 @@ use oxc_linter::LintContext;
 use oxc_parser::Parser;
 use oxc_query::{schema, Adapter};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
-use oxc_span::{SourceType, Span};
+use oxc_span::SourceType;
 use serde::Deserialize;
 use trustfall::{execute_query, FieldValue, Schema, TransparentValue};
 
@@ -182,13 +182,11 @@ impl LinterPlugin {
 
             ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
 
-            for RawPluginDiagnostic { start, end } in transformed_data_to_span {
-                let span = Span::new(start, end);
-
+            for plugin_diagnostic in transformed_data_to_span {
                 let error = ErrorFromLinterPlugin::PluginGenerated(
                     plugin.summary.clone(),
                     plugin.reason.clone(),
-                    span,
+                    plugin_diagnostic.into(),
                 );
 
                 ctx.diagnostic(error);
