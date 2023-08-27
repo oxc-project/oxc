@@ -54,42 +54,30 @@ declare_oxc_lint!(
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint(no-constant-binary-expression): Disallow expressions where the operation doesn't affect the value"
-)]
-#[diagnostic()]
-struct NoConstantBinaryExpressionDiagnostic(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
     "eslint(no-constant-binary-expression): Unexpected constant {0:?} on the left-hand side of a {1:?} expression"
 )]
-#[diagnostic(severity(warning))]
-struct ConstantShortCircuit(
-    &'static str, // property
-    &'static str, // operator
-    #[label("This expression always evaluates to the constant on the left-hand side")] Span,
-);
+#[diagnostic(
+    severity(warning),
+    help("This expression always evaluates to the constant on the left-hand side")
+)]
+struct ConstantShortCircuit(&'static str, &'static str, #[label] Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-constant-binary-expression): Unexpected constant binary expression")]
-#[diagnostic(severity(warning))]
-struct ConstantBinaryOperand(
-    &'static str, // otherSide
-    &'static str, // operator
-    #[label("This compares constantly with the {0}-hand side of the {1}")] Span,
-);
+#[diagnostic(severity(warning), help("This compares constantly with the {0}-hand side of the {1}"))]
+struct ConstantBinaryOperand(&'static str, &'static str, #[label] Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object")]
-#[diagnostic(severity(warning))]
-struct ConstantAlwaysNew(#[label("These two values can never be equal")] Span);
+#[diagnostic(severity(warning), help("These two values can never be equal"))]
+struct ConstantAlwaysNew(#[label] Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
     "eslint(no-constant-binary-expression): Unexpected comparison of two newly constructed objects"
 )]
-#[diagnostic(severity(warning))]
-struct ConstantBothAlwaysNew(#[label("These two values can never be equal")] Span);
+#[diagnostic(severity(warning), help("These two values can never be equal"))]
+struct ConstantBothAlwaysNew(#[label] Span);
 
 impl Rule for NoConstantBinaryExpression {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

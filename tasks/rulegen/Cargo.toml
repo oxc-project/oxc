@@ -6,10 +6,11 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_span      = { workspace = true }
-oxc_ast       = { workspace = true }
-oxc_parser    = { workspace = true }
+oxc_allocator    = { workspace = true }
+oxc_span         = { workspace = true }
+oxc_ast          = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_tasks_common = { workspace = true }
 
 convert_case = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }

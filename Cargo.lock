@@ -2267,6 +2267,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_span",
+ "oxc_tasks_common",
  "regex",
  "serde",
  "ureq",
