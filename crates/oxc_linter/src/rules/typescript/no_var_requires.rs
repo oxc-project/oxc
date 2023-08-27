@@ -9,10 +9,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-var-requires): Use ES6 style imports or import foo = require(\"foo\") imports."
-)]
-#[diagnostic(severity(warning))]
+#[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
+#[diagnostic(severity(warning),  help("Use ES6 style imports or import instead."))]
 struct NoVarRequiresDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +42,10 @@ impl Rule for NoVarRequires {
         let AstKind::CallExpression(expr) = node.kind() else { return };
 
         if expr.is_require_call()
-            && !ctx.scopes().get_bindings(node.scope_id()).contains_key("require")
+            && !ctx
+                .scopes()
+                .ancestors(node.scope_id())
+                .any(|scope_id| ctx.scopes().get_bindings(scope_id).contains_key("require"))
         {
             // If the parent is an expression statement => this is a top level require()
             // Or, if the parent is a chain expression (require?.()) and
@@ -87,6 +88,12 @@ fn test() {
             const require = createRequire('foo');
             const json = require('./some.json');
         "#,
+        "
+            let require = () => ''; 
+            {
+                let foo = require('foo');
+            }
+        ",
     ];
 
     let fail = vec![

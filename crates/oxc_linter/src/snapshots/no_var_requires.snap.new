@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 95
+expression: no_var_requires
+---
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ var foo = require('foo');
+   ·           ──────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ const foo = require('foo');
+   ·             ──────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ let foo = require('foo');
+   ·           ──────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ let foo = trick(require('foo'));
+   ·                 ──────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ var foo = require?.('foo');
+   ·           ────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ const foo = require?.('foo');
+   ·             ────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ let foo = require?.('foo');
+   ·           ────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ let foo = trick(require?.('foo'));
+   ·                 ────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ let foo = trick?.(require('foo'));
+   ·                   ──────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ const foo = require('./foo.json') as Foo;
+   ·             ─────────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ const foo: Foo = require('./foo.json').default;
+   ·                  ─────────────────────
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:1:1]
+ 1 │ 
+ 2 │             const configValidator = new Validator(require('./a.json'));
+   ·                                                   ───────────────────
+ 3 │             configValidator.addSchema(require('./a.json'));
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+  ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
+   ╭─[no_var_requires.tsx:2:1]
+ 2 │             const configValidator = new Validator(require('./a.json'));
+ 3 │             configValidator.addSchema(require('./a.json'));
+   ·                                       ───────────────────
+ 4 │         
+   ╰────
+  help: Use ES6 style imports or import instead.
+
+
