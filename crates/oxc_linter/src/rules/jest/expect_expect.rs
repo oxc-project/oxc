@@ -20,7 +20,7 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/expect-expect): Test has no assertions")]
-#[diagnostic(severity(warning), help("Add assertions in this Test"))]
+#[diagnostic(severity(warning), help("Add assertion(s) in this Test"))]
 struct ExpectExpectDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Clone)]
@@ -41,15 +41,17 @@ impl Default for ExpectExpect {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers when there is no call made to `expect` in a test, to prevent users from forgetting to add assertions.
+    /// This rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.
     ///
     /// ### Why is this bad?
+    ///
+    ///  People may forget to add assertions.
     ///
     /// ### Example
     ///
     /// ```javascript
     /// it('should be a test', () => {
-    /// console.log('no assertion');
+    ///     console.log('no assertion');
     /// });
     /// test('should assert something', () => {});
     /// ```
@@ -109,19 +111,17 @@ impl Rule for ExpectExpect {
     }
 }
 
-fn convert_pattern(pattern: &str) -> String {
-    // Pre-process pattern, e.g.
-    // request.*.expect -> request.[a-z\\d]*.expect
-    // request.**.expect -> request.[a-z\\d\\.]*.expect
-    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
-    let pattern = pattern
-        .split('.')
-        .map(|p| if p == "**" { String::from("[a-z\\d\\.]*") } else { p.replace('*', "[a-z\\d]*") })
-        .collect::<Vec<_>>()
-        .join("\\.");
-
-    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
-    format!("(?ui)^{pattern}(\\.|$)")
+fn check_arguments<'a>(
+    call_expr: &'a CallExpression<'a>,
+    assert_function_names: &[String],
+    ctx: &LintContext<'a>,
+) -> bool {
+    call_expr.arguments.iter().any(|argument| {
+        if let Argument::Expression(expr) = argument {
+            return check_assert_function_used(expr, assert_function_names, ctx);
+        }
+        false
+    })
 }
 
 fn check_assert_function_used<'a>(
@@ -168,19 +168,6 @@ fn check_assert_function_used<'a>(
     false
 }
 
-fn check_arguments<'a>(
-    call_expr: &'a CallExpression<'a>,
-    assert_function_names: &[String],
-    ctx: &LintContext<'a>,
-) -> bool {
-    call_expr.arguments.iter().any(|argument| {
-        if let Argument::Expression(expr) = argument {
-            return check_assert_function_used(expr, assert_function_names, ctx);
-        }
-        false
-    })
-}
-
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
     assert_function_names: &[String],
@@ -197,6 +184,21 @@ fn check_statements<'a>(
 /// Checks if node names returned by getNodeName matches any of the given star patterns
 fn matches_assert_function_name(name: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
+}
+
+fn convert_pattern(pattern: &str) -> String {
+    // Pre-process pattern, e.g.
+    // request.*.expect -> request.[a-z\\d]*.expect
+    // request.**.expect -> request.[a-z\\d\\.]*.expect
+    // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
+    let pattern = pattern
+        .split('.')
+        .map(|p| if p == "**" { String::from("[a-z\\d\\.]*") } else { p.replace('*', "[a-z\\d]*") })
+        .collect::<Vec<_>>()
+        .join("\\.");
+
+    // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
+    format!("(?ui)^{pattern}(\\.|$)")
 }
 
 #[allow(clippy::too_many_lines)]

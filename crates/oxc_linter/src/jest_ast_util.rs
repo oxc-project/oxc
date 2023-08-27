@@ -333,6 +333,9 @@ impl<'a> MemberExpressionElement<'a> {
     }
 }
 
+/// join name of the expression. e.g.
+/// `expect(foo).toBe(bar)`  -> "expect.toBe"
+/// `new Foo().bar` -> "Foo.bar"
 pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> String {
     let chain = get_node_name_vec(expr);
     chain.join(".")
