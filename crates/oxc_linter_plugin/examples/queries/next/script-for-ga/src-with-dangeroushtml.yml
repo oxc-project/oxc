@@ -1,4 +1,4 @@
-name: "next:script-for-ga:src_with_dangeroushtml"
+name: "next:script-for-ga:src-with-dangeroushtml"
 
 query: |
   query {

@@ -1,4 +1,4 @@
-name: "next:script-for-ga:src_check"
+name: "next:script-for-ga:src-check"
 
 query: |
   query {
