@@ -199,7 +199,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReferen
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum JestFnKind {
     Expect,
     General(JestGeneralFnKind),

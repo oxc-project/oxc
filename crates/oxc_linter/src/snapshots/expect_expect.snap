@@ -7,35 +7,35 @@ expression: expect_expect
  1 │ it("should fail", () => {});
    · ───────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", myTest); function myTest() {}
    · ─────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test("should fail", () => {});
    · ─────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test.skip("should fail", () => {});
    · ──────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ afterEach(() => {});
    · ───────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
@@ -45,63 +45,63 @@ expression: expect_expect
  4 │ ╰─▶             })
  5 │             
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", () => { somePromise.then(() => {}); });
    · ────────────────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test("should fail", () => { foo(true).toBe(true); })
    · ────────────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ it("should also fail",() => expectSaga(mySaga).returns());
    · ─────────────────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => request.get().foo().expect(456));
    · ──────────────────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => request.get().foo().bar().expect(456));
    · ────────────────────────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => tester.request(123));
    · ──────────────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => request(123));
    · ───────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ test('should fail', () => request(123));
    · ───────────────────────────────────────
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:3:1]
@@ -111,7 +111,7 @@ expression: expect_expect
  6 │ ╰─▶             });
  7 │             
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
   ⚠ eslint(jest/expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:3:1]
@@ -121,6 +121,6 @@ expression: expect_expect
  6 │ ╰─▶             });
  7 │             
    ╰────
-  help: Add assertions in this Test
+  help: Add assertion(s) in this Test
 
 
