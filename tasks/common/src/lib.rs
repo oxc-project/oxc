@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
+mod request;
 mod test_file;
 
+pub use self::request::agent;
 pub use self::test_file::*;
 
 /// # Panics

@@ -21,7 +21,6 @@ use serde::Serialize;
 use ureq::Response;
 
 mod json;
-mod request;
 mod template;
 
 const ESLINT_TEST_PATH: &str =
@@ -345,7 +344,7 @@ fn main() {
     };
     println!("Reading test file from {rule_test_path}");
 
-    let body = request::agent().get(&rule_test_path).call().map(Response::into_string);
+    let body = oxc_tasks_common::agent().get(&rule_test_path).call().map(Response::into_string);
     let pass_cases;
     let fail_cases;
     let context = match body {
