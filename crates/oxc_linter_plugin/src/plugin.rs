@@ -40,7 +40,6 @@ pub struct InputQuery {
     pub reason: String,
     #[serde(skip_deserializing)]
     pub path: PathBuf,
-    pub post_transform: Option<String>,
     #[serde(default)]
     pub tests: QueryTests,
 }

@@ -24,28 +24,8 @@ args:
     - "ASCII"
   unicode_escape: "\\u"
 
-post_transform: |
-  ({span_start, span_end, as_constant_string}) => {
-    const data = {
-      "UTF-8": 'utf8',
-      "utf-8": 'utf8',
-      "Utf8": 'utf8',
-      "ASCII": 'ascii'
-    };
-
-    const fixed = data[as_constant_string];
-
-    return {
-      span_start,
-      span_end,
-      fix: fixed,
-      summary: `Prefer '${fixed}' over '${as_constant_string}'.`,
-      reason: `Prefer the normalized form of '${fixed}' over '${as_constant_string}'.`
-    }
-  }
-
-summary: Prefer <insert1> over <insert2>. (You should never see this as a user)
-reason: Prefer the normalized form of <insert1> over <insert2>. (You should never see this as a user)
+summary: Prefer 'utf8' or 'ascii'.
+reason: Prefer the normalized form of 'utf8' or 'ascii' over alternative strings.
 
 tests:
   pass:
