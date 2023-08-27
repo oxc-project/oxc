@@ -114,6 +114,11 @@ impl LinterPlugin {
         let query_source =
             Arc::new(NamedSource::new(plugin.path.to_string_lossy(), plugin.query.clone()));
         // NOTE: the 0 is technically wrong, but it's the right file which is enough
+        //       the reason we lie about the span is because in the NamedSource, we just put
+        //       the query rather than the real yaml file, and this error is about the whole
+        //       query, so we just highlight the entire length of the query. This of course is
+        //       results in the wrong row when the user ctrl-clicks, but it saves us from having
+        //       to reparse the whole yaml file in order to get the spans.
         let query_span = SourceSpan::new(0.into(), plugin.query.len().into());
 
         let query_results =
