@@ -62,6 +62,7 @@ pub struct LinterPlugin {
     schema: &'static Schema,
 }
 
+#[allow(dead_code)]
 pub enum RulesToRun {
     All,
     Only(String),
