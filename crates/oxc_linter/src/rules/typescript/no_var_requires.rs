@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
-#[diagnostic(severity(warning),  help("Use ES6 style imports or import instead."))]
+#[diagnostic(severity(warning), help("Use ES6 style imports or import instead."))]
 struct NoVarRequiresDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
