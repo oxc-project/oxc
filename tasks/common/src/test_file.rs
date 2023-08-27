@@ -1,6 +1,7 @@
 use std::{fmt, str::FromStr};
 
 use crate::project_root;
+use crate::request::agent;
 
 pub struct TestFiles {
     files: Vec<TestFile>,
@@ -59,7 +60,7 @@ impl TestFile {
             Ok((filename.to_string(), code))
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());
-            match ureq::get(lib).call() {
+            match agent().get(lib).call() {
                 Ok(response) => {
                     let mut reader = response.into_reader();
 
