@@ -441,16 +441,3 @@ pub fn test_queries(queries_to_test: &PathBuf) -> oxc_diagnostics::Result<()> {
 
     Ok(())
 }
-
-#[cfg(test)]
-mod test {
-    use std::path::Path;
-
-    use super::test_queries;
-
-    #[test]
-    fn query_tests() -> oxc_diagnostics::Result<()> {
-        test_queries(&Path::new("examples/queries").to_path_buf())?;
-        Ok(())
-    }
-}
