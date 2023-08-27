@@ -11287,8 +11287,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │     }
     ╰────
 
-  × Invalid Character `
-`
+  × Invalid Character ``
    ╭─[conformance/classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
