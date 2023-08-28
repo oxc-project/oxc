@@ -1,10 +1,14 @@
 use oxc_ast::ast::Expression;
 use trustfall::provider::{
-    ContextIterator, ContextOutcomeIterator, EdgeParameters, ResolveEdgeInfo, VertexIterator,
+    resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, EdgeParameters,
+    ResolveEdgeInfo, VertexIterator,
 };
 
 use super::vertex::Vertex;
-use crate::{util::strip_parens_from_expr, Adapter};
+use crate::{
+    util::{declaration_of_varref, strip_parens_from_expr},
+    Adapter,
+};
 
 pub(super) fn resolve_array_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
@@ -17,6 +21,7 @@ pub(super) fn resolve_array_edge<'a, 'b: 'a>(
         "span" => array::span(contexts, resolve_info),
         "element" => array::element(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -155,6 +160,7 @@ pub(super) fn resolve_arrow_function_edge<'a, 'b: 'a>(
         "span" => arrow_function::span(contexts, resolve_info),
         "parameter" => arrow_function::parameter(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -310,6 +316,23 @@ fn strip_parens<'a, 'b: 'a>(
             }
             _ => v.clone(),
         }))
+    })
+}
+
+fn or_value_at_declaration<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    _parameters: &EdgeParameters,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    resolve_neighbors_with(contexts, |v| {
+        Box::new(
+            if let Vertex::VarRef(data) = v {
+                declaration_of_varref(data, adapter)
+            } else {
+                Some(v.clone())
+            }
+            .into_iter(),
+        )
     })
 }
 
@@ -786,6 +809,7 @@ pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'DotProperty'")
         }
@@ -884,10 +908,12 @@ pub(super) fn resolve_expression_edge<'a, 'b: 'a>(
     edge_name: &str,
     parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => expression::span(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Expression'")
         }
@@ -969,11 +995,13 @@ pub(super) fn resolve_function_edge<'a, 'b: 'a>(
     edge_name: &str,
     parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "parameter" => function::parameter(contexts, resolve_info),
         "span" => function::span(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Function'")
         }
@@ -1068,6 +1096,7 @@ pub(super) fn resolve_fn_declaration_edge<'a, 'b: 'a>(
         "span" => fn_declaration::span(contexts, resolve_info),
         "parameter" => fn_declaration::parameter(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -1294,6 +1323,7 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'FnCall'")
         }
@@ -1845,6 +1875,7 @@ pub(super) fn resolve_jsxelement_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'JSXElement'")
         }
@@ -2208,6 +2239,7 @@ pub(super) fn resolve_logical_expression_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'LogicalExpression'"
@@ -2343,6 +2375,7 @@ pub(super) fn resolve_new_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'New'")
         }
@@ -2423,6 +2456,7 @@ pub(super) fn resolve_number_literal_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'NumberLiteral'"
@@ -2548,6 +2582,7 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'ObjectLiteral'"
@@ -2813,6 +2848,7 @@ pub(super) fn resolve_parenthesized_expression_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'ParenthesizedExpression'")
         }
@@ -2868,6 +2904,7 @@ pub(super) fn resolve_reassignment_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         "ancestor" => ancestors(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'Reassignment'"
@@ -2966,6 +3003,7 @@ pub(super) fn resolve_regexp_literal_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'RegExpLiteral'"
@@ -3185,6 +3223,7 @@ pub(super) fn resolve_ternary_expression_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'TernaryExpression'"
@@ -3272,6 +3311,7 @@ pub(super) fn resolve_template_literal_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'TemplateLiteral'"
@@ -3308,6 +3348,7 @@ pub(super) fn resolve_throw_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Throw'")
         }
@@ -3440,6 +3481,7 @@ pub(super) fn resolve_string_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'String'")
         }
@@ -3503,6 +3545,7 @@ pub(super) fn resolve_unary_expression_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'UnaryExpression'"
@@ -3689,6 +3732,7 @@ pub(super) fn resolve_var_ref_edge<'a, 'b: 'a>(
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts, parameters),
+        "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'VarRef'")
         }

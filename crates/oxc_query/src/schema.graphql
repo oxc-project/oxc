@@ -316,6 +316,11 @@ interface Array implements HasSpan & Expression {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -331,6 +336,11 @@ type ArrayAST implements HasSpan & Expression & Array & ASTNode {
   ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -353,6 +363,11 @@ interface NumberLiteral implements HasSpan & Expression {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -370,12 +385,15 @@ type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral 
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
 }
-
-# Expression
 
 interface JSXElement implements Expression & HasSpan {
   opening_element: JSXOpeningElement!
@@ -391,6 +409,11 @@ interface JSXElement implements Expression & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -455,6 +478,11 @@ interface ObjectLiteral implements Expression & HasSpan {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -468,6 +496,11 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
 
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -514,6 +547,11 @@ interface FnCall implements Expression & HasSpan {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -527,6 +565,11 @@ type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
 
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -552,6 +595,11 @@ interface Reassignment implements HasSpan & Expression {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -572,6 +620,11 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   right: Expression!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -620,6 +673,11 @@ interface Function implements Expression & HasSpan {
   """
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -642,6 +700,11 @@ interface UnaryExpression implements HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -670,6 +733,11 @@ type UnaryExpressionAST implements UnaryExpression & ASTNode & HasSpan & Express
   """
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -693,6 +761,11 @@ interface LogicalExpression implements HasSpan & Expression {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -721,6 +794,11 @@ type LogicalExpressionAST implements LogicalExpression & ASTNode & HasSpan & Exp
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -764,6 +842,11 @@ interface ArrowFunction implements Function & HasSpan & Expression {
   """
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -785,6 +868,11 @@ type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & 
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -820,6 +908,11 @@ interface FnDeclaration implements Function & HasSpan & Expression {
   """
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -850,6 +943,11 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   """
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -862,6 +960,11 @@ interface VarRef implements HasSpan & Expression {
   declaration: ASTNode
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -879,6 +982,11 @@ type VarRefAST implements HasSpan & Expression & VarRef & ASTNode {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -892,6 +1000,11 @@ Only includes strings declared with ' or " not `
 interface StringLiteral implements HasSpan & Expression {
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -910,6 +1023,11 @@ type StringLiteralAST implements HasSpan & Expression & ASTNode & StringLiteral 
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -920,6 +1038,11 @@ type StringLiteralAST implements HasSpan & Expression & ASTNode & StringLiteral 
 interface TemplateLiteral implements HasSpan & Expression {
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -935,6 +1058,11 @@ type TemplateLiteralAST implements HasSpan & Expression & TemplateLiteral & ASTN
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -946,6 +1074,11 @@ interface RegExpLiteral implements HasSpan & Expression {
   pattern: String!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -962,6 +1095,11 @@ type RegExpLiteralAST implements HasSpan & Expression & RegExpLiteral & ASTNode 
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -973,6 +1111,11 @@ interface ParenthesizedExpression implements HasSpan & Expression {
   expression: Expression!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -988,6 +1131,11 @@ type ParenthesizedExpressionAST implements HasSpan & Expression & ASTNode & Pare
   ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -1023,6 +1171,11 @@ interface DotProperty implements HasSpan & Expression {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -1045,6 +1198,11 @@ type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -1053,6 +1211,11 @@ type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
 }
 
 interface Expression implements HasSpan {
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Only non-null if the string can be trivially coerced to a constant string
   ie: const a = "apple"; const b = `blueberry`
@@ -1157,6 +1320,11 @@ interface TernaryExpression implements Expression & HasSpan {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -1174,6 +1342,11 @@ type TernaryExpressionAST implements Expression & HasSpan & ASTNode & TernaryExp
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -1186,6 +1359,11 @@ interface New implements Expression & HasSpan {
   argument: [Argument!]
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -1203,6 +1381,11 @@ type NewAST implements Expression & HasSpan & New & ASTNode {
   # Expression
   as_constant_string: String
   """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
+  """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
   strip_parens(strip_all: Boolean): Expression!
@@ -1214,6 +1397,11 @@ interface Throw implements Expression & HasSpan {
   to_throw: Expression!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -1229,6 +1417,11 @@ type ThrowAST implements Expression & HasSpan & Throw & ASTNode {
   ancestor: [ASTNode!]
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
@@ -1309,6 +1502,11 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  """
+  If self is a VarRef, will take the value of init value of the var ref,
+  otherwise returns self.
+  """
+  or_value_at_declaration: Expression!
   """
   Strips infinite levels of parens unless `strip_all` is `false`.
   """
