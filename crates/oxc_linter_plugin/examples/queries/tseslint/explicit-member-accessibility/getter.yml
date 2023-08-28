@@ -1,0 +1,33 @@
+name: "tseslint:explicit-member-accessibility:getter"
+
+query: |
+  query {
+    File {
+      class {
+        getter {
+          accessibility @filter(op: "is_null")
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+
+summary: Add access modifier
+reason: Enforces property privacy of members
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        class A { public get A() {} }
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        class A { get A() {} }

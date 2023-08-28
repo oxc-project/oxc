@@ -10,6 +10,7 @@ extend-exclude = [
   "crates/oxc_parser/src/lexer/mod.rs",
   "**/*.snap",
   "pnpm-lock.yaml",
+  "crates/oxc_linter_plugin/examples/queries/unicorn/prefer-string-slice/rule.yml"
 ]
 
 [default.extend-words]

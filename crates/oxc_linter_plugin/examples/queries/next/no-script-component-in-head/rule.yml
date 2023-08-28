@@ -1,0 +1,73 @@
+name: "next:no-script-component-in-head"
+
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashhead"])
+        default_import {
+          local_name @tag(name: "nextslashhead_defaultimport_name")
+        }
+      }
+      import {
+        from_path @filter(op: "=", value: ["$nextslashscript"])
+        default_import {
+          local_name @tag(name: "nextslashscript_defaultimport_name")
+        }
+      }
+
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["%nextslashhead_defaultimport_name"])
+        }
+
+        child_element @recurse(depth: 10) {
+          opening_element {
+            name @filter(op: "=", value: ["%nextslashscript_defaultimport_name"])
+          }
+        }
+
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+
+args:
+  nextslashhead: "next/head"
+  nextslashscript: "next/script"
+
+summary: "Move <Script /> outside of <Head />"
+reason: "The `next/script` component should not be used in a `next/head` component."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from "next/script";
+        const Head = ({children}) => children
+
+        export default function Index() {
+          return (
+            <Head>
+              <Script></Script>
+            </Head>
+          );
+        }
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+              <Head>
+                <Script></Script>
+              </Head>
+          );
+        }

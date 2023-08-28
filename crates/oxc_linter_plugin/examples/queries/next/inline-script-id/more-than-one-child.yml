@@ -1,0 +1,165 @@
+name: "next:inline-script-id:more-than-one-child"
+
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashscript"])
+
+        default_import {
+          local_name @tag
+        }
+      }
+
+      jsx_element {
+        child_count @filter(op: ">", value: ["$zero"])
+        opening_element {
+          name @filter(op: "=", value: ["%local_name"])
+          span_: span {
+            start @output
+            end @output
+          }
+          spread_attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
+          attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$id"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  nextslashscript: "next/script"
+  id: "id"
+
+summary: "Add an `id` attribute"
+reason: "`next/script` components with inline content require an `id` attribute to be defined to track and optimize the script."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script id="test-script">
+              {`console.log('Hello world');`}
+            </Script>
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script
+              id="test-script"
+              dangerouslySetInnerHTML={{
+                __html: `console.log('Hello world');`
+              }}
+            />
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script src="https://example.com" />
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import MyScript from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <MyScript id="test-script">
+              {`console.log('Hello world');`}
+            </MyScript>
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import MyScript from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <MyScript
+              id="test-script"
+              dangerouslySetInnerHTML={{
+                __html: `console.log('Hello world');`
+              }}
+            />
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script {...{ strategy: "lazyOnload" }} id={"test-script"}>
+              {`console.log('Hello world');`}
+            </Script>
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script {...{ strategy: "lazyOnload", id: "test-script" }}>
+              {`console.log('Hello world');`}
+            </Script>
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+        const spread = { strategy: "lazyOnload" }
+        export default function TestPage() {
+          return (
+            <Script {...spread} id={"test-script"}>
+              {`console.log('Hello world');`}
+            </Script>
+          )
+        }
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Script from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <Script>
+              {`console.log('Hello world');`}
+            </Script>
+          )
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import MyScript from 'next/script';
+
+        export default function TestPage() {
+          return (
+            <MyScript>
+              {`console.log('Hello world');`}
+            </MyScript>
+          )
+        }

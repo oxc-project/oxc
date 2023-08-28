@@ -1,0 +1,34 @@
+name: "tseslint:ban-types:String"
+
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          span { str @filter(op: "=", value: ["$String"]) }
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  String: "String"
+
+summary: Prefer string type over String type
+reason: String is a constructor function, string is a primitive type
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: string = '';
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: String = '';

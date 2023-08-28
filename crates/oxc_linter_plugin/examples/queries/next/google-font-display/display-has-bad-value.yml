@@ -1,0 +1,158 @@
+name: "next:google-font-display:display-has-bad-value"
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$link"])
+
+          span_: span {
+            start @output
+            end @output
+          }
+
+          attribute {
+            name @filter(op: "=", value: ["$href"])
+            value_as_constant_string @filter(op: "has_prefix", value: ["$href_value_start"])
+
+            value_as_url {
+              search_parameter @fold @transform(op: "count") @filter(op: ">", value:["$zero"]) {
+                key @filter(op: "=", value: ["$display"])
+                value @filter(op: "one_of", value: ["$bad_display_values"])
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  link: "link"
+  href: "href"
+  display: "display"
+  href_value_start: "https://fonts.googleapis.com/css"
+  bad_display_values:
+    - "auto"
+    - "block"
+    - "fallback"
+
+summary: "Replace '{display_value}' with 'optional'"
+reason: "Specifying display=optional minimizes the risk of invisible text or layout shift. If swapping to the custom font after it has loaded is important to you, then use display=swap instead."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+          return (
+            <Head>
+              <link href={test} rel="test" />
+              <link
+                href={process.env.NEXT_PUBLIC_CANONICAL_URL}
+                rel="canonical"
+              />
+              <link
+                href={new URL("../public/favicon.ico", import.meta.url).toString()}
+                rel="icon"
+              />
+              <link
+                href="https://fonts.googleapis.com/css2?family=Krona+One&display=optional"
+                rel="stylesheet"
+              />
+            </Head>
+          );
+        };
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <link
+                    href="https://fonts.googleapis.com/css?family=Krona+One&display=swap"
+                    rel="stylesheet"
+                  />
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <link
+                    href="https://fonts.googleapis.com/css?family=Krona+One&display=swap"
+                    rel="stylesheet"
+                    crossOrigin=""
+                  />
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+        return (
+            <Head>
+              <link
+                href="https://fonts.googleapis.com/css2?family=Krona+One&display=block"
+                rel="stylesheet"
+              />
+            </Head>
+          );
+        };
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+        return (
+          <Head>
+            <link
+              href="https://fonts.googleapis.com/css2?family=Krona+One&display=auto"
+              rel="stylesheet"
+            />
+          </Head>
+        );
+        };
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+        return (
+          <Head>
+            <link
+              href="https://fonts.googleapis.com/css2?family=Krona+One&display=fallback"
+              rel="stylesheet"
+            />
+          </Head>
+        );
+        };

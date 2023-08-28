@@ -1,0 +1,100 @@
+name: "next:no-sync-scripts"
+
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$script"])
+
+          span_: span {
+            start @output
+            end @output
+          }
+
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$src"])
+          }
+
+          attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            name @output @filter(op: "one_of", value: ["$async_or_defer"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  script: "script"
+  zero: 0
+  src: "src"
+  async_or_defer:
+    - "async"
+    - "defer"
+
+summary: "Synchronous scripts should not be used, prefer to use async or defer."
+reason: "A synchronous scripts can impact your webpage performance."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <script src='https://blah.com' async></script>
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <script {...props} ></script>
+              </div>
+            );
+          }
+        }
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <script src='https://blah.com'></script>
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <script src={props.src}></script>
+              </div>
+            );
+          }
+        }

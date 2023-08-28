@@ -1,0 +1,254 @@
+name: "unicorn:prefer-string-slice"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on FnCallAST {
+          callee {
+            ... on DotProperty {
+              accessed_property {
+                name @filter(op: "one_of", value: ["$substring_or_substr"])
+              }
+            }
+          }
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  substring_or_substr:
+    - "substring"
+    - "substr"
+
+summary: Prefer String#slice()
+reason: String#substr() and String#substring() are the two lesser known legacy ways to slice a string. It's better to use String#slice() as it's a more popular option with clearer behavior that has a consistent Array counterpart.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const substr = foo.substr
+    - relative_path:
+        - "index.ts"
+      code: |
+        const substring = foo.substring
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.slice()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.slice(0)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.slice(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.slice(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.slice?.(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.bar.baz.slice(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.slice(-3, -2)
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substr()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.substr()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar?.substring()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.[0]?.substring()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar.substr?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar?.substring?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar?.baz?.substr()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar?.baz.substring()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar.baz?.substr()
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr()
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(bar.length, Math.min(baz, 100))
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1, "abc".length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr("1", 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const length_1 = 123; "foo".substr(1, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const length_2 = 123; "foo".substr(0, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const length_3 = 123; "foo".substr('0', length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(0, -1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(0, "foo".length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const length_4 = 123; "foo".substr(1, length - 4)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const uri_1 = 'foo'; ((uri || '')).substr(1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substr(start)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substr(start, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substr(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substr(1, 2, 3)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "Sample".substr(0, "Sample".lastIndexOf("/"))
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substring()
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring()
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(2, 1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(-1, -5)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(-1, 2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring("fo".length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(0, length)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(length, 0)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substring(start)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(1)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substring(start, end)
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".substring(1, 3)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.substring(1, 2, 3)
