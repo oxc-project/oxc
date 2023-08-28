@@ -412,6 +412,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+                self,
             ),
             "ExpressionArrayElementAST" | "ExpressionArrayElement" => {
                 super::edges::resolve_expression_array_element_edge(
@@ -436,6 +437,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+                self,
             ),
             "FunctionBodyAST" | "FunctionBody" => super::edges::resolve_function_body_edge(
                 contexts,

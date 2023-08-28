@@ -6,6 +6,11 @@ use oxc_ast::ast::{
 };
 use rustc_hash::FxHasher;
 
+use crate::{
+    vertex::{VarRefVertex, Vertex},
+    Adapter,
+};
+
 pub fn jsx_attribute_to_constant_string<'a>(attr: &'a JSXAttribute<'a>) -> Option<String> {
     attr.value.as_ref().and_then(|attr_value| match attr_value {
         JSXAttributeValue::StringLiteral(slit) => slit.value.to_string().into(),
@@ -106,4 +111,14 @@ pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
     let mut hasher = FxHasher::default();
     t.hash(&mut hasher);
     hasher.finish()
+}
+
+pub fn declaration_of_varref<'b, 'c: 'b>(
+    data: &VarRefVertex<'c>,
+    adapter: &'b Adapter<'c>,
+) -> Option<Vertex<'c>> {
+    let reference_id = data.identifier_reference.reference_id.get()?;
+    let reference = adapter.semantic.symbols().references.get(reference_id)?;
+    let symbol_id = reference.symbol_id()?;
+    Some((*adapter.semantic.symbol_declaration(symbol_id)).into())
 }
