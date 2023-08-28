@@ -87,16 +87,6 @@ impl<'a> Parser<'a> {
         Ok(IdentifierName { span, name })
     }
 
-    // syntactically types are identifier name but semantically they need reference id
-    pub(crate) fn parse_identifier_name_with_reference(&mut self) -> Result<IdentifierReference> {
-        if !self.cur_kind().is_identifier_name() {
-            return Err(self.unexpected());
-        }
-        let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        let reference_id = Cell::default();
-        Ok(IdentifierReference { span, name, reference_id })
-    }
-
     /// Parse keyword kind as identifier
     pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName {
         let (span, name) = self.parse_identifier_kind(kind);

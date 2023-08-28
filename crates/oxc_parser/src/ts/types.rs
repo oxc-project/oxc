@@ -467,7 +467,7 @@ impl<'a> Parser<'a> {
     // type E = D.c.b.a;
     fn parse_ts_reference_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
-        let type_name = self.parse_ts_qualified_name()?;
+        let type_name = self.parse_ts_type_name()?;
         let type_parameters =
             if self.cur_token().is_on_new_line { None } else { self.parse_ts_type_arguments()? };
 
@@ -476,18 +476,18 @@ impl<'a> Parser<'a> {
 
     fn parse_ts_implement_name(&mut self) -> Result<Box<'a, TSClassImplements<'a>>> {
         let span = self.start_span();
-        let expression = self.parse_ts_qualified_name()?;
+        let expression = self.parse_ts_type_name()?;
         let type_parameters =
             if self.cur_token().is_on_new_line { None } else { self.parse_ts_type_arguments()? };
 
         Ok(self.ast.ts_type_implement(self.end_span(span), expression, type_parameters))
     }
 
-    pub(crate) fn parse_ts_qualified_name(&mut self) -> Result<TSTypeName<'a>> {
+    pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a>> {
         let span = self.start_span();
-        let identifier_name = self.parse_identifier_name_with_reference()?;
-        let mut left = TSTypeName::IdentifierReference(self.ast.alloc(identifier_name));
-
+        let ident = self.parse_identifier_name()?;
+        let ident = IdentifierReference::new(ident.name, ident.span);
+        let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;
             left = TSTypeName::QualifiedName(self.ast.alloc(TSQualifiedName {
@@ -496,7 +496,6 @@ impl<'a> Parser<'a> {
                 right,
             }));
         }
-
         Ok(left)
     }
 
@@ -756,7 +755,7 @@ impl<'a> Parser<'a> {
     fn parse_ts_typeof_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.expect(Kind::Typeof)?;
-        let expr_name = self.parse_ts_qualified_name()?;
+        let expr_name = self.parse_ts_type_name()?;
         let type_parameters = self.parse_ts_type_arguments()?;
         Ok(self.ast.ts_type_query_type(self.end_span(span), expr_name, type_parameters))
     }
@@ -769,8 +768,7 @@ impl<'a> Parser<'a> {
         let parameter = self.parse_ts_type()?;
         self.expect(Kind::RParen)?;
 
-        let qualifier =
-            if self.eat(Kind::Dot) { Some(self.parse_ts_qualified_name()?) } else { None };
+        let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
 
         let type_parameters = self.parse_ts_type_arguments()?;
 

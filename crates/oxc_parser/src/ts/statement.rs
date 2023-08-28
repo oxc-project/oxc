@@ -413,7 +413,7 @@ impl<'a> Parser<'a> {
                 expression,
             })
         } else {
-            TSModuleReference::TypeName(self.parse_ts_qualified_name()?)
+            TSModuleReference::TypeName(self.parse_ts_type_name()?)
         };
 
         self.asi()?;
