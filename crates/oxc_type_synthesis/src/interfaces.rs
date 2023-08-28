@@ -90,7 +90,7 @@ pub(crate) fn synthesize_signatures<T: ezno_checker::FSResolver>(
 												    Some(tp),
 											    ) = (&type_ref.type_name, &type_ref.type_parameters)
 											    {
-												    if let ast::TSTypeName::IdentifierName(
+												    if let ast::TSTypeName::IdentifierReference(
 													    ref parent_name,
 												    ) = qual.left
 												    {

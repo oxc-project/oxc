@@ -1,4 +1,7 @@
+//! TypeScript Definitions
+//!
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
+//! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
@@ -368,23 +371,26 @@ pub struct TSTypeReference<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+/// TypeName:
+///     IdentifierReference
+///     NamespaceName . IdentifierReference
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum TSTypeName<'a> {
-    IdentifierName(Box<'a, IdentifierName>),
+    IdentifierReference(Box<'a, IdentifierReference>),
     QualifiedName(Box<'a, TSQualifiedName<'a>>),
 }
 
 impl<'a> TSTypeName<'a> {
-    pub fn get_first_name(name: &TSTypeName) -> IdentifierName {
+    pub fn get_first_name(name: &TSTypeName) -> IdentifierReference {
         match name {
-            TSTypeName::IdentifierName(name) => (*name).clone(),
+            TSTypeName::IdentifierReference(name) => (*name).clone(),
             TSTypeName::QualifiedName(name) => TSTypeName::get_first_name(&name.left),
         }
     }
 
     pub fn is_const(&self) -> bool {
-        if let TSTypeName::IdentifierName(ident) = self {
+        if let TSTypeName::IdentifierReference(ident) = self {
             if ident.name == "const" {
                 return true;
             }
@@ -393,7 +399,7 @@ impl<'a> TSTypeName<'a> {
     }
 
     pub fn is_identifier(&self) -> bool {
-        matches!(self, Self::IdentifierName(_))
+        matches!(self, Self::IdentifierReference(_))
     }
 
     pub fn is_qualified_name(&self) -> bool {

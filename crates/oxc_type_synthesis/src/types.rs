@@ -224,7 +224,7 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
             }
             let tn = &reference.type_name;
             match tn {
-                ast::TSTypeName::IdentifierName(name) => environment
+                ast::TSTypeName::IdentifierReference(name) => environment
                     .get_type_by_name_handle_errors(
                         &name.name,
                         oxc_span_to_source_map_span(name.span),

@@ -67,7 +67,7 @@ impl Rule for NoMisusedNew {
                         if let Some(return_type) = &sig.return_type {
                             if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation
                             {
-                                if let TSTypeName::IdentifierName(id) = &type_ref.type_name {
+                                if let TSTypeName::IdentifierReference(id) = &type_ref.type_name {
                                     if id.name == decl_name {
                                         ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(Span::new(
                                             sig.span.start,
@@ -98,7 +98,7 @@ impl Rule for NoMisusedNew {
                                     if let TSType::TSTypeReference(type_ref) =
                                         &return_type.type_annotation
                                     {
-                                        if let TSTypeName::IdentifierName(current_id) =
+                                        if let TSTypeName::IdentifierReference(current_id) =
                                             &type_ref.type_name
                                         {
                                             if current_id.name == cls_name {
