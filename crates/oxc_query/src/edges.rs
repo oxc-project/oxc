@@ -3701,7 +3701,7 @@ mod var_ref {
         VertexIterator,
     };
 
-    use crate::Adapter;
+    use crate::{util::declaration_of_varref, Adapter};
 
     use super::{super::vertex::Vertex, get_span};
 
@@ -3711,18 +3711,15 @@ mod var_ref {
         adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let var_ref = v
-                .as_var_ref()
-                .unwrap_or_else(|| panic!("expected to have a varref vertex, instead have: {v:#?}"))
-                .identifier_reference;
-            let v = var_ref
-                .reference_id
-                .get()
-                .and_then(|x| adapter.semantic.symbols().references.get(x))
-                .and_then(oxc_semantic::Reference::symbol_id)
-                .map(|x| adapter.semantic.symbol_declaration(x));
-
-            Box::new(v.into_iter().map(|x| (*x).into()))
+            Box::new(
+                declaration_of_varref(
+                    v.as_var_ref().unwrap_or_else(|| {
+                        panic!("expected to have a varref vertex, instead have: {v:#?}")
+                    }),
+                    adapter,
+                )
+                .into_iter(),
+            )
         })
     }
 
