@@ -20,7 +20,7 @@
 
 The Oxidation Compiler is creating a suite of high-performance tools for JavaScript and TypeScript.
 
-Oxc is a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
+Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
 ## 💡 Philosophy
 
@@ -47,7 +47,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
 
 ## ⚡️ Performance
 
-* The parser is currently the fastest ready-for-production Rust-based parser.
+* The parser aim to be the fastest Rust-based ready-for-production parser.
 * The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
 
 <p float="left" align="middle">
@@ -91,7 +91,7 @@ where warm runs complete in 5 minutes.
 
 ### 🔸 AST and Parser
 
-Oxc maintains its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser developed in Rust.
+Oxc maintains its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
 
 As the parser often represents a key performance bottleneck in JavaScript tooling,
 any minor improvements can have a cascading effect on our downstream tools.
