@@ -1,3 +1,5 @@
+use std::convert::Into;
+
 use oxc_ast::ast::Expression;
 use trustfall::provider::{
     resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, EdgeParameters,
@@ -279,7 +281,7 @@ fn ancestors<'a, 'b: 'a>(
                     .ancestors(v.ast_node_id().expect("for vertex to have an ast_node")),
             )
             .map(|ancestor| *adapter.semantic.nodes().get_node(ancestor))
-            .map(std::convert::Into::into),
+            .map(Into::into),
         )
     })
 }
@@ -327,7 +329,13 @@ fn or_value_at_declaration<'a, 'b: 'a>(
     resolve_neighbors_with(contexts, |v| {
         Box::new(
             if let Vertex::VarRef(data) = v {
-                declaration_of_varref(data, adapter)
+                declaration_of_varref(data, adapter).and_then(|x| {
+                    if let Vertex::VariableDeclaration(data) = x {
+                        data.variable_declaration.init.as_ref().map(Into::into)
+                    } else {
+                        Some(x)
+                    }
+                })
             } else {
                 Some(v.clone())
             }
