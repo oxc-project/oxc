@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -6,13 +6,11 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::get_node_by_ident, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-var-requires): Use ES6 style imports or import foo = require(\"foo\") imports."
-)]
-#[diagnostic(severity(warning))]
+#[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
+#[diagnostic(severity(warning), help("Use ES6 style imports or import instead."))]
 struct NoVarRequiresDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -43,9 +41,7 @@ impl Rule for NoVarRequires {
         }
         let AstKind::CallExpression(expr) = node.kind() else { return };
 
-        if expr.is_require_call()
-            && !ctx.scopes().get_bindings(node.scope_id()).contains_key("require")
-        {
+        if expr.is_require_call() && no_local_require_declaration(&expr.callee, ctx) {
             // If the parent is an expression statement => this is a top level require()
             // Or, if the parent is a chain expression (require?.()) and
             // the grandparent is an expression statement => this is a top level require()
@@ -74,6 +70,11 @@ impl Rule for NoVarRequires {
     }
 }
 
+fn no_local_require_declaration(expr: &Expression, ctx: &LintContext) -> bool {
+    let Expression::Identifier(ident) = expr else { return true };
+    get_node_by_ident(ident, ctx).is_none()
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -87,6 +88,12 @@ fn test() {
             const require = createRequire('foo');
             const json = require('./some.json');
         "#,
+        "
+            let require = () => 'foo'; 
+            {
+                let foo = require('foo');
+            }
+        ",
     ];
 
     let fail = vec![
