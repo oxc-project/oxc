@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::get_node_by_ident, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
@@ -72,7 +72,7 @@ impl Rule for NoVarRequires {
 
 fn no_local_require_declaration(expr: &Expression, ctx: &LintContext) -> bool {
     let Expression::Identifier(ident) = expr else { return true };
-    get_node_by_ident(ident, ctx).is_none()
+    get_declaration_of_variable(ident, ctx).is_none()
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn test() {
             const json = require('./some.json');
         "#,
         "
-            let require = () => 'foo'; 
+            let require = () => 'foo';
             {
                 let foo = require('foo');
             }

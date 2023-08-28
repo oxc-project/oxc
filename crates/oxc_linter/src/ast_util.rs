@@ -266,7 +266,7 @@ pub fn get_name_from_property_key(key: &PropertyKey<'_>) -> Option<Atom> {
     }
 }
 
-pub fn get_node_by_ident<'a, 'b>(
+pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {

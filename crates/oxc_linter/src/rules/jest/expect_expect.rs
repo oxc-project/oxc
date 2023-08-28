@@ -11,7 +11,7 @@ use oxc_span::Span;
 use regex::Regex;
 
 use crate::{
-    ast_util::get_node_by_ident,
+    ast_util::get_declaration_of_variable,
     context::LintContext,
     jest_ast_util::{get_node_name, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
     rule::Rule,
@@ -151,7 +151,7 @@ fn check_assert_function_used<'a>(
             return has_assert_function;
         }
         Expression::Identifier(ident) => {
-            let Some(node) = get_node_by_ident(ident, ctx) else {
+            let Some(node) = get_declaration_of_variable(ident, ctx) else {
                 return false;
             };
             let AstKind::Function(function) = node.kind() else {
