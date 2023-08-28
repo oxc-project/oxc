@@ -161,6 +161,7 @@ pub(super) fn resolve_arrow_function_edge<'a, 'b: 'a>(
     match edge_name {
         "span" => arrow_function::span(contexts, resolve_info),
         "parameter" => arrow_function::parameter(contexts, resolve_info),
+        "body" => arrow_function::body(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
         "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         "ancestor" => ancestors(contexts, adapter),
@@ -186,6 +187,13 @@ mod arrow_function {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_body())
     }
 
     pub(super) fn span<'a, 'b: 'a>(
@@ -1007,6 +1015,7 @@ pub(super) fn resolve_function_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "parameter" => function::parameter(contexts, resolve_info),
+        "body" => function::body(contexts, resolve_info),
         "span" => function::span(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
         "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
@@ -1029,6 +1038,13 @@ mod function {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_body())
     }
 
     pub(super) fn span<'a, 'b: 'a>(
@@ -1103,6 +1119,7 @@ pub(super) fn resolve_fn_declaration_edge<'a, 'b: 'a>(
     match edge_name {
         "span" => fn_declaration::span(contexts, resolve_info),
         "parameter" => fn_declaration::parameter(contexts, resolve_info),
+        "body" => fn_declaration::body(contexts, resolve_info),
         "strip_parens" => strip_parens(contexts, parameters),
         "or_value_at_declaration" => or_value_at_declaration(contexts, parameters, adapter),
         "ancestor" => ancestors(contexts, adapter),
@@ -1128,6 +1145,13 @@ mod fn_declaration {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| v.function_parameter())
+    }
+
+    pub(super) fn body<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| v.function_body())
     }
 
     pub(super) fn span<'a, 'b: 'a>(

@@ -665,6 +665,7 @@ interface Function implements Expression & HasSpan {
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  body: FunctionBody
 
   # Expression
   """
@@ -835,6 +836,7 @@ interface ArrowFunction implements Function & HasSpan & Expression {
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  body: FunctionBody
   # Expression
   """
   Only non-null if the string can be trivially coerced to a constant string
@@ -862,6 +864,7 @@ type ArrowFunctionAST implements Function & HasSpan & ArrowFunction & ASTNode & 
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  body: FunctionBody
   # Expression
   """
   Only non-null if the string can be trivially coerced to a constant string
@@ -901,6 +904,7 @@ interface FnDeclaration implements Function & HasSpan & Expression {
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  body: FunctionBody
   # Expression
   """
   Only non-null if the string can be trivially coerced to a constant string
@@ -933,6 +937,7 @@ type FnDeclarationAST implements Function & ASTNode & FnDeclaration & HasSpan & 
   Does not include rest parameter if it exists.
   """
   parameter: [Parameter]!
+  body: FunctionBody
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]

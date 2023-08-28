@@ -291,6 +291,19 @@ impl<'a> Vertex<'a> {
         }))
     }
 
+    pub fn function_body(&self) -> VertexIterator<'a, Vertex<'a>> {
+        let body = match &self {
+            Vertex::ArrowFunction(data) => Some(&*data.arrow_expression.body),
+            Vertex::FnDeclaration(data) => data.function.body.as_deref(),
+            _ => unreachable!(
+                "'function_parameter' function should only ever be called with an ArrowFunction or FnDeclaration"
+            ),
+        };
+        Box::new(body.into_iter().map(|function_body| {
+            Vertex::FunctionBody(FunctionBodyVertex { ast_node: None, function_body }.into())
+        }))
+    }
+
     pub fn is_expr(&self) -> bool {
         match &self {
             Vertex::ObjectLiteral(..)
