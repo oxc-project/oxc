@@ -296,7 +296,7 @@ impl<'a> Vertex<'a> {
             Vertex::ArrowFunction(data) => Some(&*data.arrow_expression.body),
             Vertex::FnDeclaration(data) => data.function.body.as_deref(),
             _ => unreachable!(
-                "'function_parameter' function should only ever be called with an ArrowFunction or FnDeclaration"
+                "'function_body' function should only ever be called with an ArrowFunction or FnDeclaration"
             ),
         };
         Box::new(body.into_iter().map(|function_body| {
