@@ -320,7 +320,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [prettier]: https://github.com/prettier/prettier
 [prettier]: https://prettier.io
 [rome]: https://rome.tools
-[ruff]: https://rome.tools
+[ruff]: https://beta.ruff.rs
 [swc]: https://swc.rs
 [tdewolff-minify]: https://github.com/tdewolff/minify
 [terser]: https://terser.org
