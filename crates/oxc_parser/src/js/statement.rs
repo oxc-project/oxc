@@ -128,13 +128,13 @@ impl<'a> Parser<'a> {
             }
             Kind::Await
                 if self.peek_kind() == Kind::Using
-                    && self.nth_kind(2).is_identifier_reference(false, false, false) =>
+                    && self.nth_kind(2).is_identifier_reference(false, false) =>
             {
                 println!("CASE 1");
                 self.parse_using()
             }
             // self.cur_kind().is_identifier_reference(false, false, false)
-            Kind::Using if self.peek_kind().is_identifier_reference(false, false, false) => {
+            Kind::Using if self.peek_kind().is_identifier_reference(false, false) => {
                 println!("CASE 2");
 
                 self.parse_using()
