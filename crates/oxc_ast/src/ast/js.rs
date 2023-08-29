@@ -993,6 +993,7 @@ pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     FunctionDeclaration(Box<'a, Function<'a>>),
     ClassDeclaration(Box<'a, Class<'a>>),
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
 
     TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>),
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
@@ -1134,6 +1135,7 @@ pub struct ForStatement<'a> {
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     Expression(Expression<'a>),
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
 }
 
 impl<'a> ForStatementInit<'a> {
@@ -1172,6 +1174,7 @@ pub struct ForOfStatement<'a> {
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     AssignmentTarget(AssignmentTarget<'a>),
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
 }
 
 impl<'a> ForStatementLeft<'a> {
@@ -1951,4 +1954,14 @@ impl ModuleExportName {
             Self::StringLiteral(literal) => &literal.value,
         }
     }
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+pub struct UsingDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub is_await: bool,
+    #[cfg_attr(feature = "serde-impl", serde(default))]
+    pub declarations: Vec<'a, VariableDeclarator<'a>>,
 }

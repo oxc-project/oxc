@@ -1788,6 +1788,7 @@ const L_T: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
 
 const L_U: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
     "ndefined" => Kind::Undefined,
+    "sing" => Kind::Using,
     "nique" => Kind::Unique,
     "nknown" => Kind::Unknown,
     _ => Kind::Ident,

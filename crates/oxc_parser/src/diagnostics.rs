@@ -281,3 +281,13 @@ pub struct ReturnStatementOnlyInFunctionBody(#[label] pub Span);
 #[error("TS18007: JSX expressions may not use the comma operator.")]
 #[diagnostic(help("Did you mean to write an array?"))]
 pub struct JSXExpressionsMayNotUseTheCommaOperator(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Line terminator not permitted before using declaration")]
+#[diagnostic()]
+pub struct LineTerminatorBeforeUsingDeclaration(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Await is not allowed in using declarations")]
+#[diagnostic()]
+pub struct AwaitInUsingDeclaration(#[label] pub Span);

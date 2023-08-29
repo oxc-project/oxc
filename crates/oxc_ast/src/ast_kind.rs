@@ -37,6 +37,8 @@ pub enum AstKind<'a> {
     VariableDeclaration(&'a VariableDeclaration<'a>),
     VariableDeclarator(&'a VariableDeclarator<'a>),
 
+    UsingDeclaration(&'a UsingDeclaration<'a>),
+
     IdentifierName(&'a IdentifierName),
     IdentifierReference(&'a IdentifierReference),
     BindingIdentifier(&'a BindingIdentifier),
@@ -271,6 +273,8 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::VariableDeclaration(x) => x.span,
             Self::VariableDeclarator(x) => x.span,
 
+            Self::UsingDeclaration(x) => x.span,
+
             Self::IdentifierName(x) => x.span,
             Self::IdentifierReference(x) => x.span,
             Self::BindingIdentifier(x) => x.span,
@@ -420,6 +424,8 @@ impl<'a> AstKind<'a> {
 
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(_) => "VariableDeclarator".into(),
+
+            Self::UsingDeclaration(_) => "UsingDeclaration".into(),
 
             Self::IdentifierName(x) => format!("IdentifierName({})", x.name).into(),
             Self::IdentifierReference(x) => format!("IdentifierReference({})", x.name).into(),

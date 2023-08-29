@@ -170,6 +170,7 @@ impl<'a> GetSpan for Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.span,
             Self::FunctionDeclaration(decl) => decl.span,
             Self::ClassDeclaration(decl) => decl.span,
+            Self::UsingDeclaration(decl) => decl.span,
             Self::TSTypeAliasDeclaration(decl) => decl.span,
             Self::TSInterfaceDeclaration(decl) => decl.span,
             Self::TSEnumDeclaration(decl) => decl.span,
@@ -235,6 +236,7 @@ impl<'a> GetSpan for ForStatementInit<'a> {
         match self {
             Self::VariableDeclaration(x) => x.span,
             Self::Expression(x) => x.span(),
+            Self::UsingDeclaration(x) => x.span,
         }
     }
 }
@@ -244,6 +246,7 @@ impl<'a> GetSpan for ForStatementLeft<'a> {
         match self {
             Self::VariableDeclaration(x) => x.span,
             Self::AssignmentTarget(x) => x.span(),
+            Self::UsingDeclaration(x) => x.span,
         }
     }
 }

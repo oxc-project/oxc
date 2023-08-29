@@ -87,6 +87,7 @@ pub enum Kind {
     Type,
     Undefined,
     Unique,
+    Using,
     Unknown,
     Global,
     BigInt,
@@ -441,6 +442,7 @@ impl Kind {
             "target" => Target,
             "typeof" => Typeof,
             "unique" => Unique,
+            "using" => Using,
 
             "asserts" => Asserts,
             "boolean" => Boolean,
@@ -505,6 +507,7 @@ impl Kind {
             Finally => "finally",
             For => "for",
             Function => "function",
+            Using => "using",
             If => "if",
             Import => "import",
             In => "in",

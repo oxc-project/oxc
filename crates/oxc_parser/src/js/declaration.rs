@@ -42,6 +42,14 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
+        let using_decl = self.parse_using_declaration()?;
+
+        self.expect(Kind::Semicolon)?;
+
+        Ok(Statement::Declaration(Declaration::UsingDeclaration(self.ast.alloc(using_decl))))
+    }
+
     pub(crate) fn parse_variable_declaration(
         &mut self,
         start_span: Span,
@@ -101,5 +109,43 @@ impl<'a> Parser<'a> {
         }
 
         Ok(self.ast.variable_declarator(self.end_span(span), kind, id, init, definite))
+    }
+
+    /// UsingDeclaration[In, Yield, Await] :
+    /// using [no LineTerminator here] [lookahead ≠ await] BindingList[?In, ?Yield, ?Await, ~Pattern] ;
+    pub(crate) fn parse_using_declaration(&mut self) -> Result<UsingDeclaration<'a>> {
+        let span = self.start_span();
+
+        let is_await = self.eat(Kind::Await);
+
+        self.expect(Kind::Using)?;
+
+        // `[no LineTerminator here]`
+        if self.cur_token().is_on_new_line {
+            self.error(diagnostics::LineTerminatorBeforeUsingDeclaration(self.cur_token().span()));
+        }
+
+        // [lookahead ≠ await]
+        if self.cur_kind() == Kind::Await {
+            self.error(diagnostics::AwaitInUsingDeclaration(self.cur_token().span()));
+            self.eat(Kind::Await);
+        }
+
+        // BindingList[?In, ?Yield, ?Await, ~Pattern]
+        // TODO: work out how to exclude pattern
+        // TODO: add to context?
+        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.new_vec();
+        loop {
+            let declaration = self.parse_variable_declarator(
+                VariableDeclarationContext::new(VariableDeclarationParent::Statement),
+                VariableDeclarationKind::Var,
+            )?;
+            declarations.push(declaration);
+            if !self.eat(Kind::Comma) {
+                break;
+            }
+        }
+
+        Ok(self.ast.using_declaration(span, declarations, is_await))
     }
 }
