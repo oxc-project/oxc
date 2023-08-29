@@ -169,8 +169,8 @@ impl<'a> GetSpan for Declaration<'a> {
         match self {
             Self::VariableDeclaration(decl) => decl.span,
             Self::FunctionDeclaration(decl) => decl.span,
-            Self::ClassDeclaration(decl) => decl.span,
             Self::UsingDeclaration(decl) => decl.span,
+            Self::ClassDeclaration(decl) => decl.span,
             Self::TSTypeAliasDeclaration(decl) => decl.span,
             Self::TSInterfaceDeclaration(decl) => decl.span,
             Self::TSEnumDeclaration(decl) => decl.span,
