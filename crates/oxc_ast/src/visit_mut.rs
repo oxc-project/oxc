@@ -97,13 +97,13 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_for_statement_init(&mut self, init: &'b mut ForStatementInit<'a>) {
         match init {
-            ForStatementInit::UsingDeclaration(decl) => {
-                self.visit_using_declaration(decl);
-            }
             ForStatementInit::VariableDeclaration(decl) => {
                 self.visit_variable_declaration(decl);
             }
             ForStatementInit::Expression(expr) => self.visit_expression(expr),
+            ForStatementInit::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
         }
     }
 
