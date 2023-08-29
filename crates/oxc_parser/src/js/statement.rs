@@ -122,43 +122,16 @@ impl<'a> Parser<'a> {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
+            Kind::Await
+                if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
+            {
+                self.parse_using()
+            }
+            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
-            Kind::Await
-                if self.peek_kind() == Kind::Using
-                    && self.nth_kind(2).is_identifier_reference(false, false) =>
-            {
-                println!("CASE 1");
-                self.parse_using()
-            }
-            // self.cur_kind().is_identifier_reference(false, false, false)
-            Kind::Using if self.peek_kind().is_identifier_reference(false, false) => {
-                println!("CASE 2");
-
-                self.parse_using()
-            }
-            // TODO: is this the correct trigger?
-            // TODO: should the trigger be improved?
-            // the one after using is not `of` or `in`
-            // _ if self.ctx.has_await()
-            //     && self.peek_at(Kind::Using)
-            //     && self.nth_kind(2) != Kind::Of =>
-            // {
-            //     self.parse_using()
-            // }
-            // _ if self.cur_kind() == Kind::Using && self.peek_kind() != Kind::Of => {
-            //     self.parse_using()
-            // }
-
-            // _ if (self.ctx.has_await()
-            //     && self.peek_at(Kind::Using)
-            //     && self.nth_at(2, Kind::Ident))
-            //     || (self.cur_kind() == Kind::Using && self.nth_at(1, Kind::Ident)) =>
-            // {
-            //     self.parse_using()
-            // }
             _ => self.parse_expression_or_labeled_statement(),
         }
     }
