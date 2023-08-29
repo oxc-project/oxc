@@ -237,8 +237,8 @@ If you are unable to contribute by code, you can still participate by:
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
 
-* [Rome Tools](https://rome.tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
-* [Ruff](https://beta.ruff.rs) - [@charliermarsh](https://github.com/charliermarsh)
+* [Rome Tools][rome] - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
+* [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh)
 * [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 * [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
@@ -320,7 +320,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [prettier]: https://github.com/prettier/prettier
 [prettier]: https://prettier.io
 [rome]: https://rome.tools
-[ruff]: https://rome.tools
+[ruff]: https://beta.ruff.rs
 [swc]: https://swc.rs
 [tdewolff-minify]: https://github.com/tdewolff/minify
 [terser]: https://terser.org
