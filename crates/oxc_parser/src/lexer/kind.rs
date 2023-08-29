@@ -230,7 +230,7 @@ impl Kind {
 
     /// `BindingIdentifier`
     pub fn is_binding_identifier(self) -> bool {
-        self.is_identifier() || matches!(self, Yield | Await)
+        self.is_identifier() || matches!(self, Yield | Await | Using)
     }
 
     /// `LabelIdentifier`

@@ -1,6 +1,6 @@
 parser_test262 Summary:
-AST Parsed     : 44854/44855 (100.00%)
-Positive Passed: 44854/44855 (100.00%)
+AST Parsed     : 44855/44855 (100.00%)
+Positive Passed: 44855/44855 (100.00%)
 Negative Passed: 3919/3947 (99.29%)
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"
@@ -30,15 +30,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js"
-Expect to Parse: "language/reserved-words/unreserved-words.js"
-  × Unexpected token
-     ╭─[language/reserved-words/unreserved-words.js:106:1]
- 106 │ var use = 1;
- 107 │ var using = 1;
-     ·     ─────
- 108 │ var ushort = 1;
-     ╰────
-
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
  17 │ 
