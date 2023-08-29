@@ -52,7 +52,7 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference> {
         // allow `await` and `yield`, let semantic analysis report error
-        if !self.cur_kind().is_identifier_reference(false, false) {
+        if !self.cur_kind().is_identifier_reference(false, false, false) {
             return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);

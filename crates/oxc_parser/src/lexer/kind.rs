@@ -221,8 +221,11 @@ impl Kind {
 
     /// [Identifiers](https://tc39.es/ecma262/#sec-identifiers)
     /// `IdentifierReference`
-    pub fn is_identifier_reference(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
+    pub fn is_identifier_reference(self, r#yield: bool, r#await: bool, using: bool) -> bool {
+        self.is_identifier()
+            || (!r#yield && self == Yield)
+            || (!r#await && self == Await)
+            || (!r#using && self == Using)
     }
 
     /// `BindingIdentifier`

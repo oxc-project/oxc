@@ -126,6 +126,39 @@ impl<'a> Parser<'a> {
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
+            Kind::Await
+                if self.peek_kind() == Kind::Using
+                    && self.nth_kind(2).is_identifier_reference(false, false, false) =>
+            {
+                println!("CASE 1");
+                self.parse_using()
+            }
+            // self.cur_kind().is_identifier_reference(false, false, false)
+            Kind::Using if self.peek_kind().is_identifier_reference(false, false, false) => {
+                println!("CASE 2");
+
+                self.parse_using()
+            }
+            // TODO: is this the correct trigger?
+            // TODO: should the trigger be improved?
+            // the one after using is not `of` or `in`
+            // _ if self.ctx.has_await()
+            //     && self.peek_at(Kind::Using)
+            //     && self.nth_kind(2) != Kind::Of =>
+            // {
+            //     self.parse_using()
+            // }
+            // _ if self.cur_kind() == Kind::Using && self.peek_kind() != Kind::Of => {
+            //     self.parse_using()
+            // }
+
+            // _ if (self.ctx.has_await()
+            //     && self.peek_at(Kind::Using)
+            //     && self.nth_at(2, Kind::Ident))
+            //     || (self.cur_kind() == Kind::Using && self.nth_at(1, Kind::Ident)) =>
+            // {
+            //     self.parse_using()
+            // }
             _ => self.parse_expression_or_labeled_statement(),
         }
     }
@@ -266,6 +299,21 @@ impl<'a> Parser<'a> {
             }
 
             let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
+            return self.parse_for_loop(span, init, r#await);
+        }
+
+        if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
+            || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
+        {
+            // TODO: rename variables
+            let x = self.parse_using_declaration()?;
+
+            if matches!(self.cur_kind(), Kind::In | Kind::Of) {
+                let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(x));
+                return self.parse_for_in_or_of_loop(span, r#await, init);
+            }
+
+            let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(x)));
             return self.parse_for_loop(span, init, r#await);
         }
 

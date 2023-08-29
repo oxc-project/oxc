@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
             // GeneratorMethod
             Kind::Star if class_element_name => self.parse_property_definition_method(),
             // IdentifierReference
-            kind if kind.is_identifier_reference(false, false)
+            kind if kind.is_identifier_reference(false, false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })
                 // see <https://stackoverflow.com/questions/30285947/syntaxerror-unexpected-token>
                 && !matches!(
