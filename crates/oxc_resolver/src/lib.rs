@@ -656,6 +656,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             .name
             .as_ref()
             .and_then(|package_json_name| package_json_name.strip_prefix(specifier))
+            .filter(|subpath| subpath.is_empty() || subpath.starts_with('/'))
         else {
             return Ok(None);
         };

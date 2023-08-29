@@ -24,3 +24,24 @@ fn simple() {
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }
+
+#[test]
+fn dashed_name() {
+    let f = super::fixture();
+
+    let resolver = Resolver::default();
+
+    let data = [
+        (f.clone(), "dash", f.join("node_modules/dash/index.js")),
+        (f.clone(), "dash-name", f.join("node_modules/dash-name/index.js")),
+        (f.join("node_modules/dash"), "dash", f.join("node_modules/dash/index.js")),
+        (f.join("node_modules/dash"), "dash-name", f.join("node_modules/dash-name/index.js")),
+        (f.join("node_modules/dash-name"), "dash", f.join("node_modules/dash/index.js")),
+        (f.join("node_modules/dash-name"), "dash-name", f.join("node_modules/dash-name/index.js")),
+    ];
+
+    for (path, request, expected) in data {
+        let resolved_path = resolver.resolve(&path, request).map(|f| f.full_path());
+        assert_eq!(resolved_path, Ok(expected), "{path:?} {request}");
+    }
+}
