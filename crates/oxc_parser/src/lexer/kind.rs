@@ -230,7 +230,7 @@ impl Kind {
 
     /// `BindingIdentifier`
     pub fn is_binding_identifier(self) -> bool {
-        self.is_identifier() || matches!(self, Yield | Await | Using)
+        self.is_identifier() || matches!(self, Yield | Await)
     }
 
     /// `LabelIdentifier`
@@ -345,7 +345,7 @@ impl Kind {
         matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
             | Assert | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module
             | Namespace | Never | Out | Readonly | Require | Number | Object | Satisfies | String
-            | Symbol | Type | Undefined | Unique | Unknown | Global | BigInt | Override)
+            | Symbol | Type | Undefined | Unique | Unknown | Using | Global | BigInt | Override)
     }
 
     #[rustfmt::skip]
