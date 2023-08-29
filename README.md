@@ -24,7 +24,7 @@ Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... 
 
 ## 💡 Philosophy
 
-This project adheres to philosophies from [Rome][rome] and [Ruff][ruff].
+This project shares the same philosophies as [Biome][biome] and [Ruff][ruff].
 
 1. JavaScript tooling could be rewritten in a more performant language.
 2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools.
@@ -108,7 +108,7 @@ This clear distinction greatly enhances the development experience by aligning m
 
 #### 🏆 Parser Performance
 
-Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 2 times and the [Rome] parser by 3 times.
+Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 2 times and the [Biome] parser by 3 times.
 
 <details>
   <summary>How is it so fast?</summary>
@@ -237,7 +237,7 @@ If you are unable to contribute by code, you can still participate by:
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
 
-* [Rome Tools][rome] - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
+* [Biome][biome] - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
 * [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh)
 * [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 * [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
@@ -319,7 +319,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
 [prettier]: https://github.com/prettier/prettier
 [prettier]: https://prettier.io
-[rome]: https://rome.tools
+[biome]: https://biomejs.dev/
 [ruff]: https://beta.ruff.rs
 [swc]: https://swc.rs
 [tdewolff-minify]: https://github.com/tdewolff/minify
