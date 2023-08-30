@@ -9,8 +9,9 @@ use ignore::Walk;
 use miette::{NamedSource, SourceSpan};
 use mini_v8::{MiniV8, Value};
 use oxc_diagnostics::miette::{self};
-use oxc_linter::LintContext;
+use oxc_linter::{Fix, LintContext};
 use oxc_query::{schema, Adapter};
+use oxc_span::Span;
 use serde::Deserialize;
 use trustfall::{execute_query, FieldValue, TransparentValue};
 
@@ -155,6 +156,9 @@ impl LinterPlugin {
                     object_returned
                         .get::<_, Option<u64>>("span_end")
                         .expect("to be able to get the span_end field from the object"),
+                    object_returned
+                        .get::<_, Option<String>>("fix")
+                        .expect("to be able to get the fix field from the object"),
                     Arc::clone(&query_source),
                     query_span,
                 )?
@@ -170,13 +174,19 @@ impl LinterPlugin {
             ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
 
             for plugin_diagnostic in transformed_data_to_span {
+                let span = Span::new(plugin_diagnostic.start, plugin_diagnostic.end);
+
                 let error = ErrorFromLinterPlugin::PluginGenerated(
                     plugin.summary.clone(),
                     plugin.reason.clone(),
-                    plugin_diagnostic.into(),
+                    span,
                 );
 
-                ctx.diagnostic(error);
+                if let Some(fix) = plugin_diagnostic.fix {
+                    ctx.diagnostic_with_fix(error, || Fix::new(fix, span));
+                } else {
+                    ctx.diagnostic(error);
+                }
             }
         }
         Ok(())
@@ -236,6 +246,7 @@ impl LinterPlugin {
     fn decode_js_span_start_end(
         span_start: Option<u64>,
         span_end: Option<u64>,
+        fix: Option<String>,
         query_source: Arc<NamedSource>,
         query_span: SourceSpan,
     ) -> oxc_diagnostics::Result<Vec<RawPluginDiagnostic>> {
@@ -244,8 +255,12 @@ impl LinterPlugin {
                 let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
                     (span_start, span_end).try_into();
 
-                Ok(vec![transformed.map_err(|which_span| {
-                    ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
+                Ok(vec![transformed
+                    .map(|mut diag| {
+                        diag.fix = fix;
+                        diag
+                    })
+                    .map_err(|which_span| ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
                         number: match which_span {
                             SpanStartOrEnd::Start => span_start,
                             SpanStartOrEnd::End => span_end,
@@ -254,8 +269,7 @@ impl LinterPlugin {
                         query_span: SourceSpan::new(0.into(), 0.into()),
                         which_span,
                         query_source,
-                    }
-                })?])
+                    })?])
             }
             (a, b) => Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
                 span_start: format!("{a:?}"),

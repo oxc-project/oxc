@@ -1,5 +1,3 @@
-use oxc_span::Span;
-
 use crate::errors::SpanStartOrEnd;
 
 /// Represents an oxc span with more TryFrom implementations catered
@@ -7,6 +5,7 @@ use crate::errors::SpanStartOrEnd;
 pub struct RawPluginDiagnostic {
     pub start: u32,
     pub end: u32,
+    pub fix: Option<String>,
 }
 
 impl TryFrom<(u64, u64)> for RawPluginDiagnostic {
@@ -16,6 +15,7 @@ impl TryFrom<(u64, u64)> for RawPluginDiagnostic {
         Ok(Self {
             start: u32::try_from(value.0).map_err(|_| SpanStartOrEnd::Start)?,
             end: u32::try_from(value.1).map_err(|_| SpanStartOrEnd::End)?,
+            fix: None,
         })
     }
 }
@@ -27,12 +27,7 @@ impl TryFrom<(i64, i64)> for RawPluginDiagnostic {
         Ok(Self {
             start: u32::try_from(value.0).map_err(|_| SpanStartOrEnd::Start)?,
             end: u32::try_from(value.1).map_err(|_| SpanStartOrEnd::End)?,
+            fix: None,
         })
-    }
-}
-
-impl From<RawPluginDiagnostic> for Span {
-    fn from(val: RawPluginDiagnostic) -> Self {
-        Self::new(val.start, val.end)
     }
 }

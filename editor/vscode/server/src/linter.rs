@@ -263,7 +263,7 @@ impl IsolatedLintHandler {
             return Some(Self::wrap_diagnostics(path, &source_text, reports));
         };
 
-        let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
+        let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic)).with_fix(true);
         {
             let plugin = plugin.read().unwrap();
             if let Some(plugin) = &*plugin {
