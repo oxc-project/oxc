@@ -700,6 +700,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
 
+    /// enhanced-resolve: AliasFieldPlugin for [ResolveOptions::alias_fields]
     fn load_browser_field(
         &self,
         path: &Path,
