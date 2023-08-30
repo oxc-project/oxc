@@ -26,6 +26,5 @@ indexmap   = { workspace = true }
 itertools  = { workspace = true }
 
 [dev-dependencies]
-oxc_allocator = { workspace = true }
 oxc_parser    = { workspace = true }
 miette        = { workspace = true, features = ["fancy-no-backtrace"] }

@@ -3,7 +3,6 @@
 use std::{cell::RefCell, rc::Rc};
 
 use itertools::Itertools;
-use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
@@ -45,7 +44,7 @@ pub struct VariableInfo {
 
 #[derive(Debug)]
 pub struct RedeclareVariables {
-    pub variables: RefCell<Vec<VariableInfo>>,
+    pub variables: Vec<VariableInfo>,
 }
 
 pub struct SemanticBuilder<'a> {
@@ -117,7 +116,7 @@ impl<'a> SemanticBuilder<'a> {
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            redeclare_variables: RedeclareVariables { variables: RefCell::new(vec![]) },
+            redeclare_variables: RedeclareVariables { variables: vec![] },
         }
     }
 
@@ -430,6 +429,10 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
     }
+
+    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
+        self.redeclare_variables.variables.push(variable);
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -458,7 +461,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    #[allow(clippy::too_many_lines)]
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
@@ -473,15 +475,6 @@ impl<'a> SemanticBuilder<'a> {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
                 self.make_all_namespaces_valuelike();
-                if let Some(body) = &func.body {
-                    for stmt in &body.statements {
-                        if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) =
-                            stmt
-                        {
-                            self.add_variable(var_decl, false);
-                        }
-                    }
-                }
             }
             AstKind::ArrowExpression(_) => {
                 self.function_stack.push(self.current_node_id);
@@ -557,45 +550,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flag(NodeFlags::HasYield);
-            }
-            AstKind::Program(program) => {
-                for stmt in &program.body {
-                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
-                    {
-                        self.add_variable(var_decl, false);
-                    }
-                }
-            }
-            AstKind::ForStatement(for_stmt) => {
-                if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &for_stmt.init {
-                    self.add_variable(var_decl, false);
-                }
-            }
-            AstKind::ForInStatement(for_in_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
-                    self.add_variable(var_decl, false);
-                }
-            }
-            AstKind::ForOfStatement(for_of_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_of_stmt.left {
-                    self.add_variable(var_decl, false);
-                }
-            }
-            AstKind::StaticBlock(static_block) => {
-                for stmt in &static_block.body {
-                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
-                    {
-                        self.add_variable(var_decl, false);
-                    }
-                }
-            }
-            AstKind::BlockStatement(block_stmt) => {
-                for stmt in &block_stmt.body {
-                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
-                    {
-                        self.add_variable(var_decl, true);
-                    }
-                }
             }
             _ => {}
         }
@@ -740,29 +694,6 @@ impl<'a> SemanticBuilder<'a> {
             SymbolFlags::Import
         } else {
             SymbolFlags::Export
-        }
-    }
-
-    fn add_variable(&mut self, var_decl: &Box<'a, VariableDeclaration>, is_block: bool) {
-        let mut current_scope_id = self.current_scope_id;
-
-        if is_block {
-            for scope_id in self.scope.ancestors(current_scope_id).skip(1) {
-                if self.scope.get_flags(scope_id).is_var() {
-                    current_scope_id = scope_id;
-                    break;
-                }
-            }
-        }
-
-        for var in &var_decl.declarations {
-            if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                self.redeclare_variables.variables.borrow_mut().push(VariableInfo {
-                    name: ident.name.clone(),
-                    span: ident.span,
-                    scope_id: current_scope_id,
-                });
-            }
         }
     }
 }

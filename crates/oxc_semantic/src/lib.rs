@@ -9,7 +9,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
@@ -48,7 +48,7 @@ pub struct Semantic<'a> {
 
     unused_labels: Vec<AstNodeId>,
 
-    redeclare_variables: RefCell<Vec<VariableInfo>>,
+    redeclare_variables: Vec<VariableInfo>,
 }
 
 impl<'a> Semantic<'a> {
@@ -121,8 +121,8 @@ impl<'a> Semantic<'a> {
         self.scopes().root_unresolved_references().contains_key(&ident.name)
     }
 
-    pub fn redeclare_variables(&self) -> Vec<VariableInfo> {
-        self.redeclare_variables.clone().into_inner()
+    pub fn redeclare_variables(&self) -> &Vec<VariableInfo> {
+        &self.redeclare_variables
     }
 }
 

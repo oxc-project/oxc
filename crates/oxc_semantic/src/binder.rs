@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
 use oxc_span::{Atom, SourceType};
 
-use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
+use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder, VariableInfo};
 
 pub trait Binder {
     fn bind(&self, _builder: &mut SemanticBuilder) {}
@@ -49,6 +49,12 @@ impl<'a> Binder for VariableDeclarator<'a> {
                             .scope
                             .get_bindings_mut(scope_id)
                             .insert(ident.name.clone(), symbol_id);
+                    } else {
+                        builder.add_redeclared_variables(VariableInfo {
+                            name: ident.name.clone(),
+                            span: ident.span,
+                            scope_id: scope_id,
+                        });
                     }
                 }
             }
