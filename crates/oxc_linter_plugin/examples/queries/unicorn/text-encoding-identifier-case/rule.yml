@@ -1,0 +1,140 @@
+name: "unicorn:text-encoding-identifier-case"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on StringLiteralAST {
+          as_constant_string @filter(op: "one_of", value: ["$bad_utf8_or_ascii"])
+          span_: span {
+            str @filter(op: "not_has_substring", value: ["$unicode_escape"])
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  bad_utf8_or_ascii:
+    - "UTF-8"
+    - "utf-8"
+    - "Utf8"
+    - "ASCII"
+  unicode_escape: "\\u"
+
+summary: Prefer 'utf8' or 'ascii'.
+reason: Prefer the normalized form of 'utf8' or 'ascii' over alternative strings.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        `UTF-8`
+    - relative_path:
+        - "index.ts"
+      code: |
+        "utf8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        "utf+8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        "   utf8   "
+    - relative_path:
+        - "index.ts"
+      code: |
+        'utf8'
+    - relative_path:
+        - "index.ts"
+      code: |
+        "\u0055tf8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        const ASCII = 1
+    - relative_path:
+        - "index.ts"
+      code: |
+        const UTF8 = 1
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        "UTF-8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        "utf-8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        'utf-8'
+    - relative_path:
+        - "index.ts"
+      code: |
+        "Utf8"
+    - relative_path:
+        - "index.ts"
+      code: |
+        "ASCII"
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFile?.(file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs?.readFile(file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        readFile(file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFile(...file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        new fs.readFile(file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFile(file, {encoding: "UTF-8"})
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFile("UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFile(file, "UTF-8", () => {})
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.readFileSync(file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs[readFile](file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs["readFile"](file, "UTF-8")
+    - relative_path:
+        - "index.ts"
+      code: |
+        await fs.readFile(file, "UTF-8",)
+    - relative_path:
+        - "index.ts"
+      code: |
+        fs.promises.readFile(file, "UTF-8",)
+    - relative_path:
+        - "index.ts"
+      code: |
+        whatever.readFile(file, "UTF-8",)

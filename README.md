@@ -1,181 +1,257 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-dark-transparent.png" width="700">
-    <img alt="OXC Logo" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-white.png" width="700">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-dark-transparent.png" width="600">
+    <img alt="OXC Logo" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-white.png" width="600">
   </picture>
 </p>
 
 <div align="center">
 
-[![Discord chat][discord-badge]][discord-url]
+[![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
-[![npm version][npm-badge]][npm-url]
-[![Crates.io][crates-badge]][crates-url]
-[![Docs.rs][docs-badge]][docs-url]
-
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
-[![Code Size][code-size-badge]][code-size-url]
-[![MIT licensed][mit-badge]][mit-url]
+[![Sponsors][sponsors-badge]][sponsors-url]
 
-### [Playground](https://web-infra-dev.github.io/oxc/playground)
+[![Discord chat][discord-badge]][discord-url]
+[![Playground][playground-badge]][playground-url]
 </div>
 
-[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
-[discord-url]: https://discord.gg/9uXCAwqQZW
-[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
-[mit-url]: LICENSE
-[ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
-[npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
-[npm-url]: https://www.npmjs.com/package/oxlint/v/latest
-[crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
-[crates-url]: https://crates.io/crates/oxc_parser
-[docs-badge]: https://docs.rs/oxc/badge.svg
-[docs-url]: https://docs.rs/oxc
-[code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
-[code-size-url]: https://github.com/web-infra-dev/oxc
-[code-coverage-badge]: https://codecov.io/github/web-infra-dev/oxc/branch/main/graph/badge.svg
-[code-coverage-url]: https://codecov.io/gh/web-infra-dev/oxc
+## ⚓ Oxc
 
-The Oxidation Compiler is creating a suite of high-performance tools for the JavaScript / TypeScript language re-written in Rust:
+The Oxidation Compiler is creating a suite of high-performance tools for JavaScript and TypeScript.
 
-* [AST](./crates/oxc_ast) - See [docs.rs][docs-ast]
-* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs][docs-parser], [@oxidation-compiler/napi][npm-napi]
-* [Linter](./crates/oxc_linter) ([ESLint][ESLint]) - Prototype - Try it out! `npx oxlint@latest path`
-* Formatter ([prettier][prettier])
-* Transpiler ([babel][babel])
-* [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/web-infra-dev/oxc/tree/main/crates/oxc_minifier)
-* [Resolver](./crates/oxc_resolver) ([enhanced-resolve](enhanced-resolve))
-* Type Checker - See [ezno][ezno], available via `npx oxidation-compiler@latest check path`
+Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
-[docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
-[docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
-[npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
-[acorn]: https://github.com/acornjs/acorn
-[babel]: https://babel.dev
-[prettier]: https://prettier.io
-[ESLint]: https://eslint.org/
-[prettier]: https://github.com/prettier/prettier
-[ezno]: https://github.com/kaleidawave/ezno
-[terser]: https://terser.org
-[enhanced-resolve]: https://github.com/webpack/enhanced-resolve
+## 💡 Philosophy
 
-## Philosophy
+This project shares the same philosophies as [Biome][biome] and [Ruff][ruff].
 
-This project follows philosophies from the [Rome](https://rome.tools) and [Ruff](https://beta.ruff.rs) projects.
+1. JavaScript tooling could be rewritten in a more performant language.
+2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools.
 
-1. JavaScript tooling could be rewritten in a more performant language
-2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools
+## ⚡️ Quick Start
 
-## Milestone
+The linter is ready to catch mistakes for you. It comes with over 60 default rules and no configuration is required.
 
-This project currently has a fully working parser, a prototype for the linter as well as the minifier.
+To start using, install [oxlint][npm-oxlint] or via `npx`:
 
-The current objectives are:
+```bash
+npx oxlint@latest .
+```
 
-* Publish the linter as a product
-* Finish the minifier
+To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4000+ files in 0.5 seconds.
 
-## Contributing
+<p float="left" align="left">
+  <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
+</p>
 
-This project is an invitation for you to come and learn Rust with us,
-any contributions to this project are appreciated.
+## ⚡️ Performance
 
-To get started, check out some of the [good first issues](https://github.com/web-infra-dev/oxc/contribute) or ask us on [Discord][discord-url].
+* The parser aim to be the fastest Rust-based ready-for-production parser.
+* The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
+
+<p float="left" align="middle">
+  <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-parser-written-in-rust/main/bar-graph.svg" width="49%">
+  <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-linter/main/bar-graph.svg" width="49%">
+</p>
+
+## ⌨️  Programming Usage
+
+### Rust
+
+Individual crates are published, you may use them to build your own JavaScript tools.
+
+* The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
+* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
+* See `crates/*/examples` for example usage.
+
+While Rust has gained a reputation for its comparatively slower compilation speed,
+we have dedicated significant effort to fine-tune the Rust compilation speed.
+Our aim is to minimize any impact on your development workflow,
+ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
+
+This is demonstrated by our [CI runs](https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=branch%3Amain),
+where warm runs complete in 5 minutes.
+
+### Node.js
+
+* You may use the parser via napi: [@oxidation-compiler/napi][npm-napi]
+
+----
+
+## 🎯 Tools
+
+- [AST and Parser](#-ast-and-parser)
+- [Linter](#-linter)
+- [Resolver](#-resolver)
+- [Minifier](#-minifier)
+- [Formatter](#-formatter)
+- [Transpiler](#-transpiler)
+- [Ezno Type Checker](#-ezno-type-checker)
+
+### 🔸 AST and Parser
+
+Oxc maintains its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
+
+As the parser often represents a key performance bottleneck in JavaScript tooling,
+any minor improvements can have a cascading effect on our downstream tools.
+By developing our parser, we have the opportunity to explore and implement well-researched performance techniques.
+
+While many existing JavaScript tools rely on [estree] as their AST specification,
+a notable drawback is its abundance of ambiguous nodes.
+This ambiguity often leads to confusion during development with [estree].
+
+The Oxc AST differs slightly from the [estree] AST by removing ambiguous nodes and introducing distinct types.
+For example, instead of using a generic [estree] `Identifier`,
+the Oxc AST provides specific types such as `BindingIdentifier`, `IdentifierReference`, and `IdentifierName`.
+This clear distinction greatly enhances the development experience by aligning more closely with the ECMAScript specification.
+
+#### 🏆 Parser Performance
+
+Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 2 times and the [Biome] parser by 3 times.
+
+<details>
+  <summary>How is it so fast?</summary>
+  <ul>
+    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation.</li>
+    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a>.</li>
+    <li>No other heap allocations are done except the above two.</li>
+    <li>Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer.</li>
+  </ul>
+</details>
+
+### 🔸 Linter
+
+The linter embraces convention over configuration, eliminating the need for extensive configuration and plugin setup.
+Unlike other linters like [ESLint], which often require intricate configurations and plugin installations (e.g. [@typescript-eslint]),
+our linter only requires a single command that you can immediately run on your codebase:
+
+```bash
+npx oxlint@latest .
+```
+
+We also plan to port essential plugins such as [eslint-plugin-import] and [eslint-plugin-jest].
+
+#### 🏆 Linter Performance
+
+The linter is 50 - 100 times faster than [ESLint] depending on the number of rules and number of CPU cores used.
+It completes in less than a second for most codebases with a few hundred files and completes in a few seconds for
+larger monorepos. See [bench-javascript-linter](https://github.com/Boshen/bench-javascript-linter) for details.
+
+As an upside, the binary is approximately 3MB, whereas [ESLint] and its associated plugin dependencies can easily exceed 100.
+
+You may also download the linter binary from the [latest release tag](https://github.com/web-infra-dev/oxc/releases/latest) as a standalone binary,
+this lets you run the linter without a Node.js installation in your CI.
+
+<details>
+  <summary>How is it so fast?</summary>
+  <ul>
+    <li>Oxc parser is used.</li>
+    <li>AST visit is a fast operation due to linear memory scan from the memory arena.</li>
+    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores.</li>
+    <li>Every single lint rule is tuned for performance.</li>
+  </ul>
+</details>
+
+#### Linter Plugin
+
+We are currently developing a DSL-based plugin system.
+The plugin system uses [trustfall] as its query engine and a subset of GraphQL as its query language.
+
+You will not need to use JavaScript or Rust to write a plugin, this is useful for QAs and security researchers.
+
+### 🔸 Resolver
+
+Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
+To address this, we are actively working on porting [enhanced-resolve].
+
+[eslint-plugin-import] will be our first application for the resolver, since it is currently a performance and complexity blocker for a lot of projects.
+
+### 🔸 Minifier
+
+JavaScript minification plays a crucial role in optimizing website performance as it reduces the amount of data sent to users,
+resulting in faster page loads.
+This holds tremendous economic value, particularly for e-commerce websites, where every second can equate to millions of dollars.
+
+However, existing minifiers typically require a trade-off between compression quality and speed.
+You have to choose between the slowest for the best compression or the fastest for less compression.
+But what if we could develop a faster minifier without compromising on compression?
+
+We are actively working on a prototype that aims to achieve this goal,
+by porting all test cases from well-known minifiers such as [google-closure-compiler], [terser], [esbuild], and [tdewolff-minify].
+
+Preliminary results indicate that we are on track to achieve our objectives.
+With the Oxc minifier, you can expect faster minification times without sacrificing compression quality.
+
+### 🔸 Formatter
+
+While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
+Unfortunately we are currently lacking the resources to do so.
+
+### 🔸 Transpiler
+
+Creating a robust transpiler requires significant investment in terms of time, expertise, and resources.
+It necessitates deep knowledge of ECMAScript specifications, compatibility analysis, and code transformation techniques.
+Unfortunately, we currently lack the necessary resources to embark on this endeavor.
+
+If there is any interest, this project will be limited to an esnext to es6 transpiler.
+
+### 🔸 Ezno Type Checker
+
+Developed by @kaleidawave, [ezno] is a TypeScript checker written in Rust with a focus on static analysis and runtime performance.
+You may read the [announcement blog post](https://kaleidawave.github.io/posts/introducing-ezno/) for more information.
+
+The type checker is available via `npx oxidation-compiler@latest check path` and the [playground][playground-url].
+
+----
+
+## ✍️  Contribute
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
+
+Check out some of the [good first issues](https://github.com/web-infra-dev/oxc/contribute) or ask us on [Discord][discord-url].
 
 If you are unable to contribute by code, you can still participate by:
 
-* star and watch this project
-* test the linter by running `npx oxlint@latest .` in your own projects
-* join us on [Discord](https://discord.gg/9uXCAwqQZW)
-* [follow me on twitter](https://twitter.com/boshen_c)
-* provide your wisdom in [discussions](https://github.com/web-infra-dev/oxc/discussions)
+* Add a [GitHub Star](https://github.com/web-infra-dev/oxc/stargazers) to the project.
+* Join us on [Discord][discord-url].
+* [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
-## Linter
+## 📚 Learning Resources
 
-The linter is fast to the extent that it feels broken.
-
-With 45 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo on a Mac M2:
-
-```
-vscode  main ❯ npx oxlint@latest src
-Finished in 388ms on 3477 files with 45 rules using 8 threads.
-Found 798 warnings.
-```
-
-And also in a huge monorepo using Mac i7:
-
-```
-Finished in 5568ms on 51931 files with 45 rules using 12 threads.
-```
-
-On my Intel i7 6-core, the linter is around 80 times faster than ESLint.
-
-See [benchmark](./benchmark/) for details.
-
-### Try it out yourself!
-
-The linter is currently usable and it can potentially catch a few mistakes for you:
-
-```
-npx oxlint@latest path
-```
-
-## Parser Conformance
-
-The `cargo coverage` command reports the following conformance summary
-
-```
-Test262 Summary:
-AST Parsed     : 44000/44000 (100.00%)
-Positive Passed: 44000/44000 (100.00%)
-Negative Passed: 3915/3915 (100.00%)
-
-Babel Summary:
-AST Parsed     : 2065/2071 (99.71%)
-Positive Passed: 2062/2071 (99.57%)
-Negative Passed: 1332/1502 (88.68%)
-
-TypeScript Summary:
-AST Parsed     : 2337/2337 (100.00%)
-Positive Passed: 2331/2337 (99.74%)
-Negative Passed: 673/2535 (26.55%)
-```
-
-[Test262 conformance](https://github.com/tc39/test262) is complete. TypeScript parsing is complete.
-
-Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
-
-## Learning Resources
-
-* My [small tutorial on how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
-* My small article - [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
+* My small tutorial on [how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
+* My small article [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
-* [Create an issue and insert your inspirational learning resources here]
+* [Andrew Kelley - Practical DOD](https://vimeo.com/649009599)
 
-## Maintainers
+## 🧑‍💻 Maintenance
 
-* Project Lead: [Boshen](https://github.com/boshen)
+* Oxc is currently being developed and maintained by project lead [Boshen] with the help of [contributors] from all over the world
+* APIs should be simple and well-documented
+* All performance issues (runtime and compilation speed) are considered as bugs in this project
+* Third-party dependencies should be minimal
+* Code coverage should be monitored for unused code. Aim for 99% code coverage
+* Embrace data-oriented design
 
-## Credits
+## 🤝 Credits
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
 
-* [Rome Tools](https://rome.tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
-* [Ruff](https://beta.ruff.rs) - [@charliermarsh](https://github.com/charliermarsh)
+* [Biome][biome] - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
+* [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh)
 * [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 * [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
+
+Special thanks go to
+
 * [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
+* [@guan-wy](https://github.com/guan-wy) for the [project logo](https://github.com/Boshen/oxc-assets)
 
-## License
+## 📖 License
 
-[MIT](./LICENSE)
+Oxc is free and open-source software licensed under the [MIT License](./LICENSE).
 
-## Third Party Licenses
-
-Licenses are listed in [THIRD-PARTY-LICENSE](./THIRD-PARTY-LICENSE)
-
-This project partially copies code from the following projects:
+Oxc partially copies code from the following projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
 
 | Project       | License       |
 | ------------- | ------------- |
@@ -196,3 +272,58 @@ This project partially copies code from the following projects:
 | [parcel-bundler/parcel](https://github.com/parcel-bundler/parcel) | [MIT](https://github.com/parcel-bundler/parcel/blob/v2/LICENSE) |
 | [dividab/tsconfig-paths](https://github.com/dividab/tsconfig-paths) | [MIT](https://github.com/dividab/tsconfig-paths/blob/master/LICENSE) |
 | [tmccombs/json-comments-rs](https://github.com/tmccombs/json-comments-rs) | [Apache 2.0](https://github.com/tmccombs/json-comments-rs/blob/main/LICENSE) |
+
+[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
+[discord-url]: https://discord.gg/9uXCAwqQZW
+[license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[license-url]: ./LICENSE
+[ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
+[npm-url]: https://www.npmjs.com/package/oxlint/v/latest
+[code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
+[code-size-url]: https://github.com/web-infra-dev/oxc
+[code-coverage-badge]: https://codecov.io/github/web-infra-dev/oxc/branch/main/graph/badge.svg
+[code-coverage-url]: https://codecov.io/gh/web-infra-dev/oxc
+[sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
+[sponsors-url]: https://github.com/sponsors/Boshen
+[playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
+[playground-url]: https://web-infra-dev.github.io/oxc/playground
+
+[crate-oxc-url]: https://crates.io/crates/oxc
+[crate-ast-url]: https://crates.io/crates/oxc_ast
+[crate-parser-url]: https://crates.io/crates/oxc_parser
+[docs-oxc-url]: https://docs.rs/oxc
+[docs-ast-url]: https://docs.rs/oxc_ast
+[docs-parser-url]: https://docs.rs/oxc_parser
+
+[Boshen]: https://github.com/boshen
+[CompactString]: https://github.com/ParkMyCar/compact_str
+[ESLint]: https://eslint.org/
+[acorn]: https://github.com/acornjs/acorn
+[babel]: https://babel.dev
+[bumpalo]: https://docs.rs/bumpalo
+[contributors]: https://github.com/web-infra-dev/oxc/graphs/contributors
+[docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
+[docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
+[enhanced-resolve]: https://github.com/webpack/enhanced-resolve
+[esbuild]: https://esbuild.github.io/
+[eslint-plugin-import]: https://www.npmjs.com/package/eslint-plugin-import
+[eslint-plugin-jest]: https://www.npmjs.com/package/eslint-plugin-jest
+[estree]: https://github.com/estree/estree
+[ezno]: https://github.com/kaleidawave/ezno
+[google-closure-compiler]: https://github.com/google/closure-compiler
+[minification-benchmarks]: https://github.com/privatenumber/minification-benchmarks
+[npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
+[npm-oxlint]: https://www.npmjs.com/package/oxlint
+[parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
+[prettier]: https://github.com/prettier/prettier
+[prettier]: https://prettier.io
+[biome]: https://biomejs.dev/
+[ruff]: https://beta.ruff.rs
+[swc]: https://swc.rs
+[tdewolff-minify]: https://github.com/tdewolff/minify
+[terser]: https://terser.org
+[trustfall]: https://github.com/obi1kenobi/trustfall
+[vscode]: https://github.com/microsoft/vscode
+[@typescript-eslint]: https://typescript-eslint.io

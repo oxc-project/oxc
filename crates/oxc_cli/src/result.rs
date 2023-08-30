@@ -7,22 +7,19 @@ use std::{
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
-    IOError(crate::lint::Error),
-    PathNotFound {
-        paths: Vec<PathBuf>,
-    },
-    LintResult {
-        duration: Duration,
-        number_of_rules: usize,
-        number_of_files: usize,
-        number_of_warnings: usize,
-        number_of_errors: usize,
-        max_warnings_exceeded: bool,
-    },
-    TypeCheckResult {
-        duration: Duration,
-        number_of_diagnostics: usize,
-    },
+    PathNotFound { paths: Vec<PathBuf> },
+    LintResult(LintResult),
+    TypeCheckResult { duration: Duration, number_of_diagnostics: usize },
+}
+
+#[derive(Debug)]
+pub struct LintResult {
+    pub duration: Duration,
+    pub number_of_rules: usize,
+    pub number_of_files: usize,
+    pub number_of_warnings: usize,
+    pub number_of_errors: usize,
+    pub max_warnings_exceeded: bool,
 }
 
 impl Termination for CliRunResult {
@@ -33,18 +30,14 @@ impl Termination for CliRunResult {
                 println!("Path {paths:?} does not exist.");
                 ExitCode::from(1)
             }
-            Self::IOError(e) => {
-                println!("IO Error: {e}");
-                ExitCode::from(1)
-            }
-            Self::LintResult {
+            Self::LintResult(LintResult {
                 duration,
                 number_of_rules,
                 number_of_files,
                 number_of_warnings,
                 number_of_errors,
                 max_warnings_exceeded,
-            } => {
+            }) => {
                 let ms = duration.as_millis();
                 let threads = rayon::current_num_threads();
                 let number_of_diagnostics = number_of_warnings + number_of_errors;

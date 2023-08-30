@@ -82,7 +82,7 @@ fn exports_not_browser_field1() {
     let f = super::fixture().join("exports-field");
 
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         condition_names: vec!["webpack".into()],
         extensions: vec![".js".into()],
         ..ResolveOptions::default()
@@ -98,7 +98,7 @@ fn exports_not_browser_field2() {
     let f2 = super::fixture().join("exports-field2");
 
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         extensions: vec![".js".into()],
         condition_names: vec!["node".into()],
         ..ResolveOptions::default()
@@ -138,7 +138,7 @@ fn field_name_path() {
 
     for exports_fields in exports_fields {
         let resolver = Resolver::new(ResolveOptions {
-            alias_fields: vec!["browser".into()],
+            alias_fields: vec![vec!["browser".into()]],
             exports_fields,
             extensions: vec![".js".into()],
             ..ResolveOptions::default()
@@ -149,7 +149,7 @@ fn field_name_path() {
 
     // field name path #4
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         exports_fields: vec![vec!["exports".into()]],
         extensions: vec![".js".into()],
         ..ResolveOptions::default()
@@ -159,7 +159,7 @@ fn field_name_path() {
 
     // field name path #5
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         exports_fields: vec![vec!["ex".into()], vec!["exports_field".into(), "exports".into()]],
         extensions: vec![".js".into()],
         ..ResolveOptions::default()

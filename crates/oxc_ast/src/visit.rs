@@ -1510,7 +1510,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_type_name(&mut self, name: &'a TSTypeName<'a>) {
         match &name {
-            TSTypeName::IdentifierName(ident) => self.visit_identifier_name(ident),
+            TSTypeName::IdentifierReference(ident) => self.visit_identifier_reference(ident),
             TSTypeName::QualifiedName(_) => {}
         }
     }

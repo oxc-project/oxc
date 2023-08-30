@@ -44,17 +44,18 @@ jobs:
       - name: Cargo check
         run: cargo ck
 
+      - name: Build oxlint
+        run: cargo build -p oxc_cli --bin oxlint # for cli snapshots
+
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os == 'Windows'
-        run: |
-          cargo test run --workspace --all-targets --all-features --no-run
+        run: cargo test run --no-run --workspace --all-targets --all-features
 
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os != 'Windows'
-        run: |
-          cargo nextest run --workspace --all-targets --all-features --no-run
+        run: cargo nextest run --no-run --workspace --all-targets --all-features
 
   wasm:
     name: Check Wasm
@@ -133,22 +134,21 @@ jobs:
         run: cargo lint -- -D warnings
 
   ecosystem-test:
-    needs: cache
     name: Testing Linter with VSCode Repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: benchmark
 
       - name: Clone VSCode
         uses: actions/checkout@v3
         with:
           repository: microsoft/vscode
           path: ./vscode
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
 
       - name: Build oxlint
         run: cargo build --release -p oxc_cli --bin oxlint
@@ -194,6 +194,9 @@ jobs:
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
+
+      - name: Build oxlint
+        run: cargo build -p oxc_cli --bin oxlint # for cli snapshots
 
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405

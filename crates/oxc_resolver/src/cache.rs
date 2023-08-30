@@ -27,7 +27,7 @@ struct IdentityHasher(u64);
 
 impl Hasher for IdentityHasher {
     fn write(&mut self, _: &[u8]) {
-        panic!("Invalid use of IdentityHasher")
+        unreachable!("Invalid use of IdentityHasher")
     }
     fn write_u64(&mut self, n: u64) {
         self.0 = n;

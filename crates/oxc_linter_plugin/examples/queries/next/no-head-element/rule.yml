@@ -1,0 +1,128 @@
+name: "next:no-head-element"
+
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$head"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        is_last @filter(op: "=", value: ["$false"])
+        name @filter(op: "has_suffix", value: ["$app"])
+      }
+    }
+  }
+
+args:
+  app: "app"
+  zero: 0
+  head: "head"
+  false: false
+
+summary: "Do not use `<head>` element. Use `<Head />` from `next/head` instead."
+reason: |
+  A `<head>` element was used to include page-level metadata, but this can cause unexpected behavior
+  in a Next.js application. Use Next.js' built-in `next/head` component instead.
+
+
+tests:
+  pass:
+    - relative_path:
+        - "pages"
+        - "index.js"
+
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }
+
+    - relative_path:
+        - "pages"
+        - "index.tsx"
+
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }
+
+    - relative_path:
+        - "app"
+        - "layout.js"
+
+      code: |
+        export default function Layout({ children }) {
+          return (
+            <html>
+              <head>
+                <title>layout</title>
+              </head>
+              <body>{children}</body>
+            </html>
+          );
+        }
+
+  fail:
+    - relative_path:
+        - "pages"
+        - "index.js"
+
+      code: |
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <head>
+                  <title>My page title</title>
+                </head>
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "pages"
+        - "index.tsx"
+
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <head>
+                  <title>My page title</title>
+                </head>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }

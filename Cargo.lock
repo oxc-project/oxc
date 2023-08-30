@@ -120,6 +120,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "backtrace-ext"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "537beee3be4a18fb023b570f80e3ae28003db9167a751266b259926e25539d50"
+dependencies = [
+ "backtrace",
+]
+
+[[package]]
 name = "base64"
 version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -951,9 +960,21 @@ dependencies = [
  "globset",
  "lazy_static",
  "linked-hash-map",
+ "serde",
  "similar",
  "walkdir",
  "yaml-rust",
+]
+
+[[package]]
+name = "insta-cmd"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48dee4ceca7bb4634484c679a445b96d1cf1e454b956540ce18dba18e922d8d0"
+dependencies = [
+ "insta",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1090,12 +1111,26 @@ name = "linked-hash-map"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "linux-raw-sys"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57bcfdad1b858c2db7c38303a6d2ad4dfaf5eb53dfeb0910128b2c26d6158503"
+
+[[package]]
+name = "located_yaml"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bc68ee6f87a1be7fdba1dcfd854528371aa84a8390279b5d7a99d5da82add76"
+dependencies = [
+ "linked-hash-map",
+ "serde",
+ "yaml-rust",
+]
 
 [[package]]
 name = "lock_api"
@@ -1171,6 +1206,8 @@ version = "5.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59bb584eaeeab6bd0226ccf3509a69d7936d148cf3d036ad350abe35e8c6856e"
 dependencies = [
+ "backtrace",
+ "backtrace-ext",
  "is-terminal",
  "miette-derive",
  "once_cell",
@@ -1422,7 +1459,7 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1440,7 +1477,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bumpalo",
  "serde",
@@ -1449,7 +1486,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "num-bigint",
@@ -1465,7 +1502,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_lower"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1500,6 +1537,7 @@ dependencies = [
  "bpaf",
  "codespan-reporting",
  "ignore",
+ "insta-cmd",
  "jemallocator",
  "miette",
  "mimalloc",
@@ -1545,7 +1583,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "is-terminal",
  "miette",
@@ -1557,7 +1595,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "miette",
  "oxc_allocator",
@@ -1569,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_hir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "num-bigint",
@@ -1586,7 +1624,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "index_vec",
  "static_assertions",
@@ -1620,6 +1658,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_linter_plugin"
+version = "0.0.0"
+dependencies = [
+ "ignore",
+ "located_yaml",
+ "miette",
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_linter",
+ "oxc_parser",
+ "oxc_query",
+ "oxc_semantic",
+ "oxc_span",
+ "path-calculate",
+ "serde",
+ "serde_yaml",
+ "trustfall",
+]
+
+[[package]]
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
@@ -1632,7 +1690,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "itertools 0.11.0",
@@ -1682,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "miette",
@@ -1738,7 +1796,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "indexmap 2.0.0",
@@ -1757,7 +1815,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "compact_str",
  "miette",
@@ -1766,7 +1824,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 2.4.0",
  "oxc_index",
@@ -1810,6 +1868,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
+ "oxc_linter_plugin",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1876,6 +1935,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43eb3595c63a214e1b37b44f44b0a84900ef7ae0b4c5efce59e123d246d7a0de"
 dependencies = [
  "path-dedot",
+]
+
+[[package]]
+name = "path-calculate"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4690055139867a4a0d11d18ab98d80b325d7aa573b99e0ae8e1bc787a4282da7"
+dependencies = [
+ "path-absolutize",
 ]
 
 [[package]]
@@ -2200,6 +2268,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_span",
+ "oxc_tasks_common",
  "regex",
  "serde",
  "ureq",

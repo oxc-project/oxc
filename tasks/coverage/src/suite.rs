@@ -3,6 +3,7 @@ use std::{
     io::{stdout, Read, Write},
     panic::UnwindSafe,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
     result::Result,
 };
 
@@ -50,7 +51,7 @@ pub struct CoverageReport<'a, T> {
 /// A Test Suite is responsible for reading code from a repository
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
-        self.read_test_cases(args);
+        self.read_test_cases(name, args);
         let report = self.coverage_report();
 
         let mut out = stdout();
@@ -70,19 +71,38 @@ pub trait Suite<T: Case> {
 
     fn save_test_cases(&mut self, cases: Vec<T>);
 
-    fn read_test_cases(&mut self, args: &AppArgs) {
-        let filter = args.filter.as_ref();
-
+    fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
         let test_root = self.get_test_root();
-        // get all files paths
-        let paths = WalkDir::new(test_root)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| !e.file_type().is_dir())
-            .map(|e| e.path().to_owned())
-            .filter(|path| !self.skip_test_path(path))
-            .filter(|path| filter.map_or(true, |query| path.to_string_lossy().contains(query)))
-            .collect::<Vec<_>>();
+
+        let get_paths = || {
+            let filter = args.filter.as_ref();
+            WalkDir::new(test_root)
+                .into_iter()
+                .filter_map(Result::ok)
+                .filter(|e| !e.file_type().is_dir())
+                .map(|e| e.path().to_owned())
+                .filter(|path| !self.skip_test_path(path))
+                .filter(|path| filter.map_or(true, |query| path.to_string_lossy().contains(query)))
+                .collect::<Vec<_>>()
+        };
+
+        let mut paths = get_paths();
+
+        // Initialize git submodule if it is empty.
+        if paths.is_empty() {
+            println!("-------------------------------------------------------");
+            println!("git submodule is empty for {name}");
+            println!("Running `git submodule update --init`");
+            println!("This may take a while.");
+            println!("-------------------------------------------------------");
+            Command::new("git")
+                .args(["submodule", "update", "--init", "--progress"])
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .output()
+                .expect("failed to execute `git submodule update --init`");
+            paths = get_paths();
+        }
 
         // read all files, run the tests and save them
         let cases = paths

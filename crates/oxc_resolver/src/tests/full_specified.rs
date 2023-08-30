@@ -35,7 +35,7 @@ fn test() {
                 ("alias1".into(), vec![AliasValue::Path("/a/abc".into())]),
                 ("alias2".into(), vec![AliasValue::Path("/a".into())]),
             ],
-            alias_fields: vec!["browser".into()],
+            alias_fields: vec![vec!["browser".into()]],
             fully_specified: true,
             ..ResolveOptions::default()
         },
@@ -86,7 +86,7 @@ fn resolve_to_context() {
                 ("alias1".into(), vec![AliasValue::Path("/a/abc".into())]),
                 ("alias2".into(), vec![AliasValue::Path("/a".into())]),
             ],
-            alias_fields: vec!["browser".into()],
+            alias_fields: vec![vec!["browser".into()]],
             fully_specified: true,
             resolve_to_context: true,
             ..ResolveOptions::default()

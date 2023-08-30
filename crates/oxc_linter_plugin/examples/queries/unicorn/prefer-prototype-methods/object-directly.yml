@@ -1,0 +1,198 @@
+name: "unicorn:prefer-prototype-methods:object-directly"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on FnCallAST {
+          callee {
+            strip_parens {
+              ... on DotProperty {
+                accessed_property {
+                  name @filter(op: "one_of", value: ["$bind_call_apply"])
+                }
+                called_on {
+                  strip_parens {
+                    span {
+                      start @tag(name: "start") @output
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      expression { # we use expression so we can strip_parens, but also have the start spans match (if the start of the span was a paren)
+        span { start @filter(op: "=", value: ["%start"]) }
+        strip_parens {
+          ... on ObjectLiteral {
+            entry @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
+            span_: span {
+              start @output
+              end @output
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  bind_call_apply:
+    - "bind"
+    - "call"
+    - "apply"
+  zero: 0
+
+summary: Prefer Object.prototype.X.{bind,call,apply} over {}.X.{bind,call,apply}
+reason: When “borrowing” a method from Array or Object, it's clearer to get it from the prototype than from an instance.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_1 = Array.prototype.push.apply(bar, elements);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_2 = Array.prototype.slice.call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_3 = Object.prototype.toString.call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_4 = Object.prototype.hasOwnProperty.call(bar, "property");
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_5 = Object.prototype.propertyIsEnumerable.call(bar, "property");
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_6 = "".charCodeAt.call(bar, 0);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_7 = [notEmpty].push.apply(bar, elements);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo_8 = {notEmpty}.toString.call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        Array.prototype.forEach.call(foo, () => {})
+    - relative_path:
+        - "index.ts"
+      code: |
+        const push_9 = Array.prototype.push.bind(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        const push_10 = [].push
+    - relative_path:
+        - "index.ts"
+      code: |
+        const {push} = []
+    - relative_path:
+        - "index.ts"
+      code: |
+        Math.max.apply(null, numbers)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.apply(null, args)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply(...[].slice)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply(foo, [].slice)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply(Math.max, Math, numbers)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply()
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect["apply"]([].slice, foo, [])
+    - relative_path:
+        - "index.ts"
+      code: |
+        NotReflect.apply([].slice, foo, [])
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.notApply([].slice, foo, [])
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply([]?.slice, foo, [])
+    - relative_path:
+        - "index.ts"
+      code: |
+        Reflect.apply(foo, [].bar, [].bar)
+    - relative_path:
+        - "index.ts"
+      code: |
+        class Foo {bar() { this.baz.bind(this) }}
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a = {bar() { this.baz.bind(this) }}
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar.bind(foo)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar.bind(bar)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo[{}].call(bar)
+    - relative_path:
+        - "index.ts"
+      code: |
+        Object.hasOwn(bar)
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__3 = {}.toString.call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__4 = {}.hasOwnProperty.call(bar, "property");
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__5 = {}.propertyIsEnumerable.call(bar, "property");
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__8 = ({}).toString.call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__9 = ({}.toString).call(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        const foo__10 = ({}.toString.call)(bar);
+    - relative_path:
+        - "index.ts"
+      code: |
+        function foo__12(){return{}.toString.call(bar)}

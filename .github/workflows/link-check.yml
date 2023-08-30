@@ -1,0 +1,40 @@
+name: Check Links
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.md'
+      - '**/*.html'
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**/*.md'
+      - '**/*.html'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check Links
+        uses: lycheeverse/lychee-action@master
+        with:
+          # For parameter description, see https://github.com/lycheeverse/lychee#commandline-parameters
+          # Accept 429 for now due to GitHub rate limit.
+          # See https://github.com/lycheeverse/lychee/issues/634
+          # Exclude twitter links, see https://github.com/lycheeverse/lychee/issues/1108.
+          # Ideally this is built in, by https://github.com/lycheeverse/lychee/pull/1147.
+          # Not sure why it doesn't work, exclude it manually.
+          args: --accept 200,429 --verbose --no-progress --exclude 'https://twitter\.com/*' .
+          # Fail action on broken links
+          fail: true

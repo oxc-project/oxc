@@ -1,0 +1,99 @@
+name: "unicorn:require-number-to-fixed-digits-argument"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on FnCallAST {
+          callee {
+            ... on DotProperty {
+              accessed_property {
+                name @filter(op: "=", value: ["$to_fixed"])
+              }
+              called_on @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+                ... on New { __typename }
+              }
+            }
+          }
+          argument @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
+          span_: span {
+            str @filter(op: "not_has_substring", value: ["$questionmark"]) # should be just checking for ChainExpression when that's added
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  to_fixed: "toFixed"
+  questionmark: "?"
+  zero: 0
+
+summary: Add an argument of 0.
+reason: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.toFixed(0)
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.toFixed(...[])
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.toFixed(2)
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.toFixed(1,2,3)
+    - relative_path:
+        - "index.ts"
+      code: |
+        number[toFixed]()
+    - relative_path:
+        - "index.ts"
+      code: |
+        number["toFixed"]()
+    - relative_path:
+        - "index.ts"
+      code: |
+        number?.toFixed()
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.toFixed?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        number.notToFixed();
+    - relative_path:
+        - "index.ts"
+      code: |
+        new BigNumber(1).toFixed()
+    - relative_path:
+        - "index.ts"
+      code: |
+        new Number(1).toFixed()
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const string = number.toFixed();
+    - relative_path:
+        - "index.ts"
+      code: |
+        const string = number.toFixed( /* comment */ );
+    - relative_path:
+        - "index.ts"
+      code: |
+        Number(1).toFixed()
+    - relative_path:
+        - "index.ts"
+      code: |
+        const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();

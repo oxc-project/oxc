@@ -145,11 +145,12 @@ impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        self.0.index_mut(index)
-    }
-}
+// Unused right now.
+// impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
+// fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+// self.0.index_mut(index)
+// }
+// }
 
 impl<'alloc, T> Serialize for Vec<'alloc, T>
 where

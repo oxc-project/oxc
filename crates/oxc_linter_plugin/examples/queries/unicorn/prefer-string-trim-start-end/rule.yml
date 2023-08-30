@@ -1,0 +1,124 @@
+name: "unicorn:prefer-string-trim-start-end"
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on FnCallAST {
+          span_: span {
+            str @filter(op: "not_has_suffix", value: ["$dotquestionmark"])
+            start @output
+            end @output
+          }
+          callee {
+            ... on DotProperty {
+              accessed_property {
+                name @filter(op: "one_of", value: ["$trim_left_right"])
+              }
+            }
+          }
+          argument @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
+        }
+      }
+    }
+  }
+
+args:
+  trim_left_right:
+    - "trimLeft"
+    - "trimRight"
+  dotquestionmark: ".?()"
+  zero: 0
+
+summary: Add an argument of 0.
+reason: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimStart()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimStart?.()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimEnd()
+    - relative_path:
+        - "index.ts"
+      code: |
+        new foo.trimLeft();
+    - relative_path:
+        - "index.ts"
+      code: |
+        trimLeft();
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo['trimLeft']();
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo[trimLeft]();
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar();
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimLeft(extra);
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimLeft(...argumentsArray)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar(trimLeft)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.bar(foo.trimLeft)
+    - relative_path:
+        - "index.ts"
+      code: |
+        trimLeft.foo()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimLeft.bar()
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimLeft()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimRight()
+    - relative_path:
+        - "index.ts"
+      code: |
+        trimLeft.trimRight()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo.trimLeft.trimRight()
+    - relative_path:
+        - "index.ts"
+      code: |
+        "foo".trimLeft()
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo
+        // comment
+        .trimRight/* comment */(/* comment */)
+    - relative_path:
+        - "index.ts"
+      code: |
+        foo?.trimLeft()

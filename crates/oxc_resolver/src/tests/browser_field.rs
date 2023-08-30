@@ -7,7 +7,11 @@ fn ignore() {
     let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into(), "innerBrowser1".into(), "innerBrowser2".into()],
+        alias_fields: vec![
+            vec!["browser".into()],
+            vec!["innerBrowser1".into()],
+            vec!["innerBrowser2".into()],
+        ],
         ..ResolveOptions::default()
     });
 
@@ -31,7 +35,12 @@ fn replace_file() {
     let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![
+            vec!["browser".into()],
+            vec!["innerBrowser1".into(), "field2".into(), "browser".into()], // not presented
+            vec!["innerBrowser1".into(), "field".into(), "browser".into()],
+            vec!["innerBrowser2".into(), "browser".into()],
+        ],
         // Not part of enhanced-resolve. Added to make sure no interaction between these two fields.
         main_fields: vec!["browser".into()],
         ..ResolveOptions::default()
@@ -47,10 +56,8 @@ fn replace_file() {
         ("should replace a module with a file 2", f.join("lib"), "module-a", f.join("browser/module-a.js")),
         ("should replace a module with a module 1", f.clone(), "module-b", f.join("node_modules/module-c.js")),
         ("should replace a module with a module 2", f.join("lib"), "module-b", f.join("node_modules/module-c.js")),
-        // TODO: resolve `innerBrowser1` field in `browser-module/pakckage.json`
-        // ("should resolve in nested property 1", f.clone(), "./lib/main1.js", f.join("lib/main.js")),
-        // TODO: resolve `innerBrowser2` field in `browser-module/pakckage.json`
-        // ("should resolve in nested property 2", f.clone(), "./lib/main2.js", f.join("lib/browser.js")),
+        ("should resolve in nested property 1", f.clone(), "./lib/main1.js", f.join("lib/main.js")),
+        ("should resolve in nested property 2", f.clone(), "./lib/main2.js", f.join("lib/browser.js")),
         ("should check only alias field properties", f.clone(), "./toString", f.join("lib/toString.js")),
         // not part of enhanced-resolve
         ("recursion", f.clone(), "module-c", f.join("node_modules/module-c.js")),

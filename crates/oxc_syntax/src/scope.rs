@@ -8,7 +8,7 @@ define_index_type! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Debug, Clone, Copy)]
     pub struct ScopeFlags: u16 {
         const StrictMode       = 1 << 0;
         const Top              = 1 << 1;

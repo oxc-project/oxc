@@ -35,6 +35,7 @@ oxc_linter         = { path = "crates/oxc_linter" }
 oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
 oxc_resolver       = { path = "crates/oxc_resolver" }
 oxc_query          = { path = "crates/oxc_query" }
+oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
@@ -86,6 +87,8 @@ stacker            = { version = "0.1.15" }
 tracing            = { version = "0.1" }
 tracing-subscriber = { version = "0.3" }
 trustfall          = { version = "0.6.1" }
+insta              = { version = "1.31.0", features = ["glob"] }
+insta-cmd          = { version = "0.3.0" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'

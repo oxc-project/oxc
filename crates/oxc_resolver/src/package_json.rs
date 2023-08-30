@@ -137,34 +137,34 @@ impl PackageJson {
                     package_json.main_fields.push(value.clone());
                 }
             }
-            // Dynamically create `browser_fields`.
-            let dir = path.parent().unwrap();
-            for browser_field_key in &options.alias_fields {
-                if let Some(value) = package_json_value.remove(browser_field_key) {
-                    let mut browser_field: BrowserField = serde_json::from_value(value)?;
-                    // Normalize all relative paths to make browser_field a constant value lookup
-                    if let BrowserField::Map(map) = &mut browser_field {
-                        let relative_paths = map
-                            .keys()
-                            .filter(|path| path.starts_with("."))
-                            .cloned()
-                            .collect::<Vec<_>>();
-                        for relative_path in relative_paths {
-                            if let Some(value) = map.remove(&relative_path) {
-                                let normalized_path = dir.normalize_with(relative_path);
-                                map.insert(normalized_path, value);
-                            }
+        }
+
+        // Dynamically create `browser_fields`.
+        let dir = path.parent().unwrap();
+        for object_path in &options.alias_fields {
+            if let Some(browser_field) = Self::get_value_by_path(&package_json_value, object_path) {
+                let mut browser_field = BrowserField::deserialize(browser_field)?;
+                // Normalize all relative paths to make browser_field a constant value lookup
+                if let BrowserField::Map(map) = &mut browser_field {
+                    let relative_paths = map
+                        .keys()
+                        .filter(|path| path.starts_with("."))
+                        .cloned()
+                        .collect::<Vec<_>>();
+                    for relative_path in relative_paths {
+                        if let Some(value) = map.remove(&relative_path) {
+                            let normalized_path = dir.normalize_with(relative_path);
+                            map.insert(normalized_path, value);
                         }
                     }
-                    package_json.browser_fields.push(browser_field);
                 }
+                package_json.browser_fields.push(browser_field);
             }
         }
 
         // Dynamically create `exports`.
         for object_path in &options.exports_fields {
-            let exports = Self::get_value_by_path(&package_json_value, object_path);
-            if let Some(exports) = exports {
+            if let Some(exports) = Self::get_value_by_path(&package_json_value, object_path) {
                 let exports = ExportsField::deserialize(exports)?;
                 package_json.exports.push(exports);
             }

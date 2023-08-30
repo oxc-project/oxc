@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::Ordering};
 use oxc_ast::{
     ast::{
         CallExpression, Expression, IdentifierName, IdentifierReference,
-        ImportDeclarationSpecifier, MemberExpression, ModuleDeclaration,
+        ImportDeclarationSpecifier, MemberExpression, ModuleDeclaration, TemplateLiteral,
     },
     AstKind,
 };
@@ -11,6 +11,23 @@ use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{Atom, Span};
 
 use crate::context::LintContext;
+
+pub fn is_type_of_jest_fn_call<'a>(
+    call_expr: &'a CallExpression<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    kinds: &[JestFnKind],
+) -> bool {
+    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx);
+    if let Some(jest_fn_call) = jest_fn_call {
+        let kind = jest_fn_call.kind();
+        if kinds.contains(&kind) {
+            return true;
+        }
+    }
+
+    false
+}
 
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
@@ -182,7 +199,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReferen
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum JestFnKind {
     Expect,
     General(JestGeneralFnKind),
@@ -211,7 +228,7 @@ impl JestFnKind {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum JestGeneralFnKind {
     Hook,
     Describe,
@@ -223,6 +240,15 @@ pub enum ParsedJestFnCall<'a> {
     GeneralJestFnCall(ParsedGeneralJestFnCall<'a>),
     #[allow(unused)]
     ExpectFnCall(ParsedExpectFnCall<'a>),
+}
+
+impl<'a> ParsedJestFnCall<'a> {
+    pub fn kind(&self) -> JestFnKind {
+        match self {
+            Self::GeneralJestFnCall(call) => call.kind,
+            Self::ExpectFnCall(call) => call.kind,
+        }
+    }
 }
 
 pub struct ParsedGeneralJestFnCall<'a> {
@@ -307,6 +333,44 @@ impl<'a> MemberExpressionElement<'a> {
     }
 }
 
+/// join name of the expression. e.g.
+/// `expect(foo).toBe(bar)`  -> "expect.toBe"
+/// `new Foo().bar` -> "Foo.bar"
+pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> String {
+    let chain = get_node_name_vec(expr);
+    chain.join(".")
+}
+
+pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
+    let mut chain: Vec<Cow<'a, str>> = Vec::new();
+
+    match expr {
+        Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
+        Expression::StringLiteral(string_literal) => {
+            chain.push(Cow::Borrowed(&string_literal.value));
+        }
+        Expression::TemplateLiteral(template_literal) if is_pure_string(template_literal) => {
+            chain.push(Cow::Borrowed(template_literal.quasi().unwrap()));
+        }
+        Expression::TaggedTemplateExpression(tagged_expr) => {
+            chain.extend(get_node_name_vec(&tagged_expr.tag));
+        }
+        Expression::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
+        Expression::MemberExpression(member_expr) => {
+            chain.extend(get_node_name_vec(member_expr.object()));
+            if let Some(name) = member_expr.static_property_name() {
+                chain.push(Cow::Borrowed(name));
+            }
+        }
+        Expression::NewExpression(new_expr) => {
+            chain.extend(get_node_name_vec(&new_expr.callee));
+        }
+        _ => {}
+    };
+
+    chain
+}
+
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
 fn get_node_chain<'a>(
     expr: &'a Expression<'a>,
@@ -343,19 +407,21 @@ fn get_node_chain<'a>(
                 span: string_literal.span,
             });
         }
-        Expression::TemplateLiteral(template_literal) => {
-            if template_literal.expressions.is_empty() && template_literal.quasis.len() == 1 {
-                chain.push(KnownMemberExpressionProperty {
-                    element: MemberExpressionElement::Expression(expr),
-                    parent,
-                    span: template_literal.span,
-                });
-            }
+        Expression::TemplateLiteral(template_literal) if is_pure_string(template_literal) => {
+            chain.push(KnownMemberExpressionProperty {
+                element: MemberExpressionElement::Expression(expr),
+                parent,
+                span: template_literal.span,
+            });
         }
         _ => {}
     };
 
     chain
+}
+
+fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
+    template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
 }
 
 // sorted list for binary search.

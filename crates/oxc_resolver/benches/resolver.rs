@@ -31,7 +31,7 @@ fn data() -> Vec<(PathBuf, &'static str)> {
         (cwd.join("test/fixtures"), "m1/a.js?query#fragment"),
         // extensions
         (cwd.join("test/fixtures/extensions"), "./foo"),
-        (cwd.join("test/fixtures/extensions/module"), "module"),
+        (cwd.join("test/fixtures/extensions/module"), "module/"),
         // browserField
         (cwd.join("test/fixtures/browser-module"), "./lib/replaced"),
         (cwd.join("test/fixtures/browser-module/lib"), "./replaced"),
@@ -62,7 +62,7 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
     use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
     Resolver::new(ResolveOptions {
         alias: vec![("/absolute/path".into(), vec![AliasValue::Path("./".into())])],
-        alias_fields: vec!["browser".into()],
+        alias_fields: vec![vec!["browser".into()]],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
             (".mjs".into(), vec![".mts".into()]),
