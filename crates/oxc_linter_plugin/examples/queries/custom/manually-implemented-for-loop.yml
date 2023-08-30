@@ -1,0 +1,123 @@
+name: custom:manually-implemented-for-loop
+
+query: |
+  query {
+    File {
+      ast_node {
+        ... on VariableDeclarationAST {
+          left {
+            assignment_to_variable_name @tag(name: "init_var_name")
+          }
+          # parent includes let/const/var
+          parent {
+            span {
+              span_start: start @output
+              end @tag(name: "end_of_variable_decl")
+            }
+          }
+          span {
+            str @output(name: "init_var_str")
+          }
+        }
+      }
+
+      ast_node {
+        ... on WhileStatementAST {
+          span {
+            start @tag(name: "start_of_while")
+                  @filter(op: ">", value: ["%end_of_variable_decl"])
+            span_end: end @output
+          }
+          condition {
+            span { str @output(name: "cond_body_str") }
+          }
+          body {
+            ... on BlockStatement {
+              statement {
+                ... on ExpressionStatement {
+                  expression {
+                    ... on Reassignment {
+                      left_as_expression {
+                        ... on VarRef {
+                          name @filter(op: "=", value: ["%init_var_name"])
+                        }
+                      }
+                      span {
+                        start @tag(name: "start_of_block_statement")
+                      }
+                    }
+                  }
+                  span { str @output(name: "third_part_of_for_str") }
+                }
+              }
+              span { str @output(name: "for_loop_body_str") }
+            }
+          }
+
+          # ensure that^ block statement is the last one
+          # by making sure no other statements in the body
+          # have a farther starting point than Reassignment
+          body @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            ... on BlockStatement {
+              statement {
+                span { start @filter(op: ">", value: ["%start_of_block_statement"])}
+              }
+            }
+          }
+        }
+      }
+
+      # ensure that there are no ast nodes between the variable declaration
+      # and the while statement
+      ast_node @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        span {
+          start @filter(op: ">", value: ["%end_of_variable_decl"])
+                @filter(op: "<", value: ["%start_of_while"])
+        }
+      }
+    }
+  }
+
+# "cond_body_str": "next",
+# "for_loop_body_str": "{\n  const column = bot.world.getColumn(next.x, next.z)\n  const sectionY = next.y + Math.abs(bot.game.minY >> 4)\n  const totalSections = bot.game.height >> 4\n  if (sectionY >= 0 && sectionY < totalSections && column && !visitedSections.has(next.toString())) {\n    const section = column.sections[sectionY]\n    if (useExtraInfo === true || isBlockInSection(section, matcher)) {\n      const begin = new Vec3(next.x * 16, sectionY * 16 + bot.game.minY, next.z * 16)\n      const cursor = begin.clone()\n      const end = cursor.offset(16, 16, 16)\n      for (cursor.x = begin.x; cursor.x < end.x; cursor.x++) {\n        for (cursor.y = begin.y; cursor.y < end.y; cursor.y++) {\n          for (cursor.z = begin.z; cursor.z < end.z; cursor.z++) {\n            if (fullMatcher(cursor) && cursor.distanceTo(point) <= maxDistance) blocks.push(cursor.clone())\n          }\n        }\n      }\n    }\n    visitedSections.add(next.toString())\n  }\n  // If we started a layer, we have to finish it otherwise we might miss closer blocks\n  if (startedLayer !== it.apothem && blocks.length >= count) {\n    break\n  }\n  startedLayer = it.apothem\n  next = it.next()\n}",
+# "init_var_str": "next = start",
+# "span_end": 1167,
+# "span_start": 4,
+# "third_part_of_for_str": "next = it.next()"
+
+post_transform: |
+  ({span_start, span_end, cond_body_str, init_var_str, for_loop_body_str, third_part_of_for_str}) => {
+
+    /// find the index of last time `third_part_of_for_str` was used
+    const n = for_loop_body_str.lastIndexOf(third_part_of_for_str);
+    // slice the string in 2, one from the start to the lastIndexOf
+    // and then replace the word in the rest
+    for_loop_body_str = for_loop_body_str.slice(0, n) + for_loop_body_str.slice(n)
+                                                          .replace(third_part_of_for_str, '') // todo: get rid of empty line
+
+    const for_header = `for (let ${init_var_str}; ${cond_body_str}; ${third_part_of_for_str}) ${for_loop_body_str}`
+
+    return {span_start, span_end, fix: for_header}
+  }
+
+args:
+  zero: 0
+
+summary: Prefer for loop over while loop
+reason: Prefer for loop over while loop as for loops keep the initialization condition, continuation condition, and incrementation all in one line for better readability.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: bigint = 10n;
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        let x = 1;
+        while (x > 0) {
+          console.log('hello!')
+          x = x + 1;
+        }
