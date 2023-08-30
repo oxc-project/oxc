@@ -68,7 +68,6 @@ pub fn parse_jest_fn_call<'a>(
     // only the top level Call expression callee's parent is None, it's not necessary to set it to None, but
     // I didn't know how to pass Expression to it.
     let chain = get_node_chain(callee, None);
-
     let all_member_expr_except_last = chain
         .iter()
         .rev()
