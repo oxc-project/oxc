@@ -5,5 +5,6 @@ mod raw_diagnostic;
 mod spans;
 #[cfg(test)]
 mod test;
+mod util;
 
-pub use plugin::LinterPlugin;
+pub use {plugin::LinterPlugin, util::make_relative_path_parts};
