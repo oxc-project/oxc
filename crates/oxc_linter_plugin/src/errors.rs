@@ -49,6 +49,16 @@ pub enum ErrorFromLinterPlugin {
         #[label = "This query failed."]
         query_span: SourceSpan,
     },
+    #[error(
+        "Expected post_transform to return object or null, however instead, the lint plugin returned:\n{what_was_returned}"
+    )]
+    UnexpectedJSReturn {
+        what_was_returned: String,
+        #[source_code]
+        post_transform_code: Arc<NamedSource>,
+        #[label = "This query failed."]
+        post_transform_span: SourceSpan,
+    },
 }
 
 #[derive(Debug, Error, Diagnostic)]
