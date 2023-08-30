@@ -194,13 +194,13 @@ impl Default for ResolveOptions {
 
 impl ResolveOptions {
     pub(crate) fn sanitize(mut self) -> Self {
+        // Set `enforceExtension` to `true` when [ResolveOptions::extensions] contains an empty string.
+        // See <https://github.com/webpack/enhanced-resolve/pull/285>
         if self.enforce_extension == EnforceExtension::Auto {
-            self.enforce_extension = EnforceExtension::Disabled;
-            // Set `enforceExtension` to `true` when [ResolveOptions::extensions] contains an empty string.
-            // See <https://github.com/webpack/enhanced-resolve/pull/285>
-            if self.extensions.iter().any(String::is_empty) {
+            if !self.extensions.is_empty() && self.extensions.iter().any(String::is_empty) {
                 self.enforce_extension = EnforceExtension::Enabled;
-                self.extensions.retain(String::is_empty);
+            } else {
+                self.enforce_extension = EnforceExtension::Disabled;
             }
         }
         self

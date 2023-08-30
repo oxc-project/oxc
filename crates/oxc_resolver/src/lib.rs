@@ -408,9 +408,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let Some(path) = self.load_extension_alias(cached_path, ctx)? {
             return Ok(Some(path));
         }
-        // 1. If X is a file, load X as its file extension format. STOP
-        if let Some(path) = self.load_alias_or_file(cached_path, ctx)? {
-            return Ok(Some(path));
+        if self.options.enforce_extension.is_disabled() {
+            // 1. If X is a file, load X as its file extension format. STOP
+            if let Some(path) = self.load_alias_or_file(cached_path, ctx)? {
+                return Ok(Some(path));
+            }
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
