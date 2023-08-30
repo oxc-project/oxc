@@ -10,7 +10,7 @@ use oxc_diagnostics::miette::{self};
 use oxc_linter::LintContext;
 use oxc_query::{schema, Adapter};
 use serde::Deserialize;
-use trustfall::{execute_query, FieldValue, Schema, TransparentValue};
+use trustfall::{execute_query, FieldValue, TransparentValue};
 
 /// Represents a single parsed yaml plugin file. Includes
 /// the query, tests, and metadata about the query.
@@ -45,7 +45,6 @@ pub struct SingleTest {
 #[derive(Debug)]
 pub struct LinterPlugin {
     pub(crate) rules: Vec<InputQuery>,
-    schema: &'static Schema,
 }
 
 impl LinterPlugin {
@@ -73,7 +72,7 @@ impl LinterPlugin {
             }
         }
 
-        Ok(Self { rules: deserialized_queries, schema: schema() })
+        Ok(Self { rules: deserialized_queries })
     }
 
     /// Run specific plugin rule by reference on parsed code.
@@ -87,7 +86,6 @@ impl LinterPlugin {
     // the Adapter trait is implemented for a &Adapter, not just Adapter
     #[allow(clippy::redundant_allocation)]
     fn run_specific_plugin_rule(
-        &self,
         ctx: &mut LintContext,
         plugin: &InputQuery,
         adapter: &Arc<&Adapter<'_>>,
@@ -103,7 +101,7 @@ impl LinterPlugin {
         let query_span = SourceSpan::new(0.into(), plugin.query.len().into());
 
         let query_results =
-            execute_query(self.schema, Arc::clone(adapter), &plugin.query, plugin.args.clone())
+            execute_query(schema(), Arc::clone(adapter), &plugin.query, plugin.args.clone())
                 .map_err(|err| ErrorFromLinterPlugin::Trustfall {
                     error_message: err.to_string(),
                     query_source: Arc::clone(&query_source),
@@ -187,7 +185,7 @@ impl LinterPlugin {
         let inner = Adapter::new(Rc::clone(ctx.semantic()), relative_file_path_parts);
         let adapter = Arc::from(&inner);
         for rule in &self.rules {
-            self.run_specific_plugin_rule(ctx, rule, &adapter)?;
+            Self::run_specific_plugin_rule(ctx, rule, &adapter)?;
         }
         Ok(())
     }
@@ -208,7 +206,7 @@ impl LinterPlugin {
         let inner = Adapter::new(Rc::clone(ctx.semantic()), relative_file_path_parts);
         let adapter = Arc::from(&inner);
         for rule in self.rules.iter().filter(|x| x.name == rule_name) {
-            self.run_specific_plugin_rule(ctx, rule, &adapter)?;
+            Self::run_specific_plugin_rule(ctx, rule, &adapter)?;
         }
         Ok(())
     }
