@@ -657,7 +657,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let Some(subpath) = package_json
             .name
             .as_ref()
-            .and_then(|package_json_name| package_json_name.strip_prefix(specifier))
+            .and_then(|package_json_name| specifier.strip_prefix(package_json_name))
             .filter(|subpath| subpath.is_empty() || subpath.starts_with('/'))
         else {
             return Ok(None);
