@@ -68,3 +68,24 @@ fn replace_file() {
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }
+
+#[test]
+fn broken() {
+    let f = super::fixture();
+
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec![vec!["browser".into()]],
+        ..ResolveOptions::default()
+    });
+
+    #[rustfmt::skip]
+    let data = [
+        // The browser field string value should be ignored
+        (f.clone(), "browser-module-broken", f.join("node_modules/browser-module-broken/main.js")),
+    ];
+
+    for (path, request, expected) in data {
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
+        assert_eq!(resolved_path, Ok(expected), "{path:?} {request}");
+    }
+}
