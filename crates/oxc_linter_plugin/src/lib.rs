@@ -1,10 +1,10 @@
-#[cfg(test)]
 mod errors;
-#[cfg(test)]
 mod plugin;
-#[cfg(test)]
 mod raw_diagnostic;
 #[cfg(test)]
 mod spans;
 #[cfg(test)]
 mod test;
+mod util;
+
+pub use {plugin::LinterPlugin, util::make_relative_path_parts};

@@ -1868,6 +1868,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
+ "oxc_linter_plugin",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
