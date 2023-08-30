@@ -109,52 +109,12 @@ impl LinterPlugin {
                 })?;
 
         for result in query_results {
-            let transformed_data_to_span = match (result.get("span_start"), result.get("span_end"))
-            {
-                (Some(FieldValue::Uint64(span_start)), Some(FieldValue::Uint64(span_end))) => {
-                    let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
-                        (*span_start, *span_end).try_into();
-
-                    vec![transformed.map_err(|which_span| {
-                        ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
-                            number: match which_span {
-                                SpanStartOrEnd::Start => *span_start,
-                                SpanStartOrEnd::End => *span_end,
-                            }
-                            .into(),
-                            query_span,
-                            which_span,
-                            query_source: Arc::clone(&query_source),
-                        }
-                    })?]
-                }
-                (Some(FieldValue::Int64(span_start)), Some(FieldValue::Int64(span_end))) => {
-                    let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
-                        (*span_start, *span_end).try_into();
-
-                    vec![transformed.map_err(|which_span| {
-                        ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
-                            number: match which_span {
-                                SpanStartOrEnd::Start => *span_start,
-                                SpanStartOrEnd::End => *span_end,
-                            }
-                            .into(),
-                            query_span,
-                            which_span,
-                            query_source: Arc::clone(&query_source),
-                        }
-                    })?]
-                }
-                (a, b) => {
-                    return Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
-                        span_start: format!("{a:?}"),
-                        span_end: format!("{b:?}"),
-                        query_source: Arc::clone(&query_source),
-                        query_span,
-                    }
-                    .into())
-                }
-            };
+            let transformed_data_to_span = Self::decode_span_start_end(
+                result.get("span_start"),
+                result.get("span_end"),
+                Arc::clone(&query_source),
+                query_span,
+            )?;
 
             ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
 
@@ -169,6 +129,57 @@ impl LinterPlugin {
             }
         }
         Ok(())
+    }
+
+    fn decode_span_start_end(
+        span_start: Option<&FieldValue>,
+        span_end: Option<&FieldValue>,
+        query_source: Arc<NamedSource>,
+        query_span: SourceSpan,
+    ) -> oxc_diagnostics::Result<Vec<RawPluginDiagnostic>> {
+        match (span_start, span_end) {
+            (Some(FieldValue::Uint64(span_start)), Some(FieldValue::Uint64(span_end))) => {
+                let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
+                    (*span_start, *span_end).try_into();
+
+                Ok(vec![transformed.map_err(|which_span| {
+                    ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
+                        number: match which_span {
+                            SpanStartOrEnd::Start => *span_start,
+                            SpanStartOrEnd::End => *span_end,
+                        }
+                        .into(),
+                        query_span,
+                        which_span,
+                        query_source,
+                    }
+                })?])
+            }
+            (Some(FieldValue::Int64(span_start)), Some(FieldValue::Int64(span_end))) => {
+                let transformed: Result<RawPluginDiagnostic, SpanStartOrEnd> =
+                    (*span_start, *span_end).try_into();
+
+                Ok(vec![transformed.map_err(|which_span| {
+                    ErrorFromLinterPlugin::SpanStartOrEndDoesntFitInU32 {
+                        number: match which_span {
+                            SpanStartOrEnd::Start => *span_start,
+                            SpanStartOrEnd::End => *span_end,
+                        }
+                        .into(),
+                        query_span,
+                        which_span,
+                        query_source,
+                    }
+                })?])
+            }
+            (a, b) => Err(ErrorFromLinterPlugin::WrongTypeForSpanStartSpanEnd {
+                span_start: format!("{a:?}"),
+                span_end: format!("{b:?}"),
+                query_source,
+                query_span,
+            }
+            .into()),
+        }
     }
 
     /// Run all plugin rules on parsed code.
