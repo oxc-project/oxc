@@ -58,6 +58,7 @@ impl LanguageServer for Backend {
         self.client.log_message(MessageType::INFO, "oxc initialized.").await;
 
         if let Some(Some(root_uri)) = self.root_uri.get() {
+            self.server_linter.make_plugin(root_uri);
             let result = self.server_linter.run_full(root_uri);
 
             self.publish_all_diagnostics(
@@ -154,6 +155,7 @@ impl Backend {
 
     async fn handle_file_update(&self, uri: Url) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
+            self.server_linter.make_plugin(root_uri);
             if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri) {
                 self.client
                     .publish_diagnostics(
