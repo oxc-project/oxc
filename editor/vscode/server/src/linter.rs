@@ -14,7 +14,7 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
 use oxc_linter::{LintContext, Linter};
-use oxc_linter_plugin::LinterPlugin;
+use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -267,7 +267,7 @@ impl IsolatedLintHandler {
         {
             let plugin = plugin.read().unwrap();
             if let Some(plugin) = &*plugin {
-                plugin.lint_file(&mut lint_ctx, vec![Some("index.ts".to_owned())]).unwrap();
+                plugin.lint_file(&mut lint_ctx, make_relative_path_parts(&path.into())).unwrap();
             }
         }
 
