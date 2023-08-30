@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use located_yaml::{YamlElt, YamlLoader};
-use miette::SourceSpan;
+use oxc_diagnostics::miette::SourceSpan;
 
 /// Whether a rule is under the pass or the fail column of the plugin file.
 pub enum PassOrFail {
