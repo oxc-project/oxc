@@ -166,6 +166,15 @@ fn field_name_path() {
     });
     let resolved_path = resolver.resolve(&f3, "exports-field").map(|r| r.full_path());
     assert_eq!(resolved_path, Ok(f3.join("node_modules/exports-field/index")));
+
+    // non-compliant export targeting a directory
+    let resolver = Resolver::new(ResolveOptions {
+        exports_fields: vec![vec!["broken".into()]],
+        extensions: vec![".js".into()],
+        ..ResolveOptions::default()
+    });
+    let resolved_path = resolver.resolve(&f3, "exports-field").map(|r| r.full_path());
+    assert_eq!(resolved_path, Ok(f3.join("node_modules/exports-field/src/index.js")));
 }
 
 #[test]

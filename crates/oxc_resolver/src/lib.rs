@@ -693,11 +693,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let Some(path) = self.load_browser_field(cached_path.path(), None, package_json, ctx)? {
             return Ok(Some(path));
         }
+
+        // Non-compliant ESM can result in a directory
+        if cached_path.is_dir(&self.cache.fs) {
+            if let Some(path) = self.load_as_directory(cached_path, ctx)? {
+                return Ok(Some(path));
+            }
+        }
+
         // 1. let RESOLVED_PATH = fileURLToPath(MATCH)
         // 2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension format. STOP
         if let Some(path) = self.load_as_file(cached_path, ctx)? {
             return Ok(Some(path));
         }
+
         // 3. THROW "not found"
         Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
