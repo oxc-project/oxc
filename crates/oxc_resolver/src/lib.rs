@@ -223,8 +223,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         match specifier.as_bytes()[0] {
-            // 2. If X begins with '/'
-            //    a. set Y to be the file system root
+            // 3. If X begins with './' or '/' or '../'
             b'/' => self.require_absolute(cached_path, specifier, ctx),
             // 3. If X begins with './' or '/' or '../'
             b'.' => self.require_relative(cached_path, specifier, ctx),
@@ -265,8 +264,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         if self.options.roots.is_empty() {
-            let cached_path = self.cache.value(Path::new("/"));
-            self.load_package_self_or_node_modules(&cached_path, specifier, ctx)
+            // 2. If X begins with '/'
+            //   a. set Y to be the file system root
+            let path = self.cache.value(Path::new(specifier));
+            if let Some(path) = self.load_as_file_or_directory(&path, specifier, ctx)? {
+                return Ok(path);
+            }
+            Err(ResolveError::NotFound(cached_path.to_path_buf()))
         } else {
             for root in &self.options.roots {
                 let cached_path = self.cache.value(root);
@@ -290,16 +294,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let path = cached_path.path().normalize_with(specifier);
         let cached_path = self.cache.value(&path);
         // a. LOAD_AS_FILE(Y + X)
-        if !specifier.ends_with('/') {
-            if let Some(path) = self.load_as_file(&cached_path, ctx)? {
-                return Ok(path);
-            }
-        }
         // b. LOAD_AS_DIRECTORY(Y + X)
-        if cached_path.is_dir(&self.cache.fs) {
-            if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
-                return Ok(path);
-            }
+        if let Some(path) = self.load_as_file_or_directory(&cached_path, specifier, ctx)? {
+            return Ok(path);
         }
         // c. THROW "not found"
         Err(ResolveError::NotFound(path))
@@ -425,6 +422,58 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
+    fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+        if !cached_path.is_dir(&self.cache.fs) {
+            return Ok(None);
+        }
+        if self.options.resolve_to_context {
+            return Ok(Some(cached_path.clone()));
+        }
+        // TODO: Only package.json is supported, so warn about having other values
+        // Checking for empty files is needed for omitting checks on package.json
+        // 1. If X/package.json is a file,
+        if !self.options.description_files.is_empty() {
+            // a. Parse X/package.json, and look for "main" field.
+            if let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? {
+                // b. If "main" is a falsy value, GOTO 2.
+                for main_field in &package_json.main_fields {
+                    // c. let M = X + (json main field)
+                    let main_field_path = cached_path.path().normalize_with(main_field);
+                    // d. LOAD_AS_FILE(M)
+                    let cached_path = self.cache.value(&main_field_path);
+                    if let Some(path) = self.load_as_file(&cached_path, ctx)? {
+                        return Ok(Some(path));
+                    }
+                    // e. LOAD_INDEX(M)
+                    if let Some(path) = self.load_index(&cached_path, ctx)? {
+                        return Ok(Some(path));
+                    }
+                }
+                // f. LOAD_INDEX(X) DEPRECATED
+                // g. THROW "not found"
+            }
+        }
+        // 2. LOAD_INDEX(X)
+        self.load_index(cached_path, ctx)
+    }
+
+    fn load_as_file_or_directory(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        if !specifier.ends_with('/') {
+            if let Some(path) = self.load_as_file(cached_path, ctx)? {
+                return Ok(Some(path));
+            }
+        }
+        if let Some(path) = self.load_as_directory(cached_path, ctx)? {
+            return Ok(Some(path));
+        }
+        Ok(None)
+    }
+
     fn load_extensions(
         &self,
         path: &Path,
@@ -521,38 +570,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
-        if self.options.resolve_to_context {
-            return Ok(Some(cached_path.clone()));
-        }
-        // TODO: Only package.json is supported, so warn about having other values
-        // Checking for empty files is needed for omitting checks on package.json
-        // 1. If X/package.json is a file,
-        if !self.options.description_files.is_empty() {
-            // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? {
-                // b. If "main" is a falsy value, GOTO 2.
-                for main_field in &package_json.main_fields {
-                    // c. let M = X + (json main field)
-                    let main_field_path = cached_path.path().normalize_with(main_field);
-                    // d. LOAD_AS_FILE(M)
-                    let cached_path = self.cache.value(&main_field_path);
-                    if let Some(path) = self.load_as_file(&cached_path, ctx)? {
-                        return Ok(Some(path));
-                    }
-                    // e. LOAD_INDEX(M)
-                    if let Some(path) = self.load_index(&cached_path, ctx)? {
-                        return Ok(Some(path));
-                    }
-                }
-                // f. LOAD_INDEX(X) DEPRECATED
-                // g. THROW "not found"
-            }
-        }
-        // 2. LOAD_INDEX(X)
-        self.load_index(cached_path, ctx)
-    }
-
     fn load_node_modules(
         &self,
         cached_path: &CachedPath,
@@ -565,25 +582,49 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. for each DIR in DIRS:
         loop {
             for module_name in &self.options.modules {
+                // node_module_path = foo/node_modules/
                 node_module_path.push(module_name);
-                // a. LOAD_PACKAGE_EXPORTS(X, DIR)
-                if let Some(path) = self.load_package_exports(&node_module_path, specifier, ctx)? {
+                let cached_path = self.cache.value(&node_module_path);
+
+                // Skip if foo/node_modules does not exist
+                if !cached_path.is_dir(&self.cache.fs) {
+                    node_module_path.pop();
+                    continue;
+                }
+
+                // Optimize node_modules lookup by inspecting whether the package exists
+                // From LOAD_PACKAGE_EXPORTS(X, DIR)
+                // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
+                //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
+                let (package_name, subpath) = Self::parse_package_specifier(specifier);
+
+                if !package_name.is_empty() {
+                    let package_path = node_module_path.join(package_name);
+                    let cached_path = self.cache.value(&package_path);
+                    // Try foo/node_modules/package_name
+                    if cached_path.is_dir(&self.cache.fs) {
+                        // a. LOAD_PACKAGE_EXPORTS(X, DIR)
+                        if let Some(path) = self.load_package_exports(subpath, &cached_path, ctx)? {
+                            return Ok(Some(path));
+                        }
+                    } else {
+                        // foo/node_modules/package_name is not a directory, so useless to check inside it
+                        if !subpath.is_empty() {
+                            node_module_path.pop();
+                            continue;
+                        }
+                    }
+                }
+
+                // Try as file or directory for all other cases
+                // b. LOAD_AS_FILE(DIR/X)
+                // c. LOAD_AS_DIRECTORY(DIR/X)
+                let node_module_file = node_module_path.normalize_with(specifier);
+                let cached_path = self.cache.value(&node_module_file);
+                if let Some(path) = self.load_as_file_or_directory(&cached_path, specifier, ctx)? {
                     return Ok(Some(path));
                 }
 
-                // Using `join` because `specifier` can be `/` separated.
-                let node_module_file = node_module_path.join(specifier);
-                let cached_path = self.cache.value(&node_module_file);
-                // b. LOAD_AS_FILE(DIR/X)
-                if !specifier.ends_with('/') {
-                    if let Some(path) = self.load_as_file(&cached_path, ctx)? {
-                        return Ok(Some(path));
-                    }
-                }
-                // c. LOAD_AS_DIRECTORY(DIR/X)
-                if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
-                    return Ok(Some(path));
-                }
                 node_module_path.pop();
             }
 
@@ -596,16 +637,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_package_exports(
         &self,
-        path: &Path,
-        specifier: &str,
+        subpath: &str,
+        cached_path: &CachedPath,
         ctx: &ResolveContext,
     ) -> ResolveState {
-        // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
-        //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
         //    return.
-        let (name, subpath) = Self::parse_package_specifier(specifier);
-        let cached_path = self.cache.value(&path.join(name));
         let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? else {
             return Ok(None);
         };
@@ -694,16 +731,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(Some(path));
         }
 
-        // Non-compliant ESM can result in a directory
-        if cached_path.is_dir(&self.cache.fs) {
-            if let Some(path) = self.load_as_directory(cached_path, ctx)? {
-                return Ok(Some(path));
-            }
-        }
-
         // 1. let RESOLVED_PATH = fileURLToPath(MATCH)
         // 2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension format. STOP
-        if let Some(path) = self.load_as_file(cached_path, ctx)? {
+        //
+        // Non-compliant ESM can result in a directory, so directory is tried as well.
+        if let Some(path) = self.load_as_file_or_directory(cached_path, "", ctx)? {
             return Ok(Some(path));
         }
 
