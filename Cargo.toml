@@ -70,7 +70,7 @@ regex              = { version = "1.9.3" }
 rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js             = { version = "0.2.2" }
 ropey              = { version = "1.6.0" }
-serde              = { version = "1.0.185" }
+serde              = { version = "1.0.188" }
 serde_json         = { version = "1.0.105" }
 syn                = { version = "=1" }
 thiserror          = { version = "1.0.47" }
