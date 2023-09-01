@@ -664,9 +664,9 @@ dependencies = [
 
 [[package]]
 name = "ezno-checker"
-version = "0.0.7"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c149e46a16a5e0b4c12e84686e1d793b58e9100babd70a2a30f70fe1358a5926"
+checksum = "ce89c36282d2e7e84de91cca6c2c32ba11f4839ae8c73fb7cc0024411ab28521"
 dependencies = [
  "bimap",
  "binary-serialize-derive",
@@ -1216,7 +1216,7 @@ dependencies = [
  "supports-hyperlinks",
  "supports-unicode",
  "terminal_size",
- "textwrap 0.15.2",
+ "textwrap",
  "thiserror",
  "unicode-width",
 ]
@@ -1588,7 +1588,7 @@ dependencies = [
  "is-terminal",
  "miette",
  "owo-colors",
- "textwrap 0.16.0",
+ "textwrap",
  "thiserror",
  "unicode-width",
 ]
@@ -2540,9 +2540,9 @@ dependencies = [
 
 [[package]]
 name = "source-map"
-version = "0.13.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aebacbfb6ea7b5257c72f8d2f7790cf4fc3e72f399d76b56d48f6290c8ed7789"
+checksum = "fedd4de16a29859eebdc14368c1fc2f5227ba58e1fdaba748072bf80ed9c5a35"
 dependencies = [
  "serde",
 ]
@@ -2673,20 +2673,9 @@ dependencies = [
 
 [[package]]
 name = "textwrap"
-version = "0.15.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7b3e525a49ec206798b40326a44121291b530c963cfb01018f63e135bac543d"
-dependencies = [
- "smawk",
- "unicode-linebreak",
- "unicode-width",
-]
-
-[[package]]
-name = "textwrap"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
+checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 dependencies = [
  "smawk",
  "unicode-linebreak",

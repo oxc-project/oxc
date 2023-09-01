@@ -17,5 +17,5 @@ miette    = { workspace = true }
 
 unicode-width = "0.1.10"
 owo-colors    = { version = "3.5.0" }
-textwrap      = { version = "=0.16.0" } # need to sync with miette
+textwrap      = { version = "=0.15.0" } # pinned to 0.15.0 to sync with miette
 is-terminal   = { version = "0.4.9" }
