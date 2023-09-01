@@ -24,7 +24,7 @@ pub struct NoConditionalExpect;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents the use of expect in conditional blocks, such as ifs & catchs.
+    /// This rule prevents the use of expect in conditional blocks, such as ifs & catch(s).
     /// This includes using expect in callbacks to functions named catch, which are assumed to be promises.
     ///
     /// ### Why is this bad?
