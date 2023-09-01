@@ -16,8 +16,8 @@ const TESTS_ROOT: &str = "tasks/coverage/typescript/tests/";
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`
-    static ref META_OPTIONS: Regex = Regex::new(r"(?m)^/{2}\s*@(?P<name>\w+)\s*:\s*(?P<value>[^\r\n]*)").unwrap();
-    static ref TEST_BRACES: Regex = Regex::new(r"^\s*[{|}]\s*$").unwrap();
+    static ref META_OPTIONS: Regex = Regex::new(r"(?m)^/{2}[[:space:]]*@(?P<name>[[:word:]]+)[[:space:]]*:[[:space:]]*(?P<value>[^\r\n]*)").unwrap();
+    static ref TEST_BRACES: Regex = Regex::new(r"^[[:space:]]*[{|}][[:space:]]*$").unwrap();
 }
 
 pub struct TypeScriptSuite<T: Case> {
