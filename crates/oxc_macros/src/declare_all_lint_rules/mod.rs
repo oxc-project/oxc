@@ -2,7 +2,7 @@ mod trie;
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
     Result,
@@ -62,10 +62,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             .collect::<Vec<_>>()
             .join("/")
     });
-    let rule_timer = rules
-        .iter()
-        .map(|node| format_ident!("RuleTimer{}", node.name.to_string().to_case(Case::Pascal)))
-        .collect::<Vec<_>>();
 
     quote! {
         #(#use_stmts)*
@@ -115,47 +111,39 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
             pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, print_execution_times: bool) {
                 let start = print_execution_times.then(|| Instant::now());
-                match self {
-                    #(Self::#struct_names(rule) => {
-                        let diagnostics = rule.run(node, ctx);
-                        if let Some(start) = start {
-                            unsafe { #rule_timer.update(&start.elapsed()) };
-                        }
-                        diagnostics
-                    }),*
+                let result = match self {
+                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
+                };
+                if let Some(start) = start {
+                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
+                result
             }
 
             pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>, print_execution_times: bool) {
                 let start = print_execution_times.then(|| Instant::now());
-                match self {
-                    #(Self::#struct_names(rule) => {
-                        let diagnostics = rule.run_on_symbol(symbol_id, ctx);
-                        if let Some(start) = start {
-                            unsafe { #rule_timer.update(&start.elapsed()) };
-                        }
-                        diagnostics
-                    }),*
+                let result = match self {
+                    #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
+                };
+                if let Some(start) = start {
+                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
+                result
             }
 
             pub fn run_once<'a>(&self, ctx: &LintContext<'a>, print_execution_times: bool) {
                 let start = print_execution_times.then(|| Instant::now());
-                match self {
-                    #(Self::#struct_names(rule) => {
-                        let diagnostics = rule.run_once(ctx);
-                        if let Some(start) = start {
-                            unsafe { #rule_timer.update(&start.elapsed()) };
-                        }
-                        diagnostics
-                    }),*
+                let result = match self {
+                    #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+                };
+                if let Some(start) = start {
+                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
+                result
             }
 
             pub fn execute_time(&self) -> Duration {
-                match self {
-                    #(Self::#struct_names(_) => unsafe { #rule_timer.duration() }),*
-                }
+                RULE_TIMERS.get(self.name()).unwrap().duration()
             }
         }
 
@@ -185,7 +173,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             }
         }
 
-        #(pub static mut #rule_timer : RuleTimer = RuleTimer::new());*;
+        use once_cell::sync::Lazy;
+        use std::collections::HashMap;
+        pub static RULE_TIMERS: Lazy<HashMap<&'static str, RuleTimer>> = Lazy::new(|| {
+            let mut m = HashMap::new();
+            #(m.insert(#struct_names::NAME, RuleTimer::new());)*
+            m
+        });
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![

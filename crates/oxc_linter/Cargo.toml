@@ -31,6 +31,7 @@ rustc-hash  = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 num-traits  = { workspace = true }
 itertools   = { workspace = true }
+dashmap     = { workspace = true }
 
 rust-lapper = "1.1.0"
 once_cell   = "1.18.0"

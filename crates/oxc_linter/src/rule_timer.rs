@@ -14,7 +14,7 @@ impl RuleTimer {
         Self { secs: AtomicU64::new(0), nanos: AtomicU32::new(0) }
     }
 
-    pub fn update(&mut self, duration: &Duration) {
+    pub fn update(&self, duration: &Duration) {
         self.secs.fetch_add(duration.as_secs(), Ordering::SeqCst);
         self.nanos.fetch_add(duration.subsec_nanos(), Ordering::SeqCst);
     }

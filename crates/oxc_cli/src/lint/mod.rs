@@ -143,4 +143,11 @@ mod test {
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
     }
+
+    #[test]
+    fn timing() {
+        let args = &["--timing", "fixtures"];
+        // make sure this doesn't crash
+        test(args);
+    }
 }
