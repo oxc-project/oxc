@@ -40,14 +40,14 @@ oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
-bpaf               = { version = "0.9.4" }
+bpaf               = { version = "0.9.5" }
 bitflags           = { version = "2.4.0" }
 bumpalo            = { version = "3.13.0" }
 compact_str        = { version = "0.7.1" }
 convert_case       = { version = "0.6.0" }
 criterion          = { version = "0.5.1", default-features = false }
 crossbeam-channel  = { version = "0.5.8" }
-dashmap            = { version = "5.5.0" }
+dashmap            = { version = "5.5.3" }
 env_logger         = { version = "0.10.0" }
 flate2             = { version = "1.0.27" }
 futures            = { version = "0.3.28" }
@@ -56,8 +56,8 @@ itertools          = { version = "0.11.0" }
 jemallocator       = { version = "0.5.4" }
 lazy_static        = { version = "1.4.0" }
 miette             = { version = "5.10.0" }
-mimalloc           = { version = "0.1.37" }
-nodejs-resolver    = { version = "0.0.88" }
+mimalloc           = { version = "0.1.38" }
+nodejs-resolver    = { version = "0.1.0" }
 num-bigint         = { version = "0.4.3" }
 num-traits         = { version = "0.2.16" }
 phf                = { version = "0.11" }
@@ -66,11 +66,11 @@ proc-macro2        = { version = "1.0.66" }
 project-root       = { version = "0.2.2" }
 quote              = { version = "1.0.33" }
 rayon              = { version = "1.7.0" }
-regex              = { version = "1.9.3", default-features = false, features = ["std", "perf"] } # remove unicode for smaller binary
+regex              = { version = "1.9.4", default-features = false, features = ["std", "perf"] } # remove unicode for smaller binary
 rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js             = { version = "0.2.2" }
 ropey              = { version = "1.6.0" }
-serde              = { version = "1.0.185" }
+serde              = { version = "1.0.188" }
 serde_json         = { version = "1.0.105" }
 syn                = { version = "=1" }
 thiserror          = { version = "1.0.47" }
@@ -78,7 +78,7 @@ tokio              = { version = "1" }
 tower-lsp          = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start   = { version = "1.1.0" }
 ureq               = { version = "2.7.1", default-features = false, features = ["tls"] }
-url                = { version = "2.4.0" }
+url                = { version = "2.4.1" }
 walkdir            = { version = "2.3.3" }
 indexmap           = { version = "2.0.0" }
 index_vec          = { version = "0.1.3" }
