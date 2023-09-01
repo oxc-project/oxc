@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -6,10 +6,15 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, jest_ast_util::parse_expect_jest_fn_call, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    jest_ast_util::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("(jest/no-conditional-expect): Unexpected conditional expect)")]
+#[error("(jest/no-conditional-expect): Unexpected conditional expect")]
 #[diagnostic(severity(warning), help("Avoid calling `expect` conditionally`"))]
 struct NoConditionalExpectDiagnostic(#[label] pub Span);
 
@@ -50,28 +55,70 @@ declare_oxc_lint!(
 impl Rule for NoConditionalExpect {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, node, ctx) else {
+            if !is_type_of_jest_fn_call(call_expr, node, ctx, &[JestFnKind::Expect]) {
                 return;
-            };
+            }
 
-            if has_condition_or_catch_in_parent(node, ctx) {
+            let has_condition_or_catch = check_parents(node, ctx, false);
+            if has_condition_or_catch {
                 ctx.diagnostic(NoConditionalExpectDiagnostic(call_expr.span));
             }
         }
     }
 }
 
-fn has_condition_or_catch_in_parent(node: &AstNode, ctx: &LintContext) -> bool {
-    // if is_type_of_jest_fn_call(call_expr, node, ctx, kinds)
+fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: bool) -> bool {
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return false;
     };
 
-    if let AstKind::IfStatement(_) = parent.kind() {
-        return true;
+    match parent.kind() {
+        AstKind::CallExpression(call_expr) => {
+            if is_type_of_jest_fn_call(
+                call_expr,
+                parent,
+                ctx,
+                &[JestFnKind::General(JestGeneralFnKind::Test)],
+            ) {
+                return in_conditional;
+            }
+
+            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+                if member_expr.static_property_name() == Some("catch") {
+                    return check_parents(parent, ctx, true);
+                }
+            }
+        }
+        AstKind::CatchClause(_)
+        | AstKind::SwitchStatement(_)
+        | AstKind::IfStatement(_)
+        | AstKind::ConditionalExpression(_)
+        | AstKind::LogicalExpression(_) => return check_parents(parent, ctx, true),
+        AstKind::Function(function) => {
+            let Some(ident) = &function.id else {
+                return false;
+            };
+            let symbol_table = ctx.semantic().symbols();
+            let Some(symbol_id) = ident.symbol_id.get() else {
+                return false;
+            };
+
+            return symbol_table.get_resolved_references(symbol_id).any(|reference| {
+                let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
+                    return false;
+                };
+
+                check_parents(parent, ctx, in_conditional)
+            });
+        }
+        AstKind::Program(_) => return false,
+        _ => {}
     }
+
+    check_parents(parent, ctx, in_conditional)
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -93,136 +140,136 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        //         it('foo', () => {
-        //             process.env.FAIL && setNum(1);
-        //             expect(num).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         function getValue() {
-        //             let num = 2;
-        //             process.env.FAIL && setNum(1);
-        //             return num;
-        //         }
-        //         it('foo', () => {
-        //         expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         it('foo', () => {
-        //             process.env.FAIL || setNum(1);
-        //             expect(num).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         function getValue() {
-        //             let num = 2;
-        //             process.env.FAIL || setNum(1);
-        //             return num;
-        //         }
-        //         it('foo', () => {
-        //             expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         it('foo', () => {
-        //             const num = process.env.FAIL ? 1 : 2;
-        //             expect(num).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         function getValue() {
-        //             return process.env.FAIL ? 1 : 2
-        //         }
+        (
+            "
+                it('foo', () => {
+                    process.env.FAIL && setNum(1);
+                    expect(num).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                function getValue() {
+                    let num = 2;
+                    process.env.FAIL && setNum(1);
+                    return num;
+                }
+                it('foo', () => {
+                expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                it('foo', () => {
+                    process.env.FAIL || setNum(1);
+                    expect(num).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                function getValue() {
+                    let num = 2;
+                    process.env.FAIL || setNum(1);
+                    return num;
+                }
+                it('foo', () => {
+                    expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                it('foo', () => {
+                    const num = process.env.FAIL ? 1 : 2;
+                    expect(num).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                function getValue() {
+                    return process.env.FAIL ? 1 : 2
+                }
 
-        //         it('foo', () => {
-        //             expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         it('foo', () => {
-        //             let num;
+                it('foo', () => {
+                    expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                it('foo', () => {
+                    let num;
 
-        //             switch(process.env.FAIL) {
-        //                 case true:
-        //                 num = 1;
-        //                 break;
-        //                 case false:
-        //                 num = 2;
-        //                 break;
-        //             }
+                    switch(process.env.FAIL) {
+                        case true:
+                        num = 1;
+                        break;
+                        case false:
+                        num = 2;
+                        break;
+                    }
 
-        //             expect(num).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         function getValue() {
-        //             switch(process.env.FAIL) {
-        //             case true:
-        //                 return 1;
-        //             case false:
-        //                 return 2;
-        //             }
-        //         }
+                    expect(num).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                function getValue() {
+                    switch(process.env.FAIL) {
+                    case true:
+                        return 1;
+                    case false:
+                        return 2;
+                    }
+                }
 
-        //         it('foo', () => {
-        //             expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         it('foo', () => {
-        //             let num = 2;
+                it('foo', () => {
+                    expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                it('foo', () => {
+                    let num = 2;
 
-        //             if(process.env.FAIL) {
-        //                 num = 1;
-        //             }
+                    if(process.env.FAIL) {
+                        num = 1;
+                    }
 
-        //             expect(num).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //         function getValue() {
-        //             if(process.env.FAIL) {
-        //                 return 1;
-        //             }
-        //             return 2;
-        //         }
+                    expect(num).toBe(2);
+                });
+            ",
+            None,
+        ),
+        (
+            "
+                function getValue() {
+                    if(process.env.FAIL) {
+                        return 1;
+                    }
+                    return 2;
+                }
 
-        //         it('foo', () => {
-        //             expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
+                it('foo', () => {
+                    expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
         (
             "
                 it('foo', () => {
@@ -266,24 +313,24 @@ fn test() {
             ",
             None,
         ),
-        // (
-        //     "
-        //         function getValue() {
-        //             try {
-        //                 process.env.FAIL.toString();
+        (
+            "
+                function getValue() {
+                    try {
+                        process.env.FAIL.toString();
 
-        //                 return 1;
-        //             } catch {
-        //                 return 2;
-        //             }
-        //         }
+                        return 1;
+                    } catch {
+                        return 2;
+                    }
+                }
 
-        //         it('foo', () => {
-        //             expect(getValue()).toBe(2);
-        //         });
-        //     ",
-        //     None,
-        // ),
+                it('foo', () => {
+                    expect(getValue()).toBe(2);
+                });
+            ",
+            None,
+        ),
         (
             "
                 it('works', async () => {
