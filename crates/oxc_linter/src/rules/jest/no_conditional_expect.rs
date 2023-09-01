@@ -129,7 +129,7 @@ fn test() {
                 it('foo', () => {
                     expect(1).toBe(2);
                 });
-		    ",
+            ",
             None,
         ),
         (
