@@ -245,7 +245,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     #[allow(clippy::unused_self)]
     fn require_core(&self, specifier: &str) -> Result<(), ResolveError> {
-        if specifier.starts_with("node:") || BUILTINS.binary_search(&specifier).is_ok() {
+        if self.options.builtin_modules
+            && (specifier.starts_with("node:") || BUILTINS.binary_search(&specifier).is_ok())
+        {
             return Err(ResolveError::Builtin(specifier.to_string()));
         }
         Ok(())

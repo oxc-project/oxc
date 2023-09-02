@@ -1,12 +1,22 @@
-use crate::{ResolveError, Resolver};
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use crate::{ResolveError, ResolveOptions, Resolver};
+
+#[test]
+fn builtins_off() {
+    let f = Path::new("/");
+    let resolver = Resolver::default();
+    let resolved_path = resolver.resolve(f, "zlib").map(|r| r.full_path());
+    assert_eq!(resolved_path, Err(ResolveError::NotFound(PathBuf::from("/"))));
+}
 
 #[test]
 fn builtins() {
-    let resolver = Resolver::default();
     let f = Path::new("/");
 
-    #[rustfmt::skip]
+    let resolver =
+        Resolver::new(ResolveOptions { builtin_modules: true, ..ResolveOptions::default() });
+
     let pass = [
         "_http_agent",
         "_http_client",
