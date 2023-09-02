@@ -428,9 +428,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if !cached_path.is_dir(&self.cache.fs) {
             return Ok(None);
         }
-        if self.options.resolve_to_context {
-            return Ok(Some(cached_path.clone()));
-        }
         // TODO: Only package.json is supported, so warn about having other values
         // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
@@ -465,6 +462,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &ResolveContext,
     ) -> ResolveState {
+        if self.options.resolve_to_context {
+            return Ok(cached_path.is_dir(&self.cache.fs).then(|| cached_path.clone()));
+        }
         if !specifier.ends_with('/') {
             if let Some(path) = self.load_as_file(cached_path, ctx)? {
                 return Ok(Some(path));

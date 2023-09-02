@@ -74,7 +74,7 @@ fn prefer_relative() {
 }
 
 #[test]
-fn resolve_context() {
+fn resolve_to_context() {
     let f = super::fixture();
     let resolver =
         Resolver::new(ResolveOptions { resolve_to_context: true, ..ResolveOptions::default() });
