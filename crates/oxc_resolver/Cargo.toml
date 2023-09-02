@@ -30,7 +30,6 @@ once_cell = "1.18.0"
 
 [dev-dependencies]
 criterion          = { workspace = true }
-nodejs-resolver    = "0.1.0"                                        # for benchmark
 rayon              = { workspace = true }                            # for benchmark
 static_assertions  = { workspace = true }
 tracing-subscriber = { workspace = true }

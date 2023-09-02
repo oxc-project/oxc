@@ -45,19 +45,6 @@ fn data() -> Vec<(PathBuf, &'static str)> {
     ]
 }
 
-fn nodejs_resolver() -> nodejs_resolver::Resolver {
-    use nodejs_resolver::{AliasMap, Options, Resolver};
-    Resolver::new(Options {
-        browser_field: true,
-        alias: vec![("/absolute/path".into(), vec![AliasMap::Target("./".into())])],
-        extension_alias: vec![
-            (".js".into(), vec![".ts".into(), ".js".into()]),
-            (".mjs".into(), vec![".mts".into()]),
-        ],
-        ..Options::default()
-    })
-}
-
 fn oxc_resolver() -> oxc_resolver::Resolver {
     use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
     Resolver::new(ResolveOptions {
@@ -74,31 +61,6 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
 fn resolver_benchmark(c: &mut Criterion) {
     let data = data();
 
-    // Check path is valid by comparing the outputs, re-initialize so they don't use cache
-    for (path, request) in &data {
-        let nodejs_resolver_path = if let Ok(nodejs_resolver::ResolveResult::Resource(resource)) =
-            nodejs_resolver().resolve(path, request)
-        {
-            Some(resource.path)
-        } else {
-            None
-        };
-        let oxc_path = oxc_resolver()
-            .resolve(path, request)
-            .map_or(None, |oxc_path| Some(oxc_path.into_path_buf()));
-        assert_eq!(nodejs_resolver_path, oxc_path, "{path:?} {request}");
-    }
-
-    // Bench nodejs_resolver with cache
-    c.bench_with_input(BenchmarkId::new("single-thread", "nodejs-resolver"), &data, |b, data| {
-        let nodejs_resolver = nodejs_resolver();
-        b.iter(|| {
-            for (path, request) in data {
-                _ = nodejs_resolver.resolve(path, request);
-            }
-        });
-    });
-
     // Bench oxc_resolver with cache
     c.bench_with_input(BenchmarkId::new("single-thread", "oxc-resolver"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
@@ -106,15 +68,6 @@ fn resolver_benchmark(c: &mut Criterion) {
             for (path, request) in data {
                 _ = oxc_resolver.resolve(path, request);
             }
-        });
-    });
-
-    c.bench_with_input(BenchmarkId::new("multi-thread", "nodejs-resolver"), &data, |b, data| {
-        let nodejs_resolver = nodejs_resolver();
-        b.iter(|| {
-            data.par_iter().for_each(|(path, request)| {
-                _ = nodejs_resolver.resolve(path, request);
-            });
         });
     });
 
