@@ -688,8 +688,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let Some(subpath) = package_json
             .name
             .as_ref()
-            .and_then(|package_json_name| specifier.strip_prefix(package_json_name))
-            .filter(|subpath| subpath.is_empty() || subpath.starts_with('/'))
+            .and_then(|package_name| Self::strip_package_name(specifier, package_name))
         else {
             return Ok(None);
         };
@@ -774,7 +773,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             let only_module = from.is_some();
             let alias_key = from.unwrap_or(alias_key_raw);
             let exact_match = only_module && inner_request == alias_key;
-            if !(exact_match || inner_request.starts_with(alias_key)) {
+            if !(exact_match || Self::strip_package_name(&inner_request, alias_key).is_some()) {
                 continue;
             }
             for r in specifiers {
@@ -1436,5 +1435,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         // 11. Return 0.
         Ordering::Equal
+    }
+
+    fn strip_package_name<'a>(specifier: &'a str, package_name: &'a str) -> Option<&'a str> {
+        specifier
+            .strip_prefix(package_name)
+            .filter(|tail| tail.is_empty() || tail.starts_with('/') || tail.starts_with('\\'))
     }
 }
