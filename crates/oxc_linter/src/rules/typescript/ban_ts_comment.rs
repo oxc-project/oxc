@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -126,13 +125,11 @@ impl Rule for BanTsComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
         for (start, comment) in comments {
-            let regex = if comment.is_single_line() { &SINGLELINE } else { &MULTILINE };
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
 
-            if let Some(captures) = regex.captures(raw) {
+            if let Some(captures) = find_ts_comment_directive(raw, comment.is_single_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
-                let directive = captures.name("directive").unwrap().as_str();
-                let description = captures.name("description").map_or("", |m| m.as_str().trim());
+                let (directive, description) = (captures.0, captures.1.trim());
 
                 match self.option(directive) {
                     DirectiveConfig::Boolean(on) => {
@@ -170,19 +167,6 @@ impl Rule for BanTsComment {
     }
 }
 
-// regex to parse single line comment
-static SINGLELINE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^/*\s*@ts-(?P<directive>expect-error|ignore|check|nocheck)(?P<description>.*)")
-        .unwrap()
-});
-// regex to parse multiline comment
-static MULTILINE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r"^\s*(?:/|\*)*\s*@ts-(?P<directive>expect-error|ignore|check|nocheck)(?P<description>.*)",
-    )
-    .unwrap()
-});
-
 impl BanTsComment {
     /// get the option for a given directive, caller should guarantee
     /// the directive should be one of the ignore/check/nocheck/expect-error
@@ -195,6 +179,30 @@ impl BanTsComment {
             _ => unreachable!(),
         }
     }
+}
+
+pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
+    let prefix = "@ts-";
+    // For multi-line comments, get the last line
+    let mut lines = raw.lines();
+    let line = lines.next_back()?;
+    let index = line.find(prefix)?;
+    if !line[..index]
+        .chars()
+        .all(|c| c.is_whitespace() || if single_line { c == '/' } else { c == '*' || c == '/' })
+    {
+        return None;
+    }
+    let multi_len = lines.map(|line| line.len() + 1).sum::<usize>();
+    let start = index + prefix.len();
+    for directive in ["expect-error", "ignore", "nocheck", "check"] {
+        if line.get(start..start + directive.len()) == Some(directive) {
+            let start = multi_len + index + prefix.len();
+            let end = start + directive.len();
+            return Some((&raw[start..end], &raw[end..]));
+        }
+    }
+    None
 }
 
 #[test]
