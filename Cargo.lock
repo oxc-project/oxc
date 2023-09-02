@@ -1508,16 +1508,18 @@ dependencies = [
 name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
+ "codspeed-criterion-compat",
  "criterion",
  "jemallocator",
  "mimalloc",
  "oxc_allocator",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
- "pico-args",
+ "rayon",
 ]
 
 [[package]]
@@ -1767,15 +1769,10 @@ dependencies = [
 name = "oxc_resolver"
 version = "0.0.0"
 dependencies = [
- "codspeed-criterion-compat",
- "criterion",
  "dashmap",
  "dunce",
  "indexmap 2.0.0",
- "jemallocator",
- "mimalloc",
  "once_cell",
- "rayon",
  "rustc-hash",
  "serde",
  "serde_json",
