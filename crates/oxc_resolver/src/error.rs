@@ -64,6 +64,12 @@ pub enum ResolveError {
     Recursion,
 }
 
+impl ResolveError {
+    pub fn is_ignore(&self) -> bool {
+        matches!(self, Self::Ignored(_))
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SpecifierError {
     Empty,

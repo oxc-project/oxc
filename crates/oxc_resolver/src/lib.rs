@@ -175,6 +175,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx.with_query_fragment(specifier.query, specifier.fragment);
         let cached_path = self.cache.value(path);
         let cached_path = self.require(&cached_path, specifier.path(), &ctx).or_else(|err| {
+            if err.is_ignore() {
+                return Err(err);
+            }
             // enhanced-resolve: try fallback
             self.load_alias(&cached_path, Some(specifier.path()), &self.options.fallback, &ctx)
                 .and_then(|value| value.ok_or(err))
@@ -243,7 +246,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
     }
 
-    #[allow(clippy::unused_self)]
     fn require_core(&self, specifier: &str) -> Result<(), ResolveError> {
         if self.options.builtin_modules
             && (specifier.starts_with("node:") || BUILTINS.binary_search(&specifier).is_ok())
