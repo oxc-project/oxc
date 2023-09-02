@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("(jest/no-conditional-expect): Unexpected conditional expect")]
+#[error("eslint(jest/no-conditional-expect): Unexpected conditional expect")]
 #[diagnostic(severity(warning), help("Avoid calling `expect` conditionally`"))]
 struct NoConditionalExpectDiagnostic(#[label] pub Span);
 
