@@ -4,10 +4,6 @@ name: Code Coverage
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - '**.rs'
   push:
     branches:
       - main
