@@ -579,21 +579,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &ResolveContext,
     ) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
-        // Use a buffer to reduce total memory allocation.
-        let mut node_module_path = cached_path.path().to_path_buf();
         // 2. for each DIR in DIRS:
-        loop {
+        for path in cached_path.path().ancestors() {
             for module_name in &self.options.modules {
                 // node_module_path = foo/node_modules/
-                node_module_path.push(module_name);
-                let cached_path = self.cache.value(&node_module_path);
+                let cached_path = if path.ends_with(module_name) {
+                    self.cache.value(path)
+                } else {
+                    self.cache.value(&path.join(module_name))
+                };
 
                 // Skip if foo/node_modules does not exist
                 if !cached_path.is_dir(&self.cache.fs) {
-                    node_module_path.pop();
                     continue;
                 }
-
                 // Optimize node_modules lookup by inspecting whether the package exists
                 // From LOAD_PACKAGE_EXPORTS(X, DIR)
                 // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
@@ -601,7 +600,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 let (package_name, subpath) = Self::parse_package_specifier(specifier);
 
                 if !package_name.is_empty() {
-                    let package_path = node_module_path.join(package_name);
+                    let package_path = cached_path.path().join(package_name);
                     let cached_path = self.cache.value(&package_path);
                     // Try foo/node_modules/package_name
                     if cached_path.is_dir(&self.cache.fs) {
@@ -612,7 +611,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     } else {
                         // foo/node_modules/package_name is not a directory, so useless to check inside it
                         if !subpath.is_empty() {
-                            node_module_path.pop();
                             continue;
                         }
                     }
@@ -621,17 +619,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 // Try as file or directory for all other cases
                 // b. LOAD_AS_FILE(DIR/X)
                 // c. LOAD_AS_DIRECTORY(DIR/X)
-                let node_module_file = node_module_path.normalize_with(specifier);
+                let node_module_file = cached_path.path().normalize_with(specifier);
                 let cached_path = self.cache.value(&node_module_file);
                 if let Some(path) = self.load_as_file_or_directory(&cached_path, specifier, ctx)? {
                     return Ok(Some(path));
                 }
-
-                node_module_path.pop();
-            }
-
-            if !node_module_path.pop() {
-                break;
             }
         }
         Ok(None)
