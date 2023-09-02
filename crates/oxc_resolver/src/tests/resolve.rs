@@ -51,8 +51,18 @@ fn resolve() {
     }
 }
 
-// #[test]
-// fn issue238_resolve() {}
+#[test]
+fn issue238_resolve() {
+    let f = super::fixture().join("issue-238");
+    let resolver = Resolver::new(ResolveOptions {
+        extensions: vec![".js".into(), ".jsx".into(), ".ts".into(), ".tsx".into()],
+        modules: vec!["src/a".into(), "src/b".into(), "src/common".into(), "node_modules".into()],
+        ..ResolveOptions::default()
+    });
+    let resolved_path =
+        resolver.resolve(f.join("src/common"), "config/myObjectFile").map(|r| r.full_path());
+    assert_eq!(resolved_path, Ok(f.join("src/common/config/myObjectFile.js")),);
+}
 
 #[test]
 fn prefer_relative() {
