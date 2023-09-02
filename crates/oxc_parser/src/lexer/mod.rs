@@ -20,7 +20,7 @@ use oxc_span::{SourceType, Span};
 use oxc_syntax::{
     identifier::{
         is_identifier_part, is_identifier_start_all, is_irregular_line_terminator,
-        is_irregular_whitespace, is_line_terminator, CR, EOF, FF, LF, LS, PS, TAB, VT,
+        is_irregular_whitespace, is_line_terminator, CR, FF, LF, LS, PS, TAB, VT,
     },
     unicode_id_start::is_id_start_unicode,
 };
@@ -84,7 +84,7 @@ impl<'a> Lexer<'a> {
             source_type,
             current,
             errors: vec![],
-            lookahead: VecDeque::with_capacity(4),
+            lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
         }
@@ -254,21 +254,22 @@ impl<'a> Lexer<'a> {
 
     /// Peek the next char without advancing the position
     #[inline]
-    fn peek(&self) -> char {
-        self.current.chars.clone().next().unwrap_or(EOF)
+    fn peek(&self) -> Option<char> {
+        self.current.chars.clone().next()
     }
 
     /// Peek the next next char without advancing the position
-    fn peek2(&self) -> char {
+    #[inline]
+    fn peek2(&self) -> Option<char> {
         let mut chars = self.current.chars.clone();
         chars.next();
-        chars.next().unwrap_or(EOF)
+        chars.next()
     }
 
     /// Peek the next character, and advance the current position if it matches
     #[inline]
     fn next_eq(&mut self, c: char) -> bool {
-        let matched = self.peek() == c;
+        let matched = self.peek() == Some(c);
         if matched {
             self.current.chars.next();
         }
@@ -282,11 +283,10 @@ impl<'a> Lexer<'a> {
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
     fn unexpected_err(&mut self) {
-        let c = self.peek();
-        if c == EOF {
-            self.error(diagnostics::UnexpectedEnd(self.current_offset()));
-        } else {
-            self.error(diagnostics::InvalidCharacter(c, self.current_offset()));
+        let offset = self.current_offset();
+        match self.peek() {
+            Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
+            None => self.error(diagnostics::UnexpectedEnd(offset)),
         }
     }
 
@@ -419,8 +419,7 @@ impl<'a> Lexer<'a> {
     /// Section 12.6.1 Identifier Names
     fn identifier_tail(&mut self, mut builder: AutoCow<'a>) -> (bool, &'a str) {
         // ident tail
-        loop {
-            let c = self.peek();
+        while let Some(c) = self.peek() {
             if !is_identifier_part(c) {
                 if c == '\\' {
                     self.current.chars.next();
@@ -453,12 +452,12 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.7 Punctuators
     fn read_dot(&mut self, builder: &mut AutoCow<'a>) -> Kind {
-        if self.peek() == '.' && self.peek2() == '.' {
+        if self.peek() == Some('.') && self.peek2() == Some('.') {
             self.current.chars.next();
             self.current.chars.next();
             return Kind::Dot3;
         }
-        if self.peek().is_ascii_digit() {
+        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
             builder.push_matching('.');
             self.decimal_literal_after_decimal_point(builder)
         } else {
@@ -476,7 +475,7 @@ impl<'a> Lexer<'a> {
             }
         } else if self.next_eq('=') {
             Some(Kind::LtEq)
-        } else if self.peek() == '!'
+        } else if self.peek() == Some('!')
             // SingleLineHTMLOpenComment `<!--` in script mode
             && self.source_type.is_script()
             && self.remaining().starts_with("!--")
@@ -557,25 +556,25 @@ impl<'a> Lexer<'a> {
     /// 12.8.3 Numeric Literals with `0` prefix
     fn read_zero(&mut self, builder: &mut AutoCow<'a>) -> Kind {
         match self.peek() {
-            'b' | 'B' => self.read_non_decimal(Kind::Binary, builder),
-            'o' | 'O' => self.read_non_decimal(Kind::Octal, builder),
-            'x' | 'X' => self.read_non_decimal(Kind::Hex, builder),
-            c @ ('e' | 'E') => {
+            Some('b' | 'B') => self.read_non_decimal(Kind::Binary, builder),
+            Some('o' | 'O') => self.read_non_decimal(Kind::Octal, builder),
+            Some('x' | 'X') => self.read_non_decimal(Kind::Hex, builder),
+            Some(c @ ('e' | 'E')) => {
                 self.current.chars.next();
                 builder.push_matching(c);
                 self.read_decimal_exponent(builder)
             }
-            '.' => {
+            Some('.') => {
                 self.current.chars.next();
                 builder.push_matching('.');
                 self.decimal_literal_after_decimal_point_after_digits(builder)
             }
-            'n' => {
+            Some('n') => {
                 self.current.chars.next();
                 builder.push_matching('n');
                 self.check_after_numeric_literal(Kind::Decimal)
             }
-            n if n.is_ascii_digit() => self.read_legacy_octal(builder),
+            Some(n) if n.is_ascii_digit() => self.read_legacy_octal(builder),
             _ => self.check_after_numeric_literal(Kind::Decimal),
         }
     }
@@ -584,7 +583,7 @@ impl<'a> Lexer<'a> {
         let c = self.current.chars.next().unwrap();
         builder.push_matching(c);
 
-        if kind.matches_number_char(self.peek()) {
+        if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
             let c = self.current.chars.next().unwrap();
             builder.push_matching(c);
         } else {
@@ -592,14 +591,13 @@ impl<'a> Lexer<'a> {
             return Kind::Undetermined;
         }
 
-        loop {
-            match self.peek() {
+        while let Some(c) = self.peek() {
+            match c {
                 '_' => {
                     self.current.chars.next();
                     builder.force_allocation_without_current_ascii_char(self);
-                    let c = self.peek();
-                    if kind.matches_number_char(c) {
-                        self.current.chars.next();
+                    if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
+                        let c = self.current.chars.next().unwrap();
                         builder.push_matching(c);
                     } else {
                         self.unexpected_err();
@@ -613,7 +611,7 @@ impl<'a> Lexer<'a> {
                 _ => break,
             }
         }
-        if self.peek() == 'n' {
+        if self.peek() == Some('n') {
             self.current.chars.next();
             builder.push_matching('n');
         }
@@ -624,10 +622,10 @@ impl<'a> Lexer<'a> {
         let mut kind = Kind::Octal;
         loop {
             match self.peek() {
-                '0'..='7' => {
+                Some('0'..='7') => {
                     self.current.chars.next();
                 }
-                '8'..='9' => {
+                Some('8'..='9') => {
                     self.current.chars.next();
                     kind = Kind::Decimal;
                 }
@@ -637,13 +635,13 @@ impl<'a> Lexer<'a> {
 
         match self.peek() {
             // allow 08.5 and 09.5
-            '.' if kind == Kind::Decimal => {
+            Some('.') if kind == Kind::Decimal => {
                 self.current.chars.next();
                 builder.push_matching('.');
                 self.decimal_literal_after_decimal_point_after_digits(builder)
             }
             // allow 08e1 and 09e1
-            'e' if kind == Kind::Decimal => {
+            Some('e') if kind == Kind::Decimal => {
                 self.current.chars.next();
                 builder.push_matching('e');
                 self.read_decimal_exponent(builder)
@@ -668,12 +666,12 @@ impl<'a> Lexer<'a> {
 
     fn read_decimal_exponent(&mut self, builder: &mut AutoCow<'a>) -> Kind {
         let kind = match self.peek() {
-            '-' => {
+            Some('-') => {
                 self.current.chars.next();
                 builder.push_matching('-');
                 Kind::NegativeExponential
             }
-            '+' => {
+            Some('+') => {
                 self.current.chars.next();
                 builder.push_matching('+');
                 Kind::PositiveExponential
@@ -685,7 +683,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
-        if self.peek().is_ascii_digit() {
+        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
             let c = self.current.chars.next().unwrap();
             builder.push_matching(c);
         } else {
@@ -697,12 +695,12 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_digits_after_first_digit(&mut self, builder: &mut AutoCow<'a>) {
-        loop {
-            match self.peek() {
+        while let Some(c) = self.peek() {
+            match c {
                 '_' => {
                     self.current.chars.next();
                     builder.force_allocation_without_current_ascii_char(self);
-                    if self.peek().is_ascii_digit() {
+                    if self.peek().is_some_and(|c| c.is_ascii_digit()) {
                         let c = self.current.chars.next().unwrap();
                         builder.push_matching(c);
                     } else {
@@ -735,7 +733,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn optional_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
-        if self.peek().is_ascii_digit() {
+        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
             let c = self.current.chars.next().unwrap();
             builder.push_matching(c);
         } else {
@@ -745,7 +743,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn optional_exponent(&mut self, builder: &mut AutoCow<'a>) -> Option<Kind> {
-        if matches!(self.peek(), 'e' | 'E') {
+        if matches!(self.peek(), Some('e' | 'E')) {
             let c = self.current.chars.next().unwrap();
             builder.push_matching(c);
             return Some(self.read_decimal_exponent(builder));
@@ -756,14 +754,13 @@ impl<'a> Lexer<'a> {
     fn check_after_numeric_literal(&mut self, kind: Kind) -> Kind {
         let offset = self.offset();
         // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
-        let ch = self.peek();
-        if !ch.is_ascii_digit() && !is_identifier_start_all(ch) {
+        let c = self.peek();
+        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start_all(ch)) {
             return kind;
         }
         self.current.chars.next();
-        loop {
-            let c = self.peek();
-            if c != EOF && is_identifier_start_all(c) {
+        while let Some(c) = self.peek() {
+            if is_identifier_start_all(c) {
                 self.current.chars.next();
             } else {
                 break;
@@ -843,7 +840,7 @@ impl<'a> Lexer<'a> {
 
         let mut flags = RegExpFlags::empty();
 
-        while let ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9') = self.peek() {
+        while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.current.chars.next();
             if !ch.is_ascii_lowercase() {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
@@ -881,7 +878,7 @@ impl<'a> Lexer<'a> {
         let mut is_valid_escape_sequence = true;
         while let Some(c) = self.current.chars.next() {
             match c {
-                '$' if self.peek() == '{' => {
+                '$' if self.peek() == Some('{') => {
                     if is_valid_escape_sequence {
                         self.current.token.value =
                             self.string_to_token_value(builder.finish_without_push(self));
@@ -921,15 +918,13 @@ impl<'a> Lexer<'a> {
         let prev_str = &self.source[start_offset as usize..self.offset() as usize];
 
         let mut builder = AutoCow::new(self);
-        loop {
-            let c = self.peek();
+        while let Some(c) = self.peek() {
             if c == '-' || is_identifier_start_all(c) {
                 self.current.chars.next();
                 builder.push_matching(c);
-                loop {
-                    let c = self.peek();
+                while let Some(c) = self.peek() {
                     if is_identifier_part(c) {
-                        self.current.chars.next();
+                        let c = self.current.chars.next().unwrap();
                         builder.push_matching(c);
                     } else {
                         break;
@@ -953,22 +948,21 @@ impl<'a> Lexer<'a> {
     /// { `JSXChildExpressionopt` }
     fn read_jsx_child(&mut self) -> Kind {
         match self.peek() {
-            '<' => {
+            Some('<') => {
                 self.current.chars.next();
                 Kind::LAngle
             }
-            '{' => {
+            Some('{') => {
                 self.current.chars.next();
                 Kind::LCurly
             }
-            EOF => Kind::Eof,
-            c => {
+            Some(c) => {
                 let mut builder = AutoCow::new(self);
                 builder.push_matching(c);
                 loop {
                     // `>` and `}` are errors in TypeScript but not Babel
                     // let's make this less strict so we can parse more code
-                    if matches!(self.peek(), '{' | '<') {
+                    if matches!(self.peek(), Some('{' | '<')) {
                         break;
                     }
                     if let Some(c) = self.current.chars.next() {
@@ -980,6 +974,7 @@ impl<'a> Lexer<'a> {
                 self.current.token.value = self.string_to_token_value(builder.finish(self));
                 Kind::JSXText
             }
+            None => Kind::Eof,
         }
     }
 
@@ -1034,7 +1029,7 @@ impl<'a> Lexer<'a> {
         }
 
         let value = match self.peek() {
-            '{' => self.unicode_code_point(),
+            Some('{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
@@ -1086,7 +1081,7 @@ impl<'a> Lexer<'a> {
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek() {
-            '{' => self.unicode_code_point(),
+            Some('{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
@@ -1137,9 +1132,9 @@ impl<'a> Lexer<'a> {
 
     fn hex_digit(&mut self) -> Option<u32> {
         let value = match self.peek() {
-            c @ '0'..='9' => c as u32 - '0' as u32,
-            c @ 'a'..='f' => 10 + (c as u32 - 'a' as u32),
-            c @ 'A'..='F' => 10 + (c as u32 - 'A' as u32),
+            Some(c @ '0'..='9') => c as u32 - '0' as u32,
+            Some(c @ 'a'..='f') => 10 + (c as u32 - 'a' as u32),
+            Some(c @ 'A'..='F') => 10 + (c as u32 - 'A' as u32),
             _ => return None,
         };
         self.current.chars.next();
@@ -1164,7 +1159,10 @@ impl<'a> Lexer<'a> {
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
         // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        if !((0xD800..=0xDBFF).contains(&high) && self.peek() == '\\' && self.peek2() == 'u') {
+        if !((0xD800..=0xDBFF).contains(&high)
+            && self.peek() == Some('\\')
+            && self.peek2() == Some('u'))
+        {
             return Some(SurrogatePair::CodePoint(high));
         }
 
@@ -1231,7 +1229,7 @@ impl<'a> Lexer<'a> {
                     self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
                 }
                 // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek().is_ascii_digit() => text.push('\0'),
+                '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => text.push('\0'),
                 // Section 12.8.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
@@ -1240,16 +1238,16 @@ impl<'a> Lexer<'a> {
                     num.push(a);
                     match a {
                         '4'..='7' => {
-                            if matches!(self.peek(), '0'..='7') {
+                            if matches!(self.peek(), Some('0'..='7')) {
                                 let b = self.current.chars.next().unwrap();
                                 num.push(b);
                             }
                         }
                         '0'..='3' => {
-                            if matches!(self.peek(), '0'..='7') {
+                            if matches!(self.peek(), Some('0'..='7')) {
                                 let b = self.current.chars.next().unwrap();
                                 num.push(b);
-                                if matches!(self.peek(), '0'..='7') {
+                                if matches!(self.peek(), Some('0'..='7')) {
                                     let c = self.current.chars.next().unwrap();
                                     num.push(c);
                                 }
@@ -1262,7 +1260,7 @@ impl<'a> Lexer<'a> {
                         char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
                     text.push(value);
                 }
-                '0' if in_template && self.peek().is_ascii_digit() => {
+                '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
                     self.current.chars.next();
                     // error raised within the parser by `diagnostics::TemplateLiteral`
                     *is_valid_escape_sequence = false;
@@ -1464,11 +1462,11 @@ const PRD: ByteHandler = |lexer| {
 const SLH: ByteHandler = |lexer| {
     lexer.consume_char();
     match lexer.peek() {
-        '/' => {
+        Some('/') => {
             lexer.current.chars.next();
             lexer.skip_single_line_comment()
         }
-        '*' => {
+        Some('*') => {
             lexer.current.chars.next();
             lexer.skip_multi_line_comment()
         }
@@ -1553,9 +1551,9 @@ const QST: ByteHandler = |lexer| {
         } else {
             Kind::Question2
         }
-    } else if lexer.peek() == '.' {
+    } else if lexer.peek() == Some('.') {
         // parse `?.1` as `?` `.1`
-        if lexer.peek2().is_ascii_digit() {
+        if lexer.peek2().is_some_and(|c| c.is_ascii_digit()) {
             Kind::Question
         } else {
             lexer.current.chars.next();
