@@ -27,5 +27,5 @@ fn bench_minifier(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_minifier);
-criterion_main!(parser);
+criterion_group!(minifier, bench_minifier);
+criterion_main!(minifier);

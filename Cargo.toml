@@ -55,7 +55,7 @@ ignore                    = { version = "0.4.20" }
 itertools                 = { version = "0.11.0" }
 jemallocator              = { version = "0.5.4" }
 lazy_static               = { version = "1.4.0" }
-miette                    = { version = "5.10.0" }
+miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
 mimalloc                  = { version = "0.1.38" }
 nodejs-resolver           = { version = "0.1.0" }
 num-bigint                = { version = "0.4.3" }
