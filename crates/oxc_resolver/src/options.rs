@@ -123,6 +123,12 @@ pub struct ResolveOptions {
     ///
     /// Default `true`
     pub symlinks: bool,
+
+    /// Whether to parse [module.builtinModules](https://nodejs.org/api/module.html#modulebuiltinmodules) or not.
+    /// For example, "zlib" will throw [ResolveError::Builtin] when set to true.
+    ///
+    /// Default `false`
+    pub builtin_modules: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -188,6 +194,7 @@ impl Default for ResolveOptions {
             restrictions: vec![],
             roots: vec![],
             symlinks: true,
+            builtin_modules: false,
         }
     }
 }
@@ -267,6 +274,9 @@ impl fmt::Display for ResolveOptions {
         if self.symlinks {
             write!(f, "symlinks:{:?},", self.symlinks)?;
         }
+        if self.builtin_modules {
+            write!(f, "builtin_modules:{:?},", self.builtin_modules)?;
+        }
         Ok(())
     }
 }
@@ -308,10 +318,11 @@ mod test {
             prefer_absolute: true,
             restrictions: vec![Restriction::Path(PathBuf::from("restrictions"))],
             roots: vec![PathBuf::from("roots")],
+            builtin_modules: true,
             ..ResolveOptions::default()
         };
 
-        let expected = r#"tsconfig:"tsconfig.json",alias:[("a", [Ignore])],alias_fields:[["browser"]],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
+        let expected = r#"tsconfig:"tsconfig.json",alias:[("a", [Ignore])],alias_fields:[["browser"]],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,builtin_modules:true,"#;
         assert_eq!(format!("{options}"), expected);
     }
 }
