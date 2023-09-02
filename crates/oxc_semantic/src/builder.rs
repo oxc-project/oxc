@@ -253,7 +253,7 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+            self.symbols.create_symbol(span, name.clone(), includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
         self.scope.add_binding(scope_id, name.clone(), symbol_id);
         symbol_id
