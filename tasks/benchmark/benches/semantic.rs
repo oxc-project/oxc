@@ -35,5 +35,5 @@ fn bench_semantic(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_semantic);
-criterion_main!(parser);
+criterion_group!(semantic, bench_semantic);
+criterion_main!(semantic);

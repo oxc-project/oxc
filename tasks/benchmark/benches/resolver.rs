@@ -74,5 +74,5 @@ fn bench_resolver(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_resolver);
-criterion_main!(benches);
+criterion_group!(resolver, bench_resolver);
+criterion_main!(resolver);

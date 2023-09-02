@@ -1535,7 +1535,6 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_diagnostics",
- "oxc_index",
  "oxc_linter",
  "oxc_parser",
  "oxc_span",
@@ -1589,7 +1588,6 @@ dependencies = [
 name = "oxc_formatter"
 version = "0.1.1"
 dependencies = [
- "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1626,7 +1624,6 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
- "dashmap",
  "insta",
  "itertools 0.11.0",
  "lazy_static",
@@ -1776,7 +1773,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "static_assertions",
  "tracing",
  "tracing-subscriber",
  "vfs",
@@ -1836,7 +1832,6 @@ name = "oxc_type_synthesis"
 version = "0.0.0"
 dependencies = [
  "ezno-checker",
- "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1871,7 +1866,6 @@ name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
- "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_lower",

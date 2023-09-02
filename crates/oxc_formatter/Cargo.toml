@@ -19,4 +19,3 @@ oxc_syntax    = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
-miette     = { workspace = true, features = ["fancy-no-backtrace"] }
