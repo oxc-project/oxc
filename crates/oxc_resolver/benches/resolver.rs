@@ -18,7 +18,12 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use std::{env, path::PathBuf};
 
+#[cfg(codspeed)]
+use codspeed_criterion_compat::{criterion_group, criterion_main, BenchmarkId, Criterion};
+
+#[cfg(not(codspeed))]
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+
 use rayon::prelude::*;
 
 fn data() -> Vec<(PathBuf, &'static str)> {
@@ -62,7 +67,7 @@ fn resolver_benchmark(c: &mut Criterion) {
     let data = data();
 
     // Bench oxc_resolver with cache
-    c.bench_with_input(BenchmarkId::new("single-thread", "oxc-resolver"), &data, |b, data| {
+    c.bench_with_input(BenchmarkId::new("resolver", "single-thread"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             for (path, request) in data {
@@ -71,7 +76,7 @@ fn resolver_benchmark(c: &mut Criterion) {
         });
     });
 
-    c.bench_with_input(BenchmarkId::new("multi-thread", "oxc-resolver"), &data, |b, data| {
+    c.bench_with_input(BenchmarkId::new("resolver", "multi-thread"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             data.par_iter().for_each(|(path, request)| {
