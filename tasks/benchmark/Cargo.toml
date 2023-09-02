@@ -22,6 +22,10 @@ name    = "semantic"
 harness = false
 
 [[bench]]
+name    = "linter"
+harness = false
+
+[[bench]]
 name    = "minifier"
 harness = false
 
@@ -37,6 +41,7 @@ oxc_minifier              = { workspace = true }
 oxc_tasks_common          = { workspace = true }
 oxc_semantic              = { workspace = true }
 oxc_resolver              = { workspace = true }
+oxc_linter                = { workspace = true }
 rayon                     = { workspace = true }
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }
