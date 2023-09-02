@@ -258,7 +258,7 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc_allocator"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bumpalo",
  "serde",
@@ -266,7 +266,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags",
  "num-bigint",
@@ -279,7 +279,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "is-terminal",
  "miette",
@@ -295,13 +295,12 @@ version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
  "oxc_allocator",
- "oxc_ast",
  "oxc_parser",
 ]
 
 [[package]]
 name = "oxc_index"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "index_vec",
  "static_assertions",
@@ -309,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags",
  "num-bigint",
@@ -324,7 +323,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "compact_str",
  "miette",
@@ -332,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags",
  "oxc_index",
@@ -409,9 +408,23 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
 name = "serde"
-version = "1.0.183"
+version = "1.0.188"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32ac8da02677876d532745a130fc9d8e6edfa81a269b107c5b00829b91d8eb3c"
+checksum = "cf9e0fcba69a370eed61bcf2b728575f726b50b55cba78064753d708ddc7549e"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.188"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4eca7ac642d82aa35b60049a6eccb4be6be75e599bd2e9adb5f875a737654af2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "smawk"
@@ -438,9 +451,9 @@ dependencies = [
 
 [[package]]
 name = "textwrap"
-version = "0.16.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
+checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 dependencies = [
  "smawk",
  "unicode-linebreak",

@@ -10,19 +10,42 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[lib]
+bench = false
+
+[[bench]]
+name    = "parser"
+harness = false
+
+[[bench]]
+name    = "semantic"
+harness = false
+
+[[bench]]
+name    = "minifier"
+harness = false
+
+[[bench]]
+name    = "resolver"
+harness = false
+
+[dependencies]
+oxc_span                  = { workspace = true }
+oxc_allocator             = { workspace = true }
+oxc_parser                = { workspace = true }
+oxc_minifier              = { workspace = true }
+oxc_tasks_common          = { workspace = true }
+oxc_semantic              = { workspace = true }
+oxc_resolver              = { workspace = true }
+rayon                     = { workspace = true }
+criterion                 = { workspace = true }
+codspeed-criterion-compat = { workspace = true, optional = true }
+
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 mimalloc = { workspace = true }
 
-[dependencies]
-oxc_span         = { workspace = true }
-oxc_allocator    = { workspace = true }
-oxc_parser       = { workspace = true }
-oxc_minifier     = { workspace = true }
-oxc_tasks_common = { workspace = true }
-oxc_semantic     = { workspace = true }
-
-pico-args = { workspace = true }
-criterion = { workspace = true }
+[features]
+codspeed = ["codspeed-criterion-compat"]

@@ -1,13 +1,3 @@
-//! Resolver benchmark
-//!
-//! ```bash
-//! git switch main
-//! cargo bench --bench resolver -- --save-baseline main
-//! git switch -
-//! cargo bench --bench resolver -- --save-baseline pr
-//! critcmp
-//! ```
-
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -16,18 +6,15 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-#[cfg(codspeed)]
-use codspeed_criterion_compat::{criterion_group, criterion_main, BenchmarkId, Criterion};
-
-#[cfg(not(codspeed))]
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_tasks_common::project_root;
 
 use rayon::prelude::*;
 
 fn data() -> Vec<(PathBuf, &'static str)> {
-    let cwd = env::current_dir().unwrap().join("tests/enhanced_resolve/");
+    let cwd = project_root().join("crates/oxc_resolver/tests/enhanced_resolve/");
     vec![
         (cwd.clone(), "./"),
         (cwd.clone(), "./lib/index"),
@@ -63,11 +50,12 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
     })
 }
 
-fn resolver_benchmark(c: &mut Criterion) {
+fn bench_resolver(c: &mut Criterion) {
     let data = data();
 
-    // Bench oxc_resolver with cache
-    c.bench_with_input(BenchmarkId::new("resolver", "single-thread"), &data, |b, data| {
+    let mut group = c.benchmark_group("resolver");
+
+    group.bench_with_input(BenchmarkId::from_parameter("single-thread"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             for (path, request) in data {
@@ -76,7 +64,7 @@ fn resolver_benchmark(c: &mut Criterion) {
         });
     });
 
-    c.bench_with_input(BenchmarkId::new("resolver", "multi-thread"), &data, |b, data| {
+    group.bench_with_input(BenchmarkId::from_parameter("single-thread"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             data.par_iter().for_each(|(path, request)| {
@@ -86,5 +74,5 @@ fn resolver_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, resolver_benchmark);
+criterion_group!(benches, bench_resolver);
 criterion_main!(benches);

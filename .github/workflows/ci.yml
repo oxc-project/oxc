@@ -51,11 +51,11 @@ jobs:
       # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os == 'Windows'
-        run: cargo test run --no-run --workspace --all-targets --all-features
+        run: cargo test run --no-run --workspace --all-features
 
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os != 'Windows'
-        run: cargo nextest run --no-run --workspace --all-targets --all-features
+        run: cargo nextest run --no-run --workspace --all-features
 
   wasm:
     name: Check Wasm
