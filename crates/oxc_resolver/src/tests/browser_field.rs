@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/browserField.test.js>
 
-use crate::{ResolveError, ResolveOptions, Resolver};
+use crate::{AliasValue, ResolveError, ResolveOptions, Resolver};
 
 #[test]
 fn ignore() {
@@ -88,4 +88,21 @@ fn broken() {
         let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{path:?} {request}");
     }
+}
+
+#[test]
+fn crypto_js() {
+    let f = super::fixture();
+
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec![vec!["browser".into()]],
+        fallback: vec![(
+            "crypto".into(),
+            vec![AliasValue::Path(f.join("lib.js").to_string_lossy().to_string())],
+        )],
+        ..ResolveOptions::default()
+    });
+
+    let resolved_path = resolver.resolve(f.join("crypto-js"), "crypto").map(|r| r.full_path());
+    assert_eq!(resolved_path, Err(ResolveError::Ignored(f.join("crypto-js"))));
 }
