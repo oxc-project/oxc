@@ -14,7 +14,7 @@ use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("parser");
-    for file in TestFiles::new().files() {
+    for file in TestFiles::minimal().files() {
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
