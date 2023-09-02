@@ -25,6 +25,7 @@ fn alias() {
         ("/e/index", ""),
         ("/e/anotherDir/index", ""),
         ("/e/dir/file", ""),
+        ("/dashed-name", ""),
     ]);
 
     let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
@@ -53,6 +54,7 @@ fn alias() {
                 // not part of enhanced-resolve, added to make sure query in alias value works
                 ("alias_query".into(), vec![AliasValue::Path("a?query_after".into())]),
                 ("alias_fragment".into(), vec![AliasValue::Path("a#fragment_after".into())]),
+                ("dash".into(), vec![AliasValue::Ignore]),
             ],
             modules: vec!["/".into()],
             ..ResolveOptions::default()
@@ -94,6 +96,7 @@ fn alias() {
         // not part of enhanced-resolve, added to make sure query in alias value works
         ("should resolve query in alias value", "alias_query?query_before", "/a/index?query_after"),
         ("should resolve query in alias value", "alias_fragment#fragment_before", "/a/index#fragment_after"),
+        ("should resolve dashed name", "dashed-name", "/dashed-name"),
     ];
 
     for (comment, request, expected) in pass {
