@@ -12,6 +12,7 @@ pub mod ast {
     pub use oxc_ast::*;
 }
 
+#[cfg(feature = "minifier")]
 pub mod ast_lower {
     #[doc(inline)]
     pub use oxc_ast_lower::*;
@@ -22,11 +23,13 @@ pub mod diagnostics {
     pub use oxc_diagnostics::*;
 }
 
+#[cfg(feature = "formatter")]
 pub mod formatter {
     #[doc(inline)]
     pub use oxc_formatter::*;
 }
 
+#[cfg(feature = "minifier")]
 pub mod hir {
     #[doc(inline)]
     pub use oxc_hir::*;
@@ -37,6 +40,7 @@ pub mod index {
     pub use oxc_index::*;
 }
 
+#[cfg(feature = "minifier")]
 pub mod minifier {
     #[doc(inline)]
     pub use oxc_minifier::*;
@@ -47,6 +51,7 @@ pub mod parser {
     pub use oxc_parser::*;
 }
 
+#[cfg(feature = "semantic")]
 pub mod semantic {
     #[doc(inline)]
     pub use oxc_semantic::*;
@@ -60,14 +65,4 @@ pub mod span {
 pub mod syntax {
     #[doc(inline)]
     pub use oxc_syntax::*;
-}
-
-#[allow(unused_imports)]
-#[test]
-fn import_smoke_test() {
-    use crate::{
-        allocator::Allocator, ast::ast::Program as AstProgram, ast_lower::AstLower,
-        diagnostics::Error, formatter::Formatter, hir::hir::Program as HirProgram, index::IndexVec,
-        minifier::Minifier, parser::Parser, semantic::Semantic, span::Span, syntax::NumberBase,
-    };
 }
