@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDoneCallback,
-    correctness
+    nursery
 );
 
 impl Rule for NoDoneCallback {
