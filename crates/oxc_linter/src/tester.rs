@@ -1,13 +1,10 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde_json::Value;
 
-use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, Message};
+use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, RuleEnum};
 
 #[derive(Eq, PartialEq)]
 enum TestResult {
@@ -100,7 +97,10 @@ impl Tester {
         let name = self.rule_name.replace('-', "_");
         let path = PathBuf::from(name).with_extension("tsx");
         let allocator = Allocator::default();
-        let result = self.run_rules(&allocator, &path, source_text, config, is_fix);
+        let rule = self.find_rule().read_json(config);
+        let options = LintOptions::default().with_fix(is_fix);
+        let linter = Arc::new(Linter::from_options(options).with_rules(vec![rule]));
+        let result = LintService::run_source(&linter, &path, &allocator, source_text, false);
 
         if result.is_empty() {
             return TestResult::Passed;
@@ -124,21 +124,10 @@ impl Tester {
         TestResult::Failed
     }
 
-    fn run_rules<'a>(
-        &mut self,
-        allocator: &'a Allocator,
-        path: &Path,
-        source_text: &'a str,
-        config: Option<Value>,
-        is_fix: bool,
-    ) -> Vec<Message<'a>> {
-        let rule = RULES
+    fn find_rule(&self) -> &RuleEnum {
+        RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
-            .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
-        let rule = rule.read_json(config);
-        let options = LintOptions::default().with_fix(is_fix);
-        let linter = Arc::new(Linter::from_options(options).with_rules(vec![rule]));
-        LintService::run_source(&linter, path, allocator, source_text, false)
+            .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name))
     }
 }
