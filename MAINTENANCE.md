@@ -4,24 +4,24 @@ Manually edit all versions specified by `[workspace.dependencies]` in Cargo.toml
 also manually edit each of the crates version.
 
 ```bash
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_allocator/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_ast/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_ast_lower/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_diagnostics/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_formatter/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_hir/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_index/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_minifier/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_parser/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_semantic/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_span/Cargo.toml
-sed -i '' 's/0.1.0/0.1.1/' crates/oxc_syntax/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_allocator/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_ast/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_ast_lower/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_diagnostics/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_formatter/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_hir/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_index/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_minifier/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_parser/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_semantic/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_span/Cargo.toml
+sed -i '' 's/0.1.1/0.1.2/' crates/oxc_syntax/Cargo.toml
 
 cargo build
 git add .
 git commit
-jurst ready
+just ready
 ```
 
 Run the following commands, the order is important.
