@@ -68,6 +68,10 @@ pub struct LintOptions {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many)]
     pub filter: Vec<(AllowWarnDeny, String)>,
 
+    /// Use the experimental import plugin and detect ESM problems
+    #[bpaf(switch, hide_usage)]
+    pub import_plugin: bool,
+
     #[bpaf(external)]
     pub fix_options: FixOptions,
 

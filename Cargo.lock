@@ -1626,6 +1626,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
+ "dashmap",
  "insta",
  "itertools 0.11.0",
  "lazy_static",
@@ -1638,6 +1639,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_macros",
  "oxc_parser",
+ "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",

@@ -9,6 +9,7 @@ pub struct LintOptions {
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub fix: bool,
     pub timing: bool,
+    pub import_plugin: bool,
 }
 
 impl Default for LintOptions {
@@ -17,6 +18,7 @@ impl Default for LintOptions {
             filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
             fix: false,
             timing: false,
+            import_plugin: false,
         }
     }
 }
@@ -39,6 +41,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_timing(mut self, yes: bool) -> Self {
         self.timing = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_import_plugin(mut self, yes: bool) -> Self {
+        self.import_plugin = yes;
         self
     }
 }

@@ -52,6 +52,10 @@ impl ignore::ParallelVisitor for WalkCollector {
 impl Walk {
     /// # Panics
     pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
+        let paths = paths
+            .iter()
+            .map(|p| p.canonicalize().unwrap_or_else(|_| p.clone()))
+            .collect::<Vec<_>>();
         let mut inner = ignore::WalkBuilder::new(&paths[0]);
 
         if let Some(paths) = paths.get(1..) {

@@ -57,6 +57,7 @@ Available positional items:
     PATH                      Single file, single path or list of paths
 
 Available options:
+        --import-plugin       Use the experimental import plugin and detect ESM problems
     -h, --help                Prints help information
 
 
