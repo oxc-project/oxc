@@ -37,7 +37,9 @@ fn main() {
         alias: vec![("/asdf".into(), vec![AliasValue::Path("./test.js".into())])],
         ..ResolveOptions::default()
     };
-    let resolved_path = Resolver::new(options).resolve(path, &request);
 
-    println!("Result: {resolved_path:?}");
+    match Resolver::new(options).resolve(path, &request) {
+        Err(error) => println!("Error: {error}"),
+        Ok(resolution) => println!("Resolved: {}", resolution.full_path().to_string_lossy()),
+    }
 }
