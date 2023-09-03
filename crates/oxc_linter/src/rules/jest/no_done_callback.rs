@@ -96,7 +96,7 @@ impl Rule for NoDoneCallback {
                 }
 
                 let Some(Argument::Expression(expr)) =
-                    find_callback_arg(call_expr, is_jest_each, kind)
+                    find_argument_of_callback(call_expr, is_jest_each, kind)
                 else {
                     return;
                 };
@@ -155,7 +155,7 @@ fn get_span_of_first_parameter(params: &FormalParameters) -> Option<Span> {
     span
 }
 
-fn find_callback_arg<'a>(
+fn find_argument_of_callback<'a>(
     call_expr: &'a CallExpression<'a>,
     is_jest_each: bool,
     kind: JestFnKind,
