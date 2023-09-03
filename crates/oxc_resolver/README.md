@@ -3,10 +3,6 @@
 * [enhanced-resolve](https://github.com/webpack/enhanced-resolve) configurations
 * built-in [tsconfig-paths-webpack-plugin](https://github.com/dividab/tsconfig-paths-webpack-plugin)
 
-## TODO
-
-- [ ] use `thiserror` for better error messages
-
 #### Resolver Options
 
 | Done | Field            | Default                     | Description                                                                                                                                               |

@@ -527,9 +527,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     }
                 }
                 Restriction::RegExp(_) => {
-                    return Err(ResolveError::Unimplemented(
-                        "Restriction with regex is unimplemented.",
-                    ))
+                    return Err(ResolveError::Unimplemented("Restriction with regex"))
                 }
             }
         }
