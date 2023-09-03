@@ -26,7 +26,7 @@ pub use crate::{
     fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
-    service::{LintService, PathWork},
+    service::LintService,
 };
 pub(crate) use rules::{RuleEnum, RULES};
 

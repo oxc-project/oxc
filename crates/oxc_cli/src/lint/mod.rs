@@ -1,7 +1,7 @@
-use std::{io::BufWriter, sync::Arc};
+use std::io::BufWriter;
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_linter::{LintOptions, LintService, Linter, PathWork};
+use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, LintResult, Runner};
 
@@ -38,33 +38,23 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_fix(fix_options.fix)
             .with_timing(misc_options.timing);
-
-        let linter = Arc::new(Linter::from_options(lint_options));
+        let lint_service = LintService::new(lint_options);
 
         let diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
             .with_max_warnings(warning_options.max_warnings);
 
-        let lint_service = LintService::new(Arc::clone(&linter));
-        let tx_path = lint_service.tx_path.clone();
-        lint_service.run(&diagnostic_service.sender().clone());
-
         let paths = Walk::new(&paths, &ignore_options).iter().collect::<Vec<_>>();
         let number_of_files = paths.len();
 
-        rayon::spawn(move || {
-            for path in &paths {
-                tx_path.send(PathWork::Begin(path.clone())).unwrap();
-            }
-            tx_path.send(PathWork::Done).unwrap();
-        });
-
+        lint_service.run(paths, &diagnostic_service.sender().clone());
         diagnostic_service.run();
-        linter.print_execution_times_if_enable();
+
+        lint_service.linter().print_execution_times_if_enable();
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
-            number_of_rules: linter.number_of_rules(),
+            number_of_rules: lint_service.linter().number_of_rules(),
             number_of_files,
             number_of_warnings: diagnostic_service.warnings_count(),
             number_of_errors: diagnostic_service.errors_count(),
