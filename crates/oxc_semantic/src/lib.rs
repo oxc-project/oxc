@@ -177,7 +177,9 @@ mod tests {
 
         let top_level_a = semantic
             .scopes()
-            .iter_bindings().find(|(_scope_id, _symbol_id, name)| name == &Atom::from("Fn")).unwrap();
+            .iter_bindings()
+            .find(|(_scope_id, _symbol_id, name)| name == &Atom::from("Fn"))
+            .unwrap();
         assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }
 
