@@ -9,7 +9,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
@@ -41,7 +41,7 @@ pub struct Semantic<'a> {
 
     trivias: Rc<Trivias>,
 
-    module_record: ModuleRecord,
+    module_record: Arc<ModuleRecord>,
 
     jsdoc: JSDoc<'a>,
 

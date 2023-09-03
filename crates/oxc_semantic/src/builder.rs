@@ -1,6 +1,6 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
@@ -149,7 +149,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
-            module_record,
+            module_record: Arc::new(module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
         };
@@ -164,7 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
-            module_record: ModuleRecord::default(),
+            module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
         }
