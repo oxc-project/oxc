@@ -1513,6 +1513,7 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "oxc_allocator",
+ "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
  "oxc_resolver",
