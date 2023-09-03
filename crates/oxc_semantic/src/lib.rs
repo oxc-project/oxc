@@ -77,7 +77,7 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &ModuleRecord {
+    pub fn module_record(&self) -> &Arc<ModuleRecord> {
         &self.module_record
     }
 
