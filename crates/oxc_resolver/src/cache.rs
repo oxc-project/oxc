@@ -1,5 +1,6 @@
 use once_cell::sync::OnceCell as OnceLock;
 use std::{
+    borrow::Borrow,
     convert::AsRef,
     hash::{BuildHasherDefault, Hash, Hasher},
     ops::Deref,
@@ -7,7 +8,7 @@ use std::{
     sync::Arc,
 };
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use rustc_hash::FxHasher;
 
 use crate::{
@@ -17,24 +18,8 @@ use crate::{
 #[derive(Default)]
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
-    // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
-    cache: DashMap<u64, CachedPath, BuildHasherDefault<IdentityHasher>>,
-    tsconfigs: DashMap<u64, Arc<TsConfig>, BuildHasherDefault<IdentityHasher>>,
-}
-
-#[derive(Default)]
-struct IdentityHasher(u64);
-
-impl Hasher for IdentityHasher {
-    fn write(&mut self, _: &[u8]) {
-        unreachable!("Invalid use of IdentityHasher")
-    }
-    fn write_u64(&mut self, n: u64) {
-        self.0 = n;
-    }
-    fn finish(&self) -> u64 {
-        self.0
-    }
+    cache: DashSet<CachedPath, BuildHasherDefault<FxHasher>>,
+    tsconfigs: DashMap<PathBuf, Arc<TsConfig>, BuildHasherDefault<FxHasher>>,
 }
 
 impl<Fs: FileSystem> Cache<Fs> {
@@ -48,18 +33,13 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     pub fn value(&self, path: &Path) -> CachedPath {
-        let hash = {
-            let mut hasher = FxHasher::default();
-            path.hash(&mut hasher);
-            hasher.finish()
-        };
-        if let Some(cache_entry) = self.cache.get(&hash) {
-            return cache_entry.value().clone();
+        if let Some(cache_entry) = self.cache.get(path) {
+            return cache_entry.clone();
         }
         let parent = path.parent().map(|p| self.value(p));
         let data =
             CachedPath(Arc::new(CachedPathImpl::new(path.to_path_buf().into_boxed_path(), parent)));
-        self.cache.insert(hash, data.clone());
+        self.cache.insert(data.clone());
         data
     }
 
@@ -68,13 +48,8 @@ impl<Fs: FileSystem> Cache<Fs> {
         tsconfig_path: &Path,
         callback: impl FnOnce(&mut TsConfig) -> Result<(), ResolveError>, // callback for modifying tsconfig with `extends`
     ) -> Result<Arc<TsConfig>, ResolveError> {
-        let hash = {
-            let mut hasher = FxHasher::default();
-            tsconfig_path.hash(&mut hasher);
-            hasher.finish()
-        };
         self.tsconfigs
-            .entry(hash)
+            .entry(tsconfig_path.to_path_buf())
             .or_try_insert_with(|| {
                 let mut tsconfig_string = self
                     .fs
@@ -94,11 +69,30 @@ impl<Fs: FileSystem> Cache<Fs> {
 #[derive(Clone)]
 pub struct CachedPath(Arc<CachedPathImpl>);
 
+impl Hash for CachedPath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.path.hash(state);
+    }
+}
+
+impl PartialEq for CachedPath {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.path == other.0.path
+    }
+}
+impl Eq for CachedPath {}
+
 impl Deref for CachedPath {
     type Target = CachedPathImpl;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
+    }
+}
+
+impl Borrow<Path> for CachedPath {
+    fn borrow(&self) -> &Path {
+        &self.0.path
     }
 }
 
