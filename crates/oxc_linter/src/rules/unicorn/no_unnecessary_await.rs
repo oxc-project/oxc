@@ -38,12 +38,24 @@ impl Rule for NoUnnecessaryAwait {
             if !not_promise(&expr.argument) {
                 return;
             }
-            if
-            // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
-            matches!(expr.argument, Expression::FunctionExpression(_))
-                || matches!(expr.argument, Expression::ClassExpression(_))
-            // TODO: `+await +1` -> `++1`
-            {
+            if {
+                // Removing `await` may change them to a declaration, if there is no `id` will cause SyntaxError
+                matches!(expr.argument, Expression::FunctionExpression(_))
+                    || matches!(expr.argument, Expression::ClassExpression(_))
+            } || {
+                // `+await +1` -> `++1`
+                ctx.nodes().parent_node(node.id()).map_or(false, |parent| {
+                    if let (
+                        AstKind::UnaryExpression(parent_unary),
+                        Expression::UnaryExpression(inner_unary),
+                    ) = (parent.kind(), &expr.argument)
+                    {
+                        parent_unary.operator == inner_unary.operator
+                    } else {
+                        false
+                    }
+                })
+            } {
                 ctx.diagnostic(NoUnnecessaryAwaitDiagnostic(expr.span));
             } else {
                 ctx.diagnostic_with_fix(NoUnnecessaryAwaitDiagnostic(expr.span), || {
@@ -138,9 +150,12 @@ fn test() {
     let fix = vec![
         ("await []", "[]", None),
         ("await (a == b)", "(a == b)", None),
+        ("+await -1", "+ -1", None),
+        ("-await +1", "- +1", None),
         ("await function() {}", "await function() {}", None), // no autofix
         ("await class {}", "await class {}", None),           // no autofix
-                                                              // ("+await +1", "+await +1", None),                     // no autofix
+        ("+await +1", "+await +1", None),                     // no autofix
+        ("-await -1", "-await -1", None),                     // no autofix
     ];
 
     Tester::new(NoUnnecessaryAwait::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
