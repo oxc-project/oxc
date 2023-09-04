@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -109,7 +109,7 @@ impl Rule for NoDisabledTests {
                     } else {
                         Message::DisabledTestWithX.details()
                     };
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
                     return;
                 }
 
@@ -121,7 +121,7 @@ impl Rule for NoDisabledTests {
                     } else {
                         Message::DisabledTestWithSkip.details()
                     };
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
                 }
             } else if let Expression::Identifier(ident) = &call_expr.callee {
                 if ident.name.as_str() == "pending"
