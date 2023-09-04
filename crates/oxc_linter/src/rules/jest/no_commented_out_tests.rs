@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// // test.skip('foo', () => {});
     /// ```
     NoCommentedOutTests,
-    suspicious
+    restriction
 );
 
 impl Rule for NoCommentedOutTests {

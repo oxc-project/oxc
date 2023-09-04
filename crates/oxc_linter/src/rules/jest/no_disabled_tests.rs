@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDisabledTests,
-    correctness
+    restriction
 );
 
 #[derive(Debug, Error, Diagnostic)]

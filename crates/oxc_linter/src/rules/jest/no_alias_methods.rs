@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// expect(a).toThrowError();
     /// ```
     NoAliasMethods,
-    style
+    restriction
 );
 
 impl Rule for NoAliasMethods {
