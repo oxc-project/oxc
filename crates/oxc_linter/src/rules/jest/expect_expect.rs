@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// test('should assert something', () => {});
     /// ```
     ExpectExpect,
-    suspicious
+    restriction
 );
 
 impl Rule for ExpectExpect {

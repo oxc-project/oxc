@@ -49,7 +49,7 @@ declare_oxc_lint!(
     // });
     /// ```
     NoConditionalExpect,
-    correctness
+    restriction
 );
 
 impl Rule for NoConditionalExpect {
