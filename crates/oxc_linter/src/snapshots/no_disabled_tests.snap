@@ -5,140 +5,140 @@ expression: no_disabled_tests
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip('foo', function () {})
-   · ────────────────────────────────────
+   · ─────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip.each([1, 2, 3])('%s', (a, b) => {});
-   · ─────────────────────────────────────────────────
+   · ─────────────────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xdescribe.each([1, 2, 3])('%s', (a, b) => {});
-   · ─────────────────────────────────────────────
+   · ─────────────────────────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe[`skip`]('foo', function () {})
-   · ───────────────────────────────────────
+   · ────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe['skip']('foo', function () {})
-   · ───────────────────────────────────────
+   · ────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip('foo', function () {})
-   · ──────────────────────────────
+   · ───────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it['skip']('foo', function () {})
-   · ─────────────────────────────────
+   · ──────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip('foo', function () {})
-   · ────────────────────────────────
+   · ─────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip.each``('foo', function () {})
-   · ─────────────────────────────────────
+   · ──────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip.each``('foo', function () {})
-   · ───────────────────────────────────────
+   · ────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip.each([])('foo', function () {})
-   · ───────────────────────────────────────
+   · ────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip.each([])('foo', function () {})
-   · ─────────────────────────────────────────
+   · ──────────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test['skip']('foo', function () {})
-   · ───────────────────────────────────
+   · ────────────
    ╰────
   help: "Remove the appending `.skip`"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xdescribe('foo', function () {})
-   · ────────────────────────────────
+   · ─────────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit('foo', function () {})
-   · ──────────────────────────
+   · ───
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest('foo', function () {})
-   · ────────────────────────────
+   · ─────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each``('foo', function () {})
-   · ─────────────────────────────────
+   · ──────────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest.each``('foo', function () {})
-   · ───────────────────────────────────
+   · ────────────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each([])('foo', function () {})
-   · ───────────────────────────────────
+   · ────────────
    ╰────
   help: "Remove x prefix"
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest.each([])('foo', function () {})
-   · ─────────────────────────────────────
+   · ──────────────
    ╰────
   help: "Remove x prefix"
 
