@@ -1129,9 +1129,7 @@ impl<'a> Gen for BinaryExpression<'a> {
 impl Gen for BinaryOperator {
     fn gen(&self, p: &mut Formatter) {
         let operator = self.as_str().as_bytes();
-        if self.is_keyword() {
-            p.print_space();
-        }
+        p.print_space();
         p.print_str(operator);
         p.print_space();
     }
