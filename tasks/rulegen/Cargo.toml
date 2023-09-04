@@ -18,4 +18,4 @@ regex        = { workspace = true }
 lazy_static  = { workspace = true }
 ureq         = { workspace = true }
 
-handlebars = "4.3.7"
+handlebars = "4.4.0"
