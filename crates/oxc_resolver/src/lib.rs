@@ -32,11 +32,10 @@ mod tests;
 
 use std::{
     borrow::Cow,
-    cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
     fmt,
-    ops::Deref,
+    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -76,37 +75,43 @@ impl<Fs> fmt::Debug for ResolverGeneric<Fs> {
 type ResolveState = Result<Option<CachedPath>, ResolveError>;
 
 #[derive(Debug, Default, Clone)]
-struct ResolveContext(RefCell<ResolveContextImpl>);
+struct ResolveContext(ResolveContextImpl);
 
 impl Deref for ResolveContext {
-    type Target = RefCell<ResolveContextImpl>;
+    type Target = ResolveContextImpl;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
+impl DerefMut for ResolveContext {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl ResolveContext {
-    fn with_fully_specified(&self, yes: bool) {
-        self.borrow_mut().fully_specified = yes;
+    fn with_fully_specified(&mut self, yes: bool) {
+        self.fully_specified = yes;
     }
 
-    fn with_query_fragment(&self, query: Option<&str>, fragment: Option<&str>) {
+    fn with_query_fragment(&mut self, query: Option<&str>, fragment: Option<&str>) {
         if let Some(query) = query {
-            self.borrow_mut().query.replace(query.to_string());
+            self.query.replace(query.to_string());
         }
         if let Some(fragment) = fragment {
-            self.borrow_mut().fragment.replace(fragment.to_string());
+            self.fragment.replace(fragment.to_string());
         }
     }
 
-    fn with_resolving_alias(&self, alias: String) {
-        self.borrow_mut().resolving_alias = Some(alias);
+    fn with_resolving_alias(&mut self, alias: String) {
+        self.resolving_alias = Some(alias);
     }
 
-    fn test_for_infinite_recursion(&self) -> Result<(), ResolveError> {
-        self.borrow_mut().depth += 1;
+    fn test_for_infinite_recursion(&mut self) -> Result<(), ResolveError> {
+        self.depth += 1;
         // 64 should be more than enough for detecting infinite recursion.
-        if self.borrow().depth > 64 {
+        if self.depth > 64 {
             return Err(ResolveError::Recursion);
         }
         Ok(())
@@ -167,25 +172,30 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     #[tracing::instrument(name = "resolve", level = "DEBUG", ret, skip(self), fields(options = %self.options))]
     fn resolve_impl(&self, path: &Path, specifier: &str) -> Result<Resolution, ResolveError> {
-        let ctx = ResolveContext(RefCell::new(ResolveContextImpl {
+        let mut ctx = ResolveContext(ResolveContextImpl {
             fully_specified: self.options.fully_specified,
             ..ResolveContextImpl::default()
-        }));
+        });
         let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
         ctx.with_query_fragment(specifier.query, specifier.fragment);
         let cached_path = self.cache.value(path);
-        let cached_path = self.require(&cached_path, specifier.path(), &ctx).or_else(|err| {
-            if err.is_ignore() {
-                return Err(err);
-            }
-            // enhanced-resolve: try fallback
-            self.load_alias(&cached_path, Some(specifier.path()), &self.options.fallback, &ctx)
+        let cached_path =
+            self.require(&cached_path, specifier.path(), &mut ctx).or_else(|err| {
+                if err.is_ignore() {
+                    return Err(err);
+                }
+                // enhanced-resolve: try fallback
+                self.load_alias(
+                    &cached_path,
+                    Some(specifier.path()),
+                    &self.options.fallback,
+                    &mut ctx,
+                )
                 .and_then(|value| value.ok_or(err))
-        })?;
+            })?;
         let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
         // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
-        let mut ctx = ctx.borrow_mut();
         Ok(Resolution {
             path,
             query: ctx.query.take(),
@@ -204,7 +214,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         ctx.test_for_infinite_recursion()?;
 
@@ -214,7 +224,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         // tsconfig-paths
-        if let Some(path) = self.load_tsconfig_paths(specifier, &ResolveContext::default())? {
+        if let Some(path) = self.load_tsconfig_paths(specifier, &mut ResolveContext::default())? {
             return Ok(path);
         }
 
@@ -259,7 +269,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         debug_assert!(specifier.starts_with('/'));
         if !self.options.prefer_relative && self.options.prefer_absolute {
@@ -293,7 +303,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         let path = cached_path.path().normalize_with(specifier);
         let cached_path = self.cache.value(&path);
@@ -310,7 +320,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
         if let Some(path) = self.load_package_imports(cached_path, specifier, ctx)? {
@@ -323,7 +333,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         if self.options.prefer_relative {
             if let Ok(path) = self.require_relative(cached_path, specifier, ctx) {
@@ -345,15 +355,15 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Option<CachedPath> {
-        if ctx.borrow().fragment.is_some() && ctx.borrow().query.is_none() {
-            let fragment = ctx.borrow_mut().fragment.take().unwrap();
+        if ctx.fragment.is_some() && ctx.query.is_none() {
+            let fragment = ctx.fragment.take().unwrap();
             let path = format!("{specifier}{fragment}");
             if let Ok(path) = self.require(cached_path, &path, ctx) {
                 return Some(path);
             }
-            ctx.borrow_mut().fragment.replace(fragment);
+            ctx.fragment.replace(fragment);
         }
         None
     }
@@ -362,7 +372,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         let (_, subpath) = Self::parse_package_specifier(specifier);
         if subpath.is_empty() {
@@ -385,7 +395,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
@@ -404,7 +414,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.resolve_esm_match(&path, &package_json, ctx)
     }
 
-    fn load_as_file(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+    fn load_as_file(&self, cached_path: &CachedPath, ctx: &mut ResolveContext) -> ResolveState {
         // enhanced-resolve feature: extension_alias
         if let Some(path) = self.load_extension_alias(cached_path, ctx)? {
             return Ok(Some(path));
@@ -426,7 +436,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+    fn load_as_directory(
+        &self,
+        cached_path: &CachedPath,
+        ctx: &mut ResolveContext,
+    ) -> ResolveState {
         if !cached_path.is_dir(&self.cache.fs) {
             return Ok(None);
         }
@@ -462,7 +476,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         if self.options.resolve_to_context {
             return Ok(cached_path.is_dir(&self.cache.fs).then(|| cached_path.clone()));
@@ -482,9 +496,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         path: &Path,
         extensions: &[String],
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
-        if ctx.borrow().fully_specified {
+        if ctx.fully_specified {
             return Ok(None);
         }
         for extension in extensions {
@@ -534,7 +548,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(())
     }
 
-    fn load_index(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+    fn load_index(&self, cached_path: &CachedPath, ctx: &mut ResolveContext) -> ResolveState {
         for main_file in &self.options.main_files {
             let main_path = cached_path.path().join(main_file);
             let cached_path = self.cache.value(&main_path);
@@ -555,7 +569,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias_or_file(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+    fn load_alias_or_file(
+        &self,
+        cached_path: &CachedPath,
+        ctx: &mut ResolveContext,
+    ) -> ResolveState {
         if let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? {
             let path = cached_path.path();
             if let Some(path) = self.load_browser_field(path, None, &package_json, ctx)? {
@@ -576,7 +594,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         // 2. for each DIR in DIRS:
@@ -633,7 +651,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         subpath: &str,
         cached_path: &CachedPath,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
         //    return.
@@ -667,7 +685,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
@@ -718,7 +736,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         package_json: &PackageJson,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         if let Some(path) = self.load_browser_field(cached_path.path(), None, package_json, ctx)? {
             return Ok(Some(path));
@@ -742,12 +760,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         path: &Path,
         specifier: Option<&str>,
         package_json: &PackageJson,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         let Some(specifier) = package_json.resolve_browser_field(path, specifier)? else {
             return Ok(None);
         };
-        if ctx.borrow().resolving_alias.as_ref().is_some_and(|s| s == specifier) {
+        if ctx.resolving_alias.as_ref().is_some_and(|s| s == specifier) {
             return Ok(None);
         }
         let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
@@ -764,7 +782,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         cached_path: &CachedPath,
         specifier: Option<&str>,
         aliases: &Alias,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         let inner_request =
             specifier.map_or_else(|| cached_path.path().to_string_lossy(), Cow::Borrowed);
@@ -796,8 +814,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         }
 
                         // Then try path without query and fragment
-                        let old_query = ctx.borrow().query.clone();
-                        let old_fragment = ctx.borrow().fragment.clone();
+                        let old_query = ctx.query.clone();
+                        let old_fragment = ctx.fragment.clone();
                         ctx.with_query_fragment(specifier.query, specifier.fragment);
                         if let Some(path) = self.load_alias_value(
                             cached_path,
@@ -826,7 +844,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         alias_key: &str,
         alias_value: &str,
         request: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         if request != alias_value
             && !request.strip_prefix(alias_value).is_some_and(|prefix| prefix.starts_with('/'))
@@ -850,7 +868,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Errors
     ///
     /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
-    fn load_extension_alias(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+    fn load_extension_alias(
+        &self,
+        cached_path: &CachedPath,
+        ctx: &mut ResolveContext,
+    ) -> ResolveState {
         let Some(path_extension) = cached_path.path().extension() else { return Ok(None) };
         let Some((_, extensions)) = self
             .options
@@ -868,7 +890,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::ExtensionAlias)
     }
 
-    fn load_tsconfig_paths(&self, specifier: &str, ctx: &ResolveContext) -> ResolveState {
+    fn load_tsconfig_paths(&self, specifier: &str, ctx: &mut ResolveContext) -> ResolveState {
         let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
         let tsconfig_path = self.cache.value(tsconfig_path);
         let tsconfig = self.load_tsconfig(&tsconfig_path)?;
@@ -898,7 +920,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 let extended_tsconfig_path = resolver.require(
                     cached_path.parent().unwrap(),
                     tsconfig_extend_specifier,
-                    &ResolveContext::default(),
+                    &mut ResolveContext::default(),
                 )?;
                 let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
                 extended_tsconfigs.push(extended_tsconfig);
@@ -915,7 +937,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         let (name, subpath) = Self::parse_package_specifier(specifier);
         // 11. While parentURL is not the file system root,
@@ -985,7 +1007,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         subpath: &str,
         exports: &ExportsField,
         conditions: &[String],
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // 1. If exports is an Object with both a key starting with "." and a key not starting with ".", throw an Invalid Package Configuration error.
         if let ExportsField::Map(map) = exports {
@@ -1007,9 +1029,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // enhanced-resolve appends query and fragment when resolving exports field
             // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/lib/ExportsFieldPlugin.js#L57-L62
             // This is only need when querying the main export, otherwise ctx is passed through.
-            if ctx.borrow().query.is_some() || ctx.borrow().fragment.is_some() {
-                let query = ctx.borrow().query.clone().unwrap_or_default();
-                let fragment = ctx.borrow().fragment.clone().unwrap_or_default();
+            if ctx.query.is_some() || ctx.fragment.is_some() {
+                let query = ctx.query.clone().unwrap_or_default();
+                let fragment = ctx.fragment.clone().unwrap_or_default();
                 return Err(ResolveError::PackagePathNotExported(format!(
                     "./{subpath}{query}{fragment}"
                 )));
@@ -1082,7 +1104,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         &self,
         cached_path: &CachedPath,
         specifier: &str,
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         // 1. Assert: specifier begins with "#".
         debug_assert!(specifier.starts_with('#'), "{specifier}");
@@ -1124,7 +1146,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         package_url: &Path,
         is_imports: bool,
         conditions: &[String],
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         // enhanced-resolve behaves differently, it throws
         // Error: CachedPath to directories is not possible with the exports field (specifier was ./dist/)
@@ -1211,7 +1233,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         pattern_match: Option<&str>,
         is_imports: bool,
         conditions: &[String],
-        ctx: &ResolveContext,
+        ctx: &mut ResolveContext,
     ) -> ResolveState {
         fn normalize_string_target<'a>(
             target_key: &'a str,

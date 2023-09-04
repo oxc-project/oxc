@@ -1281,7 +1281,7 @@ fn test_cases() {
                 Path::new(""),
                 true,
                 &case.condition_names.iter().map(ToString::to_string).collect::<Vec<_>>(),
-                &ResolveContext::default(),
+                &mut ResolveContext::default(),
             )
             .map(|p| p.map(|p| p.to_path_buf()));
         if let Some(expect) = case.expect {
