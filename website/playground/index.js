@@ -20,6 +20,7 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
 import { buildSchema } from "graphql";
+import { LZMA } from 'lzma/src/lzma_worker-min.js';
 
 import initWasm, {
   Oxc,
@@ -654,7 +655,7 @@ query {
   }
 }
 
-// Code copied from Rome
+// Code partly copied from Rome
 // <https://github.com/rome/tools/blob/665bb9d810b4ebf4ea82b72df20ad79b8fa3a3d0/website/src/playground/utils.ts#L141-L181>
 class URLParams {
   // Safari/Webkit/JSC/whatever only allows setting a URL 50 times within 30 seconds
@@ -685,47 +686,22 @@ class URLParams {
     { trailing: true }
   );
 
-  // See https://developer.mozilla.org/en-US/docs/Web/API/btoa#unicode_strings
   encodeCode(code) {
-    return btoa(this.toBinary(code));
+    const lzma = LZMA.compress(code);
+    return this.LZMABufferToBase64(lzma);
   }
 
   decodeCode(encoded) {
-    try {
-      return this.fromBinary(atob(encoded));
-    } catch {
-      return encoded;
-    }
+    const compressed = this.base64ToLZMABuffer(encoded);
+    return LZMA.decompress(compressed);
   }
 
-  // convert a Unicode string to a string in which
-  // each 16-bit unit occupies only one byte
-  toBinary(input) {
-    const codeUnits = new Uint16Array(input.length);
-    for (let i = 0; i < codeUnits.length; i++) {
-      codeUnits[i] = input.charCodeAt(i);
-    }
-
-    const charCodes = new Uint8Array(codeUnits.buffer);
-    let result = "";
-    for (let i = 0; i < charCodes.byteLength; i++) {
-      result += String.fromCharCode(charCodes[i]);
-    }
-    return result;
-  }
-
-  fromBinary(binary) {
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < bytes.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    const charCodes = new Uint16Array(bytes.buffer);
-    let result = "";
-    for (let i = 0; i < charCodes.length; i++) {
-      result += String.fromCharCode(charCodes[i]);
-    }
-    return result;
-  }
+  // https://developer.mozilla.org/en-US/docs/Glossary/Base64#the_unicode_problem
+  // btoa is safe here, because we manually construct a string of code points
+  // which are guaranteed to be one-byte chars
+  // the 128 offset is to compensate for LZMA's -128 to 127 range
+  LZMABufferToBase64 = (buffer) => btoa(Array.from(buffer, (x) => String.fromCodePoint(x + 128)).join(""));
+  base64ToLZMABuffer = (base64) => Uint8Array.from(atob(base64), (m) => m.codePointAt(0) - 128);
 }
 
 async function main() {
