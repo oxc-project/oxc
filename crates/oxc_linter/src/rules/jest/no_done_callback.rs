@@ -181,7 +181,7 @@ enum Message {
 }
 
 impl Message {
-    pub fn details(&self) -> (&'static str, &'static str) {
+    fn details(&self) -> (&'static str, &'static str) {
         match self {
             Self::NoDoneCallback => (
                 "Function parameter(s) use the `done` argument",
