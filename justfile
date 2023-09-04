@@ -1,7 +1,7 @@
 #!/usr/bin/env -S just --justfile
 
 _default:
-  just --list -u
+  @just --list -u
 
 alias r := ready
 alias c := coverage
@@ -34,6 +34,10 @@ update:
 # use .ignore file getting the ignore list
 watch command:
   cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
+
+# Run the example in `parser`, `formatter`, `linter`
+example tool:
+  just watch 'run -p oxc_{{tool}} --example {{tool}}'
 
 # Format all files
 fmt:
