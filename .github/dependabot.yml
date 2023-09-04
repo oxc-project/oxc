@@ -18,6 +18,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "textwrap"
+      - dependency-name: "ezno-checker"
 
   # Enable when we have more resources
   # - package-ecosystem: "gitsubmodule"
