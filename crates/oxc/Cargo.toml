@@ -28,5 +28,5 @@ oxc_minifier    = { workspace = true, optional = true }
 
 [features]
 formatter = ["oxc_formatter"]
-semantic = ["oxc_semantic"]
-minifier = ["oxc_hir", "oxc_ast_lower", "oxc_minifier"]
+semantic  = ["oxc_semantic"]
+minifier  = ["oxc_hir", "oxc_ast_lower", "oxc_minifier"]

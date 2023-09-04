@@ -1,16 +1,16 @@
 [package]
 name                   = "oxc_resolver"
-version                = "0.0.0"
-publish                = false
+version                = "0.1.0"
+readme                 = "README.md"
 authors.workspace      = true
-description.workspace  = true
 edition.workspace      = true
 homepage.workspace     = true
-keywords.workspace     = true
 license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
-categories.workspace   = true
+description            = "ESM / CJS module resolution"
+keywords               = ["node", "resolve", "cjs", "esm", "enhanced-resolve"]
+categories             = ["development-tools"]
 
 [lib]
 doctest = false
@@ -24,9 +24,8 @@ serde_json = { workspace = true, features = [
 ] } # preserve_order: package_json.exports requires order such as `["require", "import", "default"]`
 rustc-hash = { workspace = true }
 indexmap = { workspace = true, features = ["serde"] } # serde for Deserialize from package.json
-dunce = "1.0.4"
-# Use `std::sync::OnceLock::get_or_try_init` when it is stable.
-once_cell = "1.18.0"
+dunce = "1.0.4" # Normalize Windows paths to the most compatible format, avoiding UNC where possible
+once_cell = "1.18.0" # Use `std::sync::OnceLock::get_or_try_init` when it is stable.
 thiserror = { workspace = true }
 
 [dev-dependencies]
