@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDoneCallback,
-    nursery
+    // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
+    restriction 
 );
 
 impl Rule for NoDoneCallback {
