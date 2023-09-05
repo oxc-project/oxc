@@ -44,7 +44,7 @@ impl Runner for LintRunner {
             .with_quiet(warning_options.quiet)
             .with_max_warnings(warning_options.max_warnings);
 
-        let paths = Walk::new(&paths, &ignore_options).iter().collect::<Vec<_>>();
+        let paths = Walk::new(&paths, &ignore_options).paths();
         let number_of_files = paths.len();
 
         lint_service.run(paths, &diagnostic_service.sender().clone());
