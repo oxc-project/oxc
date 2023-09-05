@@ -70,7 +70,7 @@ declare_oxc_lint!(
     /// ```
     NoDoneCallback,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
-    restriction 
+    restriction
 );
 
 impl Rule for NoDoneCallback {
