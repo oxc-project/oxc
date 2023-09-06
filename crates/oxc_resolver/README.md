@@ -2,6 +2,9 @@
 
 * [enhanced-resolve](https://github.com/webpack/enhanced-resolve) configurations
 * built-in [tsconfig-paths-webpack-plugin](https://github.com/dividab/tsconfig-paths-webpack-plugin)
+  * support extending tsconfig defined in `tsconfig.extends`
+  * support paths alias defined in `tsconfig.compilerOptions.paths`
+  * support project references defined `tsconfig.references`
 
 #### Resolver Options
 
