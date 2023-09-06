@@ -12,7 +12,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Uninvoked array callback")]
+#[error("deepscan(uninvoked-array-callback): Uninvoked array callback")]
 #[diagnostic(
     severity(warning),
     help("consider filling the array with `undefined` values using `Array.prototype.fill()`")

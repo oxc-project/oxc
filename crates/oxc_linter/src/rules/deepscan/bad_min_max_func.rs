@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Math.min and Math.max combination leads to constant result")]
+#[error("deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result")]
 #[diagnostic(
     severity(warning),
     help("This evaluates to {0:?} because of the incorrect `Math.min`/`Math.max` combination")

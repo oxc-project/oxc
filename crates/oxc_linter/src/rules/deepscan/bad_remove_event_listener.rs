@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("removeEventListener() should be called with a correct listener")]
+#[error("deepscan(bad-remove-event-listener): removeEventListener() should be called with a correct listener")]
 #[diagnostic(
     severity(warning),
     help(

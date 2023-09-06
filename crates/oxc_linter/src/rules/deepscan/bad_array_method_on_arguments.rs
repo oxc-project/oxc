@@ -12,7 +12,7 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Bad array method on arguments")]
+#[error("deepscan(bad-array-method-on-arguments): Bad array method on arguments")]
 #[diagnostic(
     severity(warning),
     help(

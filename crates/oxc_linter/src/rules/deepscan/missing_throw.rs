@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Missing throw")]
+#[error("deepscan(missing-throw): Missing throw")]
 #[diagnostic(
     severity(warning),
     help("The `throw` keyword seems to be missing in front of this 'new' expression")

@@ -2,56 +2,56 @@
 source: crates/oxc_linter/src/tester.rs
 expression: bad_min_max_func
 ---
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(Math.max(100, x), 0)
    · ─────────────────────────────
    ╰────
   help: This evaluates to 0.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.max(255.255, Math.min(0, x))
    · ─────────────────────────────────
    ╰────
   help: This evaluates to 255.255 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.max(Math.min(0, x), 255)
    · ─────────────────────────────
    ╰────
   help: This evaluates to 255.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.max(1000, Math.min(0, z))
    · ──────────────────────────────
    ╰────
   help: This evaluates to 1000.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math["min"](0, Math.max(100, x))
    · ────────────────────────────────
    ╰────
   help: This evaluates to 0.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(Math.max(1000, x), 100, 3)
    · ───────────────────────────────────
    ╰────
   help: This evaluates to 3.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(0, 5, Math['max'](x, 100, 30))
    · ───────────────────────────────────────
    ╰────
   help: This evaluates to 0.0 because of the incorrect `Math.min`/`Math.max` combination
 
-  ⚠ Math.min and Math.max combination leads to constant result
+  ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(Math.max(1e3, x), 1.55e2)
    · ──────────────────────────────────
