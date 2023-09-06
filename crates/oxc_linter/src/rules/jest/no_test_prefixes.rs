@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// xdescribe('foo'); // invalid
     /// ```
     NoTestPrefixes,
-    correctness
+    restriction
 );
 
 fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {

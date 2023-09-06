@@ -1,0 +1,7 @@
+{
+  "name": "crypto-js",
+  "main": "index.js",
+  "browser": {
+    "crypto": false
+  }
+}

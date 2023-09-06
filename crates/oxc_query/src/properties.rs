@@ -865,11 +865,11 @@ pub(super) fn resolve_unary_expression_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "operator" => resolve_property_with(contexts, |v| {
-            v.as_logical_expression()
+            v.as_unary_expression()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a logicalexpression vertex, instead have: {v:#?}")
+                    panic!("expected to have a unaryexpression vertex, instead have: {v:#?}")
                 })
-                .logical_expression
+                .unary_expression
                 .operator
                 .as_str()
                 .into()
@@ -879,7 +879,7 @@ pub(super) fn resolve_unary_expression_property<'a, 'b: 'a>(
         }),
         _ => {
             unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'LogicalExpression'"
+                "attempted to read unexpected property '{property_name}' on type 'UnaryExpression'"
             )
         }
     }

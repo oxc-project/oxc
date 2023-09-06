@@ -220,15 +220,11 @@ impl PackageJson {
     ) -> Result<Option<&str>, ResolveError> {
         let request = request.map_or(path, |r| Path::new(r));
         for browser in &self.browser_fields {
-            match browser {
-                BrowserField::Map(field_data) => {
-                    // look up by full path if request is empty
-                    if let Some(value) = field_data.get(request) {
-                        return Self::alias_value(path, value);
-                    }
-                }
-                BrowserField::String(value) => {
-                    return Ok(Some(value.as_str()));
+            // Only object is valid, all other types are invalid
+            // https://github.com/webpack/enhanced-resolve/blob/3a28f47788de794d9da4d1702a3a583d8422cd48/lib/AliasFieldPlugin.js#L44-L52
+            if let BrowserField::Map(field_data) = browser {
+                if let Some(value) = field_data.get(request) {
+                    return Self::alias_value(path, value);
                 }
             }
         }

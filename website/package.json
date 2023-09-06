@@ -24,7 +24,8 @@
     "cm6-graphql": "^0.0.9",
     "codemirror": "^6.0.1",
     "graphql": "^16.7.1",
-    "lodash.throttle": "^4.1.1"
+    "lodash.throttle": "^4.1.1",
+    "lzma": "^2.3.2"
   },
   "devDependencies": {
     "@oxc/wasm-web": "../npm/wasm-web",

@@ -1,104 +1,47 @@
-# Note: macos-latest is too unstable to be useful for benchmark, the variance is always huge.
-
 name: Benchmark
 
 on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - 'npm/**'
-      - 'website/**'
-      - 'crates/oxc/**'
-      - 'crates/oxc_cli/**'
-      - 'crates/oxc_formatter/**'
-      - 'crates/oxc_linter/**'
-      - 'crates/oxc_napi/**'
-      - 'crates/oxc_query/**'
-      - 'crates/oxc_resolver/**'
-      - 'crates/oxc_type_synthesis/**'
-      - 'crates/oxc_wasm/**'
+    paths:
+      - '**/*.rs'
+      - 'Cargo.lock'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.rs'
+      - 'Cargo.lock'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
-  benchmark_ubuntu:
-    name: Benchmark Linux
-    uses: ./.github/workflows/reusable_benchmark.yml
-    with:
-      os: ubuntu-latest
-
-  benchmark_windows:
-    name: Benchmark Windows
-    uses: ./.github/workflows/reusable_benchmark.yml
-    with:
-      os: windows-latest
-
-  compare:
+  benchmark:
+    name: Benchmark
     runs-on: ubuntu-latest
-    name: Compare Benchmarks
-    needs: [benchmark_ubuntu, benchmark_windows]
     steps:
-      - name: Install critcmp
+      - name: Checkout Branch
+        uses: actions/checkout@v3
+
+      - name: Install codspeed
         uses: taiki-e/install-action@v2
         with:
-          tool: critcmp
+          tool: cargo-codspeed
 
-      - name: Linux | Download benchmark results
-        uses: actions/download-artifact@v3
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
         with:
-          name: benchmark-results-ubuntu-latest
-          path: ./target/criterion
+          shared-key: benchmark
+          save-cache: ${{ github.ref_name == 'main' }}
 
-      - name: Linux | Compare benchmark results
-        shell: bash
-        run: |
-          echo "## Benchmark Results" >> summary.md
-          echo "### Linux" >> summary.md
-          echo "\`\`\`" >> summary.md
-          critcmp main pr >> summary.md
-          echo "\`\`\`" >> summary.md
-          echo "" >> summary.md
+      - name: Build Benchmark
+        run: cargo codspeed build --features codspeed -p oxc_benchmark
 
-      - name: Linux | Cleanup benchmark results
-        run: rm -rf ./target/criterion
-
-      - name: Windows | Download PR benchmark results
-        uses: actions/download-artifact@v3
+      - name: Run benchmark
+        uses: CodSpeedHQ/action@v1
         with:
-          name: benchmark-results-windows-latest
-          path: ./target/criterion
-
-      - name: Windows | Compare benchmark results
-        shell: bash
-        run: |
-          echo "### Windows" >> summary.md
-          echo "\`\`\`" >> summary.md
-          critcmp main pr >> summary.md
-          echo "\`\`\`" >> summary.md
-          echo "" >> summary.md
-          cat summary.md > $GITHUB_STEP_SUMMARY
-
-      - name: Find Comment
-        # Check if the event is not triggered by a fork
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: peter-evans/find-comment@v2
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Benchmark Results
-
-      - name: Create or update comment
-        # Check if the event is not triggered by a fork
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          body-file: summary.md
+          run: cargo codspeed run
+          token: ${{ secrets.CODSPEED_TOKEN }}

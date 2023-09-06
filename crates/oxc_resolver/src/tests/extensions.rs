@@ -50,7 +50,7 @@ fn default_enforce_extension() {
     })
     .resolve(&f, "./foo");
 
-    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo"))));
+    assert_eq!(resolved.map(Resolution::into_path_buf), Ok(f.join("foo.ts")));
     // TODO: need to match missingDependencies returned from the resolve function
 }
 

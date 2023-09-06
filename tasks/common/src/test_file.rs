@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr};
+use std::{fmt, fs::read_to_string, str::FromStr};
 
 use crate::project_root;
 use crate::request::agent;
@@ -14,20 +14,31 @@ impl Default for TestFiles {
 }
 
 impl TestFiles {
-    /// # Panics
-    /// Fails to read file
     pub fn new() -> Self {
-        let root = project_root();
-        let files = std::fs::read_to_string(root.join("./tasks/libs.txt"))
-            .unwrap()
-            .lines()
-            .map(|file| TestFile::new(file).unwrap())
-            .collect::<Vec<_>>();
+        let files = Self::get_files().into_iter().map(|file| TestFile::new(&file)).collect();
+        Self { files }
+    }
+
+    pub fn minimal() -> Self {
+        let files = Self::get_files()
+            .into_iter()
+            .filter(|name| ["react", "vue", "antd", "typescript"].iter().any(|f| name.contains(f)))
+            .map(|file| TestFile::new(&file))
+            .collect();
         Self { files }
     }
 
     pub fn files(&self) -> &Vec<TestFile> {
         &self.files
+    }
+
+    fn get_files() -> Vec<String> {
+        let root = project_root();
+        read_to_string(root.join("./tasks/libs.txt"))
+            .unwrap()
+            .lines()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
     }
 }
 
@@ -39,9 +50,10 @@ pub struct TestFile {
 
 impl TestFile {
     /// # Errors
-    pub fn new(url: &str) -> Result<Self, String> {
-        let (file_name, source_text) = Self::get_source_text(url)?;
-        Ok(Self { url: url.to_string(), file_name, source_text })
+    /// # Panics
+    pub fn new(url: &str) -> Self {
+        let (file_name, source_text) = Self::get_source_text(url).unwrap();
+        Self { url: url.to_string(), file_name, source_text }
     }
 
     /// # Errors

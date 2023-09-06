@@ -25,7 +25,6 @@ mimalloc = { workspace = true }
 [dependencies]
 oxc_allocator      = { workspace = true }
 oxc_diagnostics    = { workspace = true }
-oxc_index          = { workspace = true }
 oxc_linter         = { workspace = true }
 oxc_parser         = { workspace = true }
 oxc_span           = { workspace = true }
@@ -35,7 +34,7 @@ oxc_type_synthesis = { workspace = true }
 codespan-reporting = "0.11.1"
 
 ignore = { workspace = true, features = ["simd-accel"] }
-miette = { workspace = true, features = ["fancy-no-backtrace"] }
+miette = { workspace = true }
 rayon  = { workspace = true }
 bpaf   = { workspace = true, features = ["derive", "autocomplete", "bright-color"] }
 

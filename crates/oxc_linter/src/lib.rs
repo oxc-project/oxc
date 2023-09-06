@@ -17,16 +17,16 @@ mod service;
 
 use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
-pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
     fixer::Fix,
+    fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
-    service::{LintService, PathWork},
+    service::LintService,
 };
 pub(crate) use rules::{RuleEnum, RULES};
 

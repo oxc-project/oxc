@@ -9,7 +9,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Some tests seem to be commented")]
+#[error("eslint(jest/no-commented-out-tests): Some tests seem to be commented")]
 #[diagnostic(severity(warning), help("Remove or uncomment this comment"))]
 struct NoCommentedOutTestsDiagnostic(#[label] pub Span);
 
@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// // test.skip('foo', () => {});
     /// ```
     NoCommentedOutTests,
-    suspicious
+    restriction
 );
 
 impl Rule for NoCommentedOutTests {

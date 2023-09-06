@@ -265,9 +265,12 @@ impl IsolatedLintHandler {
 
         let mut lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
         {
-            let plugin = plugin.read().unwrap();
-            if let Some(plugin) = &*plugin {
-                plugin.lint_file(&mut lint_ctx, make_relative_path_parts(&path.into())).unwrap();
+            if let Ok(guard) = plugin.read() {
+                if let Some(plugin) = &*guard {
+                    plugin
+                        .lint_file(&mut lint_ctx, make_relative_path_parts(&path.into()))
+                        .unwrap();
+                }
             }
         }
 
@@ -349,11 +352,13 @@ impl ServerLinter {
     }
 
     pub fn make_plugin(&self, root_uri: &Url) {
-        let mut plugin = self.plugin.write().unwrap();
         let mut path = root_uri.to_file_path().unwrap();
         path.push(".oxc/");
         path.push("plugins");
-        plugin.replace(LinterPlugin::new(&path).unwrap());
+        if path.exists() {
+            let mut plugin = self.plugin.write().unwrap();
+            plugin.replace(LinterPlugin::new(&path).unwrap());
+        }
     }
 
     pub fn run_full(&self, root_uri: &Url) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {

@@ -1,6 +1,6 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
@@ -164,7 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
-            module_record,
+            module_record: Arc::new(module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
             redeclare_variables: self.redeclare_variables.variables,
@@ -180,7 +180,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
-            module_record: ModuleRecord::default(),
+            module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
             redeclare_variables: self.redeclare_variables.variables,
@@ -269,8 +269,7 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let includes = includes | self.current_symbol_flags;
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
         self.scope.add_binding(scope_id, name.clone(), symbol_id);
         symbol_id

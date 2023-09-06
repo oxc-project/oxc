@@ -9,7 +9,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
@@ -42,7 +42,7 @@ pub struct Semantic<'a> {
 
     trivias: Rc<Trivias>,
 
-    module_record: ModuleRecord,
+    module_record: Arc<ModuleRecord>,
 
     jsdoc: JSDoc<'a>,
 
@@ -80,7 +80,7 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &ModuleRecord {
+    pub fn module_record(&self) -> &Arc<ModuleRecord> {
         &self.module_record
     }
 
@@ -174,6 +174,20 @@ mod tests {
 
         let references = semantic.symbol_references(top_level_a);
         assert_eq!(references.count(), 1);
+    }
+
+    #[test]
+    fn test_top_level_symbols() {
+        let source = "function Fn() {}";
+        let allocator = Allocator::default();
+        let semantic = get_semantic(&allocator, source, SourceType::default());
+
+        let top_level_a = semantic
+            .scopes()
+            .iter_bindings()
+            .find(|(_scope_id, _symbol_id, name)| name == &Atom::from("Fn"))
+            .unwrap();
+        assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }
 
     #[test]

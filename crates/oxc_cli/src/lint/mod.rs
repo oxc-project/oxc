@@ -1,13 +1,7 @@
-use std::{
-    io::BufWriter,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
-};
+use std::io::BufWriter;
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_linter::{LintOptions, LintService, Linter, PathWork};
+use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, LintResult, Runner};
 
@@ -44,40 +38,24 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_fix(fix_options.fix)
             .with_timing(misc_options.timing);
-
-        let linter = Arc::new(Linter::from_options(lint_options));
+        let lint_service = LintService::new(lint_options);
 
         let diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
             .with_max_warnings(warning_options.max_warnings);
 
-        let number_of_files = Arc::new(AtomicUsize::new(0));
+        let paths = Walk::new(&paths, &ignore_options).paths();
+        let number_of_files = paths.len();
 
-        let lint_service = LintService::new(Arc::clone(&linter));
-        let tx_path = lint_service.tx_path.clone();
-        lint_service.run(&diagnostic_service.sender().clone());
-
-        rayon::spawn({
-            let number_of_files = Arc::clone(&number_of_files);
-            let walk = Walk::new(&paths, &ignore_options);
-            move || {
-                let mut count = 0;
-                for path in walk.iter() {
-                    count += 1;
-                    tx_path.send(PathWork::Begin(path)).unwrap();
-                }
-                tx_path.send(PathWork::Done).unwrap();
-                number_of_files.store(count, Ordering::SeqCst);
-            }
-        });
-
+        lint_service.run(paths, &diagnostic_service.sender().clone());
         diagnostic_service.run();
-        linter.print_execution_times_if_enable();
+
+        lint_service.linter().print_execution_times_if_enable();
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
-            number_of_rules: linter.number_of_rules(),
-            number_of_files: number_of_files.load(Ordering::SeqCst),
+            number_of_rules: lint_service.linter().number_of_rules(),
+            number_of_files,
             number_of_warnings: diagnostic_service.warnings_count(),
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
@@ -142,5 +120,12 @@ mod test {
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn timing() {
+        let args = &["--timing", "fixtures"];
+        // make sure this doesn't crash
+        test(args);
     }
 }

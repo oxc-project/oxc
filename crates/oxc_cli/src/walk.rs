@@ -1,18 +1,58 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc,
+};
 
-use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
+use ignore::{overrides::OverrideBuilder, DirEntry};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::IgnoreOptions;
 
 pub struct Walk {
-    inner: ignore::Walk,
+    inner: ignore::WalkParallel,
+}
+
+struct WalkBuilder {
+    sender: mpsc::Sender<Vec<Box<Path>>>,
+}
+
+impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
+    fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
+        Box::new(WalkCollector { paths: vec![], sender: self.sender.clone() })
+    }
+}
+
+struct WalkCollector {
+    paths: Vec<Box<Path>>,
+    sender: mpsc::Sender<Vec<Box<Path>>>,
+}
+
+impl Drop for WalkCollector {
+    fn drop(&mut self) {
+        let paths = std::mem::take(&mut self.paths);
+        self.sender.send(paths).unwrap();
+    }
+}
+
+impl ignore::ParallelVisitor for WalkCollector {
+    fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
+        match entry {
+            Ok(entry) => {
+                if entry.file_type().is_some_and(|ft| !ft.is_dir()) && Walk::is_wanted_entry(&entry)
+                {
+                    self.paths.push(entry.path().to_path_buf().into_boxed_path());
+                }
+                ignore::WalkState::Continue
+            }
+            Err(_err) => ignore::WalkState::Skip,
+        }
+    }
 }
 
 impl Walk {
     /// # Panics
     pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
-        let mut inner = WalkBuilder::new(&paths[0]);
+        let mut inner = ignore::WalkBuilder::new(&paths[0]);
 
         if let Some(paths) = paths.get(1..) {
             for path in paths {
@@ -38,15 +78,16 @@ impl Walk {
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
         // * it is super rare to have symlinked source code
-        let inner = inner.ignore(false).git_global(false).follow_links(false).build();
+        let inner = inner.ignore(false).git_global(false).follow_links(false).build_parallel();
         Self { inner }
     }
 
-    pub fn iter(self) -> impl Iterator<Item = Box<Path>> {
-        self.inner
-            .filter_map(Result::ok)
-            .filter(Self::is_wanted_entry)
-            .map(|entry| entry.path().to_path_buf().into_boxed_path())
+    pub fn paths(self) -> Vec<Box<Path>> {
+        let (sender, receiver) = mpsc::channel::<Vec<Box<Path>>>();
+        let mut builder = WalkBuilder { sender };
+        self.inner.visit(&mut builder);
+        drop(builder);
+        receiver.into_iter().flatten().collect()
     }
 
     fn is_wanted_entry(dir_entry: &DirEntry) -> bool {

@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "Boshen"
+
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "Boshen"
+    groups:
+      dependencies:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "textwrap"
+      - dependency-name: "ezno-checker"
+
+  # Enable when we have more resources
+  # - package-ecosystem: "gitsubmodule"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   assignees:
+  #     - "Boshen"

@@ -15,19 +15,19 @@ rust-version = "1.60"
 
 [workspace.dependencies]
 # publish = true
-oxc             = { version = "0.1.0", path = "crates/oxc" }
-oxc_allocator   = { version = "0.1.0", path = "crates/oxc_allocator" }
-oxc_ast         = { version = "0.1.0", path = "crates/oxc_ast" }
-oxc_ast_lower   = { version = "0.1.0", path = "crates/oxc_ast_lower" }
-oxc_diagnostics = { version = "0.1.0", path = "crates/oxc_diagnostics" }
-oxc_formatter   = { version = "0.1.0", path = "crates/oxc_formatter" }
-oxc_hir         = { version = "0.1.0", path = "crates/oxc_hir" }
-oxc_index       = { version = "0.1.0", path = "crates/oxc_index" }
-oxc_minifier    = { version = "0.1.0", path = "crates/oxc_minifier" }
-oxc_parser      = { version = "0.1.0", path = "crates/oxc_parser" }
-oxc_semantic    = { version = "0.1.0", path = "crates/oxc_semantic" }
-oxc_span        = { version = "0.1.0", path = "crates/oxc_span" }
-oxc_syntax      = { version = "0.1.0", path = "crates/oxc_syntax" }
+oxc             = { version = "0.1.3", path = "crates/oxc" }
+oxc_allocator   = { version = "0.1.3", path = "crates/oxc_allocator" }
+oxc_ast         = { version = "0.1.3", path = "crates/oxc_ast" }
+oxc_ast_lower   = { version = "0.1.3", path = "crates/oxc_ast_lower" }
+oxc_diagnostics = { version = "0.1.3", path = "crates/oxc_diagnostics" }
+oxc_formatter   = { version = "0.1.3", path = "crates/oxc_formatter" }
+oxc_hir         = { version = "0.1.3", path = "crates/oxc_hir" }
+oxc_index       = { version = "0.1.3", path = "crates/oxc_index" }
+oxc_minifier    = { version = "0.1.3", path = "crates/oxc_minifier" }
+oxc_parser      = { version = "0.1.3", path = "crates/oxc_parser" }
+oxc_semantic    = { version = "0.1.3", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.1.3", path = "crates/oxc_span" }
+oxc_syntax      = { version = "0.1.3", path = "crates/oxc_syntax" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }
@@ -40,55 +40,56 @@ oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
-bpaf               = { version = "0.9.4" }
-bitflags           = { version = "2.4.0" }
-bumpalo            = { version = "3.13.0" }
-compact_str        = { version = "0.7.1" }
-convert_case       = { version = "0.6.0" }
-criterion          = { version = "0.5.1", default-features = false }
-crossbeam-channel  = { version = "0.5.8" }
-dashmap            = { version = "5.5.0" }
-env_logger         = { version = "0.10.0" }
-flate2             = { version = "1.0.27" }
-futures            = { version = "0.3.28" }
-ignore             = { version = "0.4.20" }
-itertools          = { version = "0.11.0" }
-jemallocator       = { version = "0.5.4" }
-lazy_static        = { version = "1.4.0" }
-miette             = { version = "5.10.0" }
-mimalloc           = { version = "0.1.37" }
-nodejs-resolver    = { version = "0.0.88" }
-num-bigint         = { version = "0.4.3" }
-num-traits         = { version = "0.2.16" }
-phf                = { version = "0.11" }
-pico-args          = { version = "0.5.0" }
-proc-macro2        = { version = "1.0.66" }
-project-root       = { version = "0.2.2" }
-quote              = { version = "1.0.33" }
-rayon              = { version = "1.7.0" }
-regex              = { version = "1.9.3" }
-rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
-ryu-js             = { version = "0.2.2" }
-ropey              = { version = "1.6.0" }
-serde              = { version = "1.0.185" }
-serde_json         = { version = "1.0.105" }
-syn                = { version = "=1" }
-thiserror          = { version = "1.0.47" }
-tokio              = { version = "1" }
-tower-lsp          = { version = "0.20.0", features = ["proposed"] }
-unicode-id-start   = { version = "1.1.0" }
-ureq               = { version = "2.7.1", default-features = false, features = ["tls"] }
-url                = { version = "2.4.0" }
-walkdir            = { version = "2.3.3" }
-indexmap           = { version = "2.0.0" }
-index_vec          = { version = "0.1.3" }
-static_assertions  = { version = "1.1.0" }
-stacker            = { version = "0.1.15" }
-tracing            = { version = "0.1" }
-tracing-subscriber = { version = "0.3" }
-trustfall          = { version = "0.6.1" }
-insta              = { version = "1.31.0", features = ["glob"] }
-insta-cmd          = { version = "0.3.0" }
+bpaf                      = { version = "0.9.5" }
+bitflags                  = { version = "2.4.0" }
+bumpalo                   = { version = "3.13.0" }
+compact_str               = { version = "0.7.1" }
+convert_case              = { version = "0.6.0" }
+criterion                 = { version = "0.5.1", default-features = false }
+crossbeam-channel         = { version = "0.5.8" }
+dashmap                   = { version = "5.5.3" }
+env_logger                = { version = "0.10.0", default-features = false, features = ["auto-color", "humantime"] }
+flate2                    = { version = "1.0.27" }
+futures                   = { version = "0.3.28" }
+ignore                    = { version = "0.4.20" }
+itertools                 = { version = "0.11.0" }
+jemallocator              = { version = "0.5.4" }
+lazy_static               = { version = "1.4.0" }
+miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
+mimalloc                  = { version = "0.1.38" }
+nodejs-resolver           = { version = "0.1.0" }
+num-bigint                = { version = "0.4.3" }
+num-traits                = { version = "0.2.16" }
+phf                       = { version = "0.11" }
+pico-args                 = { version = "0.5.0" }
+proc-macro2               = { version = "1.0.66" }
+project-root              = { version = "0.2.2" }
+quote                     = { version = "1.0.33" }
+rayon                     = { version = "1.7.0" }
+regex                     = { version = "1.9.5" }
+rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
+ryu-js                    = { version = "0.2.2" }
+ropey                     = { version = "1.6.0" }
+serde                     = { version = "1.0.188" }
+serde_json                = { version = "1.0.105" }
+syn                       = { version = "=1" }
+thiserror                 = { version = "1.0.48" }
+tokio                     = { version = "1" }
+tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
+unicode-id-start          = { version = "1.1.1" }
+ureq                      = { version = "2.7.1", default-features = false, features = ["tls"] }
+url                       = { version = "2.4.1" }
+walkdir                   = { version = "2.3.3" }
+indexmap                  = { version = "2.0.0" }
+index_vec                 = { version = "0.1.3" }
+static_assertions         = { version = "1.1.0" }
+stacker                   = { version = "0.1.15" }
+tracing                   = { version = "0.1" }
+tracing-subscriber        = { version = "0.3" }
+trustfall                 = { version = "0.6.1" }
+insta                     = { version = "1.31.0", features = ["glob"] }
+insta-cmd                 = { version = "0.3.0" }
+codspeed-criterion-compat = { version = "2.1.0" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
