@@ -93,7 +93,7 @@ impl LintOptions {
                             if name_or_category == "all" {
                                 rules.clear();
                             } else {
-                                rules.retain(|rule| rule.name() == name_or_category);
+                                rules.retain(|rule| rule.name() != name_or_category);
                             }
                         }
                     };

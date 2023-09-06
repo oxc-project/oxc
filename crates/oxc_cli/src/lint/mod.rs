@@ -76,7 +76,9 @@ mod test {
     use crate::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
-        let options = lint_command().run_inner(args).unwrap().lint_options;
+        let mut new_args = vec!["--quiet"];
+        new_args.extend(args);
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
         let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
             unreachable!()
         };
@@ -84,8 +86,15 @@ mod test {
     }
 
     #[test]
+    fn timing() {
+        let args = &["--timing", "fixtures"];
+        // make sure this doesn't crash
+        test(args);
+    }
+
+    #[test]
     fn dir() {
-        let args = &["--quiet", "fixtures"];
+        let args = &["fixtures"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
         assert_eq!(result.number_of_files, 2);
@@ -95,7 +104,7 @@ mod test {
 
     #[test]
     fn file() {
-        let args = &["--quiet", "fixtures/debugger.js"];
+        let args = &["fixtures/debugger.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
@@ -104,7 +113,7 @@ mod test {
 
     #[test]
     fn multi_files() {
-        let args = &["--quiet", "fixtures/debugger.js", "fixtures/nan.js"];
+        let args = &["fixtures/debugger.js", "fixtures/nan.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 2);
         assert_eq!(result.number_of_warnings, 2);
@@ -113,7 +122,7 @@ mod test {
 
     #[test]
     fn wrong_extension() {
-        let args = &["--quiet", "foo.asdf"];
+        let args = &["foo.asdf"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -122,7 +131,7 @@ mod test {
 
     #[test]
     fn ignore_pattern() {
-        let args = &["--quiet", "--ignore-pattern", "**/*.js", "fixtures"];
+        let args = &["--ignore-pattern", "**/*.js", "fixtures"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -130,9 +139,20 @@ mod test {
     }
 
     #[test]
-    fn timing() {
-        let args = &["--timing", "fixtures"];
-        // make sure this doesn't crash
-        test(args);
+    fn filter_allow_all() {
+        let args = &["-A", "all", "fixtures"];
+        let result = test(args);
+        assert!(result.number_of_files > 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn filter_allow_one() {
+        let args = &["-D", "correctness", "-A", "no-debugger", "fixtures/debugger.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
     }
 }
