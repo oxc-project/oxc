@@ -101,7 +101,7 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
         return;
     }
 
-    let module_record = &ctx.module_record_builder.module_record;
+    let module_record = &ctx.module_record;
 
     // It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
     // does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.

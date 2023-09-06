@@ -63,8 +63,8 @@ pub struct SemanticBuilder<'a> {
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    with_module_record_builder: bool,
-    pub module_record_builder: ModuleRecordBuilder,
+    pub(crate) module_record: Arc<ModuleRecord>,
+
     unused_labels: UnusedLabels<'a>,
 
     jsdoc: JSDocBuilder<'a>,
@@ -97,8 +97,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
-            with_module_record_builder: false,
-            module_record_builder: ModuleRecordBuilder::default(),
+            module_record: Arc::new(ModuleRecord::default()),
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
@@ -114,33 +113,34 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn with_module_record_builder(mut self, yes: bool) -> Self {
-        self.with_module_record_builder = yes;
-        self
-    }
-
-    #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
         self
     }
 
+    /// Get the built module record from `build_module_record`
+    pub fn module_record(&self) -> Arc<ModuleRecord> {
+        Arc::clone(&self.module_record)
+    }
+
+    /// Build the module record with a shallow AST visit
+    #[must_use]
+    pub fn build_module_record(mut self, program: &'a Program<'a>) -> Self {
+        let mut module_record_builder = ModuleRecordBuilder::default();
+        module_record_builder.visit(program);
+        self.module_record = Arc::new(module_record_builder.build());
+        self
+    }
+
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        // First AST pass
         if !self.source_type.is_typescript_definition() {
             self.visit_program(program);
-        }
 
-        // Second partial AST pass on top level import / export statements
-        let module_record = if self.with_module_record_builder {
-            self.module_record_builder.visit(program);
+            // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
                 EarlyErrorJavaScript::check_module_record(&self);
             }
-            self.module_record_builder.build()
-        } else {
-            ModuleRecord::default()
-        };
+        }
 
         let semantic = Semantic {
             source_text: self.source_text,
@@ -149,7 +149,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
-            module_record: Arc::new(module_record),
+            module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
         };

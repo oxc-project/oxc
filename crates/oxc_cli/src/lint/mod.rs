@@ -26,6 +26,7 @@ impl Runner for LintRunner {
         let CliLintOptions {
             paths,
             filter,
+            import_plugin,
             warning_options,
             ignore_options,
             fix_options,
@@ -34,25 +35,27 @@ impl Runner for LintRunner {
 
         let now = std::time::Instant::now();
 
+        let paths = Walk::new(&paths, &ignore_options).paths();
+        let number_of_files = paths.len();
+
+        let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
             .with_fix(fix_options.fix)
-            .with_timing(misc_options.timing);
-        let lint_service = LintService::new(lint_options);
+            .with_timing(misc_options.timing)
+            .with_import_plugin(import_plugin);
+        let lint_service = LintService::new(cwd, &paths, lint_options);
 
         let diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
             .with_max_warnings(warning_options.max_warnings);
-
-        let paths = Walk::new(&paths, &ignore_options).paths();
-        let number_of_files = paths.len();
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
             let tx_error = diagnostic_service.sender().clone();
             let lint_service = lint_service.clone();
             move || {
-                lint_service.run(paths, &tx_error);
+                lint_service.run(&tx_error);
             }
         });
         diagnostic_service.run();

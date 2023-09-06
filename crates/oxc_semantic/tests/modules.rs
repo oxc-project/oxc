@@ -23,8 +23,7 @@ fn test_exports() {
         export { foo };
         export default defaultExport;
         ",
-    )
-    .with_module_record_builder(true);
+    );
 
     test.has_some_symbol("foo").is_exported().test();
 

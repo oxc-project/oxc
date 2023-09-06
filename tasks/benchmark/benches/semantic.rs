@@ -26,7 +26,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 b.iter_with_large_drop(|| {
                     SemanticBuilder::new(source_text, source_type)
-                        .with_module_record_builder(true)
+                        .build_module_record(program)
                         .build(program)
                 });
             },
