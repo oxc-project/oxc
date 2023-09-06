@@ -9,6 +9,7 @@ use oxc_span::SourceType;
 use crate::{Fixer, LintContext, LintOptions, Linter, Message};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
+#[derive(Clone)]
 pub struct LintService {
     linter: Arc<Linter>,
 }

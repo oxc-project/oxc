@@ -47,7 +47,14 @@ impl Runner for LintRunner {
         let paths = Walk::new(&paths, &ignore_options).paths();
         let number_of_files = paths.len();
 
-        lint_service.run(paths, &diagnostic_service.sender().clone());
+        // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
+        rayon::spawn({
+            let tx_error = diagnostic_service.sender().clone();
+            let lint_service = lint_service.clone();
+            move || {
+                lint_service.run(paths, &tx_error);
+            }
+        });
         diagnostic_service.run();
 
         lint_service.linter().print_execution_times_if_enable();
