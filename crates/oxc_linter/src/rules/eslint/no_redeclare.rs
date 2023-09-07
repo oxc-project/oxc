@@ -69,7 +69,7 @@ impl Rule for NoRedeclare {
 
         match node.kind() {
             AstKind::BindingIdentifier(ident) => {
-                if self.built_in_globals && !BUILTINS.get(&ident.name).is_none() {
+                if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
                     ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
                 }
             }
