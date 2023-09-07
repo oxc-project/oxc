@@ -1,31 +1,56 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use oxc_span::{Atom, Span};
-use rustc_hash::FxHashMap;
+use std::{hash::BuildHasherDefault, sync::Arc};
 
-/// [Source Text Module Record](https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records)
+use dashmap::DashMap;
+use indexmap::IndexMap;
+use oxc_span::{Atom, Span};
+use rustc_hash::{FxHashMap, FxHasher};
+
+/// Module Record
+///
+/// See
+/// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
+/// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Debug, Default)]
 pub struct ModuleRecord {
-    /// <https://tc39.es/ecma262/#sec-static-semantics-modulerequests>
+    /// `[[RequestedModules]]`
+    ///
+    /// A List of all the ModuleSpecifier strings used by the module represented by this record to request the importation of a module. The List is in source text occurrence order.
+    ///
     /// Module requests from:
     ///   import ImportClause FromClause
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
-    /// Keyed by FromClause, valued by all node occurrences
-    pub module_requests: FxHashMap<Atom, Vec<Span>>,
+    /// Keyed by ModuleSpecifier, valued by all node occurrences
+    pub requested_modules: IndexMap<Atom, Vec<Span>, BuildHasherDefault<FxHasher>>,
 
+    /// `[[LoadedModules]]`
+    ///
+    /// A map from the specifier strings used by the module represented by this record to request the importation of a module to the resolved Module Record.
+    /// The list does not contain two different Records with the same `[[Specifier]]`.
+    pub loaded_modules: DashMap<Atom, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
+
+    /// `[[ImportEntries]]`
+    ///
     /// A List of ImportEntry records derived from the code of this module
     pub import_entries: Vec<ImportEntry>,
 
+    /// `[[LocalExportEntries]]`
+    ///
     /// A List of ExportEntry records derived from the code of this module
     /// that correspond to declarations that occur within the module
     pub local_export_entries: Vec<ExportEntry>,
 
+    /// `[[IndirectExportEntries]]`
+    ///
     /// A List of ExportEntry records derived from the code of this module
     /// that correspond to reexported imports that occur within the module
     /// or exports from export * as namespace declarations.
     pub indirect_export_entries: Vec<ExportEntry>,
 
+    /// `[[StarExportEntries]]`
+    ///
     /// A List of ExportEntry records derived from the code of this module
     /// that correspond to export * declarations that occur within the module,
     /// not including export * as namespace declarations.
