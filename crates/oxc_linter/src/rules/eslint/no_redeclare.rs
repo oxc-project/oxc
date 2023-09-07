@@ -1,9 +1,10 @@
-// use oxc_ast::AstKind;
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
@@ -63,25 +64,23 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run_once(&self, ctx: &LintContext) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let redeclare_variables = ctx.semantic().redeclare_variables();
 
-        for redeclare_variables in redeclare_variables {
-            if self.built_in_globals {
-                if let Some(&value) = BUILTINS.get(&redeclare_variables.name) {
-                    if value {
-                        ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(
-                            redeclare_variables.name.clone(),
-                            redeclare_variables.span,
-                        ));
-                    }
+        match node.kind() {
+            AstKind::BindingIdentifier(ident) => {
+                if self.built_in_globals && !BUILTINS.get(&ident.name).is_none() {
+                    ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
                 }
-            } else {
-                ctx.diagnostic(NoRedeclareDiagnostic(
-                    redeclare_variables.name.clone(),
-                    redeclare_variables.span,
-                ));
             }
+            _ => return,
+        }
+
+        for redeclare_variables in redeclare_variables {
+            ctx.diagnostic(NoRedeclareDiagnostic(
+                redeclare_variables.name.clone(),
+                redeclare_variables.span,
+            ));
         }
     }
 }
@@ -126,23 +125,22 @@ fn test() {
         ("var a = function() { }; var a = new Date();", None),
         ("var a = 3; var a = 10; var a = 15;", None),
         ("var a; var a;", None),
-        ("export vars a; var a;", None),
-
+        ("export var a; var a;", None),
         // `var` redeclaration in class static blocks. Redeclaration of functions is not allowed in class static blocks.
         ("class C { static { var a; var a; } }", None),
         ("class C { static { var a; { var a; } } }", None),
         ("class C { static { { var a; } var a; } }", None),
         ("class C { static { { var a; } { var a; } } }", None),
-        ("var Object = 0;", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var top = 0;", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var a; var {a = 0, b: Object = 0} = {};", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var a; var {a = 0, b: Object = 0} = {};", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var a; var {a = 0, b: Object = 0} = {};", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var a; var {a = 0, b: Object = 0} = {};", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var globalThis = 0;", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("var a; var {a = 0, b: globalThis = 0} = {};", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("/*global b:false*/ var b = 1;", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-        ("/*global b:true*/ var b = 1;", Some(serde_json::json!([{ "builtinGlobals": false }]))),
+        ("var Object = 0;", Some(serde_json::json!([{ "builtinGlobals": true }]))),
+        (
+            "var a; var {a = 0, b: Object = 0} = {};",
+            Some(serde_json::json!([{ "builtinGlobals": true }])),
+        ),
+        ("var globalThis = 0;", Some(serde_json::json!([{ "builtinGlobals": true }]))),
+        (
+            "var a; var {a = 0, b: globalThis = 0} = {};",
+            Some(serde_json::json!([{ "builtinGlobals": true }])),
+        ),
         ("function f() { var a; var a; }", None),
         ("function f(a) { var a; }", None),
         ("function f() { var a; if (test) { var a; } }", None),

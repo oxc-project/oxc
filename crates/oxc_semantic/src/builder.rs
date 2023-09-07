@@ -265,6 +265,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
+            self.add_redeclared_variables(VariableInfo { name: name.clone(), span, scope_id });
             return symbol_id;
         }
 
@@ -335,7 +336,8 @@ impl<'a> SemanticBuilder<'a> {
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
-        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
+        let flag = self.symbols.get_flag(symbol_id);
+        if report_error && flag.intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(Redeclaration(name.clone(), symbol_span, span));
         }

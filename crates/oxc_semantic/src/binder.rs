@@ -53,7 +53,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                         builder.add_redeclared_variables(VariableInfo {
                             name: ident.name.clone(),
                             span: ident.span,
-                            scope_id: scope_id,
+                            scope_id,
                         });
                     }
                 }

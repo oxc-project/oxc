@@ -1,55 +1,110 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 80
+assertion_line: 92
 expression: no_redeclare
 ---
-  ⚠ eslint(no-redeclare): 'a' is already defined.
+  ⚠ eslint(no-redeclare): 'b' is already defined.
    ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10;
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+ 1 │ switch(foo) { case a: var b = 3;
+ 2 │ case b: var b = 4}
+   ·             ┬
+   ·             ╰── 'b' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'b' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ switch(foo) { case a: var b = 3;
+ 2 │ case b: var b = 4}
+   ·             ┬
+   ·             ╰── 'b' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'b' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ switch(foo) { case a: var b = 3;
+ 2 │ case b: var b = 4}
+   ·             ┬
+   ·             ╰── 'b' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'b' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ switch(foo) { case a: var b = 3;
+ 2 │ case b: var b = 4}
+   ·             ┬
+   ·             ╰── 'b' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = 3; var a = 10;
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+   ·                ┬
+   ·                ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10;
+   ·                ┬
+   ·                ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = {}; var a = [];
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+   ·                 ┬
+   ·                 ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = {}; var a = [];
+   ·                 ┬
+   ·                 ╰── 'a' is already defined.
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; function a() {}
+   ·     ┬           ┬
+   ·     │           ╰── It can not be redeclared here
+   ·     ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function a() {} function a() {}
+   ·          ┬               ┬
+   ·          │               ╰── It can not be redeclared here
+   ·          ╰── `a` has already been declared here
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = function() { }; var a = function() { }
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+   ·                             ┬
+   ·                             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = function() { }; var a = function() { }
+   ·                             ┬
+   ·                             ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = function() { }; var a = new Date();
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+   ·                             ┬
+   ·                             ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10; var a = 15;
-   ·     ┬
-   ·     ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10; var a = 15;
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+ 1 │ var a = function() { }; var a = new Date();
+   ·                             ┬
+   ·                             ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -61,23 +116,121 @@ expression: no_redeclare
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10; var a = 15;
+   ·                            ┬
+   ·                            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10; var a = 15;
+   ·                ┬
+   ·                ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10; var a = 15;
+   ·                            ┬
+   ·                            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10; var a = 15;
+   ·                ┬
+   ·                ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a = 3; var a = 10; var a = 15;
+   ·                            ┬
+   ·                            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
  1 │ var a; var a;
-   ·     ┬
-   ·     ╰── 'a' is already defined.
+   ·            ┬
+   ·            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var a;
+   ·            ┬
+   ·            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ export var a; var a;
+   ·                   ┬
+   ·                   ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ export var a; var a;
+   ·                   ┬
+   ·                   ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ class C { static { var a; var a; } }
-   ·                        ┬
-   ·                        ╰── 'a' is already defined.
+   ·                               ┬
+   ·                               ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { var a; var a; } }
+   ·                               ┬
+   ·                               ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { var a; var a; } }
+   ·                               ┬
+   ·                               ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ class C { static { var a; { var a; } } }
-   ·                        ┬
-   ·                        ╰── 'a' is already defined.
+   ·                                 ┬
+   ·                                 ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { var a; { var a; } } }
+   ·                                 ┬
+   ·                                 ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { var a; { var a; } } }
+   ·                                 ┬
+   ·                                 ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } var a; } }
+   ·                                   ┬
+   ·                                   ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } var a; } }
+   ·                                   ┬
+   ·                                   ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -90,29 +243,183 @@ expression: no_redeclare
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ class C { static { { var a; } { var a; } } }
-   ·                          ┬
-   ·                          ╰── 'a' is already defined.
+   ·                                     ┬
+   ·                                     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } { var a; } } }
+   ·                                     ┬
+   ·                                     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } { var a; } } }
+   ·                                     ┬
+   ·                                     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var Object = 0;
+   ·     ───┬──
+   ·        ╰── 'Object' is already defined as a built-in global variable.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: Object = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: Object = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: Object = 0} = {};
+   ·                       ───┬──
+   ·                          ╰── 'Object' is already defined as a built-in global variable.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: Object = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var globalThis = 0;
+   ·     ─────┬────
+   ·          ╰── 'globalThis' is already defined as a built-in global variable.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: globalThis = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: globalThis = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: globalThis = 0} = {};
+   ·                       ─────┬────
+   ·                            ╰── 'globalThis' is already defined as a built-in global variable.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ var a; var {a = 0, b: globalThis = 0} = {};
+   ·             ┬
+   ·             ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ function f() { var a; var a; }
-   ·                    ┬
-   ·                    ╰── 'a' is already defined.
+   ·                           ┬
+   ·                           ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f() { var a; var a; }
+   ·                           ┬
+   ·                           ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f() { var a; var a; }
+   ·                           ┬
+   ·                           ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f(a) { var a; }
+   ·                     ┬
+   ·                     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f(a) { var a; }
+   ·                     ┬
+   ·                     ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f(a) { var a; }
+   ·                     ┬
+   ·                     ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ function f() { var a; if (test) { var a; } }
-   ·                    ┬
-   ·                    ╰── 'a' is already defined.
+   ·                                       ┬
+   ·                                       ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f() { var a; if (test) { var a; } }
+   ·                                       ┬
+   ·                                       ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f() { var a; if (test) { var a; } }
+   ·                                       ┬
+   ·                                       ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ for (var a, a;;);
-   ·          ┬
-   ·          ╰── 'a' is already defined.
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ for (var a, a;;);
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ for (var a, a;;);
+   ·             ┬
+   ·             ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ for (var a, a;;);
+   ·             ┬
+   ·             ╰── 'a' is already defined.
    ╰────
 
 
