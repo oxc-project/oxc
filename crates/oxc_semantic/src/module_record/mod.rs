@@ -20,7 +20,7 @@ mod module_record_tests {
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
-            .with_module_record_builder(true)
+            .build_module_record(program)
             .build(program);
         Arc::clone(&semantic_ret.semantic.module_record)
     }

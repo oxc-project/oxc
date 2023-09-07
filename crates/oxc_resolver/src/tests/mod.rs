@@ -17,6 +17,7 @@ mod scoped_packages;
 mod simple;
 mod symlink;
 mod tsconfig_paths;
+mod tsconfig_project_references;
 
 use crate::Resolver;
 use std::{env, path::PathBuf, sync::Arc, thread};

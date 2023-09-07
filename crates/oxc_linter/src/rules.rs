@@ -97,6 +97,7 @@ mod jest {
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
     pub mod no_disabled_tests;
+    pub mod no_done_callback;
     pub mod no_focused_tests;
     pub mod no_test_prefixes;
     pub mod valid_describe_callback;
@@ -193,6 +194,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::expect_expect,
     jest::no_alias_methods,
     jest::no_conditional_expect,
+    jest::no_done_callback,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await
 }

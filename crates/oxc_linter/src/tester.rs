@@ -1,7 +1,8 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::DiagnosticService;
 use serde_json::Value;
 
 use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, RuleEnum};
@@ -99,8 +100,12 @@ impl Tester {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
         let options = LintOptions::default().with_fix(is_fix);
-        let linter = Arc::new(Linter::from_options(options).with_rules(vec![rule]));
-        let result = LintService::run_source(&linter, &path, &allocator, source_text, false);
+        let linter = Linter::from_options(options).with_rules(vec![rule]);
+        let cwd = PathBuf::new().into_boxed_path();
+        let lint_service = LintService::from_linter(cwd, &[path.clone().into_boxed_path()], linter);
+        let diagnostic_service = DiagnosticService::default();
+        let tx_error = diagnostic_service.sender();
+        let result = lint_service.run_source(&allocator, source_text, false, tx_error);
 
         if result.is_empty() {
             return TestResult::Passed;

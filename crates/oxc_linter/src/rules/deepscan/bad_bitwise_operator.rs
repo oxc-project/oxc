@@ -13,7 +13,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Bad bitwise operator")]
+#[error("deepscan(bad-bitwise-operator): Bad bitwise operator")]
 #[diagnostic(
     severity(warning),
     help("Bitwise operator '{0}' seems unintended. Did you mean logical operator '{1}'?")

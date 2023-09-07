@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Bad comparison sequence")]
+#[error("deepscan(bad-comparison-sequence): Bad comparison sequence")]
 #[diagnostic(
     severity(warning),
     help(

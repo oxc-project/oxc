@@ -224,7 +224,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         // tsconfig-paths
-        if let Some(path) = self.load_tsconfig_paths(specifier, &mut ResolveContext::default())? {
+        if let Some(path) =
+            self.load_tsconfig_paths(cached_path, specifier, &mut ResolveContext::default())?
+        {
             return Ok(path);
         }
 
@@ -890,11 +892,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::ExtensionAlias)
     }
 
-    fn load_tsconfig_paths(&self, specifier: &str, ctx: &mut ResolveContext) -> ResolveState {
+    fn load_tsconfig_paths(
+        &self,
+        cached_path: &CachedPath,
+        specifier: &str,
+        ctx: &mut ResolveContext,
+    ) -> ResolveState {
         let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
         let tsconfig_path = self.cache.value(tsconfig_path);
         let tsconfig = self.load_tsconfig(&tsconfig_path)?;
-        let paths = tsconfig.resolve_path_alias(specifier);
+        let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
             let cached_path = self.cache.value(&path);
             if let Ok(path) = self.require_relative(&cached_path, ".", ctx) {
@@ -905,28 +912,35 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_tsconfig(&self, cached_path: &CachedPath) -> Result<Arc<TsConfig>, ResolveError> {
-        debug_assert!(cached_path.path().extension().is_some_and(|ext| ext == "json"));
-        self.cache.tsconfig(cached_path.path(), |tsconfig| {
-            if tsconfig.extends().is_empty() {
-                return Ok(());
+        self.cache.tsconfig(cached_path, |tsconfig| {
+            // Extend tsconfig
+            if !tsconfig.extends().is_empty() {
+                let resolver = self.clone_with_options(ResolveOptions {
+                    extensions: vec![".json".into()],
+                    main_files: vec!["tsconfig".into()],
+                    ..ResolveOptions::default()
+                });
+                let mut extended_tsconfigs = vec![];
+                for tsconfig_extend_specifier in tsconfig.extends() {
+                    let extended_tsconfig_path = resolver.require(
+                        cached_path.parent().unwrap(),
+                        tsconfig_extend_specifier,
+                        &mut ResolveContext::default(),
+                    )?;
+                    let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
+                    extended_tsconfigs.push(extended_tsconfig);
+                }
+                for extended_tsconfig in extended_tsconfigs {
+                    tsconfig.extend_tsconfig(&extended_tsconfig);
+                }
             }
-            let resolver = self.clone_with_options(ResolveOptions {
-                extensions: vec![".json".into()],
-                main_files: vec!["tsconfig".into()],
-                ..ResolveOptions::default()
-            });
-            let mut extended_tsconfigs = vec![];
-            for tsconfig_extend_specifier in tsconfig.extends() {
-                let extended_tsconfig_path = resolver.require(
-                    cached_path.parent().unwrap(),
-                    tsconfig_extend_specifier,
-                    &mut ResolveContext::default(),
-                )?;
-                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
-                extended_tsconfigs.push(extended_tsconfig);
-            }
-            for extended_tsconfig in extended_tsconfigs {
-                tsconfig.extend_tsconfig(&extended_tsconfig);
+            // Load project references
+            let directory = tsconfig.directory().to_path_buf();
+            for reference in tsconfig.references_mut() {
+                let reference_tsconfig_path =
+                    self.cache.value(&directory.normalize_with(&reference.path));
+                let tsconfig = self.cache.tsconfig(&reference_tsconfig_path, |_| Ok(()))?;
+                reference.tsconfig.replace(tsconfig);
             }
             Ok(())
         })

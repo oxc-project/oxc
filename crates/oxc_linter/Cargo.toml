@@ -22,6 +22,7 @@ oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
+oxc_resolver    = { workspace = true }
 
 rayon       = { workspace = true }
 lazy_static = { workspace = true }                        # used in oxc_macros
@@ -31,6 +32,7 @@ rustc-hash  = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 num-traits  = { workspace = true }
 itertools   = { workspace = true }
+dashmap     = { workspace = true }
 
 rust-lapper = "1.1.0"
 once_cell   = "1.18.0"

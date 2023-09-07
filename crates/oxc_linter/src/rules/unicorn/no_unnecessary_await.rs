@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Disallow awaiting non-promise values.")]
+#[error("eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values")]
 #[diagnostic(severity(warning), help("consider to remove the `await`"))]
 struct NoUnnecessaryAwaitDiagnostic(#[label] pub Span);
 

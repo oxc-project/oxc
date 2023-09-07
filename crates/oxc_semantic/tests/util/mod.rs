@@ -14,8 +14,6 @@ pub struct SemanticTester {
     allocator: Allocator,
     source_type: SourceType,
     source_text: &'static str,
-    /// SemanticBuilder option
-    use_module_record_builder: bool,
 }
 
 impl SemanticTester {
@@ -35,12 +33,7 @@ impl SemanticTester {
     }
 
     pub fn new(source_text: &'static str, source_type: SourceType) -> Self {
-        Self {
-            allocator: Allocator::default(),
-            source_type,
-            source_text,
-            use_module_record_builder: true,
-        }
+        Self { allocator: Allocator::default(), source_type, source_text }
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
@@ -54,13 +47,6 @@ impl SemanticTester {
     #[allow(dead_code)]
     pub fn with_jsx(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_jsx(yes);
-        self
-    }
-
-    /// Set [`SemanticBuilder`]'s `with_module_record_builder` option
-    #[allow(dead_code)]
-    pub fn with_module_record_builder(mut self, yes: bool) -> Self {
-        self.use_module_record_builder = yes;
         self
     }
 
@@ -86,7 +72,7 @@ impl SemanticTester {
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
-            .with_module_record_builder(self.use_module_record_builder)
+            .build_module_record(program)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {

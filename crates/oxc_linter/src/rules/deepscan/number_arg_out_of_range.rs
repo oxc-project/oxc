@@ -12,7 +12,7 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Radix or precision arguments of number-related functions should not exceed the limit")]
+#[error("deepscan(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit")]
 #[diagnostic(
     severity(warning),
     help("The first argument of 'Number.prototype.{0}' should be a number between {1} and {2}")

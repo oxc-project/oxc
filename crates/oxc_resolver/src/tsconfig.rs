@@ -1,6 +1,7 @@
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use crate::{json_comments::strip_comments_in_place, PathUtil};
@@ -21,7 +22,23 @@ pub struct TsConfig {
     extends: Vec<String>,
 
     #[serde(default)]
+    references: Vec<ProjectReference>,
+
+    #[serde(default)]
     compiler_options: CompilerOptions,
+}
+
+/// Project Reference
+/// <https://www.typescriptlang.org/docs/handbook/project-references.html>
+#[derive(Debug, Deserialize)]
+pub struct ProjectReference {
+    /// The path property of each reference can point to a directory containing a tsconfig.json file,
+    /// or to the config file itself (which may have any name).
+    pub path: PathBuf,
+
+    /// Reference to the resolved tsconfig
+    #[serde(skip)]
+    pub tsconfig: Option<Arc<TsConfig>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -79,6 +96,17 @@ impl TsConfig {
         &self.extends
     }
 
+    pub fn references_mut(&mut self) -> &mut Vec<ProjectReference> {
+        self.references.as_mut()
+    }
+
+    fn base_path(&self) -> &Path {
+        self.compiler_options
+            .base_url
+            .as_ref()
+            .map_or_else(|| self.directory(), |path| path.as_ref())
+    }
+
     pub fn extend_tsconfig(&mut self, tsconfig: &Self) {
         let compiler_options = &mut self.compiler_options;
         if compiler_options.base_url.is_none() {
@@ -88,6 +116,20 @@ impl TsConfig {
             compiler_options.paths_base = tsconfig.compiler_options.paths_base.clone();
             compiler_options.paths = tsconfig.compiler_options.paths.clone();
         }
+    }
+
+    pub fn resolve(&self, path: &Path, specifier: &str) -> Vec<PathBuf> {
+        if path.starts_with(self.base_path()) {
+            return self.resolve_path_alias(specifier);
+        }
+        for reference in &self.references {
+            if let Some(tsconfig) = &reference.tsconfig {
+                if path.starts_with(tsconfig.base_path()) {
+                    return tsconfig.resolve_path_alias(specifier);
+                }
+            }
+        }
+        vec![]
     }
 
     // Copied from parcel

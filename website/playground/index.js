@@ -20,7 +20,7 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
 import { buildSchema } from "graphql";
-import { LZMA } from 'lzma/src/lzma_worker-min.js';
+import { LZMA } from 'lzma/src/lzma_worker.js';
 
 import initWasm, {
   Oxc,

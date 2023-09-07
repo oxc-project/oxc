@@ -2,238 +2,238 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unnecessary_await
 ---
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await []
    · ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await [Promise.resolve()]
    · ─────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (() => {})
    · ────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (() => Promise.resolve())
    · ───────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (a === b)
    · ───────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (a instanceof Promise)
    · ────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (a > b)
    · ─────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await class {}
    · ──────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await class extends Promise {}
    · ──────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await function() {}
    · ───────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await function name() {}
    · ────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await function() { return Promise.resolve() }
    · ─────────────────────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (<></>)
    · ─────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (<a></a>)
    · ───────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await 0
    · ───────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await 1
    · ───────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await ""
    · ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await "string"
    · ──────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await true
    · ──────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await false
    · ───────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await null
    · ──────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await 0n
    · ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await 1n
    · ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await `${Promise.resolve()}`
    · ────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await !Promise.resolve()
    · ────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await void Promise.resolve()
    · ────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await +Promise.resolve()
    · ────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await ~1
    · ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await ++foo
    · ───────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await foo--
    · ───────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await (Promise.resolve(), 1)
    · ────────────────────────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ async function foo() {+await +1}
    ·                        ────────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ async function foo() {-await-1}
    ·                        ───────
    ╰────
   help: consider to remove the `await`
 
-  ⚠ Disallow awaiting non-promise values.
+  ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ async function foo() {+await -1}
    ·                        ────────

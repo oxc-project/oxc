@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: uninvoked_array_callback
 ---
-  ⚠ Uninvoked array callback
+  ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5).map(_ => {})
    ·              ──────┬───── ─┬─
@@ -11,7 +11,7 @@ expression: uninvoked_array_callback
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
 
-  ⚠ Uninvoked array callback
+  ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5).filter(function(_) {})
    ·              ──────┬───── ───┬──
@@ -20,7 +20,7 @@ expression: uninvoked_array_callback
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
 
-  ⚠ Uninvoked array callback
+  ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5)['every'](function(_) {})
    ·              ──────┬───── ───┬───
