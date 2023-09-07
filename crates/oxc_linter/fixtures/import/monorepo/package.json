@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "dependencies": {
+    "right-pad": "^1.0.1"
+  },
+  "devDependencies": {
+    "left-pad": "^1.2.0"
+  }
+}
