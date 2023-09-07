@@ -16,6 +16,7 @@ enum TestResult {
 
 pub struct Tester {
     rule_name: &'static str,
+    rule_path: PathBuf,
     expect_pass: Vec<(String, Option<Value>)>,
     expect_fail: Vec<(String, Option<Value>)>,
     expect_fix: Vec<(String, String, Option<Value>)>,
@@ -28,9 +29,17 @@ impl Tester {
         expect_pass: Vec<(S, Option<Value>)>,
         expect_fail: Vec<(S, Option<Value>)>,
     ) -> Self {
+        let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
-        Self { rule_name, expect_pass, expect_fail, expect_fix: vec![], snapshot: String::new() }
+        Self {
+            rule_name,
+            rule_path,
+            expect_pass,
+            expect_fail,
+            expect_fix: vec![],
+            snapshot: String::new(),
+        }
     }
 
     pub fn new_without_config<S: Into<String>>(
@@ -42,6 +51,12 @@ impl Tester {
         let expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
         Self::new(rule_name, expect_pass, expect_fail)
     }
+
+    // /// Change the file name extension
+    // pub fn with_rule_path_extension(mut self, extension: &str) -> Self {
+    // self.rule_path.set_extension(extension);
+    // self
+    // }
 
     pub fn expect_fix<S: Into<String>>(mut self, expect_fix: Vec<(S, S, Option<Value>)>) -> Self {
         self.expect_fix =
@@ -95,8 +110,7 @@ impl Tester {
     }
 
     fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
-        let name = self.rule_name.replace('-', "_");
-        let path = PathBuf::from(name).with_extension("tsx");
+        let path = &self.rule_path;
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
         let options = LintOptions::default().with_fix(is_fix);
