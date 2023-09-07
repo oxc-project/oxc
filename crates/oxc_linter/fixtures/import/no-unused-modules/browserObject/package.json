@@ -1,0 +1,6 @@
+{
+  "browser": {
+    "browserObject": "./index.js",
+    "an-ignored-module": false
+  }
+}

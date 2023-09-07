@@ -1,0 +1,12 @@
+{
+  "overrides": [
+    {
+      "files": "**.ts",
+      "parser": "@typescript-eslint/parser",
+      "extends": "../../../config/typescript",
+      "rules": {
+        "import/export": "error",
+      },
+    },
+  ],
+}
