@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./aliased/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "../project_a/conf.json"
+    },
+    {
+      "path": "../project_b"
+    },
+    {
+      "path": "../project_c/tsconfig.json"
+    }
+  ]
+}
