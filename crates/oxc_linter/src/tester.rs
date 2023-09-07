@@ -25,6 +25,7 @@ pub struct Tester {
     expect_fix: Vec<(String, String, Option<Value>)>,
     snapshot: String,
     current_working_directory: Box<Path>,
+    import_plugin: bool,
 }
 
 impl Tester {
@@ -46,6 +47,7 @@ impl Tester {
             expect_fix: vec![],
             snapshot: String::new(),
             current_working_directory,
+            import_plugin: false,
         }
     }
 
@@ -59,11 +61,16 @@ impl Tester {
         Self::new(rule_name, expect_pass, expect_fail)
     }
 
-    // /// Change the file name extension
-    // pub fn with_rule_path_extension(mut self, extension: &str) -> Self {
-    // self.rule_path.set_extension(extension);
-    // self
-    // }
+    /// Change the file name extension
+    pub fn with_rule_path_extension(mut self, extension: &str) -> Self {
+        self.rule_path.set_extension(extension);
+        self
+    }
+
+    pub fn with_import_plugin(mut self, yes: bool) -> Self {
+        self.import_plugin = yes;
+        self
+    }
 
     pub fn expect_fix<S: Into<String>>(mut self, expect_fix: Vec<(S, S, Option<Value>)>) -> Self {
         self.expect_fix =
@@ -117,14 +124,19 @@ impl Tester {
     }
 
     fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
-        let path = &self.rule_path;
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
-        let options = LintOptions::default().with_fix(is_fix);
+        let options =
+            LintOptions::default().with_fix(is_fix).with_import_plugin(self.import_plugin);
         let linter = Linter::from_options(options).with_rules(vec![rule]);
+        let path_to_lint = if self.import_plugin {
+            self.current_working_directory.join(&self.rule_path)
+        } else {
+            self.rule_path.clone()
+        };
         let lint_service = LintService::from_linter(
             self.current_working_directory.clone(),
-            &[path.clone().into_boxed_path()],
+            &[path_to_lint.into_boxed_path()],
             linter,
         );
         let diagnostic_service = DiagnosticService::default();
@@ -144,7 +156,7 @@ impl Tester {
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
-                path.to_string_lossy(),
+                self.rule_path.to_string_lossy(),
                 source_text.to_string(),
             ));
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
