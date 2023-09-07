@@ -20,7 +20,10 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
 import { buildSchema } from "graphql";
+
+// lzma is a very old library, it writes to window when built in production with vite.
 import { LZMA } from 'lzma/src/lzma_worker.js';
+const GLOBAL_LZMA = LZMA || window.LZMA;
 
 import initWasm, {
   Oxc,
@@ -687,13 +690,13 @@ class URLParams {
   );
 
   encodeCode(code) {
-    const lzma = LZMA.compress(code);
+    const lzma = GLOBAL_LZMA.compress(code);
     return this.LZMABufferToBase64(lzma);
   }
 
   decodeCode(encoded) {
     const compressed = this.base64ToLZMABuffer(encoded);
-    return LZMA.decompress(compressed);
+    return GLOBAL_LZMA.decompress(compressed);
   }
 
   // https://developer.mozilla.org/en-US/docs/Glossary/Base64#the_unicode_problem
