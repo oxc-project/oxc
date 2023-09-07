@@ -220,8 +220,11 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let target_module_record = Arc::clone(&self.module_map.get(path).unwrap());
-                    module_record.loaded_modules.insert(specifier, target_module_record);
+                    if let Some(target_module_record) = self.module_map.get(path) {
+                        module_record
+                            .loaded_modules
+                            .insert(specifier, Arc::clone(&target_module_record));
+                    }
                 });
         }
 

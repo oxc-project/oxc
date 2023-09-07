@@ -5,6 +5,11 @@
 //! These modules are declared manually because `cargo fmt` stops formatting these files with they
 //! are inside a proc macro.
 
+/// <https://github.com/import-js/eslint-plugin-import>
+mod import {
+    pub mod named;
+}
+
 mod deepscan {
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
@@ -194,5 +199,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_conditional_expect,
     jest::no_done_callback,
     unicorn::no_instanceof_array,
-    unicorn::no_unnecessary_await
+    unicorn::no_unnecessary_await,
+    import::named
 }
