@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// [property matchers](https://jestjs.io/docs/en/snapshot-testing#property-matchers).
     ///
     /// ### Example
-    /// 
+    ///
     /// ```javascript
     /// expect(something).toMatchInlineSnapshot(
     ///   `Object {
