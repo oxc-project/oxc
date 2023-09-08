@@ -59,10 +59,14 @@ impl FileSystem for MemoryFS {
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
         let is_file = metadata.file_type == vfs::VfsFileType::File;
         let is_dir = metadata.file_type == vfs::VfsFileType::Directory;
-        Ok(FileMetadata::new(is_file, is_dir))
+        Ok(FileMetadata::new(is_file, is_dir, false))
     }
 
-    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
-        Ok(path.as_ref().to_path_buf())
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+        self.metadata(path)
+    }
+
+    fn read_link<P: AsRef<Path>>(&self, _path: P) -> io::Result<PathBuf> {
+        Err(io::Error::new(io::ErrorKind::NotFound, "not a symlink"))
     }
 }

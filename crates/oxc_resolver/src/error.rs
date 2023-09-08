@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::{io, path::PathBuf, sync::Arc};
 use thiserror::Error;
 
 /// All resolution errors.
-#[derive(Debug, Clone, Eq, PartialEq, Error)]
+#[derive(Debug, Clone, PartialEq, Error)]
 pub enum ResolveError {
     /// Ignored path
     ///
@@ -21,6 +21,9 @@ pub enum ResolveError {
     /// Path not found
     #[error("Path not found {0}")]
     NotFound(PathBuf),
+
+    #[error("{0}")]
+    IOError(IOError),
 
     /// Node.js builtin modules
     ///
@@ -86,6 +89,15 @@ impl ResolveError {
     pub fn is_ignore(&self) -> bool {
         matches!(self, Self::Ignored(_))
     }
+
+    pub(crate) fn from_serde_json_error(path: PathBuf, error: &serde_json::Error) -> Self {
+        Self::JSON(JSONError {
+            path,
+            message: error.to_string(),
+            line: error.line(),
+            column: error.column(),
+        })
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Error)]
@@ -103,13 +115,18 @@ pub struct JSONError {
     pub column: usize,
 }
 
-impl ResolveError {
-    pub(crate) fn from_serde_json_error(path: PathBuf, error: &serde_json::Error) -> Self {
-        Self::JSON(JSONError {
-            path,
-            message: error.to_string(),
-            line: error.line(),
-            column: error.column(),
-        })
+#[derive(Debug, Clone, Error)]
+#[error("{0}")]
+pub struct IOError(Arc<io::Error>);
+
+impl PartialEq for IOError {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.kind() == other.0.kind()
+    }
+}
+
+impl From<io::Error> for ResolveError {
+    fn from(err: io::Error) -> Self {
+        Self::IOError(IOError(Arc::new(err)))
     }
 }

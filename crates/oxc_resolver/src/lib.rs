@@ -193,7 +193,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 )
                 .and_then(|value| value.ok_or(err))
             })?;
-        let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
+        let path = self.load_realpath(&cached_path)?;
         // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
         Ok(Resolution {
@@ -516,11 +516,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_realpath(&self, cached_path: &CachedPath) -> Option<PathBuf> {
+    fn load_realpath(&self, cached_path: &CachedPath) -> Result<PathBuf, ResolveError> {
         if self.options.symlinks {
-            cached_path.symlink(&self.cache.fs)
+            cached_path.canonicalize(&self.cache).map_err(ResolveError::from)
         } else {
-            None
+            Ok(cached_path.to_path_buf())
         }
     }
 
