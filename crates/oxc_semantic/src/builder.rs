@@ -83,7 +83,7 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    pub redeclare_variables: RedeclareVariables,
+    redeclare_variables: RedeclareVariables,
 }
 
 pub struct SemanticBuilderReturn<'a> {

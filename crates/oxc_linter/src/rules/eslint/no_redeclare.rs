@@ -12,7 +12,11 @@ use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
 #[diagnostic(severity(warning))]
-struct NoRedeclareDiagnostic(Atom, #[label("'{0}' is already defined.")] pub Span);
+struct NoRedeclareDiagnostic(
+    Atom,
+    #[label("'{0}' is already defined.")] pub Span,
+    #[label("It can not be redeclare here.")] pub Span,
+);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
@@ -28,6 +32,7 @@ struct NoRedeclareAsBuiltiInDiagnostic(
 struct NoRedeclareBySyntaxDiagnostic(
     Atom,
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
+    #[label("It can not be redeclare here.")] pub Span,
 );
 
 #[derive(Debug, Default, Clone)]
@@ -71,16 +76,19 @@ impl Rule for NoRedeclare {
             AstKind::BindingIdentifier(ident) => {
                 if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
                     ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
+                } else {
+                    for redeclare_variable in redeclare_variables {
+                        if redeclare_variable.name == ident.name && redeclare_variable.span != ident.span {
+                            ctx.diagnostic(NoRedeclareDiagnostic(
+                                redeclare_variable.name.clone(),
+                                ident.span,
+                                redeclare_variable.span,
+                            ));
+                        }
+                    }
                 }
             }
             _ => return,
-        }
-
-        for redeclare_variables in redeclare_variables {
-            ctx.diagnostic(NoRedeclareDiagnostic(
-                redeclare_variables.name.clone(),
-                redeclare_variables.span,
-            ));
         }
     }
 }
