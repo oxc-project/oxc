@@ -598,27 +598,29 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &mut ResolveContext,
     ) -> ResolveState {
+        let (package_name, subpath) = Self::parse_package_specifier(specifier);
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         // 2. for each DIR in DIRS:
-        for path in cached_path.path().ancestors() {
-            for module_name in &self.options.modules {
-                // node_module_path = foo/node_modules/
-                let cached_path = if path.ends_with(module_name) {
-                    self.cache.value(path)
-                } else {
-                    self.cache.value(&path.join(module_name))
+        for module_name in &self.options.modules {
+            for cached_path in std::iter::successors(Some(cached_path), |p| p.parent()) {
+                let mut cached_path = cached_path.clone();
+
+                if !cached_path.path().ends_with(module_name) {
+                    if let Some(path) = if module_name == "node_modules" {
+                        cached_path.cached_node_modules(&self.cache)
+                    } else {
+                        cached_path.module_directory(module_name, &self.cache)
+                    } {
+                        cached_path = path;
+                    } else {
+                        continue;
+                    }
                 };
 
-                // Skip if foo/node_modules does not exist
-                if !cached_path.is_dir(&self.cache.fs) {
-                    continue;
-                }
                 // Optimize node_modules lookup by inspecting whether the package exists
                 // From LOAD_PACKAGE_EXPORTS(X, DIR)
                 // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
                 //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
-                let (package_name, subpath) = Self::parse_package_specifier(specifier);
-
                 if !package_name.is_empty() {
                     let package_path = cached_path.path().join(package_name);
                     let cached_path = self.cache.value(&package_path);
