@@ -4,7 +4,6 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
@@ -69,16 +68,18 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
         let redeclare_variables = ctx.semantic().redeclare_variables();
 
-        match node.kind() {
-            AstKind::BindingIdentifier(ident) => {
+        for node in ctx.nodes().iter() {
+            if let AstKind::BindingIdentifier(ident) = node.kind() {
                 if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
                     ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
                 } else {
                     for redeclare_variable in redeclare_variables {
-                        if redeclare_variable.name == ident.name && redeclare_variable.span != ident.span {
+                        if redeclare_variable.name == ident.name
+                            && redeclare_variable.span != ident.span
+                        {
                             ctx.diagnostic(NoRedeclareDiagnostic(
                                 redeclare_variable.name.clone(),
                                 ident.span,
@@ -88,7 +89,6 @@ impl Rule for NoRedeclare {
                     }
                 }
             }
-            _ => return,
         }
     }
 }
