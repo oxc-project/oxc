@@ -73,7 +73,7 @@ impl ModuleRecordBuilder {
 
     fn add_module_request(&mut self, name_span: &NameSpan) {
         self.module_record
-            .module_requests
+            .requested_modules
             .entry(name_span.name().clone())
             .or_default()
             .push(name_span.span());

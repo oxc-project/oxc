@@ -24,3 +24,5 @@ unicode-id-start = { workspace = true }
 serde            = { workspace = true, features = ["derive"], optional = true }
 bitflags         = { workspace = true }
 rustc-hash       = { workspace = true }
+indexmap         = { workspace = true }
+dashmap          = { workspace = true }

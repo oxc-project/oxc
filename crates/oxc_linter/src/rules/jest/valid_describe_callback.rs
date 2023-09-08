@@ -59,7 +59,6 @@ declare_oxc_lint!(
     /// }));
     /// ```
     ValidDescribeCallback,
-    // Because this rule has one test case not passed, will set to correctness when finished.
     restriction
 );
 
