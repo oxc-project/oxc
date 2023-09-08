@@ -1,0 +1,5 @@
+(function () {
+
+  exports.x = 'foo'
+
+}())

@@ -1,0 +1,6 @@
+{
+  "bin": {
+    "binObject": "./index.js"
+  },
+  "private": false
+}

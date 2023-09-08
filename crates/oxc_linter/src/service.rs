@@ -139,6 +139,10 @@ impl Runtime {
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         let Ok(source_type) = SourceType::from_path(path) else { return };
 
+        if self.module_map.contains_key(path) {
+            return;
+        }
+
         if self.init_cache_state(path) {
             return;
         }
@@ -205,17 +209,22 @@ impl Runtime {
 
             // Retrieve all dependency modules from this module.
             module_record
-                .module_requests
+                .requested_modules
                 .keys()
                 .cloned()
                 .par_bridge()
                 .map_with(&self.resolver, |resolver, specifier| {
-                    resolver.resolve(dir, &specifier).ok()
+                    resolver.resolve(dir, &specifier).ok().map(|r| (specifier, r))
                 })
                 .flatten()
-                .filter(|r| !self.module_map.contains_key(r.path()))
-                .for_each_with(tx_error, |tx_error, resolution| {
-                    self.process_path(resolution.path(), tx_error);
+                .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
+                    let path = resolution.path();
+                    self.process_path(path, tx_error);
+                    if let Some(target_module_record) = self.module_map.get(path) {
+                        module_record
+                            .loaded_modules
+                            .insert(specifier, Arc::clone(&target_module_record));
+                    }
                 });
         }
 

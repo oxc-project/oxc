@@ -19,7 +19,7 @@ fn data() -> Vec<(PathBuf, &'static str)> {
     vec![
         (cwd.clone(), "./"),
         (cwd.clone(), "./lib/index"),
-        (cwd, "/absolute/path"),
+        (cwd.clone(), "/absolute/path"),
         // query fragment
         (f.clone(), "./main1.js#fragment?query"),
         (f.clone(), "m1/a.js?query#fragment"),
@@ -54,19 +54,52 @@ fn data() -> Vec<(PathBuf, &'static str)> {
         (f.join("node_modules/dash"), "dash-name"),
         (f.join("node_modules/dash-name"), "dash"),
         (f.join("node_modules/dash-name"), "dash-name"),
+        // alias
+        (cwd.clone(), "aaa"),
+        (cwd.clone(), "ggg"),
+        (cwd.clone(), "rrr"),
+        (cwd.clone(), "@"),
+        (cwd, "@@@"),
     ]
 }
 
 fn oxc_resolver() -> oxc_resolver::Resolver {
     use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
+    let alias_value = AliasValue::Path("./".into());
     Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), ".js".into()],
         condition_names: vec!["webpack".into()],
-        alias: vec![("/absolute/path".into(), vec![AliasValue::Path("./".into())])],
         alias_fields: vec![vec!["browser".into()]],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
             (".mjs".into(), vec![".mts".into()]),
+        ],
+        // Real projects LOVE setting these many aliases.
+        // I saw them with my own eyes.
+        alias: vec![
+            ("/absolute/path".into(), vec![alias_value.clone()]),
+            ("aaa".into(), vec![alias_value.clone()]),
+            ("bbb".into(), vec![alias_value.clone()]),
+            ("ccc".into(), vec![alias_value.clone()]),
+            ("ddd".into(), vec![alias_value.clone()]),
+            ("eee".into(), vec![alias_value.clone()]),
+            ("fff".into(), vec![alias_value.clone()]),
+            ("ggg".into(), vec![alias_value.clone()]),
+            ("hhh".into(), vec![alias_value.clone()]),
+            ("iii".into(), vec![alias_value.clone()]),
+            ("jjj".into(), vec![alias_value.clone()]),
+            ("kkk".into(), vec![alias_value.clone()]),
+            ("lll".into(), vec![alias_value.clone()]),
+            ("mmm".into(), vec![alias_value.clone()]),
+            ("nnn".into(), vec![alias_value.clone()]),
+            ("ooo".into(), vec![alias_value.clone()]),
+            ("ppp".into(), vec![alias_value.clone()]),
+            ("qqq".into(), vec![alias_value.clone()]),
+            ("rrr".into(), vec![alias_value.clone()]),
+            ("sss".into(), vec![alias_value.clone()]),
+            ("@".into(), vec![alias_value.clone()]),
+            ("@@".into(), vec![alias_value.clone()]),
+            ("@@@".into(), vec![alias_value]),
         ],
         ..ResolveOptions::default()
     })
@@ -91,7 +124,7 @@ fn bench_resolver(c: &mut Criterion) {
         });
     });
 
-    group.bench_with_input(BenchmarkId::from_parameter("single-thread"), &data, |b, data| {
+    group.bench_with_input(BenchmarkId::from_parameter("multi-thread"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             data.par_iter().for_each(|(path, request)| {

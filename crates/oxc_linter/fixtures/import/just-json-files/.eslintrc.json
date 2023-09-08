@@ -1,0 +1,22 @@
+{
+  "root": true,
+
+  "plugins": ["import", "json"],
+
+  "rules": {
+    "import/no-unused-modules": [
+      "error",
+      {
+        "missingExports": false,
+        "unusedExports": true
+      }
+    ]
+  },
+
+  "overrides": [
+    {
+      "files": "*.json",
+      "extends": "plugin:json/recommended"
+    }
+  ]
+}

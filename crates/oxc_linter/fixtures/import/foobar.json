@@ -1,0 +1,15 @@
+{
+  "action": "set",
+  "node": {
+    "key": "/foo",
+    "value": "foo",
+    "modifiedIndex": 1438,
+    "createdIndex": 1438
+  },
+  "prevNode": {
+    "key": "/foo",
+    "value": "bar",
+    "modifiedIndex": 1437,
+    "createdIndex": 1437
+  }
+}
