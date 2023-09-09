@@ -1,6 +1,6 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
@@ -125,8 +125,12 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Build the module record with a shallow AST visit
     #[must_use]
-    pub fn build_module_record(mut self, program: &'a Program<'a>) -> Self {
-        let mut module_record_builder = ModuleRecordBuilder::default();
+    pub fn build_module_record(
+        mut self,
+        resolved_absolute_path: PathBuf,
+        program: &'a Program<'a>,
+    ) -> Self {
+        let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
         module_record_builder.visit(program);
         self.module_record = Arc::new(module_record_builder.build());
         self

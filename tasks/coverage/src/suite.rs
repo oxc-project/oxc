@@ -303,7 +303,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(parser_ret.trivias)
             .with_check_syntax_error(true)
-            .build_module_record(program)
+            .build_module_record(PathBuf::new(), program)
             .build(program);
         if let Some(res) = self.check_semantic(&semantic_ret.semantic) {
             return res;

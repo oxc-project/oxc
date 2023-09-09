@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod named;
+    pub mod no_self_import;
 }
 
 mod deepscan {
@@ -202,5 +203,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_interpolation_in_snapshots,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
-    import::named
+    import::named,
+    import::no_self_import
 }

@@ -61,9 +61,19 @@ impl Tester {
         Self::new(rule_name, expect_pass, expect_fail)
     }
 
-    /// Change the file name extension
-    pub fn with_rule_path_extension(mut self, extension: &str) -> Self {
-        self.rule_path.set_extension(extension);
+    pub fn update_expect_pass_fail<S: Into<String>>(
+        mut self,
+        expect_pass: Vec<S>,
+        expect_fail: Vec<S>,
+    ) -> Self {
+        self.expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
+        self.expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
+        self
+    }
+
+    /// Change the path
+    pub fn change_rule_path(mut self, path: &str) -> Self {
+        self.rule_path = self.current_working_directory.join(path);
         self
     }
 
@@ -87,6 +97,13 @@ impl Tester {
     pub fn test_and_snapshot(&mut self) {
         self.test();
         self.snapshot();
+    }
+
+    pub fn snapshot(&self) {
+        let name = self.rule_name.replace('-', "_");
+        insta::with_settings!({ prepend_module_to_snapshot => false, }, {
+            insta::assert_snapshot!(name.clone(), self.snapshot, &name);
+        });
     }
 
     fn test_pass(&mut self) {
@@ -114,13 +131,6 @@ impl Tester {
                 unreachable!()
             }
         }
-    }
-
-    fn snapshot(&self) {
-        let name = self.rule_name.replace('-', "_");
-        insta::with_settings!({ prepend_module_to_snapshot => false, }, {
-            insta::assert_snapshot!(name.clone(), self.snapshot, &name);
-        });
     }
 
     fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
@@ -152,11 +162,17 @@ impl Tester {
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
+        let diagnostic_path = if self.import_plugin {
+            self.rule_path.strip_prefix(&self.current_working_directory).unwrap()
+        } else {
+            &self.rule_path
+        }
+        .to_string_lossy();
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
-                self.rule_path.to_string_lossy(),
+                diagnostic_path.clone(),
                 source_text.to_string(),
             ));
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();

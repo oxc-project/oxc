@@ -192,7 +192,7 @@ impl Runtime {
         let semantic_builder = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(program);
+            .build_module_record(path.to_path_buf(), program);
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().import_plugin {
