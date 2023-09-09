@@ -150,7 +150,7 @@ mod module_record_tests {
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
-            local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
+            import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);
@@ -165,7 +165,7 @@ mod module_record_tests {
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(23, 28))),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
-            local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
+            import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);

@@ -86,6 +86,68 @@ expression: named
    ╰────
   help: does "./re-export-names" have the export "a"?
 
+  ⚠ eslint-plugin-import(named): named import "bar" not found
+   ╭─[named.js:1:1]
+ 1 │ export { bar } from './bar'
+   ·          ───
+   ╰────
+  help: does "./bar" have the export "bar"?
+
+  × Unexpected token
+   ╭─[named.js:1:1]
+ 1 │ export bar2, { bar } from './bar'
+   ·        ────
+   ╰────
+
+  ⚠ eslint-plugin-import(named): named import "baz" not found
+   ╭─[named.js:1:1]
+ 1 │ const { baz } = require('./bar')
+   ·         ───
+   ╰────
+  help: does "./bar" have the export "baz"?
+
+  ⚠ eslint-plugin-import(named): named import "baz" not found
+   ╭─[named.js:1:1]
+ 1 │ let { baz } = require('./bar')
+   ·       ───
+   ╰────
+  help: does "./bar" have the export "baz"?
+
+  ⚠ eslint-plugin-import(named): named import "bar" not found
+   ╭─[named.js:1:1]
+ 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
+   ·              ───
+   ╰────
+  help: does "./bar" have the export "bar"?
+
+  ⚠ eslint-plugin-import(named): named import "bop" not found
+   ╭─[named.js:1:1]
+ 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
+   ·                   ───
+   ╰────
+  help: does "./bar" have the export "bop"?
+
+  ⚠ eslint-plugin-import(named): named import "a" not found
+   ╭─[named.js:1:1]
+ 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
+   ·                                               ─
+   ╰────
+  help: does "./re-export-names" have the export "a"?
+
+  ⚠ eslint-plugin-import(named): named import "defExport" not found
+   ╭─[named.js:1:1]
+ 1 │ const { default: defExport } = require('./named-exports')
+   ·                  ─────────
+   ╰────
+  help: does "./named-exports" have the export "defExport"?
+
+  ⚠ eslint-plugin-import(named): named import "baz" not found
+   ╭─[named.js:1:1]
+ 1 │ import { baz } from 'es6-module'
+   ·          ───
+   ╰────
+  help: does "es6-module" have the export "baz"?
+
   ⚠ eslint-plugin-import(named): named import "bap" not found
    ╭─[named.js:1:1]
  1 │ import { foo, bar, bap } from './re-export-default'
@@ -106,5 +168,19 @@ expression: named
    ·          ───
    ╰────
   help: does "./export-all" have the export "bar"?
+
+  ⚠ eslint-plugin-import(named): named import "NotExported" not found
+   ╭─[named.js:1:1]
+ 1 │ import { NotExported } from './typescript-export-assign-object'
+   ·          ───────────
+   ╰────
+  help: does "./typescript-export-assign-object" have the export "NotExported"?
+
+  ⚠ eslint-plugin-import(named): named import "FooBar" not found
+   ╭─[named.js:1:1]
+ 1 │ import { FooBar } from './typescript-export-assign-object'
+   ·          ──────
+   ╰────
+  help: does "./typescript-export-assign-object" have the export "FooBar"?
 
 
