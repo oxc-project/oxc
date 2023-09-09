@@ -47,24 +47,24 @@ where
 {
     let source_type = SourceType::default();
     let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
-    let snapshot: String =
-        sources
-            .into_iter()
-            .map(|source| {
-                let minified = Minifier::new(source, source_type, options).build();
-                format!(
-            "==================================== SOURCE ====================================
+    let snapshot: String = sources
+        .into_iter()
+        .map(|source| {
+            let minified = Minifier::new(source, source_type, options).build();
+            format!(
+                "==================================== SOURCE ====================================
 {source}
 
 =================================== MINIFIED ===================================
 {minified}
 
-")
-            })
-            .fold(String::new(), |mut acc, snapshot| {
-                acc.push_str(snapshot.as_str());
-                acc
-            });
+"
+            )
+        })
+        .fold(String::new(), |mut acc, snapshot| {
+            acc.push_str(snapshot.as_str());
+            acc
+        });
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
 
         insta::assert_snapshot!(name, snapshot);
