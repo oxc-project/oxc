@@ -1,0 +1,304 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_explicit_any
+---
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const number: any = 1
+   ·               ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): any {}
+   ·                     ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): Array<any>
+   ·                           ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): any[] {}
+   ·                     ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): number { return 1 }
+   ·                               ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: any[]): number { return 1 }
+   ·                         ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): Array<any>
+   ·                               ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): Array<any>
+   ·                                            ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): Array<Array<any>>
+   ·                                 ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any[]>): Array<any>
+   ·                               ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any[]>): Array<any>
+   ·                                              ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { constructor(param: Array<any>) {} }
+   ·                                          ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: any }
+   ·                          ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: Array<any> }
+   ·                                ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: any[] }
+   ·                          ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: Array<Array<any>> }
+   ·                                      ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  × Unexpected token
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { constructor(param: Array<any>) {} }
+   ·                                                    ─
+   ╰────
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: any }
+   ·                              ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: Array<any> }
+   ·                                    ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: any[] }
+   ·                              ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: Array<Array<any>> }
+   ·                                          ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  × Unexpected token
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { constructor(param: Array<any>) {} }
+   ·                                             ─
+   ╰────
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: any }
+   ·                       ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: Array<any> }
+   ·                             ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: any[] }
+   ·                       ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: Array<Array<any>> }
+   ·                                   ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | any }
+   ·                                ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<any> }
+   ·                                      ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<any[]> }
+   ·                                      ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<Array<any>> }
+   ·                                            ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & any }
+   ·                                ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & any[] }
+   ·                                ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<any> }
+   ·                                      ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<Array<any>> }
+   ·                                            ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<any[]> }
+   ·                                      ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Foo<T = any> extends Bar<any> {}
+   ·               ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Foo<T = any> extends Bar<any> {}
+   ·                                ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ abstract class Foo<T = any> extends Bar<any> {}
+   ·                        ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ abstract class Foo<T = any> extends Bar<any> {}
+   ·                                         ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function test<T extends Partial<any>>() {}
+   ·                                 ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const test = <T extends Partial<any>>() => {};
+   ·                                 ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function foo(a: number, ...rest: any[]): void { return; }
+   ·                                  ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+  ⚠ Unexpected any. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type Any = any;
+   ·            ───
+   ╰────
+  help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
+
+
