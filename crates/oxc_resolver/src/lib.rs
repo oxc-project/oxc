@@ -185,13 +185,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     return Err(err);
                 }
                 // enhanced-resolve: try fallback
-                self.load_alias(
-                    &cached_path,
-                    Some(specifier.path()),
-                    &self.options.fallback,
-                    &mut ctx,
-                )
-                .and_then(|value| value.ok_or(err))
+                self.load_alias(&cached_path, specifier.path(), &self.options.fallback, &mut ctx)
+                    .and_then(|value| value.ok_or(err))
             })?;
         let path = self.load_realpath(&cached_path)?;
         // enhanced-resolve: restrictions
@@ -231,9 +226,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         // enhanced-resolve: try alias
-        if let Some(path) =
-            self.load_alias(cached_path, Some(specifier), &self.options.alias, ctx)?
-        {
+        if let Some(path) = self.load_alias(cached_path, specifier, &self.options.alias, ctx)? {
             return Ok(path);
         }
 
@@ -583,7 +576,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         // enhanced-resolve: try file as alias
-        if let Some(path) = self.load_alias(cached_path, None, &self.options.alias, ctx)? {
+        let alias_specifier = cached_path.path().to_string_lossy();
+        if let Some(path) =
+            self.load_alias(cached_path, &alias_specifier, &self.options.alias, ctx)?
+        {
             return Ok(Some(path));
         }
         if cached_path.is_file(&self.cache.fs) {
@@ -784,33 +780,30 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_alias(
         &self,
         cached_path: &CachedPath,
-        specifier: Option<&str>,
+        specifier: &str,
         aliases: &Alias,
         ctx: &mut ResolveContext,
     ) -> ResolveState {
-        let inner_request =
-            specifier.map_or_else(|| cached_path.path().to_string_lossy(), Cow::Borrowed);
         for (alias_key_raw, specifiers) in aliases {
             let from = alias_key_raw.strip_suffix('$');
-            let only_module = from.is_some();
             let alias_key = from.unwrap_or(alias_key_raw);
-            let exact_match = only_module && inner_request == alias_key;
-            if !(exact_match || Self::strip_package_name(&inner_request, alias_key).is_some()) {
+            let exact_match = from.is_some() && specifier == alias_key;
+            if !(exact_match || Self::strip_package_name(specifier, alias_key).is_some()) {
                 continue;
             }
             for r in specifiers {
                 match r {
                     AliasValue::Path(alias_value) => {
-                        let specifier =
+                        let new_specifier =
                             Specifier::parse(alias_value).map_err(ResolveError::Specifier)?;
 
                         // `#` can be a fragment or a path, try fragment as path first
-                        if specifier.query.is_none() && specifier.fragment.is_some() {
+                        if new_specifier.query.is_none() && new_specifier.fragment.is_some() {
                             if let Some(path) = self.load_alias_value(
                                 cached_path,
                                 alias_key,
                                 alias_value, // pass in original alias value, not parsed
-                                inner_request.as_ref(),
+                                specifier,
                                 ctx,
                             )? {
                                 return Ok(Some(path));
@@ -820,12 +813,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         // Then try path without query and fragment
                         let old_query = ctx.query.clone();
                         let old_fragment = ctx.fragment.clone();
-                        ctx.with_query_fragment(specifier.query, specifier.fragment);
+                        ctx.with_query_fragment(new_specifier.query, new_specifier.fragment);
                         if let Some(path) = self.load_alias_value(
                             cached_path,
                             alias_key,
-                            specifier.path(), // pass in passed alias value
-                            inner_request.as_ref(),
+                            new_specifier.path(), // pass in passed alias value
+                            specifier,
                             ctx,
                         )? {
                             return Ok(Some(path));
