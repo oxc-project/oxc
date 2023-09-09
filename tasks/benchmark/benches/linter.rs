@@ -1,11 +1,3 @@
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
-#[cfg(target_os = "windows")]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use std::rc::Rc;
 
 use oxc_allocator::Allocator;

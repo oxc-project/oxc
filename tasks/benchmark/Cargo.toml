@@ -46,11 +46,5 @@ rayon                     = { workspace = true }
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true }
-
 [features]
 codspeed = ["codspeed-criterion-compat"]
