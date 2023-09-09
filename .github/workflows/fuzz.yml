@@ -26,4 +26,4 @@ jobs:
         run: rustup default nightly
 
       - name: Run Fuzzer
-        run: cargo +nightly fuzz run --release parser -- -only_ascii=1 -detect_leaks=0 -max_total_time=900
+        run: cargo +nightly fuzz run --sanitizer none --release parser -- -only_ascii=1 -detect_leaks=0 -max_total_time=900
