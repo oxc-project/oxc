@@ -26,16 +26,16 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@v3
 
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
-
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
           shared-key: benchmark
           save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Install codspeed
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-codspeed
 
       - name: Build Benchmark
         run: cargo codspeed build --features codspeed -p oxc_benchmark
