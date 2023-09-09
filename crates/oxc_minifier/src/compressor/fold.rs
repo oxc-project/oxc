@@ -9,7 +9,8 @@ use num_bigint::BigInt;
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
     get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
-    get_side_free_string_value, is_exact_int64, IsLiteralValue, MayHaveSideEffects, NumberValue,
+    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
+    MayHaveSideEffects, NumberValue,
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -200,6 +201,9 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
+                BinaryOperator::Addition => {
+                    self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
+                }
                 _ => None,
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
@@ -227,6 +231,49 @@ impl<'a> Compressor<'a> {
         };
         if let Some(folded_expr) = folded_expr {
             *expr = folded_expr;
+        }
+    }
+
+    fn try_fold_addition<'b>(
+        &mut self,
+        span: Span,
+        left: &'b Expression<'a>,
+        right: &'b Expression<'a>,
+    ) -> Option<Expression<'a>> {
+        // skip any potentially dangerous compressions
+        if left.may_have_side_effects() || right.may_have_side_effects() {
+            return None;
+        }
+
+        let left_type = Ty::from(left);
+        let right_type = Ty::from(right);
+        match (left_type, right_type) {
+            (Ty::Undetermined, _) | (_, Ty::Undetermined) => None,
+
+            // string concatenation
+            (Ty::Str, _) | (_, Ty::Str) => {
+                // no need to use get_side_effect_free_string_value b/c we checked for side effects
+                // at the beginning
+                let Some(left_string) = get_string_value(left) else { return None };
+                let Some(right_string) = get_string_value(right) else { return None };
+                // let value = left_string.to_owned().
+                let value = left_string + right_string;
+                let string_literal = self.hir.string_literal(span, Atom::from(value));
+                Some(self.hir.literal_string_expression(string_literal))
+            },
+
+            // number addition
+            (Ty::Number, _) | (_, Ty::Number)
+            // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
+                | (Ty::Boolean, Ty::Boolean) => {
+                let Some( left_number ) = get_number_value(left) else { return None };
+                let Some( right_number ) = get_number_value(right) else { return None };
+                let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
+                let number_literal = self.hir.number_literal(span, value, "", NumberBase::Decimal);
+                // todo: add raw &str
+                Some(self.hir.literal_number_expression(number_literal))
+            },
+            _ => None
         }
     }
 

@@ -1687,6 +1687,7 @@ name = "oxc_minifier"
 version = "0.1.3"
 dependencies = [
  "bitflags 2.4.0",
+ "insta",
  "itertools 0.11.0",
  "jemallocator",
  "mimalloc",

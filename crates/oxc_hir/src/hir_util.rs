@@ -245,6 +245,41 @@ impl NumberValue {
     }
 }
 
+impl std::ops::Add<Self> for NumberValue {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        match self {
+            Self::Number(num) => match other {
+                Self::Number(other_num) => Self::Number(num + other_num),
+                Self::PositiveInfinity => Self::PositiveInfinity,
+                Self::NegativeInfinity => Self::NegativeInfinity,
+                Self::NaN => Self::NaN,
+            },
+            Self::NaN => Self::NaN,
+            Self::PositiveInfinity => match other {
+                Self::NaN | Self::NegativeInfinity => Self::NaN,
+                _ => Self::PositiveInfinity,
+            },
+            Self::NegativeInfinity => match other {
+                Self::NaN | Self::PositiveInfinity => Self::NaN,
+                _ => Self::NegativeInfinity,
+            },
+        }
+    }
+}
+
+impl TryFrom<NumberValue> for f64 {
+    type Error = ();
+    fn try_from(value: NumberValue) -> Result<Self, Self::Error> {
+        match value {
+            NumberValue::Number(num) => Ok(num),
+            NumberValue::PositiveInfinity => Ok(Self::INFINITY),
+            NumberValue::NegativeInfinity => Ok(Self::NEG_INFINITY),
+            NumberValue::NaN => Err(()),
+        }
+    }
+}
+
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
 }
@@ -505,7 +540,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
 /// Gets the value of a node as a String, or `None` if it cannot be converted. When it returns a
 /// String, this method effectively emulates the `String()` JavaScript cast function.
 /// This method does not consider whether `expr` may have side effects.
-fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
+pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
     match expr {
         Expression::StringLiteral(string_literal) => {
             Some(Cow::Borrowed(string_literal.value.as_str()))
