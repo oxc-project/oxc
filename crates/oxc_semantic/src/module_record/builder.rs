@@ -1,16 +1,22 @@
+use std::path::PathBuf;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, GetSpan, Span};
 #[allow(clippy::wildcard_imports)]
 use oxc_syntax::module_record::*;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ModuleRecordBuilder {
     pub module_record: ModuleRecord,
     export_entries: Vec<ExportEntry>,
 }
 
 impl ModuleRecordBuilder {
+    pub fn new(resolved_absolute_path: PathBuf) -> Self {
+        Self { module_record: ModuleRecord::new(resolved_absolute_path), ..Self::default() }
+    }
+
     pub fn visit(&mut self, program: &Program) {
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.

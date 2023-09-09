@@ -200,7 +200,7 @@ fn test() {
     ];
 
     Tester::new_without_config(Named::NAME, pass, fail)
-        .with_rule_path_extension("js")
+        .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();
 }

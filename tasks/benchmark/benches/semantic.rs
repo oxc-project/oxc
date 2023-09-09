@@ -12,6 +12,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
+use std::path::PathBuf;
 
 fn bench_semantic(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("semantic");
@@ -26,7 +27,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 b.iter_with_large_drop(|| {
                     SemanticBuilder::new(source_text, source_type)
-                        .build_module_record(program)
+                        .build_module_record(PathBuf::new(), program)
                         .build(program)
                 });
             },
