@@ -20,7 +20,7 @@ use crate::{
 #[derive(Default)]
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
-    cache: DashSet<CachedPath, BuildHasherDefault<FxHasher>>,
+    cache: DashSet<CachedPath, BuildHasherDefault<IdentityHasher>>,
     tsconfigs: DashMap<PathBuf, Arc<TsConfig>, BuildHasherDefault<FxHasher>>,
 }
 
@@ -35,12 +35,20 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     pub fn value(&self, path: &Path) -> CachedPath {
-        if let Some(cache_entry) = self.cache.get(path) {
+        let hash = {
+            let mut hasher = FxHasher::default();
+            path.hash(&mut hasher);
+            hasher.finish()
+        };
+        if let Some(cache_entry) = self.cache.get((hash, path).borrow() as &dyn CacheKey) {
             return cache_entry.clone();
         }
         let parent = path.parent().map(|p| self.value(p));
-        let data =
-            CachedPath(Arc::new(CachedPathImpl::new(path.to_path_buf().into_boxed_path(), parent)));
+        let data = CachedPath(Arc::new(CachedPathImpl::new(
+            hash,
+            path.to_path_buf().into_boxed_path(),
+            parent,
+        )));
         self.cache.insert(data.clone());
         data
     }
@@ -128,7 +136,7 @@ pub struct CachedPath(Arc<CachedPathImpl>);
 
 impl Hash for CachedPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.path.hash(state);
+        self.0.hash.hash(state);
     }
 }
 
@@ -147,9 +155,9 @@ impl Deref for CachedPath {
     }
 }
 
-impl Borrow<Path> for CachedPath {
-    fn borrow(&self) -> &Path {
-        &self.0.path
+impl<'a> Borrow<dyn CacheKey + 'a> for CachedPath {
+    fn borrow(&self) -> &(dyn CacheKey + 'a) {
+        self
     }
 }
 
@@ -159,7 +167,14 @@ impl AsRef<CachedPathImpl> for CachedPath {
     }
 }
 
+impl CacheKey for CachedPath {
+    fn tuple(&self) -> (u64, &Path) {
+        (self.hash, &self.path)
+    }
+}
+
 pub struct CachedPathImpl {
+    hash: u64,
     path: Box<Path>,
     parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
@@ -170,8 +185,9 @@ pub struct CachedPathImpl {
 }
 
 impl CachedPathImpl {
-    fn new(path: Box<Path>, parent: Option<CachedPath>) -> Self {
+    fn new(hash: u64, path: Box<Path>, parent: Option<CachedPath>) -> Self {
         Self {
+            hash,
             path,
             parent,
             meta: OnceLock::new(),
@@ -286,5 +302,53 @@ impl CachedPathImpl {
                     .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
             })
             .cloned()
+    }
+}
+
+/// Memoized cache key, code adapted from <https://stackoverflow.com/a/50478038>.
+trait CacheKey {
+    fn tuple(&self) -> (u64, &Path);
+}
+
+impl Hash for dyn CacheKey + '_ {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.tuple().0.hash(state);
+    }
+}
+
+impl PartialEq for dyn CacheKey + '_ {
+    fn eq(&self, other: &Self) -> bool {
+        self.tuple().1 == other.tuple().1
+    }
+}
+
+impl Eq for dyn CacheKey + '_ {}
+
+impl<'a> CacheKey for (u64, &'a Path) {
+    fn tuple(&self) -> (u64, &Path) {
+        (self.0, self.1)
+    }
+}
+
+impl<'a> Borrow<dyn CacheKey + 'a> for (u64, &'a Path) {
+    fn borrow(&self) -> &(dyn CacheKey + 'a) {
+        self
+    }
+}
+
+/// Since the cache key is memoized, use an identity hasher
+/// to avoid double cache.
+#[derive(Default)]
+struct IdentityHasher(u64);
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, _: &[u8]) {
+        unreachable!("Invalid use of IdentityHasher")
+    }
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+    fn finish(&self) -> u64 {
+        self.0
     }
 }
