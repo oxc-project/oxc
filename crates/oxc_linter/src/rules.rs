@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod named;
+    pub mod no_cycle;
     pub mod no_self_import;
 }
 
@@ -206,5 +207,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     import::named,
+    import::no_cycle,
     import::no_self_import
 }
