@@ -32,6 +32,11 @@ pub struct CompressOptions {
     /// Default `false`
     pub drop_console: bool,
 
+    /// Attempt to evaluate constant expressions
+    ///
+    /// Default `true`
+    pub evaluate: bool,
+
     /// Join consecutive var statements.
     ///
     /// Default `true`
@@ -54,6 +59,7 @@ impl Default for CompressOptions {
             booleans: true,
             drop_debugger: true,
             drop_console: false,
+            evaluate: true, 
             join_vars: true,
             loops: true,
             typeofs: true,

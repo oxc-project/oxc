@@ -201,7 +201,7 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
-                BinaryOperator::Addition => {
+                BinaryOperator::Addition if self.options.evaluate => {
                     self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
                 }
                 _ => None,
