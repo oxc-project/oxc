@@ -15,7 +15,7 @@ struct NoConsoleDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConsole {
-    /// A list of allowed methods to be used.
+    /// A list of methods allowed to be used.
     /// 
     /// ```
     /// // allowed: ["info"]
