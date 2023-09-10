@@ -27,6 +27,7 @@ fn addition_folding_snapshots() {
             "var x = 1; x + 1 === 2",
             "var y = 1; 1 + y === 2",
             "null - Number(1)",
+            "1 + 1.0000001",
         ],
     );
 }

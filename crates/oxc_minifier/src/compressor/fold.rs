@@ -201,6 +201,12 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
+                // NOTE: string concat folding breaks our current evaluation of Test262 tests. The
+                // minifier is tested by comparing output of running the minifier once and twice,
+                // respectively. Since Test262Error messages include string concats, the outputs
+                // don't match (even though the produced code is valid). Additionally, We'll likely
+                // want to add `evaluate` checks for all constant folding, not just additions, but
+                // we're adding this here until a decision is made.
                 BinaryOperator::Addition if self.options.evaluate => {
                     self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
                 }
@@ -270,7 +276,7 @@ impl<'a> Compressor<'a> {
                 let Some( right_number ) = get_number_value(right) else { return None };
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
                 // Float if value has a fractional part, otherwise Decimal
-                let number_base = if value.fract() <= f64::EPSILON { NumberBase::Decimal } else { NumberBase::Float };
+                let number_base = if is_exact_int64(value) { NumberBase::Decimal } else { NumberBase::Float };
                 let number_literal = self.hir.number_literal(span, value, "", number_base);
                 // todo: add raw &str
                 Some(self.hir.literal_number_expression(number_literal))
