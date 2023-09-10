@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -16,7 +16,7 @@ struct NoConsoleDiagnostic(#[label] pub Span);
 #[derive(Debug, Default, Clone)]
 pub struct NoConsole {
     /// A list of methods allowed to be used.
-    /// 
+    ///
     /// ```javascript
     /// // allowed: ['info']
     /// console.log('foo'); // will error
@@ -30,9 +30,9 @@ declare_oxc_lint!(
     /// Disallows using the global console object.
     ///
     /// ### Why is this bad?
-    /// In JavaScript that is designed to be executed in the browser, 
-    /// it’s considered a best practice to avoid using methods on console. 
-    /// Such messages are considered to be for debugging purposes and therefore 
+    /// In JavaScript that is designed to be executed in the browser,
+    /// it’s considered a best practice to avoid using methods on console.
+    /// Such messages are considered to be for debugging purposes and therefore
     /// not suitable to ship to the client.
     ///
     /// ### Example
@@ -46,35 +46,41 @@ declare_oxc_lint!(
 impl Rule for NoConsole {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self {
-             allow: value.get(0)
-             .and_then(|v| v.get("allow"))
-             .and_then(serde_json::Value::as_array)
-             .map(|v| {
-                v.iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(ToString::to_string)
-                .collect()
-             })
-             .unwrap_or_default()
-            }
+            allow: value
+                .get(0)
+                .and_then(|v| v.get("allow"))
+                .and_then(serde_json::Value::as_array)
+                .map(|v| {
+                    v.iter()
+                        .filter_map(serde_json::Value::as_str)
+                        .map(ToString::to_string)
+                        .collect()
+                })
+                .unwrap_or_default(),
+        }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let module_record = ctx.semantic().module_record();
-        
+
         for import_entry in &module_record.import_entries {
             if import_entry.local_name.name().as_str() == "console" {
                 return;
             }
         }
 
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) = node.kind() {
-            if expr.object.without_parenthesized().get_identifier_reference().is_some_and(|x| x.name == "console") {
-
-                if !allowed_method(&self.allow,expr.property.name.as_str()) {
+        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
+            node.kind()
+        {
+            if expr
+                .object
+                .without_parenthesized()
+                .get_identifier_reference()
+                .is_some_and(|x| x.name == "console")
+            {
+                if !allowed_method(&self.allow, expr.property.name.as_str()) {
                     ctx.diagnostic(NoConsoleDiagnostic(expr.property.span));
                 }
-
             }
         }
     }
