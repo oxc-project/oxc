@@ -59,7 +59,7 @@ impl Default for CompressOptions {
             booleans: true,
             drop_debugger: true,
             drop_console: false,
-            evaluate: true, 
+            evaluate: true,
             join_vars: true,
             loops: true,
             typeofs: true,

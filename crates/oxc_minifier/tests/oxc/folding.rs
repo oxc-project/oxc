@@ -26,7 +26,7 @@ fn addition_folding_snapshots() {
             "let x = 1; let y = x + 1;",
             "var x = 1; x + 1 === 2",
             "var y = 1; 1 + y === 2",
-            "null - Number(1)"
+            "null - Number(1)",
         ],
     );
 }
