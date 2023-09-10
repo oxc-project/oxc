@@ -269,7 +269,9 @@ impl<'a> Compressor<'a> {
                 let Some( left_number ) = get_number_value(left) else { return None };
                 let Some( right_number ) = get_number_value(right) else { return None };
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
-                let number_literal = self.hir.number_literal(span, value, "", NumberBase::Decimal);
+                // Float if value has a fractional part, otherwise Decimal
+                let number_base = if value.fract() <= f64::EPSILON { NumberBase::Decimal } else { NumberBase::Float };
+                let number_literal = self.hir.number_literal(span, value, "", number_base);
                 // todo: add raw &str
                 Some(self.hir.literal_number_expression(number_literal))
             },
