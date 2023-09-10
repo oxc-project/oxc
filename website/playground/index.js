@@ -455,8 +455,10 @@ class Playground {
     document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
     document.getElementById("query-args-or-outputs").style.display = "none";
-    document.getElementById("duration").style.display = "inline";
     document.getElementById("query-results-viewer").style.display = "none";
+    // disable #duration and #panel during query view
+    document.getElementById("duration").style.display = "inline";
+    document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -495,6 +497,7 @@ class Playground {
         document.getElementById("query-results-viewer").style.display =
           "inline";
         document.getElementById("duration").style.display = "none";
+        document.getElementById("panel").style.display = "none";
         let savedQuery = getStringFromStorage(STORAGE_KEY_QUERY);
         if (!savedQuery) {
           text = `
