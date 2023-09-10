@@ -3,7 +3,7 @@
 mod fold;
 mod util;
 
-use oxc_allocator::{Allocator, Vec, oxc_vec};
+use oxc_allocator::{oxc_vec, Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
 use oxc_semantic::Semantic;

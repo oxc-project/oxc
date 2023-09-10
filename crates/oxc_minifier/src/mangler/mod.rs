@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_allocator::{Allocator, oxc_vec, Vec as OxcVec};
+use oxc_allocator::{oxc_vec, Allocator, Vec as OxcVec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::Visit;
@@ -68,7 +68,7 @@ impl Mangler {
 /// ```
 pub struct ManglerBuilder<'a> {
     semantic: SemanticBuilder<'a>,
-    allocator: &'a Allocator
+    allocator: &'a Allocator,
 }
 
 impl<'a> Visit<'a> for ManglerBuilder<'a> {
@@ -155,11 +155,10 @@ impl<'a> ManglerBuilder<'a> {
         let frequencies =
             Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
 
-        let unresolved_references = OxcVec::from_iter_in(scope_tree
-            .root_unresolved_references()
-            .keys(), self.allocator);
-            // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
-            // .filter(|name| name.len() < 5)
+        let unresolved_references =
+            OxcVec::from_iter_in(scope_tree.root_unresolved_references().keys(), self.allocator);
+        // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
+        // .filter(|name| name.len() < 5)
 
         let mut names = Vec::with_capacity(total_number_of_slots);
 
