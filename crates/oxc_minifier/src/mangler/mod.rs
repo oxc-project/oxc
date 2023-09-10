@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use oxc_allocator::{Allocator, oxc_vec, Vec as OxcVec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::Visit;
@@ -67,6 +68,7 @@ impl Mangler {
 /// ```
 pub struct ManglerBuilder<'a> {
     semantic: SemanticBuilder<'a>,
+    allocator: &'a Allocator
 }
 
 impl<'a> Visit<'a> for ManglerBuilder<'a> {
@@ -102,8 +104,8 @@ impl<'a> Visit<'a> for ManglerBuilder<'a> {
 }
 
 impl<'a> ManglerBuilder<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { semantic: SemanticBuilder::new(source_text, source_type) }
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        Self { semantic: SemanticBuilder::new(source_text, source_type), allocator }
     }
 
     #[must_use]
@@ -125,7 +127,7 @@ impl<'a> ManglerBuilder<'a> {
         let mut slots: IndexVec<SymbolId, Slot> = index_vec![0; symbol_table.len()];
 
         // Keep track of the maximum slot number for each scope
-        let mut max_slot_for_scope = vec![0; scope_tree.len()];
+        let mut max_slot_for_scope = oxc_vec![in self.allocator; 0; scope_tree.len()];
 
         // Walk the scope tree and compute the slot number for each scope
         for scope_id in scope_tree.descendants() {
@@ -153,12 +155,11 @@ impl<'a> ManglerBuilder<'a> {
         let frequencies =
             Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
 
-        let unresolved_references = scope_tree
+        let unresolved_references = OxcVec::from_iter_in(scope_tree
             .root_unresolved_references()
-            .keys()
+            .keys(), self.allocator);
             // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
             // .filter(|name| name.len() < 5)
-            .collect::<Vec<_>>();
 
         let mut names = Vec::with_capacity(total_number_of_slots);
 

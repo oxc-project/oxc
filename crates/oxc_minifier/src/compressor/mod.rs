@@ -3,7 +3,7 @@
 mod fold;
 mod util;
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, Vec, oxc_vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
 use oxc_semantic::Semantic;
@@ -139,7 +139,7 @@ impl<'a> Compressor<'a> {
     fn join_vars<'b>(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
         // Collect all the consecutive ranges that contain joinable vars.
         // This is required because Rust prevents in-place vec mutation.
-        let mut ranges = vec![];
+        let mut ranges = self.hir.new_vec();
         let mut range = 0..0;
         let mut i = 1usize;
         let mut capacity = 0usize;

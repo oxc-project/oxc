@@ -48,7 +48,7 @@ impl<'a> Minifier<'a> {
         let _semantic = Compressor::new(&allocator, semantic, self.options.compress).build(program);
         let mut printer = Printer::new(self.source_text.len(), self.options.print);
         if self.options.mangle {
-            let mangler = ManglerBuilder::new(self.source_text, self.source_type).build(program);
+            let mangler = ManglerBuilder::new(&allocator, self.source_text, self.source_type).build(program);
             printer.with_mangler(mangler);
         }
         printer.build(program)

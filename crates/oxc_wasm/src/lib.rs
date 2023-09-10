@@ -221,7 +221,7 @@ impl Oxc {
             let _semantic =
                 Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
             if minifier_options.mangle() {
-                let mangler = ManglerBuilder::new(source_text, source_type).build(hir);
+                let mangler = ManglerBuilder::new(&allocator, source_text, source_type).build(hir);
                 printer.with_mangler(mangler);
             }
 
