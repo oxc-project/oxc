@@ -17,8 +17,8 @@ struct NoConsoleDiagnostic(#[label] pub Span);
 pub struct NoConsole {
     /// A list of methods allowed to be used.
     /// 
-    /// ```
-    /// // allowed: ["info"]
+    /// ```javascript
+    /// // allowed: ['info']
     /// console.log('foo'); // will error
     /// console.info('bar'); // will not error
     /// ```
