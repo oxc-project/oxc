@@ -6,11 +6,11 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::rc::Rc;
+use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{LintContext, Linter};
+use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -29,13 +29,13 @@ fn bench_linter(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)
                     .with_trivias(ret.trivias)
+                    .build_module_record(PathBuf::new(), program)
                     .build(program);
-                let linter = Linter::new();
+                let lint_options =
+                    LintOptions::default().with_filter(vec![(AllowWarnDeny::Deny, "all".into())]);
+                let linter = Linter::from_options(lint_options);
                 let semantic = Rc::new(semantic_ret.semantic);
-                b.iter_with_large_drop(|| {
-                    let ctx = LintContext::new(&Rc::clone(&semantic));
-                    linter.run(ctx)
-                });
+                b.iter(|| linter.run(LintContext::new(&semantic)));
             },
         );
     }

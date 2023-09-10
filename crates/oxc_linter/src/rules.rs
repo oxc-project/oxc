@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod named;
+    pub mod no_cycle;
     pub mod no_self_import;
 }
 
@@ -85,6 +86,7 @@ mod typescript {
     pub mod consistent_type_exports;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
+    pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_misused_new;
     pub mod no_namespace;
@@ -182,6 +184,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_type_exports,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
+    typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_non_null_asserted_optional_chain,
     typescript::no_unnecessary_type_constraint,
@@ -204,5 +207,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     import::named,
+    import::no_cycle,
     import::no_self_import
 }
