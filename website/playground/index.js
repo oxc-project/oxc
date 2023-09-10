@@ -186,7 +186,7 @@ class Playground {
       let queryResults = this.oxc.run_query(
         this.parserOptions,
         this.viewer.state.doc.toString(),
-        getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? {}
+        getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? '{}' // must be a string of an empty object as this is a string param
       );
 
       let output =
