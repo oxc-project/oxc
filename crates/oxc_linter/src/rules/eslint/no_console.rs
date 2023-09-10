@@ -72,15 +72,10 @@ impl Rule for NoConsole {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
             node.kind()
         {
-            if expr
-                .object
-                .without_parenthesized()
-                .get_identifier_reference()
-                .is_some_and(|x| x.name == "console")
-            {
-                if !allowed_method(&self.allow, expr.property.name.as_str()) {
-                    ctx.diagnostic(NoConsoleDiagnostic(expr.property.span));
-                }
+            if expr.object.without_parenthesized().get_identifier_reference().is_some_and(|x| {
+                x.name == "console" && !allowed_method(&self.allow, expr.property.name.as_str())
+            }) {
+                ctx.diagnostic(NoConsoleDiagnostic(expr.property.span));
             }
         }
     }
