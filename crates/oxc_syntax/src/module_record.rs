@@ -123,7 +123,7 @@ impl ImportImportName {
     }
 }
 
-/// [`ExportEntry`](https://tc39.es/ecma262/#importentry-record)
+/// [`ExportEntry`](https://tc39.es/ecma262/#exportentry-record)
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry {
     /// Span for the entire export entry

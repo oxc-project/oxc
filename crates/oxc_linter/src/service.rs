@@ -126,11 +126,6 @@ impl Runtime {
 
     fn resolver() -> Resolver {
         Resolver::new(ResolveOptions {
-            condition_names: vec!["node".into(), "import".into()],
-            extension_alias: vec![
-                (".js".into(), vec![".js".into(), ".tsx".into(), "ts".into()]),
-                (".mjs".into(), vec![".mjs".into(), ".mts".into()]),
-            ],
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
             ..ResolveOptions::default()
         })
@@ -138,10 +133,6 @@ impl Runtime {
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         let Ok(source_type) = SourceType::from_path(path) else { return };
-
-        if self.module_map.contains_key(path) {
-            return;
-        }
 
         if self.init_cache_state(path) {
             return;
@@ -200,21 +191,14 @@ impl Runtime {
                 .insert(path.to_path_buf().into_boxed_path(), Arc::clone(&module_record));
             self.update_cache_state(path);
 
-            // Stop if the current module is not marked for lint.
-            if !self.paths.contains(path) {
-                return vec![];
-            }
-
-            let dir = path.parent().unwrap();
-
             // Retrieve all dependency modules from this module.
+            let dir = path.parent().unwrap();
             module_record
                 .requested_modules
                 .keys()
-                .cloned()
                 .par_bridge()
                 .map_with(&self.resolver, |resolver, specifier| {
-                    resolver.resolve(dir, &specifier).ok().map(|r| (specifier, r))
+                    resolver.resolve(dir, specifier).ok().map(|r| (specifier, r))
                 })
                 .flatten()
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
@@ -223,9 +207,14 @@ impl Runtime {
                     if let Some(target_module_record) = self.module_map.get(path) {
                         module_record
                             .loaded_modules
-                            .insert(specifier, Arc::clone(&target_module_record));
+                            .insert(specifier.clone(), Arc::clone(&target_module_record));
                     }
                 });
+
+            // Stop if the current module is not marked for lint.
+            if !self.paths.contains(path) {
+                return vec![];
+            }
         }
 
         let semantic_ret = semantic_builder.build(program);
@@ -249,25 +238,26 @@ impl Runtime {
                 || Arc::new((Mutex::new(CacheStateEntry::ReadyToConstruct), Condvar::new())),
             ))
         };
-
         let mut state = cvar
             .wait_while(lock.lock().unwrap(), |state| {
                 matches!(*state, CacheStateEntry::PendingStore(_))
             })
             .unwrap();
 
-        if self.module_map.get(path).is_some() {
-            return true;
-        }
-
-        let i = if let CacheStateEntry::PendingStore(i) = *state { i } else { 0 };
-        *state = CacheStateEntry::PendingStore(i + 1);
+        let cache_hit = if self.module_map.contains_key(path) {
+            true
+        } else {
+            let i = if let CacheStateEntry::PendingStore(i) = *state { i } else { 0 };
+            *state = CacheStateEntry::PendingStore(i + 1);
+            false
+        };
 
         if *state == CacheStateEntry::ReadyToConstruct {
             cvar.notify_one();
         }
+
         drop(state);
-        false
+        cache_hit
     }
 
     fn update_cache_state(&self, path: &Path) {
