@@ -11,7 +11,7 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected any. Specify a different type.")]
+#[error("typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.")]
 #[diagnostic(severity(warning), help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct."))]
 struct NoExplicitAnyDiagnostic(#[label] pub Span);
 
