@@ -540,7 +540,7 @@ impl<'a> Parser<'a> {
         in_optional_chain: &mut bool,
     ) -> Result<Expression<'a>> {
         let mut lhs = lhs;
-        while !self.at(Kind::Eof) {
+        loop {
             lhs = match self.cur_kind() {
                 Kind::LBrack => self.parse_computed_member_expression(lhs_span, lhs, false)?,
                 Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false)?,
