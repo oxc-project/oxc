@@ -255,6 +255,11 @@ fn resolve_to_jest_fn<'a>(
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
     if ctx.semantic().is_reference_to_global_variable(ident) {
+        // If the identifier is not a jest function, bail out
+        if JestFnKind::from(&ident.name) == JestFnKind::Unknown {
+            return None;
+        }
+
         return Some(ResolvedJestFn {
             local: &ident.name,
             kind: JestFnFrom::Global,

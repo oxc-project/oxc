@@ -2,6 +2,8 @@ name: Cargo Fuzz
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Run everyweek
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -13,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
+        uses: actions/checkout@v4
 
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
 
-      - name: Run
-        run: |
-          cd crates/oxc_parser/fuzz
-          cargo fuzz run --release parser -- -only_ascii=1 -detect_leaks=0 -max_total_time=900
+      - name: Nightly
+        run: rustup default nightly
+
+      - name: Run Fuzzer
+        run: cargo +nightly fuzz run --sanitizer none --release parser -- -only_ascii=1 -detect_leaks=0 -max_total_time=900

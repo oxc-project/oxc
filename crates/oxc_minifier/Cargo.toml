@@ -27,6 +27,7 @@ num-bigint    = { workspace = true }
 itertools     = { workspace = true }
 
 [dev-dependencies]
+insta     = { workspace = true }
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
 

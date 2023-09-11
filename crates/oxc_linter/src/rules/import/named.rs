@@ -4,7 +4,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
-use oxc_syntax::module_record::ImportImportName;
+use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -61,6 +61,30 @@ impl Rule for Named {
                 import_name.span(),
             ));
         }
+
+        for export_entry in &module_record.indirect_export_entries {
+            let Some(module_request) = &export_entry.module_request else {
+                continue;
+            };
+            let ExportImportName::Name(import_name) = &export_entry.import_name else {
+                continue;
+            };
+            let specifier = module_request.name();
+            // Get remote module record
+            let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
+                continue;
+            };
+            let remote_module_record = remote_module_record_ref.value();
+            // Check remote bindings
+            if remote_module_record.exported_bindings.contains_key(import_name.name()) {
+                continue;
+            }
+            ctx.diagnostic(NamedDiagnostic(
+                import_name.name().clone(),
+                specifier.clone(),
+                import_name.span(),
+            ));
+        }
     }
 }
 
@@ -79,13 +103,16 @@ fn test() {
         "import { destructingAssign } from './named-exports'",
         "import { destructingRenamedAssign } from './named-exports'",
         "import { ActionTypes } from './qc'",
+        // TODO: export *
         // "import {a, b, c, d} from './re-export'",
         // "import {a, b, c} from './re-export-common-star'",
         // "import {RuleTester} from './re-export-node_modules'",
         // "import { jsxFoo } from './jsx/AnotherComponent'",
         "import {a, b, d} from './common'; // eslint-disable-line named",
         "import { foo, bar } from './re-export-names'",
+        // TODO: module.exports
         // "import { foo, bar } from './common'",
+        // ignore core modules by default
         "import { foo } from 'crypto'",
         // "import { zoob } from 'a'",
         "import { someThing } from './test-module'",
@@ -148,33 +175,32 @@ fn test() {
         "import { ActionTypes1 } from './qc'",
         "import {a, b, c, d, e} from './re-export'",
         "import { a } from './re-export-names'",
-        // "export { bar } from './bar'",
-        // "export bar2, { bar } from './bar'",
+        "export { bar } from './bar'",
+        "export bar2, { bar } from './bar'",
         // old babel parser
         // "import { foo, bar, baz } from './named-trampoline'",
         // "import { baz } from './broken-trampoline'",
-        //
-        // "const { baz } = require('./bar')",
-        // "let { baz } = require('./bar')",
-        // "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
-        // "const { default: defExport } = require('./named-exports')",
+        "const { baz } = require('./bar')",
+        "let { baz } = require('./bar')",
+        "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
+        "const { default: defExport } = require('./named-exports')",
         // flow
         // "import  { type MyOpaqueType, MyMissingClass } from './flowtypes'",
         // jsnext
         // "/*jsnext*/ import { createSnorlax } from 'redux'",
-        // "import { baz } from 'es6-module'",
+        "import { baz } from 'es6-module'",
         "import { foo, bar, bap } from './re-export-default'",
         "import { default as barDefault } from './re-export'",
         // export all
         "import { bar } from './export-all'",
         // TypeScript
         // Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
-        // "import { NotExported } from './typescript-export-assign-object'",
-        // "import { FooBar } from './typescript-export-assign-object'",
+        "import { NotExported } from './typescript-export-assign-object'",
+        "import { FooBar } from './typescript-export-assign-object'",
     ];
 
     Tester::new_without_config(Named::NAME, pass, fail)
-        .with_rule_path_extension("js")
+        .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();
 }
