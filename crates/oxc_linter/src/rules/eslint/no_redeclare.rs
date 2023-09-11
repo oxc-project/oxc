@@ -4,6 +4,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
@@ -68,24 +69,24 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run_once(&self, ctx: &LintContext) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let redeclare_variables = ctx.semantic().redeclare_variables();
+        let symbol_table = ctx.semantic().symbols();
+        let decl = symbol_table.get_declaration(symbol_id);
 
-        for node in ctx.nodes().iter() {
-            if let AstKind::BindingIdentifier(ident) = node.kind() {
-                if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
-                    ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
-                } else {
-                    for redeclare_variable in redeclare_variables {
-                        if redeclare_variable.name == ident.name
-                            && redeclare_variable.span != ident.span
-                        {
-                            ctx.diagnostic(NoRedeclareDiagnostic(
-                                redeclare_variable.name.clone(),
-                                ident.span,
-                                redeclare_variable.span,
-                            ));
-                        }
+        if let AstKind::BindingIdentifier(ident) = ctx.nodes().kind(decl) {
+            if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
+                ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
+            } else {
+                for redeclare_variable in redeclare_variables {
+                    if redeclare_variable.name == ident.name
+                        && redeclare_variable.span != ident.span
+                    {
+                        ctx.diagnostic(NoRedeclareDiagnostic(
+                            redeclare_variable.name.clone(),
+                            ident.span,
+                            redeclare_variable.span,
+                        ));
                     }
                 }
             }
