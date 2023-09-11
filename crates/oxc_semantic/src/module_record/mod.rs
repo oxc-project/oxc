@@ -9,7 +9,7 @@ mod module_record_tests {
     use oxc_span::{SourceType, Span};
     #[allow(clippy::wildcard_imports)]
     use oxc_syntax::module_record::*;
-    use std::sync::Arc;
+    use std::{path::PathBuf, sync::Arc};
 
     use crate::SemanticBuilder;
 
@@ -20,7 +20,7 @@ mod module_record_tests {
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
-            .build_module_record(program)
+            .build_module_record(PathBuf::new(), program)
             .build(program);
         Arc::clone(&semantic_ret.semantic.module_record)
     }
@@ -150,7 +150,7 @@ mod module_record_tests {
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
-            local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
+            import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);
@@ -165,7 +165,7 @@ mod module_record_tests {
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(23, 28))),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
-            local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
+            import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);

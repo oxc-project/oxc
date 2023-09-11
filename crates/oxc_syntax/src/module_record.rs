@@ -1,6 +1,6 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use std::{hash::BuildHasherDefault, sync::Arc};
+use std::{hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
 use indexmap::IndexMap;
@@ -12,8 +12,11 @@ use rustc_hash::{FxHashMap, FxHasher};
 /// See
 /// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ModuleRecord {
+    /// Resolved absolute path to this module record
+    pub resolved_absolute_path: PathBuf,
+
     /// `[[RequestedModules]]`
     ///
     /// A List of all the ModuleSpecifier strings used by the module represented by this record to request the importation of a module. The List is in source text occurrence order.
@@ -61,6 +64,12 @@ pub struct ModuleRecord {
 
     pub export_default: Option<Span>,
     pub export_default_duplicated: Vec<Span>,
+}
+
+impl ModuleRecord {
+    pub fn new(resolved_absolute_path: PathBuf) -> Self {
+        Self { resolved_absolute_path, ..Self::default() }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,7 +123,7 @@ impl ImportImportName {
     }
 }
 
-/// [`ExportEntry`](https://tc39.es/ecma262/#importentry-record)
+/// [`ExportEntry`](https://tc39.es/ecma262/#exportentry-record)
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry {
     /// Span for the entire export entry

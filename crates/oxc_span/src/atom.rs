@@ -1,4 +1,8 @@
-use std::{borrow::Borrow, fmt, ops::Deref};
+use std::{
+    borrow::{Borrow, Cow},
+    fmt,
+    ops::Deref,
+};
 
 use compact_str::CompactString;
 #[cfg(feature = "serde")]
@@ -59,6 +63,12 @@ impl<'a> From<&'a str> for Atom {
 
 impl From<String> for Atom {
     fn from(s: String) -> Self {
+        Self(s.into())
+    }
+}
+
+impl From<Cow<'_, str>> for Atom {
+    fn from(s: Cow<'_, str>) -> Self {
         Self(s.into())
     }
 }

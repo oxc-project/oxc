@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_self_import
+---
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[no-self-import.js:1:1]
+ 1 │ import bar from './no-self-import'
+   ·                 ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[no-self-import.js:1:1]
+ 1 │ var bar = require('./no-self-import')
+   ·                   ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[no-self-import.js:1:1]
+ 1 │ var bar = require('./no-self-import.js')
+   ·                   ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[index.js:1:1]
+ 1 │ var bar = require('.')
+   ·                   ───
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[index.js:1:1]
+ 1 │ var bar = require('./')
+   ·                   ────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[index.js:1:1]
+ 1 │ var bar = require('././././')
+   ·                   ──────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-self-import): module importing itself is not allowed
+   ╭─[no-self-import-folder/index.js:1:1]
+ 1 │ var bar = require('../no-self-import-folder')
+   ·                   ──────────────────────────
+   ╰────
+
+

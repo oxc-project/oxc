@@ -1,0 +1,83 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_cycle
+---
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './es6/depth-one'
+   ·                     ─────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-one - fixtures/import/cycles/es6/depth-one.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ const { foo } = require('./es6/depth-one')
+   ·                         ─────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-one - fixtures/import/cycles/es6/depth-one.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './es6/depth-one-reexport'
+   ·                     ──────────────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-one-reexport - fixtures/import/cycles/es6/depth-one-reexport.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './es6/depth-two'
+   ·                     ─────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
+        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './es6/depth-three-star'
+   ·                     ────────────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-three-star - fixtures/import/cycles/es6/depth-three-star.js
+        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
+        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './es6/depth-three-indirect'
+   ·                     ────────────────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./es6/depth-three-indirect - fixtures/import/cycles/es6/depth-three-indirect.js
+        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
+        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './intermediate-ignore'
+   ·                     ───────────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./intermediate-ignore - fixtures/import/cycles/intermediate-ignore.js
+        -> ./ignore - fixtures/import/cycles/ignore/index.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:1]
+ 1 │ import { foo } from './ignore'
+   ·                     ──────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./ignore - fixtures/import/cycles/ignore/index.js
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+

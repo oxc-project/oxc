@@ -21,7 +21,7 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check version changes
         uses: EndBug/version-check@v2
@@ -75,7 +75,7 @@ jobs:
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -131,7 +131,7 @@ jobs:
     needs:
       - build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Node.js
         uses: actions/setup-node@v3

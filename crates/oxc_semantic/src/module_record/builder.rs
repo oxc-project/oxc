@@ -1,16 +1,22 @@
+use std::path::PathBuf;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, GetSpan, Span};
 #[allow(clippy::wildcard_imports)]
 use oxc_syntax::module_record::*;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ModuleRecordBuilder {
     pub module_record: ModuleRecord,
     export_entries: Vec<ExportEntry>,
 }
 
 impl ModuleRecordBuilder {
+    pub fn new(resolved_absolute_path: PathBuf) -> Self {
+        Self { module_record: ModuleRecord::new(resolved_absolute_path), ..Self::default() }
+    }
+
     pub fn visit(&mut self, program: &Program) {
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.
@@ -303,17 +309,16 @@ impl ModuleRecordBuilder {
 
         if let Some(decl) = &decl.declaration {
             decl.bound_names(&mut |ident| {
+                let export_name =
+                    ExportExportName::Name(NameSpan::new(ident.name.clone(), ident.span));
+                let local_name =
+                    ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let export_entry = ExportEntry {
+                    span: Span::default(),
                     module_request: module_request.clone(),
-                    export_name: ExportExportName::Name(NameSpan::new(
-                        ident.name.clone(),
-                        ident.span,
-                    )),
-                    local_name: ExportLocalName::Name(NameSpan::new(
-                        ident.name.clone(),
-                        ident.span,
-                    )),
-                    ..ExportEntry::default()
+                    import_name: ExportImportName::Null,
+                    export_name,
+                    local_name,
                 };
                 self.add_export_entry(export_entry);
                 self.add_export_binding(ident.name.clone(), ident.span);
@@ -321,17 +326,32 @@ impl ModuleRecordBuilder {
         }
 
         for specifier in &decl.specifiers {
-            let export_entry = ExportEntry {
-                module_request: module_request.clone(),
-                export_name: ExportExportName::Name(NameSpan::new(
-                    specifier.exported.name().clone(),
-                    specifier.exported.span(),
-                )),
-                local_name: ExportLocalName::Name(NameSpan::new(
+            let export_name = ExportExportName::Name(NameSpan::new(
+                specifier.exported.name().clone(),
+                specifier.exported.span(),
+            ));
+            let import_name = if module_request.is_some() {
+                ExportImportName::Name(NameSpan::new(
                     specifier.local.name().clone(),
                     specifier.local.span(),
-                )),
-                ..ExportEntry::default()
+                ))
+            } else {
+                ExportImportName::Null
+            };
+            let local_name = if module_request.is_some() {
+                ExportLocalName::Null
+            } else {
+                ExportLocalName::Name(NameSpan::new(
+                    specifier.local.name().clone(),
+                    specifier.local.span(),
+                ))
+            };
+            let export_entry = ExportEntry {
+                span: Span::default(),
+                module_request: module_request.clone(),
+                import_name,
+                export_name,
+                local_name,
             };
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name().clone(), specifier.exported.span());

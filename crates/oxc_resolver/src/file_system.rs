@@ -9,30 +9,29 @@ pub trait FileSystem: Default + Send + Sync {
     ///
     /// # Errors
     ///
-    /// * Any [io::Error]
+    /// * See [std::fs::read_to_string]
     fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String>;
 
     /// See [std::fs::metadata]
     ///
     /// # Errors
     ///
-    /// This function will return an error in the following situations, but is not
-    /// limited to just these cases:
-    ///
-    /// * The user lacks permissions to perform `metadata` call on `path`.
-    /// * `path` does not exist.
+    /// See [std::fs::metadata]
     fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
 
-    /// See [std::fs::canonicalize]
+    /// See [std::fs::symlink_metadata]
     ///
     /// # Errors
     ///
-    /// This function will return an error in the following situations, but is not
-    /// limited to just these cases:
+    /// See [std::fs::symlink_metadata]
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+
+    /// See [std::fs::read_link]
     ///
-    /// * `path` does not exist.
-    /// * A non-final component in path is not a directory.
-    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
+    /// # Errors
+    ///
+    /// See [std::fs::read_link]
+    fn read_link<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
 }
 
 /// Metadata information about a file.
@@ -40,17 +39,18 @@ pub trait FileSystem: Default + Send + Sync {
 pub struct FileMetadata {
     pub(crate) is_file: bool,
     pub(crate) is_dir: bool,
+    pub(crate) is_symlink: bool,
 }
 
 impl FileMetadata {
-    pub fn new(is_file: bool, is_dir: bool) -> Self {
-        Self { is_file, is_dir }
+    pub fn new(is_file: bool, is_dir: bool, is_symlink: bool) -> Self {
+        Self { is_file, is_dir, is_symlink }
     }
 }
 
 impl From<fs::Metadata> for FileMetadata {
     fn from(metadata: fs::Metadata) -> Self {
-        Self::new(metadata.is_file(), metadata.is_dir())
+        Self::new(metadata.is_file(), metadata.is_dir(), metadata.is_symlink())
     }
 }
 
@@ -67,7 +67,11 @@ impl FileSystem for FileSystemOs {
         fs::metadata(path).map(FileMetadata::from)
     }
 
-    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
-        dunce::canonicalize(path)
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+        fs::symlink_metadata(path).map(FileMetadata::from)
+    }
+
+    fn read_link<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        fs::read_link(path).map(|p| dunce::simplified(&p).to_path_buf())
     }
 }

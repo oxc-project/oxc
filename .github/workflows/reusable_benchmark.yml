@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch == 'main' && 'main' || '' }}
 
@@ -59,7 +59,7 @@ jobs:
     name: Run
     runs-on: ${{ inputs.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download Binaries
         uses: actions/download-artifact@v3
