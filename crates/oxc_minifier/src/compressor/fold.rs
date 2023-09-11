@@ -9,7 +9,8 @@ use num_bigint::BigInt;
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
     get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
-    get_side_free_string_value, is_exact_int64, IsLiteralValue, MayHaveSideEffects, NumberValue,
+    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
+    MayHaveSideEffects, NumberValue,
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -200,6 +201,15 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
+                // NOTE: string concat folding breaks our current evaluation of Test262 tests. The
+                // minifier is tested by comparing output of running the minifier once and twice,
+                // respectively. Since Test262Error messages include string concats, the outputs
+                // don't match (even though the produced code is valid). Additionally, We'll likely
+                // want to add `evaluate` checks for all constant folding, not just additions, but
+                // we're adding this here until a decision is made.
+                BinaryOperator::Addition if self.options.evaluate => {
+                    self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
+                }
                 _ => None,
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
@@ -227,6 +237,51 @@ impl<'a> Compressor<'a> {
         };
         if let Some(folded_expr) = folded_expr {
             *expr = folded_expr;
+        }
+    }
+
+    fn try_fold_addition<'b>(
+        &mut self,
+        span: Span,
+        left: &'b Expression<'a>,
+        right: &'b Expression<'a>,
+    ) -> Option<Expression<'a>> {
+        // skip any potentially dangerous compressions
+        if left.may_have_side_effects() || right.may_have_side_effects() {
+            return None;
+        }
+
+        let left_type = Ty::from(left);
+        let right_type = Ty::from(right);
+        match (left_type, right_type) {
+            (Ty::Undetermined, _) | (_, Ty::Undetermined) => None,
+
+            // string concatenation
+            (Ty::Str, _) | (_, Ty::Str) => {
+                // no need to use get_side_effect_free_string_value b/c we checked for side effects
+                // at the beginning
+                let Some(left_string) = get_string_value(left) else { return None };
+                let Some(right_string) = get_string_value(right) else { return None };
+                // let value = left_string.to_owned().
+                let value = left_string + right_string;
+                let string_literal = self.hir.string_literal(span, Atom::from(value));
+                Some(self.hir.literal_string_expression(string_literal))
+            },
+
+            // number addition
+            (Ty::Number, _) | (_, Ty::Number)
+            // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
+                | (Ty::Boolean, Ty::Boolean) => {
+                let Some( left_number ) = get_number_value(left) else { return None };
+                let Some( right_number ) = get_number_value(right) else { return None };
+                let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
+                // Float if value has a fractional part, otherwise Decimal
+                let number_base = if is_exact_int64(value) { NumberBase::Decimal } else { NumberBase::Float };
+                let number_literal = self.hir.number_literal(span, value, "", number_base);
+                // todo: add raw &str
+                Some(self.hir.literal_number_expression(number_literal))
+            },
+            _ => None
         }
     }
 
