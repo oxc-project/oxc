@@ -599,20 +599,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. for each DIR in DIRS:
         for module_name in &self.options.modules {
             for cached_path in std::iter::successors(Some(cached_path), |p| p.parent()) {
-                let mut cached_path = cached_path.clone();
-
-                if !cached_path.path().ends_with(module_name) {
-                    if let Some(path) = if module_name == "node_modules" {
-                        cached_path.cached_node_modules(&self.cache)
-                    } else {
-                        cached_path.module_directory(module_name, &self.cache)
-                    } {
-                        cached_path = path;
-                    } else {
-                        continue;
-                    }
+                let Some(cached_path) = self.get_module_directory(cached_path, module_name) else {
+                    continue;
                 };
-
                 // Optimize node_modules lookup by inspecting whether the package exists
                 // From LOAD_PACKAGE_EXPORTS(X, DIR)
                 // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
@@ -654,6 +643,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         Ok(None)
+    }
+
+    fn get_module_directory(
+        &self,
+        cached_path: &CachedPath,
+        module_name: &str,
+    ) -> Option<CachedPath> {
+        if cached_path.path().ends_with(module_name) {
+            Some(cached_path.clone())
+        } else if module_name == "node_modules" {
+            cached_path.cached_node_modules(&self.cache)
+        } else {
+            cached_path.module_directory(module_name, &self.cache)
+        }
     }
 
     fn load_package_exports(
@@ -957,15 +960,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &mut ResolveContext,
     ) -> ResolveState {
-        let (name, subpath) = Self::parse_package_specifier(specifier);
+        let (package_name, subpath) = Self::parse_package_specifier(specifier);
         // 11. While parentURL is not the file system root,
-        let mut parent_url = cached_path.path().to_path_buf();
-        loop {
-            for module_name in &self.options.modules {
+        for module_name in &self.options.modules {
+            for cached_path in std::iter::successors(Some(cached_path), |p| p.parent()) {
                 // 1. Let packageURL be the URL resolution of "node_modules/" concatenated with packageSpecifier, relative to parentURL.
-                parent_url.push(module_name);
-                let package_path = parent_url.join(name);
+                let Some(cached_path) = self.get_module_directory(cached_path, module_name) else {
+                    continue;
+                };
                 // 2. Set parentURL to the parent folder URL of parentURL.
+                let package_path = cached_path.path().join(package_name);
                 let cached_path = self.cache.value(&package_path);
                 // 3. If the folder at packageURL does not exist, then
                 //   1. Continue the next loop iteration.
@@ -1008,10 +1012,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     ctx.with_query_fragment(specifier.query, specifier.fragment);
                     return self.require(&cached_path, specifier.path(), ctx).map(Some);
                 }
-                parent_url.pop();
-            }
-            if !parent_url.pop() {
-                break;
             }
         }
 
