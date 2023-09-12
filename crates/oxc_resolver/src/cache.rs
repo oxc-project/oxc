@@ -55,29 +55,34 @@ impl<Fs: FileSystem> Cache<Fs> {
 
     pub fn tsconfig(
         &self,
-        tsconfig_path: &CachedPath,
+        path: &Path,
         callback: impl FnOnce(&mut TsConfig) -> Result<(), ResolveError>, // callback for modifying tsconfig with `extends`
     ) -> Result<Arc<TsConfig>, ResolveError> {
-        self.tsconfigs
-            .entry(tsconfig_path.path().to_path_buf())
-            .or_try_insert_with(|| {
-                let tsconfig_path = if tsconfig_path.is_dir(&self.fs) {
-                    Cow::Owned(tsconfig_path.path().join("tsconfig.json"))
-                } else {
-                    Cow::Borrowed(tsconfig_path.path())
-                };
-                let mut tsconfig_string = self
-                    .fs
-                    .read_to_string(&tsconfig_path)
-                    .map_err(|_| ResolveError::NotFound(tsconfig_path.to_path_buf()))?;
-                let mut tsconfig =
-                    TsConfig::parse(&tsconfig_path, &mut tsconfig_string).map_err(|error| {
-                        ResolveError::from_serde_json_error(tsconfig_path.to_path_buf(), &error)
-                    })?;
-                callback(&mut tsconfig)?;
-                Ok(Arc::new(tsconfig))
-            })
-            .map(|r| Arc::clone(r.value()))
+        if let Some(tsconfig_ref) = self.tsconfigs.get(path) {
+            return Ok(Arc::clone(tsconfig_ref.value()));
+        }
+        let meta = self.fs.metadata(path).ok();
+        let tsconfig_path = if meta.is_some_and(|m| m.is_file) {
+            Cow::Borrowed(path)
+        } else if meta.is_some_and(|m| m.is_dir) {
+            Cow::Owned(path.join("tsconfig.json"))
+        } else {
+            let mut os_string = path.to_path_buf().into_os_string();
+            os_string.push(".json");
+            Cow::Owned(PathBuf::from(os_string))
+        };
+        let mut tsconfig_string = self
+            .fs
+            .read_to_string(&tsconfig_path)
+            .map_err(|_| ResolveError::NotFound(tsconfig_path.to_path_buf()))?;
+        let mut tsconfig =
+            TsConfig::parse(&tsconfig_path, &mut tsconfig_string).map_err(|error| {
+                ResolveError::from_serde_json_error(tsconfig_path.to_path_buf(), &error)
+            })?;
+        callback(&mut tsconfig)?;
+        let tsconfig = Arc::new(tsconfig);
+        self.tsconfigs.insert(path.to_path_buf(), Arc::clone(&tsconfig));
+        Ok(tsconfig)
     }
 }
 
