@@ -511,7 +511,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_realpath(&self, cached_path: &CachedPath) -> Result<PathBuf, ResolveError> {
         if self.options.symlinks {
-            cached_path.canonicalize(&self.cache).map_err(ResolveError::from)
+            cached_path.realpath(&self.cache.fs).map_err(ResolveError::from)
         } else {
             Ok(cached_path.to_path_buf())
         }
