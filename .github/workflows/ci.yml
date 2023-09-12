@@ -148,7 +148,8 @@ jobs:
       - name: Install Rust
         uses: ./.github/actions/rustup
         with:
-          shared-key: benchmark
+          shared-key: oxlint
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Build oxlint
         run: cargo build --release -p oxc_cli --bin oxlint
