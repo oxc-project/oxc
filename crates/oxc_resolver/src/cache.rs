@@ -1,12 +1,11 @@
 use once_cell::sync::OnceCell as OnceLock;
 use std::{
     borrow::{Borrow, Cow},
-    collections::VecDeque,
     convert::AsRef,
     hash::{BuildHasherDefault, Hash, Hasher},
     io,
     ops::Deref,
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -14,7 +13,8 @@ use dashmap::{DashMap, DashSet};
 use rustc_hash::FxHasher;
 
 use crate::{
-    package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions, TsConfig,
+    package_json::PackageJson, path::PathUtil, FileMetadata, FileSystem, ResolveError,
+    ResolveOptions, TsConfig,
 };
 
 #[derive(Default)]
@@ -79,56 +79,6 @@ impl<Fs: FileSystem> Cache<Fs> {
             })
             .map(|r| Arc::clone(r.value()))
     }
-
-    // Code copied from parcel
-    // <https://github.com/parcel-bundler/parcel/blob/cd0edbccaafeacd2203a34e34570f45e2a10f028/packages/utils/node-resolver-rs/src/path.rs#L64>
-    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
-        let mut ret = PathBuf::new();
-        let mut seen_links = 0;
-        let mut queue = VecDeque::new();
-        queue.push_back(path.to_path_buf());
-        while let Some(cur_path) = queue.pop_front() {
-            let mut components = cur_path.components();
-            for component in &mut components {
-                match component {
-                    Component::Prefix(c) => ret.push(c.as_os_str()),
-                    Component::RootDir => {
-                        ret.push(component.as_os_str());
-                    }
-                    Component::CurDir => {}
-                    Component::ParentDir => {
-                        ret.pop();
-                    }
-                    Component::Normal(c) => {
-                        ret.push(c);
-                        let cached_path = self.value(&ret);
-                        let Some(link) = cached_path.symlink(&self.fs)? else {
-                            continue;
-                        };
-                        seen_links += 1;
-                        if seen_links > 32 {
-                            return Err(io::Error::new(
-                                io::ErrorKind::NotFound,
-                                "Too many symlinks",
-                            ));
-                        }
-                        if link.is_absolute() {
-                            ret = PathBuf::new();
-                        } else {
-                            ret.pop();
-                        }
-                        let remaining = components.as_path();
-                        if !remaining.as_os_str().is_empty() {
-                            queue.push_front(remaining.to_path_buf());
-                        }
-                        queue.push_front(link);
-                        break;
-                    }
-                }
-            }
-        }
-        Ok(ret)
-    }
 }
 
 #[derive(Clone)]
@@ -179,7 +129,7 @@ pub struct CachedPathImpl {
     parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
-    canonicalized: OnceLock<PathBuf>,
+    canonicalized: OnceLock<Option<PathBuf>>,
     node_modules: OnceLock<Option<CachedPath>>,
     package_json: OnceLock<Option<Arc<PackageJson>>>,
 }
@@ -227,7 +177,7 @@ impl CachedPathImpl {
             .get_or_try_init(|| {
                 if let Ok(symlink_metadata) = fs.symlink_metadata(&self.path) {
                     if symlink_metadata.is_symlink {
-                        return fs.read_link(self.path()).map(Some);
+                        return fs.canonicalize(self.path()).map(Some);
                     }
                 }
                 Ok(None)
@@ -235,8 +185,22 @@ impl CachedPathImpl {
             .cloned()
     }
 
-    pub fn canonicalize<Fs: FileSystem>(&self, cache: &Cache<Fs>) -> io::Result<PathBuf> {
-        self.canonicalized.get_or_try_init(|| cache.canonicalize(&self.path)).cloned()
+    pub fn realpath<Fs: FileSystem>(&self, fs: &Fs) -> io::Result<PathBuf> {
+        self.canonicalized
+            .get_or_try_init(|| {
+                if let Some(link) = self.symlink(fs)? {
+                    return Ok(Some(link));
+                }
+                if let Some(parent) = self.parent() {
+                    let parent_path = parent.realpath(fs)?;
+                    return Ok(Some(
+                        parent_path.normalize_with(self.path.strip_prefix(&parent.path).unwrap()),
+                    ));
+                };
+                Ok(None)
+            })
+            .cloned()
+            .map(|r| r.unwrap_or_else(|| self.path.clone().to_path_buf()))
     }
 
     pub fn module_directory<Fs: FileSystem>(
