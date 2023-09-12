@@ -631,6 +631,15 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         if !subpath.is_empty() {
                             continue;
                         }
+                        // Skip if the directory lead to the scope package does not exist
+                        // i.e. `foo/node_modules/@scope` is not a directory for `foo/node_modules/@scope/package`
+                        if package_name.starts_with('@') {
+                            if let Some(path) = cached_path.parent() {
+                                if !path.is_dir(&self.cache.fs) {
+                                    continue;
+                                }
+                            }
+                        }
                     }
                 }
 
