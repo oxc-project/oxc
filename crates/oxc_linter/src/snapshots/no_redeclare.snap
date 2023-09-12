@@ -1,18 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 122
+assertion_line: 105
 expression: no_redeclare
 ---
-  ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ switch(foo) { case a: var b = 3;
-   ·                           ┬
-   ·                           ╰── 'b' is already defined.
- 2 │ case b: var b = 4}
-   ·             ┬
-   ·             ╰── It can not be redeclare here.
-   ╰────
-
   ⚠ eslint(no-redeclare): 'b' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ switch(foo) { case a: var b = 3;
@@ -74,33 +64,9 @@ expression: no_redeclare
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = 3; var a = 10; var a = 15;
-   ·     ┬          ┬
-   ·     │          ╰── It can not be redeclare here.
-   ·     ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬                      ┬
    ·     │                      ╰── It can not be redeclare here.
    ·     ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10; var a = 15;
-   ·                ┬           ┬
-   ·                │           ╰── It can not be redeclare here.
-   ·                ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a = 3; var a = 10; var a = 15;
-   ·                ┬           ┬
-   ·                │           ╰── 'a' is already defined.
-   ·                ╰── It can not be redeclare here.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -166,13 +132,6 @@ expression: no_redeclare
    ·     ╰── 'a' is already defined.
    ╰────
 
-  ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a; var {a = 0, b: Object = 0} = {};
-   ·                       ───┬──
-   ·                          ╰── 'Object' is already defined as a built-in global variable.
-   ╰────
-
   ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var globalThis = 0;
@@ -186,13 +145,6 @@ expression: no_redeclare
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclare here.
    ·     ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ var a; var {a = 0, b: globalThis = 0} = {};
-   ·                       ─────┬────
-   ·                            ╰── 'globalThis' is already defined as a built-in global variable.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
@@ -217,14 +169,6 @@ expression: no_redeclare
    ·                    ┬                  ┬
    ·                    │                  ╰── It can not be redeclare here.
    ·                    ╰── 'a' is already defined.
-   ╰────
-
-  ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ for (var a, a;;);
-   ·          ┬  ┬
-   ·          │  ╰── It can not be redeclare here.
-   ·          ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.

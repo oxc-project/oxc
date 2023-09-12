@@ -1,11 +1,15 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    ast::{BindingIdentifier, BindingPatternKind},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{SymbolId, VariableInfo};
 use oxc_span::{Atom, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
 
@@ -70,25 +74,40 @@ impl Rule for NoRedeclare {
     }
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
-        let redeclare_variables = ctx.semantic().redeclare_variables();
+        let redeclare_variable_map = ctx.semantic().redeclare_variable_map();
         let symbol_table = ctx.semantic().symbols();
         let decl = symbol_table.get_declaration(symbol_id);
 
-        if let AstKind::BindingIdentifier(ident) = ctx.nodes().kind(decl) {
-            if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
-                ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
-            } else {
-                for redeclare_variable in redeclare_variables {
-                    if redeclare_variable.name == ident.name
-                        && redeclare_variable.span != ident.span
-                    {
-                        ctx.diagnostic(NoRedeclareDiagnostic(
-                            redeclare_variable.name.clone(),
-                            ident.span,
-                            redeclare_variable.span,
-                        ));
+        match ctx.nodes().kind(decl) {
+            AstKind::VariableDeclarator(var) => {
+                if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
+                    self.report_diagnostic(ctx, redeclare_variable_map, ident);
+                }
+            }
+            AstKind::FormalParameters(params) => {
+                for item in &params.items {
+                    if let BindingPatternKind::BindingIdentifier(ident) = &item.pattern.kind {
+                        self.report_diagnostic(ctx, redeclare_variable_map, ident);
                     }
                 }
+            }
+            _ => {}
+        }
+    }
+}
+
+impl NoRedeclare {
+    fn report_diagnostic(
+        &self,
+        ctx: &LintContext,
+        redeclare_variable_map: &FxHashMap<Atom, VariableInfo>,
+        ident: &BindingIdentifier,
+    ) {
+        if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
+            ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
+        } else if let Some(var) = redeclare_variable_map.get(&ident.name) {
+            if var.name == ident.name && var.span != ident.span {
+                ctx.diagnostic(NoRedeclareDiagnostic(ident.name.clone(), ident.span, var.span));
             }
         }
     }

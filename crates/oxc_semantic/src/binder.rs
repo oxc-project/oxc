@@ -50,10 +50,9 @@ impl<'a> Binder for VariableDeclarator<'a> {
                             .get_bindings_mut(scope_id)
                             .insert(ident.name.clone(), symbol_id);
                     } else {
-                        builder.add_redeclared_variables(VariableInfo {
+                        builder.add_redeclared_variables(&VariableInfo {
                             name: ident.name.clone(),
                             span: ident.span,
-                            scope_id,
                         });
                     }
                 }
