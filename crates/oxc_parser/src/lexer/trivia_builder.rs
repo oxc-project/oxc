@@ -1,5 +1,4 @@
-use oxc_ast::Trivias;
-use oxc_span::Span;
+use oxc_ast::{CommentKind, Trivias};
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
@@ -11,13 +10,13 @@ impl TriviaBuilder {
         self.trivias
     }
 
+    /// skip leading `//`
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
-        // skip leading `//`
-        self.trivias.add_single_line_comment(Span::new(start + 2, end));
+        self.trivias.push((start + 2, end, CommentKind::SingleLine));
     }
 
+    /// skip leading `/*` and trailing `*/`
     pub fn add_multi_line_comment(&mut self, start: u32, end: u32) {
-        // skip leading `/*` and trailing `*/`
-        self.trivias.add_multi_line_comment(Span::new(start + 2, end - 2));
+        self.trivias.push((start + 2, end - 2, CommentKind::MultiLine));
     }
 }

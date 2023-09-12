@@ -13,7 +13,7 @@ use std::{rc::Rc, sync::Arc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
-use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
+use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
 pub use oxc_syntax::{
     module_record::ModuleRecord,
@@ -39,7 +39,7 @@ pub struct Semantic<'a> {
 
     symbols: SymbolTable,
 
-    trivias: Rc<Trivias>,
+    trivias: Rc<TriviasMap>,
 
     module_record: Arc<ModuleRecord>,
 
@@ -69,7 +69,7 @@ impl<'a> Semantic<'a> {
         &self.scopes
     }
 
-    pub fn trivias(&self) -> &Trivias {
+    pub fn trivias(&self) -> &TriviasMap {
         &self.trivias
     }
 
