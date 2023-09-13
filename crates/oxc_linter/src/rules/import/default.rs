@@ -107,7 +107,6 @@ fn test() {
     ];
 
     let fail = vec![
-        r#"import Foo from "./jsx/FooES7.js""#,
         r#"import baz from "./named-exports""#,
         r#"export baz from "./named-exports""#,
         r#"export baz, { bar } from "./named-exports""#,

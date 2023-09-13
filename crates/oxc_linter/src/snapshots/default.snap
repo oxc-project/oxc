@@ -2,12 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: default
 ---
-  × Unterminated string
-   ╭─[index.js:1:1]
- 1 │ import Foo from "./jsx/FooES7.js
-   ·                 ────────────────
-   ╰────
-
   ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
    ╭─[index.js:1:1]
  1 │ import baz from "./named-exports"
