@@ -7,10 +7,10 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod default;
     pub mod named;
     pub mod no_cycle;
     pub mod no_self_import;
-    pub mod default;
 }
 
 mod deepscan {
