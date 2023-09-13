@@ -1,2 +1,5 @@
 [profile.default]
 slow-timeout = { period = "10s", terminate-after = 1 }
+
+[profile.codecov]
+slow-timeout = { period = "15m"  }
