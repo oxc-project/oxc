@@ -2,10 +2,53 @@
 source: crates/oxc_linter/src/tester.rs
 expression: default
 ---
+  × Unterminated string
+   ╭─[index.js:1:1]
+ 1 │ import Foo from "./jsx/FooES7.js
+   ·                 ────────────────
+   ╰────
+
   ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
    ╭─[index.js:1:1]
- 1 │ import baz from './named-exports';
+ 1 │ import baz from "./named-exports"
    ·                 ─────────────────
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz from "./named-exports"
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz, { bar } from "./named-exports"
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz, * as names from "./named-exports"
+   ·        ───
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[index.js:1:1]
+ 1 │ import barDefault from "./re-export",
+   ·                                     ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  ⚠ eslint-plugin-import(default): No default export found in imported module "./Named-Exports"
+   ╭─[index.js:1:1]
+ 1 │ import bar from "./Named-Exports"
+   ·                 ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(default): No default export found in imported module "./typescript"
+   ╭─[index.js:1:1]
+ 1 │ import foobar from "./typescript"
+   ·                    ──────────────
    ╰────
 
 
