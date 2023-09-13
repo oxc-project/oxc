@@ -52,7 +52,7 @@ impl Rule for Default {
                 ctx.diagnostic(DefaultDiagnostic(
                     specifier.clone(),
                     import_entry.module_request.span(),
-                ))
+                ));
             }
         }
     }
