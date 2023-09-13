@@ -906,7 +906,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &mut ResolveContext,
     ) -> ResolveState {
         let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
-        let tsconfig = self.load_tsconfig(tsconfig_path, ctx)?;
+        let tsconfig = self.load_tsconfig(tsconfig_path)?;
         let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
             let cached_path = self.cache.value(&path);
@@ -917,11 +917,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_tsconfig(
-        &self,
-        path: &Path,
-        ctx: &mut ResolveContext,
-    ) -> Result<Arc<TsConfig>, ResolveError> {
+    fn load_tsconfig(&self, path: &Path) -> Result<Arc<TsConfig>, ResolveError> {
         self.cache.tsconfig(path, |tsconfig| {
             let directory = self.cache.value(tsconfig.directory());
             // Extend tsconfig
@@ -931,10 +927,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     None => return Err(ResolveError::Specifier(SpecifierError::Empty)),
                     Some(b'/') => PathBuf::from(tsconfig_extend_specifier),
                     Some(b'.') => tsconfig.directory().normalize_with(tsconfig_extend_specifier),
-                    _ => {
-                        let mut new_ctx = ResolveContext::default();
-                        new_ctx.0.depth = ctx.depth + 1;
-                        self.clone_with_options(ResolveOptions {
+                    _ => self
+                        .clone_with_options(ResolveOptions {
                             description_files: vec![],
                             extensions: vec![],
                             main_files: vec!["tsconfig.json".into()],
@@ -943,15 +937,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         .load_package_self_or_node_modules(
                             &directory,
                             tsconfig_extend_specifier,
-                            &mut new_ctx,
-                        )?
-                        .to_path_buf()
-                    }
+                            &mut ResolveContext::default(),
+                        )
+                        .map_err(|err| match err {
+                            ResolveError::NotFound(path) => ResolveError::TsconfigNotFound(path),
+                            _ => err,
+                        })?
+                        .to_path_buf(),
                 };
                 extended_tsconfig_paths.push(extended_tsconfig_path);
             }
             for extended_tsconfig_path in extended_tsconfig_paths {
-                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path, ctx)?;
+                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
                 tsconfig.extend_tsconfig(&extended_tsconfig);
             }
             // Load project references
