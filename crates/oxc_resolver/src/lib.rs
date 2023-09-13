@@ -50,7 +50,7 @@ use crate::{
     tsconfig::TsConfig,
 };
 pub use crate::{
-    error::{JSONError, ResolveError},
+    error::{JSONError, ResolveError, SpecifierError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
     package_json::PackageJson,
@@ -906,8 +906,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &mut ResolveContext,
     ) -> ResolveState {
         let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
-        let tsconfig_path = self.cache.value(tsconfig_path);
-        let tsconfig = self.load_tsconfig(&tsconfig_path)?;
+        let tsconfig = self.load_tsconfig(tsconfig_path, ctx)?;
         let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
             let cached_path = self.cache.value(&path);
@@ -918,34 +917,47 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_tsconfig(&self, cached_path: &CachedPath) -> Result<Arc<TsConfig>, ResolveError> {
-        self.cache.tsconfig(cached_path, |tsconfig| {
+    fn load_tsconfig(
+        &self,
+        path: &Path,
+        ctx: &mut ResolveContext,
+    ) -> Result<Arc<TsConfig>, ResolveError> {
+        self.cache.tsconfig(path, |tsconfig| {
+            let directory = self.cache.value(tsconfig.directory());
             // Extend tsconfig
-            if !tsconfig.extends().is_empty() {
-                let resolver = self.clone_with_options(ResolveOptions {
-                    extensions: vec![".json".into()],
-                    main_files: vec!["tsconfig".into()],
-                    ..ResolveOptions::default()
-                });
-                let mut extended_tsconfigs = vec![];
-                for tsconfig_extend_specifier in tsconfig.extends() {
-                    let extended_tsconfig_path = resolver.require(
-                        cached_path.parent().unwrap(),
-                        tsconfig_extend_specifier,
-                        &mut ResolveContext::default(),
-                    )?;
-                    let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
-                    extended_tsconfigs.push(extended_tsconfig);
-                }
-                for extended_tsconfig in extended_tsconfigs {
-                    tsconfig.extend_tsconfig(&extended_tsconfig);
-                }
+            let mut extended_tsconfig_paths = vec![];
+            for tsconfig_extend_specifier in tsconfig.extends() {
+                let extended_tsconfig_path = match tsconfig_extend_specifier.as_bytes().first() {
+                    None => return Err(ResolveError::Specifier(SpecifierError::Empty)),
+                    Some(b'/') => PathBuf::from(tsconfig_extend_specifier),
+                    Some(b'.') => tsconfig.directory().normalize_with(tsconfig_extend_specifier),
+                    _ => {
+                        let mut new_ctx = ResolveContext::default();
+                        new_ctx.0.depth = ctx.depth + 1;
+                        self.clone_with_options(ResolveOptions {
+                            description_files: vec![],
+                            extensions: vec![],
+                            main_files: vec!["tsconfig.json".into()],
+                            ..ResolveOptions::default()
+                        })
+                        .load_package_self_or_node_modules(
+                            &directory,
+                            tsconfig_extend_specifier,
+                            &mut new_ctx,
+                        )?
+                        .to_path_buf()
+                    }
+                };
+                extended_tsconfig_paths.push(extended_tsconfig_path);
+            }
+            for extended_tsconfig_path in extended_tsconfig_paths {
+                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path, ctx)?;
+                tsconfig.extend_tsconfig(&extended_tsconfig);
             }
             // Load project references
             let directory = tsconfig.directory().to_path_buf();
             for reference in tsconfig.references_mut() {
-                let reference_tsconfig_path =
-                    self.cache.value(&directory.normalize_with(&reference.path));
+                let reference_tsconfig_path = directory.normalize_with(&reference.path);
                 let tsconfig = self.cache.tsconfig(&reference_tsconfig_path, |_| Ok(()))?;
                 reference.tsconfig.replace(tsconfig);
             }
