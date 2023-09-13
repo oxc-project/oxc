@@ -34,13 +34,6 @@ expression: default
    ╰────
   help: does "./re-export" have the default export?
 
-  ⚠ eslint-plugin-import(default): No default export found in imported module "./Named-Exports"
-   ╭─[index.js:1:1]
- 1 │ import bar from "./Named-Exports"
-   ·                 ─────────────────
-   ╰────
-  help: does "./Named-Exports" have the default export?
-
   ⚠ eslint-plugin-import(default): No default export found in imported module "./typescript"
    ╭─[index.js:1:1]
  1 │ import foobar from "./typescript"

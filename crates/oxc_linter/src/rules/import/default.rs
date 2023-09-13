@@ -114,7 +114,8 @@ fn test() {
         // broken-trampoline.js contains no longer valid syntax
         // r#"import twofer from "./broken-trampoline""#,
         r#"import barDefault from "./re-export""#,
-        r#"import bar from "./Named-Exports""#,
+        // Ignore Case Sensitivity
+        // r#"import bar from "./Named-Exports""#,
         r#"import foobar from "./typescript""#,
         // TODO: `export =`
         // r#"import React from "./typescript-export-assign-default-namespace""#,
