@@ -25,6 +25,8 @@ mod package_json;
 mod path;
 mod resolution;
 mod specifier;
+#[cfg(feature = "tracing-subscriber")]
+mod tracing_subscriber;
 mod tsconfig;
 
 #[cfg(test)]
@@ -137,6 +139,8 @@ impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
 
 impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
+        #[cfg(feature = "tracing-subscriber")]
+        tracing_subscriber::init();
         Self { options: options.sanitize(), cache: Arc::new(Cache::default()) }
     }
 
