@@ -22,6 +22,10 @@ pub enum ResolveError {
     #[error("Path not found {0}")]
     NotFound(PathBuf),
 
+    /// Tsconfig not found
+    #[error("Tsconfig not found {0}")]
+    TsconfigNotFound(PathBuf),
+
     #[error("{0}")]
     IOError(IOError),
 
