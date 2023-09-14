@@ -61,20 +61,18 @@ impl Rule for NoConsole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ExpressionStatement(expr) = node.kind() {
-            if let Expression::CallExpression(call_expr) = &expr.expression {
-                if let Expression::MemberExpression(mem) = &call_expr.callee {
-                    if let Expression::Identifier(ident) = mem.object() {
-                        if ctx.semantic().is_reference_to_global_variable(ident)
-                            && ident.name == "console"
-                            && !self
-                                .allow
-                                .iter()
-                                .any(|s| mem.static_property_name().is_some_and(|f| f == s))
-                        {
-                            ctx.diagnostic(NoConsoleDiagnostic(
-                                mem.static_property_info().unwrap().0,
-                            ));
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            if let Expression::MemberExpression(mem) = &call_expr.callee {
+                if let Expression::Identifier(ident) = mem.object() {
+                    if ctx.semantic().is_reference_to_global_variable(ident)
+                        && ident.name == "console"
+                        && !self
+                            .allow
+                            .iter()
+                            .any(|s| mem.static_property_name().is_some_and(|f| f == s))
+                    {
+                        if let Some(mem) = mem.static_property_info() {
+                            ctx.diagnostic(NoConsoleDiagnostic(mem.0));
                         }
                     }
                 }
