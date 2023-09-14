@@ -171,10 +171,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         path: P,
         specifier: &str,
     ) -> Result<Resolution, ResolveError> {
-        self.resolve_impl(path.as_ref(), specifier)
+        let path = path.as_ref();
+        let span = tracing::debug_span!("resolve", path = ?path, specifier = specifier);
+        let _enter = span.enter();
+        tracing::trace!(options = ?self.options, "resolve_options");
+        let r = self.resolve_impl(path, specifier);
+        match &r {
+            Ok(r) => tracing::debug!(path = ?path, specifier = specifier, ret = ?r.path),
+            Err(err) => tracing::error!(path = ?path, specifier = specifier, err = ?err),
+        };
+        r
     }
 
-    #[tracing::instrument(name = "resolve", level = "DEBUG", ret, skip(self), fields(options = %self.options))]
     fn resolve_impl(&self, path: &Path, specifier: &str) -> Result<Resolution, ResolveError> {
         let mut ctx = ResolveContext(ResolveContextImpl {
             fully_specified: self.options.fully_specified,
@@ -589,6 +597,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if cached_path.is_file(&self.cache.fs) {
             return Ok(Some(cached_path.clone()));
         }
+        tracing::trace!(path = ?cached_path, "is_not_file");
         Ok(None)
     }
 
@@ -599,6 +608,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &mut ResolveContext,
     ) -> ResolveState {
         let (package_name, subpath) = Self::parse_package_specifier(specifier);
+        tracing::trace!(path = ?cached_path, package_name, subpath, "load_node_modules");
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         // 2. for each DIR in DIRS:
         for module_name in &self.options.modules {
@@ -679,6 +689,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if package_json.exports.is_empty() {
             return Ok(None);
         };
+        tracing::trace!(path = ?cached_path, exports = ?package_json.exports, "load_package_exports");
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
         //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
         // Note: The subpath is not prepended with a dot on purpose
@@ -730,6 +741,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
         // defined in the ESM resolver.
         let package_url = package_json.directory();
+        tracing::trace!(package = ?package_url, exports = ?package_json.exports, "load_package_self");
         // Note: The subpath is not prepended with a dot on purpose
         // because `package_exports_resolve` matches subpath without the leading dot.
         for exports in &package_json.exports {
@@ -913,6 +925,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let tsconfig = self.load_tsconfig(tsconfig_path)?;
         let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
+            tracing::trace!(path = ?cached_path, tsconfig_path = ?path, "load_tsconfig_paths");
             let cached_path = self.cache.value(&path);
             if let Ok(path) = self.require_relative(&cached_path, ".", ctx) {
                 return Ok(Some(path));
@@ -924,6 +937,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_tsconfig(&self, path: &Path) -> Result<Arc<TsConfig>, ResolveError> {
         self.cache.tsconfig(path, |tsconfig| {
             let directory = self.cache.value(tsconfig.directory());
+            tracing::trace!(tsconfig = ?tsconfig, "load_tsconfig");
             // Extend tsconfig
             let mut extended_tsconfig_paths = vec![];
             for tsconfig_extend_specifier in tsconfig.extends() {

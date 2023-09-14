@@ -2,6 +2,7 @@ use once_cell::sync::OnceCell as OnceLock;
 use std::{
     borrow::{Borrow, Cow},
     convert::AsRef,
+    fmt,
     hash::{BuildHasherDefault, Hash, Hasher},
     io,
     ops::Deref,
@@ -88,6 +89,12 @@ impl<Fs: FileSystem> Cache<Fs> {
 
 #[derive(Clone)]
 pub struct CachedPath(Arc<CachedPathImpl>);
+
+impl fmt::Debug for CachedPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.path.fmt(f)
+    }
+}
 
 impl Hash for CachedPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
