@@ -371,7 +371,7 @@ impl Kind {
 
     pub fn match_keyword(s: &str) -> Self {
         let len = s.len();
-        if len == 1 || len >= 12 {
+        if len <= 1 || len >= 12 || !s.as_bytes()[0].is_ascii_lowercase() {
             return Ident;
         }
         Self::match_keyword_impl(s)
