@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_ast_lower"
-version                = "0.1.3"
+version                = "0.2.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
