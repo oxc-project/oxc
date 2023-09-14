@@ -38,6 +38,7 @@ mod eslint {
     pub mod no_class_assign;
     pub mod no_compare_neg_zero;
     pub mod no_cond_assign;
+    pub mod no_console;
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
     pub mod no_constant_condition;
@@ -139,6 +140,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_class_assign,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
+    eslint::no_console,
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
@@ -149,9 +151,9 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
-    eslint::no_empty,
     eslint::no_empty_character_class,
     eslint::no_empty_pattern,
+    eslint::no_empty,
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
