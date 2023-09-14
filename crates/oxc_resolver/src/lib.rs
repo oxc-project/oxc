@@ -25,6 +25,8 @@ mod package_json;
 mod path;
 mod resolution;
 mod specifier;
+#[cfg(feature = "tracing-subscriber")]
+mod tracing_subscriber;
 mod tsconfig;
 
 #[cfg(test)]
@@ -50,7 +52,7 @@ use crate::{
     tsconfig::TsConfig,
 };
 pub use crate::{
-    error::{JSONError, ResolveError},
+    error::{JSONError, ResolveError, SpecifierError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
     package_json::PackageJson,
@@ -137,6 +139,8 @@ impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
 
 impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
+        #[cfg(feature = "tracing-subscriber")]
+        tracing_subscriber::init();
         Self { options: options.sanitize(), cache: Arc::new(Cache::default()) }
     }
 
@@ -511,7 +515,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_realpath(&self, cached_path: &CachedPath) -> Result<PathBuf, ResolveError> {
         if self.options.symlinks {
-            cached_path.canonicalize(&self.cache).map_err(ResolveError::from)
+            cached_path.realpath(&self.cache.fs).map_err(ResolveError::from)
         } else {
             Ok(cached_path.to_path_buf())
         }
@@ -599,20 +603,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. for each DIR in DIRS:
         for module_name in &self.options.modules {
             for cached_path in std::iter::successors(Some(cached_path), |p| p.parent()) {
-                let mut cached_path = cached_path.clone();
-
-                if !cached_path.path().ends_with(module_name) {
-                    if let Some(path) = if module_name == "node_modules" {
-                        cached_path.cached_node_modules(&self.cache)
-                    } else {
-                        cached_path.module_directory(module_name, &self.cache)
-                    } {
-                        cached_path = path;
-                    } else {
-                        continue;
-                    }
+                let Some(cached_path) = self.get_module_directory(cached_path, module_name) else {
+                    continue;
                 };
-
                 // Optimize node_modules lookup by inspecting whether the package exists
                 // From LOAD_PACKAGE_EXPORTS(X, DIR)
                 // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
@@ -631,6 +624,15 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         if !subpath.is_empty() {
                             continue;
                         }
+                        // Skip if the directory lead to the scope package does not exist
+                        // i.e. `foo/node_modules/@scope` is not a directory for `foo/node_modules/@scope/package`
+                        if package_name.starts_with('@') {
+                            if let Some(path) = cached_path.parent() {
+                                if !path.is_dir(&self.cache.fs) {
+                                    continue;
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -645,6 +647,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         Ok(None)
+    }
+
+    fn get_module_directory(
+        &self,
+        cached_path: &CachedPath,
+        module_name: &str,
+    ) -> Option<CachedPath> {
+        if cached_path.path().ends_with(module_name) {
+            Some(cached_path.clone())
+        } else if module_name == "node_modules" {
+            cached_path.cached_node_modules(&self.cache)
+        } else {
+            cached_path.module_directory(module_name, &self.cache)
+        }
     }
 
     fn load_package_exports(
@@ -894,8 +910,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &mut ResolveContext,
     ) -> ResolveState {
         let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
-        let tsconfig_path = self.cache.value(tsconfig_path);
-        let tsconfig = self.load_tsconfig(&tsconfig_path)?;
+        let tsconfig = self.load_tsconfig(tsconfig_path)?;
         let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
             let cached_path = self.cache.value(&path);
@@ -906,34 +921,44 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_tsconfig(&self, cached_path: &CachedPath) -> Result<Arc<TsConfig>, ResolveError> {
-        self.cache.tsconfig(cached_path, |tsconfig| {
+    fn load_tsconfig(&self, path: &Path) -> Result<Arc<TsConfig>, ResolveError> {
+        self.cache.tsconfig(path, |tsconfig| {
+            let directory = self.cache.value(tsconfig.directory());
             // Extend tsconfig
-            if !tsconfig.extends().is_empty() {
-                let resolver = self.clone_with_options(ResolveOptions {
-                    extensions: vec![".json".into()],
-                    main_files: vec!["tsconfig".into()],
-                    ..ResolveOptions::default()
-                });
-                let mut extended_tsconfigs = vec![];
-                for tsconfig_extend_specifier in tsconfig.extends() {
-                    let extended_tsconfig_path = resolver.require(
-                        cached_path.parent().unwrap(),
-                        tsconfig_extend_specifier,
-                        &mut ResolveContext::default(),
-                    )?;
-                    let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
-                    extended_tsconfigs.push(extended_tsconfig);
-                }
-                for extended_tsconfig in extended_tsconfigs {
-                    tsconfig.extend_tsconfig(&extended_tsconfig);
-                }
+            let mut extended_tsconfig_paths = vec![];
+            for tsconfig_extend_specifier in tsconfig.extends() {
+                let extended_tsconfig_path = match tsconfig_extend_specifier.as_bytes().first() {
+                    None => return Err(ResolveError::Specifier(SpecifierError::Empty)),
+                    Some(b'/') => PathBuf::from(tsconfig_extend_specifier),
+                    Some(b'.') => tsconfig.directory().normalize_with(tsconfig_extend_specifier),
+                    _ => self
+                        .clone_with_options(ResolveOptions {
+                            description_files: vec![],
+                            extensions: vec![],
+                            main_files: vec!["tsconfig.json".into()],
+                            ..ResolveOptions::default()
+                        })
+                        .load_package_self_or_node_modules(
+                            &directory,
+                            tsconfig_extend_specifier,
+                            &mut ResolveContext::default(),
+                        )
+                        .map_err(|err| match err {
+                            ResolveError::NotFound(path) => ResolveError::TsconfigNotFound(path),
+                            _ => err,
+                        })?
+                        .to_path_buf(),
+                };
+                extended_tsconfig_paths.push(extended_tsconfig_path);
+            }
+            for extended_tsconfig_path in extended_tsconfig_paths {
+                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
+                tsconfig.extend_tsconfig(&extended_tsconfig);
             }
             // Load project references
             let directory = tsconfig.directory().to_path_buf();
             for reference in tsconfig.references_mut() {
-                let reference_tsconfig_path =
-                    self.cache.value(&directory.normalize_with(&reference.path));
+                let reference_tsconfig_path = directory.normalize_with(&reference.path);
                 let tsconfig = self.cache.tsconfig(&reference_tsconfig_path, |_| Ok(()))?;
                 reference.tsconfig.replace(tsconfig);
             }
@@ -948,15 +973,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &mut ResolveContext,
     ) -> ResolveState {
-        let (name, subpath) = Self::parse_package_specifier(specifier);
+        let (package_name, subpath) = Self::parse_package_specifier(specifier);
         // 11. While parentURL is not the file system root,
-        let mut parent_url = cached_path.path().to_path_buf();
-        loop {
-            for module_name in &self.options.modules {
+        for module_name in &self.options.modules {
+            for cached_path in std::iter::successors(Some(cached_path), |p| p.parent()) {
                 // 1. Let packageURL be the URL resolution of "node_modules/" concatenated with packageSpecifier, relative to parentURL.
-                parent_url.push(module_name);
-                let package_path = parent_url.join(name);
+                let Some(cached_path) = self.get_module_directory(cached_path, module_name) else {
+                    continue;
+                };
                 // 2. Set parentURL to the parent folder URL of parentURL.
+                let package_path = cached_path.path().join(package_name);
                 let cached_path = self.cache.value(&package_path);
                 // 3. If the folder at packageURL does not exist, then
                 //   1. Continue the next loop iteration.
@@ -999,10 +1025,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     ctx.with_query_fragment(specifier.query, specifier.fragment);
                     return self.require(&cached_path, specifier.path(), ctx).map(Some);
                 }
-                parent_url.pop();
-            }
-            if !parent_url.pop() {
-                break;
             }
         }
 

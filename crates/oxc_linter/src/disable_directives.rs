@@ -1,4 +1,4 @@
-use oxc_ast::Trivias;
+use oxc_ast::TriviasMap;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
@@ -28,7 +28,7 @@ impl<'a> DisableDirectives<'a> {
 
 pub struct DisableDirectivesBuilder<'a, 'b> {
     source_text: &'a str,
-    trivias: &'b Trivias,
+    trivias: &'b TriviasMap,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
     /// Start of `eslint-disable`
@@ -38,7 +38,7 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
-    pub fn new(source_text: &'a str, trivias: &'b Trivias) -> Self {
+    pub fn new(source_text: &'a str, trivias: &'b TriviasMap) -> Self {
         Self {
             source_text,
             trivias,

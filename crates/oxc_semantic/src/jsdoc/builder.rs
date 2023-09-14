@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, rc::Rc};
 
-use oxc_ast::{AstKind, Trivias};
+use oxc_ast::{AstKind, TriviasMap};
 use oxc_span::{GetSpan, Span};
 
 use super::{JSDoc, JSDocComment};
@@ -8,13 +8,13 @@ use super::{JSDoc, JSDocComment};
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
 
-    trivias: Rc<Trivias>,
+    trivias: Rc<TriviasMap>,
 
     docs: BTreeMap<Span, JSDocComment<'a>>,
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: &Rc<Trivias>) -> Self {
+    pub fn new(source_text: &'a str, trivias: &Rc<TriviasMap>) -> Self {
         Self { source_text, trivias: Rc::clone(trivias), docs: BTreeMap::default() }
     }
 

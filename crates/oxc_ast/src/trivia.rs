@@ -4,14 +4,23 @@ use std::collections::BTreeMap;
 
 use oxc_span::Span;
 
+/// A vec of trivias from the lexer, tupled by (span.start, span.end).
+pub type Trivias = Vec<(u32, u32, CommentKind)>;
+
 /// Trivias such as comments
 ///
 /// Trivia (called that because it's trivial) represent the parts of the source text that are largely insignificant for normal understanding of the code.
 /// For example: whitespace, comments, and even conflict markers.
 #[derive(Debug, Default)]
-pub struct Trivias {
+pub struct TriviasMap {
     /// Keyed by span.start
     comments: BTreeMap<u32, Comment>,
+}
+
+impl From<Trivias> for TriviasMap {
+    fn from(trivias: Trivias) -> Self {
+        Self { comments: trivias.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect() }
+    }
 }
 
 /// Single or multiline comment
@@ -46,7 +55,7 @@ impl Comment {
     }
 }
 
-impl Trivias {
+impl TriviasMap {
     pub fn comments(&self) -> &BTreeMap<u32, Comment> {
         &self.comments
     }

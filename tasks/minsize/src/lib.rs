@@ -6,7 +6,7 @@ use std::{
 use brotlic::{BlockSize, BrotliEncoderOptions, CompressorWriter, Quality, WindowSize};
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
-use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
 
@@ -54,7 +54,10 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let options = MinifierOptions::default();
+    let options = MinifierOptions {
+        compress: CompressOptions { evaluate: false, ..CompressOptions::default() },
+        ..MinifierOptions::default()
+    };
     let source_text1 = Minifier::new(&file.source_text, source_type, options).build();
     let source_text2 = Minifier::new(&source_text1, source_type, options).build();
     assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
