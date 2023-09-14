@@ -444,9 +444,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn identifier_name_handler(&mut self) -> &'a str {
-        let mut builder = AutoCow::new(self);
-        let c = self.consume_char();
-        builder.push_matching(c);
+        let builder = AutoCow::new(self);
+        self.consume_char();
         self.identifier_name(builder)
     }
 
