@@ -1,4 +1,4 @@
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// console.log('here');
     /// ```
     NoConsole,
-    correctness
+    restriction
 );
 
 impl Rule for NoConsole {
@@ -61,28 +61,24 @@ impl Rule for NoConsole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let module_record = ctx.semantic().module_record();
-
-        for import_entry in &module_record.import_entries {
-            if import_entry.local_name.name().as_str() == "console" {
-                return;
-            }
-        }
-
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
-            node.kind()
-        {
-            if expr.object.without_parenthesized().get_identifier_reference().is_some_and(|x| {
-                x.name == "console" && !allowed_method(&self.allow, expr.property.name.as_str())
-            }) {
-                ctx.diagnostic(NoConsoleDiagnostic(expr.property.span));
+        if let AstKind::ExpressionStatement(expr) = node.kind() {
+            if let Expression::CallExpression(call_expr) = &expr.expression {
+                if let Expression::MemberExpression(mem) = &call_expr.callee {
+                    if let Expression::Identifier(ident) = mem.object() {
+                        if ctx.semantic().is_reference_to_global_variable(ident)
+                            && ident.name == "console"
+                            && !self
+                                .allow
+                                .iter()
+                                .any(|s| mem.static_property_name().is_some_and(|f| f == s))
+                        {
+                            ctx.diagnostic(NoConsoleDiagnostic(mem.static_property_info().unwrap().0));
+                        }
+                    }
+                }
             }
         }
     }
-}
-
-fn allowed_method(allow: &[String], method: &str) -> bool {
-    allow.iter().any(|s| s == method)
 }
 
 #[test]
@@ -100,12 +96,12 @@ fn test() {
         ("console.error(foo)", Some(serde_json::json!([{ "allow": ["log", "error"] }]))),
         ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }]))),
         ("var console = require('myconsole'); console.log(foo)", None),
+        ("import console from 'myconsole'; console.log(foo)", None),
     ];
 
     let fail = vec![
         ("console.log(foo)", None),
         ("console.error(foo)", None),
-        ("console.log = foo()", None),
         ("console.info(foo)", None),
         ("console.warn(foo)", None),
         ("console.log(foo)", Some(serde_json::json!([{ "allow": ["error"] }]))),
