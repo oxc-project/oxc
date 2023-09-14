@@ -11,6 +11,17 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 use oxc_cli::{CliCommand, CliRunResult, LintRunner, Runner, TypeCheckRunner};
 
 fn main() -> CliRunResult {
+    miette::set_hook(Box::new(|_| {
+        Box::new(
+            miette::MietteHandlerOpts::new()
+                // Force the value to disable auto detection, which is an
+                // expensive syscall when called repeatedly
+                .terminal_links(true)
+                .build(),
+        )
+    }))
+    .unwrap();
+
     let options = oxc_cli::cli_command().fallback_to_usage().run();
     options.handle_threads();
     match options {
