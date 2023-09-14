@@ -72,7 +72,9 @@ impl Rule for NoConsole {
                                 .iter()
                                 .any(|s| mem.static_property_name().is_some_and(|f| f == s))
                         {
-                            ctx.diagnostic(NoConsoleDiagnostic(mem.static_property_info().unwrap().0));
+                            ctx.diagnostic(NoConsoleDiagnostic(
+                                mem.static_property_info().unwrap().0,
+                            ));
                         }
                     }
                 }
