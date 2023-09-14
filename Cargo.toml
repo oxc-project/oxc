@@ -62,7 +62,7 @@ num-bigint                = { version = "0.4.3" }
 num-traits                = { version = "0.2.16" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.66" }
+proc-macro2               = { version = "1.0.67" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.33" }
 rayon                     = { version = "1.7.0" }
@@ -71,12 +71,12 @@ rustc-hash                = { version = "1.1.0", default-features = false, featu
 ryu-js                    = { version = "0.2.2" }
 ropey                     = { version = "1.6.0" }
 serde                     = { version = "1.0.188" }
-serde_json                = { version = "1.0.106" }
+serde_json                = { version = "1.0.107" }
 syn                       = { version = "=1" }
 thiserror                 = { version = "1.0.48" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
-unicode-id-start          = { version = "1.1.1" }
+unicode-id-start          = { version = "1.1.2" }
 ureq                      = { version = "2.7.1", default-features = false, features = ["tls"] }
 url                       = { version = "2.4.1" }
 walkdir                   = { version = "2.4.0" }
