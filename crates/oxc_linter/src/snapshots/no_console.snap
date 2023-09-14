@@ -4,6 +4,12 @@ expression: no_console
 ---
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:1]
+ 1 │ console.log()
+   ·         ───
+   ╰────
+
+  ⚠ eslint(no-console): Unexpected console statement.
+   ╭─[no_console.tsx:1:1]
  1 │ console.log(foo)
    ·         ───
    ╰────
