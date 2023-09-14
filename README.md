@@ -237,8 +237,8 @@ If you are unable to contribute by code, you can still participate by:
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
 
-* [Biome][biome] - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
-* [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh)
+* [Biome][biome] - [@ematipico](https://github.com/ematipico)
+* [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
 * [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 * [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
