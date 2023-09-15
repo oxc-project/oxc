@@ -1,10 +1,15 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    ast::{
+        AssignmentExpression, AssignmentTarget, CallExpression, Expression, MemberExpression,
+        SimpleAssignmentTarget,
+    },
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Reference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, Fix};
@@ -37,7 +42,7 @@ declare_oxc_lint!(
     restriction
 );
 
-const JASMINE_NAMES: [&str; 5] = ["spyOn", "spyOnProperty", "fail", "pending", "jasmine"];
+const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
@@ -46,82 +51,95 @@ impl Rule for NoJasmineGlobals {
             .scopes()
             .root_unresolved_references()
             .iter()
-            .filter(|(key, _)| JASMINE_NAMES.contains(&key.as_str()));
+            .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(&key.as_str()));
 
         for (name, reference_ids) in jasmine_references {
             for &reference_id in reference_ids {
                 let reference = symbol_table.get_reference(reference_id);
                 if let Some((error, help)) = get_non_jasmine_property_messages(name) {
                     ctx.diagnostic(NoJasmineGlobalsDiagnostic(error, help, reference.span()));
+                }
+            }
+        }
+    }
+
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::AssignmentExpression(assign_expr) = node.kind() {
+            diagnostic_assign_expr(assign_expr, ctx)
+        } else if let AstKind::CallExpression(call_expr) = node.kind() {
+            diagnostic_call_expr(call_expr, ctx)
+        }
+    }
+}
+
+fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintContext) {
+    if let AssignmentTarget::SimpleAssignmentTarget(
+        SimpleAssignmentTarget::MemberAssignmentTarget(member_expr),
+    ) = &expr.left
+    {
+        let (span, property_name) = match get_jasmine_property_name(member_expr) {
+            Some(value) => value,
+            None => return,
+        };
+
+        if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
+            // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;` we can fix it to `jest.setTimeout(5000)`
+            if expr.right.is_literal_expression() {
+                ctx.diagnostic_with_fix(
+                    NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
+                    || Fix::new("jest.setTimeout", expr.left.span()),
+                );
+                return;
+            }
+        }
+
+        ctx.diagnostic(NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span));
+    }
+}
+
+fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
+    if let Expression::MemberExpression(member_expr) = &expr.callee {
+        let (span, property_name) = match get_jasmine_property_name(member_expr) {
+            Some(value) => value,
+            None => return,
+        };
+
+        JasmineProperty::from_str(property_name).map_or_else(
+            || {
+                ctx.diagnostic(NoJasmineGlobalsDiagnostic(
+                    COMMON_ERROR_TEXT,
+                    COMMON_HELP_TEXT,
+                    span,
+                ));
+            },
+            |jasmine_property| {
+                let (error, help) = jasmine_property.details();
+                if jasmine_property.available_in_jest_expect() {
+                    ctx.diagnostic_with_fix(NoJasmineGlobalsDiagnostic(error, help, span), || {
+                        Fix::new("expect", member_expr.object().span())
+                    });
                 } else {
-                    diagnostic_jasmine_property(reference, ctx);
+                    ctx.diagnostic(NoJasmineGlobalsDiagnostic(error, help, span));
                 }
-            }
-        }
+            },
+        );
     }
 }
 
-fn diagnostic_jasmine_property(reference: &Reference, ctx: &LintContext) {
-    let parent = ctx.nodes().parent_node(reference.node_id());
-    if let Some(parent) = parent {
-        if let AstKind::MemberExpression(member_expr) = parent.kind() {
-            let Some(property_name) = member_expr.static_property_name() else { return };
-
-            if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
-                if let Some(ancestor) = ctx
-                    .nodes()
-                    .parent_node(parent.id())
-                    .and_then(|p| ctx.nodes().parent_node(p.id()))
-                    .and_then(|p| ctx.nodes().parent_node(p.id()))
-                {
-                    if let AstKind::AssignmentExpression(expr) = ancestor.kind() {
-                        if expr.right.is_literal_expression() {
-                            ctx.diagnostic_with_fix(
-                                NoJasmineGlobalsDiagnostic(
-                                    COMMON_ERROR_TEXT,
-                                    COMMON_HELP_TEXT,
-                                    expr.span,
-                                ),
-                                || Fix::new("jest.setTimeout", expr.left.span()),
-                            );
-                        } else {
-                            ctx.diagnostic(NoJasmineGlobalsDiagnostic(
-                                COMMON_ERROR_TEXT,
-                                COMMON_HELP_TEXT,
-                                expr.span,
-                            ));
-                        }
-                    }
-                }
-            }
-
-            JasmineProperty::from_str(property_name).map_or_else(
-                || {
-                    ctx.diagnostic(NoJasmineGlobalsDiagnostic(
-                        COMMON_ERROR_TEXT,
-                        COMMON_HELP_TEXT,
-                        reference.span(),
-                    ));
-                },
-                |jasmine_property| {
-                    let (error, help) = jasmine_property.details();
-                    if jasmine_property.available_in_jest_expect() {
-                        ctx.diagnostic_with_fix(
-                            NoJasmineGlobalsDiagnostic(error, help, reference.span()),
-                            || {
-                                let object = member_expr.object();
-                                Fix::new("expect", object.span())
-                            },
-                        );
-                    } else {
-                        ctx.diagnostic(NoJasmineGlobalsDiagnostic(error, help, reference.span()));
-                    }
-                },
-            );
-        }
+fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Option<(Span, &'a str)> {
+    let name = match member_expr.object() {
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        _ => None,
+    };
+    let is_jasmine_object = name.is_some_and(|name| name == "jasmine");
+    if !is_jasmine_object {
+        return None;
     }
+    let Some((span, property_name)) = member_expr.static_property_info() else {
+        return None;
+    };
+    Some((span, property_name))
 }
-
 const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
 const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
@@ -204,6 +222,17 @@ impl JasmineProperty {
     }
 }
 
+#[ignore]
+#[test]
+fn test_1() {
+    use crate::tester::Tester;
+
+    let pass = vec![];
+    let fail = vec![("jasmine.any()", None)];
+
+    Tester::new(NoJasmineGlobals::NAME, pass, fail).test_and_snapshot();
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -254,7 +283,7 @@ fn test() {
             None,
         ),
         ("jasmine.any()", "expect.any()", None),
-        ("jasmine.anything", "expect.anything", None),
+        ("jasmine.anything()", "expect.anything()", None),
         ("jasmine.arrayContaining()", "expect.arrayContaining()", None),
         ("jasmine.objectContaining()", "expect.objectContaining()", None),
         ("jasmine.stringMatching()", "expect.stringMatching()", None),
