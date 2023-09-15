@@ -23,10 +23,8 @@ oxc_parser         = { workspace = true }
 oxc_semantic       = { workspace = true }
 oxc_linter         = { workspace = true }
 oxc_formatter      = { workspace = true }
-oxc_ast_lower      = { workspace = true }
-oxc_hir            = { workspace = true, features = ["serde"] }
 oxc_type_synthesis = { workspace = true }
-oxc_minifier       = { workspace = true }
+# oxc_minifier       = { workspace = true }
 oxc_span           = { workspace = true }
 oxc_query          = { workspace = true }
 serde_json         = { workspace = true }

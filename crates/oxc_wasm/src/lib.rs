@@ -3,11 +3,10 @@ mod options;
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::{LintContext, Linter};
-use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
+// use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
@@ -18,8 +17,8 @@ use trustfall::{execute_query, TransparentValue};
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
-    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
-    OxcTypeCheckingOptions,
+    OxcFormatterOptions, OxcLinterOptions, /*OxcMinifierOptions, */ OxcParserOptions,
+    OxcRunOptions, OxcTypeCheckingOptions,
 };
 
 #[wasm_bindgen(start)]
@@ -160,7 +159,7 @@ impl Oxc {
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
         formatter_options: &OxcFormatterOptions,
-        minifier_options: &OxcMinifierOptions,
+        // minifier_options: &OxcMinifierOptions,
         _type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
@@ -207,26 +206,26 @@ impl Oxc {
             self.formatted_text = printed;
         }
 
-        if run_options.hir() && !run_options.minify() {
-            let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
-            self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
-        }
+        // if run_options.hir() && !run_options.minify() {
+        // let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
+        // self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
+        // }
 
-        if run_options.minify() {
-            let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
-            let hir = allocator.alloc(ast_lower_ret.program);
-            let semantic = ast_lower_ret.semantic;
+        // if run_options.minify() {
+        // let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
+        // let hir = allocator.alloc(ast_lower_ret.program);
+        // let semantic = ast_lower_ret.semantic;
 
-            let mut printer = Printer::new(self.source_text.len(), PrinterOptions);
-            let _semantic =
-                Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
-            if minifier_options.mangle() {
-                let mangler = ManglerBuilder::new(source_text, source_type).build(hir);
-                printer.with_mangler(mangler);
-            }
+        // let mut printer = Printer::new(self.source_text.len(), PrinterOptions);
+        // let _semantic =
+        // Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
+        // if minifier_options.mangle() {
+        // let mangler = ManglerBuilder::new(source_text, source_type).build(hir);
+        // printer.with_mangler(mangler);
+        // }
 
-            self.minified_text = printer.build(hir);
-        }
+        // self.minified_text = printer.build(hir);
+        // }
 
         if run_options.type_check() {
             let (diagnostics, ..) = synthesize_program(program, |_: &std::path::Path| None);

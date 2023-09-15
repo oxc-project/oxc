@@ -16,7 +16,7 @@ fn main() {
     match task {
         "parser" => args.run_parser(),
         "formatter" => args.run_formatter(),
-        "minifier" => args.run_minifier(),
+        // "minifier" => args.run_minifier(),
         _ => args.run_all(),
     };
 }
