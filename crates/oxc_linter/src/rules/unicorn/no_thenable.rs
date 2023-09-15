@@ -1,7 +1,9 @@
 use oxc_ast::{
     ast::{
-        self, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, Expression,
-        MemberExpression, PropertyKey, SimpleAssignmentTarget,
+        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
+        BindingPatternKind, CallExpression, Declaration, Expression, MemberExpression,
+        ModuleDeclaration, ModuleExportName, ObjectPropertyKind, PropertyKey,
+        SimpleAssignmentTarget, VariableDeclarator,
     },
     AstKind,
 };
@@ -60,7 +62,7 @@ impl Rule for NoThenable {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
-                    if let oxc_ast::ast::ObjectPropertyKind::ObjectProperty(prop) = prop {
+                    if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                         if contains_then(&prop.key, ctx) {
                             ctx.diagnostic(NoThenableDiagnostic::Object(prop.span));
                         }
@@ -77,23 +79,23 @@ impl Rule for NoThenable {
                     ctx.diagnostic(NoThenableDiagnostic::Class(def.span));
                 }
             }
-            AstKind::ModuleDeclaration(ast::ModuleDeclaration::ExportNamedDeclaration(decl)) => {
+            AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
                 // check declaration
                 if let Some(ref decl) = decl.declaration {
                     match decl {
-                        ast::Declaration::VariableDeclaration(decl) => {
+                        Declaration::VariableDeclaration(decl) => {
                             for decl in &decl.declarations {
                                 check_binding_pattern(&decl.id.kind, ctx);
                             }
                         }
-                        ast::Declaration::FunctionDeclaration(decl) => {
+                        Declaration::FunctionDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
                                     ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
                                 }
                             };
                         }
-                        ast::Declaration::ClassDeclaration(decl) => {
+                        Declaration::ClassDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
                                     ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
@@ -106,12 +108,12 @@ impl Rule for NoThenable {
                 // check specifier
                 for spec in &decl.specifiers {
                     match spec.exported {
-                        ast::ModuleExportName::Identifier(ref ident) => {
+                        ModuleExportName::Identifier(ref ident) => {
                             if ident.name == "then" {
                                 ctx.diagnostic(NoThenableDiagnostic::Export(ident.span));
                             }
                         }
-                        ast::ModuleExportName::StringLiteral(ref lit) => {
+                        ModuleExportName::StringLiteral(ref lit) => {
                             if lit.value == "then" {
                                 ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
                             }
@@ -145,15 +147,15 @@ impl Rule for NoThenable {
     }
 }
 
-fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
+fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     // `Object.defineProperty(foo, 'then', …)`
     // `Reflect.defineProperty(foo, 'then', …)`
     if !{
         !expr.optional
             && expr.arguments.len() >= 3
-            && !matches!(expr.arguments[0], ast::Argument::SpreadElement(_))
+            && !matches!(expr.arguments[0], Argument::SpreadElement(_))
             && match expr.callee {
-                ast::Expression::MemberExpression(ref me) => {
+                Expression::MemberExpression(ref me) => {
                     me.object().get_identifier_reference().map_or(false, |ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
                     }) && me.static_property_name() == Some("defineProperty")
@@ -162,7 +164,7 @@ fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let ast::Argument::Expression(inner) = &expr.arguments[1] {
+    } else if let Argument::Expression(inner) = &expr.arguments[1] {
         if let Some(span) = check_expression(inner, ctx) {
             ctx.diagnostic(NoThenableDiagnostic::Object(span));
         }
@@ -172,12 +174,9 @@ fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
     if !{
         !expr.optional
             && expr.arguments.len() == 1
-            && matches!(
-                expr.arguments[0],
-                ast::Argument::Expression(Expression::ArrayExpression(_))
-            )
+            && matches!(expr.arguments[0], Argument::Expression(Expression::ArrayExpression(_)))
             && match expr.callee {
-                ast::Expression::MemberExpression(ref me) => {
+                Expression::MemberExpression(ref me) => {
                     me.object()
                         .get_identifier_reference()
                         .map_or(false, |ident_ref| ident_ref.name == "Object")
@@ -187,8 +186,7 @@ fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let ast::Argument::Expression(Expression::ArrayExpression(outer)) = &expr.arguments[0]
-    {
+    } else if let Argument::Expression(Expression::ArrayExpression(outer)) = &expr.arguments[0] {
         for inner in &outer.elements {
             // inner item is array
             if let ArrayExpressionElement::Expression(Expression::ArrayExpression(inner)) = inner {
@@ -206,14 +204,14 @@ fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
     }
 }
 
-fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
+fn check_binding_pattern(pat: &BindingPatternKind, ctx: &LintContext) {
     match pat {
-        ast::BindingPatternKind::BindingIdentifier(bind) => {
+        BindingPatternKind::BindingIdentifier(bind) => {
             if bind.name == "then" {
                 ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
             }
         }
-        ast::BindingPatternKind::ObjectPattern(obj) => {
+        BindingPatternKind::ObjectPattern(obj) => {
             for prop in &obj.properties {
                 check_binding_pattern(&prop.value.kind, ctx);
             }
@@ -221,7 +219,7 @@ fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
                 check_binding_pattern(&elem.argument.kind, ctx);
             }
         }
-        ast::BindingPatternKind::ArrayPattern(arr) => {
+        BindingPatternKind::ArrayPattern(arr) => {
             for pat in &arr.elements {
                 if let Some(pat) = pat.as_ref() {
                     check_binding_pattern(&pat.kind, ctx);
@@ -231,7 +229,7 @@ fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
                 check_binding_pattern(&elem.argument.kind, ctx);
             }
         }
-        ast::BindingPatternKind::AssignmentPattern(assign) => {
+        BindingPatternKind::AssignmentPattern(assign) => {
             check_binding_pattern(&assign.left.kind, ctx);
         }
     }
@@ -239,22 +237,22 @@ fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
 
 fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span::Span> {
     match expr {
-        oxc_ast::ast::Expression::StringLiteral(lit) => {
+        Expression::StringLiteral(lit) => {
             if lit.value == "then" {
                 Some(lit.span)
             } else {
                 None
             }
         }
-        oxc_ast::ast::Expression::TemplateLiteral(lit) => {
+        Expression::TemplateLiteral(lit) => {
             lit.quasi().and_then(|quasi| if quasi == &"then" { Some(lit.span) } else { None })
         }
-        oxc_ast::ast::Expression::Identifier(ident) => {
+        Expression::Identifier(ident) => {
             let tab = ctx.semantic().symbols();
             ident.reference_id.get().and_then(|ref_id| {
                 tab.get_reference(ref_id).symbol_id().and_then(|symbol_id| {
                     let decl = ctx.semantic().nodes().get_node(tab.get_declaration(symbol_id));
-                    if let AstKind::VariableDeclarator(oxc_ast::ast::VariableDeclarator {
+                    if let AstKind::VariableDeclarator(VariableDeclarator {
                         init: Some(Expression::StringLiteral(ref lit)),
                         ..
                     }) = decl.kind()
