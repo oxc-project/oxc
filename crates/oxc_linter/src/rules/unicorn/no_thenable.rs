@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        self, ArrayExpressionElement, AssignmentTarget, Expression,
-        MemberExpression, PropertyKey, SimpleAssignmentTarget,
+        self, ArrayExpressionElement, AssignmentTarget, Expression, MemberExpression, PropertyKey,
+        SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -45,6 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThenable {
+    #[allow(clippy::too_many_lines)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
@@ -100,12 +101,12 @@ impl Rule for NoThenable {
                                 if ident.name == "then" {
                                     ctx.diagnostic(NoThenableDiagnostic::Export(ident.span));
                                 }
-                            },
+                            }
                             ast::ModuleExportName::StringLiteral(ref lit) => {
                                 if lit.value == "then" {
                                     ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
                                 }
-                            },
+                            }
                         }
                     }
                 }
@@ -168,13 +169,12 @@ impl Rule for NoThenable {
                                     ArrayExpressionElement::SpreadElement(_)
                                 )
                             {
-                                match inner.elements[0] {
-                                    ArrayExpressionElement::Expression(ref expr) => {
-                                        if let Some(span) = check_expression(expr, ctx) {
-                                            ctx.diagnostic(NoThenableDiagnostic::Object(span));
-                                        }
+                                if let ArrayExpressionElement::Expression(ref expr) =
+                                    inner.elements[0]
+                                {
+                                    if let Some(span) = check_expression(expr, ctx) {
+                                        ctx.diagnostic(NoThenableDiagnostic::Object(span));
                                     }
-                                    _ => {}
                                 }
                             }
                         }
@@ -203,7 +203,7 @@ impl Rule for NoThenable {
                                             ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
                                         }
                                     }
-                                    _ => {}
+                                    MemberExpression::PrivateFieldExpression(_) => {}
                                 }
                             }
                         }
@@ -230,19 +230,25 @@ fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
             }
         }
         ast::BindingPatternKind::ObjectPattern(obj) => {
-            for prop in obj.properties.iter() {
+            for prop in &obj.properties {
                 check_binding_pattern(&prop.value.kind, ctx);
             }
-            obj.rest.as_ref().map(|elem| check_binding_pattern(&elem.argument.kind, ctx));
+            if let Some(elem) = obj.rest.as_ref() {
+                check_binding_pattern(&elem.argument.kind, ctx);
+            }
         }
         ast::BindingPatternKind::ArrayPattern(arr) => {
             for pat in &arr.elements {
-                pat.as_ref().map(|pat| check_binding_pattern(&pat.kind, ctx));
+                if let Some(pat) = pat.as_ref() {
+                    check_binding_pattern(&pat.kind, ctx);
+                }
             }
-            arr.rest.as_ref().map(|elem| check_binding_pattern(&elem.argument.kind, ctx));
+            if let Some(elem) = arr.rest.as_ref() {
+                check_binding_pattern(&elem.argument.kind, ctx);
+            }
         }
         ast::BindingPatternKind::AssignmentPattern(assign) => {
-            check_binding_pattern(&assign.left.kind, ctx)
+            check_binding_pattern(&assign.left.kind, ctx);
         }
     }
 }
@@ -257,12 +263,12 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             }
         }
         oxc_ast::ast::Expression::TemplateLiteral(lit) => {
-            lit.quasi().map_or(None, |quasi| if quasi == &"then" { Some(lit.span) } else { None })
+            lit.quasi().and_then(|quasi| if quasi == &"then" { Some(lit.span) } else { None })
         }
         oxc_ast::ast::Expression::Identifier(ident) => {
             let tab = ctx.semantic().symbols();
-            ident.reference_id.get().map_or(None, |ref_id| {
-                tab.get_reference(ref_id).symbol_id().map_or(None, |symbol_id| {
+            ident.reference_id.get().and_then(|ref_id| {
+                tab.get_reference(ref_id).symbol_id().and_then(|symbol_id| {
                     let decl = ctx.semantic().nodes().get_node(tab.get_declaration(symbol_id));
                     if let AstKind::VariableDeclarator(oxc_ast::ast::VariableDeclarator {
                         init: Some(Expression::StringLiteral(ref lit)),
