@@ -1,7 +1,7 @@
 parser_babel Summary:
-AST Parsed     : 2072/2078 (99.71%)
-Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1342/1507 (89.05%)
+AST Parsed     : 2077/2083 (99.71%)
+Positive Passed: 2074/2083 (99.57%)
+Negative Passed: 1342/1495 (89.77%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -21,11 +21,9 @@ Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.j
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/uncategorised/.191/input.js"
-Expect Syntax Error: "es2015/uncategorised/.335/input.js"
-Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
+Expect Syntax Error: "es2015/uncategorised/335/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
@@ -36,19 +34,9 @@ Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
-Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
-Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
-Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
-Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0006/input.js"
-Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-4-hex/input.js"
-Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-var-hex/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/.GH-1106-09/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/.migrated_0035/input.js"
+Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
 Expect Syntax Error: "esprima/rest-parameter/invalid-setter-rest/input.js"
-Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
-Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
-Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
 Expect Syntax Error: "typescript/arrow-function/async-rest-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
@@ -599,10 +587,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·    ────────
    ╰────
 
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[core/object/invalid-getter-param/input.js:1:1]
+ 1 │ ({ get prop(x) {} })
+   ·            ───
+   ╰────
+
   × A 'set' accessor must have exactly one parameter.
-   ╭─[core/object/invalid-setter/input.js:1:1]
+   ╭─[core/object/invalid-setter-no-param/input.js:1:1]
  1 │ ({ set x(){} })
    ·         ──
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[core/object/invalid-setter-two-params/input.js:1:1]
+ 1 │ ({ set prop(x, y) {} })
+   ·            ──────
    ╰────
 
   × Expected `(` but found `await`
@@ -930,24 +930,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·           ─────────────────────
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × A 'get' accessor must not have any formal parameters.
-   ╭─[core/uncategorised/.542/input.js:1:1]
- 1 │ ({ get prop(x) {} })
-   ·            ───
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[core/uncategorised/.543/input.js:1:1]
- 1 │ ({ set prop() {} })
-   ·            ──
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[core/uncategorised/.544/input.js:1:1]
- 1 │ ({ set prop(x, y) {} })
-   ·            ──────
-   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/108/input.js:1:1]
@@ -3365,24 +3347,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │     `;
    ╰────
 
-  × A 'yield' expression is only allowed in a generator body.
-   ╭─[es2015/uncategorised/.260/input.js:1:1]
- 1 │ (function() { "use strict"; f(yield v) })
-   ·                               ─────
-   ╰────
-
-  × A 'get' accessor must not have any formal parameters.
-   ╭─[es2015/uncategorised/.345/input.js:1:1]
- 1 │ class A { get prop(x) {} }
-   ·                   ───
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[es2015/uncategorised/.346/input.js:1:1]
- 1 │ class A { set prop() {} }
-   ·                   ──
-   ╰────
-
   × for-of loop variable declaration may not have an initializer
    ╭─[es2015/uncategorised/109/input.js:1:1]
  1 │ for (var x = 42 of list) process(x);
@@ -3756,6 +3720,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·          ╰── `]` expected
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[es2015/uncategorised/260/input.js:1:1]
+ 1 │ (function() { "use strict"; f(yield v) })
+   ·                               ─────
+   ╰────
+
   × Expected `(` but found `**`
    ╭─[es2015/uncategorised/261/input.js:1:1]
  1 │ var obj = { *test** }
@@ -4018,6 +3988,18 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/uncategorised/344/input.js:1:1]
  1 │ super
    · ─────
+   ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[es2015/uncategorised/345/input.js:1:1]
+ 1 │ class A { get prop(x) {} }
+   ·                   ───
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[es2015/uncategorised/346/input.js:1:1]
+ 1 │ class A { set prop() {} }
+   ·                   ──
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
@@ -6737,18 +6719,18 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·            ╰── `x` has already been declared here
    ╰────
 
-  × Unexpected trailing comma after rest element
-   ╭─[esprima/es2015-array-binding-pattern/.invalid-elision-after-rest/input.js:1:1]
- 1 │ ([a,...b,])=>0;
-   ·         ─
-   ╰────
-
   × Identifier `b` has already been declared
    ╭─[esprima/es2015-array-binding-pattern/invalid-dup-param/input.js:1:1]
  1 │ ([a,[b],...b])=>0;
    ·      ┬     ┬
    ·      │     ╰── It can not be redeclared here
    ·      ╰── `b` has already been declared here
+   ╰────
+
+  × Unexpected trailing comma after rest element
+   ╭─[esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:1]
+ 1 │ ([a,...b,])=>0;
+   ·         ─
    ╰────
 
   × Identifier `a` has already been declared
@@ -6881,7 +6863,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Cannot assign to 'eval' in strict mode
-   ╭─[esprima/es2015-class/.migrated_0026/input.js:1:1]
+   ╭─[esprima/es2015-class/invalid-eval-in-class-method-params/input.js:1:1]
  1 │ class A {a(eval){}}
    ·            ────
    ╰────
@@ -7089,19 +7071,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Invalid Unicode escape sequence
-   ╭─[esprima/es2015-identifier/.invalid_lone_surrogate/input.js:1:1]
- 1 │ \uD800!
-   ·  ─────
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[esprima/es2015-identifier/.invalid_lone_surrogate/input.js:1:1]
- 1 │ \uD800!
-   ·       ▲
-   ╰────
-  help: Try insert a semicolon here
-
-  × Invalid Unicode escape sequence
    ╭─[esprima/es2015-identifier/invalid_escaped_surrogate_pairs/input.js:1:1]
  1 │ var \uD83B\uDE00
    ·      ───────────
@@ -7118,6 +7087,19 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ var 🀒
    ·     ─
    ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[esprima/es2015-identifier/invalid_lone_surrogate/input.js:1:1]
+ 1 │ \uD800!
+   ·  ─────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[esprima/es2015-identifier/invalid_lone_surrogate/input.js:1:1]
+ 1 │ \uD800!
+   ·       ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × Cannot use export statement outside a module
    ╭─[esprima/es2015-identifier/invalid_var_await/input.js:1:1]
@@ -7337,7 +7319,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
-   ╭─[esprima/es2015-super-property/.invalid_super_access/input.js:2:1]
+   ╭─[esprima/es2015-super-property/invalid_super_access/input.js:2:1]
  2 │     constructor() {
  3 │         (super)();
    ·          ─────
@@ -7346,7 +7328,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
-   ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
+   ╭─[esprima/es2015-super-property/invalid_super_id/input.js:1:1]
  1 │ class A {
  2 │     foo() { new super + 3 }
    ·                 ─────
@@ -7356,7 +7338,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
-   ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
+   ╭─[esprima/es2015-super-property/invalid_super_id/input.js:1:1]
  1 │ class A {
  2 │     foo() { new super + 3 }
    ·             ─────────
@@ -7370,18 +7352,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·         ───────
    ╰────
 
-  × Bad escape sequence in untagged template literal
-   ╭─[esprima/es2015-template-literals/.octal-literal/input.js:1:1]
- 1 │ `\00`;
-   ·  ───
-   ╰────
-
-  × Bad escape sequence in untagged template literal
-   ╭─[esprima/es2015-template-literals/.strict-octal-literal/input.js:1:1]
- 1 │ 'use strict'; `\00`;
-   ·                ───
-   ╰────
-
   × Expected `(` but found `${}`
    ╭─[esprima/es2015-template-literals/after-switch/input.js:1:1]
  1 │ switch `test`
@@ -7393,6 +7363,18 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[esprima/es2015-template-literals/invalid-escape/input.js:1:1]
  1 │ `\1`;
    ·  ──
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[esprima/es2015-template-literals/invalid-octal-literal/input.js:1:1]
+ 1 │ `\00`;
+   ·  ───
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[esprima/es2015-template-literals/invalid-strict-octal-literal/input.js:1:1]
+ 1 │ 'use strict'; `\00`;
+   ·                ───
    ╰────
 
   × Unterminated string
@@ -7659,6 +7641,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ "\u000";
    ·  ─────
    ╰────
+
+  × Invalid escape sequence
+   ╭─[esprima/invalid-syntax/GH-1106-09/input.js:1:1]
+ 1 │ "\9";
+   · ────
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
 
   × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0000/input.js:1:1]

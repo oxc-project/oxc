@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5137/5142 (99.90%)
-Positive Passed: 5129/5142 (99.75%)
-Negative Passed: 1014/4824 (21.02%)
+AST Parsed     : 5158/5162 (99.92%)
+Positive Passed: 5150/5162 (99.77%)
+Negative Passed: 1014/4831 (20.99%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -275,6 +275,8 @@ Expect Syntax Error: "compiler/classExtendsInterfaceThatExtendsClassWithPrivates
 Expect Syntax Error: "compiler/classExtendsInterface_not.ts"
 Expect Syntax Error: "compiler/classExtendsMultipleBaseClasses.ts"
 Expect Syntax Error: "compiler/classExtendsNull.ts"
+Expect Syntax Error: "compiler/classExtendsNull2.ts"
+Expect Syntax Error: "compiler/classExtendsNull3.ts"
 Expect Syntax Error: "compiler/classImplementsClass2.ts"
 Expect Syntax Error: "compiler/classImplementsClass4.ts"
 Expect Syntax Error: "compiler/classImplementsClass5.ts"
@@ -470,6 +472,7 @@ Expect Syntax Error: "compiler/deepKeysIndexing.ts"
 Expect Syntax Error: "compiler/deeplyNestedAssignabilityErrorsCombined.ts"
 Expect Syntax Error: "compiler/deeplyNestedAssignabilityIssue.ts"
 Expect Syntax Error: "compiler/deeplyNestedCheck.ts"
+Expect Syntax Error: "compiler/deeplyNestedMappedTypes.ts"
 Expect Syntax Error: "compiler/defaultArgsInFunctionExpressions.ts"
 Expect Syntax Error: "compiler/defaultArgsInOverloads.ts"
 Expect Syntax Error: "compiler/defaultBestCommonTypesHaveDecls.ts"
@@ -506,6 +509,7 @@ Expect Syntax Error: "compiler/divergentAccessorsTypes2.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes4.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes5.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes6.ts"
+Expect Syntax Error: "compiler/divergentAccessorsTypes8.ts"
 Expect Syntax Error: "compiler/divergentAccessorsVisibility1.ts"
 Expect Syntax Error: "compiler/doNotElaborateAssignabilityToTypeParameters.ts"
 Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2015.ts"
@@ -2156,6 +2160,7 @@ Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignat
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature3.ts"
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature7.ts"
 Expect Syntax Error: "conformance/constEnums/constEnum2.ts"
+Expect Syntax Error: "conformance/constEnums/constEnumNoObjectPrototypePropertyAccess.ts"
 Expect Syntax Error: "conformance/constEnums/constEnumPropertyAccess1.ts"
 Expect Syntax Error: "conformance/constEnums/constEnumPropertyAccess2.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowAliasing.ts"
@@ -3213,6 +3218,7 @@ Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserExpression
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement5.ts"
+Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement3.ts"
@@ -3319,6 +3325,7 @@ Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatem
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement15.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement20.ts"
+Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement25.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement9.ts"
@@ -3869,51 +3876,51 @@ Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
 
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:27:1]
- 27 │ class StaticPrototype {
- 28 │     static prototype: number; // always an error
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:55:1]
+ 55 │ class StaticPrototype {
+ 56 │     static prototype: number; // always an error
     ·            ─────────
- 29 │     prototype: string; // ok
+ 57 │     prototype: string; // ok
     ╰────
 
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:32:1]
- 32 │ class StaticPrototypeFn {
- 33 │     static prototype() {} // always an error
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:65:1]
+ 65 │ class StaticPrototypeFn {
+ 66 │     static prototype() {} // always an error
     ·            ─────────
- 34 │     prototype() {} // ok
+ 67 │     prototype() {} // ok
     ╰────
 
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:86:1]
- 86 │ var StaticPrototype_Anonymous = class {
- 87 │     static prototype: number; // always an error
-    ·            ─────────
- 88 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:91:1]
- 91 │ var StaticPrototypeFn_Anonymous = class {
- 92 │     static prototype() {} // always an error
-    ·            ─────────
- 93 │     prototype() {} // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:153:1]
- 153 │     export default class StaticPrototype {
- 154 │         static prototype: number; // always an error
-     ·                ─────────
- 155 │         prototype: string; // ok
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:163:1]
+ 163 │ var StaticPrototype_Anonymous = class {
+ 164 │     static prototype: number; // always an error
+     ·            ─────────
+ 165 │     prototype: string; // ok
      ╰────
 
   × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:160:1]
- 160 │     export default class StaticPrototypeFn {
- 161 │         static prototype() {} // always an error
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:173:1]
+ 173 │ var StaticPrototypeFn_Anonymous = class {
+ 174 │     static prototype() {} // always an error
+     ·            ─────────
+ 175 │     prototype() {} // ok
+     ╰────
+
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:280:1]
+ 280 │     export default class StaticPrototype {
+ 281 │         static prototype: number; // always an error
      ·                ─────────
- 162 │         prototype() {} // ok
+ 282 │         prototype: string; // ok
+     ╰────
+
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:292:1]
+ 292 │     export default class StaticPrototypeFn {
+ 293 │         static prototype() {} // always an error
+     ·                ─────────
+ 294 │         prototype() {} // ok
      ╰────
 
 Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
@@ -3971,15 +3978,6 @@ Expect to Parse: "conformance/externalModules/topLevelAwait.3.ts"
  7 │ declare const await: any;
  8 │ declare class C extends await {}
    ·                         ─────
-   ╰────
-
-Expect to Parse: "conformance/parser/ecmascript5/Statements/parserForStatement9.ts"
-  × Expected `,` but found `in`
-   ╭─[conformance/parser/ecmascript5/Statements/parserForStatement9.ts:3:1]
- 3 │ for (let [x = 'a' in {}] = []; !x; x = !x) console.log(x)
- 4 │ for (let {x = 'a' in {}} = {}; !x; x = !x) console.log(x)
-   ·                   ─┬
-   ·                    ╰── `,` expected
    ╰────
 
 Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
@@ -9781,6 +9779,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ─────
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:12:1]
+ 12 │ 
+ 13 │ declare module debugger {} // still an error
+    ·        ─
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:10:1]
+ 10 │ 
+ 11 │ declare namespace debugger {} // still an error
+    ·        ─
+    ╰────
+  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
    ╭─[conformance/async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts:3:1]
@@ -17574,14 +17588,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `,` but found `in`
-   ╭─[conformance/parser/ecmascript5/Statements/parserForInStatement8.ts:3:1]
- 3 │ for (let [x = 'a' in {}] in { '': 0 }) console.log(x)
- 4 │ for (let {x = 'a' in {}} in { '': 0 }) console.log(x)
-   ·                   ─┬
-   ·                    ╰── `,` expected
-   ╰────
-
   × Unexpected token
    ╭─[conformance/parser/ecmascript5/Statements/parserForStatement4.ts:1:1]
  1 │ for (a = 1 in b) {
@@ -17998,14 +18004,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ var async;
  4 │ for (async of [1, 2]) {}
    ·      ─────
-   ╰────
-
-  × Expected `,` but found `in`
-   ╭─[conformance/parser/ecmascript6/Iterators/parserForOfStatement25.ts:5:1]
- 5 │ for (let [x = 'a' in {}] of [[]]) console.log(x)
- 6 │ for (let {x = 'a' in {}} of [{}]) console.log(x)
-   ·                   ─┬
-   ·                    ╰── `,` expected
    ╰────
 
   × Only a single declaration is allowed in a `for...of` statement

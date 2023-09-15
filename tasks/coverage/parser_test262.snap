@@ -1,6 +1,6 @@
 parser_test262 Summary:
-AST Parsed     : 44855/44855 (100.00%)
-Positive Passed: 44855/44855 (100.00%)
+AST Parsed     : 44947/44947 (100.00%)
+Positive Passed: 44947/44947 (100.00%)
 Negative Passed: 3919/3947 (99.29%)
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"
@@ -19735,43 +19735,40 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  22 │ 
     ╰────
 
-  × Identifier `test262_a` has already been declared
+  × Identifier `type` has already been declared
     ╭─[language/module-code/import-assertions/early-dup-assert-key-export.js:20:1]
  20 │ export * from './import-assertion-3_FIXTURE.js' assert {
- 21 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 22 │   test262_b: '',
- 23 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
+ 21 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 22 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 23 │ };
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-nobinding.js:21:1]
+ 21 │ import './import-assertion-2_FIXTURE.js' assert {
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
  24 │ };
     ╰────
 
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-nobinding.js:21:1]
- 21 │ import './import-assertion-2_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
-    ╰────
-
-  × Identifier `test262_a` has already been declared
+  × Identifier `type` has already been declared
     ╭─[language/module-code/import-assertions/early-dup-assert-key-import-withbinding.js:21:1]
  21 │ import x from './import-assertion-1_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 24 │ };
     ╰────
 
   × Private identifier '#x' is not allowed outside class bodies
