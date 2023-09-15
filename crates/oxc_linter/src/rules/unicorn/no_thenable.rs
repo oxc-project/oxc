@@ -67,51 +67,48 @@ impl Rule for NoThenable {
                     ctx.diagnostic(NoThenableDiagnostic::Class(def.span));
                 }
             }
-            AstKind::ModuleDeclaration(decl) => match decl {
-                ast::ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                    // check declaration
-                    if let Some(ref decl) = decl.declaration {
-                        match decl {
-                            ast::Declaration::VariableDeclaration(decl) => {
-                                for decl in &decl.declarations {
-                                    check_binding_pattern(&decl.id.kind, ctx);
-                                }
+            AstKind::ModuleDeclaration(ast::ModuleDeclaration::ExportNamedDeclaration(decl)) => {
+                // check declaration
+                if let Some(ref decl) = decl.declaration {
+                    match decl {
+                        ast::Declaration::VariableDeclaration(decl) => {
+                            for decl in &decl.declarations {
+                                check_binding_pattern(&decl.id.kind, ctx);
                             }
-                            ast::Declaration::FunctionDeclaration(decl) => {
-                                decl.id.as_ref().map(|bind| {
-                                    if bind.name == "then" {
-                                        ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
-                                    }
-                                });
-                            }
-                            ast::Declaration::ClassDeclaration(decl) => {
-                                decl.id.as_ref().map(|bind| {
-                                    if bind.name == "then" {
-                                        ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
-                                    }
-                                });
-                            }
-                            _ => {}
                         }
+                        ast::Declaration::FunctionDeclaration(decl) => {
+                            if let Some(bind) = decl.id.as_ref() {
+                                if bind.name == "then" {
+                                    ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
+                                }
+                            };
+                        }
+                        ast::Declaration::ClassDeclaration(decl) => {
+                            if let Some(bind) = decl.id.as_ref() {
+                                if bind.name == "then" {
+                                    ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
+                                }
+                            };
+                        }
+                        _ => {}
                     }
-                    // check specifier
-                    for spec in &decl.specifiers {
-                        match spec.exported {
-                            ast::ModuleExportName::Identifier(ref ident) => {
-                                if ident.name == "then" {
-                                    ctx.diagnostic(NoThenableDiagnostic::Export(ident.span));
-                                }
+                }
+                // check specifier
+                for spec in &decl.specifiers {
+                    match spec.exported {
+                        ast::ModuleExportName::Identifier(ref ident) => {
+                            if ident.name == "then" {
+                                ctx.diagnostic(NoThenableDiagnostic::Export(ident.span));
                             }
-                            ast::ModuleExportName::StringLiteral(ref lit) => {
-                                if lit.value == "then" {
-                                    ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
-                                }
+                        }
+                        ast::ModuleExportName::StringLiteral(ref lit) => {
+                            if lit.value == "then" {
+                                ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
                             }
                         }
                     }
                 }
-                _ => {}
-            },
+            }
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             AstKind::MemberExpression(expr) => {
                 if let Some(parent) = ctx.nodes().parent_node(node.id()) {
@@ -287,7 +284,7 @@ fn contains_then(key: &PropertyKey, ctx: &LintContext) -> bool {
     match key {
         PropertyKey::Identifier(ident) => ident.name == "then",
         PropertyKey::Expression(expr) => check_expression(expr, ctx).is_some(),
-        _ => false,
+        PropertyKey::PrivateIdentifier(_) => false
     }
 }
 
