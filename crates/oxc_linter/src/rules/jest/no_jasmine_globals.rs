@@ -83,7 +83,7 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
         };
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
-            // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;` we can fix it to `jest.setTimeout(5000)`
+            // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000` we can fix it to `jest.setTimeout(5000)`
             if let Expression::NumberLiteral(number_literal) = &expr.right {
                 ctx.diagnostic_with_fix(
                     NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
