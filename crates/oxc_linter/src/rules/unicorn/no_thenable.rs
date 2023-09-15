@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        self, ArrayExpressionElement, AssignmentTarget, Expression, MemberExpression, PropertyKey,
-        SimpleAssignmentTarget,
+        self, ArrayExpressionElement, AssignmentExpression, AssignmentTarget, Expression,
+        MemberExpression, PropertyKey, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -110,45 +110,29 @@ impl Rule for NoThenable {
                 }
             }
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
-            AstKind::MemberExpression(expr) => {
-                if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-                    if let Some(grandparent) = ctx.nodes().parent_node(parent.id()) {
-                        if let AstKind::AssignmentTarget(
-                            AssignmentTarget::SimpleAssignmentTarget(
-                                SimpleAssignmentTarget::MemberAssignmentTarget(target),
-                            ),
-                        ) = grandparent.kind()
-                        {
-                            if hash(&expr) == hash(target) {
-                                match expr {
-                                    MemberExpression::ComputedMemberExpression(expr) => {
-                                        if let Some(span) = check_expression(&expr.expression, ctx)
-                                        {
-                                            ctx.diagnostic(NoThenableDiagnostic::Class(span));
-                                        }
-                                    }
-                                    MemberExpression::StaticMemberExpression(expr) => {
-                                        if expr.property.name == "then" {
-                                            ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
-                                        }
-                                    }
-                                    MemberExpression::PrivateFieldExpression(_) => {}
-                                }
-                            }
-                        }
+            // foo.then = ...
+            AstKind::AssignmentExpression(AssignmentExpression {
+                left:
+                    AssignmentTarget::SimpleAssignmentTarget(
+                        SimpleAssignmentTarget::MemberAssignmentTarget(target),
+                    ),
+                ..
+            }) => match &target.0 {
+                MemberExpression::ComputedMemberExpression(expr) => {
+                    if let Some(span) = check_expression(&expr.expression, ctx) {
+                        ctx.diagnostic(NoThenableDiagnostic::Class(span));
                     }
                 }
-            }
+                MemberExpression::StaticMemberExpression(expr) => {
+                    if expr.property.name == "then" {
+                        ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
+                    }
+                }
+                MemberExpression::PrivateFieldExpression(_) => {}
+            },
             _ => {}
         }
     }
-}
-
-fn hash<T: std::hash::Hash>(t: &T) -> u64 {
-    use std::hash::Hasher;
-    let mut s = std::collections::hash_map::DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
 }
 
 fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
@@ -284,7 +268,7 @@ fn contains_then(key: &PropertyKey, ctx: &LintContext) -> bool {
     match key {
         PropertyKey::Identifier(ident) => ident.name == "then",
         PropertyKey::Expression(expr) => check_expression(expr, ctx).is_some(),
-        PropertyKey::PrivateIdentifier(_) => false
+        PropertyKey::PrivateIdentifier(_) => false,
     }
 }
 
