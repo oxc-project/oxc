@@ -1719,6 +1719,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_transformer"
+version = "0.2.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_formatter",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_type_synthesis"
 version = "0.0.0"
 dependencies = [

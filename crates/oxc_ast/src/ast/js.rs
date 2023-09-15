@@ -257,6 +257,12 @@ pub struct IdentifierName {
     pub name: Atom,
 }
 
+impl IdentifierName {
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name }
+    }
+}
+
 /// Identifier Reference
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
