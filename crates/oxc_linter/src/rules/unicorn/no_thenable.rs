@@ -112,75 +112,7 @@ impl Rule for NoThenable {
                 }
                 _ => {}
             },
-            AstKind::CallExpression(expr) => {
-                // `Object.defineProperty(foo, 'then', …)`
-                // `Reflect.defineProperty(foo, 'then', …)`
-                if !{
-                    !expr.optional
-                        && expr.arguments.len() >= 3
-                        && !matches!(expr.arguments[0], ast::Argument::SpreadElement(_))
-                        && match expr.callee {
-                            ast::Expression::MemberExpression(ref me) => {
-                                me.object().get_identifier_reference().map_or(false, |ident_ref| {
-                                    ident_ref.name == "Reflect" || ident_ref.name == "Object"
-                                }) && me.static_property_name() == Some("defineProperty")
-                                    && !me.optional()
-                            }
-                            _ => false,
-                        }
-                } {
-                } else if let ast::Argument::Expression(inner) = &expr.arguments[1] {
-                    if let Some(span) = check_expression(inner, ctx) {
-                        ctx.diagnostic(NoThenableDiagnostic::Object(span));
-                    }
-                }
-
-                // `Object.fromEntries([['then', …]])`
-                if !{
-                    !expr.optional
-                        && expr.arguments.len() == 1
-                        && matches!(
-                            expr.arguments[0],
-                            ast::Argument::Expression(Expression::ArrayExpression(_))
-                        )
-                        && match expr.callee {
-                            ast::Expression::MemberExpression(ref me) => {
-                                me.object()
-                                    .get_identifier_reference()
-                                    .map_or(false, |ident_ref| ident_ref.name == "Object")
-                                    && me.static_property_name() == Some("fromEntries")
-                                    && !me.optional()
-                            }
-                            _ => false,
-                        }
-                } {
-                } else if let ast::Argument::Expression(Expression::ArrayExpression(outer)) =
-                    &expr.arguments[0]
-                {
-                    for inner in &outer.elements {
-                        // inner item is array
-                        if let ArrayExpressionElement::Expression(Expression::ArrayExpression(
-                            inner,
-                        )) = inner
-                        {
-                            if inner.elements.len() > 0
-                                && !matches!(
-                                    inner.elements[0],
-                                    ArrayExpressionElement::SpreadElement(_)
-                                )
-                            {
-                                if let ArrayExpressionElement::Expression(ref expr) =
-                                    inner.elements[0]
-                                {
-                                    if let Some(span) = check_expression(expr, ctx) {
-                                        ctx.diagnostic(NoThenableDiagnostic::Object(span));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             AstKind::MemberExpression(expr) => {
                 if let Some(parent) = ctx.nodes().parent_node(node.id()) {
                     if let Some(grandparent) = ctx.nodes().parent_node(parent.id()) {
@@ -220,6 +152,67 @@ fn hash<T: std::hash::Hash>(t: &T) -> u64 {
     let mut s = std::collections::hash_map::DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
+}
+
+fn check_call_expression(expr: &ast::CallExpression, ctx: &LintContext) {
+    // `Object.defineProperty(foo, 'then', …)`
+    // `Reflect.defineProperty(foo, 'then', …)`
+    if !{
+        !expr.optional
+            && expr.arguments.len() >= 3
+            && !matches!(expr.arguments[0], ast::Argument::SpreadElement(_))
+            && match expr.callee {
+                ast::Expression::MemberExpression(ref me) => {
+                    me.object().get_identifier_reference().map_or(false, |ident_ref| {
+                        ident_ref.name == "Reflect" || ident_ref.name == "Object"
+                    }) && me.static_property_name() == Some("defineProperty")
+                        && !me.optional()
+                }
+                _ => false,
+            }
+    } {
+    } else if let ast::Argument::Expression(inner) = &expr.arguments[1] {
+        if let Some(span) = check_expression(inner, ctx) {
+            ctx.diagnostic(NoThenableDiagnostic::Object(span));
+        }
+    }
+
+    // `Object.fromEntries([['then', …]])`
+    if !{
+        !expr.optional
+            && expr.arguments.len() == 1
+            && matches!(
+                expr.arguments[0],
+                ast::Argument::Expression(Expression::ArrayExpression(_))
+            )
+            && match expr.callee {
+                ast::Expression::MemberExpression(ref me) => {
+                    me.object()
+                        .get_identifier_reference()
+                        .map_or(false, |ident_ref| ident_ref.name == "Object")
+                        && me.static_property_name() == Some("fromEntries")
+                        && !me.optional()
+                }
+                _ => false,
+            }
+    } {
+    } else if let ast::Argument::Expression(Expression::ArrayExpression(outer)) = &expr.arguments[0]
+    {
+        for inner in &outer.elements {
+            // inner item is array
+            if let ArrayExpressionElement::Expression(Expression::ArrayExpression(inner)) = inner {
+                if inner.elements.len() > 0
+                    && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
+                {
+                    if let ArrayExpressionElement::Expression(ref expr) = inner.elements[0] {
+                        if let Some(span) = check_expression(expr, ctx) {
+                            ctx.diagnostic(NoThenableDiagnostic::Object(span));
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn check_binding_pattern(pat: &ast::BindingPatternKind, ctx: &LintContext) {
