@@ -32,13 +32,23 @@ pub struct NoThenable;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// disallow `then` property
     ///
     /// ### Why is this bad?
+    /// If an object is defined as "thenable", once it's accidentally
+    /// used in an await expression, it may cause problems:
     ///
     ///
     /// ### Example
     /// ```javascript
+    /// const foo = {
+    ///     unicorn: 1,
+    ///     then() {},
+    /// };
+    ///
+    /// const {unicorn} = await foo;
+    ///
+    /// console.log('after'); //<- This will never execute
     /// ```
     NoThenable,
     correctness
