@@ -13,6 +13,7 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
+pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;

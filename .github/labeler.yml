@@ -1,5 +1,5 @@
 A-ast:
-- any: ['crates/oxc_ast/**/*', 'crates/oxc_ast_lower/**/*']
+- any: ['crates/oxc_ast/**/*']
 
 A-cli:
 - any: ['crates/oxc_cli/**/*', 'npm/**/*']

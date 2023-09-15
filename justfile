@@ -59,7 +59,7 @@ lint:
 # Run all the conformance tests. See `tasks/coverage`, `tasks/minsize`
 coverage:
   cargo coverage
-  cargo minsize
+  # cargo minsize
 
 # Get code coverage
 codecov:

@@ -193,24 +193,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brotlic"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8d5a350a871e06f5274bc1206bcd0da426522b4d0fbfad5fcec92806d854e5b"
-dependencies = [
- "brotlic-sys",
-]
-
-[[package]]
-name = "brotlic-sys"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afdec5c62bc97b56349053cf66ba503af5c2448591be61c3ad70a5f11b57e574"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "bstr"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -413,15 +395,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a17b76ff3a4162b0b27f354a0c87015ddad39d35f9c0c36607a3bdd175dde1f1"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "crc32fast"
-version = "1.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b540bd8bc810d3885c6ea91e2018302f68baba2129ab3e88f32389ee9370880d"
-dependencies = [
- "cfg-if",
 ]
 
 [[package]]
@@ -714,16 +687,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "flate2"
-version = "1.0.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6c98ee8095e9d1dcbf2fcc6d95acccb90d1c81db1e44725c6a984b1dbdfb010"
-dependencies = [
- "crc32fast",
- "miniz_oxide",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -905,15 +868,6 @@ name = "httparse"
 version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904"
-
-[[package]]
-name = "humansize"
-version = "2.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cb51c9a029ddc91b07a787f1d86b53ccfa49b0e86688c946ebe8d3555685dd7"
-dependencies = [
- "libm",
-]
 
 [[package]]
 name = "humantime"
@@ -1106,12 +1060,6 @@ dependencies = [
  "cfg-if",
  "winapi",
 ]
-
-[[package]]
-name = "libm"
-version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
 name = "libmimalloc-sys"
@@ -1461,12 +1409,9 @@ version = "0.2.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
- "oxc_ast_lower",
  "oxc_diagnostics",
  "oxc_formatter",
- "oxc_hir",
  "oxc_index",
- "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1499,20 +1444,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_ast_lower"
-version = "0.2.0"
-dependencies = [
- "oxc_allocator",
- "oxc_ast",
- "oxc_hir",
- "oxc_parser",
- "oxc_semantic",
- "oxc_span",
- "serde_json",
- "stacker",
-]
-
-[[package]]
 name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
@@ -1522,7 +1453,6 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_linter",
- "oxc_minifier",
  "oxc_parser",
  "oxc_resolver",
  "oxc_semantic",
@@ -1563,11 +1493,8 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast",
- "oxc_ast_lower",
  "oxc_diagnostics",
  "oxc_formatter",
- "oxc_hir",
- "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1603,23 +1530,6 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
-]
-
-[[package]]
-name = "oxc_hir"
-version = "0.2.0"
-dependencies = [
- "bitflags 2.4.0",
- "num-bigint",
- "num-traits",
- "oxc_allocator",
- "oxc_index",
- "oxc_semantic",
- "oxc_span",
- "oxc_syntax",
- "ryu-js",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -1688,41 +1598,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "oxc_minifier"
-version = "0.2.0"
-dependencies = [
- "bitflags 2.4.0",
- "insta",
- "itertools 0.11.0",
- "jemallocator",
- "mimalloc",
- "num-bigint",
- "oxc_allocator",
- "oxc_ast",
- "oxc_ast_lower",
- "oxc_hir",
- "oxc_index",
- "oxc_parser",
- "oxc_semantic",
- "oxc_span",
- "oxc_syntax",
- "pico-args",
- "walkdir",
-]
-
-[[package]]
-name = "oxc_minsize"
-version = "0.0.0"
-dependencies = [
- "brotlic",
- "flate2",
- "humansize",
- "oxc_minifier",
- "oxc_span",
- "oxc_tasks_common",
 ]
 
 [[package]]
@@ -1884,12 +1759,9 @@ dependencies = [
  "console_error_panic_hook",
  "oxc_allocator",
  "oxc_ast",
- "oxc_ast_lower",
  "oxc_diagnostics",
  "oxc_formatter",
- "oxc_hir",
  "oxc_linter",
- "oxc_minifier",
  "oxc_parser",
  "oxc_query",
  "oxc_semantic",
@@ -2121,15 +1993,6 @@ name = "project-root"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bccbff07d5ed689c4087d20d7307a52ab6141edeedf487c3876a55b86cf63df"
-
-[[package]]
-name = "psm"
-version = "0.1.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5787f7cda34e3033a72192c018bc5883100330f362ef279a8cbccfce8bb4e874"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "quote"
@@ -2549,19 +2412,6 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
-
-[[package]]
-name = "stacker"
-version = "0.1.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c886bd4480155fd3ef527d45e9ac8dd7118a898a46530b7b94c3e21866259fce"
-dependencies = [
- "cc",
- "cfg-if",
- "libc",
- "psm",
- "winapi",
-]
 
 [[package]]
 name = "static_assertions"

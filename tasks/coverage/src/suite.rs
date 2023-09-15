@@ -11,7 +11,6 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
-use oxc_ast_lower::AstLower;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -296,8 +295,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
-        let ret = AstLower::new(&allocator, source_text, source_type).build(&parser_ret.program);
-        let _json = ret.program.to_json();
 
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
