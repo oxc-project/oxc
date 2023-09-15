@@ -43,6 +43,8 @@ declare_oxc_lint!(
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
+const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
+const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 impl Rule for NoJasmineGlobals {
     fn run_once(&self, ctx: &LintContext) {
@@ -143,9 +145,6 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
     };
     Some((span, property_name))
 }
-
-const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
-const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
 fn get_non_jasmine_property_messages(name: &str) -> Option<(&'static str, &'static str)> {
     match name {
