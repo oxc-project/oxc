@@ -65,9 +65,9 @@ impl Rule for NoJasmineGlobals {
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::AssignmentExpression(assign_expr) = node.kind() {
-            diagnostic_assign_expr(assign_expr, ctx)
+            diagnostic_assign_expr(assign_expr, ctx);
         } else if let AstKind::CallExpression(call_expr) = node.kind() {
-            diagnostic_call_expr(call_expr, ctx)
+            diagnostic_call_expr(call_expr, ctx);
         }
     }
 }
@@ -84,10 +84,13 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
             // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;` we can fix it to `jest.setTimeout(5000)`
-            if expr.right.is_literal_expression() {
+            if let Expression::NumberLiteral(number_literal) = &expr.right {
                 ctx.diagnostic_with_fix(
                     NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
-                    || Fix::new("jest.setTimeout", expr.left.span()),
+                    || {
+                        let content = format!("jest.setTimeout({})", number_literal.value);
+                        Fix::new(content, expr.span)
+                    },
                 );
                 return;
             }
@@ -140,6 +143,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
     };
     Some((span, property_name))
 }
+
 const COMMON_ERROR_TEXT: &str = "Illegal usage of jasmine global";
 const COMMON_HELP_TEXT: &str = "prefer use Jest own API";
 
@@ -222,17 +226,6 @@ impl JasmineProperty {
     }
 }
 
-#[ignore]
-#[test]
-fn test_1() {
-    use crate::tester::Tester;
-
-    let pass = vec![];
-    let fail = vec![("jasmine.any()", None)];
-
-    Tester::new(NoJasmineGlobals::NAME, pass, fail).test_and_snapshot();
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -242,19 +235,19 @@ fn test() {
         ("jest.fn()", None),
         ("expect.extend()", None),
         ("expect.any()", None),
-        ("it(\"foo\", function () {})", None),
-        ("test(\"foo\", function () {})", None),
+        ("it('foo', function () {})", None),
+        ("test('foo', function () {})", None),
         ("foo()", None),
         ("require('foo')('bar')", None),
         ("(function(){})()", None),
         ("function callback(fail) { fail() }", None),
-        ("var spyOn = require(\"actions\"); spyOn(\"foo\")", None),
+        ("var spyOn = require('actions'); spyOn('foo')", None),
         ("function callback(pending) { pending() }", None),
     ];
 
     let fail = vec![
-        ("spyOn(some, \"object\")", None),
-        ("spyOnProperty(some, \"object\")", None),
+        ("spyOn(some, 'object')", None),
+        ("spyOnProperty(some, 'object')", None),
         ("fail()", None),
         ("pending()", None),
         ("jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;", None),
@@ -276,7 +269,7 @@ fn test() {
     ];
 
     let fix = vec![
-        ("jasmine.DEFAULT_TIMEOUT_INTERVAL = 5", "jest.setTimeout = 5", None),
+        ("jasmine.DEFAULT_TIMEOUT_INTERVAL = 5", "jest.setTimeout(5)", None),
         (
             "jasmine.DEFAULT_TIMEOUT_INTERVAL = ()=>{}",
             "jasmine.DEFAULT_TIMEOUT_INTERVAL = ()=>{}",

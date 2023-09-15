@@ -4,14 +4,14 @@ expression: no_jasmine_globals
 ---
   ⚠ eslint(jest/no-jasmine-globals): "Illegal usage of global spyOn"
    ╭─[no_jasmine_globals.tsx:1:1]
- 1 │ spyOn(some, "object")
+ 1 │ spyOn(some, 'object')
    · ─────
    ╰────
   help: "prefer use Jest own API `jest.spyOn`"
 
   ⚠ eslint(jest/no-jasmine-globals): "Illegal usage of global spyOnProperty"
    ╭─[no_jasmine_globals.tsx:1:1]
- 1 │ spyOnProperty(some, "object")
+ 1 │ spyOnProperty(some, 'object')
    · ─────────────
    ╰────
   help: "prefer use Jest own API `jest.spyOn`"
