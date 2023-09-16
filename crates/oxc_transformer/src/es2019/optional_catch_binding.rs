@@ -21,7 +21,7 @@ impl<'a> OptionalCatchBinding<'a> {
         if clause.param.is_some() {
             return;
         }
-        let binding_identifier = BindingIdentifier::new(Span::default(), "unused".into());
+        let binding_identifier = BindingIdentifier::new(Span::default(), "_unused".into());
         let binding_pattern_kind = self.ast.binding_identifier(binding_identifier);
         let binding_pattern = self.ast.binding_pattern(binding_pattern_kind, None, false);
         clause.param = Some(binding_pattern);

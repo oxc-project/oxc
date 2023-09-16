@@ -19,12 +19,13 @@ use es2019::OptionalCatchBinding;
 
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
-    target: TransformTarget,
+    pub target: TransformTarget,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TransformTarget {
+    ES2015,
     ES2016,
     ES2019,
     #[default]

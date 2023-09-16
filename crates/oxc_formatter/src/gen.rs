@@ -848,11 +848,11 @@ impl Gen for RegExpLiteral {
 
 impl Gen for StringLiteral {
     fn gen(&self, p: &mut Formatter) {
-        p.print(b'\'');
+        p.print_quote();
         for c in self.value.chars() {
             p.print_str(c.escape_default().to_string().as_bytes());
         }
-        p.print(b'\'');
+        p.print_quote();
     }
 }
 
