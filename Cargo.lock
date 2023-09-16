@@ -1458,6 +1458,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
+ "oxc_transformer",
  "rayon",
 ]
 

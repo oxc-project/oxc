@@ -18,6 +18,10 @@ name    = "parser"
 harness = false
 
 [[bench]]
+name    = "transformer"
+harness = false
+
+[[bench]]
 name    = "semantic"
 harness = false
 
@@ -42,6 +46,7 @@ oxc_tasks_common          = { workspace = true }
 oxc_semantic              = { workspace = true }
 oxc_resolver              = { workspace = true }
 oxc_linter                = { workspace = true }
+oxc_transformer           = { workspace = true }
 rayon                     = { workspace = true }
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }
