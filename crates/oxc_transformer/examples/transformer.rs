@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{TransformOptions, TransformTarget, Transformer};
 
 // Instruction:
 // create a `test.js`,
@@ -33,7 +33,7 @@ fn main() {
     println!("Original:\n");
     println!("{printed}");
 
-    let transform_options = TransformOptions::default();
+    let transform_options = TransformOptions { target: TransformTarget::ES2015 };
     Transformer::new(&allocator, &transform_options).build(program);
     let printed = Formatter::new(source_text.len(), formatter_options).build(program);
     println!("Transformed:\n");

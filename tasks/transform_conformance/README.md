@@ -37,8 +37,8 @@ Does not have any features.
 
 ### ES2019
 
-- [ ] optional-catch-binding
-- [ ] json-strings
+- [x] optional-catch-binding
+- [ ] json-strings [Codegen]
 
 ### ES2018
 

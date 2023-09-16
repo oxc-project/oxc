@@ -21,6 +21,7 @@ pub fn babel() {
         "babel-plugin-transform-unicode-sets-regex",
         // ES2021
         "babel-plugin-transform-numeric-separator",
+        "babel-plugin-transform-logical-assignment-operators",
         // ES2020
         "babel-plugin-transform-export-namespace-from",
         // ES2019

@@ -9,6 +9,14 @@
 * Passed: removal/bigint/input.js
 * Passed: used-with-transform-es2015-literals/input.js
 
+# babel-plugin-transform-logical-assignment-operators
+* Failed: logical-assignment/general-semantics/input.js
+* Failed: logical-assignment/null-coalescing/input.js
+* Failed: logical-assignment/null-coalescing-without-other/input.js
+* Passed: logical-assignment/anonymous-functions-transform/input.js
+* Passed: logical-assignment/arrow-functions-transform/input.js
+* Passed: logical-assignment/named-functions-transform/input.js
+
 # babel-plugin-transform-export-namespace-from
 * Failed: export-namespace/namespace-default/input.mjs
 * Failed: export-namespace/namespace-es6/input.mjs
