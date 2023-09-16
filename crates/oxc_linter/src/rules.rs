@@ -116,6 +116,7 @@ mod jest {
 
 mod unicorn {
     pub mod no_instanceof_array;
+    pub mod no_thenable;
     pub mod no_unnecessary_await;
 }
 
@@ -211,6 +212,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_jasmine_globals,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
+    unicorn::no_thenable,
     import::named,
     import::no_cycle,
     import::no_self_import,
