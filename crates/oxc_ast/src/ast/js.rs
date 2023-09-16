@@ -282,8 +282,8 @@ impl Hash for IdentifierReference {
 }
 
 impl IdentifierReference {
-    pub fn new(name: Atom, span: Span) -> Self {
-        Self { name, span, reference_id: Cell::default() }
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name, reference_id: Cell::default() }
     }
 }
 
@@ -306,8 +306,8 @@ impl Hash for BindingIdentifier {
 }
 
 impl BindingIdentifier {
-    pub fn new(name: Atom, span: Span) -> Self {
-        Self { name, span, symbol_id: Cell::default() }
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name, symbol_id: Cell::default() }
     }
 }
 

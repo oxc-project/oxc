@@ -28,7 +28,7 @@ impl<'a> ExponentiationOperator<'a> {
         let left = self.ast.move_expression(&mut binary_expression.left);
         let right = self.ast.move_expression(&mut binary_expression.right);
         // Math.pow
-        let ident_math = IdentifierReference::new("Math".into(), Span::default());
+        let ident_math = IdentifierReference::new(Span::default(), "Math".into());
         let object = self.ast.identifier_expression(ident_math);
         let property = IdentifierName::new(Span::default(), "pow".into());
         let callee = self.ast.static_member_expression(Span::default(), object, property, false);
