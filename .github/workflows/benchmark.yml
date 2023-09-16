@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
+        with:
+          submodules: true # Pull submodules for additional files
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
