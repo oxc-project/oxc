@@ -49,6 +49,7 @@ jobs:
         uses: ./.github/actions/rustup
 
       - run: cargo coverage
+      - run: cargo run --release -p oxc_transform_conformance
 
       # - run: cargo minsize
 

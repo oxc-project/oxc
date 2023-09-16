@@ -56,9 +56,10 @@ test:
 lint:
   cargo lint -- --deny warnings
 
-# Run all the conformance tests. See `tasks/coverage`, `tasks/minsize`
+# Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
   cargo coverage
+  cargo run --release -p oxc_transform_conformance
   # cargo minsize
 
 # Get code coverage
