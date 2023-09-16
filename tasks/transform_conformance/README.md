@@ -18,12 +18,12 @@ Does not have any features.
 - [ ] class-static-block
 - [ ] private-methods
 - [ ] private-property-in-object
-- [ ] syntax-top-level-await
+- [x] syntax-top-level-await [Syntax]
 
 ### ES2021
 
 - [ ] logical-assignment-operators
-- [ ] numeric-separator
+- [x] numeric-separator [Syntax]
 
 ### ES2020
 
@@ -31,9 +31,9 @@ Does not have any features.
 - [ ] export-namespace-from
 - [ ] nullish-coalescing-operator
 - [ ] optional-chaining
-- [ ] syntax-bigint
-- [ ] syntax-dynamic-import
-- [ ] syntax-import-meta
+- [x] syntax-bigint [Syntax]
+- [x] syntax-dynamic-import [Syntax]
+- [x] syntax-import-meta [Syntax]
 
 ### ES2019
 

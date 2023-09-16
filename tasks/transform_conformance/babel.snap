@@ -1,9 +1,0 @@
-Failed: babel-plugin-transform-exponentiation-operator/test/fixtures/exponentiation-operator/assignment
-Failed: babel-plugin-transform-exponentiation-operator/test/fixtures/regression/4349
-Failed: babel-plugin-transform-exponentiation-operator/test/fixtures/regression/4403
-
-Passed: babel-plugin-transform-exponentiation-operator/test/fixtures/exponentiation-operator/binary
-Passed: babel-plugin-transform-optional-catch-binding/test/fixtures/optional-catch-bindings/try-catch-block-binding
-Passed: babel-plugin-transform-optional-catch-binding/test/fixtures/optional-catch-bindings/try-catch-block-no-binding
-Passed: babel-plugin-transform-optional-catch-binding/test/fixtures/optional-catch-bindings/try-catch-finally-binding
-Passed: babel-plugin-transform-optional-catch-binding/test/fixtures/optional-catch-bindings/try-catch-finally-no-binding
