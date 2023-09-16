@@ -6,13 +6,14 @@
 )]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     NumberBase,
 };
+use std::mem;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -52,6 +53,13 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
+    }
+
+    /// Moves the expression out by replacing it with a null expression.
+    pub fn move_expression(&self, expr: &mut Expression<'a>) -> Expression<'a> {
+        let null_literal = NullLiteral::new(expr.span());
+        let null_expr = self.literal_null_expression(null_literal);
+        mem::replace(expr, null_expr)
     }
 
     pub fn program(

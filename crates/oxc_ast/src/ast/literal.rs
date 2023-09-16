@@ -43,6 +43,12 @@ impl Hash for NullLiteral {
     }
 }
 
+impl NullLiteral {
+    pub fn new(span: Span) -> Self {
+        Self { span }
+    }
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NumberLiteral<'a> {
