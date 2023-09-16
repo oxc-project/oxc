@@ -9,7 +9,6 @@ use std::rc::Rc;
 /// References:
 /// * <https://babel.dev/docs/babel-plugin-transform-exponentiation-operator>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
-///
 pub struct ExponentiationOperator<'a> {
     ast: Rc<AstBuilder<'a>>,
 }
