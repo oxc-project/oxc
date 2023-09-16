@@ -1499,6 +1499,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_tasks_common",
  "pico-args",
  "project-root",
  "rayon",

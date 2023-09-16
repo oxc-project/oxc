@@ -15,16 +15,12 @@ use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSourc
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
-
-/// Normalizes the path when on Windows to using forward slash delimiters.
-fn normalize_path(path: &Path) -> String {
-    path.display().to_string().replace('\\', "/")
-}
 
 #[derive(Debug)]
 pub enum TestResult {
