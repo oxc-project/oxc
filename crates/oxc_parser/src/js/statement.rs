@@ -278,15 +278,14 @@ impl<'a> Parser<'a> {
         if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
             || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
         {
-            // TODO: rename variables
-            let x = self.parse_using_declaration()?;
+            let using_decl = self.parse_using_declaration()?;
 
             if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-                let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(x));
+                let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
                 return self.parse_for_in_or_of_loop(span, r#await, init);
             }
 
-            let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(x)));
+            let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
             return self.parse_for_loop(span, init, r#await);
         }
 
