@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5158/5162 (99.92%)
 Positive Passed: 5150/5162 (99.77%)
-Negative Passed: 1014/4831 (20.99%)
+Negative Passed: 1018/4831 (21.07%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3382,8 +3382,6 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.2.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.3.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.7.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.8.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.9.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts"
@@ -3392,8 +3390,6 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.4.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.5.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.7.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.8.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.9.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForIn.ts"
@@ -18390,6 +18386,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │ }
    ╰────
 
+  × Using declarations may not have binding patterns
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:7:1]
+ 7 │     await using a = null,
+ 8 │                 [b] = null,
+   ·                 ───
+ 9 │                 c = null;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:6:1]
  6 │ {
@@ -18399,7 +18403,23 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Using declarations may not have binding patterns
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.7.ts:7:1]
+ 7 │     await using a = null,
+ 8 │                 {b} = null,
+   ·                 ───
+ 9 │                 c = null;
+   ╰────
+
   × Missing initializer in destructuring declaration
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:6:1]
+ 6 │ async function main() {
+ 7 │     for (await using {} of []) {
+   ·                      ──
+ 8 │     }
+   ╰────
+
+  × Using declarations may not have binding patterns
    ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:6:1]
  6 │ async function main() {
  7 │     for (await using {} of []) {
@@ -18415,6 +18435,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  7 │ declare using y: null;
    ╰────
 
+  × Using declarations may not have binding patterns
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.5.ts:7:1]
+ 7 │     using a = null,
+ 8 │           [b] = null,
+   ·           ───
+ 9 │           c = null;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:6:1]
  6 │ {
@@ -18423,6 +18451,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × Using declarations may not have binding patterns
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.7.ts:7:1]
+ 7 │     using a = null,
+ 8 │           {b} = null,
+   ·           ───
+ 9 │           c = null;
+   ╰────
 
   × Unexpected token
    ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.2.ts:5:1]

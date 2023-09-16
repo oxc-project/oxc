@@ -291,3 +291,8 @@ pub struct LineTerminatorBeforeUsingDeclaration(#[label] pub Span);
 #[error("Await is not allowed in using declarations")]
 #[diagnostic()]
 pub struct AwaitInUsingDeclaration(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Using declarations may not have binding patterns")]
+#[diagnostic()]
+pub struct InvalidIdentifierInUsingDeclaration(#[label] pub Span);

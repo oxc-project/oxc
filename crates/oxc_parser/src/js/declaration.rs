@@ -132,14 +132,22 @@ impl<'a> Parser<'a> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        // TODO: work out how to exclude pattern
-        // TODO: add to context?
         let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.new_vec();
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Statement),
                 VariableDeclarationKind::Var,
             )?;
+
+            match declaration.id.kind {
+                BindingPatternKind::BindingIdentifier(_) => {}
+                _ => {
+                    self.error(diagnostics::InvalidIdentifierInUsingDeclaration(
+                        declaration.id.span(),
+                    ));
+                }
+            }
+
             declarations.push(declaration);
             if !self.eat(Kind::Comma) {
                 break;
