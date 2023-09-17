@@ -286,6 +286,7 @@ impl ModuleRecordBuilder {
                 .map_or(ExportLocalName::Default(exported_name.span()), |ident| {
                     ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span))
                 }),
+            span: decl.declaration.span(),
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
@@ -314,7 +315,7 @@ impl ModuleRecordBuilder {
                 let local_name =
                     ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let export_entry = ExportEntry {
-                    span: Span::default(),
+                    span: decl.span(),
                     module_request: module_request.clone(),
                     import_name: ExportImportName::Null,
                     export_name,
@@ -347,7 +348,7 @@ impl ModuleRecordBuilder {
                 ))
             };
             let export_entry = ExportEntry {
-                span: Span::default(),
+                span: specifier.span,
                 module_request: module_request.clone(),
                 import_name,
                 export_name,
