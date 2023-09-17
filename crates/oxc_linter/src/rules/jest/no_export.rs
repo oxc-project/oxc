@@ -96,6 +96,16 @@ fn test() {
             None,
         ),
         ("export default function() {};  test('a test', () => { expect(1).toBe(1);});", None),
+        (
+            "
+              const foo = 1;
+              const bar = 2;
+              test('a test', () => {})
+
+              export {foo, bar};
+            ",
+            None,
+        ),
         // TODO: support `module.exports`
         // ("module.exports['invalid'] = function() {};  test('a test', () => { expect(1).toBe(1);});", None),
         // ("module.exports = function() {}; ;  test('a test', () => { expect(1).toBe(1);});", None),
