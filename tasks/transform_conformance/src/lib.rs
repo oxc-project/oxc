@@ -19,18 +19,42 @@ pub fn babel() {
     let cases = [
         // ES2024
         "babel-plugin-transform-unicode-sets-regex",
+        // ES2022
+        "babel-plugin-transform-class-properties",
+        "babel-plugin-transform-class-static-block",
+        "babel-plugin-transform-private-methods",
+        "babel-plugin-transform-private-property-in-object",
+        // [Syntax] "babel-plugin-transform-syntax-top-level-await",
         // ES2021
-        "babel-plugin-transform-numeric-separator",
         "babel-plugin-transform-logical-assignment-operators",
+        "babel-plugin-transform-numeric-separator",
         // ES2020
         "babel-plugin-transform-export-namespace-from",
+        "babel-plugin-transform-dynamic-import",
+        "babel-plugin-transform-export-namespace-from",
+        "babel-plugin-transform-nullish-coalescing-operator",
+        "babel-plugin-transform-optional-chaining",
+        // [Syntax] "babel-plugin-transform-syntax-bigint",
+        // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
+        // [Syntax] "babel-plugin-transform-syntax-import-meta",
         // ES2019
         "babel-plugin-transform-optional-catch-binding",
+        "babel-plugin-transform-json-strings",
+        // ES2018
+        "babel-plugin-transform-async-generator-functions",
+        "babel-plugin-transform-object-rest-spread",
+        "babel-plugin-transform-unicode-property-regex",
+        "babel-plugin-transform-dotall-regex",
+        "babel-plugin-transform-named-capturing-groups-regex",
+        // ES2017
+        "babel-plugin-transform-async-to-generator",
         // ES2016
         "babel-plugin-transform-exponentiation-operator",
     ];
 
     let mut snapshot = String::new();
+    let mut total = 0;
+    let mut all_passed = 0;
 
     // Get all fixtures
     for case in cases {
@@ -47,10 +71,12 @@ pub fn babel() {
             .map(walkdir::DirEntry::into_path)
             .collect::<Vec<_>>();
         paths.sort_unstable();
+        total += paths.len();
 
         // Run the test
         let (passed, failed): (Vec<PathBuf>, Vec<PathBuf>) =
             paths.into_iter().partition(|path| babel_test(path));
+        all_passed += passed.len();
 
         // Snapshot
         snapshot.push_str("# ");
@@ -72,6 +98,7 @@ pub fn babel() {
         snapshot.push('\n');
     }
 
+    let snapshot = format!("Passed: {all_passed}/{total}\n\n{snapshot}");
     let path = project_root().join("tasks/transform_conformance/babel.snap.md");
     let mut file = File::create(path).unwrap();
     file.write_all(snapshot.as_bytes()).unwrap();
