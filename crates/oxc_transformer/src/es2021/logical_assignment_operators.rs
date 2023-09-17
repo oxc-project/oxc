@@ -28,19 +28,18 @@ impl<'a> LogicalAssignmentOperators<'a> {
             _ => return,
         };
 
-        // Create the left hand sife
+        // Create the left hand side
         // a || (a = b)
         // ^     ^
         let left1: AssignmentTarget<'a> = self.ast.copy(&assignment_expr.left);
-        let left2;
-        match &assignment_expr.left {
+        let left2 = match &assignment_expr.left {
             AssignmentTarget::SimpleAssignmentTarget(target) => match target {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    left2 = self.ast.identifier_expression((*ident).clone());
+                    self.ast.identifier_expression((*ident).clone())
                 }
                 SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
                     let member_expr = self.ast.copy(&**member_expr);
-                    left2 = self.ast.member_expression(member_expr);
+                    self.ast.member_expression(member_expr)
                 }
                 // All other are TypeScript syntax.
                 _ => return,
