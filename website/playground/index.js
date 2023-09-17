@@ -412,7 +412,8 @@ class Playground {
       this.parserOptions,
       this.linterOptions,
       this.formatterOptions,
-      this.minifierOptions,
+      // TODO: minifierOptions is not used temporarily, see: #917
+      // this.minifierOptions,
       this.typeCheckOptions
     );
     const elapsed = new Date() - start;
@@ -673,9 +674,20 @@ class URLParams {
 
   constructor() {
     this.params = new URLSearchParams(window.location.search);
-    this.code = this.params.has("code")
-      ? this.decodeCode(this.params.get("code"))
-      : getStringFromStorage(STORAGE_KEY_CODE);
+    this.code = this.tryReadCode(this.params);
+  }
+
+  tryReadCode(params) {
+    try {
+      if (params.has("code")) {
+        return this.decodeCode(params.get("code"));
+      }
+      return getStringFromStorage(STORAGE_KEY_CODE);
+    } catch(e) {
+      console.error(e);
+      return ''
+    }
+
   }
 
   updateCode = throttle(
