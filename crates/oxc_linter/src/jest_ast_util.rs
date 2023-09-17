@@ -12,6 +12,37 @@ use oxc_span::{Atom, Span};
 
 use crate::context::LintContext;
 
+const JEST_METHOD_NAMES: [&str; 14] = [
+    "afterAll",
+    "afterEach",
+    "beforeAll",
+    "beforeEach",
+    "describe",
+    "expect",
+    "fdescribe",
+    "fit",
+    "it",
+    "jest",
+    "test",
+    "xdescribe",
+    "xit",
+    "xtest",
+];
+pub fn is_jest_file(ctx: &LintContext) -> bool {
+    if JEST_METHOD_NAMES
+        .iter()
+        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
+    {
+        return true;
+    };
+
+    let import_entries = &ctx.semantic().module_record().import_entries;
+
+    return import_entries.iter().any(|import_entry| {
+        matches!(import_entry.module_request.name().as_str(), "@jest/globals")
+    });
+}
+
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
@@ -354,7 +385,6 @@ pub enum JestGeneralFnKind {
 
 pub enum ParsedJestFnCall<'a> {
     GeneralJestFnCall(ParsedGeneralJestFnCall<'a>),
-    #[allow(unused)]
     ExpectFnCall(ParsedExpectFnCall<'a>),
 }
 

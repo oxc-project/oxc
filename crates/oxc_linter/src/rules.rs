@@ -107,6 +107,7 @@ mod jest {
     pub mod no_conditional_expect;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
+    pub mod no_export;
     pub mod no_focused_tests;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
@@ -212,6 +213,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_mocks_import,
+    jest::no_export,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
