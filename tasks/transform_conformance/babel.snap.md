@@ -1,10 +1,4 @@
-Passed: 88/1099
-
-# babel-plugin-transform-unicode-sets-regex
-* Failed: basic/basic/input.js
-* Failed: basic/string-properties/input.js
-* Failed: transform-u/basic/input.js
-* Failed: transform-u/string-properties/input.js
+Passed: 86/1071
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -706,36 +700,6 @@ Passed: 88/1099
 * Failed: regression/gh-7304/input.mjs
 * Failed: regression/gh-7388/input.js
 * Failed: regression/gh-8323/input.js
-
-# babel-plugin-transform-unicode-property-regex
-* Failed: with-unicode-flag/script-extensions/input.js
-* Failed: with-unicode-flag/simple/input.js
-* Failed: with-unicode-flag/unicode-10/input.js
-* Failed: with-unicode-flag/unicode-11/input.js
-* Failed: with-unicode-flag/unicode-12/input.js
-* Failed: with-unicode-flag/unicode-13/input.js
-* Failed: without-unicode-flag/script-extensions/input.js
-* Failed: without-unicode-flag/simple/input.js
-* Failed: without-unicode-flag/unicode-10/input.js
-* Failed: without-unicode-flag/unicode-11/input.js
-* Failed: without-unicode-flag/unicode-12/input.js
-* Failed: without-unicode-flag/unicode-13/input.js
-
-# babel-plugin-transform-dotall-regex
-* Failed: dotall-regex/simple/input.js
-* Failed: dotall-regex/with-unicode-flag/input.js
-* Failed: dotall-regex/with-unicode-property-escape/input.js
-
-# babel-plugin-transform-named-capturing-groups-regex
-* Failed: syntax/basic/input.js
-* Failed: syntax/escape-unicode-flag/input.js
-* Failed: wrapper/basic/input.js
-* Failed: wrapper/looks-like-a-group/input.js
-* Failed: wrapper/looks-like-a-group-unicode/input.js
-* Failed: wrapper/skips-anonymous-capturing-groups/input.js
-* Failed: wrapper/test-method/input.js
-* Passed: syntax/escape-no-unicode-flag/input.js
-* Passed: wrapper/only-when-named-groups/input.js
 
 # babel-plugin-transform-async-to-generator
 * Failed: assumption-ignoreFunctionLength-true/basic/input.mjs

@@ -1,12 +1,17 @@
 # Transformer
 
+Legend:
+* [Syntax] means this is a syntax plugin, no code is required because it is supported by the parser.
+* [Regex] means this is a regex transform, which is not supported.
+* [Codegen] means the code generator is responsible for the feature.
+
 ## Target
 
 From [@babel/preset-env](https://babel.dev/docs/babel-preset-env).
 
 ### ES2024
 
-- [ ] unicode-sets-regex
+- [ ] [Regex] unicode-sets-regex
 
 ### ES2023
 
@@ -18,12 +23,12 @@ Does not have any features.
 - [ ] class-static-block
 - [ ] private-methods
 - [ ] private-property-in-object
-- [x] syntax-top-level-await [Syntax]
+- [x] [Syntax] syntax-top-level-await
 
 ### ES2021
 
 - [ ] logical-assignment-operators
-- [x] numeric-separator [Syntax]
+- [x] [Syntax] numeric-separator
 
 ### ES2020
 
@@ -31,22 +36,22 @@ Does not have any features.
 - [ ] export-namespace-from
 - [ ] nullish-coalescing-operator
 - [ ] optional-chaining
-- [x] syntax-bigint [Syntax]
-- [x] syntax-dynamic-import [Syntax]
-- [x] syntax-import-meta [Syntax]
+- [x] [Syntax] syntax-bigint
+- [x] [Syntax] syntax-dynamic-import
+- [x] [Syntax] syntax-import-meta
 
 ### ES2019
 
 - [x] optional-catch-binding
-- [ ] json-strings [Codegen]
+- [ ] [Codegen] json-strings
 
 ### ES2018
 
 - [ ] async-generator-functions
 - [ ] object-rest-spread
-- [ ] unicode-property-regex
-- [ ] dotall-regex
-- [ ] named-capturing-groups-regex
+- [ ] [Regex] unicode-property-regex
+- [ ] [Regex] dotall-regex
+- [ ] [Regex] named-capturing-groups-regex
 
 ### ES2017
 
@@ -76,5 +81,5 @@ Does not have any features.
 - [ ] sticky-regex
 - [ ] template-literals
 - [ ] typeof-symbol
-- [ ] unicode-escapes
-- [ ] unicode-regex
+- [ ] [Regex] unicode-escapes
+- [ ] [Regex] unicode-regex

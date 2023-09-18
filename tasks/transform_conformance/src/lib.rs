@@ -22,7 +22,7 @@ pub fn babel(options: &BabelOptions) {
 
     let cases = [
         // ES2024
-        "babel-plugin-transform-unicode-sets-regex",
+        // [Regex] "babel-plugin-transform-unicode-sets-regex",
         // ES2022
         "babel-plugin-transform-class-properties",
         "babel-plugin-transform-class-static-block",
@@ -47,9 +47,9 @@ pub fn babel(options: &BabelOptions) {
         // ES2018
         "babel-plugin-transform-async-generator-functions",
         "babel-plugin-transform-object-rest-spread",
-        "babel-plugin-transform-unicode-property-regex",
-        "babel-plugin-transform-dotall-regex",
-        "babel-plugin-transform-named-capturing-groups-regex",
+        // [Regex] "babel-plugin-transform-unicode-property-regex",
+        // [Regex] "babel-plugin-transform-dotall-regex",
+        // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
         // ES2017
         "babel-plugin-transform-async-to-generator",
         // ES2016
