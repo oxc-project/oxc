@@ -25,11 +25,11 @@ oxc_linter         = { workspace = true }
 oxc_formatter      = { workspace = true }
 oxc_type_synthesis = { workspace = true }
 # oxc_minifier       = { workspace = true }
-oxc_span           = { workspace = true }
-oxc_query          = { workspace = true }
-serde_json         = { workspace = true }
-trustfall          = { workspace = true }
-serde              = { workspace = true }
+oxc_span   = { workspace = true }
+oxc_query  = { workspace = true }
+serde_json = { workspace = true }
+trustfall  = { workspace = true }
+serde      = { workspace = true }
 
 wasm-bindgen       = { version = "0.2" }
 serde-wasm-bindgen = "0.6.0"

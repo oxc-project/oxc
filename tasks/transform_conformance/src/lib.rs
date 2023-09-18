@@ -12,8 +12,12 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
 use oxc_transformer::{TransformOptions, TransformTarget, Transformer};
 
+pub struct BabelOptions {
+    pub filter: Option<String>,
+}
+
 /// # Panics
-pub fn babel() {
+pub fn babel(options: &BabelOptions) {
     let root = project_root().join("tasks/coverage/babel/packages");
 
     let cases = [
@@ -50,6 +54,10 @@ pub fn babel() {
         "babel-plugin-transform-async-to-generator",
         // ES2016
         "babel-plugin-transform-exponentiation-operator",
+        // TypeScript
+        "babel-plugin-transform-typescript",
+        // React
+        "babel-plugin-transform-react-jsx",
     ];
 
     let mut snapshot = String::new();
@@ -75,7 +83,7 @@ pub fn babel() {
 
         // Run the test
         let (passed, failed): (Vec<PathBuf>, Vec<PathBuf>) =
-            paths.into_iter().partition(|path| babel_test(path));
+            paths.into_iter().partition(|path| babel_test(path, options));
         all_passed += passed.len();
 
         // Snapshot
@@ -104,17 +112,25 @@ pub fn babel() {
     file.write_all(snapshot.as_bytes()).unwrap();
 }
 
-fn babel_test(input_path: &Path) -> bool {
-    let extension = input_path.extension().unwrap().to_str().unwrap();
-    let output_path = input_path.parent().unwrap().join(format!("output.{extension}"));
+fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
+    let output_path = input_path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
+        let path = entry.ok()?.path();
+        let file_stem = path.file_stem()?;
+        (file_stem == "output").then_some(path)
+    });
     let source_text = fs::read_to_string(input_path).unwrap();
+    let filtered =
+        options.filter.as_ref().is_some_and(|f| input_path.to_string_lossy().as_ref().contains(f));
 
-    let expected = fs::read_to_string(output_path).ok();
+    if filtered {
+        println!("{input_path:?}");
+    }
 
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(input_path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
+    let expected = output_path.and_then(|path| fs::read_to_string(path).ok());
     if let Some(expected) = &expected {
         let transform_options = TransformOptions { target: TransformTarget::ES2015 };
         let program = allocator.alloc(ret.program);
@@ -122,13 +138,12 @@ fn babel_test(input_path: &Path) -> bool {
 
         let formatter_options = FormatterOptions::default();
         let transformed = Formatter::new(source_text.len(), formatter_options).build(program);
-        // if !passed {
-        // println!("{input_path:?}");
-        // println!("Transformed:\n");
-        // println!("{transformed}");
-        // println!("Expected:\n");
-        // println!("{expected}");
-        // }
+        if filtered {
+            println!("Expected:\n");
+            println!("{expected:?}\n");
+            println!("Transformed:\n");
+            println!("{transformed}");
+        }
         return remove_whitespace(&transformed) == remove_whitespace(expected);
     }
 

@@ -1730,6 +1730,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
+ "pico-args",
  "walkdir",
 ]
 

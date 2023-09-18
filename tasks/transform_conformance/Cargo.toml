@@ -11,11 +11,12 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
-oxc_span   = { workspace = true }
-oxc_allocator   = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_formatter   = { workspace = true }
-oxc_transformer = { workspace = true }
+oxc_span         = { workspace = true }
+oxc_allocator    = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_formatter    = { workspace = true }
+oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
-walkdir      = { workspace = true }
+walkdir   = { workspace = true }
+pico-args = { workspace = true }
