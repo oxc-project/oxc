@@ -30,9 +30,10 @@ fn bench_transformer(criterion: &mut Criterion) {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, source_text, source_type).parse();
             let program = allocator.alloc(ret.program);
-            let transform_options = TransformOptions::default();
             b.iter(|| {
-                Transformer::new(&allocator, &transform_options).build(black_box(program));
+                let transform_options = TransformOptions::default();
+                Transformer::new(&allocator, source_type, transform_options)
+                    .build(black_box(program));
             });
         });
     }

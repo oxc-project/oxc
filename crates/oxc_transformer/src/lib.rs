@@ -10,33 +10,29 @@
 mod es2016;
 mod es2019;
 mod es2021;
+mod options;
+mod react_jsx;
+mod typescript;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_span::SourceType;
 use std::rc::Rc;
 
 use es2016::ExponentiationOperator;
 use es2019::OptionalCatchBinding;
 use es2021::LogicalAssignmentOperators;
+use react_jsx::ReactJsx;
+use typescript::TypeScript;
 
-#[derive(Debug, Default, Clone)]
-pub struct TransformOptions {
-    pub target: TransformTarget,
-}
-
-/// See <https://www.typescriptlang.org/tsconfig#target>
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-pub enum TransformTarget {
-    ES2015,
-    ES2016,
-    ES2019,
-    ES2021,
-    #[default]
-    ESNext,
-}
+pub use crate::options::{
+    TransformOptions, TransformReactOptions, TransformReactRuntime, TransformTarget,
+};
 
 #[derive(Default)]
 pub struct Transformer<'a> {
+    typescript: Option<TypeScript<'a>>,
+    react_jsx: Option<ReactJsx<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
     // es2019
@@ -46,10 +42,20 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
-    pub fn new(allocator: &'a Allocator, options: &TransformOptions) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_type: SourceType,
+        options: TransformOptions,
+    ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
 
         let mut t = Self::default();
+        if source_type.is_typescript() {
+            t.typescript.replace(TypeScript::new(Rc::clone(&ast)));
+        }
+        if let Some(react_options) = options.react {
+            t.react_jsx.replace(ReactJsx::new(Rc::clone(&ast), react_options));
+        }
         if options.target < TransformTarget::ES2021 {
             t.es2021_logical_assignment_operators
                 .replace(LogicalAssignmentOperators::new(Rc::clone(&ast)));
@@ -70,6 +76,8 @@ impl<'a> Transformer<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
+        // self.typescript.as_mut().map(|t| t.transform_expression(expr));
+        // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
 

@@ -10,7 +10,7 @@ use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
-use oxc_transformer::{TransformOptions, TransformTarget, Transformer};
+use oxc_transformer::{TransformOptions, TransformReactOptions, TransformTarget, Transformer};
 
 pub struct BabelOptions {
     pub filter: Option<String>,
@@ -132,19 +132,28 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
 
     let expected = output_path.and_then(|path| fs::read_to_string(path).ok());
     if let Some(expected) = &expected {
-        let transform_options = TransformOptions { target: TransformTarget::ES2015 };
+        let transform_options = TransformOptions {
+            target: TransformTarget::ES2015,
+            react: Some(TransformReactOptions::default()),
+        };
         let program = allocator.alloc(ret.program);
-        Transformer::new(&allocator, &transform_options).build(program);
+        Transformer::new(&allocator, source_type, transform_options).build(program);
 
         let formatter_options = FormatterOptions::default();
         let transformed = Formatter::new(source_text.len(), formatter_options).build(program);
+        let trim_transformed = remove_whitespace(&transformed);
+        let trim_expected = remove_whitespace(expected);
+        let passed = trim_transformed == trim_expected;
         if filtered {
             println!("Expected:\n");
             println!("{expected:?}\n");
             println!("Transformed:\n");
-            println!("{transformed}");
+            println!("{transformed}\n");
+            println!("Diff:\n");
+            println!("{trim_transformed:?}");
+            println!("{trim_expected:?}");
         }
-        return remove_whitespace(&transformed) == remove_whitespace(expected);
+        return passed;
     }
 
     ret.errors.is_empty()
