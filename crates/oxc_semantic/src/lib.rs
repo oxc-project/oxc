@@ -14,13 +14,12 @@ use std::{rc::Rc, sync::Arc};
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
-use oxc_span::{Atom, SourceType};
+use oxc_span::SourceType;
 pub use oxc_syntax::{
     module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
-use rustc_hash::FxHashMap;
 
 pub use crate::{
     builder::VariableInfo,
@@ -49,7 +48,7 @@ pub struct Semantic<'a> {
 
     unused_labels: Vec<AstNodeId>,
 
-    redeclare_variable_map: FxHashMap<Atom, VariableInfo>,
+    redeclare_variables: Vec<VariableInfo>,
 }
 
 impl<'a> Semantic<'a> {
@@ -122,8 +121,8 @@ impl<'a> Semantic<'a> {
         self.scopes().root_unresolved_references().contains_key(&ident.name)
     }
 
-    pub fn redeclare_variable_map(&self) -> &FxHashMap<Atom, VariableInfo> {
-        &self.redeclare_variable_map
+    pub fn redeclare_variables(&self) -> &Vec<VariableInfo> {
+        &self.redeclare_variables
     }
 }
 

@@ -39,11 +39,12 @@ struct UnusedLabels<'a> {
 pub struct VariableInfo {
     pub name: Atom,
     pub span: Span,
+    pub symbol_id: SymbolId,
 }
 
 #[derive(Debug)]
 pub struct RedeclareVariables {
-    pub variables: FxHashMap<Atom, VariableInfo>,
+    pub variables: Vec<VariableInfo>,
 }
 
 pub struct SemanticBuilder<'a> {
@@ -82,7 +83,7 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    redeclare_variable_map: RedeclareVariables,
+    redeclare_variables: RedeclareVariables,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -114,7 +115,7 @@ impl<'a> SemanticBuilder<'a> {
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            redeclare_variable_map: RedeclareVariables { variables: FxHashMap::default() },
+            redeclare_variables: RedeclareVariables { variables: vec![] },
         }
     }
 
@@ -170,7 +171,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
-            redeclare_variable_map: self.redeclare_variable_map.variables,
+            redeclare_variables: self.redeclare_variables.variables,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -186,7 +187,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
-            redeclare_variable_map: self.redeclare_variable_map.variables,
+            redeclare_variables: self.redeclare_variables.variables,
         }
     }
 
@@ -268,7 +269,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            self.add_redeclared_variables(&VariableInfo { name: name.clone(), span });
+            self.add_redeclared_variables(VariableInfo { name: name.clone(), span, symbol_id });
             return symbol_id;
         }
 
@@ -434,11 +435,8 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub fn add_redeclared_variables(&mut self, variable: &VariableInfo) {
-        self.redeclare_variable_map.variables.insert(
-            variable.name.clone(),
-            VariableInfo { name: variable.name.clone(), span: variable.span },
-        );
+    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
+        self.redeclare_variables.variables.push(variable);
     }
 }
 
