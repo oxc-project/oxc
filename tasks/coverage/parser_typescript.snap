@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5159/5163 (99.92%)
 Positive Passed: 5151/5163 (99.77%)
-Negative Passed: 1018/4831 (21.07%)
+Negative Passed: 1020/4831 (21.11%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3384,7 +3384,6 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.3.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.8.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.9.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.2.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsWithImportHelpers.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts"
@@ -3392,7 +3391,6 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.4.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.8.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.9.ts"
-Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForIn.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithImportHelpers.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/invalidSwitchBreakStatement.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/switchBreakStatements.ts"
@@ -18411,6 +18409,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  9 │                 c = null;
    ╰────
 
+  × The left-hand side of a for...in statement cannot be an await using declaration
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts:6:1]
+ 6 │ async function main() {
+ 7 │     for (await using x in {}) {
+   ·          ─────────────
+ 8 │     }
+   ╰────
+
   × Missing initializer in destructuring declaration
    ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:6:1]
  6 │ async function main() {
@@ -18458,6 +18464,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │           {b} = null,
    ·           ───
  9 │           c = null;
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForIn.ts:5:1]
+ 5 │ 
+ 6 │ for (using x in {}) {
+   ·      ───────
+ 7 │ }
    ╰────
 
   × Unexpected token

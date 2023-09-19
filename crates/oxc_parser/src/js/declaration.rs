@@ -154,6 +154,6 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(self.ast.using_declaration(span, declarations, is_await))
+        Ok(self.ast.using_declaration(self.end_span(span), declarations, is_await))
     }
 }

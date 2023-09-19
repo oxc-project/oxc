@@ -280,6 +280,18 @@ impl<'a> Parser<'a> {
         {
             let using_decl = self.parse_using_declaration()?;
 
+            if matches!(self.cur_kind(), Kind::In) {
+                if using_decl.is_await {
+                    self.error(diagnostics::AwaitUsingDeclarationNotAllowedInForInStatement(
+                        using_decl.span,
+                    ));
+                } else {
+                    self.error(diagnostics::UsingDeclarationNotAllowedInForInStatement(
+                        using_decl.span,
+                    ));
+                }
+            }
+
             if matches!(self.cur_kind(), Kind::In | Kind::Of) {
                 let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
                 return self.parse_for_in_or_of_loop(span, r#await, init);

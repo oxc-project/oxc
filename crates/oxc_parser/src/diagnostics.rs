@@ -296,3 +296,13 @@ pub struct AwaitInUsingDeclaration(#[label] pub Span);
 #[error("Using declarations may not have binding patterns")]
 #[diagnostic()]
 pub struct InvalidIdentifierInUsingDeclaration(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("The left-hand side of a for...in statement cannot be an await using declaration")]
+#[diagnostic()]
+pub struct AwaitUsingDeclarationNotAllowedInForInStatement(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("The left-hand side of a for...in statement cannot be an using declaration")]
+#[diagnostic()]
+pub struct UsingDeclarationNotAllowedInForInStatement(#[label] pub Span);
