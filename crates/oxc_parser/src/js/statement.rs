@@ -122,6 +122,8 @@ impl<'a> Parser<'a> {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
+            // TODO: investigate whether we can get better error messages by not checking `self.nth_kind(2).is_binding_identifier()`
+            // and instead attempting to parse the using declaration and then checking if it is valid.
             Kind::Await
                 if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
             {
@@ -278,7 +280,7 @@ impl<'a> Parser<'a> {
         if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
             || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
         {
-            let using_decl = self.parse_using_declaration()?;
+            let using_decl = self.parse_using_declaration(StatementContext::For)?;
 
             if matches!(self.cur_kind(), Kind::In) {
                 if using_decl.is_await {

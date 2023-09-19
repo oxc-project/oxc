@@ -283,26 +283,31 @@ pub struct ReturnStatementOnlyInFunctionBody(#[label] pub Span);
 pub struct JSXExpressionsMayNotUseTheCommaOperator(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Line terminator not permitted before using declaration")]
+#[error("Line terminator not permitted before using declaration.")]
 #[diagnostic()]
 pub struct LineTerminatorBeforeUsingDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Await is not allowed in using declarations")]
+#[error("Await is not allowed in using declarations.")]
 #[diagnostic()]
 pub struct AwaitInUsingDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Using declarations may not have binding patterns")]
+#[error("Using declarations may not have binding patterns.")]
 #[diagnostic()]
 pub struct InvalidIdentifierInUsingDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("The left-hand side of a for...in statement cannot be an await using declaration")]
+#[error("The left-hand side of a for...in statement cannot be an await using declaration.")]
 #[diagnostic()]
 pub struct AwaitUsingDeclarationNotAllowedInForInStatement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("The left-hand side of a for...in statement cannot be an using declaration")]
+#[error("The left-hand side of a for...in statement cannot be an using declaration.")]
 #[diagnostic()]
 pub struct UsingDeclarationNotAllowedInForInStatement(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Using declarations must have an initializer.")]
+#[diagnostic()]
+pub struct UsingDeclarationsMustBeInitialized(#[label] pub Span);

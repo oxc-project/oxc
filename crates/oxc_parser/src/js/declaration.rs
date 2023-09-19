@@ -43,7 +43,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
-        let using_decl = self.parse_using_declaration()?;
+        let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
 
         self.expect(Kind::Semicolon)?;
 
@@ -113,7 +113,10 @@ impl<'a> Parser<'a> {
 
     /// UsingDeclaration[In, Yield, Await] :
     /// using [no LineTerminator here] [lookahead ≠ await] BindingList[?In, ?Yield, ?Await, ~Pattern] ;
-    pub(crate) fn parse_using_declaration(&mut self) -> Result<UsingDeclaration<'a>> {
+    pub(crate) fn parse_using_declaration(
+        &mut self,
+        statement_ctx: StatementContext,
+    ) -> Result<UsingDeclaration<'a>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
@@ -146,6 +149,11 @@ impl<'a> Parser<'a> {
                         declaration.id.span(),
                     ));
                 }
+            }
+
+            // Excluding `for` loops, an initializer is required in a UsingDeclaration.
+            if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
+                self.error(diagnostics::UsingDeclarationsMustBeInitialized(declaration.id.span()));
             }
 
             declarations.push(declaration);
