@@ -1070,6 +1070,16 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+pub struct UsingDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub is_await: bool,
+    #[cfg_attr(feature = "serde-impl", serde(default))]
+    pub declarations: Vec<'a, VariableDeclarator<'a>>,
+}
+
 /// Empty Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -1954,14 +1964,4 @@ impl ModuleExportName {
             Self::StringLiteral(literal) => &literal.value,
         }
     }
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct UsingDeclaration<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub is_await: bool,
-    #[cfg_attr(feature = "serde-impl", serde(default))]
-    pub declarations: Vec<'a, VariableDeclarator<'a>>,
 }
