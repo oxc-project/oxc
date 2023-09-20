@@ -7,6 +7,7 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    pub mod default;
     pub mod named;
     pub mod no_cycle;
     pub mod no_self_import;
@@ -37,6 +38,7 @@ mod eslint {
     pub mod no_class_assign;
     pub mod no_compare_neg_zero;
     pub mod no_cond_assign;
+    pub mod no_console;
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
     pub mod no_constant_condition;
@@ -106,14 +108,18 @@ mod jest {
     pub mod no_conditional_expect;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
+    pub mod no_export;
     pub mod no_focused_tests;
     pub mod no_interpolation_in_snapshots;
+    pub mod no_jasmine_globals;
+    pub mod no_mocks_import;
     pub mod no_test_prefixes;
     pub mod valid_describe_callback;
 }
 
 mod unicorn {
     pub mod no_instanceof_array;
+    pub mod no_thenable;
     pub mod no_unnecessary_await;
 }
 
@@ -139,6 +145,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_class_assign,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
+    eslint::no_console,
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
@@ -149,9 +156,9 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
-    eslint::no_empty,
     eslint::no_empty_character_class,
     eslint::no_empty_pattern,
+    eslint::no_empty,
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
@@ -206,9 +213,14 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_conditional_expect,
     jest::no_done_callback,
     jest::no_interpolation_in_snapshots,
+    jest::no_jasmine_globals,
+    jest::no_mocks_import,
+    jest::no_export,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
+    unicorn::no_thenable,
     import::named,
     import::no_cycle,
-    import::no_self_import
+    import::no_self_import,
+    import::default
 }

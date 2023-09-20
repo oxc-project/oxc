@@ -13,6 +13,7 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
+pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
@@ -22,7 +23,11 @@ mod visit_mut;
 pub use num_bigint::BigUint;
 
 pub use crate::{
-    ast_builder::AstBuilder, ast_kind::AstKind, trivia::Trivias, visit::Visit, visit_mut::VisitMut,
+    ast_builder::AstBuilder,
+    ast_kind::AstKind,
+    trivia::{Comment, CommentKind, Trivias, TriviasMap},
+    visit::Visit,
+    visit_mut::VisitMut,
 };
 
 // After experimenting with two types of boxed enum variants:

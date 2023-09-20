@@ -18,6 +18,10 @@ name    = "parser"
 harness = false
 
 [[bench]]
+name    = "transformer"
+harness = false
+
+[[bench]]
 name    = "semantic"
 harness = false
 
@@ -25,23 +29,24 @@ harness = false
 name    = "linter"
 harness = false
 
-[[bench]]
-name    = "minifier"
-harness = false
+# [[bench]]
+# name    = "minifier"
+# harness = false
 
 [[bench]]
 name    = "resolver"
 harness = false
 
 [dependencies]
-oxc_span                  = { workspace = true }
-oxc_allocator             = { workspace = true }
-oxc_parser                = { workspace = true }
-oxc_minifier              = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_parser    = { workspace = true }
+# oxc_minifier              = { workspace = true }
 oxc_tasks_common          = { workspace = true }
 oxc_semantic              = { workspace = true }
 oxc_resolver              = { workspace = true }
 oxc_linter                = { workspace = true }
+oxc_transformer           = { workspace = true }
 rayon                     = { workspace = true }
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }

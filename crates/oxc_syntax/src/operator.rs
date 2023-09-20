@@ -39,7 +39,7 @@ pub enum AssignmentOperator {
 }
 
 impl AssignmentOperator {
-    pub fn is_logical_operator(self) -> bool {
+    pub fn is_logical(self) -> bool {
         matches!(self, Self::LogicalAnd | Self::LogicalOr | Self::LogicalNullish)
     }
 

@@ -109,13 +109,8 @@ fn test() -> io::Result<()> {
     ];
 
     for (comment, path, request) in pass {
-        let filename = resolver_with_symlinks.resolve(&path, request).map_or_else(
-            |err| {
-                panic!("{err:?} {comment} {path:?} {request}");
-            },
-            |r| r.full_path(),
-        );
-        assert_eq!(filename, root.join("lib/index.js"));
+        let filename = resolver_with_symlinks.resolve(&path, request).map(|r| r.full_path());
+        assert_eq!(filename, Ok(root.join("lib/index.js")), "{comment:?}");
 
         let resolved_path =
             resolver_without_symlinks.resolve(&path, request).map(|r| r.full_path());

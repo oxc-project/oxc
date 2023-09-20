@@ -12,12 +12,6 @@ pub mod ast {
     pub use oxc_ast::*;
 }
 
-#[cfg(feature = "minifier")]
-pub mod ast_lower {
-    #[doc(inline)]
-    pub use oxc_ast_lower::*;
-}
-
 pub mod diagnostics {
     #[doc(inline)]
     pub use oxc_diagnostics::*;
@@ -29,22 +23,16 @@ pub mod formatter {
     pub use oxc_formatter::*;
 }
 
-#[cfg(feature = "minifier")]
-pub mod hir {
-    #[doc(inline)]
-    pub use oxc_hir::*;
-}
-
 pub mod index {
     #[doc(inline)]
     pub use oxc_index::*;
 }
 
-#[cfg(feature = "minifier")]
-pub mod minifier {
-    #[doc(inline)]
-    pub use oxc_minifier::*;
-}
+// #[cfg(feature = "minifier")]
+// pub mod minifier {
+// #[doc(inline)]
+// pub use oxc_minifier::*;
+// }
 
 pub mod parser {
     #[doc(inline)]

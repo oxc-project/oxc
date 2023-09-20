@@ -184,7 +184,7 @@ impl NoConstantBinaryExpression {
                 AssignmentOperator::Assign => {
                     Self::has_constant_nullishness(&assign_expr.right, non_nullish, ctx)
                 }
-                op if op.is_logical_operator() => false,
+                op if op.is_logical() => false,
                 _ => true,
             },
             Expression::SequenceExpression(sequence_expr) => sequence_expr
@@ -322,7 +322,7 @@ impl NoConstantBinaryExpression {
                 AssignmentOperator::Assign => {
                     Self::has_constant_strict_boolean_comparison(&assign_expr.right, ctx)
                 }
-                op if op.is_logical_operator() => false,
+                op if op.is_logical() => false,
                 _ => true,
             },
             Expression::SequenceExpression(sequence_expr) => sequence_expr

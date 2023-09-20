@@ -1,31 +1,31 @@
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+// #[cfg(not(target_env = "msvc"))]
+// #[global_allocator]
+// static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-#[cfg(target_os = "windows")]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+// #[cfg(target_os = "windows")]
+// #[global_allocator]
+// static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_minifier::{Minifier, MinifierOptions};
-use oxc_span::SourceType;
-use oxc_tasks_common::TestFiles;
+// use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+// // use oxc_minifier::{Minifier, MinifierOptions};
+// use oxc_span::SourceType;
+// use oxc_tasks_common::TestFiles;
 
-fn bench_minifier(criterion: &mut Criterion) {
-    let mut group = criterion.benchmark_group("minifier");
-    for file in TestFiles::minimal().files() {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(&file.file_name),
-            &file.source_text,
-            |b, source_text| {
-                let source_type = SourceType::from_path(&file.file_name).unwrap();
-                let options = MinifierOptions::default();
-                b.iter_with_large_drop(|| Minifier::new(source_text, source_type, options).build());
-            },
-        );
-    }
-    group.finish();
-}
+// fn bench_minifier(criterion: &mut Criterion) {
+// let mut group = criterion.benchmark_group("minifier");
+// for file in TestFiles::minimal().files() {
+// group.bench_with_input(
+// BenchmarkId::from_parameter(&file.file_name),
+// &file.source_text,
+// |b, source_text| {
+// let source_type = SourceType::from_path(&file.file_name).unwrap();
+// let options = MinifierOptions::default();
+// b.iter_with_large_drop(|| Minifier::new(source_text, source_type, options).build());
+// },
+// );
+// }
+// group.finish();
+// }
 
-criterion_group!(minifier, bench_minifier);
-criterion_main!(minifier);
+// criterion_group!(minifier, bench_minifier);
+// criterion_main!(minifier);

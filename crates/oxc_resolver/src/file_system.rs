@@ -26,12 +26,12 @@ pub trait FileSystem: Default + Send + Sync {
     /// See [std::fs::symlink_metadata]
     fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
 
-    /// See [std::fs::read_link]
+    /// See [std::fs::canonicalize]
     ///
     /// # Errors
     ///
     /// See [std::fs::read_link]
-    fn read_link<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
 }
 
 /// Metadata information about a file.
@@ -71,7 +71,7 @@ impl FileSystem for FileSystemOs {
         fs::symlink_metadata(path).map(FileMetadata::from)
     }
 
-    fn read_link<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
-        fs::read_link(path).map(|p| dunce::simplified(&p).to_path_buf())
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        dunce::canonicalize(path)
     }
 }

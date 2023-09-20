@@ -54,12 +54,14 @@ pub enum FinalEndOfLine {
 #[derive(Debug, Clone)]
 pub struct FormatterOptions {
     pub indentation: u8,
+    // <https://prettier.io/docs/en/options#quotes>
+    pub single_quote: bool,
     pub end_of_line: EndOfLine,
 }
 
 impl Default for FormatterOptions {
     fn default() -> Self {
-        Self { indentation: 4, end_of_line: EndOfLine::LF }
+        Self { indentation: 4, single_quote: false, end_of_line: EndOfLine::LF }
     }
 }
 
@@ -68,12 +70,14 @@ impl Default for FormatterOptions {
 pub struct InnerOptions {
     pub indentation: u8,
     pub end_of_line: FinalEndOfLine,
+    pub single_quote: bool,
 }
 
 impl From<FormatterOptions> for InnerOptions {
     fn from(options: FormatterOptions) -> Self {
         Self {
             indentation: options.indentation,
+            single_quote: options.single_quote,
             end_of_line: options.end_of_line.get_final_end_of_line(),
         }
     }
@@ -206,6 +210,11 @@ impl Formatter {
     #[inline]
     pub fn print_equal(&mut self) {
         self.print(b'=');
+    }
+
+    #[inline]
+    pub fn print_quote(&mut self) {
+        self.print(if self.options.single_quote { b'\'' } else { b'"' });
     }
 
     pub fn print_indent(&mut self) {

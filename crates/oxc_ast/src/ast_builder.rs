@@ -6,13 +6,14 @@
 )]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     NumberBase,
 };
+use std::mem;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -52,6 +53,17 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
+    }
+
+    pub fn copy<T>(&self, src: &T) -> T {
+        unsafe { std::mem::transmute_copy(src) }
+    }
+
+    /// Moves the expression out by replacing it with a null expression.
+    pub fn move_expression(&self, expr: &mut Expression<'a>) -> Expression<'a> {
+        let null_literal = NullLiteral::new(expr.span());
+        let null_expr = self.literal_null_expression(null_literal);
+        mem::replace(expr, null_expr)
     }
 
     pub fn program(
@@ -332,6 +344,13 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn simple_assignment_target_identifier(
+        &self,
+        ident: IdentifierReference,
+    ) -> SimpleAssignmentTarget<'a> {
+        SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident))
+    }
+
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
         Expression::AwaitExpression(self.alloc(AwaitExpression { span, argument }))
     }
@@ -409,6 +428,10 @@ impl<'a> AstBuilder<'a> {
         Expression::LogicalExpression(self.alloc(LogicalExpression { span, left, operator, right }))
     }
 
+    pub fn member_expression(&self, expr: MemberExpression<'a>) -> Expression<'a> {
+        Expression::MemberExpression(self.alloc(expr))
+    }
+
     pub fn computed_member_expression(
         &self,
         span: Span,
@@ -416,14 +439,9 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool, // for optional chaining
     ) -> Expression<'a> {
-        Expression::MemberExpression(self.alloc({
-            MemberExpression::ComputedMemberExpression(ComputedMemberExpression {
-                span,
-                object,
-                expression,
-                optional,
-            })
-        }))
+        self.member_expression(MemberExpression::ComputedMemberExpression(
+            ComputedMemberExpression { span, object, expression, optional },
+        ))
     }
 
     pub fn static_member_expression(
@@ -433,13 +451,11 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName,
         optional: bool, // for optional chaining
     ) -> Expression<'a> {
-        Expression::MemberExpression(self.alloc({
-            MemberExpression::StaticMemberExpression(StaticMemberExpression {
-                span,
-                object,
-                property,
-                optional,
-            })
+        self.member_expression(MemberExpression::StaticMemberExpression(StaticMemberExpression {
+            span,
+            object,
+            property,
+            optional,
         }))
     }
 
@@ -450,13 +466,11 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier,
         optional: bool,
     ) -> Expression<'a> {
-        Expression::MemberExpression(self.alloc({
-            MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
-                span,
-                object,
-                field,
-                optional,
-            })
+        self.member_expression(MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
+            span,
+            object,
+            field,
+            optional,
         }))
     }
 

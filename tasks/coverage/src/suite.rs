@@ -11,21 +11,16 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
-use oxc_ast_lower::AstLower;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
-
-/// Normalizes the path when on Windows to using forward slash delimiters.
-fn normalize_path(path: &Path) -> String {
-    path.display().to_string().replace('\\', "/")
-}
 
 #[derive(Debug)]
 pub enum TestResult {
@@ -296,8 +291,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
-        let ret = AstLower::new(&allocator, source_text, source_type).build(&parser_ret.program);
-        let _json = ret.program.to_json();
 
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)

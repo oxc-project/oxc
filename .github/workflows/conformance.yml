@@ -49,8 +49,9 @@ jobs:
         uses: ./.github/actions/rustup
 
       - run: cargo coverage
+      - run: cargo run --release -p oxc_transform_conformance
 
-      - run: cargo minsize
+      # - run: cargo minsize
 
       - name: Check for snapshot diff
         run: git diff --exit-code

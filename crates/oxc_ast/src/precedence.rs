@@ -3,7 +3,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::hir::{
+use crate::ast::{
     ArrowExpression, AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression,
     ConditionalExpression, Expression, LogicalExpression, MemberExpression, NewExpression,
     SequenceExpression, UnaryExpression, UpdateExpression, YieldExpression,

@@ -18,8 +18,6 @@ ignore:
   - "crates/oxc_ast/src/visit_mut.rs"
   - "crates/oxc_ast/src/ast_kind.rs"
   - "crates/oxc_ast/src/span.rs"
-  - "crates/oxc_hir/src/hir_kind.rs"
-  - "crates/oxc_hir/src/span.rs"
   - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_napi"
   - "crates/oxc_parser/fuzz"

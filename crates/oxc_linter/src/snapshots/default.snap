@@ -1,0 +1,44 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: default
+---
+  ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
+   ╭─[index.js:1:1]
+ 1 │ import baz from "./named-exports"
+   ·                 ─────────────────
+   ╰────
+  help: does "./named-exports" have the default export?
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz from "./named-exports"
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz, { bar } from "./named-exports"
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ export baz, * as names from "./named-exports"
+   ·        ───
+   ╰────
+
+  ⚠ eslint-plugin-import(default): No default export found in imported module "./re-export"
+   ╭─[index.js:1:1]
+ 1 │ import barDefault from "./re-export"
+   ·                        ─────────────
+   ╰────
+  help: does "./re-export" have the default export?
+
+  ⚠ eslint-plugin-import(default): No default export found in imported module "./typescript"
+   ╭─[index.js:1:1]
+ 1 │ import foobar from "./typescript"
+   ·                    ──────────────
+   ╰────
+  help: does "./typescript" have the default export?
+
+

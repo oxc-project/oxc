@@ -1,12 +1,12 @@
 use once_cell::sync::OnceCell as OnceLock;
 use std::{
     borrow::{Borrow, Cow},
-    collections::VecDeque,
     convert::AsRef,
+    fmt,
     hash::{BuildHasherDefault, Hash, Hasher},
     io,
     ops::Deref,
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
@@ -14,7 +14,8 @@ use dashmap::{DashMap, DashSet};
 use rustc_hash::FxHasher;
 
 use crate::{
-    package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions, TsConfig,
+    package_json::PackageJson, path::PathUtil, FileMetadata, FileSystem, ResolveError,
+    ResolveOptions, TsConfig,
 };
 
 #[derive(Default)]
@@ -55,84 +56,45 @@ impl<Fs: FileSystem> Cache<Fs> {
 
     pub fn tsconfig(
         &self,
-        tsconfig_path: &CachedPath,
+        path: &Path,
         callback: impl FnOnce(&mut TsConfig) -> Result<(), ResolveError>, // callback for modifying tsconfig with `extends`
     ) -> Result<Arc<TsConfig>, ResolveError> {
-        self.tsconfigs
-            .entry(tsconfig_path.path().to_path_buf())
-            .or_try_insert_with(|| {
-                let tsconfig_path = if tsconfig_path.is_dir(&self.fs) {
-                    Cow::Owned(tsconfig_path.path().join("tsconfig.json"))
-                } else {
-                    Cow::Borrowed(tsconfig_path.path())
-                };
-                let mut tsconfig_string = self
-                    .fs
-                    .read_to_string(&tsconfig_path)
-                    .map_err(|_| ResolveError::NotFound(tsconfig_path.to_path_buf()))?;
-                let mut tsconfig =
-                    TsConfig::parse(&tsconfig_path, &mut tsconfig_string).map_err(|error| {
-                        ResolveError::from_serde_json_error(tsconfig_path.to_path_buf(), &error)
-                    })?;
-                callback(&mut tsconfig)?;
-                Ok(Arc::new(tsconfig))
-            })
-            .map(|r| Arc::clone(r.value()))
-    }
-
-    // Code copied from parcel
-    // <https://github.com/parcel-bundler/parcel/blob/cd0edbccaafeacd2203a34e34570f45e2a10f028/packages/utils/node-resolver-rs/src/path.rs#L64>
-    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
-        let mut ret = PathBuf::new();
-        let mut seen_links = 0;
-        let mut queue = VecDeque::new();
-        queue.push_back(path.to_path_buf());
-        while let Some(cur_path) = queue.pop_front() {
-            let mut components = cur_path.components();
-            for component in &mut components {
-                match component {
-                    Component::Prefix(c) => ret.push(c.as_os_str()),
-                    Component::RootDir => {
-                        ret.push(component.as_os_str());
-                    }
-                    Component::CurDir => {}
-                    Component::ParentDir => {
-                        ret.pop();
-                    }
-                    Component::Normal(c) => {
-                        ret.push(c);
-                        let cached_path = self.value(&ret);
-                        let Some(link) = cached_path.symlink(&self.fs)? else {
-                            continue;
-                        };
-                        seen_links += 1;
-                        if seen_links > 32 {
-                            return Err(io::Error::new(
-                                io::ErrorKind::NotFound,
-                                "Too many symlinks",
-                            ));
-                        }
-                        if link.is_absolute() {
-                            ret = PathBuf::new();
-                        } else {
-                            ret.pop();
-                        }
-                        let remaining = components.as_path();
-                        if !remaining.as_os_str().is_empty() {
-                            queue.push_front(remaining.to_path_buf());
-                        }
-                        queue.push_front(link);
-                        break;
-                    }
-                }
-            }
+        if let Some(tsconfig_ref) = self.tsconfigs.get(path) {
+            return Ok(Arc::clone(tsconfig_ref.value()));
         }
-        Ok(ret)
+        let meta = self.fs.metadata(path).ok();
+        let tsconfig_path = if meta.is_some_and(|m| m.is_file) {
+            Cow::Borrowed(path)
+        } else if meta.is_some_and(|m| m.is_dir) {
+            Cow::Owned(path.join("tsconfig.json"))
+        } else {
+            let mut os_string = path.to_path_buf().into_os_string();
+            os_string.push(".json");
+            Cow::Owned(PathBuf::from(os_string))
+        };
+        let mut tsconfig_string = self
+            .fs
+            .read_to_string(&tsconfig_path)
+            .map_err(|_| ResolveError::TsconfigNotFound(tsconfig_path.to_path_buf()))?;
+        let mut tsconfig =
+            TsConfig::parse(&tsconfig_path, &mut tsconfig_string).map_err(|error| {
+                ResolveError::from_serde_json_error(tsconfig_path.to_path_buf(), &error)
+            })?;
+        callback(&mut tsconfig)?;
+        let tsconfig = Arc::new(tsconfig);
+        self.tsconfigs.insert(path.to_path_buf(), Arc::clone(&tsconfig));
+        Ok(tsconfig)
     }
 }
 
 #[derive(Clone)]
 pub struct CachedPath(Arc<CachedPathImpl>);
+
+impl fmt::Debug for CachedPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.path.fmt(f)
+    }
+}
 
 impl Hash for CachedPath {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -179,7 +141,7 @@ pub struct CachedPathImpl {
     parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
-    canonicalized: OnceLock<PathBuf>,
+    canonicalized: OnceLock<Option<PathBuf>>,
     node_modules: OnceLock<Option<CachedPath>>,
     package_json: OnceLock<Option<Arc<PackageJson>>>,
 }
@@ -227,7 +189,7 @@ impl CachedPathImpl {
             .get_or_try_init(|| {
                 if let Ok(symlink_metadata) = fs.symlink_metadata(&self.path) {
                     if symlink_metadata.is_symlink {
-                        return fs.read_link(self.path()).map(Some);
+                        return fs.canonicalize(self.path()).map(Some);
                     }
                 }
                 Ok(None)
@@ -235,8 +197,22 @@ impl CachedPathImpl {
             .cloned()
     }
 
-    pub fn canonicalize<Fs: FileSystem>(&self, cache: &Cache<Fs>) -> io::Result<PathBuf> {
-        self.canonicalized.get_or_try_init(|| cache.canonicalize(&self.path)).cloned()
+    pub fn realpath<Fs: FileSystem>(&self, fs: &Fs) -> io::Result<PathBuf> {
+        self.canonicalized
+            .get_or_try_init(|| {
+                if let Some(link) = self.symlink(fs)? {
+                    return Ok(Some(link));
+                }
+                if let Some(parent) = self.parent() {
+                    let parent_path = parent.realpath(fs)?;
+                    return Ok(Some(
+                        parent_path.normalize_with(self.path.strip_prefix(&parent.path).unwrap()),
+                    ));
+                };
+                Ok(None)
+            })
+            .cloned()
+            .map(|r| r.unwrap_or_else(|| self.path.clone().to_path_buf()))
     }
 
     pub fn module_directory<Fs: FileSystem>(
