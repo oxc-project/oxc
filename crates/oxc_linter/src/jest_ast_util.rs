@@ -339,7 +339,7 @@ fn get_import_decl_node_id(ident: &IdentifierReference, ctx: &LintContext) -> Op
     None
 }
 
-pub fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
+fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
     match expr {
         Expression::Identifier(ident) => Some(ident),
         Expression::MemberExpression(member_expr) => resolve_first_ident(member_expr.object()),
