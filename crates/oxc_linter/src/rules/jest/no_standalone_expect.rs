@@ -79,7 +79,8 @@ impl Rule for NoStandaloneExpect {
             }
         }
 
-        if is_correct_place_to_call_expect(node, ctx, &self.additional_test_block_functions).is_none()
+        if is_correct_place_to_call_expect(node, ctx, &self.additional_test_block_functions)
+            .is_none()
         {
             ctx.diagnostic(NoStandaloneExpectDiagnostic(head.span));
         }
