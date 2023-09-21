@@ -172,7 +172,7 @@ fn parse_jest_expect_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     members: Vec<KnownMemberExpressionProperty<'a>>,
     name: &'a str,
-    head: KnownMemberExpressionProperty
+    head: KnownMemberExpressionProperty<'a>,
 ) -> Option<ParsedJestFnCall<'a>> {
     // check if the `member` is being called, which means it is the matcher
     let has_matcher = match &call_expr.callee {
@@ -339,7 +339,7 @@ fn get_import_decl_node_id(ident: &IdentifierReference, ctx: &LintContext) -> Op
     None
 }
 
-fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
+pub fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
     match expr {
         Expression::Identifier(ident) => Some(ident),
         Expression::MemberExpression(member_expr) => resolve_first_ident(member_expr.object()),

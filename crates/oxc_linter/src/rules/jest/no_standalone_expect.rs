@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{CallExpression, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -12,35 +9,57 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     jest_ast_util::{
-        parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind, ParsedExpectFnCall, JestGeneralFnKind,
+        get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
+        JestGeneralFnKind, ParsedExpectFnCall,
     },
     rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
+#[error("eslint(jest/no-standalone-expect): Expect must be inside of a test block.")]
+#[diagnostic(severity(warning), help("Did you forget to wrap `expect` in a `test` or `it` block?"))]
 struct NoStandaloneExpectDiagnostic(#[label] pub Span);
 
+/// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>
 #[derive(Debug, Default, Clone)]
-pub struct NoStandaloneExpect;
+pub struct NoStandaloneExpect {
+    additional_test_block_functions: Vec<String>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevents `expect` statements outside of a `test` or `it` block. An `expect`
+    /// within a helper function (but outside of a `test` or `it` block) will not
+    /// trigger this rule.
     ///
-    /// ### Why is this bad?
-    ///
+    /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
+    /// calls will execute if they are not in a test block.
     ///
     /// ### Example
     /// ```javascript
+    /// describe('a test', () => {
+    ///     expect(1).toBe(1);
+    /// });
     /// ```
     NoStandaloneExpect,
-    correctness
+    restriction
 );
 
 impl Rule for NoStandaloneExpect {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let additional_test_block_functions = value
+            .get(0)
+            .and_then(|v| v.get("additionalTestBlockFunctions"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
+            })
+            .unwrap_or_default();
+
+        Self { additional_test_block_functions }
+    }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -60,38 +79,71 @@ impl Rule for NoStandaloneExpect {
             }
         }
 
-        if let Some(_) = find_up(node, ctx) {
+        if is_right_place_to_call_expect(node, ctx, &self.additional_test_block_functions).is_none()
+        {
             ctx.diagnostic(NoStandaloneExpectDiagnostic(head.span));
         }
     }
 }
 
-fn find_up<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<()> {
+fn is_right_place_to_call_expect<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    additional_test_block_functions: &[String],
+) -> Option<()> {
+    let mut parent = ctx.nodes().parent_node(node.id())?;
+
+    // loop until find the closest function body
+    loop {
+        match parent.kind() {
+            AstKind::FunctionBody(_) => {
+                break;
+            }
+            _ => {
+                parent = ctx.nodes().parent_node(parent.id())?;
+            }
+        }
+    }
+
+    let node = parent;
     let parent = ctx.nodes().parent_node(node.id())?;
 
     match parent.kind() {
-        AstKind::BlockStatement(_)
-        | AstKind::FunctionBody(_) => return find_up(node, ctx),
-        AstKind::ArrowExpression(_) | AstKind::Function(_) => {
-            let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
-                return None;
-            };
-
-            if matches!(grandparent.kind(), AstKind::CallExpression(_)) {
-                return find_up(grandparent, ctx);
-            };
-        }
-        AstKind::CallExpression(call_expr) => {
-            let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else {
-                return None;
-            };
-            let JestFnKind::General(fn_kind) = jest_fn_call.kind else {
-                return None;
-            };
-            if matches!(fn_kind, JestGeneralFnKind::Describe) {
+        AstKind::Function(function) => {
+            // `function foo() { expect(1).toBe(1); }`
+            if function.is_function_declaration() {
                 return Some(());
             }
-            return None 
+
+            if function.is_expression() {
+                let grandparent = ctx.nodes().parent_node(parent.id())?;
+
+                // `test('foo', function () { expect(1).toBe(1) })`
+                // `const foo = function() {expect(1).toBe(1)}`
+                return if is_var_declarator_or_test_block(
+                    grandparent,
+                    ctx,
+                    additional_test_block_functions,
+                ) {
+                    Some(())
+                } else {
+                    None
+                };
+            }
+        }
+        AstKind::ArrowExpression(_) => {
+            let grandparent = ctx.nodes().parent_node(parent.id())?;
+            // `test('foo', () => expect(1).toBe(1))`
+            // `const foo = () => expect(1).toBe(1)`
+            return if is_var_declarator_or_test_block(
+                grandparent,
+                ctx,
+                additional_test_block_functions,
+            ) {
+                Some(())
+            } else {
+                None
+            };
         }
         _ => {}
     }
@@ -99,6 +151,41 @@ fn find_up<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<()> {
     None
 }
 
+fn is_var_declarator_or_test_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    additional_test_block_functions: &[String],
+) -> bool {
+    match node.kind() {
+        AstKind::VariableDeclarator(_) => return true,
+        AstKind::CallExpression(call_expr) => {
+            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
+                if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test)) {
+                    return true;
+                }
+            }
+
+            let node_name = get_node_name(&call_expr.callee);
+            if additional_test_block_functions.iter().any(|fn_name| &node_name == fn_name) {
+                return true;
+            }
+        }
+        AstKind::Argument(_) => {
+            if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    ctx,
+                    additional_test_block_functions,
+                );
+            }
+        }
+        _ => {}
+    }
+
+    false
+}
+
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -169,7 +256,7 @@ fn test() {
                     t('testing', () => expect(true).toBe(false));
                 });
             ",
-            Some(serde_json::json!([{ "additionalTestBlockFunctions": "undefined" }]))
+            None
         ),
         (
             "
