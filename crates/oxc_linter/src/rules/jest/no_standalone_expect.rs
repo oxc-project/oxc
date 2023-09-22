@@ -1,0 +1,321 @@
+use oxc_ast::{ast::Expression, AstKind};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
+use crate::{
+    context::LintContext,
+    jest_ast_util::{
+        get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
+        JestGeneralFnKind, ParsedExpectFnCall,
+    },
+    rule::Rule,
+    AstNode,
+};
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("eslint(jest/no-standalone-expect): Expect must be inside of a test block.")]
+#[diagnostic(severity(warning), help("Did you forget to wrap `expect` in a `test` or `it` block?"))]
+struct NoStandaloneExpectDiagnostic(#[label] pub Span);
+
+/// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>
+#[derive(Debug, Default, Clone)]
+pub struct NoStandaloneExpect {
+    additional_test_block_functions: Vec<String>,
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Prevents `expect` statements outside of a `test` or `it` block. An `expect`
+    /// within a helper function (but outside of a `test` or `it` block) will not
+    /// trigger this rule.
+    ///
+    /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
+    /// calls will execute if they are not in a test block.
+    ///
+    /// ### Example
+    /// ```javascript
+    /// describe('a test', () => {
+    ///     expect(1).toBe(1);
+    /// });
+    /// ```
+    NoStandaloneExpect,
+    restriction
+);
+
+impl Rule for NoStandaloneExpect {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let additional_test_block_functions = value
+            .get(0)
+            .and_then(|v| v.get("additionalTestBlockFunctions"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| {
+                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
+            })
+            .unwrap_or_default();
+
+        Self { additional_test_block_functions }
+    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, node, ctx) else {
+            return;
+        };
+        let ParsedExpectFnCall { head, members, .. } = jest_fn_call;
+
+        // only report `expect.hasAssertions` & `expect.assertions` member calls
+        if members.len() == 1
+            && members[0].is_name_unequal("assertions")
+            && members[0].is_name_unequal("hasAssertions")
+        {
+            if let Some(Expression::MemberExpression(_)) = head.parent {
+                return;
+            }
+        }
+
+        if is_correct_place_to_call_expect(node, ctx, &self.additional_test_block_functions)
+            .is_none()
+        {
+            ctx.diagnostic(NoStandaloneExpectDiagnostic(head.span));
+        }
+    }
+}
+
+fn is_correct_place_to_call_expect<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    additional_test_block_functions: &[String],
+) -> Option<()> {
+    let mut parent = ctx.nodes().parent_node(node.id())?;
+
+    // loop until find the closest function body
+    loop {
+        match parent.kind() {
+            AstKind::FunctionBody(_) => {
+                break;
+            }
+            _ => {
+                parent = ctx.nodes().parent_node(parent.id())?;
+            }
+        }
+    }
+
+    let node = parent;
+    let parent = ctx.nodes().parent_node(node.id())?;
+
+    match parent.kind() {
+        AstKind::Function(function) => {
+            // `function foo() { expect(1).toBe(1); }`
+            if function.is_function_declaration() {
+                return Some(());
+            }
+
+            if function.is_expression() {
+                let grandparent = ctx.nodes().parent_node(parent.id())?;
+
+                // `test('foo', function () { expect(1).toBe(1) })`
+                // `const foo = function() {expect(1).toBe(1)}`
+                return if is_var_declarator_or_test_block(
+                    grandparent,
+                    ctx,
+                    additional_test_block_functions,
+                ) {
+                    Some(())
+                } else {
+                    None
+                };
+            }
+        }
+        AstKind::ArrowExpression(_) => {
+            let grandparent = ctx.nodes().parent_node(parent.id())?;
+            // `test('foo', () => expect(1).toBe(1))`
+            // `const foo = () => expect(1).toBe(1)`
+            return if is_var_declarator_or_test_block(
+                grandparent,
+                ctx,
+                additional_test_block_functions,
+            ) {
+                Some(())
+            } else {
+                None
+            };
+        }
+        _ => {}
+    }
+
+    None
+}
+
+fn is_var_declarator_or_test_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    additional_test_block_functions: &[String],
+) -> bool {
+    match node.kind() {
+        AstKind::VariableDeclarator(_) => return true,
+        AstKind::CallExpression(call_expr) => {
+            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
+                if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test)) {
+                    return true;
+                }
+            }
+
+            let node_name = get_node_name(&call_expr.callee);
+            if additional_test_block_functions.iter().any(|fn_name| &node_name == fn_name) {
+                return true;
+            }
+        }
+        AstKind::Argument(_) => {
+            if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+                return is_var_declarator_or_test_block(
+                    parent,
+                    ctx,
+                    additional_test_block_functions,
+                );
+            }
+        }
+        _ => {}
+    }
+
+    false
+}
+
+#[allow(clippy::too_many_lines)]
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("expect.any(String)", None),
+        ("expect.extend({})", None),
+        ("describe('a test', () => { it('an it', () => {expect(1).toBe(1); }); });", None),
+        ("describe('a test', () => { it('an it', () => { const func = () => { expect(1).toBe(1); }; }); });", None),
+        ("describe('a test', () => { const func = () => { expect(1).toBe(1); }; });", None),
+        ("describe('a test', () => { function func() { expect(1).toBe(1); }; });", None),
+        ("describe('a test', () => { const func = function(){ expect(1).toBe(1); }; });", None),
+        ("it('an it', () => expect(1).toBe(1))", None),
+        ("const func = function(){ expect(1).toBe(1); };", None),
+        ("const func = () => expect(1).toBe(1);", None),
+        ("{}", None),
+        ("it.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
+        ("it.each([1, true])('trues', value => { expect(value).toBe(true); }); it('an it', () => { expect(1).toBe(1) });", None),
+        (
+            "
+                it.each`
+                    num   | value
+                    ${1} | ${true}
+                `('trues', ({ value }) => {
+                    expect(value).toBe(true);
+                });
+            ", 
+            None
+        ),
+        ("it.only('an only', value => { expect(value).toBe(true); });", None),
+        ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
+        ("describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });", None),
+        ("
+            describe('scenario', () => {
+                const t = Math.random() ? it.only : it;
+                t('testing', () => expect(true));
+            });
+        ", Some(serde_json::json!([{ "additionalTestBlockFunctions": ['t'] }]))),
+        (
+            r#"
+                each([
+                [1, 1, 2],
+                [1, 2, 3],
+                [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            "#, Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])))
+        ];
+
+    let fail = vec![
+        ("(() => {})('testing', () => expect(true).toBe(false))", None),
+        ("expect.hasAssertions()", None),
+        ("expect().hasAssertions()", None),
+        (
+            "
+                describe('scenario', () => {
+                    const t = Math.random() ? it.only : it;
+                    t('testing', () => expect(true).toBe(false));
+                });
+            ",
+            None
+        ),
+        (
+            "
+                describe('scenario', () => {
+                    const t = Math.random() ? it.only : it;
+                    t('testing', () => expect(true).toBe(false));
+                });
+            ",
+            None
+        ),
+        (
+            "
+                each([
+                    [1, 1, 2],
+                    [1, 2, 3],
+                    [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            ", None),
+        (
+            "
+                each([
+                    [1, 1, 2],
+                    [1, 2, 3],
+                    [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            ", 
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each"] }]))
+        ),
+        (
+            "
+                each([
+                    [1, 1, 2],
+                    [1, 2, 3],
+                    [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            ", 
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["test"] }]))
+        ),
+        ("describe('a test', () => { expect(1).toBe(1); });", None),
+        ("describe('a test', () => expect(1).toBe(1));", None),
+        ("describe('a test', () => { const func = () => { expect(1).toBe(1); }; expect(1).toBe(1); });", None),
+        ("describe('a test', () => {  it(() => { expect(1).toBe(1); }); expect(1).toBe(1); });", None),
+        ("expect(1).toBe(1);", None),
+        ("{expect(1).toBe(1)}", None),
+        ("it.each([1, true])('trues', value => { expect(value).toBe(true); }); expect(1).toBe(1);", None),
+        ("describe.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
+        (
+            "
+                import { expect as pleaseExpect } from '@jest/globals';
+                describe('a test', () => { pleaseExpect(1).toBe(1); });
+            ", 
+            None
+        ),
+        (
+            "
+                import { expect as pleaseExpect } from '@jest/globals';
+                beforeEach(() => pleaseExpect.hasAssertions());
+            ",
+            None
+        )
+    ];
+
+    Tester::new(NoStandaloneExpect::NAME, pass, fail).test_and_snapshot();
+}
