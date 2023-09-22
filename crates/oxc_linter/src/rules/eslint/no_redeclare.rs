@@ -153,7 +153,6 @@ fn test() {
         ("var a = 3; var a = 10; var a = 15;", None),
         ("var a; var a;", None),
         ("export var a; var a;", None),
-
         // `var` redeclaration in class static blocks. Redeclaration of functions is not allowed in class static blocks.
         ("class C { static { var a; var a; } }", None),
         // Todo: Fix me
