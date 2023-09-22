@@ -133,7 +133,8 @@ pub fn parse_jest_fn_call<'a>(
         let name = resolved.original.unwrap_or(resolved.local).as_str();
         let kind = JestFnKind::from(name);
         let mut members = Vec::new();
-        let iter = chain.into_iter().skip(1);
+        let mut iter = chain.into_iter();
+        let head = iter.next()?;
         let rest = iter;
 
         // every member node must have a member expression as their parent
@@ -143,7 +144,7 @@ pub fn parse_jest_fn_call<'a>(
         }
 
         if matches!(kind, JestFnKind::Expect) {
-            return parse_jest_expect_fn_call(call_expr, members, name);
+            return parse_jest_expect_fn_call(call_expr, members, name, head);
         }
 
         // Check every link in the chain except the last is a member expression
@@ -171,6 +172,7 @@ fn parse_jest_expect_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     members: Vec<KnownMemberExpressionProperty<'a>>,
     name: &'a str,
+    head: KnownMemberExpressionProperty<'a>,
 ) -> Option<ParsedJestFnCall<'a>> {
     // check if the `member` is being called, which means it is the matcher
     let has_matcher = match &call_expr.callee {
@@ -184,6 +186,7 @@ fn parse_jest_expect_fn_call<'a>(
 
     return Some(ParsedJestFnCall::ExpectFnCall(ParsedExpectFnCall {
         kind: JestFnKind::Expect,
+        head,
         members,
         name: Cow::Borrowed(name),
         args: &call_expr.arguments,
@@ -407,6 +410,7 @@ pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
+    pub head: KnownMemberExpressionProperty<'a>,
     pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
     // it save a group of modifier index from members
