@@ -62,7 +62,7 @@ impl Termination for CliRunResult {
                     if number_of_errors == 1 { "" } else { "s" }
                 );
 
-                let exit_code = u8::from(number_of_diagnostics > 0);
+                let exit_code = u8::from(number_of_errors > 0);
                 ExitCode::from(exit_code)
             }
             Self::TypeCheckResult { duration, number_of_diagnostics } => {
