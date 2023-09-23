@@ -35,6 +35,18 @@ struct UnusedLabels<'a> {
     labels: Vec<AstNodeId>,
 }
 
+#[derive(Debug, Clone)]
+pub struct VariableInfo {
+    pub name: Atom,
+    pub span: Span,
+    pub symbol_id: SymbolId,
+}
+
+#[derive(Debug)]
+pub struct RedeclareVariables {
+    pub variables: Vec<VariableInfo>,
+}
+
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
 
@@ -70,6 +82,8 @@ pub struct SemanticBuilder<'a> {
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
+
+    redeclare_variables: RedeclareVariables,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -101,6 +115,7 @@ impl<'a> SemanticBuilder<'a> {
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
+            redeclare_variables: RedeclareVariables { variables: vec![] },
         }
     }
 
@@ -155,6 +170,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
+            redeclare_variables: self.redeclare_variables.variables,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -170,6 +186,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
+            redeclare_variables: self.redeclare_variables.variables,
         }
     }
 
@@ -251,6 +268,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
+            self.add_redeclared_variables(VariableInfo { name: name.clone(), span, symbol_id });
             return symbol_id;
         }
 
@@ -321,7 +339,8 @@ impl<'a> SemanticBuilder<'a> {
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
-        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
+        let flag = self.symbols.get_flag(symbol_id);
+        if report_error && flag.intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(Redeclaration(name.clone(), symbol_span, span));
         }
@@ -413,6 +432,10 @@ impl<'a> SemanticBuilder<'a> {
                 self.symbols.resolved_references[symbol_id].push(reference_id);
             }
         }
+    }
+
+    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
+        self.redeclare_variables.variables.push(variable);
     }
 }
 
