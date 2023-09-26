@@ -106,6 +106,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_confusing_set_timeout;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
     pub mod no_export;
@@ -212,6 +213,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::expect_expect,
     jest::no_alias_methods,
     jest::no_conditional_expect,
+    jest::no_confusing_set_timeout,
     jest::no_done_callback,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
