@@ -65,7 +65,7 @@ pico-args                 = { version = "0.5.0" }
 proc-macro2               = { version = "1.0.67" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.33" }
-rayon                     = { version = "1.7.0" }
+rayon                     = { version = "1.8.0" }
 regex                     = { version = "1.9.5" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "0.2.2" }
@@ -87,7 +87,7 @@ stacker                   = { version = "0.1.15" }
 tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
 trustfall                 = { version = "0.6.1" }
-insta                     = { version = "1.31.0", features = ["glob"] }
+insta                     = { version = "1.32.0", features = ["glob"] }
 insta-cmd                 = { version = "0.3.0" }
 codspeed-criterion-compat = { version = "2.2.0", default-features = false }
 
