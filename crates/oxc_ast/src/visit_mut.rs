@@ -1108,7 +1108,7 @@ pub trait VisitMut<'a, 'b>: Sized {
             self.visit_ts_type(name);
         }
         if let Some(type_annotation) = &mut ty.type_annotation {
-            self.visit_ts_type(type_annotation);
+            self.visit_ts_type_annotation(type_annotation);
         }
     }
 

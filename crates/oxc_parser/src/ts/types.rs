@@ -656,14 +656,8 @@ impl<'a> Parser<'a> {
             _ => TSMappedTypeModifierOperator::None,
         };
 
-        let type_annotation = if self.eat(Kind::Colon) {
-            let type_annotation = self.parse_ts_type()?;
-            self.bump(Kind::Semicolon);
-            Some(type_annotation)
-        } else {
-            None
-        };
-
+        let type_annotation = self.parse_ts_type_annotation()?;
+        self.bump(Kind::Semicolon);
         self.expect(Kind::RCurly)?;
 
         Ok(self.ast.ts_mapped_type(
@@ -676,6 +670,9 @@ impl<'a> Parser<'a> {
         ))
     }
 
+    // pub(create) fn parse_ts_type_annotation() {
+    //
+    // }
     pub(crate) fn is_at_named_tuple_element(&mut self) -> bool {
         let offset = u8::from(self.at(Kind::Dot3));
         let has_colon = self.nth_at(offset + 1, Kind::Colon);
