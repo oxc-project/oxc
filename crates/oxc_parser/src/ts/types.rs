@@ -658,7 +658,6 @@ impl<'a> Parser<'a> {
 
         let type_annotation = if self.eat(Kind::Colon) {
             let type_annotation = self.parse_ts_type()?;
-
             self.bump(Kind::Semicolon);
             Some(type_annotation)
         } else {
