@@ -85,12 +85,12 @@ class Playground {
   parserOptions;
   formatterOptions;
   linterOptions;
-  // minifierOptions;
+  minifierOptions;
 
   editor;
   viewer;
   queryResultsViewer;
-  currentView = "ast"; // "ast" | "format" | "minify" | "ir"
+  currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
   viewerIsEditableConf;
@@ -114,7 +114,7 @@ class Playground {
     this.parserOptions = new OxcParserOptions();
     this.formatterOptions = new OxcFormatterOptions();
     this.linterOptions = new OxcLinterOptions();
-    // this.minifierOptions = new OxcMinifierOptions();
+    this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
 
     this.runOxc(this.editor.state.doc.toString());
@@ -425,6 +425,7 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
+      case "hir":
         return "json";
       case "query":
         return "graphql";
@@ -460,6 +461,7 @@ class Playground {
     document.getElementById("duration").style.display = "inline";
     document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
+    this.runOptions.hir = false;
     this.runOptions.minify = false;
 
     let text;
@@ -467,6 +469,11 @@ class Playground {
       case "ast":
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
+        break;
+      case "hir":
+        this.runOptions.hir = true;
+        this.run();
+        text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "ir":
         document.getElementById("ir-copy").style.display = "inline";
@@ -732,6 +739,9 @@ async function main() {
     playground.updateView("ast");
   };
 
+  document.getElementById("hir").onclick = () => {
+    playground.updateView("hir");
+  };
 
   document.getElementById("ir").onclick = () => {
     playground.updateView("ir");
@@ -784,11 +794,11 @@ async function main() {
     playground.updateEditorText(playground.editor, sourceText);
   };
 
-  // document.getElementById("mangle").onchange = function () {
-  //   const checked = document.getElementById("mangle-checkbox").checked;
-  //   playground.minifierOptions.mangle = checked;
-  //   playground.updateView("minify");
-  // };
+  document.getElementById("mangle").onchange = function () {
+    const checked = document.getElementById("mangle-checkbox").checked;
+    playground.minifierOptions.mangle = checked;
+    playground.updateView("minify");
+  };
 
   document.getElementById("type-check").onchange = function () {
     const checked = document.getElementById("type-check-checkbox").checked;
