@@ -670,9 +670,6 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    // pub(create) fn parse_ts_type_annotation() {
-    //
-    // }
     pub(crate) fn is_at_named_tuple_element(&mut self) -> bool {
         let offset = u8::from(self.at(Kind::Dot3));
         let has_colon = self.nth_at(offset + 1, Kind::Colon);
