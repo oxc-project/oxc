@@ -178,7 +178,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let r = self.resolve_impl(path, specifier);
         match &r {
             Ok(r) => tracing::debug!(path = ?path, specifier = specifier, ret = ?r.path),
-            Err(err) => tracing::error!(path = ?path, specifier = specifier, err = ?err),
+            Err(err) => tracing::debug!(path = ?path, specifier = specifier, err = ?err),
         };
         r
     }

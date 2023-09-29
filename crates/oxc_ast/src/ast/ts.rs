@@ -726,7 +726,7 @@ pub struct TSMappedType<'a> {
     pub span: Span,
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: TSMappedTypeModifierOperator,
     pub readonly: TSMappedTypeModifierOperator,
 }

@@ -90,7 +90,7 @@ class Playground {
   editor;
   viewer;
   queryResultsViewer;
-  currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
+  currentView = "ast"; // "ast" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
   viewerIsEditableConf;
@@ -425,8 +425,6 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
-      case "hir":
-        return "json";
       case "query":
         return "graphql";
       default:
@@ -461,7 +459,6 @@ class Playground {
     document.getElementById("duration").style.display = "inline";
     document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
-    this.runOptions.hir = false;
     this.runOptions.minify = false;
 
     let text;
@@ -469,11 +466,6 @@ class Playground {
       case "ast":
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
-        break;
-      case "hir":
-        this.runOptions.hir = true;
-        this.run();
-        text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "ir":
         document.getElementById("ir-copy").style.display = "inline";
@@ -737,10 +729,6 @@ async function main() {
 
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
-  };
-
-  document.getElementById("hir").onclick = () => {
-    playground.updateView("hir");
   };
 
   document.getElementById("ir").onclick = () => {

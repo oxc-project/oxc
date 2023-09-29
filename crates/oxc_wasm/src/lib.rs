@@ -39,7 +39,6 @@ pub struct Oxc {
 
     ast: JsValue,
     ir: JsValue,
-    hir: JsValue,
 
     formatted_text: String,
     minified_text: String,
@@ -86,12 +85,6 @@ impl Oxc {
     #[wasm_bindgen(getter)]
     pub fn ir(&self) -> JsValue {
         self.ir.clone()
-    }
-
-    /// Returns HIR in JSON
-    #[wasm_bindgen(getter)]
-    pub fn hir(&self) -> JsValue {
-        self.hir.clone()
     }
 
     #[wasm_bindgen(getter = formattedText)]
@@ -206,14 +199,8 @@ impl Oxc {
             self.formatted_text = printed;
         }
 
-        // if run_options.hir() && !run_options.minify() {
-        // let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
-        // self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
-        // }
-
         // if run_options.minify() {
         // let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
-        // let hir = allocator.alloc(ast_lower_ret.program);
         // let semantic = ast_lower_ret.semantic;
 
         // let mut printer = Printer::new(self.source_text.len(), PrinterOptions);

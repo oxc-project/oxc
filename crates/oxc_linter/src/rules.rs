@@ -64,6 +64,7 @@ mod eslint {
     pub mod no_new_symbol;
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
+    pub mod no_redeclare;
     pub mod no_return_await;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -112,6 +113,7 @@ mod jest {
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_mocks_import;
+    pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod valid_describe_callback;
 }
@@ -170,6 +172,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_symbol,
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
+    eslint::no_redeclare,
     eslint::no_return_await,
     eslint::no_self_assign,
     eslint::no_self_compare,
@@ -214,6 +217,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_jasmine_globals,
     jest::no_mocks_import,
     jest::no_export,
+    jest::no_standalone_expect,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,

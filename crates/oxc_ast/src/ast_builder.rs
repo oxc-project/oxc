@@ -1429,7 +1429,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
         name_type: Option<TSType<'a>>,
-        type_annotation: TSType<'a>,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a> {
