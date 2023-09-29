@@ -18,14 +18,14 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoThenableDiagnostic {
-    #[error("Do not add `then` to an object.")]
-    #[diagnostic(severity(warning), help("consider to remove `then`"))]
+    #[error("eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.")]
+    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
     Object(#[label] Span),
-    #[error("Do not export `then`.")]
-    #[diagnostic(severity(warning), help("consider to remove `then`"))]
+    #[error("eslint-plugin-unicorn(no-thenable): Do not export `then`.")]
+    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
     Export(#[label] Span),
-    #[error("Do not add `then` to a class.")]
-    #[diagnostic(severity(warning), help("consider to remove `then`"))]
+    #[error("eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.")]
+    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
     Class(#[label] Span),
 }
 
