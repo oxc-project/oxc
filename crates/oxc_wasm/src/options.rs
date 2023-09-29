@@ -7,7 +7,7 @@ pub struct OxcRunOptions {
     syntax: bool,
     lint: bool,
     format: bool,
-    hir: bool,
+    // hir: bool,
     minify: bool,
     type_check: bool,
 }
@@ -49,15 +49,15 @@ impl OxcRunOptions {
         self.format = yes;
     }
 
-    #[wasm_bindgen(getter)]
-    pub fn hir(self) -> bool {
-        self.hir
-    }
-
-    #[wasm_bindgen(setter)]
-    pub fn set_hir(&mut self, yes: bool) {
-        self.hir = yes;
-    }
+    // #[wasm_bindgen(getter)]
+    // pub fn hir(self) -> bool {
+    //     self.hir
+    // }
+    //
+    // #[wasm_bindgen(setter)]
+    // pub fn set_hir(&mut self, yes: bool) {
+    //     self.hir = yes;
+    // }
 
     #[wasm_bindgen(getter)]
     pub fn minify(self) -> bool {
