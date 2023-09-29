@@ -656,9 +656,7 @@ impl<'a> Parser<'a> {
             _ => TSMappedTypeModifierOperator::None,
         };
 
-        self.expect(Kind::Colon)?;
-        let type_annotation = self.parse_ts_type()?;
-
+        let type_annotation = self.parse_ts_type_annotation()?;
         self.bump(Kind::Semicolon);
         self.expect(Kind::RCurly)?;
 

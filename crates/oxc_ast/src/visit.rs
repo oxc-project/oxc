@@ -1447,7 +1447,9 @@ pub trait Visit<'a>: Sized {
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
         }
-        self.visit_ts_type(&ty.type_annotation);
+        if let Some(type_annotation) = &ty.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     fn visit_ts_function_type(&mut self, ty: &'a TSFunctionType<'a>) {
