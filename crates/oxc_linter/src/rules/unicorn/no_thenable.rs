@@ -63,20 +63,20 @@ impl Rule for NoThenable {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
                     if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                        if contains_then(&prop.key, ctx) {
-                            ctx.diagnostic(NoThenableDiagnostic::Object(prop.span));
+                        if let Some(span) = contains_then(&prop.key, ctx) {
+                            ctx.diagnostic(NoThenableDiagnostic::Object(span));
                         }
                     }
                 });
             }
             AstKind::PropertyDefinition(def) => {
-                if contains_then(&def.key, ctx) {
-                    ctx.diagnostic(NoThenableDiagnostic::Class(def.span));
+                if let Some(span) = contains_then(&def.key, ctx) {
+                    ctx.diagnostic(NoThenableDiagnostic::Class(span));
                 }
             }
             AstKind::MethodDefinition(def) => {
-                if contains_then(&def.key, ctx) {
-                    ctx.diagnostic(NoThenableDiagnostic::Class(def.span));
+                if let Some(span) = contains_then(&def.key, ctx) {
+                    ctx.diagnostic(NoThenableDiagnostic::Class(span));
                 }
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
@@ -272,11 +272,11 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
     }
 }
 
-fn contains_then(key: &PropertyKey, ctx: &LintContext) -> bool {
+fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
     match key {
-        PropertyKey::Identifier(ident) => ident.name == "then",
-        PropertyKey::Expression(expr) => check_expression(expr, ctx).is_some(),
-        PropertyKey::PrivateIdentifier(_) => false,
+        PropertyKey::Identifier(ident) if ident.name == "then" => Some(ident.span),
+        PropertyKey::Expression(expr) => check_expression(expr, ctx),
+        _ => None,
     }
 }
 

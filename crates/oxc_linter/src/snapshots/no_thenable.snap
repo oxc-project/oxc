@@ -5,84 +5,84 @@ expression: no_thenable
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {then: 1}
-   ·              ───────
+   ·              ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {["then"]: 1}
-   ·              ───────────
+   ·               ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {[`then`]: 1}
-   ·              ───────────
+   ·               ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";const foo = {[THEN]: 1}
-   ·                                  ─────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {then() {}}
-   ·              ─────────
+   ·              ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {["then"]() {}}
-   ·              ─────────────
+   ·               ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {[`then`]() {}}
-   ·              ─────────────
+   ·               ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";const foo = {[THEN]() {}}
-   ·                                  ───────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {get then() {}}
-   ·              ─────────────
+   ·                  ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {get ["then"]() {}}
-   ·              ─────────────────
+   ·                   ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const foo = {get [`then`]() {}}
-   ·              ─────────────────
+   ·                   ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";const foo = {get [THEN]() {}}
-   ·                                  ───────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
@@ -103,189 +103,189 @@ expression: no_thenable
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {["then"]}
-   ·            ────────
+   ·             ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {[`then`]}
-   ·            ────────
+   ·             ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {[THEN]}
-   ·                                ──────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {then() {}}
-   ·            ─────────
+   ·            ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {["then"]() {}}
-   ·            ─────────────
+   ·             ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {[`then`]() {}}
-   ·            ─────────────
+   ·             ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {[THEN]() {}}
-   ·                                ───────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static then}
-   ·            ───────────
+   ·                   ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static ["then"]}
-   ·            ───────────────
+   ·                    ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static [`then`]}
-   ·            ───────────────
+   ·                    ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {static [THEN]}
-   ·                                ─────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static then() {}}
-   ·            ────────────────
+   ·                   ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static ["then"]() {}}
-   ·            ────────────────────
+   ·                    ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static [`then`]() {}}
-   ·            ────────────────────
+   ·                    ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {static [THEN]() {}}
-   ·                                ──────────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {get then() {}}
-   ·            ─────────────
+   ·                ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {get ["then"]() {}}
-   ·            ─────────────────
+   ·                 ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {get [`then`]() {}}
-   ·            ─────────────────
+   ·                 ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {get [THEN]() {}}
-   ·                                ───────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {set then(v) {}}
-   ·            ──────────────
+   ·                ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {set ["then"](v) {}}
-   ·            ──────────────────
+   ·                 ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {set [`then`](v) {}}
-   ·            ──────────────────
+   ·                 ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {set [THEN](v) {}}
-   ·                                ────────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static get then() {}}
-   ·            ────────────────────
+   ·                       ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static get ["then"]() {}}
-   ·            ────────────────────────
+   ·                        ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ class Foo {static get [`then`]() {}}
-   ·            ────────────────────────
+   ·                        ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.
    ╭─[no_thenable.tsx:1:1]
  1 │ const THEN = "then";class Foo {static get [THEN]() {}}
-   ·                                ──────────────────────
+   ·              ──────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
 
