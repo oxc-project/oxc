@@ -85,7 +85,7 @@ pub struct LintOptions {
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many)]
+    #[bpaf(positional("PATH"), some("want at least one path"))]
     pub paths: Vec<PathBuf>,
 }
 
