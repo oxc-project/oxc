@@ -117,6 +117,7 @@ mod jest {
     pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod valid_describe_callback;
+    pub mod valid_expect;
 }
 
 mod unicorn {
@@ -210,6 +211,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_focused_tests,
     jest::valid_describe_callback,
+    jest::valid_expect,
     jest::no_commented_out_tests,
     jest::expect_expect,
     jest::no_alias_methods,

@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     jest_ast_util::{
         get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, ParsedExpectFnCall,
+        JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
     },
     rule::Rule,
     AstNode,
@@ -73,10 +73,9 @@ impl Rule for NoStandaloneExpect {
         if members.len() == 1
             && members[0].is_name_unequal("assertions")
             && members[0].is_name_unequal("hasAssertions")
+            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKind::Member))
         {
-            if let Some(Expression::MemberExpression(_)) = head.parent {
-                return;
-            }
+            return;
         }
 
         if is_correct_place_to_call_expect(node, ctx, &self.additional_test_block_functions)

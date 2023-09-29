@@ -96,23 +96,17 @@ pub fn parse_jest_fn_call<'a>(
     // If bailed out, we're not jest function
     let resolved = resolve_to_jest_fn(call_expr, ctx)?;
 
-    // only the top level Call expression callee's parent is None, it's not necessary to set it to None, but
-    // I didn't know how to pass Expression to it.
-    let chain = get_node_chain(callee, None);
-    let all_member_expr_except_last = chain
-        .iter()
-        .rev()
-        .skip(1)
-        .all(|member| matches!(member.parent, Some(Expression::MemberExpression(_))));
-
-    // Ensure that we're at the "top" of the function call chain otherwise when
-    // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
-    // the full chain is not a valid jest function call chain
-    if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
-        matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
-    }) {
-        return None;
-    }
+    let params = NodeChainParams {
+        expr: callee,
+        parent: None, // TODO: not really know how to convert type of call_expr to Expression, set to `None` temporarily.
+        parent_kind: Some(KnownMemberExpressionParentKind::Call),
+        grandparent_kind: None,
+    };
+    let chain = get_node_chain(&params);
+    let all_member_expr_except_last =
+        chain.iter().rev().skip(1).all(|member| {
+            matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
+        });
 
     if let Some(last) = chain.last() {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
@@ -144,7 +138,17 @@ pub fn parse_jest_fn_call<'a>(
         }
 
         if matches!(kind, JestFnKind::Expect) {
-            return parse_jest_expect_fn_call(call_expr, members, name, head);
+            let options = ExpectFnCallOptions { call_expr, members, name, head, node, ctx };
+            return parse_jest_expect_fn_call(options);
+        }
+
+        // Ensure that we're at the "top" of the function call chain otherwise when
+        // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
+        // the full chain is not a valid jest function call chain
+        if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
+            matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
+        }) {
+            return None;
         }
 
         // Check every link in the chain except the last is a member expression
@@ -168,21 +172,58 @@ pub fn parse_jest_fn_call<'a>(
     None
 }
 
-fn parse_jest_expect_fn_call<'a>(
+fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let mut node = node;
+
+    loop {
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else { return true };
+
+        match parent.kind() {
+            AstKind::CallExpression(_) => return false,
+            AstKind::MemberExpression(_) => node = parent,
+            _ => {
+                return true;
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ExpectError {
+    ModifierUnknown,
+    MatcherNotFound,
+    MatcherNotCalled,
+}
+
+struct ExpectFnCallOptions<'a, 'b> {
     call_expr: &'a CallExpression<'a>,
     members: Vec<KnownMemberExpressionProperty<'a>>,
     name: &'a str,
     head: KnownMemberExpressionProperty<'a>,
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+}
+
+fn parse_jest_expect_fn_call<'a>(
+    options: ExpectFnCallOptions<'a, '_>,
 ) -> Option<ParsedJestFnCall<'a>> {
-    // check if the `member` is being called, which means it is the matcher
-    let has_matcher = match &call_expr.callee {
-        Expression::MemberExpression(member_expr) => member_expr.static_property_name().is_some(),
-        _ => false,
+    let ExpectFnCallOptions { call_expr, members, name, head, node, ctx } = options;
+    let (modifiers, matcher, mut expect_error) = match find_modifiers_and_matcher(&members) {
+        Ok((modifier, matcher)) => (modifier, matcher, None),
+        Err(e) => (vec![], None, Some(e)),
     };
 
-    let Some((modifiers, matcher)) = find_modifiers_and_matcher(&members, has_matcher) else {
+    // In `expect(1).toBe(1)`, we don't want to report `expect(1)` as a expect function call.
+    if expect_error.is_some() && !is_top_most_call_expr(node, ctx) {
         return None;
-    };
+    }
+
+    if matches!(expect_error, Some(ExpectError::MatcherNotFound)) {
+        let parent = ctx.nodes().parent_node(node.id())?;
+        if matches!(parent.kind(), AstKind::MemberExpression(_)) {
+            expect_error = Some(ExpectError::MatcherNotCalled);
+        }
+    }
 
     return Some(ParsedJestFnCall::ExpectFnCall(ParsedExpectFnCall {
         kind: JestFnKind::Expect,
@@ -192,25 +233,25 @@ fn parse_jest_expect_fn_call<'a>(
         args: &call_expr.arguments,
         matcher_index: matcher,
         modifier_indices: modifiers,
+        expect_error,
     }));
 }
 
+type ModifiersAndMatcherIndex = (Vec<usize>, Option<usize>);
+
 fn find_modifiers_and_matcher(
     members: &[KnownMemberExpressionProperty],
-    has_matcher: bool,
-) -> Option<(Vec<usize>, Option<usize>)> {
-    let mut matcher = None;
+) -> Result<ModifiersAndMatcherIndex, ExpectError> {
     let mut modifiers: Vec<usize> = vec![];
 
-    // matcher is the end of the entire "expect" call chain
-    if has_matcher {
-        matcher = Some(members.len() - 1);
-    }
-
     for (index, member) in members.iter().enumerate() {
-        // the last member is the matcher, so we can stop here
-        if index == members.len() - 1 {
-            break;
+        // check if the member is being called, which means it is the matcher
+        // (and also the end of the entire "expect" call chain)
+        if matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
+            && matches!(member.grandparent_kind, Some(KnownMemberExpressionParentKind::Call))
+        {
+            let matcher = Some(index);
+            return Ok((modifiers, matcher));
         }
 
         // the first modifier can be any of the three modifiers
@@ -220,30 +261,27 @@ fn find_modifiers_and_matcher(
                 ModifierName::Resolves,
                 ModifierName::Rejects,
             ]) {
-                return None;
+                return Err(ExpectError::ModifierUnknown);
             }
         } else if modifiers.len() == 1 {
             // the second modifier can only be "not"
             if !member.is_name_in_modifiers(&[ModifierName::Not]) {
-                return None;
+                return Err(ExpectError::ModifierUnknown);
             }
             // and the first modifier has to be either "resolves" or "rejects"
             if !members[modifiers[0]]
                 .is_name_in_modifiers(&[ModifierName::Resolves, ModifierName::Rejects])
             {
-                return None;
+                return Err(ExpectError::ModifierUnknown);
             }
         } else {
-            // the third modifier can only be "resolves" or "rejects"
-            if !member.is_name_in_modifiers(&[ModifierName::Resolves, ModifierName::Rejects]) {
-                return None;
-            }
+            return Err(ExpectError::ModifierUnknown);
         }
 
         modifiers.push(index);
     }
 
-    Some((modifiers, matcher))
+    Err(ExpectError::MatcherNotFound)
 }
 
 #[derive(PartialEq, Eq)]
@@ -419,12 +457,16 @@ pub struct ParsedExpectFnCall<'a> {
     // In `expect(1).toBe(2)`, "toBe" will be matcher
     // it save the matcher index from members
     matcher_index: Option<usize>,
+    pub expect_error: Option<ExpectError>,
 }
 
 impl<'a> ParsedExpectFnCall<'a> {
     pub fn matcher(&self) -> Option<&KnownMemberExpressionProperty<'a>> {
         let matcher_index = self.matcher_index?;
         self.members.get(matcher_index)
+    }
+    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
     }
 }
 
@@ -440,9 +482,18 @@ pub enum JestFnFrom {
     Import,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum KnownMemberExpressionParentKind {
+    Member,
+    Call,
+    TaggedTemplate,
+}
+
 pub struct KnownMemberExpressionProperty<'a> {
     pub element: MemberExpressionElement<'a>,
     pub parent: Option<&'a Expression<'a>>,
+    pub parent_kind: Option<KnownMemberExpressionParentKind>,
+    pub grandparent_kind: Option<KnownMemberExpressionParentKind>,
     pub span: Span,
 }
 
@@ -547,46 +598,83 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
     chain
 }
 
-/// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
-fn get_node_chain<'a>(
+struct NodeChainParams<'a> {
     expr: &'a Expression<'a>,
     parent: Option<&'a Expression<'a>>,
-) -> Vec<KnownMemberExpressionProperty<'a>> {
+    parent_kind: Option<KnownMemberExpressionParentKind>,
+    grandparent_kind: Option<KnownMemberExpressionParentKind>,
+}
+
+/// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
+fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
+    let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
 
     match expr {
         Expression::MemberExpression(member_expr) => {
-            chain.extend(get_node_chain(member_expr.object(), Some(expr)));
+            let params = NodeChainParams {
+                expr: member_expr.object(),
+                parent: Some(expr),
+                parent_kind: Some(KnownMemberExpressionParentKind::Member),
+                grandparent_kind: *parent_kind,
+            };
+
+            chain.extend(get_node_chain(&params));
             if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
-                chain.push(KnownMemberExpressionProperty { element, parent: Some(expr), span });
+                chain.push(KnownMemberExpressionProperty {
+                    element,
+                    parent: Some(expr),
+                    parent_kind: Some(KnownMemberExpressionParentKind::Member),
+                    grandparent_kind: *parent_kind,
+                    span,
+                });
             }
         }
         Expression::Identifier(ident) => {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
-                parent,
+                parent: *parent,
+                parent_kind: *parent_kind,
+                grandparent_kind: *grandparent_kind,
                 span: ident.span,
             });
         }
         Expression::CallExpression(call_expr) => {
-            let sub_chain = get_node_chain(&call_expr.callee, Some(expr));
+            let params = NodeChainParams {
+                expr: &call_expr.callee,
+                parent: Some(expr),
+                parent_kind: Some(KnownMemberExpressionParentKind::Call),
+                grandparent_kind: *parent_kind,
+            };
+            let sub_chain = get_node_chain(&params);
             chain.extend(sub_chain);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
-            let sub_chain = get_node_chain(&tagged_expr.tag, Some(expr));
+            let params = NodeChainParams {
+                expr: &tagged_expr.tag,
+                parent: Some(expr),
+                parent_kind: Some(KnownMemberExpressionParentKind::TaggedTemplate),
+                grandparent_kind: *parent_kind,
+            };
+
+            let sub_chain = get_node_chain(&params);
             chain.extend(sub_chain);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
-                parent,
+                parent: *parent,
+                parent_kind: *parent_kind,
+                grandparent_kind: *grandparent_kind,
                 span: string_literal.span,
             });
         }
         Expression::TemplateLiteral(template_literal) if is_pure_string(template_literal) => {
             chain.push(KnownMemberExpressionProperty {
                 element: MemberExpressionElement::Expression(expr),
-                parent,
+                parent: *parent,
+                parent_kind: *parent_kind,
+                grandparent_kind: *grandparent_kind,
                 span: template_literal.span,
             });
         }
