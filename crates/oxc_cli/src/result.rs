@@ -28,7 +28,7 @@ impl Termination for CliRunResult {
         match self {
             Self::None => ExitCode::from(0),
             Self::InvalidOptions { message } => {
-                println!("{}", message);
+                println!("Invalid Options: {message}");
                 ExitCode::from(1)
             }
             Self::PathNotFound { paths } => {
