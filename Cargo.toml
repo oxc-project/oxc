@@ -58,7 +58,7 @@ lazy_static               = { version = "1.4.0" }
 miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
 mimalloc                  = { version = "0.1.39" }
 nodejs-resolver           = { version = "0.1.0" }
-num-bigint                = { version = "0.4.3" }
+num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.16" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
@@ -73,21 +73,21 @@ ropey                     = { version = "1.6.0" }
 serde                     = { version = "1.0.188" }
 serde_json                = { version = "1.0.107" }
 syn                       = { version = "=1" }
-thiserror                 = { version = "1.0.48" }
+thiserror                 = { version = "1.0.49" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
 ureq                      = { version = "2.7.1", default-features = false, features = ["tls"] }
 url                       = { version = "2.4.1" }
 walkdir                   = { version = "2.4.0" }
-indexmap                  = { version = "2.0.0" }
+indexmap                  = { version = "2.0.1" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }
 tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
 trustfall                 = { version = "0.6.1" }
-insta                     = { version = "1.32.0", features = ["glob"] }
+insta                     = { version = "1.33.0", features = ["glob"] }
 insta-cmd                 = { version = "0.3.0" }
 codspeed-criterion-compat = { version = "2.2.0", default-features = false }
 
