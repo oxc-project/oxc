@@ -18,7 +18,7 @@
       #left { display: flex; flex: 1; flex-direction: column; border-right: 1px solid #444 }
       #editor { flex: 1; overflow-y: auto; }
       #panel { height: 20%; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
-      #right { flex: 1; display:flex; flex-direction: column; max-width: 50vw; }
+      #right { flex: 1; display:flex; flex-direction: column; min-width: 0; }
       .controls { color: white; background: #24292e; padding: .8em 1em; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
       .controls label { font-size: 14px; }
       #viewer { flex: 1; overflow-y: auto; }
@@ -26,8 +26,10 @@
       .query-button-green { background-color: #32CD59; border-color: #15c541; }
       .query-button-red { background-color: #e74c3c; border-color: #c0392b; }
       #query-results-viewer { height: 50%; border-top: 1px solid #444; display: none; }
+      #divider { width: 4px; background: #444; }
+      #divider:hover { background: #666; cursor: col-resize; }
     </style>
-    <script type="module" crossorigin src="https://web-infra-dev.github.io/oxc/assets/playground-6894d3c2.js"></script>
+    <script type="module" crossorigin src="https://web-infra-dev.github.io/oxc/assets/playground-49432659.js"></script>
     <link rel="modulepreload" crossorigin href="https://web-infra-dev.github.io/oxc/assets/modulepreload-polyfill-3cfb730f.js">
   </head>
   <body>
@@ -47,14 +49,14 @@
         <div id="editor"></div>
         <div id="panel"></div>
       </div>
+      <div id="divider"></div>
       <div id="right">
         <div class="controls">
           <div>
             <button type="button" id="ast">AST</button>
-            <button type="button" id="hir">HIR</button>
             <button type="button" id="ir">IR</button>
             <!-- The formatter is WIP <button type="button" id="format">Format</button> -->
-            <button type="button" id="minify">Minify</button>
+            <!-- <button type="button" id="minify">Minify</button> -->
             <button type="button" id="query">Query Playground</button>
             <button type="button" id="query-args-or-outputs" class="query-button-red">Show Query Arguments</button>
             <button type="button" id="ir-copy">Copy IR to clipboard</button>
