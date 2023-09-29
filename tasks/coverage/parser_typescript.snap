@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
 Positive Passed: 5051/5063 (99.76%)
-Negative Passed: 996/4761 (20.92%)
+Negative Passed: 994/4761 (20.88%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -71,6 +71,7 @@ Expect Syntax Error: "compiler/anonymousClassExpression2.ts"
 Expect Syntax Error: "compiler/anyDeclare.ts"
 Expect Syntax Error: "compiler/anyIdenticalToItself.ts"
 Expect Syntax Error: "compiler/anyIndexedAccessArrayNoException.ts"
+Expect Syntax Error: "compiler/anyMappedTypesError.ts"
 Expect Syntax Error: "compiler/arguments.ts"
 Expect Syntax Error: "compiler/argumentsBindsToFunctionScopeArgumentList.ts"
 Expect Syntax Error: "compiler/argumentsObjectIterator01_ES5.ts"
@@ -1104,6 +1105,7 @@ Expect Syntax Error: "compiler/logicalNotExpression1.ts"
 Expect Syntax Error: "compiler/mappedTypeAsStringTemplate.ts"
 Expect Syntax Error: "compiler/mappedTypeGenericWithKnownKeys.ts"
 Expect Syntax Error: "compiler/mappedTypeIndexedAccess.ts"
+Expect Syntax Error: "compiler/mappedTypeNoTypeNoCrash.ts"
 Expect Syntax Error: "compiler/mappedTypeNotMistakenlyHomomorphic.ts"
 Expect Syntax Error: "compiler/mappedTypeRecursiveInference.ts"
 Expect Syntax Error: "compiler/mappedTypeUnionConstrainTupleTreatedAsArrayLike.ts"
@@ -4044,14 +4046,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │     export var foo = 1;
    ╰────
   help: Try insert a semicolon here
-
-  × Expected `:` but found `}`
-   ╭─[compiler/anyMappedTypesError.ts:2:1]
- 2 │ 
- 3 │ type Foo = {[P in "bar"]};
-   ·                         ┬
-   ·                         ╰── `:` expected
-   ╰────
 
   × 'arguments' is not allowed in class field initializer
    ╭─[compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:2:1]
@@ -7289,14 +7283,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                 ─
  10 │     a.length;
     ╰────
-
-  × Expected `)` but found `}`
-   ╭─[compiler/mappedTypeNoTypeNoCrash.ts:1:1]
- 1 │ // @declaration: true
- 2 │ type T0<T> = ({[K in keyof T]}) extends ({[key in K]: T[K]}) ? number : never;
-   ·                              ┬
-   ·                              ╰── `)` expected
-   ╰────
 
   × Identifier `baz` has already been declared
    ╭─[compiler/mismatchedClassConstructorVariable.ts:1:1]
