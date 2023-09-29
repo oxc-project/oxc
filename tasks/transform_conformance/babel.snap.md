@@ -1,4 +1,4 @@
-Passed: 86/1092
+Passed: 87/1106
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -530,6 +530,12 @@ Passed: 86/1092
 * Failed: amd/script/input.js
 * Failed: amd/to-string/input.js
 * Failed: amd/with-other-import-export/input.mjs
+* Failed: amd-createImportExpression-false/missing-plugin/input.mjs
+* Failed: amd-createImportExpression-false/module/input.mjs
+* Failed: amd-createImportExpression-false/no-interop/input.js
+* Failed: amd-createImportExpression-false/script/input.js
+* Failed: amd-createImportExpression-false/to-string/input.js
+* Failed: amd-createImportExpression-false/with-other-import-export/input.mjs
 * Failed: commonjs/missing-plugin/input.mjs
 * Failed: commonjs/module/input.mjs
 * Failed: commonjs/no-interop/input.js
@@ -537,12 +543,23 @@ Passed: 86/1092
 * Failed: commonjs/shadowed-require/input.js
 * Failed: commonjs/template-literal/input.js
 * Failed: commonjs/to-string/input.js
-* Failed: systemjs/missing-plugin-babel-7/input.mjs
+* Failed: commonjs-createImportExpression-false/missing-plugin/input.mjs
+* Failed: commonjs-createImportExpression-false/module/input.mjs
+* Failed: commonjs-createImportExpression-false/no-interop/input.js
+* Failed: commonjs-createImportExpression-false/script/input.js
+* Failed: commonjs-createImportExpression-false/shadowed-require/input.js
+* Failed: commonjs-createImportExpression-false/template-literal/input.js
+* Failed: commonjs-createImportExpression-false/to-string/input.js
 * Failed: systemjs/module/input.mjs
 * Failed: systemjs/script/input.js
 * Failed: systemjs/to-string/input.js
+* Failed: systemjs-createImportExpression-false/missing-plugin-babel-7/input.mjs
+* Failed: systemjs-createImportExpression-false/module/input.mjs
+* Failed: systemjs-createImportExpression-false/script/input.js
+* Failed: systemjs-createImportExpression-false/to-string/input.js
 * Passed: missing-module-transform/missing-module-transform/input.js
 * Passed: systemjs/missing-plugin/input.mjs
+* Passed: systemjs-createImportExpression-false/missing-plugin/input.mjs
 
 # babel-plugin-transform-export-namespace-from
 * Failed: export-namespace/namespace-default/input.mjs
@@ -587,9 +604,6 @@ Passed: 86/1092
 * Failed: general/in-method-key/input.js
 * Failed: general/in-method-key-loose/input.js
 * Failed: general/in-var-destructuring/input.js
-* Failed: general/lhs-assignment/input.js
-* Failed: general/lhs-assignment-read-and-update/input.js
-* Failed: general/lhs-update/input.js
 * Failed: general/member-access/input.js
 * Failed: general/memoize/input.js
 * Failed: general/memoize-loose/input.js

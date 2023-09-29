@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5159/5163 (99.92%)
-Positive Passed: 5151/5163 (99.77%)
-Negative Passed: 1022/4831 (21.16%)
+AST Parsed     : 5166/5170 (99.92%)
+Positive Passed: 5158/5170 (99.77%)
+Negative Passed: 1023/4841 (21.13%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -278,6 +278,9 @@ Expect Syntax Error: "compiler/classExtendsMultipleBaseClasses.ts"
 Expect Syntax Error: "compiler/classExtendsNull.ts"
 Expect Syntax Error: "compiler/classExtendsNull2.ts"
 Expect Syntax Error: "compiler/classExtendsNull3.ts"
+Expect Syntax Error: "compiler/classFieldSuperAccessibleJs1.ts"
+Expect Syntax Error: "compiler/classFieldSuperNotAccessible.ts"
+Expect Syntax Error: "compiler/classFieldSuperNotAccessibleJs.ts"
 Expect Syntax Error: "compiler/classImplementsClass2.ts"
 Expect Syntax Error: "compiler/classImplementsClass4.ts"
 Expect Syntax Error: "compiler/classImplementsClass5.ts"
@@ -1488,6 +1491,7 @@ Expect Syntax Error: "compiler/recursiveTypeParameterConstraintReferenceLacksTyp
 Expect Syntax Error: "compiler/recursiveTypeRelations.ts"
 Expect Syntax Error: "compiler/recursivelyExpandingUnionNoStackoverflow.ts"
 Expect Syntax Error: "compiler/redefineArray.ts"
+Expect Syntax Error: "compiler/relationComplexityError.ts"
 Expect Syntax Error: "compiler/relationalOperatorComparable.ts"
 Expect Syntax Error: "compiler/renamingDestructuredPropertyInFunctionType.ts"
 Expect Syntax Error: "compiler/renamingDestructuredPropertyInFunctionType3.ts"
@@ -2215,6 +2219,7 @@ Expect Syntax Error: "conformance/dynamicImport/importCallExpressionSpecifierNot
 Expect Syntax Error: "conformance/enums/enumConstantMemberWithString.ts"
 Expect Syntax Error: "conformance/enums/enumConstantMemberWithTemplateLiterals.ts"
 Expect Syntax Error: "conformance/enums/enumConstantMembers.ts"
+Expect Syntax Error: "conformance/enums/enumErrorOnConstantBindingWithInitializer.ts"
 Expect Syntax Error: "conformance/enums/enumMergingErrors.ts"
 Expect Syntax Error: "conformance/enums/enumShadowedInfinityNaN.ts"
 Expect Syntax Error: "conformance/es2017/useObjectValuesAndEntries2.ts"
@@ -2614,6 +2619,7 @@ Expect Syntax Error: "conformance/expressions/binaryOperators/comparisonOperator
 Expect Syntax Error: "conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithTypeParameter.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/inOperator/inOperatorWithInvalidOperands.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/inOperator/inOperatorWithValidOperands.ts"
+Expect Syntax Error: "conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidOperands.es2015.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidOperands.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorStrictMode.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorWithEveryType.ts"
@@ -2688,6 +2694,7 @@ Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsInIfStatement
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithAny.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOf.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts"
+Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts"
@@ -11400,8 +11407,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │     }
     ╰────
 
-  × Invalid Character `
-`
+  × Invalid Character ``
    ╭─[conformance/classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
@@ -15808,6 +15814,29 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/importAssertion/importAssertion5.ts:1:1]
  1 │ import * as f from "./first" assert {
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes4.ts:1:1]
+ 1 │ import * as f from "./first" with
+   ·                             ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes5.ts:1:1]
+ 1 │ import * as f from "./first" with {
+   ·                             ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes6.ts:2:1]
+ 2 │ // @filename: mod.mts
+ 3 │ import * as thing1 from "./mod.mjs" with { field: 0 };
+   ·                                    ─
+ 4 │ import * as thing2 from "./mod.mjs" with { field: `a` };
+   ╰────
+  help: Try insert a semicolon here
 
   × The keyword 'interface' is reserved
    ╭─[conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:2:1]

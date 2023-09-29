@@ -1,6 +1,6 @@
 parser_test262 Summary:
-AST Parsed     : 44947/44947 (100.00%)
-Positive Passed: 44947/44947 (100.00%)
+AST Parsed     : 44961/44961 (100.00%)
+Positive Passed: 44961/44961 (100.00%)
 Negative Passed: 3919/3947 (99.29%)
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"

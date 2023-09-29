@@ -1,7 +1,7 @@
 parser_babel Summary:
-AST Parsed     : 2077/2083 (99.71%)
-Positive Passed: 2074/2083 (99.57%)
-Negative Passed: 1342/1495 (89.77%)
+AST Parsed     : 2090/2096 (99.71%)
+Positive Passed: 2087/2096 (99.57%)
+Negative Passed: 1349/1499 (89.99%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -33,6 +33,7 @@ Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
+Expect Syntax Error: "es2020/dynamic-import-createImportExpression-false/invalid-trailing-comma/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
@@ -149,12 +150,8 @@ Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
 Expect Syntax Error: "typescript/types/read-only-4/input.ts"
-Expect Syntax Error: "typescript/types/tuple-labeled-after-unlabeled/input.ts"
-Expect Syntax Error: "typescript/types/tuple-labeled-before-unlabeled/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
-Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-after-labeled/input.ts"
-Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-before-labeled/input.ts"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
   × Unexpected new.target expression
    ╭─[core/opts/allowNewTargetOutsideFunction-true/input.js:1:1]
@@ -5310,6 +5307,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·        ───
    ╰────
 
+  × Unexpected token
+   ╭─[es2020/dynamic-import/invalid-lone-import/input.js:1:1]
+ 1 │ (import)
+   ·        ─
+   ╰────
+
   × Cannot use new with dynamic import
    ╭─[es2020/dynamic-import/invalid-new/input.js:1:1]
  1 │ new import("foo");
@@ -5325,6 +5328,45 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 
   × Unexpected token
    ╭─[es2020/dynamic-import/no-args/input.js:1:1]
+ 1 │ import();
+   ·        ─
+   ╰────
+
+  × The only valid meta property for import is import.meta
+   ╭─[es2020/dynamic-import-createImportExpression-false/direct-calls-only/input.js:1:1]
+ 1 │ function failsParse() {
+ 2 │   return import.then();
+   ·          ───────────
+ 3 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[es2020/dynamic-import-createImportExpression-false/invalid-arguments-spread/input.js:1:1]
+ 1 │ import(...[1])
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[es2020/dynamic-import-createImportExpression-false/invalid-lone-import/input.js:1:1]
+ 1 │ (import)
+   ·        ─
+   ╰────
+
+  × Cannot use new with dynamic import
+   ╭─[es2020/dynamic-import-createImportExpression-false/invalid-new/input.js:1:1]
+ 1 │ new import("foo");
+   ·     ─────────────
+   ╰────
+
+  × Expected `)` but found `string`
+   ╭─[es2020/dynamic-import-createImportExpression-false/multiple-args/input.js:1:1]
+ 1 │ import('hello', 'world', '!');
+   ·                          ─┬─
+   ·                           ╰── `)` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[es2020/dynamic-import-createImportExpression-false/no-args/input.js:1:1]
  1 │ import();
    ·        ─
    ╰────
