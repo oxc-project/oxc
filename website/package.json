@@ -10,28 +10,27 @@
     "wasm-build": "wasm-pack build --out-dir ../../npm/wasm-web --target web --release --scope oxc ../crates/oxc_wasm"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.9.1",
-    "@codemirror/commands": "^6.3.0",
-    "@codemirror/lang-javascript": "^6.2.1",
+    "@codemirror/autocomplete": "^6.9.0",
+    "@codemirror/commands": "^6.2.4",
+    "@codemirror/lang-javascript": "^6.1.8",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-rust": "^6.0.1",
-    "@codemirror/language": "^6.9.1",
-    "@codemirror/lint": "^6.4.2",
+    "@codemirror/language": "^6.7.0",
+    "@codemirror/lint": "^6.2.1",
     "@codemirror/state": "^6.2.1",
-    "@codemirror/view": "^6.21.0",
-    "@ddietr/codemirror-themes": "1.4.1",
+    "@codemirror/view": "^6.12.0",
+    "@ddietr/codemirror-themes": "^1.4.1",
     "@replit/codemirror-vscode-keymap": "^6.0.2",
     "cm6-graphql": "^0.0.9",
     "codemirror": "^6.0.1",
     "graphql": "^16.8.1",
-    "graphql-language-service": "5.1.7",
     "lodash.throttle": "^4.1.1",
     "lzma": "^2.3.2"
   },
   "devDependencies": {
-    "@oxc/wasm-web": "link:../npm/wasm-web",
-    "concurrently": "^8.2.1",
-    "vite": "^4.4.9",
+    "@oxc/wasm-web": "../npm/wasm-web",
+    "concurrently": "^8.1.0",
+    "vite": "^4.3.9",
     "wasm-pack": "^0.11.1"
   },
   "engines": {
