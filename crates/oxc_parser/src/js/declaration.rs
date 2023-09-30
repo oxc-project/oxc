@@ -111,6 +111,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.variable_declarator(self.end_span(span), kind, id, init, definite))
     }
 
+    /// Section 14.3.1 Let, Const, and Using Declarations
     /// UsingDeclaration[In, Yield, Await] :
     /// using [no LineTerminator here] [lookahead ≠ await] BindingList[?In, ?Yield, ?Await, ~Pattern] ;
     pub(crate) fn parse_using_declaration(

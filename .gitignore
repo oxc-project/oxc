@@ -20,6 +20,3 @@ crates/oxc_napi/*.node
 /*.jsx
 /*.ts
 /*.tsx
-
-# MacOS
-.DS_Store
