@@ -425,6 +425,7 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
+        return "json";
       case "query":
         return "graphql";
       default:
