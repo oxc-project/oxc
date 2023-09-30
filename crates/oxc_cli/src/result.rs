@@ -7,6 +7,7 @@ use std::{
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
+    InvalidOptions { message: String },
     PathNotFound { paths: Vec<PathBuf> },
     LintResult(LintResult),
     TypeCheckResult { duration: Duration, number_of_diagnostics: usize },
@@ -26,6 +27,10 @@ impl Termination for CliRunResult {
     fn report(self) -> ExitCode {
         match self {
             Self::None => ExitCode::from(0),
+            Self::InvalidOptions { message } => {
+                println!("Invalid Options: {message}");
+                ExitCode::from(1)
+            }
             Self::PathNotFound { paths } => {
                 println!("Path {paths:?} does not exist.");
                 ExitCode::from(1)

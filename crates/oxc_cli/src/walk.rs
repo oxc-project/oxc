@@ -52,6 +52,8 @@ impl ignore::ParallelVisitor for WalkCollector {
 impl Walk {
     /// # Panics
     pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
+        assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
+
         let paths = paths
             .iter()
             .map(|p| p.canonicalize().unwrap_or_else(|_| p.clone()))
