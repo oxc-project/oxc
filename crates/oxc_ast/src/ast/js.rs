@@ -30,6 +30,9 @@ impl<'a> Program<'a> {
     pub fn is_empty(&self) -> bool {
         self.body.is_empty() && self.directives.is_empty()
     }
+    pub fn is_strict(&self) -> bool {
+        self.directives.iter().any(|d| d.directive == "use strict")
+    }
 }
 
 /// Expression
@@ -1423,6 +1426,10 @@ impl<'a> Function<'a> {
 
     pub fn is_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
+    }
+
+    pub fn is_strict(&self) -> bool {
+        self.body.as_ref().is_some_and(|body| body.directives.iter().any(|directive| directive.directive == "use strict"))
     }
 }
 
