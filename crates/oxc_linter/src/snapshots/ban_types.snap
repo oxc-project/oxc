@@ -1,0 +1,250 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: ban_types
+---
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let a: String;
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Boolean` as a type. Use `boolean` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let b: Boolean;
+   ·        ───────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Number` as a type. Use `number` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let c: Number;
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Symbol` as a type. Use `symbol` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let d: Symbol;
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `BigInt` as a type. Use `bigint` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let e: BigInt;
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types 'The `Object` type actually means "any non-nullish value", so it is marginally better than `unknown`.',
+  │     - If you want a type meaning "any object", you probably want `object` instead.
+  │     - If you want a type meaning "any value", you probably want `unknown` instead.
+  │     - If you really want a type meaning "any non-nullish value", you probably want `NonNullable<unknown>` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let f: Object;
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+  │     It provides no type safety when calling the function, which can be a common source of bugs.
+  │     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+  │     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let g: Function;
+   ·        ────────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Prefer explicitly define the object shape. This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let h: {}; 
+   ·        ──
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let i: { b: String };
+   ·             ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let j: { c: String };
+   ·             ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ function foo(arg0: String) {}
+   ·                    ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ 'foo' as String;
+   ·          ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+  │     It provides no type safety when calling the function, which can be a common source of bugs.
+  │     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+  │     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ 'baz' as Function;
+   ·          ────────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Symbol` as a type. Use `symbol` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let d: Symbol = Symbol('foo');
+   ·        ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Boolean` as a type. Use `boolean` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let baz: [boolean, Boolean] = [true, false];
+   ·                    ───────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Boolean` as a type. Use `boolean` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let z = true as Boolean;
+   ·                 ───────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Prefer explicitly define the object shape. This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ type Props = {};
+   ·              ──
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+  │     It provides no type safety when calling the function, which can be a common source of bugs.
+  │     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+  │     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ let fn: Function = () => true
+   ·         ────────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const str: String = 'foo';
+   ·            ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Boolean` as a type. Use `boolean` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const bool: Boolean = true;
+   ·             ───────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Number` as a type. Use `number` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const num: Number = 1;
+   ·            ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Symbol` as a type. Use `symbol` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const symb: Symbol = Symbol('foo');
+   ·             ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `BigInt` as a type. Use `bigint` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const bigInt: BigInt = 1n;
+   ·               ──────
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Prefer explicitly define the object shape. This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ ╭─▶ const emptyObj: {
+ 2 │ │   
+ 3 │ ╰─▶         } = {foo: "bar"};
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Prefer explicitly define the object shape. This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ const emptyEmptyObj: {} = { };
+   ·                      ──
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `Boolean` as a type. Use `boolean` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ 
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+   ·                        ───────
+ 3 │           constructor(foo: String | Object | Function) {}
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:1:1]
+ 1 │ 
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+   ·                                             ──────
+ 3 │           constructor(foo: String | Object | Function) {}
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:2:1]
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+ 3 │           constructor(foo: String | Object | Function) {}
+   ·                            ──────
+ 4 │         
+   ╰────
+
+  × eslint@typescript-eslint/ban-types 'The `Object` type actually means "any non-nullish value", so it is marginally better than `unknown`.',
+  │     - If you want a type meaning "any object", you probably want `object` instead.
+  │     - If you want a type meaning "any value", you probably want `unknown` instead.
+  │     - If you really want a type meaning "any non-nullish value", you probably want `NonNullable<unknown>` instead.
+   ╭─[ban_types.tsx:2:1]
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+ 3 │           constructor(foo: String | Object | Function) {}
+   ·                                     ──────
+ 4 │         
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+  │     It provides no type safety when calling the function, which can be a common source of bugs.
+  │     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+  │     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.
+   ╭─[ban_types.tsx:2:1]
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+ 3 │           constructor(foo: String | Object | Function) {}
+   ·                                              ────────
+ 4 │         
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:5:1]
+ 5 │           arg(): Array<String> {
+ 6 │             const foo: String = 1 as String;
+   ·                        ──────
+ 7 │           }
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:5:1]
+ 5 │           arg(): Array<String> {
+ 6 │             const foo: String = 1 as String;
+   ·                                      ──────
+ 7 │           }
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Do not use `String` as a type. Use `string` instead.
+   ╭─[ban_types.tsx:4:1]
+ 4 │         
+ 5 │           arg(): Array<String> {
+   ·                        ──────
+ 6 │             const foo: String = 1 as String;
+   ╰────
+
+  × eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+  │     It provides no type safety when calling the function, which can be a common source of bugs.
+  │     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+  │     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.
+   ╭─[ban_types.tsx:2:1]
+ 2 │ type Props = {
+ 3 │   onClick: Function
+   ·            ────────
+ 4 │ }
+   ╰────
+
+
