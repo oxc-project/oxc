@@ -1429,7 +1429,9 @@ impl<'a> Function<'a> {
     }
 
     pub fn is_strict(&self) -> bool {
-        self.body.as_ref().is_some_and(|body| body.directives.iter().any(|directive| directive.directive == "use strict"))
+        self.body.as_ref().is_some_and(|body| {
+            body.directives.iter().any(|directive| directive.directive == "use strict")
+        })
     }
 }
 

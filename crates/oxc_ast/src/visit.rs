@@ -543,7 +543,7 @@ pub trait Visit<'a>: Sized {
             Expression::ChainExpression(expr) => self.visit_chain_expression(expr),
             Expression::ClassExpression(expr) => {
                 debug_assert_eq!(expr.r#type, ClassType::ClassExpression);
-                self.visit_class(expr)
+                self.visit_class(expr);
             }
             Expression::ConditionalExpression(expr) => self.visit_conditional_expression(expr),
             Expression::FunctionExpression(expr) => self.visit_function(expr, None),
@@ -1337,7 +1337,7 @@ pub trait Visit<'a>: Sized {
             Declaration::FunctionDeclaration(func) => self.visit_function(func, None),
             Declaration::ClassDeclaration(class) => {
                 debug_assert_eq!(class.r#type, ClassType::ClassDeclaration);
-                self.visit_class(class)
+                self.visit_class(class);
             }
             Declaration::TSModuleDeclaration(module) => {
                 self.visit_ts_module_declaration(module);
