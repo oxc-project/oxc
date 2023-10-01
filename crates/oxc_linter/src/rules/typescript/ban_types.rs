@@ -10,16 +10,16 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum BanTypesDiagnostic {
-    #[error("eslint@typescript-eslint/ban-types Do not use `{0}` as a type. Use `{1}` instead.")]
+    #[error("eslint@typescript-eslint/ban-types: Do not use `{0}` as a type. Use `{1}` instead.")]
     Type(String, String, #[label] Span),
-    #[error("eslint@typescript-eslint/ban-types Prefer explicitly define the object shape. This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type.")]
+    #[error("eslint@typescript-eslint/ban-types: Prefer explicitly define the object shape. This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type.")]
     TypeLiteral(#[label] Span),
-    #[error("eslint@typescript-eslint/ban-types Don't use `Function` as a type. The `Function` type accepts any function-like value.
+    #[error("eslint@typescript-eslint/ban-types: Don't use `Function` as a type. The `Function` type accepts any function-like value.
     It provides no type safety when calling the function, which can be a common source of bugs.
     It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
     If you are expecting the function to accept certain arguments, you should explicitly define the function shape.")]
     Function(#[label] Span),
-    #[error(r#"eslint@typescript-eslint/ban-types 'The `Object` type actually means "any non-nullish value", so it is marginally better than `unknown`.',
+    #[error(r#"eslint@typescript-eslint/ban-types: 'The `Object` type actually means "any non-nullish value", so it is marginally better than `unknown`.',
     - If you want a type meaning "any object", you probably want `object` instead.
     - If you want a type meaning "any value", you probably want `unknown` instead.
     - If you really want a type meaning "any non-nullish value", you probably want `NonNullable<unknown>` instead."#)]
