@@ -1,4 +1,5 @@
 mod util;
+
 use oxc_semantic::SymbolFlags;
 use util::SemanticTester;
 
