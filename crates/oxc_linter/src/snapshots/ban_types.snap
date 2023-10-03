@@ -3,31 +3,31 @@ source: crates/oxc_linter/src/tester.rs
 assertion_line: 105
 expression: ban_types
 ---
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let a: String;
    ·        ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Boolean` as a type. Use `boolean` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Boolean" as a type. Use "boolean" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let b: Boolean;
    ·        ───────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Number` as a type. Use `number` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Number" as a type. Use "number" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let c: Number;
    ·        ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Symbol` as a type. Use `symbol` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Symbol" as a type. Use "symbol" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let d: Symbol;
    ·        ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `BigInt` as a type. Use `bigint` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "BigInt" as a type. Use "bigint" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let e: BigInt;
    ·        ──────
@@ -57,25 +57,25 @@ expression: ban_types
    ·        ──
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let i: { b: String };
    ·             ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let j: { c: String };
    ·             ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ function foo(arg0: String) {}
    ·                    ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ 'foo' as String;
    ·          ──────
@@ -90,19 +90,19 @@ expression: ban_types
    ·          ────────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Symbol` as a type. Use `symbol` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Symbol" as a type. Use "symbol" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let d: Symbol = Symbol('foo');
    ·        ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Boolean` as a type. Use `boolean` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Boolean" as a type. Use "boolean" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let baz: [boolean, Boolean] = [true, false];
    ·                    ───────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Boolean` as a type. Use `boolean` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Boolean" as a type. Use "boolean" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ let z = true as Boolean;
    ·                 ───────
@@ -123,31 +123,31 @@ expression: ban_types
    ·         ────────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ const str: String = 'foo';
    ·            ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Boolean` as a type. Use `boolean` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Boolean" as a type. Use "boolean" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ const bool: Boolean = true;
    ·             ───────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Number` as a type. Use `number` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Number" as a type. Use "number" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ const num: Number = 1;
    ·            ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Symbol` as a type. Use `symbol` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Symbol" as a type. Use "symbol" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ const symb: Symbol = Symbol('foo');
    ·             ──────
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `BigInt` as a type. Use `bigint` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "BigInt" as a type. Use "bigint" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ const bigInt: BigInt = 1n;
    ·               ──────
@@ -166,7 +166,7 @@ expression: ban_types
    ·                      ──
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `Boolean` as a type. Use `boolean` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "Boolean" as a type. Use "boolean" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -174,7 +174,7 @@ expression: ban_types
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:1:1]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -182,7 +182,7 @@ expression: ban_types
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:2:1]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
@@ -212,7 +212,7 @@ expression: ban_types
  4 │         
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:5:1]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -220,7 +220,7 @@ expression: ban_types
  7 │           }
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:5:1]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -228,7 +228,7 @@ expression: ban_types
  7 │           }
    ╰────
 
-  × eslint@typescript-eslint/ban-types: Do not use `String` as a type. Use `string` instead.
+  × eslint@typescript-eslint/ban-types: Do not use "String" as a type. Use "string" instead.
    ╭─[ban_types.tsx:4:1]
  4 │         
  5 │           arg(): Array<String> {

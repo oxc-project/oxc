@@ -4,14 +4,16 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum BanTypesDiagnostic {
-    #[error("eslint@typescript-eslint/ban-types: Do not use `{0}` as a type. Use `{1}` instead.")]
-    Type(String, String, #[label] Span),
+    #[error(
+        "eslint@typescript-eslint/ban-types: Do not use {0:?} as a type. Use \"{1}\" instead."
+    )]
+    Type(Atom, String, #[label] Span),
     #[error("eslint@typescript-eslint/ban-types: Prefer explicitly define the object shape. This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type.")]
     TypeLiteral(#[label] Span),
     #[error("eslint@typescript-eslint/ban-types: Don't use `Function` as a type. The `Function` type accepts any function-like value.
@@ -60,7 +62,7 @@ impl Rule for BanTypes {
                 match name.as_str() {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(BanTypesDiagnostic::Type(
-                            name.to_string(),
+                            name.clone(),
                             name.to_lowercase(),
                             typ.span,
                         ));
