@@ -1070,6 +1070,7 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
+/// Using Declaration
 /// <https://github.com/tc39/proposal-explicit-resource-management>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
