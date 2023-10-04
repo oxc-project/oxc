@@ -160,7 +160,9 @@ impl Rule for ValidExpect {
         // In that case our target CallExpression node is the one with
         // the last `then` or `catch` statement.
         let target_node = get_parent_if_thenable(node, ctx);
-        let final_node = find_promise_call_expression_node(node, ctx).unwrap_or(target_node);
+        let Some(final_node) = find_promise_call_expression_node(node, ctx, target_node) else {
+            return;
+        };
         let Some(parent) = ctx.nodes().parent_node(final_node.id()) else { return };
         if !is_acceptable_return_node(parent, !self.always_await, ctx) {
             let span;
@@ -229,21 +231,37 @@ fn is_acceptable_return_node<'a, 'b>(
     }
 }
 
+type ParentAndIsFirstItem<'a, 'b> = (&'b AstNode<'a>, bool);
+
+// Returns the parent node of the given node, ignoring some nodes,
+// and return whether the first item if parent is an array.
 fn get_parent_with_ignore<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<ParentAndIsFirstItem<'a, 'b>> {
     let mut node = node;
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
-        // ignore some nodes
         if !matches!(
             parent.kind(),
             AstKind::Argument(_)
                 | AstKind::ExpressionArrayElement(_)
                 | AstKind::ArrayExpressionElement(_)
         ) {
-            return Some(parent);
+            // we don't want to report `Promise.all([invalidExpectCall_1, invalidExpectCall_2])` twice.
+            // so we need mark whether the node is the first item of an array.
+            // if it not the first item, we ignore it in `find_promise_call_expression_node`.
+            if let AstKind::ArrayExpressionElement(array_expr_element) = node.kind() {
+                if let AstKind::ArrayExpression(array_expr) = parent.kind() {
+                    return Some((
+                        parent,
+                        array_expr.elements.first()?.span() == array_expr_element.span(),
+                    ));
+                }
+            }
+
+            // if parent is not an array, we assume it's the first item
+            return Some((parent, true));
         }
 
         node = parent;
@@ -253,12 +271,17 @@ fn get_parent_with_ignore<'a, 'b>(
 fn find_promise_call_expression_node<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
+    default_node: &'b AstNode<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    let mut parent = get_parent_with_ignore(node, ctx)?;
+    let Some((mut parent, is_first_array_item)) = get_parent_with_ignore(node, ctx) else {
+        return Some(default_node);
+    };
     if !matches!(parent.kind(), AstKind::CallExpression(_) | AstKind::ArrayExpression(_)) {
-        return None;
+        return Some(default_node);
     }
-    let grandparent = get_parent_with_ignore(parent, ctx)?;
+    let Some((grandparent, _)) = get_parent_with_ignore(parent, ctx) else {
+        return Some(default_node);
+    };
     if matches!(parent.kind(), AstKind::ArrayExpression(_))
         && matches!(grandparent.kind(), AstKind::CallExpression(_))
     {
@@ -271,13 +294,16 @@ fn find_promise_call_expression_node<'a, 'b>(
                 if matches!(ident.name.as_str(), "Promise")
                     && ctx.nodes().parent_node(parent.id()).is_some()
                 {
-                    return Some(parent);
+                    if is_first_array_item {
+                        return Some(parent);
+                    }
+                    return None;
                 }
             }
         }
     }
 
-    None
+    Some(default_node)
 }
 
 fn get_parent_if_thenable<'a, 'b>(
@@ -331,6 +357,19 @@ impl Message {
             ),
         }
     }
+}
+
+#[ignore]
+#[test]
+fn test_1() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })", None)
+    ];
+    let fail = vec![];
+
+    Tester::new(ValidExpect::NAME, pass, fail).test_and_snapshot();
 }
 
 #[allow(clippy::too_many_lines)]

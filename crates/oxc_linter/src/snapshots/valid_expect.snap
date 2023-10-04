@@ -403,28 +403,6 @@ expression: valid_expect
   ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                     test('valid-expect', () => {
- 3 │ ╭─▶                 Promise.all([
- 4 │ │                       expect(Promise.resolve(2)).resolves.not.toBeDefined(),
- 5 │ │                       expect(Promise.resolve(3)).resolves.not.toBeDefined(),
- 6 │ ╰─▶                 ]);
- 7 │                     });
-   ╰────
-  help: "Add `await` to your assertion."
-
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
-   ╭─[valid_expect.tsx:2:1]
- 2 │                     test('valid-expect', () => {
- 3 │ ╭─▶                 Promise.x([
- 4 │ │                       expect(Promise.resolve(2)).resolves.not.toBeDefined(),
- 5 │ │                       expect(Promise.resolve(3)).resolves.not.toBeDefined(),
- 6 │ ╰─▶                 ]);
- 7 │                     });
-   ╰────
-  help: "Add `await` to your assertion."
-
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
-   ╭─[valid_expect.tsx:2:1]
- 2 │                     test('valid-expect', () => {
  3 │ ╭─▶                 Promise.x([
  4 │ │                       expect(Promise.resolve(2)).resolves.not.toBeDefined(),
  5 │ │                       expect(Promise.resolve(3)).resolves.not.toBeDefined(),
