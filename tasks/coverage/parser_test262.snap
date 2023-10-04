@@ -1,6 +1,6 @@
 parser_test262 Summary:
-AST Parsed     : 44219/44219 (100.00%)
-Positive Passed: 44219/44219 (100.00%)
+AST Parsed     : 44964/44964 (100.00%)
+Positive Passed: 44964/44964 (100.00%)
 Negative Passed: 3919/3947 (99.29%)
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"
@@ -13006,18 +13006,18 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ·        ─────────────────
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/dynamic-import/2nd-param-yield-ident-invalid.js:18:1]
- 18 │ 
- 19 │ import('./empty_FIXTURE.js', yield);
-    ·                              ─────
-    ╰────
-
   × Keywords cannot contain escape characters
     ╭─[language/expressions/dynamic-import/escape-sequence-import.js:34:1]
  34 │ 
  35 │ im\u0070ort('./empty_FIXTURE.js');
     · ───────────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/dynamic-import/import-assertions/2nd-param-yield-ident-invalid.js:18:1]
+ 18 │ 
+ 19 │ import('./empty_FIXTURE.js', yield);
+    ·                              ─────
     ╰────
 
   × Cannot assign to this expression
@@ -19355,45 +19355,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     · ─
     ╰────
 
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-export.js:20:1]
- 20 │ export * from './import-assertion-3_FIXTURE.js' assert {
- 21 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 22 │   test262_b: '',
- 23 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 24 │ };
-    ╰────
-
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-import-nobinding.js:21:1]
- 21 │ import './import-assertion-2_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
-    ╰────
-
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-import-withbinding.js:21:1]
- 21 │ import x from './import-assertion-1_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
-    ╰────
-
   × Duplicated export 'z'
     ╭─[language/module-code/early-dup-export-as-star-as.js:17:1]
  17 │ var x;
@@ -19772,6 +19733,42 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  21 │ export { Foo as "\uD83D" }
     ·                 ────────
  22 │ 
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-export.js:20:1]
+ 20 │ export * from './import-assertion-3_FIXTURE.js' assert {
+ 21 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 22 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 23 │ };
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-nobinding.js:21:1]
+ 21 │ import './import-assertion-2_FIXTURE.js' assert {
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 24 │ };
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-withbinding.js:21:1]
+ 21 │ import x from './import-assertion-1_FIXTURE.js' assert {
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 24 │ };
     ╰────
 
   × Private identifier '#x' is not allowed outside class bodies

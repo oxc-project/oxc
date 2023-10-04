@@ -209,6 +209,7 @@ impl<'a> Gen for ForStatement<'a> {
         if let Some(init) = self.init.as_ref() {
             let ctx = Context::empty();
             match init {
+                ForStatementInit::UsingDeclaration(decl) => decl.gen(p, ctx),
                 ForStatementInit::Expression(expr) => {
                     expr.gen_expr(p, Precedence::lowest(), ctx);
                 }
@@ -267,6 +268,7 @@ impl<'a> Gen for ForOfStatement<'a> {
 impl<'a> Gen for ForStatementLeft<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         match &self {
+            ForStatementLeft::UsingDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::VariableDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::AssignmentTarget(target) => target.gen(p, ctx),
         }
@@ -446,6 +448,9 @@ impl<'a> Gen for Declaration<'a> {
             Self::ClassDeclaration(declaration) => {
                 declaration.gen(p, ctx);
             }
+            Self::UsingDeclaration(declaration) => {
+                declaration.gen(p, ctx);
+            }
             Self::TSEnumDeclaration(_) => {}
         }
     }
@@ -460,6 +465,19 @@ impl<'a> Gen for VariableDeclaration<'a> {
         });
         p.print(b' ');
         p.print_list(&self.declarations, ctx);
+    }
+}
+impl<'a> Gen for UsingDeclaration<'a> {
+    fn gen(&self, p: &mut Printer, ctx: Context) {
+        if self.is_await {
+            p.print_str(b"await");
+            p.print(b' ');
+        }
+        p.print_str(b"using");
+        p.print(b' ');
+
+        p.print_list(&self.declarations, ctx);
+        p.print_semicolon();
     }
 }
 

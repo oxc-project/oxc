@@ -95,6 +95,14 @@ impl<'a> BoundNames for VariableDeclaration<'a> {
     }
 }
 
+impl<'a> BoundNames for UsingDeclaration<'a> {
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        for declarator in &self.declarations {
+            declarator.id.bound_names(f);
+        }
+    }
+}
+
 impl<'a> BoundName for Function<'a> {
     fn bound_name<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         if let Some(ident) = &self.id {

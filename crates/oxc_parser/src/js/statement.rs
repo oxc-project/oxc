@@ -122,6 +122,12 @@ impl<'a> Parser<'a> {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
+            Kind::Await
+                if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
+            {
+                self.parse_using()
+            }
+            Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
@@ -253,20 +259,13 @@ impl<'a> Parser<'a> {
             || self.at(Kind::Var)
             || (self.at(Kind::Let) && self.peek_kind().is_after_let())
         {
-            let start_span = self.start_span();
-            let init_declaration = self.without_context(Context::In, |p| {
-                let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
-                p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
-            })?;
+            return self.parse_variable_declaration_for_statement(span, r#await);
+        }
 
-            // for (.. a in) for (.. a of)
-            if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-                let init = ForStatementLeft::VariableDeclaration(init_declaration);
-                return self.parse_for_in_or_of_loop(span, r#await, init);
-            }
-
-            let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
-            return self.parse_for_loop(span, init, r#await);
+        if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
+            || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
+        {
+            return self.parse_using_declaration_for_statement(span, r#await);
         }
 
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
@@ -295,6 +294,55 @@ impl<'a> Parser<'a> {
         }
 
         self.parse_for_loop(span, Some(ForStatementInit::Expression(init_expression)), r#await)
+    }
+
+    fn parse_variable_declaration_for_statement(
+        &mut self,
+        span: Span,
+        r#await: bool,
+    ) -> Result<Statement<'a>> {
+        let start_span = self.start_span();
+        let init_declaration = self.without_context(Context::In, |p| {
+            let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
+            p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
+        })?;
+
+        // for (.. a in) for (.. a of)
+        if matches!(self.cur_kind(), Kind::In | Kind::Of) {
+            let init = ForStatementLeft::VariableDeclaration(init_declaration);
+            return self.parse_for_in_or_of_loop(span, r#await, init);
+        }
+
+        let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
+        self.parse_for_loop(span, init, r#await)
+    }
+
+    fn parse_using_declaration_for_statement(
+        &mut self,
+        span: Span,
+        r#await: bool,
+    ) -> Result<Statement<'a>> {
+        let using_decl = self.parse_using_declaration(StatementContext::For)?;
+
+        if matches!(self.cur_kind(), Kind::In) {
+            if using_decl.is_await {
+                self.error(diagnostics::AwaitUsingDeclarationNotAllowedInForInStatement(
+                    using_decl.span,
+                ));
+            } else {
+                self.error(diagnostics::UsingDeclarationNotAllowedInForInStatement(
+                    using_decl.span,
+                ));
+            }
+        }
+
+        if matches!(self.cur_kind(), Kind::In | Kind::Of) {
+            let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
+            return self.parse_for_in_or_of_loop(span, r#await, init);
+        }
+
+        let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
+        self.parse_for_loop(span, init, r#await)
     }
 
     fn parse_for_loop(

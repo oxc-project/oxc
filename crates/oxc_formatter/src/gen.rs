@@ -161,6 +161,7 @@ impl<'a> Gen for ForStatement<'a> {
             match init {
                 ForStatementInit::Expression(expr) => expr.gen(p),
                 ForStatementInit::VariableDeclaration(var) => var.gen(p),
+                ForStatementInit::UsingDeclaration(decl) => decl.gen(p),
             }
         }
 
@@ -225,6 +226,7 @@ impl<'a> Gen for ForStatementLeft<'a> {
         match &self {
             ForStatementLeft::VariableDeclaration(var) => var.gen(p),
             ForStatementLeft::AssignmentTarget(target) => target.gen(p),
+            ForStatementLeft::UsingDeclaration(decl) => decl.gen(p),
         }
     }
 }
@@ -447,6 +449,10 @@ impl<'a> Gen for Declaration<'a> {
                 declaration.gen(p);
                 p.print_newline();
             }
+            Self::UsingDeclaration(declaration) => {
+                declaration.gen(p);
+                p.print_newline();
+            }
             Self::TSTypeAliasDeclaration(_)
             | Self::TSInterfaceDeclaration(_)
             | Self::TSEnumDeclaration(_)
@@ -465,6 +471,18 @@ impl<'a> Gen for VariableDeclaration<'a> {
         });
         p.print_space();
         p.print_list(&self.declarations);
+    }
+}
+impl<'a> Gen for UsingDeclaration<'a> {
+    fn gen(&self, p: &mut Formatter) {
+        if self.is_await {
+            p.print_str(b"await");
+            p.print_space();
+        }
+        p.print_str(b"using");
+        p.print_space();
+        p.print_list(&self.declarations);
+        p.print_semicolon();
     }
 }
 
