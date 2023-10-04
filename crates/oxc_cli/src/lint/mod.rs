@@ -33,6 +33,10 @@ impl Runner for LintRunner {
             misc_options,
         } = self.options;
 
+        if paths.is_empty() {
+            return CliRunResult::InvalidOptions { message: "No paths provided.".to_string() };
+        }
+
         let now = std::time::Instant::now();
 
         let paths = Walk::new(&paths, &ignore_options).paths();

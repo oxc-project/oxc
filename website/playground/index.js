@@ -425,6 +425,7 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
+        return "json";
       case "query":
         return "graphql";
       default:
@@ -727,6 +728,8 @@ async function main() {
 
   document.getElementById("loading").remove();
 
+  addHorizontalResize()
+
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
   };
@@ -743,9 +746,9 @@ async function main() {
   // playground.updateView("format");
   // };
 
-  document.getElementById("minify").onclick = function () {
-    playground.updateView("minify");
-  };
+  // document.getElementById("minify").onclick = function () {
+  //   playground.updateView("minify");
+  // };
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
@@ -793,6 +796,40 @@ async function main() {
     playground.runOptions.type_check = checked;
     playground.updateView();
   };
+}
+
+// port from https://github.com/fkling/astexplorer/blob/541552fe45885c225fbb67d54dc4c6d6107b65b5/website/src/components/SplitPane.js#L26-L55 
+function addHorizontalResize() {
+  const container = document.getElementById("container");
+  const left = document.getElementById("left");
+  const divider = document.getElementById("divider");
+
+  divider.addEventListener("mousedown", function (event) {
+    // This is needed to prevent text selection in Safari
+    event.preventDefault();
+    const offset = container.offsetLeft;
+    const size = container.offsetWidth;
+    const setStyle = (position) => {
+      left.style.minWidth = left.style.maxWidth = position + '%'
+    }
+    globalThis.document.body.style.cursor = 'col-resize';
+
+    const moveHandler = event => {
+      event.preventDefault();
+      const newPosition = ( event.pageX - offset) / size * 100;
+      // Using 99% as the max value prevents the divider from disappearing
+      const position = Math.min(Math.max(0, newPosition), 99);
+      setStyle(position)
+    };
+    let upHandler = () => {
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+      globalThis.document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  })
 }
 
 main();

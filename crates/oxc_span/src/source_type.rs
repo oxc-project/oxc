@@ -110,6 +110,8 @@ impl SourceType {
     pub fn with_module(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Module;
+        } else {
+            self.module_kind = ModuleKind::Script;
         }
         self
     }
