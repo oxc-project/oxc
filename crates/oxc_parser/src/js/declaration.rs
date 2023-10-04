@@ -45,7 +45,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
         let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
 
-        self.expect(Kind::Semicolon)?;
+        self.asi()?;
 
         Ok(Statement::Declaration(Declaration::UsingDeclaration(self.ast.alloc(using_decl))))
     }
