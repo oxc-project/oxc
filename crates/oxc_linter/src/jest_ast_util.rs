@@ -213,7 +213,8 @@ fn parse_jest_expect_fn_call<'a>(
         Err(e) => (vec![], None, Some(e)),
     };
 
-    // In `expect(1).toBe(1)`, we don't want to report `expect(1)` as a expect function call.
+    // if the `expect` call chain is not valid, only report on the topmost node
+    // since all members in the chain are likely to get flagged for some reason
     if expect_error.is_some() && !is_top_most_call_expr(node, ctx) {
         return None;
     }
