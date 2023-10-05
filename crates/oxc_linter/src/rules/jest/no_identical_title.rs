@@ -80,13 +80,15 @@ impl Rule for NoIdenticalTitle {
         for kind_and_span in title_to_span_mapping.values() {
             let mut kind_and_spans = kind_and_span
                 .iter()
-                .filter_map(|(kind, call_expr)| {
-                    let Some(parent) = span_to_parent_mapping.get(call_expr) else { return None };
-                    Some((*call_expr, *kind, *parent))
+                .filter_map(|(kind, span)| {
+                    let Some(parent) = span_to_parent_mapping.get(span) else { return None };
+                    Some((*span, *kind, *parent))
                 })
                 .collect::<Vec<(Span, JestFnKind, AstNodeId)>>();
+            // After being sorted by parent_id, the span with the same parent will be placed nearby.
             kind_and_spans.sort_by(|a, b| a.2.cmp(&b.2));
 
+            // Skip the first element, for `describe('foo'); describe('foo');`, we only need to check the second one.
             for i in 1..kind_and_spans.len() {
                 let (span, kind, parent_id) = kind_and_spans[i];
                 let (_, prev_kind, prev_parent) = kind_and_spans[i - 1];
