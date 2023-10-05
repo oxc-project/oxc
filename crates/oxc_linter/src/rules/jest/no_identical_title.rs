@@ -40,7 +40,6 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    ///
     ///  describe('baz', () => {
     ///    //...
     ///  });
@@ -187,11 +186,11 @@ fn test() {
     let pass = vec![
         ("it(); it();", None),
         ("describe(); describe();", None),
-        ("describe(\"foo\", () => {}); it(\"foo\", () => {});", None),
+        ("describe('foo', () => {}); it('foo', () => {});", None),
         (
             "
-              describe(\"foo\", () => {
-                it(\"works\", () => {});
+              describe('foo', () => {
+                it('works', () => {});
               });
             ",
             None,
@@ -303,8 +302,8 @@ fn test() {
             ",
             None,
         ),
-        ("test(\"number\" + n, function() {});", None),
-        ("test(\"number\" + n, function() {}); test(\"number\" + n, function() {});", None),
+        ("test('number' + n, function() {});", None),
+        ("test('number' + n, function() {}); test('number' + n, function() {});", None),
         // ("it(`${n}`, function() {});", None),
         // ("it(`${n}`, function() {}); it(`${n}`, function() {});", None),
         (
@@ -328,7 +327,7 @@ fn test() {
         ),
         (
             "
-              const test = { content: () => \"foo\" };
+              const test = { content: () => 'foo' };
               test.content(`something that is not from jest`, () => {});
               test.content(`something that is not from jest`, () => {});
             ",
@@ -336,7 +335,7 @@ fn test() {
         ),
         (
             "
-              const describe = { content: () => \"foo\" };
+              const describe = { content: () => 'foo' };
               describe.content(`something that is not from jest`, () => {});
               describe.content(`something that is not from jest`, () => {});
             ",
@@ -470,7 +469,7 @@ fn test() {
         ),
         (
             "
-              describe(\"foo\", () => {
+              describe('foo', () => {
                 it(`catches backticks with the same title`, () => {});
                 it(`catches backticks with the same title`, () => {});
               });
