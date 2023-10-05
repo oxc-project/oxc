@@ -111,6 +111,7 @@ mod jest {
     pub mod no_done_callback;
     pub mod no_export;
     pub mod no_focused_tests;
+    pub mod no_identical_title;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_mocks_import;
@@ -222,6 +223,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_mocks_import,
     jest::no_export,
     jest::no_standalone_expect,
+    jest::no_identical_title,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
