@@ -54,9 +54,6 @@ declare_oxc_lint!(
     restriction
 );
 
-const DESCRIBE_NAMES: [&str; 3] = ["describe", "fdescribe", "xdescribe"];
-const TEST_NAMES: [&str; 5] = ["it", "fit", "xit", "test", "xtest"];
-
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {
         // TODO: support detect import from "@jest/globals"
@@ -103,6 +100,9 @@ impl Rule for NoIdenticalTitle {
         }
     }
 }
+
+const DESCRIBE_NAMES: [&str; 3] = ["describe", "fdescribe", "xdescribe"];
+const TEST_NAMES: [&str; 5] = ["it", "fit", "xit", "test", "xtest"];
 
 fn process_reference<'a>(
     reference_id: ReferenceId,
