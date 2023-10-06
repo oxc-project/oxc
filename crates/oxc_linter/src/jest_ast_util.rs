@@ -541,7 +541,7 @@ impl<'a> MemberExpressionElement<'a> {
     pub fn from_member_expr(
         member_expr: &'a MemberExpression<'a>,
     ) -> Option<(Span, MemberExpressionElement<'a>)> {
-        let Some((span, _)) = member_expr.static_property_info() else { return None };
+        let (span, _) = member_expr.static_property_info()?;
         match member_expr {
             MemberExpression::ComputedMemberExpression(expr) => {
                 Some((span, Self::Expression(&expr.expression)))

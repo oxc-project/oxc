@@ -111,7 +111,7 @@ impl LintOptions {
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
-        rules.sort_unstable_by_key(|rule| rule.name());
+        rules.sort_unstable_by_key(RuleEnum::name);
         rules
     }
 }
