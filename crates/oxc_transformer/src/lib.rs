@@ -102,5 +102,11 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
 
     fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
+
+        self.visit_property_key(&mut prop.key);
+        self.visit_expression(&mut prop.value);
+        if let Some(init) = &mut prop.init {
+            self.visit_expression(init);
+        }
     }
 }
