@@ -29,13 +29,22 @@ impl<'a> ShorthandProperties<'a> {
             return;
         }
 
-        if !obj_prop.key.is_specific_id("__proto__")
-            && !obj_prop.key.is_specific_string_literal("__proto__")
-        {
+        let is_proto_id = obj_prop.key.is_specific_id("__proto__");
+        let is_proto_string = obj_prop.key.is_specific_string_literal("__proto__");
+
+        if !is_proto_id && !is_proto_string {
             return;
         }
 
         obj_prop.computed = true;
+
+        if is_proto_string {
+            // input:
+            // "__proto__"() {}
+            // output:
+            // ["__proto__"]: function() {}
+            return;
+        }
 
         let proto = StringLiteral { span: obj_prop.key.span(), value: "__proto__".into() };
         let expr = self.ast.literal_string_expression(proto);
