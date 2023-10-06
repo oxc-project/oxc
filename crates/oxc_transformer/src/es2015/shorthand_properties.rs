@@ -25,7 +25,13 @@ impl<'a> ShorthandProperties<'a> {
         obj_prop.shorthand = false;
         obj_prop.method = false;
 
-        if !obj_prop.key.is_specific_id("__proto__") || obj_prop.computed {
+        if obj_prop.computed {
+            return;
+        }
+
+        if !obj_prop.key.is_specific_id("__proto__")
+            && !obj_prop.key.is_specific_string_literal("__proto__")
+        {
             return;
         }
 
