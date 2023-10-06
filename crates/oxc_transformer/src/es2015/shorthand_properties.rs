@@ -18,17 +18,17 @@ impl<'a> ShorthandProperties<'a> {
     }
 
     pub fn transform_object_property<'b>(&mut self, obj_prop: &'b mut ObjectProperty<'a>) {
-        if !obj_prop.shorthand {
+        if !obj_prop.shorthand && !obj_prop.method {
             return;
         }
 
         obj_prop.shorthand = false;
+        obj_prop.method = false;
 
-        if !obj_prop.key.is_specific_id("__proto__") {
+        if !obj_prop.key.is_specific_id("__proto__") || obj_prop.computed {
             return;
         }
 
-        debug_assert!(!obj_prop.computed, "shorthand and computed cannot be true at the same time");
         obj_prop.computed = true;
 
         let proto = StringLiteral { span: obj_prop.key.span(), value: "__proto__".into() };
