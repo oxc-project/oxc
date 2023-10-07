@@ -1593,6 +1593,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_minifier"
+version = "0.2.0"
+dependencies = [
+ "bitflags 2.4.0",
+ "insta",
+ "itertools 0.11.0",
+ "jemallocator",
+ "mimalloc",
+ "num-bigint",
+ "num-traits",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_index",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "pico-args",
+ "walkdir",
+]
+
+[[package]]
 name = "oxc_napi"
 version = "0.0.0"
 dependencies = [

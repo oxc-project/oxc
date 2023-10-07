@@ -65,6 +65,32 @@ impl<'a> NumberLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         Self { span, value, raw, base }
     }
+
+    /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
+    /// <https://262.ecma-international.org/5.1/#sec-9.5>
+    #[allow(clippy::cast_possible_truncation)] // for `as i32`
+    pub fn ecmascript_to_int32(num: f64) -> i32 {
+        // Fast path for most common case. Also covers -0.0
+        let int32_value = num as i32;
+        if (f64::from(int32_value) - num).abs() < f64::EPSILON {
+            return int32_value;
+        }
+
+        // NaN, Infinity if not included in our NumberLiteral, so we just skip step 2.
+
+        // step 3
+        let pos_int = num.signum() * num.abs().floor();
+
+        // step 4
+        let int32bit = pos_int % 2f64.powi(32);
+
+        // step5
+        if int32bit >= 2f64.powi(31) {
+            (int32bit - 2f64.powi(32)) as i32
+        } else {
+            int32bit as i32
+        }
+    }
 }
 
 impl<'a> Hash for NumberLiteral<'a> {

@@ -20,14 +20,13 @@ oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_parser    = { workspace = true }
 oxc_ast       = { workspace = true }
-oxc_ast_lower = { workspace = true }
-oxc_hir       = { workspace = true }
 oxc_semantic  = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
 bitflags      = { workspace = true }
 num-bigint    = { workspace = true }
 itertools     = { workspace = true }
+num-traits    = { workspace = true }
 
 [dev-dependencies]
 insta     = { workspace = true }

@@ -6,18 +6,18 @@ use std::{cmp::Ordering, mem, ops::Not};
 
 use num_bigint::BigInt;
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::hir::*;
-use oxc_hir::hir_util::{
-    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
-    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
-    MayHaveSideEffects, NumberValue,
-};
+use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
 
+use super::ast_util::{
+    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
+    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
+    MayHaveSideEffects, NumberValue,
+};
 use super::Compressor;
 
 /// Tri state
@@ -260,26 +260,26 @@ impl<'a> Compressor<'a> {
             (Ty::Str, _) | (_, Ty::Str) => {
                 // no need to use get_side_effect_free_string_value b/c we checked for side effects
                 // at the beginning
-                let Some(left_string) = get_string_value(left) else { return None };
-                let Some(right_string) = get_string_value(right) else { return None };
+                let left_string = get_string_value(left)?;
+                let right_string = get_string_value(right)?;
                 // let value = left_string.to_owned().
                 let value = left_string + right_string;
-                let string_literal = self.hir.string_literal(span, Atom::from(value));
-                Some(self.hir.literal_string_expression(string_literal))
+                let string_literal = self.ast.string_literal(span, Atom::from(value));
+                Some(self.ast.literal_string_expression(string_literal))
             },
 
             // number addition
             (Ty::Number, _) | (_, Ty::Number)
-            // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
+                // when added, booleans get treated as numbers where `true` is 1 and `false` is 0
                 | (Ty::Boolean, Ty::Boolean) => {
-                let Some( left_number ) = get_number_value(left) else { return None };
-                let Some( right_number ) = get_number_value(right) else { return None };
+                let left_number = get_number_value(left)?;
+                let right_number = get_number_value(right)?;
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
                 // Float if value has a fractional part, otherwise Decimal
                 let number_base = if is_exact_int64(value) { NumberBase::Decimal } else { NumberBase::Float };
-                let number_literal = self.hir.number_literal(span, value, "", number_base);
+                let number_literal = self.ast.number_literal(span, value, "", number_base);
                 // todo: add raw &str
-                Some(self.hir.literal_number_expression(number_literal))
+                Some(self.ast.literal_number_expression(number_literal))
             },
             _ => None
         }
@@ -297,8 +297,8 @@ impl<'a> Compressor<'a> {
             Tri::False => false,
             Tri::Unknown => return None,
         };
-        let boolean_literal = self.hir.boolean_literal(span, value);
-        Some(self.hir.literal_boolean_expression(boolean_literal))
+        let boolean_literal = self.ast.boolean_literal(span, value);
+        Some(self.ast.literal_boolean_expression(boolean_literal))
     }
 
     fn evaluate_comparison<'b>(
@@ -352,15 +352,15 @@ impl<'a> Compressor<'a> {
                 let right_number = get_side_free_number_value(right_expr);
 
                 if let Some(NumberValue::Number(num)) = right_number {
-                    let raw = self.hir.new_str(num.to_string().as_str());
+                    let raw = self.ast.new_str(num.to_string().as_str());
 
-                    let number_literal = self.hir.number_literal(
+                    let number_literal = self.ast.number_literal(
                         right_expr.span(),
                         num,
                         raw,
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
-                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+                    let number_literal_expr = self.ast.literal_number_expression(number_literal);
 
                     return self.try_abstract_equality_comparison(left_expr, &number_literal_expr);
                 }
@@ -372,15 +372,15 @@ impl<'a> Compressor<'a> {
                 let left_number = get_side_free_number_value(left_expr);
 
                 if let Some(NumberValue::Number(num)) = left_number {
-                    let raw = self.hir.new_str(num.to_string().as_str());
+                    let raw = self.ast.new_str(num.to_string().as_str());
 
-                    let number_literal = self.hir.number_literal(
+                    let number_literal = self.ast.number_literal(
                         left_expr.span(),
                         num,
                         raw,
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
-                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+                    let number_literal_expr = self.ast.literal_number_expression(number_literal);
 
                     return self.try_abstract_equality_comparison(&number_literal_expr, right_expr);
                 }
@@ -587,8 +587,8 @@ impl<'a> Compressor<'a> {
             };
 
             if let Some(type_name) = type_name {
-                let string_literal = self.hir.string_literal(span, Atom::from(type_name));
-                return Some(self.hir.literal_string_expression(string_literal));
+                let string_literal = self.ast.string_literal(span, Atom::from(type_name));
+                return Some(self.ast.literal_string_expression(string_literal));
             }
         }
 
@@ -596,9 +596,9 @@ impl<'a> Compressor<'a> {
     }
 
     #[allow(clippy::too_many_lines)]
-    fn try_fold_unary_operator<'b>(
+    fn try_fold_unary_operator(
         &mut self,
-        unary_expr: &'b mut UnaryExpression<'a>,
+        unary_expr: &UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
         if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
             match unary_expr.operator {
@@ -612,12 +612,12 @@ impl<'a> Compressor<'a> {
                         if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
                             return None;
                         }
-                        let bool_literal = self.hir.boolean_literal(unary_expr.span, !boolean);
-                        return Some(self.hir.literal_boolean_expression(bool_literal));
+                        let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
+                        return Some(self.ast.literal_boolean_expression(bool_literal));
                     }
                     Expression::BigintLiteral(_) => {
-                        let bool_literal = self.hir.boolean_literal(unary_expr.span, !boolean);
-                        return Some(self.hir.literal_boolean_expression(bool_literal));
+                        let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
+                        return Some(self.ast.literal_boolean_expression(bool_literal));
                     }
                     _ => {}
                 },
@@ -626,13 +626,13 @@ impl<'a> Compressor<'a> {
                 // +Infinity -> Infinity
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
                     Expression::NumberLiteral(number_literal) => {
-                        let literal = self.hir.number_literal(
+                        let literal = self.ast.number_literal(
                             unary_expr.span,
                             number_literal.value,
                             number_literal.raw,
                             number_literal.base,
                         );
-                        return Some(self.hir.literal_number_expression(literal));
+                        return Some(self.ast.literal_number_expression(literal));
                     }
                     Expression::Identifier(ident) => {
                         if matches!(ident.name.as_str(), "NaN" | "Infinity") {
@@ -646,8 +646,8 @@ impl<'a> Compressor<'a> {
                         if let Some(NumberValue::Number(value)) =
                             get_number_value(&unary_expr.argument)
                         {
-                            let raw = self.hir.new_str(value.to_string().as_str());
-                            let literal = self.hir.number_literal(
+                            let raw = self.ast.new_str(value.to_string().as_str());
+                            let literal = self.ast.number_literal(
                                 unary_expr.span,
                                 value,
                                 raw,
@@ -657,7 +657,7 @@ impl<'a> Compressor<'a> {
                                     NumberBase::Float
                                 },
                             );
-                            return Some(self.hir.literal_number_expression(literal));
+                            return Some(self.ast.literal_number_expression(literal));
                         }
                     }
                 },
@@ -666,21 +666,21 @@ impl<'a> Compressor<'a> {
                 UnaryOperator::UnaryNegation => match &unary_expr.argument {
                     Expression::NumberLiteral(number_literal) => {
                         let value = -number_literal.value;
-                        let raw = self.hir.new_str(value.to_string().as_str());
-                        let literal = self.hir.number_literal(
+                        let raw = self.ast.new_str(value.to_string().as_str());
+                        let literal = self.ast.number_literal(
                             unary_expr.span,
                             value,
                             raw,
                             number_literal.base,
                         );
-                        return Some(self.hir.literal_number_expression(literal));
+                        return Some(self.ast.literal_number_expression(literal));
                     }
                     Expression::BigintLiteral(big_int_literal) => {
                         use std::ops::Neg;
 
                         let value = big_int_literal.value.clone().neg();
-                        let literal = self.hir.bigint_literal(unary_expr.span, value);
-                        return Some(self.hir.literal_bigint_expression(literal));
+                        let literal = self.ast.bigint_literal(unary_expr.span, value);
+                        return Some(self.ast.literal_bigint_expression(literal));
                     }
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
@@ -696,31 +696,31 @@ impl<'a> Compressor<'a> {
                         if number_literal.value.fract() == 0.0 {
                             let int_value =
                                 NumberLiteral::ecmascript_to_int32(number_literal.value);
-                            let literal = self.hir.number_literal(
+                            let literal = self.ast.number_literal(
                                 unary_expr.span,
                                 f64::from(!int_value),
                                 number_literal.raw,
                                 NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
                             );
-                            return Some(self.hir.literal_number_expression(literal));
+                            return Some(self.ast.literal_number_expression(literal));
                         }
                     }
                     Expression::BigintLiteral(big_int_literal) => {
                         let value = big_int_literal.value.clone().not();
-                        let leteral = self.hir.bigint_literal(unary_expr.span, value);
-                        return Some(self.hir.literal_bigint_expression(leteral));
+                        let leteral = self.ast.bigint_literal(unary_expr.span, value);
+                        return Some(self.ast.literal_bigint_expression(leteral));
                     }
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
                             let value = -1_f64;
-                            let raw = self.hir.new_str("-1");
-                            let literal = self.hir.number_literal(
+                            let raw = self.ast.new_str("-1");
+                            let literal = self.ast.number_literal(
                                 unary_expr.span,
                                 value,
                                 raw,
                                 NumberBase::Decimal,
                             );
-                            return Some(self.hir.literal_number_expression(literal));
+                            return Some(self.ast.literal_number_expression(literal));
                         }
                     }
                     _ => {}
@@ -734,19 +734,16 @@ impl<'a> Compressor<'a> {
 
     // +NaN -> NaN
     // !Infinity -> Infinity
-    fn try_detach_unary_op(
-        &mut self,
-        unary_expr: &mut UnaryExpression<'a>,
-    ) -> Option<Expression<'a>> {
+    fn try_detach_unary_op(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
         if let Expression::Identifier(ident) = &unary_expr.argument {
             if matches!(ident.name.as_str(), "NaN" | "Infinity") {
-                let ident = self.hir.identifier_reference(
-                    unary_expr.span,
-                    ident.name.clone(),
-                    ident.reference_id.clone().into_inner(),
-                    ident.reference_flag,
-                );
-                return Some(self.hir.identifier_reference_expression(ident));
+                let ident = IdentifierReference {
+                    span: unary_expr.span,
+                    name: ident.name.clone(),
+                    reference_id: ident.reference_id.clone().into_inner().into(),
+                    reference_flag: ident.reference_flag,
+                };
+                return Some(self.ast.identifier_reference_expression(ident));
             }
         }
 
@@ -764,15 +761,15 @@ impl<'a> Compressor<'a> {
         };
 
         if can_replace {
-            let number_literal = self.hir.number_literal(
+            let number_literal = self.ast.number_literal(
                 unary_expr.argument.span(),
                 0_f64,
-                self.hir.new_str("0"),
+                self.ast.new_str("0"),
                 NumberBase::Decimal,
             );
 
-            let argument = self.hir.literal_number_expression(number_literal);
-            return Some(self.hir.unary_expression(unary_expr.span, UnaryOperator::Void, argument));
+            let argument = self.ast.literal_number_expression(number_literal);
+            return Some(self.ast.unary_expression(unary_expr.span, UnaryOperator::Void, argument));
         }
         None
     }
@@ -818,12 +815,12 @@ impl<'a> Compressor<'a> {
                 _ => unreachable!("Unknown binary operator {:?}", op),
             };
 
-            let value_raw = self.hir.new_str(result_val.to_string().as_str());
+            let value_raw = self.ast.new_str(result_val.to_string().as_str());
 
             let number_literal =
-                self.hir.number_literal(span, result_val, value_raw, NumberBase::Decimal);
+                self.ast.number_literal(span, result_val, value_raw, NumberBase::Decimal);
 
-            return Some(self.hir.literal_number_expression(number_literal));
+            return Some(self.ast.literal_number_expression(number_literal));
         }
 
         None
@@ -855,10 +852,10 @@ impl<'a> Compressor<'a> {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = self.move_out_expression(&mut logic_expr.left);
             let right = self.move_out_expression(&mut logic_expr.right);
-            let mut vec = self.hir.new_vec_with_capacity(2);
+            let mut vec = self.ast.new_vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
-            let sequence_expr = self.hir.sequence_expression(logic_expr.span, vec);
+            let sequence_expr = self.ast.sequence_expression(logic_expr.span, vec);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left {
             if left_child.operator == logic_expr.operator {
@@ -873,7 +870,7 @@ impl<'a> Compressor<'a> {
                         {
                             let left = self.move_out_expression(&mut left_child.left);
                             let right = self.move_out_expression(&mut logic_expr.right);
-                            let logic_expr = self.hir.logical_expression(
+                            let logic_expr = self.ast.logical_expression(
                                 logic_expr.span,
                                 left,
                                 left_child_op,
@@ -936,8 +933,8 @@ impl<'a> Compressor<'a> {
     }
 
     fn move_out_expression(&mut self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_literal = self.hir.null_literal(expr.span());
-        let null_expr = self.hir.literal_null_expression(null_literal);
+        let null_literal = self.ast.null_literal(expr.span());
+        let null_expr = self.ast.literal_null_expression(null_literal);
         mem::replace(expr, null_expr)
     }
 
