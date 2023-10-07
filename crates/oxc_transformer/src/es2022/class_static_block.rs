@@ -35,6 +35,8 @@ impl<'a> ClassStaticBlock<'a> {
                 continue;
             };
 
+            let span = block.span;
+
             let static_block_private_id = generate_uid(&private_names, &mut i);
             let key = PropertyKey::PrivateIdentifier(self.ast.alloc(PrivateIdentifier {
                 span: Span::default(),
@@ -104,8 +106,7 @@ impl<'a> ClassStaticBlock<'a> {
                 }
             };
 
-            *element =
-                self.ast.class_property(block.span, key, value, false, true, self.ast.new_vec());
+            *element = self.ast.class_property(span, key, value, false, true, self.ast.new_vec());
         }
     }
 }
