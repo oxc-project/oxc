@@ -151,6 +151,19 @@ impl<'a> AstBuilder<'a> {
         Statement::DebuggerStatement(self.alloc(DebuggerStatement { span }))
     }
 
+    pub fn using_statement(
+        &self,
+        span: Span,
+        declarations: Vec<'a, VariableDeclarator<'a>>,
+        is_await: bool,
+    ) -> Statement<'a> {
+        Statement::Declaration(Declaration::UsingDeclaration(self.alloc(UsingDeclaration {
+            span,
+            is_await,
+            declarations,
+        })))
+    }
+
     pub fn do_while_statement(
         &self,
         span: Span,
@@ -740,6 +753,15 @@ impl<'a> AstBuilder<'a> {
         definite: bool,
     ) -> VariableDeclarator<'a> {
         VariableDeclarator { span, kind, id, init, definite }
+    }
+
+    pub fn using_declaration(
+        &self,
+        span: Span,
+        declarations: Vec<'a, VariableDeclarator<'a>>,
+        is_await: bool,
+    ) -> UsingDeclaration<'a> {
+        UsingDeclaration { span, is_await, declarations }
     }
 
     /* ---------- Patterns ---------- */
@@ -1407,7 +1429,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
         name_type: Option<TSType<'a>>,
-        type_annotation: TSType<'a>,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a> {

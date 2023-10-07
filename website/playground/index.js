@@ -90,7 +90,7 @@ class Playground {
   editor;
   viewer;
   queryResultsViewer;
-  currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
+  currentView = "ast"; // "ast" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
   viewerIsEditableConf;
@@ -425,7 +425,6 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
-      case "hir":
         return "json";
       case "query":
         return "graphql";
@@ -461,7 +460,6 @@ class Playground {
     document.getElementById("duration").style.display = "inline";
     document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
-    this.runOptions.hir = false;
     this.runOptions.minify = false;
 
     let text;
@@ -469,11 +467,6 @@ class Playground {
       case "ast":
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
-        break;
-      case "hir":
-        this.runOptions.hir = true;
-        this.run();
-        text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "ir":
         document.getElementById("ir-copy").style.display = "inline";
@@ -735,12 +728,10 @@ async function main() {
 
   document.getElementById("loading").remove();
 
+  addHorizontalResize()
+
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
-  };
-
-  document.getElementById("hir").onclick = () => {
-    playground.updateView("hir");
   };
 
   document.getElementById("ir").onclick = () => {
@@ -755,9 +746,9 @@ async function main() {
   // playground.updateView("format");
   // };
 
-  document.getElementById("minify").onclick = function () {
-    playground.updateView("minify");
-  };
+  // document.getElementById("minify").onclick = function () {
+  //   playground.updateView("minify");
+  // };
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
@@ -805,6 +796,40 @@ async function main() {
     playground.runOptions.type_check = checked;
     playground.updateView();
   };
+}
+
+// port from https://github.com/fkling/astexplorer/blob/541552fe45885c225fbb67d54dc4c6d6107b65b5/website/src/components/SplitPane.js#L26-L55 
+function addHorizontalResize() {
+  const container = document.getElementById("container");
+  const left = document.getElementById("left");
+  const divider = document.getElementById("divider");
+
+  divider.addEventListener("mousedown", function (event) {
+    // This is needed to prevent text selection in Safari
+    event.preventDefault();
+    const offset = container.offsetLeft;
+    const size = container.offsetWidth;
+    const setStyle = (position) => {
+      left.style.minWidth = left.style.maxWidth = position + '%'
+    }
+    globalThis.document.body.style.cursor = 'col-resize';
+
+    const moveHandler = event => {
+      event.preventDefault();
+      const newPosition = ( event.pageX - offset) / size * 100;
+      // Using 99% as the max value prevents the divider from disappearing
+      const position = Math.min(Math.max(0, newPosition), 99);
+      setStyle(position)
+    };
+    let upHandler = () => {
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+      globalThis.document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  })
 }
 
 main();

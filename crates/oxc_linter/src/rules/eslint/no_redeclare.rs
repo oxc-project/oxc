@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// var a = 10;
     /// ```
     NoRedeclare,
-    correctness
+    nursery // There are false positives within TypeScript files (e.g. redeclare on interface)
 );
 
 impl Rule for NoRedeclare {

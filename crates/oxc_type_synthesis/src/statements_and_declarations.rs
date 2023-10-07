@@ -29,6 +29,7 @@ pub(crate) fn hoist_statements<T: FSResolver>(
     for (idx, statement) in statements.iter().enumerate() {
         if let Statement::Declaration(declaration) = statement {
             match declaration {
+                ast::Declaration::UsingDeclaration(_) => todo!(),
                 ast::Declaration::VariableDeclaration(_)
                 | ast::Declaration::FunctionDeclaration(_) => {}
                 ast::Declaration::ClassDeclaration(_) => {}
@@ -69,6 +70,7 @@ pub(crate) fn hoist_statements<T: FSResolver>(
         match statement {
             Statement::ModuleDeclaration(_) => {}
             Statement::Declaration(declaration) => match declaration {
+                ast::Declaration::UsingDeclaration(_) => todo!(),
                 ast::Declaration::VariableDeclaration(declaration) => {
                     let is_declare = declaration.modifiers.contains(ast::ModifierKind::Declare);
                     let is_const = matches!(declaration.kind, ast::VariableDeclarationKind::Const);
@@ -363,6 +365,8 @@ pub(crate) fn synthesize_declaration<T: FSResolver>(
     checking_data: &mut CheckingData<T>,
 ) {
     match declaration {
+        ast::Declaration::UsingDeclaration(_) => todo!(),
+
         ast::Declaration::VariableDeclaration(variable_declaration) => {
             if variable_declaration.modifiers.contains(ast::ModifierKind::Declare) {
                 return;

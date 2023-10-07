@@ -135,6 +135,9 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::ForStatementInit(init);
         self.enter_node(kind);
         match init {
+            ForStatementInit::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
             ForStatementInit::VariableDeclaration(decl) => {
                 self.visit_variable_declaration(decl);
             }
@@ -167,6 +170,9 @@ pub trait Visit<'a>: Sized {
                 self.visit_variable_declaration(decl);
             }
             ForStatementLeft::AssignmentTarget(target) => self.visit_assignment_target(target),
+            ForStatementLeft::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
         }
     }
 
@@ -446,6 +452,15 @@ pub trait Visit<'a>: Sized {
         }
         if let Some(annotation) = &def.type_annotation {
             self.visit_ts_type_annotation(annotation);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_using_declaration(&mut self, decl: &'a UsingDeclaration<'a>) {
+        let kind = AstKind::UsingDeclaration(decl);
+        self.enter_node(kind);
+        for decl in &decl.declarations {
+            self.visit_variable_declarator(decl);
         }
         self.leave_node(kind);
     }
@@ -1264,6 +1279,7 @@ pub trait Visit<'a>: Sized {
             Declaration::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             Declaration::FunctionDeclaration(func) => self.visit_function(func),
             Declaration::ClassDeclaration(class) => self.visit_class(class),
+            Declaration::UsingDeclaration(decl) => self.visit_using_declaration(decl),
             Declaration::TSModuleDeclaration(module) => {
                 self.visit_ts_module_declaration(module);
             }
@@ -1447,7 +1463,9 @@ pub trait Visit<'a>: Sized {
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
         }
-        self.visit_ts_type(&ty.type_annotation);
+        if let Some(type_annotation) = &ty.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     fn visit_ts_function_type(&mut self, ty: &'a TSFunctionType<'a>) {

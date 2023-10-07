@@ -87,6 +87,7 @@ pub enum Kind {
     Type,
     Undefined,
     Unique,
+    Using,
     Unknown,
     Global,
     BigInt,
@@ -341,7 +342,7 @@ impl Kind {
         matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
             | Assert | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module
             | Namespace | Never | Out | Readonly | Require | Number | Object | Satisfies | String
-            | Symbol | Type | Undefined | Unique | Unknown | Global | BigInt | Override)
+            | Symbol | Type | Undefined | Unique | Unknown | Using | Global | BigInt | Override)
     }
 
     #[rustfmt::skip]
@@ -441,6 +442,7 @@ impl Kind {
             "target" => Target,
             "typeof" => Typeof,
             "unique" => Unique,
+            "using" => Using,
 
             "asserts" => Asserts,
             "boolean" => Boolean,
@@ -505,6 +507,7 @@ impl Kind {
             Finally => "finally",
             For => "for",
             Function => "function",
+            Using => "using",
             If => "if",
             Import => "import",
             In => "in",

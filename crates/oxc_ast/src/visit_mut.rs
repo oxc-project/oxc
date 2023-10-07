@@ -101,6 +101,9 @@ pub trait VisitMut<'a, 'b>: Sized {
                 self.visit_variable_declaration(decl);
             }
             ForStatementInit::Expression(expr) => self.visit_expression(expr),
+            ForStatementInit::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
         }
     }
 
@@ -122,6 +125,9 @@ pub trait VisitMut<'a, 'b>: Sized {
                 self.visit_variable_declaration(decl);
             }
             ForStatementLeft::AssignmentTarget(target) => self.visit_assignment_target(target),
+            ForStatementLeft::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
         }
     }
 
@@ -209,6 +215,12 @@ pub trait VisitMut<'a, 'b>: Sized {
         self.visit_binding_pattern(&mut declarator.id);
         if let Some(init) = &mut declarator.init {
             self.visit_expression(init);
+        }
+    }
+
+    fn visit_using_declaration(&mut self, declaration: &'b mut UsingDeclaration<'a>) {
+        for decl in declaration.declarations.iter_mut() {
+            self.visit_variable_declarator(decl);
         }
     }
 
@@ -960,6 +972,7 @@ pub trait VisitMut<'a, 'b>: Sized {
             Declaration::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             Declaration::FunctionDeclaration(func) => self.visit_function(func),
             Declaration::ClassDeclaration(class) => self.visit_class(class),
+            Declaration::UsingDeclaration(decl) => self.visit_using_declaration(decl),
             Declaration::TSModuleDeclaration(module) => {
                 self.visit_ts_module_declaration(module);
             }
@@ -1107,7 +1120,9 @@ pub trait VisitMut<'a, 'b>: Sized {
         if let Some(name) = &mut ty.name_type {
             self.visit_ts_type(name);
         }
-        self.visit_ts_type(&mut ty.type_annotation);
+        if let Some(type_annotation) = &mut ty.type_annotation {
+            self.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     fn visit_ts_function_type(&mut self, ty: &'b mut TSFunctionType<'a>) {
