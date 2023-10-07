@@ -26,10 +26,7 @@ impl<'a> ClassStaticBlock<'a> {
             .body
             .iter()
             .filter_map(ClassElement::property_key)
-            .filter_map(|p| match p {
-                PropertyKey::PrivateIdentifier(p) => Some(p.name.clone()),
-                _ => None,
-            })
+            .filter_map(PropertyKey::private_name)
             .collect();
 
         let mut i = 0;
@@ -49,12 +46,8 @@ impl<'a> ClassStaticBlock<'a> {
             .then(|| {
                 // We special-case the single expression case to avoid the iife, since it's common.
                 let stmt = self.ast.move_statement(&mut block.body.deref_mut()[0]);
-                match stmt {
-                    Statement::ExpressionStatement(mut expr_stmt) => {
-                        self.ast.move_expression(&mut expr_stmt.expression)
-                    }
-                    _ => unreachable!(),
-                }
+                let Statement::ExpressionStatement(mut expr_stmt) = stmt else { unreachable!() };
+                self.ast.move_expression(&mut expr_stmt.expression)
             })
             .unwrap_or_else(|| {
                 let statements = self.ast.move_statement_vec(&mut block.body);
