@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span};
 
-use std::{collections::HashSet, ops::DerefMut, rc::Rc};
+use std::{collections::HashSet, rc::Rc};
 
 /// ES2022: Class Static Block
 ///
@@ -63,7 +63,7 @@ impl<'a> ClassStaticBlock<'a> {
                     // }
                     // ```
 
-                    let stmt = self.ast.move_statement(&mut block.body.deref_mut()[0]);
+                    let stmt = self.ast.move_statement(&mut (*block.body)[0]);
                     let Statement::ExpressionStatement(mut expr_stmt) = stmt else {
                         unreachable!()
                     };
