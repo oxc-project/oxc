@@ -49,12 +49,15 @@ use crate::{
     package_json::{ExportsField, ExportsKey, MatchObject},
     path::PathUtil,
     specifier::Specifier,
-    tsconfig::TsConfig,
+    tsconfig::{ProjectReference, TsConfig},
 };
 pub use crate::{
     error::{JSONError, ResolveError, SpecifierError},
     file_system::{FileMetadata, FileSystem},
-    options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
+    options::{
+        Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction, TsconfigOptions,
+        TsconfigReferences,
+    },
     package_json::PackageJson,
     resolution::Resolution,
 };
@@ -921,8 +924,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &mut ResolveContext,
     ) -> ResolveState {
-        let Some(tsconfig_path) = &self.options.tsconfig else { return Ok(None) };
-        let tsconfig = self.load_tsconfig(tsconfig_path)?;
+        let Some(tsconfig_options) = &self.options.tsconfig else { return Ok(None) };
+        let tsconfig =
+            self.load_tsconfig(&tsconfig_options.config_file, &tsconfig_options.references)?;
         let paths = tsconfig.resolve(cached_path.path(), specifier);
         for path in paths {
             tracing::trace!(path = ?cached_path, tsconfig_path = ?path, "load_tsconfig_paths");
@@ -934,13 +938,17 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_tsconfig(&self, path: &Path) -> Result<Arc<TsConfig>, ResolveError> {
+    fn load_tsconfig(
+        &self,
+        path: &Path,
+        references: &TsconfigReferences,
+    ) -> Result<Arc<TsConfig>, ResolveError> {
         self.cache.tsconfig(path, |tsconfig| {
             let directory = self.cache.value(tsconfig.directory());
             tracing::trace!(tsconfig = ?tsconfig, "load_tsconfig");
             // Extend tsconfig
             let mut extended_tsconfig_paths = vec![];
-            for tsconfig_extend_specifier in tsconfig.extends() {
+            for tsconfig_extend_specifier in &tsconfig.extends {
                 let extended_tsconfig_path = match tsconfig_extend_specifier.as_bytes().first() {
                     None => return Err(ResolveError::Specifier(SpecifierError::Empty)),
                     Some(b'/') => PathBuf::from(tsconfig_extend_specifier),
@@ -966,15 +974,30 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 extended_tsconfig_paths.push(extended_tsconfig_path);
             }
             for extended_tsconfig_path in extended_tsconfig_paths {
-                let extended_tsconfig = self.load_tsconfig(&extended_tsconfig_path)?;
+                let extended_tsconfig =
+                    self.load_tsconfig(&extended_tsconfig_path, &TsconfigReferences::Disabled)?;
                 tsconfig.extend_tsconfig(&extended_tsconfig);
             }
             // Load project references
-            let directory = tsconfig.directory().to_path_buf();
-            for reference in tsconfig.references_mut() {
-                let reference_tsconfig_path = directory.normalize_with(&reference.path);
-                let tsconfig = self.cache.tsconfig(&reference_tsconfig_path, |_| Ok(()))?;
-                reference.tsconfig.replace(tsconfig);
+            match references {
+                TsconfigReferences::Disabled => {
+                    tsconfig.references.drain(..);
+                }
+                TsconfigReferences::Auto => {}
+                TsconfigReferences::Paths(paths) => {
+                    tsconfig.references = paths
+                        .iter()
+                        .map(|path| ProjectReference { path: path.clone(), tsconfig: None })
+                        .collect();
+                }
+            }
+            if !tsconfig.references.is_empty() {
+                let directory = tsconfig.directory().to_path_buf();
+                for reference in &mut tsconfig.references {
+                    let reference_tsconfig_path = directory.normalize_with(&reference.path);
+                    let tsconfig = self.cache.tsconfig(&reference_tsconfig_path, |_| Ok(()))?;
+                    reference.tsconfig.replace(tsconfig);
+                }
             }
             Ok(())
         })
