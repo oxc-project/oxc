@@ -81,7 +81,7 @@ impl Rule for NoIdenticalTitle {
             let mut kind_and_spans = kind_and_span
                 .iter()
                 .filter_map(|(kind, span)| {
-                    let Some(parent) = span_to_parent_mapping.get(span) else { return None };
+                    let parent = span_to_parent_mapping.get(span)?;
                     Some((*span, *kind, *parent))
                 })
                 .collect::<Vec<(Span, JestFnKind, AstNodeId)>>();
@@ -273,7 +273,7 @@ fn test() {
             "
               describe('foo', () => {
                 it('works', () => {});
-        
+
                 describe('foe', () => {
                   it('works', () => {});
                 });
@@ -287,7 +287,7 @@ fn test() {
                 describe('foe', () => {
                   it('works', () => {});
                 });
-        
+
                 it('works', () => {});
               });
             ",
@@ -299,7 +299,7 @@ fn test() {
               describe('foo', () => {
                 describe('foe', () => {});
               });
-        
+
               describe('foe', () => {});
             ",
             None,
@@ -313,7 +313,7 @@ fn test() {
               describe('a class named ' + myClass.name, () => {
                 describe('#myMethod', () => {});
               });
-        
+
               describe('something else', () => {});
             ",
             None,
@@ -349,7 +349,7 @@ fn test() {
                 description
                 ${'b'}
               `('$description', () => {});
-        
+
               describe.each`
                 description
                 ${'a'}
@@ -363,7 +363,7 @@ fn test() {
                 describe.each``('nested each', () => {
                   describe.each``('nested nested each', () => {});
                 });
-        
+
                 describe('nested', () => {});
               });
             ",
