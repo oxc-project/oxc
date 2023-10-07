@@ -41,46 +41,71 @@ impl<'a> ClassStaticBlock<'a> {
                 name: static_block_private_id.clone(),
             }));
 
-            let value = (block.body.len() == 1
-                && matches!(block.body[0], Statement::ExpressionStatement(..)))
-            .then(|| {
-                // We special-case the single expression case to avoid the iife, since it's common.
-                let stmt = self.ast.move_statement(&mut block.body.deref_mut()[0]);
-                let Statement::ExpressionStatement(mut expr_stmt) = stmt else { unreachable!() };
-                self.ast.move_expression(&mut expr_stmt.expression)
-            })
-            .unwrap_or_else(|| {
-                let statements = self.ast.move_statement_vec(&mut block.body);
-                let callee = self.ast.parenthesized_expression(
-                    Span::default(),
-                    self.ast.arrow_expression(
+            let value = match block.body.len() {
+                0 => None,
+                1 if matches!(block.body[0], Statement::ExpressionStatement(..)) => {
+                    // We special-case the single expression case to avoid the iife, since it's common.
+                    //
+                    // We prefer to emit:
+                    // ```JavaScript
+                    // class Foo {
+                    //   static bar = 42;
+                    //   static #_ = this.foo = Foo.bar;
+                    // }
+                    // ```
+                    // instead of:
+                    // ```JavaScript
+                    // class Foo {
+                    //   static bar = 42;
+                    //   static #_ = (() => this.foo = Foo.bar)();
+                    // }
+                    // ```
+
+                    let stmt = self.ast.move_statement(&mut block.body.deref_mut()[0]);
+                    let Statement::ExpressionStatement(mut expr_stmt) = stmt else {
+                        unreachable!()
+                    };
+                    let value = self.ast.move_expression(&mut expr_stmt.expression);
+                    Some(value)
+                }
+                _ => {
+                    let params = self.ast.formal_parameters(
+                        Span::default(),
+                        FormalParameterKind::ArrowFormalParameters,
+                        self.ast.new_vec(),
+                        None,
+                    );
+
+                    let statements = self.ast.move_statement_vec(&mut block.body);
+                    let function_body =
+                        self.ast.function_body(Span::default(), self.ast.new_vec(), statements);
+
+                    let callee = self.ast.arrow_expression(
                         Span::default(),
                         false,
                         false,
                         false,
-                        self.ast.formal_parameters(
-                            Span::default(),
-                            FormalParameterKind::ArrowFormalParameters,
-                            self.ast.new_vec(),
-                            None,
-                        ),
-                        self.ast.function_body(Span::default(), self.ast.new_vec(), statements),
+                        params,
+                        function_body,
                         None,
                         None,
-                    ),
-                );
+                    );
 
-                self.ast.call_expression(Span::default(), callee, self.ast.new_vec(), false, None)
-            });
+                    let callee = self.ast.parenthesized_expression(Span::default(), callee);
 
-            *element = self.ast.class_property(
-                block.span,
-                key,
-                Some(value),
-                false,
-                true,
-                self.ast.new_vec(),
-            );
+                    let value = self.ast.call_expression(
+                        Span::default(),
+                        callee,
+                        self.ast.new_vec(),
+                        false,
+                        None,
+                    );
+                    Some(value)
+                }
+            };
+
+            *element =
+                self.ast.class_property(block.span, key, value, false, true, self.ast.new_vec());
         }
     }
 }
