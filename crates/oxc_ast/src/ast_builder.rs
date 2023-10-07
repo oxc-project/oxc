@@ -71,6 +71,10 @@ impl<'a> AstBuilder<'a> {
         mem::replace(stmt, empty_stmt)
     }
 
+    pub fn move_statement_vec(&self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
+        mem::replace(stmts, self.new_vec())
+    }
+
     pub fn program(
         &self,
         span: Span,

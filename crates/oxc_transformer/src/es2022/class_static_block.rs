@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span};
 
-use std::{collections::HashSet, mem, ops::DerefMut, rc::Rc};
+use std::{collections::HashSet, ops::DerefMut, rc::Rc};
 
 /// ES2022: Class Static Block
 ///
@@ -57,7 +57,7 @@ impl<'a> ClassStaticBlock<'a> {
                 }
             })
             .unwrap_or_else(|| {
-                let statements = mem::replace(&mut block.body, self.ast.new_vec());
+                let statements = self.ast.move_statement_vec(&mut block.body);
                 let callee = self.ast.parenthesized_expression(
                     Span::default(),
                     self.ast.arrow_expression(
