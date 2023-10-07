@@ -11,6 +11,9 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[lib]
+doctest = false
+
 [dependencies]
 oxc_parser    = { workspace = true }
 oxc_ast       = { workspace = true }

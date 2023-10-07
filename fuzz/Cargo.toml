@@ -4,6 +4,9 @@ version = "0.0.0"
 publish = false
 edition = "2021"
 
+[lib]
+doctest = false
+
 # Prevent this from interfering with workspaces
 [workspace]
 members = ["."]

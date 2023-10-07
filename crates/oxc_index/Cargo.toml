@@ -12,6 +12,9 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[lib]
+doctest = false
+
 [dependencies]
 index_vec         = { workspace = true }
 static_assertions = { workspace = true }

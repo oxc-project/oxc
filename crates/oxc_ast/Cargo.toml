@@ -11,9 +11,8 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
-[features]
-default = []
-serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "oxc_span/serde", "oxc_syntax/serde"]
+[lib]
+doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
@@ -28,3 +27,7 @@ num-traits = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 ryu-js     = { workspace = true, optional = true }
+
+[features]
+default = []
+serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "oxc_span/serde", "oxc_syntax/serde"]

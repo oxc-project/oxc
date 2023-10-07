@@ -11,6 +11,9 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[lib]
+doctest = false
+
 [dependencies]
 bumpalo = { workspace = true, features = ["collections"] }
 serde   = { workspace = true }

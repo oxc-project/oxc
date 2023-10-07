@@ -11,6 +11,9 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[lib]
+doctest = false
+
 [dependencies]
 thiserror = { workspace = true }
 miette    = { workspace = true }

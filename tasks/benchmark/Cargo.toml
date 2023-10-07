@@ -12,6 +12,7 @@ repository.workspace  = true
 
 [lib]
 bench = false
+doctest = false
 
 [[bench]]
 name    = "parser"
