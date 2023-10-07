@@ -37,7 +37,7 @@ impl<'a> ShorthandProperties<'a> {
 
         let is_proto_string = obj_prop.key.is_specific_string_literal("__proto__");
 
-        if !is_proto_string && obj_prop.key.is_specific_id("__proto__") {
+        if !is_proto_string && !obj_prop.key.is_specific_id("__proto__") {
             return;
         }
         // We reach here, it means that the key is `__proto__` or `"__proto__"`.
