@@ -54,6 +54,8 @@ pub fn babel(options: &BabelOptions) {
         "babel-plugin-transform-async-to-generator",
         // ES2016
         "babel-plugin-transform-exponentiation-operator",
+        // ES2015
+        "babel-plugin-transform-shorthand-properties",
         // TypeScript
         "babel-plugin-transform-typescript",
         // React
@@ -133,7 +135,7 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
     let expected = output_path.and_then(|path| fs::read_to_string(path).ok());
     if let Some(expected) = &expected {
         let transform_options = TransformOptions {
-            target: TransformTarget::ES2015,
+            target: TransformTarget::ES5,
             react: Some(TransformReactOptions::default()),
         };
         let program = allocator.alloc(ret.program);
@@ -146,7 +148,7 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
         let passed = trim_transformed == trim_expected;
         if filtered {
             println!("Expected:\n");
-            println!("{expected:?}\n");
+            println!("{expected}\n");
             println!("Transformed:\n");
             println!("{transformed}\n");
             println!("Diff:\n");

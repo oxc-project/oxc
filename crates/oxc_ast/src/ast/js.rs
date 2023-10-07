@@ -420,6 +420,13 @@ impl<'a> PropertyKey<'a> {
             _ => false,
         }
     }
+
+    pub fn is_specific_string_literal(&self, string: &str) -> bool {
+        match self {
+            PropertyKey::Expression(expr) => expr.is_specific_string_literal(string),
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

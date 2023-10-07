@@ -7,6 +7,7 @@ pub struct TransformOptions {
 /// See <https://www.typescriptlang.org/tsconfig#target>
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TransformTarget {
+    ES5,
     ES2015,
     ES2016,
     ES2019,

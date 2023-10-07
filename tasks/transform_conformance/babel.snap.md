@@ -1,4 +1,4 @@
-Passed: 86/1071
+Passed: 91/1078
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -749,6 +749,15 @@ Passed: 86/1071
 * Failed: regression/4349/input.js
 * Failed: regression/4403/input.js
 * Passed: exponentiation-operator/binary/input.js
+
+# babel-plugin-transform-shorthand-properties
+* Failed: shorthand-properties/method-type-annotations/input.js
+* Failed: shorthand-properties/shorthand-comments/input.js
+* Passed: shorthand-properties/method-plain/input.js
+* Passed: shorthand-properties/proto/input.js
+* Passed: shorthand-properties/shorthand-mixed/input.js
+* Passed: shorthand-properties/shorthand-multiple/input.js
+* Passed: shorthand-properties/shorthand-single/input.js
 
 # babel-plugin-transform-typescript
 * Failed: class/abstract-class-decorated/input.ts

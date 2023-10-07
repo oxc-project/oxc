@@ -7,6 +7,7 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
+mod es2015;
 mod es2016;
 mod es2019;
 mod es2021;
@@ -19,6 +20,7 @@ use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::SourceType;
 use std::rc::Rc;
 
+use es2015::ShorthandProperties;
 use es2016::ExponentiationOperator;
 use es2019::OptionalCatchBinding;
 use es2021::LogicalAssignmentOperators;
@@ -39,6 +41,8 @@ pub struct Transformer<'a> {
     es2019_optional_catch_binding: Option<OptionalCatchBinding<'a>>,
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
+    // es2015
+    es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -66,6 +70,9 @@ impl<'a> Transformer<'a> {
         if options.target < TransformTarget::ES2016 {
             t.es2016_exponentiation_operator.replace(ExponentiationOperator::new(Rc::clone(&ast)));
         }
+        if options.target < TransformTarget::ES2015 {
+            t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
+        }
         t
     }
 
@@ -91,5 +98,15 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
             self.visit_binding_pattern(param);
         }
         self.visit_statements(&mut clause.body.body);
+    }
+
+    fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
+        self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
+
+        self.visit_property_key(&mut prop.key);
+        self.visit_expression(&mut prop.value);
+        if let Some(init) = &mut prop.init {
+            self.visit_expression(init);
+        }
     }
 }
