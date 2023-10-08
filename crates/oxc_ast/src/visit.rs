@@ -1560,6 +1560,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_type_parameter(&mut self, ty: &'a TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(ty);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             self.visit_ts_type(constraint);
@@ -1569,6 +1570,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type(default);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_type_parameter_instantiation(&mut self, ty: &'a TSTypeParameterInstantiation<'a>) {

@@ -93,7 +93,7 @@ pub struct SemanticBuilderReturn<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        let scope = ScopeTree::new(source_type);
+        let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
         let trivias = Rc::new(TriviasMap::default());
@@ -212,35 +212,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn try_enter_scope(&mut self, kind: AstKind<'a>) {
-        fn is_strict(directives: &[Directive]) -> bool {
-            directives.iter().any(|d| d.directive == "use strict")
-        }
-        if let Some(flags) = ScopeTree::scope_flags_from_ast_kind(kind) {
-            self.enter_scope(flags);
-        }
-        let strict_mode = match kind {
-            AstKind::Program(program) => is_strict(&program.directives),
-            AstKind::Function(func) => {
-                func.body.as_ref().is_some_and(|body| is_strict(&body.directives))
-            }
-            _ => false,
-        };
-        if strict_mode {
-            *self.scope.get_flags_mut(self.current_scope_id) =
-                self.scope.get_flags(self.current_scope_id).with_strict_mode(true);
-        }
-    }
-
-    fn try_leave_scope(&mut self, kind: AstKind<'a>) {
-        if ScopeTree::scope_flags_from_ast_kind(kind).is_some()
-            || matches!(kind, AstKind::Program(_))
-        {
-            self.resolve_references_for_current_scope();
-            self.leave_scope();
-        }
-    }
-
     pub fn strict_mode(&self) -> bool {
         self.scope.get_flags(self.current_scope_id).is_strict_mode()
             || self.current_node_flags.contains(NodeFlags::Class)
@@ -309,7 +280,6 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        // let includes = includes | self.current_symbol_flags;
         let symbol_id =
             self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
         if includes.is_variable() {
@@ -370,37 +340,6 @@ impl<'a> SemanticBuilder<'a> {
         symbol_id
     }
 
-    pub fn enter_scope(&mut self, flags: ScopeFlags) {
-        let mut flags = flags;
-        // Inherit strict mode for functions
-        // https://tc39.es/ecma262/#sec-strict-mode-code
-        let mut strict_mode = self.scope.root_flags().is_strict_mode();
-        let parent_scope_id = self.current_scope_id;
-        let parent_scope_flags = self.scope.get_flags(parent_scope_id);
-
-        if !strict_mode && parent_scope_flags.is_function() && parent_scope_flags.is_strict_mode() {
-            strict_mode = true;
-        }
-
-        // inherit flags for non-function scopes
-        if !flags.contains(ScopeFlags::Function) {
-            flags |= parent_scope_flags & ScopeFlags::Modifiers;
-        };
-
-        if strict_mode {
-            flags |= ScopeFlags::StrictMode;
-        }
-
-        self.current_scope_id = self.scope.add_scope(Some(self.current_scope_id), flags);
-    }
-
-    pub fn leave_scope(&mut self) {
-        self.resolve_references_for_current_scope();
-        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
-            self.current_scope_id = parent_id;
-        }
-    }
-
     fn resolve_references_for_current_scope(&mut self) {
         let all_references = self
             .scope
@@ -440,15 +379,48 @@ impl<'a> SemanticBuilder<'a> {
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
-    // Setup all the context for the binder,
-    // the order is important here.
+    fn enter_scope(&mut self, flags: ScopeFlags) {
+        let parent_scope_id =
+            if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
+
+        let mut flags = flags;
+        // Inherit strict mode for functions
+        // https://tc39.es/ecma262/#sec-strict-mode-code
+        if let Some(parent_scope_id) = parent_scope_id {
+            let mut strict_mode = self.scope.root_flags().is_strict_mode();
+            let parent_scope_flags = self.scope.get_flags(parent_scope_id);
+
+            if !strict_mode
+                && parent_scope_flags.is_function()
+                && parent_scope_flags.is_strict_mode()
+            {
+                strict_mode = true;
+            }
+
+            // inherit flags for non-function scopes
+            if !flags.contains(ScopeFlags::Function) {
+                flags |= parent_scope_flags & ScopeFlags::Modifiers;
+            };
+
+            if strict_mode {
+                flags |= ScopeFlags::StrictMode;
+            }
+        }
+
+        self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
+    }
+
+    fn leave_scope(&mut self) {
+        self.resolve_references_for_current_scope();
+        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+            self.current_scope_id = parent_id;
+        }
+    }
+
+    // Setup all the context for the binder.
+    // The order is important here.
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        // create new self.scope.current_scope_id
-        self.try_enter_scope(kind);
-
-        // create new self.current_node_id
         self.create_ast_node(kind);
-
         self.enter_kind(kind);
     }
 
@@ -460,7 +432,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_kind(kind);
         self.pop_ast_node();
-        self.try_leave_scope(kind);
     }
 }
 
