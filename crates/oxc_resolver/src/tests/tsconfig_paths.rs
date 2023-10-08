@@ -2,9 +2,14 @@
 //!
 //! Fixtures copied from <https://github.com/parcel-bundler/parcel/tree/v2/packages/utils/node-resolver-core/test/fixture/tsconfig>.
 
-use super::memory_fs::MemoryFS;
-use crate::{ResolveError, ResolveOptions, Resolver, ResolverGeneric, TsConfig};
 use std::path::{Path, PathBuf};
+
+use super::memory_fs::MemoryFS;
+
+use crate::{
+    ResolveError, ResolveOptions, Resolver, ResolverGeneric, TsConfig, TsconfigOptions,
+    TsconfigReferences,
+};
 
 // <https://github.com/parcel-bundler/parcel/blob/b6224fd519f95e68d8b93ba90376fd94c8b76e69/packages/utils/node-resolver-rs/src/lib.rs#L2303>
 #[test]
@@ -24,7 +29,10 @@ fn tsconfig() {
 
     for (path, request, expected) in pass {
         let resolver = Resolver::new(ResolveOptions {
-            tsconfig: Some(path.join("tsconfig.json")),
+            tsconfig: Some(TsconfigOptions {
+                config_file: path.join("tsconfig.json"),
+                references: TsconfigReferences::Auto,
+            }),
             ..ResolveOptions::default()
         });
         let resolved_path = resolver.resolve(&path, request).map(|f| f.full_path());
@@ -37,7 +45,10 @@ fn tsconfig() {
     ];
 
     let resolver = Resolver::new(ResolveOptions {
-        tsconfig: Some(f.join("tsconfig.json")),
+        tsconfig: Some(TsconfigOptions {
+            config_file: f.join("tsconfig.json"),
+            references: TsconfigReferences::Auto,
+        }),
         ..ResolveOptions::default()
     });
     for (path, request, expected) in data {
@@ -51,7 +62,10 @@ fn json_with_comments() {
     let f = super::fixture_root().join("parcel/tsconfig/trailing-comma");
 
     let resolver = Resolver::new(ResolveOptions {
-        tsconfig: Some(f.join("tsconfig.json")),
+        tsconfig: Some(TsconfigOptions {
+            config_file: f.join("tsconfig.json"),
+            references: TsconfigReferences::Auto,
+        }),
         ..ResolveOptions::default()
     });
 
@@ -208,7 +222,10 @@ impl OneTest {
 
         let mut options = ResolveOptions {
             extensions: self.extensions.clone(),
-            tsconfig: Some(root.join("tsconfig.json")),
+            tsconfig: Some(TsconfigOptions {
+                config_file: root.join("tsconfig.json"),
+                references: TsconfigReferences::Auto,
+            }),
             ..ResolveOptions::default()
         };
         if let Some(main_fields) = &self.main_fields {
