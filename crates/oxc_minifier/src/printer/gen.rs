@@ -775,12 +775,14 @@ impl<'a> GenExpr for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer, ctx: Context) {
-        // if let Some(mangler) = &p.mangler {
-        // if let Some(name) = mangler.get_reference_name(self.reference_id.clone().into_inner()) {
-        // p.print_str(name.clone().as_bytes());
-        // return;
-        // }
-        // }
+        if let Some(mangler) = &p.mangler {
+            if let Some(reference_id) = self.reference_id.clone().into_inner() {
+                if let Some(name) = mangler.get_reference_name(reference_id) {
+                    p.print_str(name.clone().as_bytes());
+                    return;
+                }
+            }
+        }
         p.print_str(self.name.as_bytes());
     }
 }

@@ -1,7 +1,7 @@
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::hir::*;
-use oxc_hir::Visit;
+use oxc_ast::ast::*;
+use oxc_ast::Visit;
 use oxc_index::{index_vec, IndexVec};
 use oxc_semantic::{Reference, ReferenceFlag, ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::{Atom, SourceType};
@@ -78,15 +78,14 @@ impl<'a> Visit<'a> for ManglerBuilder<'a> {
         self.semantic.leave_scope();
     }
 
-    fn visit_binding_identifier(
-        &mut self,
-        ident: &'a BindingIdentifier,
-        includes: SymbolFlags,
-        excludes: SymbolFlags,
-    ) {
-        let symbol_id =
-            self.semantic.declare_symbol_for_mangler(ident.span, &ident.name, includes, excludes);
-        ident.symbol_id.replace(symbol_id);
+    fn visit_binding_identifier(&mut self, ident: &'a BindingIdentifier) {
+        let symbol_id = self.semantic.declare_symbol_for_mangler(
+            ident.span,
+            &ident.name,
+            /* TODO: add symbol flags */ SymbolFlags::empty(),
+            /* TODO: add symbol flags */ SymbolFlags::empty(),
+        );
+        ident.symbol_id.replace(Some(symbol_id));
     }
 
     fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
@@ -97,7 +96,7 @@ impl<'a> Visit<'a> for ManglerBuilder<'a> {
             ReferenceFlag::read(),
         );
         let reference_id = self.semantic.declare_reference(reference);
-        ident.reference_id.replace(reference_id);
+        ident.reference_id.replace(Some(reference_id));
     }
 }
 

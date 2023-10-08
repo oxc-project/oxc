@@ -1,7 +1,7 @@
 //! ECMAScript Minifier
 
 mod compressor;
-// mod mangler;
+mod mangler;
 mod printer;
 
 use oxc_allocator::Allocator;
@@ -10,7 +10,7 @@ use oxc_span::SourceType;
 
 pub use crate::{
     compressor::{CompressOptions, Compressor},
-    // mangler::ManglerBuilder,
+    mangler::ManglerBuilder,
     printer::{Printer, PrinterOptions},
 };
 
@@ -43,11 +43,11 @@ impl<'a> Minifier<'a> {
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();
         let program = allocator.alloc(ret.program);
         Compressor::new(&allocator, self.options.compress).build(program);
-        let printer = Printer::new(self.source_text.len(), self.options.print);
-        // if self.options.mangle {
-        // let mangler = ManglerBuilder::new(self.source_text, self.source_type).build(program);
-        // printer.with_mangler(mangler);
-        // }
+        let mut printer = Printer::new(self.source_text.len(), self.options.print);
+        if self.options.mangle {
+            let mangler = ManglerBuilder::new(self.source_text, self.source_type).build(program);
+            printer.with_mangler(mangler);
+        }
         printer.build(program)
     }
 }
