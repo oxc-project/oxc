@@ -194,6 +194,7 @@ jobs:
         uses: ./.github/actions/rustup
 
       - name: Install cargo-nextest
+        if: runner.os != 'Windows'
         uses: taiki-e/install-action@cargo-nextest
 
       - name: Build oxlint
