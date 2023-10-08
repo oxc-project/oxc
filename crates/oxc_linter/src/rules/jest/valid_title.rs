@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use regex::Regex;
 
 use crate::{
@@ -20,11 +20,11 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
-struct ValidTitleDiagnostic(&'static str, &'static str, #[label] pub Span);
+#[error("eslint(jest/valid-title): {0:?}")]
+#[diagnostic(severity(warning), help("{1:?}"))]
+struct ValidTitleDiagnostic(Atom, &'static str, #[label] pub Span);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ValidTitle {
     ignore_type_of_describe_name: bool,
     disallowed_words: Vec<String>,
@@ -49,18 +49,6 @@ impl MatchKind {
             "it" => Some(Self::It),
             "test" => Some(Self::Test),
             _ => None,
-        }
-    }
-}
-
-impl Default for ValidTitle {
-    fn default() -> Self {
-        Self {
-            ignore_type_of_describe_name: false,
-            disallowed_words: vec![],
-            ignore_space: false,
-            must_not_match_patterns: HashMap::new(),
-            must_match_patterns: HashMap::new(),
         }
     }
 }
@@ -110,12 +98,12 @@ fn compile_matcher_patterns(
                     }
                 }
 
-                return Some(map);
+                Some(map)
             },
             |value| {
                 // for `["/pattern/u", "message"]`
                 let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
-                let v = compile_matcher_pattern(MatcherPattern::Vec(value))?;
+                let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
                 map.insert(MatchKind::Describe, v.clone());
                 map.insert(MatchKind::Test, v.clone());
                 map.insert(MatchKind::It, v.clone());
@@ -127,7 +115,7 @@ fn compile_matcher_patterns(
                 // for `"/pattern/u"`
                 let string = matcher_patterns.as_str()?;
                 let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
-                let v = compile_matcher_pattern(MatcherPattern::String(
+                let v = &compile_matcher_pattern(MatcherPattern::String(
                     &serde_json::Value::String(string.to_string()),
                 ))?;
                 map.insert(MatchKind::Describe, v.clone());
@@ -135,10 +123,11 @@ fn compile_matcher_patterns(
                 map.insert(MatchKind::It, v.clone());
                 Some(map)
             },
-            |map| Some(map),
+            Some,
         )
 }
 
+#[derive(Copy, Clone)]
 enum MatcherPattern<'a> {
     String(&'a serde_json::Value),
     Vec(&'a Vec<serde_json::Value>),
@@ -154,7 +143,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
         MatcherPattern::Vec(pattern) => {
             let reg_str = pattern.get(0).and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
             let reg = Regex::new(&reg_str).ok()?;
-            let message = pattern.get(1).map(|v| v.to_string());
+            let message = pattern.get(1).map(std::string::ToString::to_string);
             Some((reg, message))
         }
     }
@@ -164,7 +153,10 @@ impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let config = value.get(0);
         let get_as_bool = |name: &str| -> bool {
-            config.and_then(|v| v.get(&name)).and_then(|v| v.as_bool()).unwrap_or_default()
+            config
+                .and_then(|v| v.get(name))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or_default()
         };
 
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
@@ -172,23 +164,24 @@ impl Rule for ValidTitle {
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str().map(|v| v.to_string())).collect())
+            .map(|v| {
+                v.iter().filter_map(|v| v.as_str().map(std::string::ToString::to_string)).collect()
+            })
             .unwrap_or_default();
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
-            .and_then(|v| compile_matcher_patterns(v))
+            .and_then(compile_matcher_patterns)
             .unwrap_or_default();
         let must_match_patterns = config
             .and_then(|v| v.get("mustMatch"))
-            .and_then(|v| compile_matcher_patterns(v))
+            .and_then(compile_matcher_patterns)
             .unwrap_or_default();
-
-        ValidTitle {
+        Self {
             ignore_type_of_describe_name,
-            ignore_space,
             disallowed_words,
-            must_match_patterns,
+            ignore_space,
             must_not_match_patterns,
+            must_match_patterns,
         }
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -224,9 +217,12 @@ impl Rule for ValidTitle {
                 );
             }
             Expression::TemplateLiteral(template_literal) => {
+                if !template_literal.is_no_substitution_template() {
+                    return;
+                }
                 if let Some(quasi) = template_literal.quasi() {
                     validate_title(
-                        &quasi.as_str(),
+                        quasi.as_str(),
                         template_literal.span,
                         self,
                         &jest_fn_call.name,
@@ -235,7 +231,7 @@ impl Rule for ValidTitle {
                 }
             }
             Expression::BinaryExpression(binary_expr) => {
-                if does_binary_expression_contain_string_node(&binary_expr) {
+                if does_binary_expression_contain_string_node(binary_expr) {
                     return;
                 }
                 if need_report_describe_name {
@@ -251,25 +247,37 @@ impl Rule for ValidTitle {
     }
 }
 
-fn validate_title(title: &str, span: Span, valid_title: &ValidTitle, name: &str, ctx: &LintContext) {
-    if title == "" {
+fn validate_title(
+    title: &str,
+    span: Span,
+    valid_title: &ValidTitle,
+    name: &str,
+    ctx: &LintContext,
+) {
+    if title.is_empty() {
         Message::EmptyTitle.diagnostic(ctx, span);
     }
 
     if !valid_title.disallowed_words.is_empty() {
         let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
             r#"(?iu)\b(?:{})\b"#,
-            valid_title.disallowed_words.join("|").replace(".", r"\.")
+            valid_title.disallowed_words.join("|").replace('.', r"\.")
         )) else {
             return;
         };
 
-        if disallowed_words_reg.is_match(title) {
-            Message::DisallowedWord.diagnostic(ctx, span);
+        if let Some(matched) = disallowed_words_reg.find(title) {
+            let error = format!("{} is not allowed in test title", matched.as_str());
+            ctx.diagnostic(ValidTitleDiagnostic(
+                Atom::from(error),
+                "It is included in the `disallowedWords` of your config file, try to remove it from your title",
+                span,
+            ));
         }
         return;
     }
 
+    // TODO: support fixer
     if !valid_title.ignore_space && title.trim() != title {
         Message::AccidentalSpace.diagnostic(ctx, span);
     }
@@ -279,6 +287,7 @@ fn validate_title(title: &str, span: Span, valid_title: &ValidTitle, name: &str,
         return;
     };
 
+    // TODO: support fixer
     if first_word == un_prefixed_name {
         Message::DuplicatePrefix.diagnostic(ctx, span);
         return;
@@ -290,16 +299,33 @@ fn validate_title(title: &str, span: Span, valid_title: &ValidTitle, name: &str,
 
     if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name) {
         if !regex.is_match(title) {
-            Message::MustMatch.diagnostic(ctx, span);
+            let raw_pattern = regex.as_str();
+            let message = message.as_ref().map_or_else(
+                || Atom::from(format!("{un_prefixed_name} should match {raw_pattern}")),
+                |message| Atom::from(message.as_str()),
+            );
+            ctx.diagnostic(ValidTitleDiagnostic(
+                message,
+                "Make sure the title matches the `mustMatch` of your config file",
+                span,
+            ));
         }
-        return;
     }
 
-    if let Some((regex, _)) = valid_title.must_not_match_patterns.get(&jest_fn_name) {
+    if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name) {
         if regex.is_match(title) {
-            Message::MustNotMatch.diagnostic(ctx, span);
+            let raw_pattern = regex.as_str();
+            let message = message.as_ref().map_or_else(
+                || Atom::from(format!("{un_prefixed_name} should not match {raw_pattern}")),
+                |message| Atom::from(message.as_str()),
+            );
+
+            ctx.diagnostic(ValidTitleDiagnostic(
+                message,
+                "Make sure the title not matches the `mustNotMatch` of your config file",
+                span,
+            ));
         }
-        return;
     }
 }
 
@@ -319,41 +345,21 @@ enum Message {
     EmptyTitle,
     DuplicatePrefix,
     AccidentalSpace,
-    DisallowedWord,
-    MustNotMatch,
-    MustMatch,
-    MustNotMatchCustom,
-    MustMatchCustom,
 }
 
 impl Message {
     fn detail(&self) -> (&'static str, &'static str) {
         match self {
             Self::TitleMustBeString => ("Title must be a string", "Replace your title with a string"),
-            Self::EmptyTitle => ("Should not have an empty title", "Write a title for your test"),
+            Self::EmptyTitle => ("Should not have an empty title", "Write a meaningful title for your test"),
             Self::DuplicatePrefix => ("Should not have duplicate prefix", "The function name has already contains the prefix, try remove the duplicate prefix"),
             Self::AccidentalSpace => ("Should not have leading or trailing spaces", "Remove the leading or trailing spaces"),
-            Self::DisallowedWord => ("is not allowed in test titles", ""),
-            Self::MustNotMatch => (" should not match", ""),
-            Self::MustMatch => ("jestFunctionName should match pattern", ""),
-            Self::MustNotMatchCustom => ("message ", "me-"),
-            Self::MustMatchCustom => ("message", "mess"),
         }
     }
     fn diagnostic(&self, ctx: &LintContext, span: Span) {
         let (error, help) = self.detail();
-        ctx.diagnostic(ValidTitleDiagnostic(error, help, span));
+        ctx.diagnostic(ValidTitleDiagnostic(Atom::from(error), help, span));
     }
-}
-
-#[ignore]
-#[test]
-fn test_1() {
-    use crate::tester::Tester;
-    let pass = vec![("test('foo test', function () {})", None)];
-    let fail = vec![];
-
-    Tester::new(ValidTitle::NAME, pass, fail).test_and_snapshot();
 }
 
 #[allow(clippy::too_many_lines)]
@@ -539,173 +545,174 @@ fn test() {
             "test(`that the value is set properly`, function () {})",
             Some(serde_json::json!([{ "disallowedWords": ["properly"] }])),
         ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-                    {
-                      "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#,
-                "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))",
-              },
-            ])),
-        ),
-        (
-            "
-                import { describe, describe as context, it as thisTest } from '@jest/globals';
-        
-                describe('things to test', () => {
-                    context('unit tests #unit', () => {
-                    thisTest('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    context('e2e tests #e4e', () => {
-                    thisTest('is another test #e2e #jest4life', () => {});
-                    });
-                });
-                ",
-            Some(
-                serde_json::json!([ { "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#, "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))", }, ]),
-            ),
-        ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-              {
-                "mustNotMatch": [
-                  r#"(?:#(?!unit|e2e))\w+"#,
-                  "Please include '#unit' or '#e2e' in titles",
-                ],
-                "mustMatch": [
-                  "^[^#]+$|(?:#(?:unit|e2e))",
-                  "Please include '#unit' or '#e2e' in titles",
-                ],
-              },
-            ])),
-        ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-              {
-                "mustNotMatch": { "describe": [r#"(?:#(?!unit|e2e))\w+"#] },
-                "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
-              },
-            ])),
-        ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-              {
-                "mustNotMatch": {
-                  "describe": [
-                    r#"(?:#(?!unit|e2e))\w+"#,
-                    "Please include '#unit' or '#e2e' in describe titles",
-                  ],
-                },
-                "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
-              },
-            ])),
-        ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-              {
-                "mustNotMatch": { "describe": r#"(?:#(?!unit|e2e))\w+"# },
-                "mustMatch": { "it": "^[^#]+$|(?:#(?:unit|e2e))" },
-              },
-            ])),
-        ),
-        (
-            "
-                describe('things to test', () => {
-                    describe('unit tests #unit', () => {
-                    it('is true #jest4life', () => {
-                        expect(true).toBe(true);
-                    });
-                    });
-        
-                    describe('e2e tests #e4e', () => {
-                    it('is another test #e2e #jest4life', () => {});
-                    });
-                });
-            ",
-            Some(serde_json::json!([
-              {
-                "mustNotMatch": {
-                  "describe": [
-                    r#"(?:#(?!unit|e2e))\w+"#,
-                    "Please include '#unit' or '#e2e' in describe titles",
-                  ],
-                },
-                "mustMatch": {
-                  "it": [
-                    "^[^#]+$|(?:#(?:unit|e2e))",
-                    "Please include '#unit' or '#e2e' in it titles",
-                  ],
-                },
-              },
-            ])),
-        ),
+        // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //                 it('is true', () => {
+        //                     expect(true).toBe(true);
+        //                 });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //                 it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //         {
+        //             "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#,
+        //             "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))",
+        //         },
+        //     ])),
+        // ),
+        // (
+        //     "
+        //         import { describe, describe as context, it as thisTest } from '@jest/globals';
+
+        //         describe('things to test', () => {
+        //             context('unit tests #unit', () => {
+        //             thisTest('is true', () => {
+        //                 expect(true).toBe(true);
+        //             });
+        //             });
+
+        //             context('e2e tests #e4e', () => {
+        //                 thisTest('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //         ",
+        //     Some(
+        //         serde_json::json!([ { "mustNotMatch": r#"(?:#(?!unit|e2e))\w+"#, "mustMatch": "^[^#]+$|(?:#(?:unit|e2e))", }, ]),
+        //     ),
+        // ),
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //                 it('is true', () => {
+        //                     expect(true).toBe(true);
+        //                 });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //                 it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //       {
+        //         "mustNotMatch": [
+        //           r#"(?:#(?!unit|e2e))\w+"#,
+        //           "Please include '#unit' or '#e2e' in titles",
+        //         ],
+        //         "mustMatch": [
+        //           "^[^#]+$|(?:#(?:unit|e2e))",
+        //           "Please include '#unit' or '#e2e' in titles",
+        //         ],
+        //       },
+        //     ])),
+        // ),
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //                 it('is true', () => {
+        //                     expect(true).toBe(true);
+        //                 });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //                 it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //       {
+        //         "mustNotMatch": { "describe": [r#"(?:#(?!unit|e2e))\w+"#] },
+        //         "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
+        //       },
+        //     ])),
+        // ),
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //                 it('is true', () => {
+        //                     expect(true).toBe(true);
+        //                 });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //                 it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //       {
+        //         "mustNotMatch": {
+        //           "describe": [
+        //             r#"(?:#(?!unit|e2e))\w+"#,
+        //             "Please include '#unit' or '#e2e' in describe titles",
+        //           ],
+        //         },
+        //         "mustMatch": { "describe": "^[^#]+$|(?:#(?:unit|e2e))" },
+        //       },
+        //     ])),
+        // ),
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //             it('is true', () => {
+        //                 expect(true).toBe(true);
+        //             });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //                 it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //       {
+        //         "mustNotMatch": { "describe": r#"(?:#(?!unit|e2e))\w+"# },
+        //         "mustMatch": { "it": "^[^#]+$|(?:#(?:unit|e2e))" },
+        //       },
+        //     ])),
+        // ),
+        // (
+        //     "
+        //         describe('things to test', () => {
+        //             describe('unit tests #unit', () => {
+        //             it('is true #jest4life', () => {
+        //                 expect(true).toBe(true);
+        //             });
+        //             });
+
+        //             describe('e2e tests #e4e', () => {
+        //             it('is another test #e2e #jest4life', () => {});
+        //             });
+        //         });
+        //     ",
+        //     Some(serde_json::json!([
+        //       {
+        //         "mustNotMatch": {
+        //           "describe": [
+        //             r#"(?:#(?!unit|e2e))\w+"#,
+        //             "Please include '#unit' or '#e2e' in describe titles",
+        //           ],
+        //         },
+        //         "mustMatch": {
+        //           "it": [
+        //             "^[^#]+$|(?:#(?:unit|e2e))",
+        //             "Please include '#unit' or '#e2e' in it titles",
+        //           ],
+        //         },
+        //       },
+        //     ])),
+        // ),
         (
             "test('the correct way to properly handle all things', () => {});",
             Some(serde_json::json!([{ "mustMatch": "#(?:unit|integration|e2e)" }])),
