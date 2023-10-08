@@ -66,7 +66,7 @@ fn compile_matcher_patterns(
         .as_array()
         .map_or_else(
             || {
-                // for `{ "describe": "/pattern/u" }`
+                // for `{ "describe": "/pattern/" }`
                 let obj = matcher_patterns.as_object()?;
                 let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
                 for (key, value) in obj {
@@ -81,7 +81,7 @@ fn compile_matcher_patterns(
                 Some(map)
             },
             |value| {
-                // for `["/pattern/u", "message"]`
+                // for `["/pattern/", "message"]`
                 let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
                 let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
                 map.insert(MatchKind::Describe, v.clone());
@@ -92,7 +92,7 @@ fn compile_matcher_patterns(
         )
         .map_or_else(
             || {
-                // for `"/pattern/u"`
+                // for `"/pattern/"`
                 let string = matcher_patterns.as_str()?;
                 let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
                 let v = &compile_matcher_pattern(MatcherPattern::String(
