@@ -119,6 +119,7 @@ mod jest {
     pub mod no_test_prefixes;
     pub mod valid_describe_callback;
     pub mod valid_expect;
+    pub mod valid_title;
 }
 
 mod unicorn {
@@ -224,6 +225,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_export,
     jest::no_standalone_expect,
     jest::no_identical_title,
+    jest::valid_title,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
