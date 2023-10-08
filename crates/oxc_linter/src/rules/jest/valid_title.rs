@@ -59,96 +59,6 @@ declare_oxc_lint!(
     restriction
 );
 
-fn compile_matcher_patterns(
-    matcher_patterns: &serde_json::Value,
-) -> Option<HashMap<MatchKind, CompiledMatcherAndMessage>> {
-    matcher_patterns
-        .as_array()
-        .map_or_else(
-            || {
-                // for `{ "describe": "/pattern/" }`
-                let obj = matcher_patterns.as_object()?;
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
-                for (key, value) in obj {
-                    let Some(v) = compile_matcher_pattern(MatcherPattern::String(value)) else {
-                        continue;
-                    };
-                    if let Some(kind) = MatchKind::from(key) {
-                        map.insert(kind, v);
-                    }
-                }
-
-                Some(map)
-            },
-            |value| {
-                // for `["/pattern/", "message"]`
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
-                let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
-                map.insert(MatchKind::Describe, v.clone());
-                map.insert(MatchKind::Test, v.clone());
-                map.insert(MatchKind::It, v.clone());
-                Some(map)
-            },
-        )
-        .map_or_else(
-            || {
-                // for `"/pattern/"`
-                let string = matcher_patterns.as_str()?;
-                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
-                let v = &compile_matcher_pattern(MatcherPattern::String(
-                    &serde_json::Value::String(string.to_string()),
-                ))?;
-                map.insert(MatchKind::Describe, v.clone());
-                map.insert(MatchKind::Test, v.clone());
-                map.insert(MatchKind::It, v.clone());
-                Some(map)
-            },
-            Some,
-        )
-}
-
-type CompiledMatcherAndMessage = (Regex, Option<String>);
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum MatchKind {
-    Describe,
-    It,
-    Test,
-}
-
-impl MatchKind {
-    fn from(name: &str) -> Option<Self> {
-        match name {
-            "describe" => Some(Self::Describe),
-            "it" => Some(Self::It),
-            "test" => Some(Self::Test),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-enum MatcherPattern<'a> {
-    String(&'a serde_json::Value),
-    Vec(&'a Vec<serde_json::Value>),
-}
-
-fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
-    match pattern {
-        MatcherPattern::String(pattern) => {
-            let reg_str = format!("(?u){}", pattern.as_str()?);
-            let reg = Regex::new(&reg_str).ok()?;
-            Some((reg, None))
-        }
-        MatcherPattern::Vec(pattern) => {
-            let reg_str = pattern.get(0).and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
-            let reg = Regex::new(&reg_str).ok()?;
-            let message = pattern.get(1).map(std::string::ToString::to_string);
-            Some((reg, message))
-        }
-    }
-}
-
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let config = value.get(0);
@@ -243,6 +153,96 @@ impl Rule for ValidTitle {
                     Message::TitleMustBeString.diagnostic(ctx, expr.span());
                 }
             }
+        }
+    }
+}
+
+type CompiledMatcherAndMessage = (Regex, Option<String>);
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+enum MatchKind {
+    Describe,
+    It,
+    Test,
+}
+
+#[derive(Copy, Clone)]
+enum MatcherPattern<'a> {
+    String(&'a serde_json::Value),
+    Vec(&'a Vec<serde_json::Value>),
+}
+
+impl MatchKind {
+    fn from(name: &str) -> Option<Self> {
+        match name {
+            "describe" => Some(Self::Describe),
+            "it" => Some(Self::It),
+            "test" => Some(Self::Test),
+            _ => None,
+        }
+    }
+}
+
+fn compile_matcher_patterns(
+    matcher_patterns: &serde_json::Value,
+) -> Option<HashMap<MatchKind, CompiledMatcherAndMessage>> {
+    matcher_patterns
+        .as_array()
+        .map_or_else(
+            || {
+                // for `{ "describe": "/pattern/" }`
+                let obj = matcher_patterns.as_object()?;
+                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                for (key, value) in obj {
+                    let Some(v) = compile_matcher_pattern(MatcherPattern::String(value)) else {
+                        continue;
+                    };
+                    if let Some(kind) = MatchKind::from(key) {
+                        map.insert(kind, v);
+                    }
+                }
+
+                Some(map)
+            },
+            |value| {
+                // for `["/pattern/", "message"]`
+                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
+                map.insert(MatchKind::Describe, v.clone());
+                map.insert(MatchKind::Test, v.clone());
+                map.insert(MatchKind::It, v.clone());
+                Some(map)
+            },
+        )
+        .map_or_else(
+            || {
+                // for `"/pattern/"`
+                let string = matcher_patterns.as_str()?;
+                let mut map: HashMap<MatchKind, CompiledMatcherAndMessage> = HashMap::new();
+                let v = &compile_matcher_pattern(MatcherPattern::String(
+                    &serde_json::Value::String(string.to_string()),
+                ))?;
+                map.insert(MatchKind::Describe, v.clone());
+                map.insert(MatchKind::Test, v.clone());
+                map.insert(MatchKind::It, v.clone());
+                Some(map)
+            },
+            Some,
+        )
+}
+
+fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
+    match pattern {
+        MatcherPattern::String(pattern) => {
+            let reg_str = format!("(?u){}", pattern.as_str()?);
+            let reg = Regex::new(&reg_str).ok()?;
+            Some((reg, None))
+        }
+        MatcherPattern::Vec(pattern) => {
+            let reg_str = pattern.get(0).and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
+            let reg = Regex::new(&reg_str).ok()?;
+            let message = pattern.get(1).map(std::string::ToString::to_string);
+            Some((reg, message))
         }
     }
 }
