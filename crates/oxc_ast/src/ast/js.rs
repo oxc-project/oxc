@@ -6,7 +6,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    reference::ReferenceId,
+    reference::{ReferenceFlag, ReferenceId},
     symbol::SymbolId,
 };
 #[cfg(feature = "serde")]
@@ -163,6 +163,11 @@ impl<'a> Expression<'a> {
         self.is_null() || self.evaluate_to_undefined()
     }
 
+    /// Determines whether the given expr is a `NaN` literal
+    pub fn is_nan(&self) -> bool {
+        matches!(self, Self::Identifier(ident) if ident.name == "NaN")
+    }
+
     /// Remove nested parentheses from this expression.
     pub fn without_parenthesized(&self) -> &Self {
         match self {
@@ -246,6 +251,23 @@ impl<'a> Expression<'a> {
             _ => None,
         }
     }
+
+    pub fn is_immutable_value(&self) -> bool {
+        match self {
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumberLiteral(_)
+            | Self::BigintLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_) => true,
+            Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
+            Self::UnaryExpression(unary_expr) => unary_expr.argument.is_immutable_value(),
+            Self::Identifier(ident) => {
+                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+            }
+            _ => false,
+        }
+    }
 }
 
 /// Identifier Name
@@ -272,6 +294,8 @@ pub struct IdentifierReference {
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<Option<ReferenceId>>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_flag: ReferenceFlag,
 }
 
 impl Hash for IdentifierReference {
@@ -283,7 +307,7 @@ impl Hash for IdentifierReference {
 
 impl IdentifierReference {
     pub fn new(span: Span, name: Atom) -> Self {
-        Self { span, name, reference_id: Cell::default() }
+        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
 }
 

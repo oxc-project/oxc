@@ -10,8 +10,8 @@ mod operator;
 use std::{rc::Rc, str::from_utf8_unchecked};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::hir::*;
-use oxc_hir::precedence;
+use oxc_ast::ast::*;
+use oxc_ast::precedence;
 use oxc_semantic::{SymbolId, SymbolTable};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
@@ -27,7 +27,7 @@ use self::{
     gen::{Gen, GenExpr},
     operator::Operator,
 };
-use crate::mangler::Mangler;
+// use crate::mangler::Mangler;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct PrinterOptions;
@@ -35,8 +35,7 @@ pub struct PrinterOptions;
 pub struct Printer {
     options: PrinterOptions,
 
-    mangler: Option<Mangler>,
-
+    // mangler: Option<Mangler>,
     /// Output Code
     code: Vec<u8>,
 
@@ -71,7 +70,7 @@ impl Printer {
         let capacity = source_len / 2;
         Self {
             options,
-            mangler: None,
+            // mangler: None,
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -84,9 +83,9 @@ impl Printer {
         }
     }
 
-    pub fn with_mangler(&mut self, mangler: Mangler) {
-        self.mangler = Some(mangler);
-    }
+    // pub fn with_mangler(&mut self, mangler: Mangler) {
+    // self.mangler = Some(mangler);
+    // }
 
     pub fn build(mut self, program: &Program<'_>) -> String {
         program.gen(&mut self, Context::default());
@@ -246,13 +245,13 @@ impl Printer {
         }
     }
 
-    fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
-        if let Some(mangler) = &self.mangler {
-            let name = mangler.get_symbol_name(symbol_id);
-            self.print_str(name.clone().as_bytes());
-        } else {
-            self.print_str(fallback.as_bytes());
-        }
+    fn print_symbol(&mut self, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+        // if let Some(mangler) = &self.mangler {
+        // let name = mangler.get_symbol_name(symbol_id);
+        // self.print_str(name.clone().as_bytes());
+        // } else {
+        self.print_str(fallback.as_bytes());
+        // }
     }
 
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {

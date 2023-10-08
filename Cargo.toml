@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members  = ["crates/*", "tasks/*", "editor/vscode/server"]
-exclude  = ["crates/oxc_minifier", "tasks/minsize"]
+exclude  = ["tasks/minsize"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]

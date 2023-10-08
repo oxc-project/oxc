@@ -57,7 +57,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(IdentifierReference { span, name, reference_id: Cell::default() })
+        Ok(IdentifierReference::new(span, name))
     }
 
     /// `BindingIdentifier` : Identifier

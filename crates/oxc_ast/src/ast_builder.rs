@@ -5,6 +5,9 @@
     clippy::unused_self,
 )]
 
+use num_bigint::BigInt;
+use std::mem;
+
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
@@ -13,7 +16,6 @@ use oxc_syntax::{
     },
     NumberBase,
 };
-use std::mem;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -88,14 +90,56 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Literals ---------- */
 
+    pub fn string_literal(&self, span: Span, value: Atom) -> StringLiteral {
+        StringLiteral { span, value }
+    }
+
     pub fn number_literal(
-        &mut self,
+        &self,
         span: Span,
         value: f64,
         raw: &'a str,
         base: NumberBase,
     ) -> NumberLiteral<'a> {
         NumberLiteral { span, value, raw, base }
+    }
+
+    pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {
+        BooleanLiteral { span, value }
+    }
+
+    pub fn null_literal(&self, span: Span) -> NullLiteral {
+        NullLiteral { span }
+    }
+
+    pub fn bigint_literal(&self, span: Span, value: BigInt) -> BigintLiteral {
+        BigintLiteral { span, value }
+    }
+
+    pub fn template_literal(
+        &self,
+        span: Span,
+        quasis: Vec<'a, TemplateElement>,
+        expressions: Vec<'a, Expression<'a>>,
+    ) -> TemplateLiteral<'a> {
+        TemplateLiteral { span, quasis, expressions }
+    }
+
+    pub fn template_element(
+        &self,
+        span: Span,
+        tail: bool,
+        value: TemplateElementValue,
+    ) -> TemplateElement {
+        TemplateElement { span, tail, value }
+    }
+
+    pub fn template_element_value(&self, raw: Atom, cooked: Option<Atom>) -> TemplateElementValue {
+        TemplateElementValue { raw, cooked }
+    }
+
+    pub fn reg_exp_literal(&self, span: Span, pattern: Atom, flags: RegExpFlags) -> RegExpLiteral {
+        RegExpLiteral { span, value: EmptyObject, regex: RegExp { pattern, flags } }
     }
 
     pub fn literal_string_expression(&self, literal: StringLiteral) -> Expression<'a> {
@@ -120,6 +164,17 @@ impl<'a> AstBuilder<'a> {
 
     pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
+    }
+
+    pub fn literal_template_expression(&mut self, literal: TemplateLiteral<'a>) -> Expression<'a> {
+        Expression::TemplateLiteral(self.alloc(literal))
+    }
+
+    pub fn identifier_reference_expression(
+        &mut self,
+        ident: IdentifierReference,
+    ) -> Expression<'a> {
+        Expression::Identifier(self.alloc(ident))
     }
 
     /* ---------- Identifiers ---------- */
