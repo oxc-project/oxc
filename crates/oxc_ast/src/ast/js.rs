@@ -414,6 +414,13 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
+    pub fn private_name(&self) -> Option<Atom> {
+        match self {
+            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
+            _ => None,
+        }
+    }
+
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             PropertyKey::Identifier(ident) => ident.name == name,

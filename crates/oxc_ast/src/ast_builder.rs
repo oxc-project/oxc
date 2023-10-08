@@ -66,6 +66,15 @@ impl<'a> AstBuilder<'a> {
         mem::replace(expr, null_expr)
     }
 
+    pub fn move_statement(&self, stmt: &mut Statement<'a>) -> Statement<'a> {
+        let empty_stmt = self.empty_statement(stmt.span());
+        mem::replace(stmt, empty_stmt)
+    }
+
+    pub fn move_statement_vec(&self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
+        mem::replace(stmts, self.new_vec())
+    }
+
     pub fn program(
         &self,
         span: Span,
@@ -713,6 +722,32 @@ impl<'a> AstBuilder<'a> {
 
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {
         ClassElement::StaticBlock(self.alloc(StaticBlock { span, body }))
+    }
+
+    pub fn class_property(
+        &self,
+        span: Span,
+        key: PropertyKey<'a>,
+        value: Option<Expression<'a>>,
+        computed: bool,
+        r#static: bool,
+        decorators: Vec<'a, Decorator<'a>>,
+    ) -> ClassElement<'a> {
+        ClassElement::PropertyDefinition(self.alloc(PropertyDefinition {
+            span,
+            key,
+            value,
+            computed,
+            r#static,
+            declare: false,
+            r#override: false,
+            optional: false,
+            definite: false,
+            readonly: false,
+            type_annotation: None,
+            accessibility: None,
+            decorators,
+        }))
     }
 
     pub fn accessor_property(

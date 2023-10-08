@@ -11,6 +11,7 @@ mod es2015;
 mod es2016;
 mod es2019;
 mod es2021;
+mod es2022;
 mod options;
 mod react_jsx;
 mod typescript;
@@ -35,6 +36,8 @@ pub use crate::options::{
 pub struct Transformer<'a> {
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
+    // es2022
+    es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
     // es2019
@@ -59,6 +62,9 @@ impl<'a> Transformer<'a> {
         }
         if let Some(react_options) = options.react {
             t.react_jsx.replace(ReactJsx::new(Rc::clone(&ast), react_options));
+        }
+        if options.target < TransformTarget::ES2022 {
+            t.es2022_class_static_block.replace(es2022::ClassStaticBlock::new(Rc::clone(&ast)));
         }
         if options.target < TransformTarget::ES2021 {
             t.es2021_logical_assignment_operators
@@ -108,5 +114,13 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
         if let Some(init) = &mut prop.init {
             self.visit_expression(init);
         }
+    }
+
+    fn visit_class_body(&mut self, class_body: &'b mut ClassBody<'a>) {
+        self.es2022_class_static_block.as_mut().map(|t| t.transform_class_body(class_body));
+
+        class_body.body.iter_mut().for_each(|class_element| {
+            self.visit_class_element(class_element);
+        });
     }
 }

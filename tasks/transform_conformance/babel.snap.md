@@ -1,4 +1,4 @@
-Passed: 91/1078
+Passed: 95/1078
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -269,10 +269,6 @@ Passed: 91/1078
 * Passed: public-loose/arrow-this-without-transform/input.js
 
 # babel-plugin-transform-class-static-block
-* Failed: class-static-block/class-binding/input.js
-* Failed: class-static-block/class-declaration/input.js
-* Failed: class-static-block/in-class-heritage/input.js
-* Failed: class-static-block/multiple-static-initializers/input.js
 * Failed: class-static-block/name-conflict/input.js
 * Failed: class-static-block/new-target/input.js
 * Failed: class-static-block/preserve-comments/input.js
@@ -290,6 +286,10 @@ Passed: 91/1078
 * Failed: integration-loose/name-conflict/input.js
 * Failed: integration-loose/preserve-comments/input.js
 * Failed: integration-loose/super-static-block/input.js
+* Passed: class-static-block/class-binding/input.js
+* Passed: class-static-block/class-declaration/input.js
+* Passed: class-static-block/in-class-heritage/input.js
+* Passed: class-static-block/multiple-static-initializers/input.js
 * Passed: integration-loose/.new-target/input.js
 
 # babel-plugin-transform-private-methods
