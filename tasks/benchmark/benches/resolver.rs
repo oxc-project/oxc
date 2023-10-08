@@ -14,7 +14,7 @@ use oxc_tasks_common::project_root;
 use rayon::prelude::*;
 
 fn data() -> Vec<(PathBuf, &'static str)> {
-    let cwd = project_root().join("crates/oxc_resolver/tests/enhanced_resolve");
+    let cwd = project_root().join("crates/oxc_resolver/fixtures/enhanced_resolve");
     let f = cwd.join("test/fixtures");
     vec![
         (cwd.clone(), "./"),

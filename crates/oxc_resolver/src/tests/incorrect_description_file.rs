@@ -1,7 +1,5 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/incorrect-description-file.test.js>
 
-use std::env;
-
 use crate::{JSONError, Resolution, ResolveError, ResolveOptions, Resolver};
 
 // TODO: add `ctx with fileDependencies and then check file dependencies
@@ -45,7 +43,7 @@ fn incorrect_description_file_3() {
 // `enhanced_resolve` does not have this test case
 #[test]
 fn no_description_file() {
-    let f = env::current_dir().unwrap().join("tests/enhanced_resolve");
+    let f = super::fixture_root().join("enhanced_resolve");
 
     // has description file
     let resolver = Resolver::default();

@@ -1,11 +1,10 @@
 //! Tests for tsconfig project references
 
 use crate::{ResolveOptions, Resolver};
-use std::env;
 
 #[test]
 fn test() {
-    let f = env::current_dir().unwrap().join("tests/tsconfig_project_references");
+    let f = super::fixture_root().join("tsconfig_project_references");
 
     let resolver = Resolver::new(ResolveOptions {
         tsconfig: Some(f.join("app")),
