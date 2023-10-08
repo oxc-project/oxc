@@ -1,5 +1,5 @@
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Span, Atom};
+use oxc_span::{Atom, Span};
 
 use std::rc::Rc;
 
@@ -25,10 +25,14 @@ impl<'a> StickyRegex<'a> {
 
         let ident = IdentifierReference::new(Span::default(), Atom::from("RegExp"));
         let callee = self.ast.identifier_expression(ident);
-        let string_of_pattern = self.ast.string_literal(Span::default(), Atom::from(reg_literal.regex.pattern.as_str()));
-        let string_of_flags = self.ast.string_literal(Span::default(), Atom::from(reg_literal.regex.flags.to_string()));
-        let pattern_literal = self.ast.literal_string_expression(string_of_pattern);
-        let flags_literal = self.ast.literal_string_expression(string_of_flags);
+        let pattern_literal = self
+            .ast
+            .string_literal(Span::default(), Atom::from(reg_literal.regex.pattern.as_str()));
+        let flags_literal = self
+            .ast
+            .string_literal(Span::default(), Atom::from(reg_literal.regex.flags.to_string()));
+        let pattern_literal = self.ast.literal_string_expression(pattern_literal);
+        let flags_literal = self.ast.literal_string_expression(flags_literal);
 
         let mut arguments = self.ast.new_vec_with_capacity(2);
         arguments.push(Argument::Expression(pattern_literal));
