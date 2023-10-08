@@ -33,26 +33,6 @@ pub struct ValidTitle {
     must_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
 }
 
-type CompiledMatcherAndMessage = (Regex, Option<String>);
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-enum MatchKind {
-    Describe,
-    It,
-    Test,
-}
-
-impl MatchKind {
-    fn from(name: &str) -> Option<Self> {
-        match name {
-            "describe" => Some(Self::Describe),
-            "it" => Some(Self::It),
-            "test" => Some(Self::Test),
-            _ => None,
-        }
-    }
-}
-
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -125,6 +105,26 @@ fn compile_matcher_patterns(
             },
             Some,
         )
+}
+
+type CompiledMatcherAndMessage = (Regex, Option<String>);
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+enum MatchKind {
+    Describe,
+    It,
+    Test,
+}
+
+impl MatchKind {
+    fn from(name: &str) -> Option<Self> {
+        match name {
+            "describe" => Some(Self::Describe),
+            "it" => Some(Self::It),
+            "test" => Some(Self::Test),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
