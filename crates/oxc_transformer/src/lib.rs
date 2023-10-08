@@ -46,6 +46,7 @@ pub struct Transformer<'a> {
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
+    es2015_sticky_regex: Option<es2015::StickyRegex<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -78,6 +79,7 @@ impl<'a> Transformer<'a> {
         }
         if options.target < TransformTarget::ES2015 {
             t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
+            t.es2015_sticky_regex.replace(es2015::StickyRegex::new(Rc::clone(&ast)));
         }
         t
     }
@@ -93,6 +95,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
         // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_sticky_regex.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }
