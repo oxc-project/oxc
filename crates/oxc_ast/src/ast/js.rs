@@ -30,8 +30,11 @@ impl<'a> Program<'a> {
     pub fn is_empty(&self) -> bool {
         self.body.is_empty() && self.directives.is_empty()
     }
+
     pub fn is_strict(&self) -> bool {
-        self.directives.iter().any(|d| d.directive == "use strict")
+        self.source_type.is_module()
+            || self.source_type.always_strict()
+            || self.directives.iter().any(|d| d.directive == "use strict")
     }
 }
 
