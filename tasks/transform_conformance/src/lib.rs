@@ -56,6 +56,7 @@ pub fn babel(options: &BabelOptions) {
         "babel-plugin-transform-exponentiation-operator",
         // ES2015
         "babel-plugin-transform-shorthand-properties",
+        "babel-plugin-transform-sticky-regex",
         // TypeScript
         "babel-plugin-transform-typescript",
         // React
