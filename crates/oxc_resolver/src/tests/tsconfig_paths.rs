@@ -4,15 +4,12 @@
 
 use super::memory_fs::MemoryFS;
 use crate::{ResolveError, ResolveOptions, Resolver, ResolverGeneric, TsConfig};
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 // <https://github.com/parcel-bundler/parcel/blob/b6224fd519f95e68d8b93ba90376fd94c8b76e69/packages/utils/node-resolver-rs/src/lib.rs#L2303>
 #[test]
 fn tsconfig() {
-    let f = env::current_dir().unwrap().join("tests/parcel");
+    let f = super::fixture_root().join("parcel");
 
     #[rustfmt::skip]
     let pass = [
@@ -51,7 +48,7 @@ fn tsconfig() {
 
 #[test]
 fn json_with_comments() {
-    let f = env::current_dir().unwrap().join("tests/parcel/tsconfig/trailing-comma");
+    let f = super::fixture_root().join("parcel/tsconfig/trailing-comma");
 
     let resolver = Resolver::new(ResolveOptions {
         tsconfig: Some(f.join("tsconfig.json")),

@@ -1,0 +1,1 @@
+/Users/bytedance/github/oxc/crates/oxc_resolver/tests/enhanced_resolve/lib/index.js

@@ -1,11 +1,11 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/roots.test.js>
 
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{AliasValue, ResolveError, ResolveOptions, Resolver};
 
 fn dirname() -> PathBuf {
-    env::current_dir().unwrap().join("tests/enhanced_resolve/test")
+    super::fixture_root().join("enhanced_resolve/test")
 }
 
 #[test]

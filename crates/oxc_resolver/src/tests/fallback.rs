@@ -1,14 +1,12 @@
 //! https://github.com/webpack/enhanced-resolve/blob/main/test/fallback.test.js
 
-use std::path::{Path, PathBuf};
-
-use crate::{AliasValue, ResolveError, ResolveOptions, ResolverGeneric};
-
-use super::memory_fs::MemoryFS;
-
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
 fn fallback() {
+    use super::memory_fs::MemoryFS;
+    use crate::{AliasValue, ResolveError, ResolveOptions, ResolverGeneric};
+    use std::path::{Path, PathBuf};
+
     let f = Path::new("/");
 
     let file_system = MemoryFS::new(&[
