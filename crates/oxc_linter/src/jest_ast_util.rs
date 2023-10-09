@@ -151,6 +151,10 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
+        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest)) {
+            return parse_jest_jest_fn_call(members, name);
+        }
+
         // Check every link in the chain except the last is a member expression
         if !all_member_expr_except_last {
             return None;
@@ -235,6 +239,21 @@ fn parse_jest_expect_fn_call<'a>(
         matcher_index: matcher,
         modifier_indices: modifiers,
         expect_error,
+    }));
+}
+
+fn parse_jest_jest_fn_call<'a>(
+    members: Vec<KnownMemberExpressionProperty<'a>>,
+    name: &'a str,
+) -> Option<ParsedJestFnCall<'a>> {
+    if !name.to_ascii_lowercase().eq_ignore_ascii_case("jest") {
+        return None;
+    }
+
+    return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
+        kind: JestFnKind::General(JestGeneralFnKind::Jest),
+        members,
+        name: Cow::Borrowed(name),
     }));
 }
 
