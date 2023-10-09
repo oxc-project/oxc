@@ -2,6 +2,7 @@
 
 mod ast_util;
 mod fold;
+mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
@@ -13,6 +14,8 @@ use oxc_syntax::{
     precedence::GetPrecedence,
     NumberBase,
 };
+
+use self::prepass::Prepass;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
@@ -70,16 +73,19 @@ impl Default for CompressOptions {
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
+
+    prepass: Prepass<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options }
+        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
     }
 
     pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+        self.prepass.visit_program(program);
         self.visit_program(program);
     }
 
@@ -208,16 +214,15 @@ impl<'a> Compressor<'a> {
     /* Expressions */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined<'b>(&mut self, _expr: &'b mut Expression<'a>) -> bool {
-        // let Expression::Identifier(ident) = expr else { return false };
-        // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
-        // if ident.name == "undefined"
-        // && self.semantic.symbols().is_global_reference(reference_id)
-        // {
-        // *expr = self.create_void_0();
-        // return true;
-        // }
-        // }
+    fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+        let Expression::Identifier(ident) = expr else { return false };
+        if ident.name == "undefined" {
+            // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
+            // && self.semantic.symbols().is_global_reference(reference_id)
+            *expr = self.create_void_0();
+            return true;
+            // }
+        }
         false
     }
 
@@ -225,13 +230,13 @@ impl<'a> Compressor<'a> {
     #[allow(unused)]
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
-        // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
-        // if ident.name == "Infinity" && self.semantic.symbols().is_global_reference(reference_id)
-        // {
-        // *expr = self.create_one_div_zero();
-        // return true;
-        // }
-        // }
+        if ident.name == "Infinity" {
+            // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
+            //&& self.semantic.symbols().is_global_reference(reference_id)
+            *expr = self.create_one_div_zero();
+            return true;
+            // }
+        }
         false
     }
 
@@ -319,7 +324,18 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !(self.drop_debugger(stmt) || self.drop_console(stmt)));
+        stmts.retain(|stmt| {
+            if matches!(stmt, Statement::EmptyStatement(_)) {
+                return false;
+            }
+            if self.drop_debugger(stmt) {
+                return false;
+            }
+            if self.drop_console(stmt) {
+                return false;
+            }
+            true
+        });
 
         self.join_vars(stmts);
 

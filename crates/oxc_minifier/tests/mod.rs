@@ -14,10 +14,10 @@ pub(crate) fn test(source_text: &str, expected: &str) {
     test_with_options(source_text, expected, options);
 }
 
-pub(crate) fn test_with_options(source_text: &str, _expected: &str, options: MinifierOptions) {
+pub(crate) fn test_with_options(source_text: &str, expected: &str, options: MinifierOptions) {
     let source_type = SourceType::default();
-    let _minified = Minifier::new(source_text, source_type, options).build();
-    // assert_eq!(expected, minified, "for source {source_text}");
+    let minified = Minifier::new(source_text, source_type, options).build();
+    assert_eq!(expected, minified, "for source {source_text}");
 }
 
 pub(crate) fn test_same(source_text: &str) {
@@ -28,17 +28,17 @@ pub(crate) fn test_reparse(source_text: &str) {
     let source_type = SourceType::default();
     let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
     let minified = Minifier::new(source_text, source_type, options).build();
-    let _minified2 = Minifier::new(&minified, source_type, options).build();
-    // assert_eq!(minified, minified2, "for source {source_text}");
+    let minified2 = Minifier::new(&minified, source_type, options).build();
+    assert_eq!(minified, minified2, "for source {source_text}");
 }
 
-pub(crate) fn test_without_compress_booleans(source_text: &str, _expected: &str) {
+pub(crate) fn test_without_compress_booleans(source_text: &str, expected: &str) {
     let source_type = SourceType::default();
     let compress_options = CompressOptions { booleans: false, ..CompressOptions::default() };
     let options =
         MinifierOptions { mangle: false, compress: compress_options, print: PrinterOptions };
-    let _minified = Minifier::new(source_text, source_type, options).build();
-    // assert_eq!(expected, minified, "for source {source_text}");
+    let minified = Minifier::new(source_text, source_type, options).build();
+    assert_eq!(expected, minified, "for source {source_text}");
 }
 
 pub(crate) fn test_snapshot<S>(name: &str, sources: S)
