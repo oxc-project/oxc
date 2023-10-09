@@ -1,4 +1,4 @@
-use oxc_hir::hir::Expression;
+use oxc_ast::ast::Expression;
 
 pub(super) fn is_console(expr: &Expression<'_>) -> bool {
     // let Statement::ExpressionStatement(expr) = stmt else { return false };

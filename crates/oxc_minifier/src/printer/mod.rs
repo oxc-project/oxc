@@ -10,8 +10,8 @@ mod operator;
 use std::{rc::Rc, str::from_utf8_unchecked};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::hir::*;
-use oxc_hir::precedence;
+use oxc_ast::ast::*;
+use oxc_ast::precedence;
 use oxc_semantic::{SymbolId, SymbolTable};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
@@ -246,13 +246,15 @@ impl Printer {
         }
     }
 
-    fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
+    fn print_symbol(&mut self, symbol_id: Option<SymbolId>, fallback: &Atom) {
         if let Some(mangler) = &self.mangler {
-            let name = mangler.get_symbol_name(symbol_id);
-            self.print_str(name.clone().as_bytes());
-        } else {
-            self.print_str(fallback.as_bytes());
+            if let Some(symbol_id) = symbol_id {
+                let name = mangler.get_symbol_name(symbol_id);
+                self.print_str(name.clone().as_bytes());
+                return;
+            }
         }
+        self.print_str(fallback.as_bytes());
     }
 
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {

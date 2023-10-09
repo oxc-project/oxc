@@ -6,7 +6,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    reference::ReferenceId,
+    reference::{ReferenceFlag, ReferenceId},
     symbol::SymbolId,
 };
 #[cfg(feature = "serde")]
@@ -29,6 +29,12 @@ pub struct Program<'a> {
 impl<'a> Program<'a> {
     pub fn is_empty(&self) -> bool {
         self.body.is_empty() && self.directives.is_empty()
+    }
+
+    pub fn is_strict(&self) -> bool {
+        self.source_type.is_module()
+            || self.source_type.always_strict()
+            || self.directives.iter().any(|d| d.directive == "use strict")
     }
 }
 
@@ -163,6 +169,11 @@ impl<'a> Expression<'a> {
         self.is_null() || self.evaluate_to_undefined()
     }
 
+    /// Determines whether the given expr is a `NaN` literal
+    pub fn is_nan(&self) -> bool {
+        matches!(self, Self::Identifier(ident) if ident.name == "NaN")
+    }
+
     /// Remove nested parentheses from this expression.
     pub fn without_parenthesized(&self) -> &Self {
         match self {
@@ -246,6 +257,23 @@ impl<'a> Expression<'a> {
             _ => None,
         }
     }
+
+    pub fn is_immutable_value(&self) -> bool {
+        match self {
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumberLiteral(_)
+            | Self::BigintLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_) => true,
+            Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
+            Self::UnaryExpression(unary_expr) => unary_expr.argument.is_immutable_value(),
+            Self::Identifier(ident) => {
+                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+            }
+            _ => false,
+        }
+    }
 }
 
 /// Identifier Name
@@ -272,6 +300,8 @@ pub struct IdentifierReference {
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<Option<ReferenceId>>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_flag: ReferenceFlag,
 }
 
 impl Hash for IdentifierReference {
@@ -283,7 +313,7 @@ impl Hash for IdentifierReference {
 
 impl IdentifierReference {
     pub fn new(span: Span, name: Atom) -> Self {
-        Self { span, name, reference_id: Cell::default() }
+        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
 }
 
@@ -414,9 +444,23 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
+    pub fn private_name(&self) -> Option<Atom> {
+        match self {
+            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
+            _ => None,
+        }
+    }
+
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             PropertyKey::Identifier(ident) => ident.name == name,
+            _ => false,
+        }
+    }
+
+    pub fn is_specific_string_literal(&self, string: &str) -> bool {
+        match self {
+            PropertyKey::Expression(expr) => expr.is_specific_string_literal(string),
             _ => false,
         }
     }
@@ -1438,6 +1482,12 @@ impl<'a> Function<'a> {
 
     pub fn is_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
+    }
+
+    pub fn is_strict(&self) -> bool {
+        self.body.as_ref().is_some_and(|body| {
+            body.directives.iter().any(|directive| directive.directive == "use strict")
+        })
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{env, fs, io, path::Path};
+use std::{fs, io, path::Path};
 
 use crate::{ResolveOptions, Resolver};
 
@@ -63,7 +63,7 @@ fn cleanup_symlinks(temp_path: &Path) {
 
 #[test]
 fn test() -> io::Result<()> {
-    let root = env::current_dir().unwrap().join("tests/enhanced_resolve");
+    let root = super::fixture_root().join("enhanced_resolve");
     let dirname = root.join("test");
     let temp_path = dirname.join("temp");
     if !temp_path.exists() {

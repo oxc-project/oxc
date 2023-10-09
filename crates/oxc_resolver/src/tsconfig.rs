@@ -19,13 +19,13 @@ pub struct TsConfig {
     path: PathBuf,
 
     #[serde(default, deserialize_with = "deserialize_extends")]
-    extends: Vec<String>,
+    pub extends: Vec<String>,
 
     #[serde(default)]
-    references: Vec<ProjectReference>,
+    pub references: Vec<ProjectReference>,
 
     #[serde(default)]
-    compiler_options: CompilerOptions,
+    pub compiler_options: CompilerOptions,
 }
 
 /// Project Reference
@@ -92,14 +92,6 @@ impl TsConfig {
         self.path.parent().unwrap()
     }
 
-    pub fn extends(&self) -> &Vec<String> {
-        &self.extends
-    }
-
-    pub fn references_mut(&mut self) -> &mut Vec<ProjectReference> {
-        self.references.as_mut()
-    }
-
     fn base_path(&self) -> &Path {
         self.compiler_options
             .base_url
@@ -120,7 +112,10 @@ impl TsConfig {
 
     pub fn resolve(&self, path: &Path, specifier: &str) -> Vec<PathBuf> {
         if path.starts_with(self.base_path()) {
-            return self.resolve_path_alias(specifier);
+            let paths = self.resolve_path_alias(specifier);
+            if !paths.is_empty() {
+                return paths;
+            }
         }
         for reference in &self.references {
             if let Some(tsconfig) = &reference.tsconfig {

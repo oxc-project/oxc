@@ -118,10 +118,13 @@ impl Linter {
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {
-        let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
-            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
-            map
-        });
+        let rules_by_category = RULES.iter().fold(
+            FxHashMap::default(),
+            |mut map: FxHashMap<RuleCategory, Vec<&RuleEnum>>, rule| {
+                map.entry(rule.category()).or_default().push(rule);
+                map
+            },
+        );
 
         for (category, rules) in rules_by_category {
             writeln!(writer, "{} ({}):", category, rules.len()).unwrap();

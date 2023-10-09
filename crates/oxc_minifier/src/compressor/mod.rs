@@ -1,18 +1,21 @@
 #![allow(clippy::unused_self)]
 
+mod ast_util;
 mod fold;
+mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::{hir::*, HirBuilder, VisitMut};
-use oxc_semantic::Semantic;
+use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::Span;
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
     precedence::GetPrecedence,
     NumberBase,
 };
+
+use self::prepass::Prepass;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
@@ -68,39 +71,41 @@ impl Default for CompressOptions {
 }
 
 pub struct Compressor<'a> {
-    hir: HirBuilder<'a>,
-    semantic: Semantic<'a>,
+    ast: AstBuilder<'a>,
     options: CompressOptions,
+
+    prepass: Prepass<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
-    pub fn new(allocator: &'a Allocator, semantic: Semantic<'a>, options: CompressOptions) -> Self {
-        Self { hir: HirBuilder::new(allocator), semantic, options }
+    pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
+        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
     }
 
-    pub fn build<'b>(mut self, program: &'b mut Program<'a>) -> Semantic<'a> {
+    pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+        self.prepass.visit_program(program);
         self.visit_program(program);
-        self.semantic
     }
 
     /* Utilities */
 
     /// `void 0`
     fn create_void_0(&mut self) -> Expression<'a> {
-        let left = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
-        let num = self.hir.literal_number_expression(left);
-        self.hir.unary_expression(SPAN, UnaryOperator::Void, num)
+        let left = self.ast.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        let num = self.ast.literal_number_expression(left);
+        self.ast.unary_expression(SPAN, UnaryOperator::Void, num)
     }
 
     /// `1/0`
+    #[allow(unused)]
     fn create_one_div_zero(&mut self) -> Expression<'a> {
-        let left = self.hir.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
-        let left = self.hir.literal_number_expression(left);
-        let right = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
-        let right = self.hir.literal_number_expression(right);
-        self.hir.binary_expression(SPAN, left, BinaryOperator::Division, right)
+        let left = self.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+        let left = self.ast.literal_number_expression(left);
+        let right = self.ast.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        let right = self.ast.literal_number_expression(right);
+        self.ast.binary_expression(SPAN, left, BinaryOperator::Division, right)
     }
 
     /* Statements */
@@ -176,7 +181,7 @@ impl<'a> Compressor<'a> {
         }
 
         // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = self.hir.new_vec_with_capacity(stmts.len() - capacity);
+        let mut new_stmts = self.ast.new_vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
                 if let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) =
@@ -199,10 +204,10 @@ impl<'a> Compressor<'a> {
     fn compress_while<'b>(&mut self, stmt: &'b mut Statement<'a>) {
         let Statement::WhileStatement(while_stmt) = stmt else { return };
         if self.options.loops {
-            let dummy_test = self.hir.this_expression(SPAN);
+            let dummy_test = self.ast.this_expression(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
-            let body = while_stmt.body.take();
-            *stmt = self.hir.for_statement(SPAN, None, Some(test), None, body);
+            let body = self.ast.move_statement(&mut while_stmt.body);
+            *stmt = self.ast.for_statement(SPAN, None, Some(test), None, body);
         }
     }
 
@@ -211,11 +216,12 @@ impl<'a> Compressor<'a> {
     /// Transforms `undefined` => `void 0`
     fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
-        if ident.name == "undefined"
-            && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner())
-        {
+        if ident.name == "undefined" {
+            // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
+            // && self.semantic.symbols().is_global_reference(reference_id)
             *expr = self.create_void_0();
             return true;
+            // }
         }
         false
     }
@@ -224,11 +230,12 @@ impl<'a> Compressor<'a> {
     #[allow(unused)]
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
-        if ident.name == "Infinity"
-            && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner())
-        {
+        if ident.name == "Infinity" {
+            // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
+            //&& self.semantic.symbols().is_global_reference(reference_id)
             *expr = self.create_one_div_zero();
             return true;
+            // }
         }
         false
     }
@@ -238,14 +245,14 @@ impl<'a> Compressor<'a> {
     fn compress_boolean<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans {
-            let num = self.hir.number_literal(
+            let num = self.ast.number_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            let num = self.hir.literal_number_expression(num);
-            *expr = self.hir.unary_expression(SPAN, UnaryOperator::LogicalNot, num);
+            let num = self.ast.literal_number_expression(num);
+            *expr = self.ast.unary_expression(SPAN, UnaryOperator::LogicalNot, num);
             return true;
         }
         false
@@ -259,7 +266,7 @@ impl<'a> Compressor<'a> {
                 if unary_expr.operator == UnaryOperator::Typeof {
                     if let Expression::Identifier(ident) = &unary_expr.argument {
                         if expr.right.is_specific_string_literal("undefined") {
-                            let left = self.hir.identifier_reference_expression((*ident).clone());
+                            let left = self.ast.identifier_reference_expression((*ident).clone());
                             let right = self.create_void_0();
                             let operator = BinaryOperator::StrictEquality;
                             *expr = BinaryExpression { span: SPAN, left, operator, right };
@@ -317,7 +324,18 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !(self.drop_debugger(stmt) || self.drop_console(stmt)));
+        stmts.retain(|stmt| {
+            if matches!(stmt, Statement::EmptyStatement(_)) {
+                return false;
+            }
+            if self.drop_debugger(stmt) {
+                return false;
+            }
+            if self.drop_console(stmt) {
+                return false;
+            }
+            true
+        });
 
         self.join_vars(stmts);
 

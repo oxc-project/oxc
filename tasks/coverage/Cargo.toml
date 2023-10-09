@@ -10,6 +10,9 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[lib]
+doctest = false
+
 [dependencies]
 oxc_allocator   = { workspace = true }
 oxc_parser      = { workspace = true }
@@ -35,4 +38,4 @@ console        = "0.15.7"
 encoding_rs    = "0.8.33"
 encoding_rs_io = "0.1.7"
 serde_yaml     = "0.9.25"
-similar        = "2.2.1"
+similar        = "2.3.0"

@@ -1,9 +1,8 @@
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
-use oxc_ast::{ast::ClassType, AstKind};
 use oxc_index::IndexVec;
-use oxc_span::{Atom, SourceType};
+use oxc_span::Atom;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -26,14 +25,6 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
-    pub fn new(source_type: SourceType) -> Self {
-        let mut scope_tree = Self::default();
-        let scope_flags = ScopeFlags::Top
-            .with_strict_mode(source_type.is_module() || source_type.always_strict());
-        scope_tree.add_scope(None, scope_flags);
-        scope_tree
-    }
-
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -132,30 +123,5 @@ impl ScopeTree {
         scope_id: ScopeId,
     ) -> &mut UnresolvedReferences {
         &mut self.unresolved_references[scope_id]
-    }
-}
-
-impl ScopeTree {
-    pub fn scope_flags_from_ast_kind(kind: AstKind) -> Option<ScopeFlags> {
-        match kind {
-            AstKind::Function(_) => Some(ScopeFlags::Function),
-            AstKind::ArrowExpression(_) => Some(ScopeFlags::Function | ScopeFlags::Arrow),
-            AstKind::StaticBlock(_) => Some(ScopeFlags::ClassStaticBlock),
-            AstKind::TSModuleBlock(_) => Some(ScopeFlags::TsModuleBlock),
-            AstKind::Class(class) if matches!(class.r#type, ClassType::ClassExpression) => {
-                // Class expression creates a temporary scope with the class name as its only variable
-                // E.g., `let c = class A { foo() { console.log(A) } }`
-                Some(ScopeFlags::empty())
-            }
-            AstKind::BlockStatement(_)
-            | AstKind::CatchClause(_)
-            | AstKind::ForStatement(_)
-            | AstKind::ForInStatement(_)
-            | AstKind::ForOfStatement(_)
-            | AstKind::TSTypeParameter(_)
-            | AstKind::TSEnumBody(_)
-            | AstKind::SwitchStatement(_) => Some(ScopeFlags::empty()),
-            _ => None,
-        }
     }
 }

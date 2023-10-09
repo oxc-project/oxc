@@ -395,7 +395,7 @@ pub struct ClassElements<'a> {
 }
 
 impl<'a> ClassElements<'a> {
-    pub(crate) fn new(p: &mut Parser<'a>) -> Self {
+    pub(crate) fn new(p: &Parser<'a>) -> Self {
         Self { elements: p.ast.new_vec(), private_bound_identifiers: FxHashMap::default() }
     }
 
@@ -481,7 +481,7 @@ pub struct SwitchCases<'a> {
 }
 
 impl<'a> SwitchCases<'a> {
-    pub(crate) fn new(p: &mut Parser<'a>) -> Self {
+    pub(crate) fn new(p: &Parser<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 }

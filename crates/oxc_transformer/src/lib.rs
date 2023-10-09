@@ -7,9 +7,11 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
+mod es2015;
 mod es2016;
 mod es2019;
 mod es2021;
+mod es2022;
 mod options;
 mod react_jsx;
 mod typescript;
@@ -19,6 +21,7 @@ use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::SourceType;
 use std::rc::Rc;
 
+use es2015::ShorthandProperties;
 use es2016::ExponentiationOperator;
 use es2019::OptionalCatchBinding;
 use es2021::LogicalAssignmentOperators;
@@ -33,12 +36,16 @@ pub use crate::options::{
 pub struct Transformer<'a> {
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
+    // es2022
+    es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
     // es2019
     es2019_optional_catch_binding: Option<OptionalCatchBinding<'a>>,
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
+    // es2015
+    es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -56,6 +63,9 @@ impl<'a> Transformer<'a> {
         if let Some(react_options) = options.react {
             t.react_jsx.replace(ReactJsx::new(Rc::clone(&ast), react_options));
         }
+        if options.target < TransformTarget::ES2022 {
+            t.es2022_class_static_block.replace(es2022::ClassStaticBlock::new(Rc::clone(&ast)));
+        }
         if options.target < TransformTarget::ES2021 {
             t.es2021_logical_assignment_operators
                 .replace(LogicalAssignmentOperators::new(Rc::clone(&ast)));
@@ -65,6 +75,9 @@ impl<'a> Transformer<'a> {
         }
         if options.target < TransformTarget::ES2016 {
             t.es2016_exponentiation_operator.replace(ExponentiationOperator::new(Rc::clone(&ast)));
+        }
+        if options.target < TransformTarget::ES2015 {
+            t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
         }
         t
     }
@@ -91,5 +104,23 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
             self.visit_binding_pattern(param);
         }
         self.visit_statements(&mut clause.body.body);
+    }
+
+    fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
+        self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
+
+        self.visit_property_key(&mut prop.key);
+        self.visit_expression(&mut prop.value);
+        if let Some(init) = &mut prop.init {
+            self.visit_expression(init);
+        }
+    }
+
+    fn visit_class_body(&mut self, class_body: &'b mut ClassBody<'a>) {
+        self.es2022_class_static_block.as_mut().map(|t| t.transform_class_body(class_body));
+
+        class_body.body.iter_mut().for_each(|class_element| {
+            self.visit_class_element(class_element);
+        });
     }
 }

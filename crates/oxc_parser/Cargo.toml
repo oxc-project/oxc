@@ -12,7 +12,6 @@ rust-version.workspace = true
 categories.workspace   = true
 
 [lib]
-# We don't use doc tests because it's too slow
 doctest = false
 
 [dependencies]

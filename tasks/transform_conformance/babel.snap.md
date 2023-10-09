@@ -1,4 +1,4 @@
-Passed: 87/1106
+Passed: 95/1078
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -19,7 +19,6 @@ Passed: 87/1106
 * Failed: assumption-setPublicClassFields/regression-T6719/input.js
 * Failed: assumption-setPublicClassFields/regression-T7364/input.mjs
 * Failed: assumption-setPublicClassFields/static/input.js
-* Failed: assumption-setPublicClassFields/static-class-binding/input.js
 * Failed: assumption-setPublicClassFields/static-export/input.mjs
 * Failed: assumption-setPublicClassFields/static-infer-name/input.js
 * Failed: assumption-setPublicClassFields/static-super/input.js
@@ -109,7 +108,6 @@ Passed: 87/1106
 * Failed: private/regression-T7364/input.mjs
 * Failed: private/static/input.js
 * Failed: private/static-call/input.js
-* Failed: private/static-class-binding/input.js
 * Failed: private/static-export/input.mjs
 * Failed: private/static-infer-name/input.js
 * Failed: private/static-inherited/input.js
@@ -181,7 +179,6 @@ Passed: 87/1106
 * Failed: private-loose/reference-in-other-property/input.js
 * Failed: private-loose/static/input.js
 * Failed: private-loose/static-call/input.js
-* Failed: private-loose/static-class-binding/input.js
 * Failed: private-loose/static-export/input.mjs
 * Failed: private-loose/static-infer-name/input.js
 * Failed: private-loose/static-inherited/input.js
@@ -219,7 +216,6 @@ Passed: 87/1106
 * Failed: public/regression-T6719/input.js
 * Failed: public/regression-T7364/input.mjs
 * Failed: public/static/input.js
-* Failed: public/static-class-binding/input.js
 * Failed: public/static-export/input.mjs
 * Failed: public/static-infer-name/input.js
 * Failed: public/static-super/input.js
@@ -245,7 +241,6 @@ Passed: 87/1106
 * Failed: public-loose/regression-T6719/input.js
 * Failed: public-loose/regression-T7364/input.mjs
 * Failed: public-loose/static/input.js
-* Failed: public-loose/static-class-binding/input.js
 * Failed: public-loose/static-export/input.mjs
 * Failed: public-loose/static-infer-name/input.js
 * Failed: public-loose/static-super/input.js
@@ -274,10 +269,6 @@ Passed: 87/1106
 * Passed: public-loose/arrow-this-without-transform/input.js
 
 # babel-plugin-transform-class-static-block
-* Failed: class-static-block/class-binding/input.js
-* Failed: class-static-block/class-declaration/input.js
-* Failed: class-static-block/in-class-heritage/input.js
-* Failed: class-static-block/multiple-static-initializers/input.js
 * Failed: class-static-block/name-conflict/input.js
 * Failed: class-static-block/new-target/input.js
 * Failed: class-static-block/preserve-comments/input.js
@@ -295,11 +286,14 @@ Passed: 87/1106
 * Failed: integration-loose/name-conflict/input.js
 * Failed: integration-loose/preserve-comments/input.js
 * Failed: integration-loose/super-static-block/input.js
+* Passed: class-static-block/class-binding/input.js
+* Passed: class-static-block/class-declaration/input.js
+* Passed: class-static-block/in-class-heritage/input.js
+* Passed: class-static-block/multiple-static-initializers/input.js
 * Passed: integration-loose/.new-target/input.js
 
 # babel-plugin-transform-private-methods
 * Failed: accessors/basic/input.js
-* Failed: accessors/class-binding/input.js
 * Failed: accessors/get-only-setter/input.js
 * Failed: accessors/preserve-comments/input.js
 * Failed: accessors/reassignment/input.js
@@ -308,20 +302,17 @@ Passed: 87/1106
 * Failed: accessors/updates/input.js
 * Failed: accessors/updates-bigint/input.js
 * Failed: accessors-loose/basic/input.js
-* Failed: accessors-loose/class-binding/input.js
 * Failed: accessors-loose/get-only-setter/input.js
 * Failed: accessors-loose/preserve-comments/input.js
 * Failed: accessors-loose/reassignment/input.js
 * Failed: accessors-loose/set-only-getter/input.js
 * Failed: accessors-loose/updates/input.js
 * Failed: accessors-privateFieldsAsProperties/basic/input.js
-* Failed: accessors-privateFieldsAsProperties/class-binding/input.js
 * Failed: accessors-privateFieldsAsProperties/get-only-setter/input.js
 * Failed: accessors-privateFieldsAsProperties/preserve-comments/input.js
 * Failed: accessors-privateFieldsAsProperties/set-only-getter/input.js
 * Failed: accessors-privateFieldsAsProperties/updates/input.js
 * Failed: accessors-privateFieldsAsSymbols/basic/input.js
-* Failed: accessors-privateFieldsAsSymbols/class-binding/input.js
 * Failed: accessors-privateFieldsAsSymbols/get-only-setter/input.js
 * Failed: accessors-privateFieldsAsSymbols/preserve-comments/input.js
 * Failed: accessors-privateFieldsAsSymbols/set-only-getter/input.js
@@ -339,7 +330,6 @@ Passed: 87/1106
 * Failed: private-method/assignment/input.js
 * Failed: private-method/async/input.js
 * Failed: private-method/before-fields/input.js
-* Failed: private-method/class-binding/input.js
 * Failed: private-method/class-expression/input.js
 * Failed: private-method/context/input.js
 * Failed: private-method/exfiltrated/input.js
@@ -352,7 +342,6 @@ Passed: 87/1106
 * Failed: private-method-loose/assignment/input.js
 * Failed: private-method-loose/async/input.js
 * Failed: private-method-loose/before-fields/input.js
-* Failed: private-method-loose/class-binding/input.js
 * Failed: private-method-loose/class-expression/input.js
 * Failed: private-method-loose/context/input.js
 * Failed: private-method-loose/exfiltrated/input.js
@@ -363,7 +352,6 @@ Passed: 87/1106
 * Failed: private-method-privateFieldsAsProperties/assignment/input.js
 * Failed: private-method-privateFieldsAsProperties/async/input.js
 * Failed: private-method-privateFieldsAsProperties/before-fields/input.js
-* Failed: private-method-privateFieldsAsProperties/class-binding/input.js
 * Failed: private-method-privateFieldsAsProperties/class-expression/input.js
 * Failed: private-method-privateFieldsAsProperties/context/input.js
 * Failed: private-method-privateFieldsAsProperties/exfiltrated/input.js
@@ -372,7 +360,6 @@ Passed: 87/1106
 * Failed: private-method-privateFieldsAsSymbols/assignment/input.js
 * Failed: private-method-privateFieldsAsSymbols/async/input.js
 * Failed: private-method-privateFieldsAsSymbols/before-fields/input.js
-* Failed: private-method-privateFieldsAsSymbols/class-binding/input.js
 * Failed: private-method-privateFieldsAsSymbols/class-expression/input.js
 * Failed: private-method-privateFieldsAsSymbols/context/input.js
 * Failed: private-method-privateFieldsAsSymbols/exfiltrated/input.js
@@ -530,12 +517,6 @@ Passed: 87/1106
 * Failed: amd/script/input.js
 * Failed: amd/to-string/input.js
 * Failed: amd/with-other-import-export/input.mjs
-* Failed: amd-createImportExpression-false/missing-plugin/input.mjs
-* Failed: amd-createImportExpression-false/module/input.mjs
-* Failed: amd-createImportExpression-false/no-interop/input.js
-* Failed: amd-createImportExpression-false/script/input.js
-* Failed: amd-createImportExpression-false/to-string/input.js
-* Failed: amd-createImportExpression-false/with-other-import-export/input.mjs
 * Failed: commonjs/missing-plugin/input.mjs
 * Failed: commonjs/module/input.mjs
 * Failed: commonjs/no-interop/input.js
@@ -543,23 +524,12 @@ Passed: 87/1106
 * Failed: commonjs/shadowed-require/input.js
 * Failed: commonjs/template-literal/input.js
 * Failed: commonjs/to-string/input.js
-* Failed: commonjs-createImportExpression-false/missing-plugin/input.mjs
-* Failed: commonjs-createImportExpression-false/module/input.mjs
-* Failed: commonjs-createImportExpression-false/no-interop/input.js
-* Failed: commonjs-createImportExpression-false/script/input.js
-* Failed: commonjs-createImportExpression-false/shadowed-require/input.js
-* Failed: commonjs-createImportExpression-false/template-literal/input.js
-* Failed: commonjs-createImportExpression-false/to-string/input.js
+* Failed: systemjs/missing-plugin-babel-7/input.mjs
 * Failed: systemjs/module/input.mjs
 * Failed: systemjs/script/input.js
 * Failed: systemjs/to-string/input.js
-* Failed: systemjs-createImportExpression-false/missing-plugin-babel-7/input.mjs
-* Failed: systemjs-createImportExpression-false/module/input.mjs
-* Failed: systemjs-createImportExpression-false/script/input.js
-* Failed: systemjs-createImportExpression-false/to-string/input.js
 * Passed: missing-module-transform/missing-module-transform/input.js
 * Passed: systemjs/missing-plugin/input.mjs
-* Passed: systemjs-createImportExpression-false/missing-plugin/input.mjs
 
 # babel-plugin-transform-export-namespace-from
 * Failed: export-namespace/namespace-default/input.mjs
@@ -595,7 +565,6 @@ Passed: 87/1106
 * Failed: general/cast-to-boolean/input.js
 * Failed: general/containers/input.js
 * Failed: general/delete/input.js
-* Failed: general/delete-in-function-params/input.js
 * Failed: general/function-call/input.js
 * Failed: general/function-call-loose/input.js
 * Failed: general/function-call-spread/input.js
@@ -604,6 +573,9 @@ Passed: 87/1106
 * Failed: general/in-method-key/input.js
 * Failed: general/in-method-key-loose/input.js
 * Failed: general/in-var-destructuring/input.js
+* Failed: general/lhs-assignment/input.js
+* Failed: general/lhs-assignment-read-and-update/input.js
+* Failed: general/lhs-update/input.js
 * Failed: general/member-access/input.js
 * Failed: general/memoize/input.js
 * Failed: general/memoize-loose/input.js
@@ -618,7 +590,6 @@ Passed: 87/1106
 * Failed: loose/cast-to-boolean/input.js
 * Failed: regression/10959-transform-optional-chaining/input.ts
 * Failed: regression/10959-transform-ts-and-optional-chaining/input.ts
-* Failed: regression/15887/input.js
 * Failed: regression/7642/input.js
 * Failed: transparent-expr-wrappers/ts-as-call-context/input.ts
 * Failed: transparent-expr-wrappers/ts-as-call-context-in-if/input.ts
@@ -763,7 +734,6 @@ Passed: 87/1106
 * Failed: export-async/default-export/input.mjs
 * Failed: export-async/import-and-export/input.mjs
 * Failed: export-async/lone-export/input.mjs
-* Failed: regression/15978/input.js
 * Failed: regression/4599/input.js
 * Failed: regression/4943/input.js
 * Failed: regression/7178/input.js
@@ -772,7 +742,6 @@ Passed: 87/1106
 * Failed: regression/T7194/input.js
 * Failed: regression/gh-6923/input.js
 * Failed: regression/in-uncompiled-class-fields/input.js
-* Failed: regression/regression-2765/input.js
 * Passed: assumption-noNewArrows-false/bluebird/input.js
 
 # babel-plugin-transform-exponentiation-operator
@@ -780,6 +749,15 @@ Passed: 87/1106
 * Failed: regression/4349/input.js
 * Failed: regression/4403/input.js
 * Passed: exponentiation-operator/binary/input.js
+
+# babel-plugin-transform-shorthand-properties
+* Failed: shorthand-properties/method-type-annotations/input.js
+* Failed: shorthand-properties/shorthand-comments/input.js
+* Passed: shorthand-properties/method-plain/input.js
+* Passed: shorthand-properties/proto/input.js
+* Passed: shorthand-properties/shorthand-mixed/input.js
+* Passed: shorthand-properties/shorthand-multiple/input.js
+* Passed: shorthand-properties/shorthand-single/input.js
 
 # babel-plugin-transform-typescript
 * Failed: class/abstract-class-decorated/input.ts
@@ -901,7 +879,6 @@ Passed: 87/1106
 * Failed: namespace/contentious-names/input.ts
 * Failed: namespace/declare/input.ts
 * Failed: namespace/declare-global-nested-namespace/input.ts
-* Failed: namespace/empty-removed/input.ts
 * Failed: namespace/export/input.ts
 * Failed: namespace/module-nested/input.ts
 * Failed: namespace/module-nested-export/input.ts
@@ -909,9 +886,7 @@ Passed: 87/1106
 * Failed: namespace/namespace-nested-module/input.ts
 * Failed: namespace/nested/input.ts
 * Failed: namespace/nested-destructuring/input.ts
-* Failed: namespace/nested-namespace/input.ts
 * Failed: namespace/nested-shorthand/input.ts
-* Failed: namespace/nested-shorthand-export/input.ts
 * Failed: namespace/same-name/input.ts
 * Failed: namespace/undeclared/input.ts
 * Failed: optimize-const-enums/custom-values/input.ts
@@ -928,7 +903,6 @@ Passed: 87/1106
 * Failed: regression/10162/input.ts
 * Failed: regression/10338/input.ts
 * Failed: regression/11061/input.mjs
-* Failed: regression/15768/input.ts
 * Failed: type-arguments/tsx/input.ts
 * Failed: type-arguments/tsx-babel-7/input.ts
 * Failed: variable-declaration/non-null-in-optional-chain/input.ts

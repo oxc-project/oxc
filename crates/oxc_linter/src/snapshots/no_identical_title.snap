@@ -1,0 +1,113 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_identical_title
+---
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:3:1]
+ 3 │                 it('works', () => {});
+ 4 │                 it('works', () => {});
+   ·                 ─────────────────────
+ 5 │               });
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               it('works', () => {});
+ 3 │               it('works', () => {});
+   ·               ─────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               test.only('this', () => {});
+ 3 │               test('this', () => {});
+   ·               ──────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               xtest('this', () => {});
+ 3 │               test('this', () => {});
+   ·               ──────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               test.only('this', () => {});
+ 3 │               test.only('this', () => {});
+   ·               ───────────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               test.concurrent('this', () => {});
+ 3 │               test.concurrent('this', () => {});
+   ·               ─────────────────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               test.only('this', () => {});
+ 3 │               test.concurrent('this', () => {});
+   ·               ─────────────────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of test."
+
+  ⚠ eslint(jest/no-identical-title): "Describe block title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               describe('foo', () => {});
+ 3 │               describe('foo', () => {});
+   ·               ─────────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of describe block."
+
+  ⚠ eslint(jest/no-identical-title): "Describe block title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:1:1]
+ 1 │ 
+ 2 │               describe('foo', () => {});
+   ·               ─────────────────────────
+ 3 │               xdescribe('foo', () => {});
+   ╰────
+  help: "Change the title of describe block."
+
+  ⚠ eslint(jest/no-identical-title): "Describe block title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:2:1]
+ 2 │               fdescribe('foo', () => {});
+ 3 │               describe('foo', () => {});
+   ·               ─────────────────────────
+ 4 │             
+   ╰────
+  help: "Change the title of describe block."
+
+  ⚠ eslint(jest/no-identical-title): "Describe block title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:4:1]
+ 4 │               });
+ 5 │               describe('foo', () => {});
+   ·               ─────────────────────────
+ 6 │             
+   ╰────
+  help: "Change the title of describe block."
+
+  ⚠ eslint(jest/no-identical-title): "Test title is used multiple times in the same describe block."
+   ╭─[no_identical_title.tsx:3:1]
+ 3 │                 it(`catches backticks with the same title`, () => {});
+ 4 │                 it(`catches backticks with the same title`, () => {});
+   ·                 ─────────────────────────────────────────────────────
+ 5 │               });
+   ╰────
+  help: "Change the title of test."
+
+

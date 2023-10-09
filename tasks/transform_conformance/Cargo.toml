@@ -10,6 +10,9 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[lib]
+doctest = false
+
 [dependencies]
 oxc_span         = { workspace = true }
 oxc_allocator    = { workspace = true }

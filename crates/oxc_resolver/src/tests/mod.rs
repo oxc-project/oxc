@@ -22,8 +22,12 @@ mod tsconfig_project_references;
 use crate::Resolver;
 use std::{env, path::PathBuf, sync::Arc, thread};
 
+pub fn fixture_root() -> PathBuf {
+    env::current_dir().unwrap().join("fixtures")
+}
+
 pub fn fixture() -> PathBuf {
-    env::current_dir().unwrap().join("tests/enhanced_resolve/test/fixtures")
+    fixture_root().join("enhanced_resolve/test/fixtures")
 }
 
 #[test]

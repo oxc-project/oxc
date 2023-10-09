@@ -6,6 +6,7 @@
 
 use oxc_allocator::Vec;
 use oxc_span::Span;
+use oxc_syntax::scope::ScopeFlags;
 
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, ast_kind::AstKind};
@@ -15,14 +16,25 @@ pub trait Visit<'a>: Sized {
     fn enter_node(&mut self, _kind: AstKind<'a>) {}
     fn leave_node(&mut self, _kind: AstKind<'a>) {}
 
+    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    fn leave_scope(&mut self) {}
+
     fn visit_program(&mut self, program: &'a Program<'a>) {
         let kind = AstKind::Program(program);
+        self.enter_scope({
+            let mut flags = ScopeFlags::Top;
+            if program.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
         self.enter_node(kind);
         for directive in &program.directives {
             self.visit_directive(directive);
         }
         self.visit_statements(&program.body);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     /* ----------  Statement ---------- */
@@ -65,9 +77,11 @@ pub trait Visit<'a>: Sized {
 
     fn visit_block_statement(&mut self, stmt: &'a BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(stmt);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_statements(&stmt.body);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_break_statement(&mut self, stmt: &'a BreakStatement) {
@@ -117,6 +131,11 @@ pub trait Visit<'a>: Sized {
 
     fn visit_for_statement(&mut self, stmt: &'a ForStatement<'a>) {
         let kind = AstKind::ForStatement(stmt);
+        let is_lexical_declaration =
+            stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         self.enter_node(kind);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
@@ -129,6 +148,9 @@ pub trait Visit<'a>: Sized {
         }
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
     }
 
     fn visit_for_statement_init(&mut self, init: &'a ForStatementInit<'a>) {
@@ -148,20 +170,34 @@ pub trait Visit<'a>: Sized {
 
     fn visit_for_in_statement(&mut self, stmt: &'a ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(stmt);
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         self.enter_node(kind);
         self.visit_for_statement_left(&stmt.left);
         self.visit_expression(&stmt.right);
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
     }
 
     fn visit_for_of_statement(&mut self, stmt: &'a ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(stmt);
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         self.enter_node(kind);
         self.visit_for_statement_left(&stmt.left);
         self.visit_expression(&stmt.right);
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
     }
 
     fn visit_for_statement_left(&mut self, left: &'a ForStatementLeft<'a>) {
@@ -206,12 +242,14 @@ pub trait Visit<'a>: Sized {
 
     fn visit_switch_statement(&mut self, stmt: &'a SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(stmt);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
         for case in &stmt.cases {
             self.visit_switch_case(case);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_switch_case(&mut self, case: &'a SwitchCase<'a>) {
@@ -246,12 +284,14 @@ pub trait Visit<'a>: Sized {
 
     fn visit_catch_clause(&mut self, clause: &'a CatchClause<'a>) {
         let kind = AstKind::CatchClause(clause);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(param) = &clause.param {
             self.visit_binding_pattern(param);
         }
         self.visit_statements(&clause.body.body);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_finally_clause(&mut self, clause: &'a BlockStatement<'a>) {
@@ -307,8 +347,16 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Function ---------- */
 
-    fn visit_function(&mut self, func: &'a Function<'a>) {
+    fn visit_function(&mut self, func: &'a Function<'a>, flags: Option<ScopeFlags>) {
         let kind = AstKind::Function(func);
+        // todo: visit binding identifier with includes, excludes
+        self.enter_scope({
+            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+            if func.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
         self.enter_node(kind);
         if let Some(ident) = &func.id {
             self.visit_binding_identifier(ident);
@@ -324,6 +372,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type_annotation(annotation);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_function_body(&mut self, body: &'a FunctionBody<'a>) {
@@ -375,7 +424,17 @@ pub trait Visit<'a>: Sized {
             self.visit_decorator(decorator);
         }
         let kind = AstKind::Class(class);
+
+        // FIXME(don): Should we enter a scope when visiting class declarations?
+        let is_class_expr = class.r#type == ClassType::ClassExpression;
+        if is_class_expr {
+            // Class expressions create a temporary scope with the class name as its only variable
+            // E.g., `let c = class A { foo() { console.log(A) } }`
+            self.enter_scope(ScopeFlags::empty());
+        }
+
         self.enter_node(kind);
+
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
@@ -391,6 +450,9 @@ pub trait Visit<'a>: Sized {
         }
         self.visit_class_body(&class.body);
         self.leave_node(kind);
+        if is_class_expr {
+            self.leave_scope();
+        }
     }
 
     fn visit_class_heritage(&mut self, expr: &'a Expression<'a>) {
@@ -424,9 +486,11 @@ pub trait Visit<'a>: Sized {
 
     fn visit_static_block(&mut self, block: &'a StaticBlock<'a>) {
         let kind = AstKind::StaticBlock(block);
+        self.enter_scope(ScopeFlags::ClassStaticBlock);
         self.enter_node(kind);
         self.visit_statements(&block.body);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_method_definition(&mut self, def: &'a MethodDefinition<'a>) {
@@ -435,8 +499,14 @@ pub trait Visit<'a>: Sized {
         for decorator in &def.decorators {
             self.visit_decorator(decorator);
         }
+        let flags = match def.kind {
+            MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::empty(),
+        };
         self.visit_property_key(&def.key);
-        self.visit_function(&def.value);
+        self.visit_function(&def.value, Some(flags));
         self.leave_node(kind);
     }
 
@@ -491,9 +561,12 @@ pub trait Visit<'a>: Sized {
             Expression::BinaryExpression(expr) => self.visit_binary_expression(expr),
             Expression::CallExpression(expr) => self.visit_call_expression(expr),
             Expression::ChainExpression(expr) => self.visit_chain_expression(expr),
-            Expression::ClassExpression(expr) => self.visit_class(expr),
+            Expression::ClassExpression(expr) => {
+                debug_assert_eq!(expr.r#type, ClassType::ClassExpression);
+                self.visit_class(expr);
+            }
             Expression::ConditionalExpression(expr) => self.visit_conditional_expression(expr),
-            Expression::FunctionExpression(expr) => self.visit_function(expr),
+            Expression::FunctionExpression(expr) => self.visit_function(expr, None),
             Expression::ImportExpression(expr) => self.visit_import_expression(expr),
             Expression::LogicalExpression(expr) => self.visit_logical_expression(expr),
             Expression::MemberExpression(expr) => self.visit_member_expression(expr),
@@ -591,6 +664,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_arrow_expression(&mut self, expr: &'a ArrowExpression<'a>) {
         let kind = AstKind::ArrowExpression(expr);
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         self.enter_node(kind);
         self.visit_formal_parameters(&expr.params);
         self.visit_function_body(&expr.body);
@@ -598,6 +672,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type_parameter_declaration(parameters);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_await_expression(&mut self, expr: &'a AwaitExpression<'a>) {
@@ -1233,7 +1308,7 @@ pub trait Visit<'a>: Sized {
         match &decl.declaration {
             ExportDefaultDeclarationKind::Expression(expr) => self.visit_expression(expr),
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
-                self.visit_function(func);
+                self.visit_function(func, None);
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => self.visit_class(class),
             _ => {}
@@ -1259,11 +1334,13 @@ pub trait Visit<'a>: Sized {
 
     fn visit_enum_body(&mut self, body: &'a TSEnumBody<'a>) {
         let kind = AstKind::TSEnumBody(body);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         for member in &body.members {
             self.visit_enum_member(member);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_enum(&mut self, decl: &'a TSEnumDeclaration<'a>) {
@@ -1277,8 +1354,11 @@ pub trait Visit<'a>: Sized {
     fn visit_declaration(&mut self, decl: &'a Declaration<'a>) {
         match decl {
             Declaration::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
-            Declaration::FunctionDeclaration(func) => self.visit_function(func),
-            Declaration::ClassDeclaration(class) => self.visit_class(class),
+            Declaration::FunctionDeclaration(func) => self.visit_function(func, None),
+            Declaration::ClassDeclaration(class) => {
+                debug_assert_eq!(class.r#type, ClassType::ClassDeclaration);
+                self.visit_class(class);
+            }
             Declaration::UsingDeclaration(decl) => self.visit_using_declaration(decl),
             Declaration::TSModuleDeclaration(module) => {
                 self.visit_ts_module_declaration(module);
@@ -1321,9 +1401,11 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_module_block(&mut self, block: &'a TSModuleBlock<'a>) {
         let kind = AstKind::TSModuleBlock(block);
+        self.enter_scope(ScopeFlags::TsModuleBlock);
         self.enter_node(kind);
         self.visit_statements(&block.body);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_type_alias_declaration(&mut self, decl: &'a TSTypeAliasDeclaration<'a>) {
@@ -1478,6 +1560,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_type_parameter(&mut self, ty: &'a TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(ty);
+        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             self.visit_ts_type(constraint);
@@ -1487,6 +1570,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type(default);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_type_parameter_instantiation(&mut self, ty: &'a TSTypeParameterInstantiation<'a>) {

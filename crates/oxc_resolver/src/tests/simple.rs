@@ -7,7 +7,7 @@ use crate::Resolver;
 #[test]
 fn simple() {
     // mimic `enhanced-resolve/test/simple.test.js`
-    let dirname = env::current_dir().unwrap().join("tests");
+    let dirname = env::current_dir().unwrap().join("fixtures");
     let f = dirname.join("enhanced_resolve/test");
 
     let resolver = Resolver::default();

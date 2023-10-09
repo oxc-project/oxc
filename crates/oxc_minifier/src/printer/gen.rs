@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
-use oxc_hir::hir::*;
-use oxc_hir::precedence;
+use oxc_ast::ast::*;
+use oxc_ast::precedence;
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -76,7 +76,9 @@ impl<'a> Gen for Statement<'a> {
             Self::BreakStatement(stmt) => stmt.gen(p, ctx),
             Self::ContinueStatement(stmt) => stmt.gen(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.gen(p, ctx),
+            Self::Declaration(decl) => decl.gen(p, ctx),
             Self::DoWhileStatement(stmt) => stmt.gen(p, ctx),
+            Self::EmptyStatement(stmt) => stmt.gen(p, ctx),
             Self::ExpressionStatement(stmt) => stmt.gen(p, ctx),
             Self::ForInStatement(stmt) => stmt.gen(p, ctx),
             Self::ForOfStatement(stmt) => stmt.gen(p, ctx),
@@ -90,7 +92,6 @@ impl<'a> Gen for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
-            Self::Declaration(decl) => decl.gen(p, ctx),
         }
     }
 }
@@ -129,20 +130,17 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer, ctx: Context) {
     p.print(b')');
 
     match &if_stmt.consequent {
-        Some(Statement::BlockStatement(block)) => {
+        Statement::BlockStatement(block) => {
             p.print_block1(block, ctx);
         }
-        Some(stmt) if wrap_to_avoid_ambiguous_else(stmt) => {
+        stmt if wrap_to_avoid_ambiguous_else(stmt) => {
             p.print(b'{');
             stmt.gen(p, ctx);
             p.print(b'}');
             p.needs_semicolon = false;
         }
-        Some(stmt) => {
+        stmt => {
             stmt.gen(p, ctx);
-        }
-        None => {
-            p.print(b';');
         }
     }
 
@@ -182,13 +180,7 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
             | Statement::ForInStatement(Box(ForInStatement { body, .. }))
             | Statement::WhileStatement(Box(WhileStatement { body, .. }))
             | Statement::WithStatement(Box(WithStatement { body, .. }))
-            | Statement::LabeledStatement(Box(LabeledStatement { body, .. })) => {
-                if let Some(stmt) = &body {
-                    stmt
-                } else {
-                    return false;
-                }
-            }
+            | Statement::LabeledStatement(Box(LabeledStatement { body, .. })) => body,
             _ => return false,
         }
     }
@@ -289,7 +281,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         p.print_str(b"do");
         p.print(b' ');
-        if let Some(Statement::BlockStatement(block)) = &self.body {
+        if let Statement::BlockStatement(block) = &self.body {
             p.print_block1(block, ctx);
         } else {
             self.body.gen(p, ctx);
@@ -300,6 +292,12 @@ impl<'a> Gen for DoWhileStatement<'a> {
         self.test.gen_expr(p, Precedence::lowest(), Context::default());
         p.print(b')');
         p.print_semicolon_after_statement();
+    }
+}
+
+impl Gen for EmptyStatement {
+    fn gen(&self, p: &mut Printer, ctx: Context) {
+        p.print(b';');
     }
 }
 
@@ -431,6 +429,7 @@ impl<'a> Gen for ModuleDeclaration<'a> {
             Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
+            _ => {}
         }
     }
 }
@@ -451,7 +450,7 @@ impl<'a> Gen for Declaration<'a> {
             Self::UsingDeclaration(declaration) => {
                 declaration.gen(p, ctx);
             }
-            Self::TSEnumDeclaration(_) => {}
+            _ => {}
         }
     }
 }
@@ -733,7 +732,7 @@ impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
             Self::ClassDeclaration(value) => value.gen(p, ctx),
-            Self::TSEnumDeclaration(_) => {}
+            _ => {}
         }
     }
 }
@@ -775,6 +774,10 @@ impl<'a> GenExpr for Expression<'a> {
             Self::ClassExpression(expr) => expr.gen(p, ctx),
             Self::JSXElement(el) => el.gen(p, ctx),
             Self::JSXFragment(fragment) => fragment.gen(p, ctx),
+            Self::ParenthesizedExpression(_) => {
+                panic!("The compressor mut strip this ParenthesizedExpression.")
+            }
+            _ => {}
         }
     }
 }
@@ -782,9 +785,11 @@ impl<'a> GenExpr for Expression<'a> {
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         if let Some(mangler) = &p.mangler {
-            if let Some(name) = mangler.get_reference_name(self.reference_id.clone().into_inner()) {
-                p.print_str(name.clone().as_bytes());
-                return;
+            if let Some(reference_id) = self.reference_id.clone().into_inner() {
+                if let Some(name) = mangler.get_reference_name(reference_id) {
+                    p.print_str(name.clone().as_bytes());
+                    return;
+                }
             }
         }
         p.print_str(self.name.as_bytes());
@@ -864,7 +869,7 @@ impl<'a> Gen for NumberLiteral<'a> {
 }
 
 // TODO: refactor this with less allocations
-fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
+fn print_non_negative_float(value: f64, p: &Printer) -> String {
     let mut result = value.to_string();
     let chars = result.as_bytes();
     let len = chars.len();
@@ -1149,15 +1154,6 @@ impl<'a> Gen for PropertyKey<'a> {
     }
 }
 
-impl<'a> Gen for PropertyValue<'a> {
-    fn gen(&self, p: &mut Printer, ctx: Context) {
-        match self {
-            Self::Pattern(pattern) => pattern.gen(p, ctx),
-            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign, Context::default()),
-        }
-    }
-}
-
 impl<'a> GenExpr for ArrowExpression<'a> {
     fn gen_expr(&self, p: &mut Printer, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > Precedence::Assign, |p| {
@@ -1167,7 +1163,7 @@ impl<'a> GenExpr for ArrowExpression<'a> {
             // No wrap for `a => {}`
             let nowrap = self.params.rest.is_none()
                 && self.params.items.len() == 1
-                && self.params.items[0].pattern.is_binding_identifier();
+                && self.params.items[0].pattern.kind.is_binding_identifier();
             if nowrap && self.r#async {
                 p.print(b' ');
             }
@@ -1353,6 +1349,7 @@ impl<'a> GenExpr for SimpleAssignmentTarget<'a> {
             Self::MemberAssignmentTarget(member_expr) => {
                 member_expr.gen_expr(p, precedence, ctx);
             }
+            _ => {}
         }
     }
 }
@@ -1590,6 +1587,7 @@ impl<'a> Gen for ClassElement<'a> {
             Self::MethodDefinition(elem) => elem.gen(p, ctx),
             Self::PropertyDefinition(elem) => elem.gen(p, ctx),
             Self::AccessorProperty(elem) => elem.gen(p, ctx),
+            _ => {}
         }
     }
 }
@@ -1885,12 +1883,11 @@ impl Gen for PrivateIdentifier {
 
 impl<'a> Gen for BindingPattern<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
-        match &self {
-            BindingPattern::BindingIdentifier(ident) => ident.gen(p, ctx),
-            BindingPattern::ObjectPattern(pattern) => pattern.gen(p, ctx),
-            BindingPattern::RestElement(elem) => elem.gen(p, ctx),
-            BindingPattern::ArrayPattern(pattern) => pattern.gen(p, ctx),
-            BindingPattern::AssignmentPattern(pattern) => pattern.gen(p, ctx),
+        match &self.kind {
+            BindingPatternKind::BindingIdentifier(ident) => ident.gen(p, ctx),
+            BindingPatternKind::ObjectPattern(pattern) => pattern.gen(p, ctx),
+            BindingPatternKind::ArrayPattern(pattern) => pattern.gen(p, ctx),
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.gen(p, ctx),
         }
     }
 }
