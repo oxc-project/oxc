@@ -24,7 +24,8 @@ fn tsconfig() {
         // This requires reading package.json.tsconfig field
         // (f.join("tsconfig/field"), "foo", f.join("node_modules/tsconfig-field/foo.js"))
         (f.join("tsconfig/exports"), "foo", f.join("node_modules/tsconfig-exports/foo.js")),
-        (f.join("tsconfig/extends-extension"), "foo", f.join("tsconfig/extends-extension/foo.js"))
+        (f.join("tsconfig/extends-extension"), "foo", f.join("tsconfig/extends-extension/foo.js")),
+        (f.join("tsconfig/extends-extensionless"), "foo", f.join("node_modules/tsconfig-field/foo.js"))
     ];
 
     for (path, request, expected) in pass {

@@ -956,7 +956,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     _ => self
                         .clone_with_options(ResolveOptions {
                             description_files: vec![],
-                            extensions: vec![],
+                            extensions: vec![".json".into()],
                             main_files: vec!["tsconfig.json".into()],
                             ..ResolveOptions::default()
                         })
@@ -966,7 +966,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                             &mut ResolveContext::default(),
                         )
                         .map_err(|err| match err {
-                            ResolveError::NotFound(path) => ResolveError::TsconfigNotFound(path),
+                            ResolveError::NotFound(_) => ResolveError::TsconfigNotFound(
+                                PathBuf::from(tsconfig_extend_specifier),
+                            ),
                             _ => err,
                         })?
                         .to_path_buf(),
