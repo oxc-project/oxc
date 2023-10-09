@@ -1,0 +1,186 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: no_confusing_set_timeout
+---
+  ⚠ eslint(jest/no-confusing-set-timeout)
+    ╭─[no_confusing_set_timeout.tsx:9:1]
+  9 │                 });
+ 10 │                 jest.setTimeout(800);
+    ·                 ───────────────
+ 11 │             
+    ╰────
+  help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+    ╭─[no_confusing_set_timeout.tsx:9:1]
+  9 │                 });
+ 10 │                 jest.setTimeout(800);
+    ·                 ───────────────
+ 11 │             
+    ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+    ╭─[no_confusing_set_timeout.tsx:9:1]
+  9 │                 });
+ 10 │                 jest.setTimeout(800);
+    ·                 ───────────────
+ 11 │             
+    ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+    ╭─[no_confusing_set_timeout.tsx:9:1]
+  9 │                 });
+ 10 │                 jest.setTimeout(800);
+    ·                 ───────────────
+ 11 │             
+    ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+    ╭─[no_confusing_set_timeout.tsx:9:1]
+  9 │                 });
+ 10 │                 jest.setTimeout(800);
+    ·                 ───────────────
+ 11 │             
+    ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:2:1]
+ 2 │                 describe('A', () => {
+ 3 │                     jest.setTimeout(800);
+   ·                     ───────────────
+ 4 │                     beforeEach(async () => { await new Promise(resolve => { setTimeout(resolve, 10000).unref(); });});
+   ╰────
+  help: `jest.setTimeout` should be call in `global` scope
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:4:1]
+ 4 │                         await new Promise((resolve) => {
+ 5 │                         jest.setTimeout(1000);
+   ·                         ───────────────
+ 6 │                         setTimeout(resolve, 10000).unref();
+   ╰────
+  help: `jest.setTimeout` should be call in `global` scope
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:2:1]
+ 2 │                 test('test-suite', () => {
+ 3 │                     jest.setTimeout(1000);
+   ·                     ───────────────
+ 4 │                 });
+   ╰────
+  help: `jest.setTimeout` should be call in `global` scope
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:6:1]
+ 6 │                 });
+ 7 │                 jest.setTimeout(1000);
+   ·                 ───────────────
+ 8 │             
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:6:1]
+ 6 │                 });
+ 7 │                 jest.setTimeout(1000);
+   ·                 ───────────────
+ 8 │             
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:6:1]
+ 6 │                 });
+ 7 │                 jest.setTimeout(1000);
+   ·                 ───────────────
+ 8 │             
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:6:1]
+ 6 │                 });
+ 7 │                 jest.setTimeout(1000);
+   ·                 ───────────────
+ 8 │             
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:3:1]
+ 3 │                 {
+ 4 │                    jest.setTimeout(800);
+   ·                    ───────────────
+ 5 │                 }
+   ╰────
+  help: `jest.setTimeout` should be call in `global` scope
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:2:1]
+ 2 │                 jest.setTimeout(800);
+ 3 │                 jest.setTimeout(900);
+   ·                 ───────────────
+ 4 │             
+   ╰────
+  help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:3:1]
+ 3 │                 {
+ 4 │                     Jest.setTimeout(800);
+   ·                     ───────────────
+ 5 │                 }
+   ╰────
+  help: `jest.setTimeout` should be call in `global` scope
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:2:1]
+ 2 │                 expect(1 + 2).toEqual(3);
+ 3 │                 jest.setTimeout(1000);
+   ·                 ───────────────
+ 4 │             
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:7:1]
+ 7 │                 });
+ 8 │                 Jest.setTimeout(800);
+   ·                 ───────────────
+ 9 │                 setTimeout(800);
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:7:1]
+ 7 │                 });
+ 8 │                 Jest.setTimeout(800);
+   ·                 ───────────────
+ 9 │                 setTimeout(800);
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:4:1]
+ 4 │                     });
+ 5 │                     jest.setTimeout(1000);
+   ·                     ───────────────
+ 6 │                 
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+  ⚠ eslint(jest/no-confusing-set-timeout)
+   ╭─[no_confusing_set_timeout.tsx:4:1]
+ 4 │                     });
+ 5 │                     jest.setTimeout(1000);
+   ·                     ───────────────
+ 6 │                 
+   ╰────
+  help: `jest.setTimeout` should be placed before any other jest methods
+
+
