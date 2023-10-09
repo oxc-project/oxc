@@ -1,4 +1,4 @@
-Passed: 95/1078
+Passed: 97/1080
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -758,6 +758,11 @@ Passed: 95/1078
 * Passed: shorthand-properties/shorthand-mixed/input.js
 * Passed: shorthand-properties/shorthand-multiple/input.js
 * Passed: shorthand-properties/shorthand-single/input.js
+
+# babel-plugin-transform-sticky-regex
+[All passed]
+* Passed: sticky-regex/basic/input.js
+* Passed: sticky-regex/ignore-non-sticky/input.js
 
 # babel-plugin-transform-typescript
 * Failed: class/abstract-class-decorated/input.ts
