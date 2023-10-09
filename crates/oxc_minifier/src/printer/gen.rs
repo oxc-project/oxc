@@ -76,8 +76,9 @@ impl<'a> Gen for Statement<'a> {
             Self::BreakStatement(stmt) => stmt.gen(p, ctx),
             Self::ContinueStatement(stmt) => stmt.gen(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.gen(p, ctx),
+            Self::Declaration(decl) => decl.gen(p, ctx),
             Self::DoWhileStatement(stmt) => stmt.gen(p, ctx),
-            Self::EmptyStatement(decl) => {}
+            Self::EmptyStatement(stmt) => stmt.gen(p, ctx),
             Self::ExpressionStatement(stmt) => stmt.gen(p, ctx),
             Self::ForInStatement(stmt) => stmt.gen(p, ctx),
             Self::ForOfStatement(stmt) => stmt.gen(p, ctx),
@@ -91,7 +92,6 @@ impl<'a> Gen for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
-            Self::Declaration(decl) => decl.gen(p, ctx),
         }
     }
 }
@@ -292,6 +292,12 @@ impl<'a> Gen for DoWhileStatement<'a> {
         self.test.gen_expr(p, Precedence::lowest(), Context::default());
         p.print(b')');
         p.print_semicolon_after_statement();
+    }
+}
+
+impl Gen for EmptyStatement {
+    fn gen(&self, p: &mut Printer, ctx: Context) {
+        p.print(b';');
     }
 }
 
@@ -768,6 +774,9 @@ impl<'a> GenExpr for Expression<'a> {
             Self::ClassExpression(expr) => expr.gen(p, ctx),
             Self::JSXElement(el) => el.gen(p, ctx),
             Self::JSXFragment(fragment) => fragment.gen(p, ctx),
+            Self::ParenthesizedExpression(_) => {
+                panic!("The compressor mut strip this ParenthesizedExpression.")
+            }
             _ => {}
         }
     }
