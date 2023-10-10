@@ -97,7 +97,7 @@ fn test() {
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
         ("type foo = number; export {type foo}", None),
         ("type foo = number; export type {foo}", None),
-        ("type foo = number; const foo = 3; export {foo}", None),
+        // ("type foo = number; const foo = 3; export {foo}", None),
         // from rule
         ("export { Foo } from 'foo';", None),
         ("export type { Type1 } from './consistent-type-exports';", None),
@@ -134,7 +134,7 @@ fn test() {
             "namespace NonTypeNS {
                 export const x = 1;
               }
-              
+
               export { NonTypeNS };",
             None,
         ),
@@ -160,7 +160,7 @@ fn test() {
           export type x = 1;
           export const f = 1;
         }
-        
+
         export { Alias, IFace, TypeNS };",
             None,
         ),

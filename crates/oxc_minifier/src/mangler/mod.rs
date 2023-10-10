@@ -1,14 +1,13 @@
 use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::Visit;
 use oxc_index::{index_vec, IndexVec};
-use oxc_semantic::{Reference, ReferenceFlag, ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::{Atom, SourceType};
-use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_span::Atom;
 
 type Slot = usize;
 
+#[derive(Debug)]
 pub struct Mangler {
     symbol_table: SymbolTable,
 }
@@ -65,56 +64,16 @@ impl Mangler {
 ///     }
 /// }
 /// ```
-pub struct ManglerBuilder<'a> {
-    semantic: SemanticBuilder<'a>,
-}
+pub struct ManglerBuilder;
 
-impl<'a> Visit<'a> for ManglerBuilder<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
-        self.semantic.enter_scope(flags);
-    }
-
-    fn leave_scope(&mut self) {
-        self.semantic.leave_scope();
-    }
-
-    fn visit_binding_identifier(&mut self, ident: &'a BindingIdentifier) {
-        let symbol_id = self.semantic.declare_symbol_for_mangler(
-            ident.span,
-            &ident.name,
-            /* TODO: add symbol flags */ SymbolFlags::empty(),
-            /* TODO: add symbol flags */ SymbolFlags::empty(),
-        );
-        ident.symbol_id.replace(Some(symbol_id));
-    }
-
-    fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
-        let reference = Reference::new(
-            ident.span,
-            ident.name.clone(),
-            self.semantic.current_node_id,
-            ReferenceFlag::read(),
-        );
-        let reference_id = self.semantic.declare_reference(reference);
-        ident.reference_id.replace(Some(reference_id));
-    }
-}
-
-impl<'a> ManglerBuilder<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { semantic: SemanticBuilder::new(source_text, source_type) }
-    }
-
+impl ManglerBuilder {
     #[must_use]
-    pub fn build(mut self, program: &'a Program<'a>) -> Mangler {
-        self.visit_program(program);
-        self.mangle()
-    }
+    pub fn build<'a>(self, program: &'a Program<'a>) -> Mangler {
+        let semantic_ret = SemanticBuilder::new("", program.source_type).build(program);
+        let semantic = semantic_ret.semantic;
 
-    /// Mangle the symbol table by computing slots from the scope tree.
-    /// A slot is the occurrence index of a binding identifier inside a scope.
-    pub fn mangle(self) -> Mangler {
-        let semantic = self.semantic.build2();
+        // Mangle the symbol table by computing slots from the scope tree.
+        // A slot is the occurrence index of a binding identifier inside a scope.
         let (mut symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
 
         // Total number of slots for all scopes

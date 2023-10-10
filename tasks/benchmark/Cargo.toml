@@ -30,9 +30,9 @@ harness = false
 name    = "linter"
 harness = false
 
-# [[bench]]
-# name    = "minifier"
-# harness = false
+[[bench]]
+name    = "minifier"
+harness = false
 
 [[bench]]
 name    = "resolver"
@@ -42,7 +42,7 @@ harness = false
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_parser    = { workspace = true }
-# oxc_minifier              = { workspace = true }
+oxc_minifier              = { workspace = true }
 oxc_tasks_common          = { workspace = true }
 oxc_semantic              = { workspace = true }
 oxc_resolver              = { workspace = true }
