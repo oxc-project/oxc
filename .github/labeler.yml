@@ -14,6 +14,8 @@ A-printer: 'crates/oxc_minifier/src/printer/**/*'
 
 A-semantic: 'crates/oxc_semantic/**/*'
 
+A-transformer: 'crates/transformer/**/*'
+
 A-resolver: 'crates/oxc_resolver/**/*'
 
 A-type-checking: 'crates/oxc_type_synthesis/**/*'
