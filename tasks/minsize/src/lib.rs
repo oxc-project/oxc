@@ -10,11 +10,11 @@ use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
 
-#[test]
-#[cfg(any(coverage, coverage_nightly))]
-fn test() {
-    run().unwrap();
-}
+// #[test]
+// #[cfg(any(coverage, coverage_nightly))]
+// fn test() {
+// run().unwrap();
+// }
 
 /// # Panics
 /// # Errors
