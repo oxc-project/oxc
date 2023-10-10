@@ -47,6 +47,7 @@ pub struct Transformer<'a> {
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_sticky_regex: Option<es2015::StickyRegex<'a>>,
+    es2015_template_literals: Option<es2015::TemplateLiteral<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -96,6 +97,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_sticky_regex.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }
