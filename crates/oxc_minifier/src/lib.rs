@@ -41,11 +41,13 @@ impl<'a> Minifier<'a> {
     pub fn build(self) -> String {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();
+
         let program = allocator.alloc(ret.program);
         Compressor::new(&allocator, self.options.compress).build(program);
+
         let mut printer = Printer::new(self.source_text.len(), self.options.print);
         if self.options.mangle {
-            let mangler = ManglerBuilder::new(self.source_text, self.source_type).build(program);
+            let mangler = ManglerBuilder.build(program);
             printer.with_mangler(mangler);
         }
         printer.build(program)

@@ -260,46 +260,6 @@ impl<'a> SemanticBuilder<'a> {
         self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
     }
 
-    pub fn declare_symbol_for_mangler(
-        &mut self,
-        span: Span,
-        name: &Atom,
-        includes: SymbolFlags,
-        excludes: SymbolFlags,
-    ) -> SymbolId {
-        let scope_id = if includes.is_function_scoped_declaration()
-            && !self.scope.get_flags(self.current_scope_id).is_var()
-            && !includes.is_function()
-        {
-            self.get_var_hosisting_scope_id()
-        } else {
-            self.current_scope_id
-        };
-
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, false) {
-            return symbol_id;
-        }
-
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        if includes.is_variable() {
-            self.scope.add_binding(scope_id, name.clone(), symbol_id);
-        }
-        symbol_id
-    }
-
-    fn get_var_hosisting_scope_id(&self) -> ScopeId {
-        let mut top_scope_id = self.current_scope_id;
-        for scope_id in self.scope.ancestors(self.current_scope_id).skip(1) {
-            if self.scope.get_flags(scope_id).is_var() {
-                top_scope_id = scope_id;
-                break;
-            }
-            top_scope_id = scope_id;
-        }
-        top_scope_id
-    }
-
     pub fn check_redeclaration(
         &mut self,
         scope_id: ScopeId,
@@ -309,8 +269,7 @@ impl<'a> SemanticBuilder<'a> {
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
-        let flag = self.symbols.get_flag(symbol_id);
-        if report_error && flag.intersects(excludes) {
+        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(Redeclaration(name.clone(), symbol_span, span));
         }

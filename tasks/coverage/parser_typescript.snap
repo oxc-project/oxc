@@ -1,6 +1,6 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
-Positive Passed: 5051/5063 (99.76%)
+Positive Passed: 5052/5063 (99.78%)
 Negative Passed: 994/4761 (20.88%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -3811,19 +3811,6 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
    ·       ────
    ╰────
 
-Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
-  × Identifier `x` has already been declared
-     ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:131:1]
- 131 │     }
- 132 │     catch ({ x }) {
-     ·              ┬
-     ·              ╰── `x` has already been declared here
- 133 │         var x;
-     ·             ┬
-     ·             ╰── It can not be redeclared here
- 134 │     }
-     ╰────
-
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
   × Classes may not have a static property named prototype
     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:27:1]
@@ -5274,19 +5261,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
    ·  ──
-   ╰────
-
-  × Identifier `x` has already been declared
-   ╭─[compiler/constDeclarationShadowedByVarDeclaration.ts:5:1]
- 5 │ {
- 6 │     const x = 0;
-   ·           ┬
-   ·           ╰── `x` has already been declared here
- 7 │ 
- 8 │     var x = 0;
-   ·         ┬
-   ·         ╰── It can not be redeclared here
- 9 │ }
    ╰────
 
   × Identifier `y` has already been declared

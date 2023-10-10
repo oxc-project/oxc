@@ -349,7 +349,6 @@ pub trait Visit<'a>: Sized {
 
     fn visit_function(&mut self, func: &'a Function<'a>, flags: Option<ScopeFlags>) {
         let kind = AstKind::Function(func);
-        // todo: visit binding identifier with includes, excludes
         self.enter_scope({
             let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
             if func.is_strict() {

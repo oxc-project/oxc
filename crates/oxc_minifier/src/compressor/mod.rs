@@ -325,9 +325,6 @@ impl<'a> Compressor<'a> {
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| {
-            if matches!(stmt, Statement::EmptyStatement(_)) {
-                return false;
-            }
             if self.drop_debugger(stmt) {
                 return false;
             }

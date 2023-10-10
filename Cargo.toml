@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
 members  = ["crates/*", "tasks/*", "editor/vscode/server"]
-exclude  = ["tasks/minsize"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -22,11 +21,11 @@ oxc_ast         = { version = "0.2.0", path = "crates/oxc_ast" }
 oxc_diagnostics = { version = "0.2.0", path = "crates/oxc_diagnostics" }
 oxc_formatter   = { version = "0.2.0", path = "crates/oxc_formatter" }
 oxc_index       = { version = "0.2.0", path = "crates/oxc_index" }
-# oxc_minifier    = { version = "0.2.0", path = "crates/oxc_minifier" }
-oxc_parser   = { version = "0.2.0", path = "crates/oxc_parser" }
-oxc_semantic = { version = "0.2.0", path = "crates/oxc_semantic" }
-oxc_span     = { version = "0.2.0", path = "crates/oxc_span" }
-oxc_syntax   = { version = "0.2.0", path = "crates/oxc_syntax" }
+oxc_minifier    = { version = "0.2.0", path = "crates/oxc_minifier" }
+oxc_parser      = { version = "0.2.0", path = "crates/oxc_parser" }
+oxc_semantic    = { version = "0.2.0", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.2.0", path = "crates/oxc_span" }
+oxc_syntax      = { version = "0.2.0", path = "crates/oxc_syntax" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }

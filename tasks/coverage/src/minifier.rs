@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-// use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_span::SourceType;
 
 use crate::{

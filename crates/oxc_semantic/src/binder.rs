@@ -26,37 +26,51 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
+
+        if self.kind.is_lexical() {
+            self.id.bound_names(&mut |ident| {
+                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                ident.symbol_id.set(Some(symbol_id));
+            });
+            return;
+        }
+
+        // Logic for scope hoisting `var`
+
+        let mut var_scope_ids = vec![];
+        if !builder.scope.get_flags(current_scope_id).is_var() {
+            for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
+                if builder.scope.get_flags(scope_id).is_var() {
+                    var_scope_ids.push(scope_id);
+                    break;
+                }
+                var_scope_ids.push(scope_id);
+            }
+        }
+
         self.id.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let span = ident.span;
+            let name = &ident.name;
+
+            for scope_id in &var_scope_ids {
+                if let Some(symbol_id) =
+                    builder.check_redeclaration(*scope_id, span, name, excludes, true)
+                {
+                    ident.symbol_id.set(Some(symbol_id));
+                    builder.add_redeclared_variables(VariableInfo {
+                        name: ident.name.clone(),
+                        span: ident.span,
+                        symbol_id,
+                    });
+                    return;
+                }
+            }
+
+            let symbol_id =
+                builder.declare_symbol_on_scope(span, name, current_scope_id, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
-            if self.kind == VariableDeclarationKind::Var
-                && !builder.scope.get_flags(current_scope_id).is_var()
-            {
-                let mut scope_ids = vec![];
-                for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
-                    if builder.scope.get_flags(scope_id).is_var() {
-                        scope_ids.push(scope_id);
-                        break;
-                    }
-                    scope_ids.push(scope_id);
-                }
-                for scope_id in scope_ids {
-                    if builder
-                        .check_redeclaration(scope_id, ident.span, &ident.name, excludes, true)
-                        .is_none()
-                    {
-                        builder
-                            .scope
-                            .get_bindings_mut(scope_id)
-                            .insert(ident.name.clone(), symbol_id);
-                    } else {
-                        builder.add_redeclared_variables(VariableInfo {
-                            name: ident.name.clone(),
-                            span: ident.span,
-                            symbol_id,
-                        });
-                    }
-                }
+            for scope_id in &var_scope_ids {
+                builder.scope.add_binding(*scope_id, name.clone(), symbol_id);
             }
         });
     }

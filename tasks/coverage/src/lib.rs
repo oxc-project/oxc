@@ -1,6 +1,6 @@
 mod babel;
 mod formatter;
-// mod minifier;
+mod minifier;
 mod misc;
 mod suite;
 mod test262;
@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use crate::{
     babel::{BabelCase, BabelSuite},
     formatter::{FormatterBabelCase, FormatterTest262Case},
-    // minifier::{MinifierBabelCase, MinifierTest262Case},
+    minifier::{MinifierBabelCase, MinifierTest262Case},
     misc::{MiscCase, MiscSuite},
     suite::Suite,
     test262::{Test262Case, Test262Suite},
@@ -40,7 +40,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_formatter();
-        // self.run_minifier();
+        self.run_minifier();
     }
 
     pub fn run_parser(&self) {
@@ -55,10 +55,10 @@ impl AppArgs {
         BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
     }
 
-    // pub fn run_minifier(&self) {
-    // Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
-    // BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
-    // }
+    pub fn run_minifier(&self) {
+        Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
+        BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
+    }
 }
 
 #[test]

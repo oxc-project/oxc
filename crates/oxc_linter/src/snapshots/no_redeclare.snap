@@ -12,16 +12,6 @@ expression: no_redeclare
    ·             ╰── It can not be redeclare here.
    ╰────
 
-  ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
- 1 │ switch(foo) { case a: var b = 3;
-   ·                           ┬
-   ·                           ╰── 'b' is already defined.
- 2 │ case b: var b = 4}
-   ·             ┬
-   ·             ╰── It can not be redeclare here.
-   ╰────
-
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
  1 │ var a = 3; var a = 10;
