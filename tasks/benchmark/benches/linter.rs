@@ -35,7 +35,9 @@ fn bench_linter(criterion: &mut Criterion) {
                     LintOptions::default().with_filter(vec![(AllowWarnDeny::Deny, "all".into())]);
                 let linter = Linter::from_options(lint_options);
                 let semantic = Rc::new(semantic_ret.semantic);
-                b.iter(|| linter.run(LintContext::new(&semantic)));
+                b.iter(|| {
+                    linter.run(LintContext::new(PathBuf::from("").into_boxed_path(), &semantic))
+                });
             },
         );
     }

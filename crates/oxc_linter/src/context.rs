@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, path::Path, rc::Rc};
 
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
@@ -22,10 +22,12 @@ pub struct LintContext<'a> {
     fix: bool,
 
     current_rule_name: &'static str,
+
+    file_path: Box<Path>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(semantic: &Rc<Semantic<'a>>) -> Self {
+    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -34,6 +36,7 @@ impl<'a> LintContext<'a> {
             disable_directives,
             fix: false,
             current_rule_name: "",
+            file_path,
         }
     }
 
@@ -53,6 +56,10 @@ impl<'a> LintContext<'a> {
 
     pub fn source_type(&self) -> &SourceType {
         self.semantic().source_type()
+    }
+
+    pub fn file_path(&self) -> &Path {
+        &self.file_path
     }
 
     pub fn with_rule_name(&mut self, name: &'static str) {

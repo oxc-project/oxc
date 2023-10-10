@@ -1590,6 +1590,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
+ "convert_case",
  "dashmap",
  "insta",
  "itertools 0.11.0",

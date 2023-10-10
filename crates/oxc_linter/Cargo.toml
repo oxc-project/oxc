@@ -27,15 +27,16 @@ oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
 oxc_resolver    = { workspace = true }
 
-rayon       = { workspace = true }
-lazy_static = { workspace = true }                        # used in oxc_macros
-serde_json  = { workspace = true }
-regex       = { workspace = true }
-rustc-hash  = { workspace = true }
-phf         = { workspace = true, features = ["macros"] }
-num-traits  = { workspace = true }
-itertools   = { workspace = true }
-dashmap     = { workspace = true }
+rayon        = { workspace = true }
+lazy_static  = { workspace = true }                        # used in oxc_macros
+serde_json   = { workspace = true }
+regex        = { workspace = true }
+rustc-hash   = { workspace = true }
+phf          = { workspace = true, features = ["macros"] }
+num-traits   = { workspace = true }
+itertools    = { workspace = true }
+dashmap      = { workspace = true }
+convert_case = { workspace = true }
 
 rust-lapper = "1.1.0"
 once_cell   = "1.18.0"

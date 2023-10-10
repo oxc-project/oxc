@@ -1,6 +1,6 @@
 mod options;
 
-use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::Error;
@@ -159,7 +159,8 @@ impl Oxc {
 
         let allocator = Allocator::default();
         let source_text = &self.source_text;
-        let source_type = SourceType::from_path("test.tsx").unwrap_or_default();
+        let path = PathBuf::from("test.tsx");
+        let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
@@ -184,7 +185,7 @@ impl Oxc {
             self.save_diagnostics(semantic_ret.errors);
 
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(&semantic);
+            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
             let linter_ret = Linter::new().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
