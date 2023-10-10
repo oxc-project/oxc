@@ -84,13 +84,13 @@ impl<'a> Transformer<'a> {
         t
     }
 
-    pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+    pub fn build(mut self, program: &mut Program<'a>) {
         self.visit_program(program);
     }
 }
 
-impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
-    fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
+impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
         // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
@@ -100,7 +100,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
         self.visit_expression_match(expr);
     }
 
-    fn visit_catch_clause(&mut self, clause: &'b mut CatchClause<'a>) {
+    fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
         self.es2019_optional_catch_binding.as_mut().map(|t| t.transform_catch_clause(clause));
 
         if let Some(param) = &mut clause.param {
@@ -109,7 +109,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
         self.visit_statements(&mut clause.body.body);
     }
 
-    fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
+    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
 
         self.visit_property_key(&mut prop.key);
@@ -119,7 +119,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Transformer<'a> {
         }
     }
 
-    fn visit_class_body(&mut self, class_body: &'b mut ClassBody<'a>) {
+    fn visit_class_body(&mut self, class_body: &mut ClassBody<'a>) {
         self.es2022_class_static_block.as_mut().map(|t| t.transform_class_body(class_body));
 
         class_body.body.iter_mut().for_each(|class_element| {

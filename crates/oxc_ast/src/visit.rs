@@ -19,8 +19,12 @@ pub trait Visit<'a>: Sized {
     fn enter_scope(&mut self, _flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
-    fn visit_program(&mut self, program: &'a Program<'a>) {
-        let kind = AstKind::Program(program);
+    fn alloc<T>(&self, t: &T) -> &'a T {
+        unsafe { std::mem::transmute(t) }
+    }
+
+    fn visit_program(&mut self, program: &Program<'a>) {
+        let kind = AstKind::Program(self.alloc(program));
         self.enter_scope({
             let mut flags = ScopeFlags::Top;
             if program.is_strict() {
@@ -39,17 +43,17 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Statement ---------- */
 
-    fn visit_statements(&mut self, stmts: &'a Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, stmts: &Vec<'a, Statement<'a>>) {
         for stmt in stmts {
             self.visit_statement(stmt);
         }
     }
 
-    fn visit_statement(&mut self, stmt: &'a Statement<'a>) {
+    fn visit_statement(&mut self, stmt: &Statement<'a>) {
         self.visit_statement_match(stmt);
     }
 
-    fn visit_statement_match(&mut self, stmt: &'a Statement<'a>) {
+    fn visit_statement_match(&mut self, stmt: &Statement<'a>) {
         match stmt {
             Statement::BlockStatement(stmt) => self.visit_block_statement(stmt),
             Statement::BreakStatement(stmt) => self.visit_break_statement(stmt),
@@ -75,8 +79,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_block_statement(&mut self, stmt: &'a BlockStatement<'a>) {
-        let kind = AstKind::BlockStatement(stmt);
+    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
+        let kind = AstKind::BlockStatement(self.alloc(stmt));
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_statements(&stmt.body);
@@ -84,8 +88,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_break_statement(&mut self, stmt: &'a BreakStatement) {
-        let kind = AstKind::BreakStatement(stmt);
+    fn visit_break_statement(&mut self, stmt: &BreakStatement) {
+        let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(break_target) = &stmt.label {
             self.visit_label_identifier(break_target);
@@ -93,8 +97,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_continue_statement(&mut self, stmt: &'a ContinueStatement) {
-        let kind = AstKind::ContinueStatement(stmt);
+    fn visit_continue_statement(&mut self, stmt: &ContinueStatement) {
+        let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(continue_target) = &stmt.label {
             self.visit_label_identifier(continue_target);
@@ -102,35 +106,35 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_debugger_statement(&mut self, stmt: &'a DebuggerStatement) {
-        let kind = AstKind::DebuggerStatement(stmt);
+    fn visit_debugger_statement(&mut self, stmt: &DebuggerStatement) {
+        let kind = AstKind::DebuggerStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_do_while_statement(&mut self, stmt: &'a DoWhileStatement<'a>) {
-        let kind = AstKind::DoWhileStatement(stmt);
+    fn visit_do_while_statement(&mut self, stmt: &DoWhileStatement<'a>) {
+        let kind = AstKind::DoWhileStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_statement(&stmt.body);
         self.visit_expression(&stmt.test);
         self.leave_node(kind);
     }
 
-    fn visit_empty_statement(&mut self, stmt: &'a EmptyStatement) {
-        let kind = AstKind::EmptyStatement(stmt);
+    fn visit_empty_statement(&mut self, stmt: &EmptyStatement) {
+        let kind = AstKind::EmptyStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_expression_statement(&mut self, stmt: &'a ExpressionStatement<'a>) {
-        let kind = AstKind::ExpressionStatement(stmt);
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
+        let kind = AstKind::ExpressionStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.expression);
         self.leave_node(kind);
     }
 
-    fn visit_for_statement(&mut self, stmt: &'a ForStatement<'a>) {
-        let kind = AstKind::ForStatement(stmt);
+    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
+        let kind = AstKind::ForStatement(self.alloc(stmt));
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
@@ -153,8 +157,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_for_statement_init(&mut self, init: &'a ForStatementInit<'a>) {
-        let kind = AstKind::ForStatementInit(init);
+    fn visit_for_statement_init(&mut self, init: &ForStatementInit<'a>) {
+        let kind = AstKind::ForStatementInit(self.alloc(init));
         self.enter_node(kind);
         match init {
             ForStatementInit::UsingDeclaration(decl) => {
@@ -168,8 +172,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_for_in_statement(&mut self, stmt: &'a ForInStatement<'a>) {
-        let kind = AstKind::ForInStatement(stmt);
+    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
+        let kind = AstKind::ForInStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty());
@@ -184,8 +188,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_for_of_statement(&mut self, stmt: &'a ForOfStatement<'a>) {
-        let kind = AstKind::ForOfStatement(stmt);
+    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
+        let kind = AstKind::ForOfStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty());
@@ -200,7 +204,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_for_statement_left(&mut self, left: &'a ForStatementLeft<'a>) {
+    fn visit_for_statement_left(&mut self, left: &ForStatementLeft<'a>) {
         match left {
             ForStatementLeft::VariableDeclaration(decl) => {
                 self.visit_variable_declaration(decl);
@@ -212,8 +216,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_if_statement(&mut self, stmt: &'a IfStatement<'a>) {
-        let kind = AstKind::IfStatement(stmt);
+    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
+        let kind = AstKind::IfStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.test);
         self.visit_statement(&stmt.consequent);
@@ -223,16 +227,16 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_labeled_statement(&mut self, stmt: &'a LabeledStatement<'a>) {
-        let kind = AstKind::LabeledStatement(stmt);
+    fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
+        let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_label_identifier(&stmt.label);
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
     }
 
-    fn visit_return_statement(&mut self, stmt: &'a ReturnStatement<'a>) {
-        let kind = AstKind::ReturnStatement(stmt);
+    fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
+        let kind = AstKind::ReturnStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(arg) = &stmt.argument {
             self.visit_expression(arg);
@@ -240,8 +244,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_switch_statement(&mut self, stmt: &'a SwitchStatement<'a>) {
-        let kind = AstKind::SwitchStatement(stmt);
+    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
+        let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
@@ -252,8 +256,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_switch_case(&mut self, case: &'a SwitchCase<'a>) {
-        let kind = AstKind::SwitchCase(case);
+    fn visit_switch_case(&mut self, case: &SwitchCase<'a>) {
+        let kind = AstKind::SwitchCase(self.alloc(case));
         self.enter_node(kind);
         if let Some(expr) = &case.test {
             self.visit_expression(expr);
@@ -262,15 +266,15 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_throw_statement(&mut self, stmt: &'a ThrowStatement<'a>) {
-        let kind = AstKind::ThrowStatement(stmt);
+    fn visit_throw_statement(&mut self, stmt: &ThrowStatement<'a>) {
+        let kind = AstKind::ThrowStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.argument);
         self.leave_node(kind);
     }
 
-    fn visit_try_statement(&mut self, stmt: &'a TryStatement<'a>) {
-        let kind = AstKind::TryStatement(stmt);
+    fn visit_try_statement(&mut self, stmt: &TryStatement<'a>) {
+        let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_block_statement(&stmt.block);
         if let Some(handler) = &stmt.handler {
@@ -282,8 +286,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_catch_clause(&mut self, clause: &'a CatchClause<'a>) {
-        let kind = AstKind::CatchClause(clause);
+    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
+        let kind = AstKind::CatchClause(self.alloc(clause));
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(param) = &clause.param {
@@ -294,31 +298,31 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_finally_clause(&mut self, clause: &'a BlockStatement<'a>) {
-        let kind = AstKind::FinallyClause(clause);
+    fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
+        let kind = AstKind::FinallyClause(self.alloc(clause));
         self.enter_node(kind);
         self.visit_block_statement(clause);
         self.leave_node(kind);
     }
 
-    fn visit_while_statement(&mut self, stmt: &'a WhileStatement<'a>) {
-        let kind = AstKind::WhileStatement(stmt);
+    fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
+        let kind = AstKind::WhileStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.test);
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
     }
 
-    fn visit_with_statement(&mut self, stmt: &'a WithStatement<'a>) {
-        let kind = AstKind::WithStatement(stmt);
+    fn visit_with_statement(&mut self, stmt: &WithStatement<'a>) {
+        let kind = AstKind::WithStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.object);
         self.visit_statement(&stmt.body);
         self.leave_node(kind);
     }
 
-    fn visit_directive(&mut self, directive: &'a Directive) {
-        let kind = AstKind::Directive(directive);
+    fn visit_directive(&mut self, directive: &Directive) {
+        let kind = AstKind::Directive(self.alloc(directive));
         self.enter_node(kind);
         self.visit_string_literal(&directive.expression);
         self.leave_node(kind);
@@ -326,8 +330,8 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Declaration ---------- */
 
-    fn visit_variable_declaration(&mut self, decl: &'a VariableDeclaration<'a>) {
-        let kind = AstKind::VariableDeclaration(decl);
+    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
+        let kind = AstKind::VariableDeclaration(self.alloc(decl));
         self.enter_node(kind);
         for declarator in &decl.declarations {
             self.visit_variable_declarator(declarator);
@@ -335,8 +339,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_variable_declarator(&mut self, declarator: &'a VariableDeclarator<'a>) {
-        let kind = AstKind::VariableDeclarator(declarator);
+    fn visit_variable_declarator(&mut self, declarator: &VariableDeclarator<'a>) {
+        let kind = AstKind::VariableDeclarator(self.alloc(declarator));
         self.enter_node(kind);
         self.visit_binding_pattern(&declarator.id);
         if let Some(init) = &declarator.init {
@@ -347,8 +351,8 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Function ---------- */
 
-    fn visit_function(&mut self, func: &'a Function<'a>, flags: Option<ScopeFlags>) {
-        let kind = AstKind::Function(func);
+    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+        let kind = AstKind::Function(self.alloc(func));
         self.enter_scope({
             let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
             if func.is_strict() {
@@ -374,8 +378,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_function_body(&mut self, body: &'a FunctionBody<'a>) {
-        let kind = AstKind::FunctionBody(body);
+    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
+        let kind = AstKind::FunctionBody(self.alloc(body));
         self.enter_node(kind);
         for directive in &body.directives {
             self.visit_directive(directive);
@@ -384,8 +388,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_formal_parameters(&mut self, params: &'a FormalParameters<'a>) {
-        let kind = AstKind::FormalParameters(params);
+    fn visit_formal_parameters(&mut self, params: &FormalParameters<'a>) {
+        let kind = AstKind::FormalParameters(self.alloc(params));
         self.enter_node(kind);
         for param in &params.items {
             self.visit_formal_parameter(param);
@@ -396,8 +400,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_formal_parameter(&mut self, param: &'a FormalParameter<'a>) {
-        let kind = AstKind::FormalParameter(param);
+    fn visit_formal_parameter(&mut self, param: &FormalParameter<'a>) {
+        let kind = AstKind::FormalParameter(self.alloc(param));
         self.enter_node(kind);
         for decorator in &param.decorators {
             self.visit_decorator(decorator);
@@ -408,21 +412,21 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Class ---------- */
 
-    fn visit_decorator(&mut self, decorator: &'a Decorator<'a>) {
-        let kind = AstKind::Decorator(decorator);
+    fn visit_decorator(&mut self, decorator: &Decorator<'a>) {
+        let kind = AstKind::Decorator(self.alloc(decorator));
         self.enter_node(kind);
         self.visit_expression(&decorator.expression);
         self.leave_node(kind);
     }
 
-    fn visit_class(&mut self, class: &'a Class<'a>) {
+    fn visit_class(&mut self, class: &Class<'a>) {
         // Class level decorators are transpiled as functions outside of the class taking the class
         // itself as argument. They should be visited before class is entered. E.g., they inherit
         // strict mode from the enclosing scope rather than from class.
         for decorator in &class.decorators {
             self.visit_decorator(decorator);
         }
-        let kind = AstKind::Class(class);
+        let kind = AstKind::Class(self.alloc(class));
 
         // FIXME(don): Should we enter a scope when visiting class declarations?
         let is_class_expr = class.r#type == ClassType::ClassExpression;
@@ -454,20 +458,20 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_class_heritage(&mut self, expr: &'a Expression<'a>) {
-        let kind = AstKind::ClassHeritage(expr);
+    fn visit_class_heritage(&mut self, expr: &Expression<'a>) {
+        let kind = AstKind::ClassHeritage(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(expr);
         self.leave_node(kind);
     }
 
-    fn visit_class_body(&mut self, body: &'a ClassBody<'a>) {
+    fn visit_class_body(&mut self, body: &ClassBody<'a>) {
         for elem in &body.body {
             self.visit_class_element(elem);
         }
     }
 
-    fn visit_class_element(&mut self, elem: &'a ClassElement<'a>) {
+    fn visit_class_element(&mut self, elem: &ClassElement<'a>) {
         match elem {
             ClassElement::StaticBlock(block) => self.visit_static_block(block),
             ClassElement::MethodDefinition(def) => self.visit_method_definition(def),
@@ -483,8 +487,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_static_block(&mut self, block: &'a StaticBlock<'a>) {
-        let kind = AstKind::StaticBlock(block);
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        let kind = AstKind::StaticBlock(self.alloc(block));
         self.enter_scope(ScopeFlags::ClassStaticBlock);
         self.enter_node(kind);
         self.visit_statements(&block.body);
@@ -492,8 +496,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_method_definition(&mut self, def: &'a MethodDefinition<'a>) {
-        let kind = AstKind::MethodDefinition(def);
+    fn visit_method_definition(&mut self, def: &MethodDefinition<'a>) {
+        let kind = AstKind::MethodDefinition(self.alloc(def));
         self.enter_node(kind);
         for decorator in &def.decorators {
             self.visit_decorator(decorator);
@@ -509,8 +513,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_property_definition(&mut self, def: &'a PropertyDefinition<'a>) {
-        let kind = AstKind::PropertyDefinition(def);
+    fn visit_property_definition(&mut self, def: &PropertyDefinition<'a>) {
+        let kind = AstKind::PropertyDefinition(self.alloc(def));
         self.enter_node(kind);
         for decorator in &def.decorators {
             self.visit_decorator(decorator);
@@ -525,8 +529,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_using_declaration(&mut self, decl: &'a UsingDeclaration<'a>) {
-        let kind = AstKind::UsingDeclaration(decl);
+    fn visit_using_declaration(&mut self, decl: &UsingDeclaration<'a>) {
+        let kind = AstKind::UsingDeclaration(self.alloc(decl));
         self.enter_node(kind);
         for decl in &decl.declarations {
             self.visit_variable_declarator(decl);
@@ -536,11 +540,11 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Expression ---------- */
 
-    fn visit_expression(&mut self, expr: &'a Expression<'a>) {
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
         self.visit_expression_match(expr);
     }
 
-    fn visit_expression_match(&mut self, expr: &'a Expression<'a>) {
+    fn visit_expression_match(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::BigintLiteral(lit) => self.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => self.visit_boolean_literal(lit),
@@ -597,14 +601,14 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_meta_property(&mut self, meta: &'a MetaProperty) {
-        let kind = AstKind::MetaProperty(meta);
+    fn visit_meta_property(&mut self, meta: &MetaProperty) {
+        let kind = AstKind::MetaProperty(self.alloc(meta));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_array_expression(&mut self, expr: &'a ArrayExpression<'a>) {
-        let kind = AstKind::ArrayExpression(expr);
+    fn visit_array_expression(&mut self, expr: &ArrayExpression<'a>) {
+        let kind = AstKind::ArrayExpression(self.alloc(expr));
         self.enter_node(kind);
         for elem in &expr.elements {
             self.visit_array_expression_element(elem);
@@ -612,8 +616,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_array_expression_element(&mut self, arg: &'a ArrayExpressionElement<'a>) {
-        let kind = AstKind::ArrayExpressionElement(arg);
+    fn visit_array_expression_element(&mut self, arg: &ArrayExpressionElement<'a>) {
+        let kind = AstKind::ArrayExpressionElement(self.alloc(arg));
         self.enter_node(kind);
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => self.visit_spread_element(spread),
@@ -623,8 +627,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_argument(&mut self, arg: &'a Argument<'a>) {
-        let kind = AstKind::Argument(arg);
+    fn visit_argument(&mut self, arg: &Argument<'a>) {
+        let kind = AstKind::Argument(self.alloc(arg));
         self.enter_node(kind);
         match arg {
             Argument::SpreadElement(spread) => self.visit_spread_element(spread),
@@ -633,15 +637,15 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_spread_element(&mut self, elem: &'a SpreadElement<'a>) {
-        let kind = AstKind::SpreadElement(elem);
+    fn visit_spread_element(&mut self, elem: &SpreadElement<'a>) {
+        let kind = AstKind::SpreadElement(self.alloc(elem));
         self.enter_node(kind);
         self.visit_expression(&elem.argument);
         self.leave_node(kind);
     }
 
-    fn visit_expression_array_element(&mut self, expr: &'a Expression<'a>) {
-        let kind = AstKind::ExpressionArrayElement(expr);
+    fn visit_expression_array_element(&mut self, expr: &Expression<'a>) {
+        let kind = AstKind::ExpressionArrayElement(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(expr);
         self.leave_node(kind);
@@ -653,16 +657,16 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_assignment_expression(&mut self, expr: &'a AssignmentExpression<'a>) {
-        let kind = AstKind::AssignmentExpression(expr);
+    fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
+        let kind = AstKind::AssignmentExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_assignment_target(&expr.left);
         self.visit_expression(&expr.right);
         self.leave_node(kind);
     }
 
-    fn visit_arrow_expression(&mut self, expr: &'a ArrowExpression<'a>) {
-        let kind = AstKind::ArrowExpression(expr);
+    fn visit_arrow_expression(&mut self, expr: &ArrowExpression<'a>) {
+        let kind = AstKind::ArrowExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         self.enter_node(kind);
         self.visit_formal_parameters(&expr.params);
@@ -674,23 +678,23 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_await_expression(&mut self, expr: &'a AwaitExpression<'a>) {
-        let kind = AstKind::AwaitExpression(expr);
+    fn visit_await_expression(&mut self, expr: &AwaitExpression<'a>) {
+        let kind = AstKind::AwaitExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.argument);
         self.leave_node(kind);
     }
 
-    fn visit_binary_expression(&mut self, expr: &'a BinaryExpression<'a>) {
-        let kind = AstKind::BinaryExpression(expr);
+    fn visit_binary_expression(&mut self, expr: &BinaryExpression<'a>) {
+        let kind = AstKind::BinaryExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.left);
         self.visit_expression(&expr.right);
         self.leave_node(kind);
     }
 
-    fn visit_call_expression(&mut self, expr: &'a CallExpression<'a>) {
-        let kind = AstKind::CallExpression(expr);
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        let kind = AstKind::CallExpression(self.alloc(expr));
         self.enter_node(kind);
         for arg in &expr.arguments {
             self.visit_argument(arg);
@@ -702,22 +706,22 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_chain_expression(&mut self, expr: &'a ChainExpression<'a>) {
-        let kind = AstKind::ChainExpression(expr);
+    fn visit_chain_expression(&mut self, expr: &ChainExpression<'a>) {
+        let kind = AstKind::ChainExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_chain_element(&expr.expression);
         self.leave_node(kind);
     }
 
-    fn visit_chain_element(&mut self, elem: &'a ChainElement<'a>) {
+    fn visit_chain_element(&mut self, elem: &ChainElement<'a>) {
         match elem {
             ChainElement::CallExpression(expr) => self.visit_call_expression(expr),
             ChainElement::MemberExpression(expr) => self.visit_member_expression(expr),
         }
     }
 
-    fn visit_conditional_expression(&mut self, expr: &'a ConditionalExpression<'a>) {
-        let kind = AstKind::ConditionalExpression(expr);
+    fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
+        let kind = AstKind::ConditionalExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.test);
         self.visit_expression(&expr.consequent);
@@ -725,23 +729,23 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_import_expression(&mut self, expr: &'a ImportExpression<'a>) {
+    fn visit_import_expression(&mut self, expr: &ImportExpression<'a>) {
         self.visit_expression(&expr.source);
         for arg in &expr.arguments {
             self.visit_expression(arg);
         }
     }
 
-    fn visit_logical_expression(&mut self, expr: &'a LogicalExpression<'a>) {
-        let kind = AstKind::LogicalExpression(expr);
+    fn visit_logical_expression(&mut self, expr: &LogicalExpression<'a>) {
+        let kind = AstKind::LogicalExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.left);
         self.visit_expression(&expr.right);
         self.leave_node(kind);
     }
 
-    fn visit_member_expression(&mut self, expr: &'a MemberExpression<'a>) {
-        let kind = AstKind::MemberExpression(expr);
+    fn visit_member_expression(&mut self, expr: &MemberExpression<'a>) {
+        let kind = AstKind::MemberExpression(self.alloc(expr));
         self.enter_node(kind);
         match expr {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -757,23 +761,23 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_computed_member_expression(&mut self, expr: &'a ComputedMemberExpression<'a>) {
+    fn visit_computed_member_expression(&mut self, expr: &ComputedMemberExpression<'a>) {
         self.visit_expression(&expr.object);
         self.visit_expression(&expr.expression);
     }
 
-    fn visit_static_member_expression(&mut self, expr: &'a StaticMemberExpression<'a>) {
+    fn visit_static_member_expression(&mut self, expr: &StaticMemberExpression<'a>) {
         self.visit_expression(&expr.object);
         self.visit_identifier_name(&expr.property);
     }
 
-    fn visit_private_field_expression(&mut self, expr: &'a PrivateFieldExpression<'a>) {
+    fn visit_private_field_expression(&mut self, expr: &PrivateFieldExpression<'a>) {
         self.visit_expression(&expr.object);
         self.visit_private_identifier(&expr.field);
     }
 
-    fn visit_new_expression(&mut self, expr: &'a NewExpression<'a>) {
-        let kind = AstKind::NewExpression(expr);
+    fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
+        let kind = AstKind::NewExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.callee);
         if let Some(parameters) = &expr.type_parameters {
@@ -785,8 +789,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_object_expression(&mut self, expr: &'a ObjectExpression<'a>) {
-        let kind = AstKind::ObjectExpression(expr);
+    fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
+        let kind = AstKind::ObjectExpression(self.alloc(expr));
         self.enter_node(kind);
         for prop in &expr.properties {
             self.visit_object_property_kind(prop);
@@ -794,23 +798,23 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_object_property_kind(&mut self, prop: &'a ObjectPropertyKind<'a>) {
+    fn visit_object_property_kind(&mut self, prop: &ObjectPropertyKind<'a>) {
         match prop {
             ObjectPropertyKind::ObjectProperty(prop) => self.visit_object_property(prop),
             ObjectPropertyKind::SpreadProperty(elem) => self.visit_spread_element(elem),
         }
     }
 
-    fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
-        let kind = AstKind::ObjectProperty(prop);
+    fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        let kind = AstKind::ObjectProperty(self.alloc(prop));
         self.enter_node(kind);
         self.visit_property_key(&prop.key);
         self.visit_expression(&prop.value);
         self.leave_node(kind);
     }
 
-    fn visit_property_key(&mut self, key: &'a PropertyKey<'a>) {
-        let kind = AstKind::PropertyKey(key);
+    fn visit_property_key(&mut self, key: &PropertyKey<'a>) {
+        let kind = AstKind::PropertyKey(self.alloc(key));
         self.enter_node(kind);
         match key {
             PropertyKey::Identifier(ident) => self.visit_identifier_name(ident),
@@ -820,20 +824,20 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_parenthesized_expression(&mut self, expr: &'a ParenthesizedExpression<'a>) {
-        let kind = AstKind::ParenthesizedExpression(expr);
+    fn visit_parenthesized_expression(&mut self, expr: &ParenthesizedExpression<'a>) {
+        let kind = AstKind::ParenthesizedExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.leave_node(kind);
     }
 
-    fn visit_private_in_expression(&mut self, expr: &'a PrivateInExpression<'a>) {
+    fn visit_private_in_expression(&mut self, expr: &PrivateInExpression<'a>) {
         self.visit_private_identifier(&expr.left);
         self.visit_expression(&expr.right);
     }
 
-    fn visit_sequence_expression(&mut self, expr: &'a SequenceExpression<'a>) {
-        let kind = AstKind::SequenceExpression(expr);
+    fn visit_sequence_expression(&mut self, expr: &SequenceExpression<'a>) {
+        let kind = AstKind::SequenceExpression(self.alloc(expr));
         self.enter_node(kind);
         for expr in &expr.expressions {
             self.visit_expression(expr);
@@ -841,36 +845,36 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
-        let kind = AstKind::TaggedTemplateExpression(expr);
+    fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
+        let kind = AstKind::TaggedTemplateExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.tag);
         self.visit_template_literal(&expr.quasi);
         self.leave_node(kind);
     }
 
-    fn visit_this_expression(&mut self, expr: &'a ThisExpression) {
-        let kind = AstKind::ThisExpression(expr);
+    fn visit_this_expression(&mut self, expr: &ThisExpression) {
+        let kind = AstKind::ThisExpression(self.alloc(expr));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_unary_expression(&mut self, expr: &'a UnaryExpression<'a>) {
-        let kind = AstKind::UnaryExpression(expr);
+    fn visit_unary_expression(&mut self, expr: &UnaryExpression<'a>) {
+        let kind = AstKind::UnaryExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.argument);
         self.leave_node(kind);
     }
 
-    fn visit_update_expression(&mut self, expr: &'a UpdateExpression<'a>) {
-        let kind = AstKind::UpdateExpression(expr);
+    fn visit_update_expression(&mut self, expr: &UpdateExpression<'a>) {
+        let kind = AstKind::UpdateExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_simple_assignment_target(&expr.argument);
         self.leave_node(kind);
     }
 
-    fn visit_yield_expression(&mut self, expr: &'a YieldExpression<'a>) {
-        let kind = AstKind::YieldExpression(expr);
+    fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
+        let kind = AstKind::YieldExpression(self.alloc(expr));
         self.enter_node(kind);
         if let Some(argument) = &expr.argument {
             self.visit_expression(argument);
@@ -878,14 +882,14 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_super(&mut self, expr: &'a Super) {
-        let kind = AstKind::Super(expr);
+    fn visit_super(&mut self, expr: &Super) {
+        let kind = AstKind::Super(self.alloc(expr));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_assignment_target(&mut self, target: &'a AssignmentTarget<'a>) {
-        let kind = AstKind::AssignmentTarget(target);
+    fn visit_assignment_target(&mut self, target: &AssignmentTarget<'a>) {
+        let kind = AstKind::AssignmentTarget(self.alloc(target));
         self.enter_node(kind);
         match target {
             AssignmentTarget::SimpleAssignmentTarget(target) => {
@@ -898,8 +902,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_simple_assignment_target(&mut self, target: &'a SimpleAssignmentTarget<'a>) {
-        let kind = AstKind::SimpleAssignmentTarget(target);
+    fn visit_simple_assignment_target(&mut self, target: &SimpleAssignmentTarget<'a>) {
+        let kind = AstKind::SimpleAssignmentTarget(self.alloc(target));
         self.enter_node(kind);
         match target {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
@@ -924,7 +928,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_assignment_target_pattern(&mut self, pat: &'a AssignmentTargetPattern<'a>) {
+    fn visit_assignment_target_pattern(&mut self, pat: &AssignmentTargetPattern<'a>) {
         match pat {
             AssignmentTargetPattern::ArrayAssignmentTarget(target) => {
                 self.visit_array_assignment_target(target);
@@ -935,7 +939,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_array_assignment_target(&mut self, target: &'a ArrayAssignmentTarget<'a>) {
+    fn visit_array_assignment_target(&mut self, target: &ArrayAssignmentTarget<'a>) {
         for element in target.elements.iter().flatten() {
             self.visit_assignment_target_maybe_default(element);
         }
@@ -944,10 +948,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_assignment_target_maybe_default(
-        &mut self,
-        target: &'a AssignmentTargetMaybeDefault<'a>,
-    ) {
+    fn visit_assignment_target_maybe_default(&mut self, target: &AssignmentTargetMaybeDefault<'a>) {
         match target {
             AssignmentTargetMaybeDefault::AssignmentTarget(target) => {
                 self.visit_assignment_target(target);
@@ -958,18 +959,15 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_assignment_target_with_default(
-        &mut self,
-        target: &'a AssignmentTargetWithDefault<'a>,
-    ) {
-        let kind = AstKind::AssignmentTargetWithDefault(target);
+    fn visit_assignment_target_with_default(&mut self, target: &AssignmentTargetWithDefault<'a>) {
+        let kind = AstKind::AssignmentTargetWithDefault(self.alloc(target));
         self.enter_node(kind);
         self.visit_assignment_target(&target.binding);
         self.visit_expression(&target.init);
         self.leave_node(kind);
     }
 
-    fn visit_object_assignment_target(&mut self, target: &'a ObjectAssignmentTarget<'a>) {
+    fn visit_object_assignment_target(&mut self, target: &ObjectAssignmentTarget<'a>) {
         for property in &target.properties {
             self.visit_assignment_target_property(property);
         }
@@ -978,7 +976,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_assignment_target_property(&mut self, property: &'a AssignmentTargetProperty<'a>) {
+    fn visit_assignment_target_property(&mut self, property: &AssignmentTargetProperty<'a>) {
         match property {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                 self.visit_assignment_target_property_identifier(ident);
@@ -991,7 +989,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_assignment_target_property_identifier(
         &mut self,
-        ident: &'a AssignmentTargetPropertyIdentifier<'a>,
+        ident: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
         self.visit_identifier_reference(&ident.binding);
         if let Some(expr) = &ident.init {
@@ -1001,7 +999,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_assignment_target_property_property(
         &mut self,
-        property: &'a AssignmentTargetPropertyProperty<'a>,
+        property: &AssignmentTargetPropertyProperty<'a>,
     ) {
         self.visit_property_key(&property.name);
         self.visit_assignment_target_maybe_default(&property.binding);
@@ -1009,8 +1007,8 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Expression ---------- */
 
-    fn visit_jsx_element(&mut self, elem: &'a JSXElement<'a>) {
-        let kind = AstKind::JSXElement(elem);
+    fn visit_jsx_element(&mut self, elem: &JSXElement<'a>) {
+        let kind = AstKind::JSXElement(self.alloc(elem));
         self.enter_node(kind);
         self.visit_jsx_opening_element(&elem.opening_element);
         for child in &elem.children {
@@ -1019,8 +1017,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_jsx_opening_element(&mut self, elem: &'a JSXOpeningElement<'a>) {
-        let kind = AstKind::JSXOpeningElement(elem);
+    fn visit_jsx_opening_element(&mut self, elem: &JSXOpeningElement<'a>) {
+        let kind = AstKind::JSXOpeningElement(self.alloc(elem));
         self.enter_node(kind);
         self.visit_jsx_element_name(&elem.name);
         for attribute in &elem.attributes {
@@ -1029,13 +1027,13 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_jsx_element_name(&mut self, name: &'a JSXElementName<'a>) {
-        let kind = AstKind::JSXElementName(name);
+    fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
+        let kind = AstKind::JSXElementName(self.alloc(name));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_jsx_attribute_item(&mut self, item: &'a JSXAttributeItem<'a>) {
+    fn visit_jsx_attribute_item(&mut self, item: &JSXAttributeItem<'a>) {
         match &item {
             JSXAttributeItem::Attribute(attribute) => self.visit_jsx_attribute(attribute),
             JSXAttributeItem::SpreadAttribute(attribute) => {
@@ -1044,17 +1042,17 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_jsx_attribute(&mut self, attribute: &'a JSXAttribute<'a>) {
+    fn visit_jsx_attribute(&mut self, attribute: &JSXAttribute<'a>) {
         if let Some(value) = &attribute.value {
             self.visit_jsx_attribute_value(value);
         }
     }
 
-    fn visit_jsx_spread_attribute(&mut self, attribute: &'a JSXSpreadAttribute<'a>) {
+    fn visit_jsx_spread_attribute(&mut self, attribute: &JSXSpreadAttribute<'a>) {
         self.visit_expression(&attribute.argument);
     }
 
-    fn visit_jsx_attribute_value(&mut self, value: &'a JSXAttributeValue<'a>) {
+    fn visit_jsx_attribute_value(&mut self, value: &JSXAttributeValue<'a>) {
         match value {
             JSXAttributeValue::ExpressionContainer(expr) => {
                 self.visit_jsx_expression_container(expr);
@@ -1065,24 +1063,24 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_jsx_expression_container(&mut self, expr: &'a JSXExpressionContainer<'a>) {
+    fn visit_jsx_expression_container(&mut self, expr: &JSXExpressionContainer<'a>) {
         self.visit_jsx_expression(&expr.expression);
     }
 
-    fn visit_jsx_expression(&mut self, expr: &'a JSXExpression<'a>) {
+    fn visit_jsx_expression(&mut self, expr: &JSXExpression<'a>) {
         match expr {
             JSXExpression::Expression(expr) => self.visit_expression(expr),
             JSXExpression::EmptyExpression(_) => {}
         }
     }
 
-    fn visit_jsx_fragment(&mut self, elem: &'a JSXFragment<'a>) {
+    fn visit_jsx_fragment(&mut self, elem: &JSXFragment<'a>) {
         for child in &elem.children {
             self.visit_jsx_child(child);
         }
     }
 
-    fn visit_jsx_child(&mut self, child: &'a JSXChild<'a>) {
+    fn visit_jsx_child(&mut self, child: &JSXChild<'a>) {
         match child {
             JSXChild::Element(elem) => self.visit_jsx_element(elem),
             JSXChild::Fragment(elem) => self.visit_jsx_fragment(elem),
@@ -1092,13 +1090,13 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_jsx_spread_child(&mut self, child: &'a JSXSpreadChild<'a>) {
+    fn visit_jsx_spread_child(&mut self, child: &JSXSpreadChild<'a>) {
         self.visit_expression(&child.expression);
     }
 
     /* ----------  Pattern ---------- */
 
-    fn visit_binding_pattern(&mut self, pat: &'a BindingPattern<'a>) {
+    fn visit_binding_pattern(&mut self, pat: &BindingPattern<'a>) {
         match &pat.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
                 self.visit_binding_identifier(ident);
@@ -1112,14 +1110,14 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_binding_identifier(&mut self, ident: &'a BindingIdentifier) {
-        let kind = AstKind::BindingIdentifier(ident);
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier) {
+        let kind = AstKind::BindingIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_object_pattern(&mut self, pat: &'a ObjectPattern<'a>) {
-        let kind = AstKind::ObjectPattern(pat);
+    fn visit_object_pattern(&mut self, pat: &ObjectPattern<'a>) {
+        let kind = AstKind::ObjectPattern(self.alloc(pat));
         self.enter_node(kind);
         for prop in &pat.properties {
             self.visit_binding_property(prop);
@@ -1130,13 +1128,13 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_binding_property(&mut self, prop: &'a BindingProperty<'a>) {
+    fn visit_binding_property(&mut self, prop: &BindingProperty<'a>) {
         self.visit_property_key(&prop.key);
         self.visit_binding_pattern(&prop.value);
     }
 
-    fn visit_array_pattern(&mut self, pat: &'a ArrayPattern<'a>) {
-        let kind = AstKind::ArrayPattern(pat);
+    fn visit_array_pattern(&mut self, pat: &ArrayPattern<'a>) {
+        let kind = AstKind::ArrayPattern(self.alloc(pat));
         self.enter_node(kind);
         for pat in pat.elements.iter().flatten() {
             self.visit_binding_pattern(pat);
@@ -1147,15 +1145,15 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_rest_element(&mut self, pat: &'a RestElement<'a>) {
-        let kind = AstKind::RestElement(pat);
+    fn visit_rest_element(&mut self, pat: &RestElement<'a>) {
+        let kind = AstKind::RestElement(self.alloc(pat));
         self.enter_node(kind);
         self.visit_binding_pattern(&pat.argument);
         self.leave_node(kind);
     }
 
-    fn visit_assignment_pattern(&mut self, pat: &'a AssignmentPattern<'a>) {
-        let kind = AstKind::AssignmentPattern(pat);
+    fn visit_assignment_pattern(&mut self, pat: &AssignmentPattern<'a>) {
+        let kind = AstKind::AssignmentPattern(self.alloc(pat));
         self.enter_node(kind);
         self.visit_binding_pattern(&pat.left);
         self.visit_expression(&pat.right);
@@ -1164,64 +1162,64 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Identifier ---------- */
 
-    fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
-        let kind = AstKind::IdentifierReference(ident);
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference) {
+        let kind = AstKind::IdentifierReference(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_private_identifier(&mut self, ident: &'a PrivateIdentifier) {
-        let kind = AstKind::PrivateIdentifier(ident);
+    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier) {
+        let kind = AstKind::PrivateIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_label_identifier(&mut self, ident: &'a LabelIdentifier) {
-        let kind = AstKind::LabelIdentifier(ident);
+    fn visit_label_identifier(&mut self, ident: &LabelIdentifier) {
+        let kind = AstKind::LabelIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_identifier_name(&mut self, ident: &'a IdentifierName) {
-        let kind = AstKind::IdentifierName(ident);
+    fn visit_identifier_name(&mut self, ident: &IdentifierName) {
+        let kind = AstKind::IdentifierName(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
     /* ----------  Literal ---------- */
 
-    fn visit_number_literal(&mut self, lit: &'a NumberLiteral<'a>) {
-        let kind = AstKind::NumberLiteral(lit);
+    fn visit_number_literal(&mut self, lit: &NumberLiteral<'a>) {
+        let kind = AstKind::NumberLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_boolean_literal(&mut self, lit: &'a BooleanLiteral) {
-        let kind = AstKind::BooleanLiteral(lit);
+    fn visit_boolean_literal(&mut self, lit: &BooleanLiteral) {
+        let kind = AstKind::BooleanLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_null_literal(&mut self, lit: &'a NullLiteral) {
-        let kind = AstKind::NullLiteral(lit);
+    fn visit_null_literal(&mut self, lit: &NullLiteral) {
+        let kind = AstKind::NullLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_bigint_literal(&mut self, lit: &'a BigintLiteral) {
-        let kind = AstKind::BigintLiteral(lit);
+    fn visit_bigint_literal(&mut self, lit: &BigintLiteral) {
+        let kind = AstKind::BigintLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_string_literal(&mut self, lit: &'a StringLiteral) {
-        let kind = AstKind::StringLiteral(lit);
+    fn visit_string_literal(&mut self, lit: &StringLiteral) {
+        let kind = AstKind::StringLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_template_literal(&mut self, lit: &'a TemplateLiteral<'a>) {
-        let kind = AstKind::TemplateLiteral(lit);
+    fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
+        let kind = AstKind::TemplateLiteral(self.alloc(lit));
         self.enter_node(kind);
         for elem in &lit.quasis {
             self.visit_template_element(elem);
@@ -1232,18 +1230,18 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_reg_expr_literal(&mut self, lit: &'a RegExpLiteral) {
-        let kind = AstKind::RegExpLiteral(lit);
+    fn visit_reg_expr_literal(&mut self, lit: &RegExpLiteral) {
+        let kind = AstKind::RegExpLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_template_element(&mut self, _elem: &'a TemplateElement) {}
+    fn visit_template_element(&mut self, _elem: &TemplateElement) {}
 
     /* ----------  Module ---------- */
 
-    fn visit_module_declaration(&mut self, decl: &'a ModuleDeclaration<'a>) {
-        let kind = AstKind::ModuleDeclaration(decl);
+    fn visit_module_declaration(&mut self, decl: &ModuleDeclaration<'a>) {
+        let kind = AstKind::ModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
         match decl {
             ModuleDeclaration::ImportDeclaration(decl) => {
@@ -1266,7 +1264,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_import_declaration(&mut self, decl: &'a ImportDeclaration<'a>) {
+    fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
         for specifier in &decl.specifiers {
             self.visit_import_declaration_specifier(specifier);
         }
@@ -1274,7 +1272,7 @@ pub trait Visit<'a>: Sized {
         // TODO: assertions
     }
 
-    fn visit_import_declaration_specifier(&mut self, specifier: &'a ImportDeclarationSpecifier) {
+    fn visit_import_declaration_specifier(&mut self, specifier: &ImportDeclarationSpecifier) {
         match &specifier {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                 self.visit_import_specifier(specifier);
@@ -1288,22 +1286,22 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_import_specifier(&mut self, specifier: &'a ImportSpecifier) {
+    fn visit_import_specifier(&mut self, specifier: &ImportSpecifier) {
         // TODO: imported
         self.visit_binding_identifier(&specifier.local);
     }
 
-    fn visit_import_default_specifier(&mut self, specifier: &'a ImportDefaultSpecifier) {
+    fn visit_import_default_specifier(&mut self, specifier: &ImportDefaultSpecifier) {
         self.visit_binding_identifier(&specifier.local);
     }
 
-    fn visit_import_name_specifier(&mut self, specifier: &'a ImportNamespaceSpecifier) {
+    fn visit_import_name_specifier(&mut self, specifier: &ImportNamespaceSpecifier) {
         self.visit_binding_identifier(&specifier.local);
     }
 
-    fn visit_export_all_declaration(&mut self, _decl: &'a ExportAllDeclaration<'a>) {}
+    fn visit_export_all_declaration(&mut self, _decl: &ExportAllDeclaration<'a>) {}
 
-    fn visit_export_default_declaration(&mut self, decl: &'a ExportDefaultDeclaration<'a>) {
+    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         match &decl.declaration {
             ExportDefaultDeclarationKind::Expression(expr) => self.visit_expression(expr),
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
@@ -1314,14 +1312,14 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_export_named_declaration(&mut self, decl: &'a ExportNamedDeclaration<'a>) {
+    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         if let Some(decl) = &decl.declaration {
             self.visit_declaration(decl);
         }
     }
 
-    fn visit_enum_member(&mut self, member: &'a TSEnumMember<'a>) {
-        let kind = AstKind::TSEnumMember(member);
+    fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {
+        let kind = AstKind::TSEnumMember(self.alloc(member));
         self.enter_node(kind);
 
         if let Some(initializer) = &member.initializer {
@@ -1331,8 +1329,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_enum_body(&mut self, body: &'a TSEnumBody<'a>) {
-        let kind = AstKind::TSEnumBody(body);
+    fn visit_enum_body(&mut self, body: &TSEnumBody<'a>) {
+        let kind = AstKind::TSEnumBody(self.alloc(body));
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         for member in &body.members {
@@ -1342,15 +1340,15 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_enum(&mut self, decl: &'a TSEnumDeclaration<'a>) {
-        let kind = AstKind::TSEnumDeclaration(decl);
+    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+        let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         self.visit_enum_body(&decl.body);
         self.leave_node(kind);
     }
 
-    fn visit_declaration(&mut self, decl: &'a Declaration<'a>) {
+    fn visit_declaration(&mut self, decl: &Declaration<'a>) {
         match decl {
             Declaration::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             Declaration::FunctionDeclaration(func) => self.visit_function(func, None),
@@ -1375,15 +1373,15 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_ts_import_equals_declaration(&mut self, decl: &'a TSImportEqualsDeclaration<'a>) {
-        let kind = AstKind::TSImportEqualsDeclaration(decl);
+    fn visit_ts_import_equals_declaration(&mut self, decl: &TSImportEqualsDeclaration<'a>) {
+        let kind = AstKind::TSImportEqualsDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         self.leave_node(kind);
     }
 
-    fn visit_ts_module_declaration(&mut self, decl: &'a TSModuleDeclaration<'a>) {
-        let kind = AstKind::TSModuleDeclaration(decl);
+    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
+        let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
         match &decl.id {
             TSModuleDeclarationName::Identifier(ident) => self.visit_identifier_name(ident),
@@ -1398,8 +1396,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_module_block(&mut self, block: &'a TSModuleBlock<'a>) {
-        let kind = AstKind::TSModuleBlock(block);
+    fn visit_ts_module_block(&mut self, block: &TSModuleBlock<'a>) {
+        let kind = AstKind::TSModuleBlock(self.alloc(block));
         self.enter_scope(ScopeFlags::TsModuleBlock);
         self.enter_node(kind);
         self.visit_statements(&block.body);
@@ -1407,8 +1405,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_ts_type_alias_declaration(&mut self, decl: &'a TSTypeAliasDeclaration<'a>) {
-        let kind = AstKind::TSTypeAliasDeclaration(decl);
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         if let Some(parameters) = &decl.type_parameters {
@@ -1418,8 +1416,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_interface_declaration(&mut self, decl: &'a TSInterfaceDeclaration<'a>) {
-        let kind = AstKind::TSInterfaceDeclaration(decl);
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         if let Some(parameters) = &decl.type_parameters {
@@ -1431,50 +1429,50 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_as_expression(&mut self, expr: &'a TSAsExpression<'a>) {
-        let kind = AstKind::TSAsExpression(expr);
+    fn visit_ts_as_expression(&mut self, expr: &TSAsExpression<'a>) {
+        let kind = AstKind::TSAsExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.visit_ts_type(&expr.type_annotation);
         self.leave_node(kind);
     }
 
-    fn visit_ts_satisfies_expression(&mut self, expr: &'a TSSatisfiesExpression<'a>) {
-        let kind = AstKind::TSSatisfiesExpression(expr);
+    fn visit_ts_satisfies_expression(&mut self, expr: &TSSatisfiesExpression<'a>) {
+        let kind = AstKind::TSSatisfiesExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.visit_ts_type(&expr.type_annotation);
         self.leave_node(kind);
     }
 
-    fn visit_ts_non_null_expression(&mut self, expr: &'a TSNonNullExpression<'a>) {
-        let kind = AstKind::TSNonNullExpression(expr);
+    fn visit_ts_non_null_expression(&mut self, expr: &TSNonNullExpression<'a>) {
+        let kind = AstKind::TSNonNullExpression(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.leave_node(kind);
     }
 
-    fn visit_ts_type_assertion(&mut self, expr: &'a TSTypeAssertion<'a>) {
-        let kind = AstKind::TSTypeAssertion(expr);
+    fn visit_ts_type_assertion(&mut self, expr: &TSTypeAssertion<'a>) {
+        let kind = AstKind::TSTypeAssertion(self.alloc(expr));
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.visit_ts_type(&expr.type_annotation);
         self.leave_node(kind);
     }
 
-    fn visit_ts_instantiation_expression(&mut self, expr: &'a TSInstantiationExpression<'a>) {
+    fn visit_ts_instantiation_expression(&mut self, expr: &TSInstantiationExpression<'a>) {
         self.visit_expression(&expr.expression);
         self.visit_ts_type_parameter_instantiation(&expr.type_parameters);
     }
 
-    fn visit_ts_type_annotation(&mut self, annotation: &'a TSTypeAnnotation<'a>) {
-        let kind = AstKind::TSTypeAnnotation(annotation);
+    fn visit_ts_type_annotation(&mut self, annotation: &TSTypeAnnotation<'a>) {
+        let kind = AstKind::TSTypeAnnotation(self.alloc(annotation));
         self.enter_node(kind);
         self.visit_ts_type(&annotation.type_annotation);
         self.leave_node(kind);
     }
 
-    fn visit_ts_type(&mut self, ty: &'a TSType<'a>) {
+    fn visit_ts_type(&mut self, ty: &TSType<'a>) {
         match ty {
             TSType::TSAnyKeyword(ty) => self.visit_ts_any_keyword(ty),
             TSType::TSNullKeyword(ty) => self.visit_ts_null_keyword(ty),
@@ -1497,8 +1495,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_ts_type_literal(&mut self, ty: &'a TSTypeLiteral<'a>) {
-        let kind = AstKind::TSTypeLiteral(ty);
+    fn visit_ts_type_literal(&mut self, ty: &TSTypeLiteral<'a>) {
+        let kind = AstKind::TSTypeLiteral(self.alloc(ty));
         self.enter_node(kind);
         for signature in &ty.members {
             self.visit_ts_signature(signature);
@@ -1506,31 +1504,31 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_indexed_access_type(&mut self, ty: &'a TSIndexedAccessType<'a>) {
-        let kind = AstKind::TSIndexedAccessType(ty);
+    fn visit_ts_indexed_access_type(&mut self, ty: &TSIndexedAccessType<'a>) {
+        let kind = AstKind::TSIndexedAccessType(self.alloc(ty));
         self.enter_node(kind);
         self.visit_ts_type(&ty.object_type);
         self.visit_ts_type(&ty.index_type);
         self.leave_node(kind);
     }
 
-    fn visit_ts_type_predicate(&mut self, ty: &'a TSTypePredicate<'a>) {
+    fn visit_ts_type_predicate(&mut self, ty: &TSTypePredicate<'a>) {
         if let Some(annotation) = &ty.type_annotation {
             self.visit_ts_type_annotation(annotation);
         }
     }
 
-    fn visit_ts_type_operator_type(&mut self, ty: &'a TSTypeOperatorType<'a>) {
+    fn visit_ts_type_operator_type(&mut self, ty: &TSTypeOperatorType<'a>) {
         self.visit_ts_type(&ty.type_annotation);
     }
 
-    fn visit_ts_tuple_type(&mut self, ty: &'a TSTupleType<'a>) {
+    fn visit_ts_tuple_type(&mut self, ty: &TSTupleType<'a>) {
         for element in &ty.element_types {
             self.visit_ts_tuple_element(element);
         }
     }
 
-    fn visit_ts_tuple_element(&mut self, ty: &'a TSTupleElement<'a>) {
+    fn visit_ts_tuple_element(&mut self, ty: &TSTupleElement<'a>) {
         match ty {
             TSTupleElement::TSType(ty) => self.visit_ts_type(ty),
             TSTupleElement::TSOptionalType(ty) => self.visit_ts_type(&ty.type_annotation),
@@ -1539,7 +1537,7 @@ pub trait Visit<'a>: Sized {
         };
     }
 
-    fn visit_ts_mapped_type(&mut self, ty: &'a TSMappedType<'a>) {
+    fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
         self.visit_ts_type_parameter(&ty.type_parameter);
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
@@ -1549,7 +1547,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_ts_function_type(&mut self, ty: &'a TSFunctionType<'a>) {
+    fn visit_ts_function_type(&mut self, ty: &TSFunctionType<'a>) {
         self.visit_formal_parameters(&ty.params);
         if let Some(parameters) = &ty.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
@@ -1557,8 +1555,8 @@ pub trait Visit<'a>: Sized {
         self.visit_ts_type_annotation(&ty.return_type);
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &'a TSTypeParameter<'a>) {
-        let kind = AstKind::TSTypeParameter(ty);
+    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
+        let kind = AstKind::TSTypeParameter(self.alloc(ty));
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
@@ -1572,8 +1570,8 @@ pub trait Visit<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_ts_type_parameter_instantiation(&mut self, ty: &'a TSTypeParameterInstantiation<'a>) {
-        let kind = AstKind::TSTypeParameterInstantiation(ty);
+    fn visit_ts_type_parameter_instantiation(&mut self, ty: &TSTypeParameterInstantiation<'a>) {
+        let kind = AstKind::TSTypeParameterInstantiation(self.alloc(ty));
         self.enter_node(kind);
         for ts_parameter in &ty.params {
             self.visit_ts_type(ts_parameter);
@@ -1581,8 +1579,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_type_parameter_declaration(&mut self, ty: &'a TSTypeParameterDeclaration<'a>) {
-        let kind = AstKind::TSTypeParameterDeclaration(ty);
+    fn visit_ts_type_parameter_declaration(&mut self, ty: &TSTypeParameterDeclaration<'a>) {
+        let kind = AstKind::TSTypeParameterDeclaration(self.alloc(ty));
         self.enter_node(kind);
         for ts_parameter in &ty.params {
             self.visit_ts_type_parameter(ts_parameter);
@@ -1590,7 +1588,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_constructor_type(&mut self, ty: &'a TSConstructorType<'a>) {
+    fn visit_ts_constructor_type(&mut self, ty: &TSConstructorType<'a>) {
         self.visit_formal_parameters(&ty.params);
         if let Some(parameters) = &ty.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
@@ -1598,44 +1596,44 @@ pub trait Visit<'a>: Sized {
         self.visit_ts_type_annotation(&ty.return_type);
     }
 
-    fn visit_ts_conditional_type(&mut self, ty: &'a TSConditionalType<'a>) {
+    fn visit_ts_conditional_type(&mut self, ty: &TSConditionalType<'a>) {
         self.visit_ts_type(&ty.check_type);
         self.visit_ts_type(&ty.extends_type);
         self.visit_ts_type(&ty.true_type);
         self.visit_ts_type(&ty.false_type);
     }
 
-    fn visit_ts_array_type(&mut self, ty: &'a TSArrayType<'a>) {
+    fn visit_ts_array_type(&mut self, ty: &TSArrayType<'a>) {
         self.visit_ts_type(&ty.element_type);
     }
 
-    fn visit_ts_type_name(&mut self, name: &'a TSTypeName<'a>) {
+    fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
         match &name {
             TSTypeName::IdentifierReference(ident) => self.visit_identifier_reference(ident),
             TSTypeName::QualifiedName(_) => {}
         }
     }
 
-    fn visit_ts_null_keyword(&mut self, ty: &'a TSNullKeyword) {
-        let kind = AstKind::TSNullKeyword(ty);
+    fn visit_ts_null_keyword(&mut self, ty: &TSNullKeyword) {
+        let kind = AstKind::TSNullKeyword(self.alloc(ty));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_ts_any_keyword(&mut self, ty: &'a TSAnyKeyword) {
-        let kind = AstKind::TSAnyKeyword(ty);
+    fn visit_ts_any_keyword(&mut self, ty: &TSAnyKeyword) {
+        let kind = AstKind::TSAnyKeyword(self.alloc(ty));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_ts_void_keyword(&mut self, ty: &'a TSVoidKeyword) {
-        let kind = AstKind::TSVoidKeyword(ty);
+    fn visit_ts_void_keyword(&mut self, ty: &TSVoidKeyword) {
+        let kind = AstKind::TSVoidKeyword(self.alloc(ty));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_ts_intersection_type(&mut self, ty: &'a TSIntersectionType<'a>) {
-        let kind = AstKind::TSIntersectionType(ty);
+    fn visit_ts_intersection_type(&mut self, ty: &TSIntersectionType<'a>) {
+        let kind = AstKind::TSIntersectionType(self.alloc(ty));
         self.enter_node(kind);
         for ty in &ty.types {
             self.visit_ts_type(ty);
@@ -1643,8 +1641,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_type_reference(&mut self, ty: &'a TSTypeReference<'a>) {
-        let kind = AstKind::TSTypeReference(ty);
+    fn visit_ts_type_reference(&mut self, ty: &TSTypeReference<'a>) {
+        let kind = AstKind::TSTypeReference(self.alloc(ty));
         self.enter_node(kind);
         self.visit_ts_type_name(&ty.type_name);
         if let Some(parameters) = &ty.type_parameters {
@@ -1653,8 +1651,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_union_type(&mut self, ty: &'a TSUnionType<'a>) {
-        let kind = AstKind::TSUnionType(ty);
+    fn visit_ts_union_type(&mut self, ty: &TSUnionType<'a>) {
+        let kind = AstKind::TSUnionType(self.alloc(ty));
         self.enter_node(kind);
         for ty in &ty.types {
             self.visit_ts_type(ty);
@@ -1662,8 +1660,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_literal_type(&mut self, ty: &'a TSLiteralType<'a>) {
-        let kind = AstKind::TSLiteralType(ty);
+    fn visit_ts_literal_type(&mut self, ty: &TSLiteralType<'a>) {
+        let kind = AstKind::TSLiteralType(self.alloc(ty));
         self.enter_node(kind);
         match &ty.literal {
             TSLiteral::BigintLiteral(lit) => self.visit_bigint_literal(lit),
@@ -1678,7 +1676,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_signature(&mut self, signature: &'a TSSignature<'a>) {
+    fn visit_ts_signature(&mut self, signature: &TSSignature<'a>) {
         match &signature {
             TSSignature::TSPropertySignature(sig) => self.visit_ts_property_signature(sig),
             TSSignature::TSCallSignatureDeclaration(sig) => {
@@ -1694,7 +1692,7 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_construct_signature_declaration(
         &mut self,
-        signature: &'a TSConstructSignatureDeclaration<'a>,
+        signature: &TSConstructSignatureDeclaration<'a>,
     ) {
         self.visit_formal_parameters(&signature.params);
         if let Some(parameters) = &signature.type_parameters {
@@ -1705,8 +1703,8 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_ts_method_signature(&mut self, signature: &'a TSMethodSignature<'a>) {
-        let kind = AstKind::TSMethodSignature(signature);
+    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        let kind = AstKind::TSMethodSignature(self.alloc(signature));
         self.enter_node(kind);
         self.visit_formal_parameters(&signature.params);
         if let Some(parameters) = &signature.type_parameters {
@@ -1718,11 +1716,11 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_index_signature_name(&mut self, name: &'a TSIndexSignatureName<'a>) {
+    fn visit_ts_index_signature_name(&mut self, name: &TSIndexSignatureName<'a>) {
         self.visit_ts_type_annotation(&name.type_annotation);
     }
 
-    fn visit_ts_index_signature(&mut self, signature: &'a TSIndexSignature<'a>) {
+    fn visit_ts_index_signature(&mut self, signature: &TSIndexSignature<'a>) {
         for name in &signature.parameters {
             self.visit_ts_index_signature_name(name);
         }
@@ -1730,8 +1728,8 @@ pub trait Visit<'a>: Sized {
         self.visit_ts_type_annotation(&signature.type_annotation);
     }
 
-    fn visit_ts_property_signature(&mut self, signature: &'a TSPropertySignature<'a>) {
-        let kind = AstKind::TSPropertySignature(signature);
+    fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {
+        let kind = AstKind::TSPropertySignature(self.alloc(signature));
         self.enter_node(kind);
         self.visit_property_key(&signature.key);
         if let Some(annotation) = &signature.type_annotation {
@@ -1740,10 +1738,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_call_signature_declaration(
-        &mut self,
-        signature: &'a TSCallSignatureDeclaration<'a>,
-    ) {
+    fn visit_ts_call_signature_declaration(&mut self, signature: &TSCallSignatureDeclaration<'a>) {
         self.visit_formal_parameters(&signature.params);
         if let Some(parameters) = &signature.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);

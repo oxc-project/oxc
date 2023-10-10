@@ -37,7 +37,7 @@ const UNICORN_TEST_PATH: &str =
 
 struct TestCase<'a> {
     source_text: &'a str,
-    code: Option<Cow<'a, str>>,
+    code: Option<String>,
     test_code: Option<Cow<'a, str>>,
 }
 
@@ -74,7 +74,7 @@ impl<'a> TestCase<'a> {
 }
 
 impl<'a> Visit<'a> for TestCase<'a> {
-    fn visit_expression(&mut self, expr: &'a Expression<'a>) {
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
@@ -87,7 +87,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
         }
     }
 
-    fn visit_call_expression(&mut self, expr: &'a CallExpression<'a>) {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         if let Expression::MemberExpression(member_expr) = &expr.callee {
             if let Expression::ArrayExpression(array_expr) = member_expr.object() {
                 // ['class A {', '}'].join('\n')
@@ -100,19 +100,19 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     code.push_str(lit.value.as_str());
                     code.push('\n');
                 }
-                self.code = Some(Cow::Owned(code));
+                self.code = Some(code);
                 self.test_code = None;
             }
         }
     }
 
-    fn visit_object_expression(&mut self, expr: &'a ObjectExpression<'a>) {
+    fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
         for obj_prop in &expr.properties {
             match obj_prop {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::Identifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+                            Expression::StringLiteral(s) => Some(s.value.to_string()),
                             // eslint-plugin-jest use dedent to strips indentation from multi-line strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 let Expression::Identifier(ident) = &tag_expr.tag else {
@@ -121,10 +121,10 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                 if ident.name != "dedent" {
                                     continue;
                                 }
-                                tag_expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                                tag_expr.quasi.quasi().map(ToString::to_string)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                                tag_expr.quasi().map(ToString::to_string)
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -146,7 +146,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                 let Expression::ArrayExpression(array_expr) = &member.object else {
                                     continue;
                                 };
-                                Some(Cow::Owned(
+                                Some(
                                     array_expr
                                         .elements
                                         .iter()
@@ -158,7 +158,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                         })
                                         .collect::<Vec<_>>()
                                         .join("\n"),
-                                ))
+                                )
                             }
                             _ => continue,
                         }
@@ -176,24 +176,24 @@ impl<'a> Visit<'a> for TestCase<'a> {
         }
     }
 
-    fn visit_template_literal(&mut self, lit: &'a TemplateLiteral<'a>) {
-        self.code = Some(Cow::Borrowed(lit.quasi().unwrap().as_str()));
+    fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
+        self.code = Some(lit.quasi().unwrap().to_string());
         self.test_code = None;
     }
 
-    fn visit_string_literal(&mut self, lit: &'a StringLiteral) {
-        self.code = Some(Cow::Borrowed(lit.value.as_str()));
+    fn visit_string_literal(&mut self, lit: &StringLiteral) {
+        self.code = Some(lit.value.to_string());
         self.test_code = None;
     }
 
-    fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
+    fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
         let Expression::Identifier(ident) = &expr.tag else {
             return;
         };
         if ident.name != "dedent" {
             return;
         }
-        self.code = expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()));
+        self.code = expr.quasi.quasi().map(std::string::ToString::to_string);
         self.test_code = None;
     }
 }
@@ -246,23 +246,23 @@ impl<'a> State<'a> {
 }
 
 impl<'a> Visit<'a> for State<'a> {
-    fn visit_program(&mut self, program: &'a Program<'a>) {
+    fn visit_program(&mut self, program: &Program<'a>) {
         for stmt in &program.body {
             self.visit_statement(stmt);
         }
     }
 
-    fn visit_statement(&mut self, stmt: &'a Statement<'a>) {
+    fn visit_statement(&mut self, stmt: &Statement<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.visit_expression_statement(expr_stmt);
         }
     }
 
-    fn visit_expression_statement(&mut self, stmt: &'a ExpressionStatement<'a>) {
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         self.visit_expression(&stmt.expression);
     }
 
-    fn visit_expression(&mut self, expr: &'a Expression<'a>) {
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
         if let Expression::CallExpression(call_expr) = expr {
             for arg in &call_expr.arguments {
                 self.visit_argument(arg);
@@ -270,7 +270,7 @@ impl<'a> Visit<'a> for State<'a> {
         }
     }
 
-    fn visit_argument(&mut self, arg: &'a Argument<'a>) {
+    fn visit_argument(&mut self, arg: &Argument<'a>) {
         if let Argument::Expression(Expression::ObjectExpression(obj_expr)) = arg {
             for obj_prop in &obj_expr.properties {
                 let ObjectPropertyKind::ObjectProperty(prop) = obj_prop else { return };
@@ -279,17 +279,17 @@ impl<'a> Visit<'a> for State<'a> {
         }
     }
 
-    fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
+    fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
         let PropertyKey::Identifier(ident) = &prop.key else { return };
         match ident.name.as_str() {
             "valid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
-                    self.valid_tests.push(array_expr);
+                    self.valid_tests.push(self.alloc(array_expr));
                 }
             }
             "invalid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
-                    self.invalid_tests.push(array_expr);
+                    self.invalid_tests.push(self.alloc(array_expr));
                 }
             }
             _ => {}

@@ -150,7 +150,7 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if !self.source_type.is_typescript_definition() {
             self.visit_program(program);
 
