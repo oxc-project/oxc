@@ -1820,6 +1820,7 @@ dependencies = [
  "oxc_ast",
  "oxc_formatter",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
 ]

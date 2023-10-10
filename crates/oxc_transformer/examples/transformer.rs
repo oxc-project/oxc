@@ -3,6 +3,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, TransformReactOptions, TransformTarget, Transformer};
 
@@ -28,11 +29,12 @@ fn main() {
     }
 
     let formatter_options = FormatterOptions::default();
-    let program = allocator.alloc(ret.program);
-    let printed = Formatter::new(source_text.len(), formatter_options.clone()).build(program);
+    let printed = Formatter::new(source_text.len(), formatter_options.clone()).build(&ret.program);
     println!("Original:\n");
     println!("{printed}");
 
+    let program = allocator.alloc(ret.program);
+    let _ = SemanticBuilder::new(&source_text, source_type).build(program);
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react: Some(TransformReactOptions::default()),

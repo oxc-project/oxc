@@ -84,7 +84,7 @@ impl<'a> Compressor<'a> {
         Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
     }
 
-    pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+    pub fn build(mut self, program: &mut Program<'a>) {
         self.prepass.visit_program(program);
         self.visit_program(program);
     }
@@ -113,7 +113,7 @@ impl<'a> Compressor<'a> {
     /// Remove block from single line blocks
     /// `{ block } -> block`
     #[allow(clippy::only_used_in_recursion)] // `&self` is only used in recursion
-    fn compress_block<'b>(&self, stmt: &'b mut Statement<'a>) {
+    fn compress_block(&self, stmt: &mut Statement<'a>) {
         if let Statement::BlockStatement(block) = stmt {
             // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
             // semantics according to AnnexB, which lead to different semantics.
@@ -126,18 +126,18 @@ impl<'a> Compressor<'a> {
 
     /// Drop `drop_debugger` statement.
     /// Enabled by `compress.drop_debugger`
-    fn drop_debugger<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
+    fn drop_debugger(&mut self, stmt: &Statement<'a>) -> bool {
         matches!(stmt, Statement::DebuggerStatement(_)) && self.options.drop_debugger
     }
 
     /// Drop `console.*` expressions.
     /// Enabled by `compress.drop_console
-    fn drop_console<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
+    fn drop_console(&mut self, stmt: &Statement<'a>) -> bool {
         self.options.drop_console
             && matches!(stmt, Statement::ExpressionStatement(expr) if util::is_console(&expr.expression))
     }
 
-    fn compress_console<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+    fn compress_console(&mut self, expr: &mut Expression<'a>) -> bool {
         if self.options.drop_console && util::is_console(expr) {
             *expr = self.create_void_0();
             true
@@ -147,7 +147,7 @@ impl<'a> Compressor<'a> {
     }
 
     /// Join consecutive var statements
-    fn join_vars<'b>(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
+    fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         // Collect all the consecutive ranges that contain joinable vars.
         // This is required because Rust prevents in-place vec mutation.
         let mut ranges = vec![];
@@ -201,7 +201,7 @@ impl<'a> Compressor<'a> {
     }
 
     /// Transforms `while(expr)` to `for(;expr;)`
-    fn compress_while<'b>(&mut self, stmt: &'b mut Statement<'a>) {
+    fn compress_while(&mut self, stmt: &mut Statement<'a>) {
         let Statement::WhileStatement(while_stmt) = stmt else { return };
         if self.options.loops {
             let dummy_test = self.ast.this_expression(SPAN);
@@ -214,7 +214,7 @@ impl<'a> Compressor<'a> {
     /* Expressions */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+    fn compress_undefined(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         if ident.name == "undefined" {
             // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
@@ -228,7 +228,7 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `Infinity` => `1/0`
     #[allow(unused)]
-    fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+    fn compress_infinity(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         if ident.name == "Infinity" {
             // if let Some(reference_id) = ident.reference_id.clone().into_inner() {
@@ -242,7 +242,7 @@ impl<'a> Compressor<'a> {
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`
     /// Enabled by `compress.booleans`
-    fn compress_boolean<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+    fn compress_boolean(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans {
             let num = self.ast.number_literal(
@@ -260,7 +260,7 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined<'b>(&mut self, expr: &'b mut BinaryExpression<'a>) {
+    fn compress_typeof_undefined(&mut self, expr: &mut BinaryExpression<'a>) {
         if expr.operator.is_equality() && self.options.typeofs {
             if let Expression::UnaryExpression(unary_expr) = &expr.left {
                 if unary_expr.operator == UnaryOperator::Typeof {
@@ -281,13 +281,13 @@ impl<'a> Compressor<'a> {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement<'b>(&mut self, stmt: &'b mut ReturnStatement<'a>) {
+    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
         if stmt.argument.as_ref().is_some_and(|expr| expr.is_undefined() || expr.is_void_0()) {
             stmt.argument = None;
         }
     }
 
-    fn compress_variable_declarator<'b>(&mut self, decl: &'b mut VariableDeclarator<'a>) {
+    fn compress_variable_declarator(&mut self, decl: &mut VariableDeclarator<'a>) {
         if decl.kind.is_const() {
             return;
         }
@@ -303,7 +303,7 @@ impl<'a> Compressor<'a> {
     /// After reordering, expressions like 0 === x and 0 === y may have higher
     /// compression together than their original counterparts.
     #[allow(unused)]
-    fn reorder_constant_expression<'b>(&self, expr: &'b mut BinaryExpression<'a>) {
+    fn reorder_constant_expression(&self, expr: &mut BinaryExpression<'a>) {
         let operator = expr.operator;
         if operator.is_equality()
             || operator.is_compare()
@@ -322,8 +322,8 @@ impl<'a> Compressor<'a> {
     }
 }
 
-impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
-    fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
+impl<'a> VisitMut<'a> for Compressor<'a> {
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| {
             if self.drop_debugger(stmt) {
                 return false;
@@ -341,14 +341,14 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         }
     }
 
-    fn visit_statement(&mut self, stmt: &'b mut Statement<'a>) {
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.compress_block(stmt);
         self.compress_while(stmt);
         self.fold_condition(stmt);
         self.visit_statement_match(stmt);
     }
 
-    fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
+    fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
         if let Some(arg) = &mut stmt.argument {
             self.visit_expression(arg);
         }
@@ -356,14 +356,14 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         self.compress_return_statement(stmt);
     }
 
-    fn visit_variable_declaration(&mut self, decl: &'b mut VariableDeclaration<'a>) {
+    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
         for declarator in decl.declarations.iter_mut() {
             self.visit_variable_declarator(declarator);
             self.compress_variable_declarator(declarator);
         }
     }
 
-    fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.visit_expression_match(expr);
         self.compress_console(expr);
         self.fold_expression(expr);
@@ -372,7 +372,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         }
     }
 
-    fn visit_binary_expression(&mut self, expr: &'b mut BinaryExpression<'a>) {
+    fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
         self.visit_expression(&mut expr.left);
         self.visit_expression(&mut expr.right);
 

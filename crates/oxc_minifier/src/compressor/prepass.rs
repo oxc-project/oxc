@@ -12,7 +12,7 @@ impl<'a> Prepass<'a> {
         Self { ast: AstBuilder::new(allocator) }
     }
 
-    fn strip_parenthesized_expression<'b>(&self, expr: &'b mut Expression<'a>) {
+    fn strip_parenthesized_expression(&self, expr: &mut Expression<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = self.ast.move_expression(&mut paren_expr.expression);
             self.strip_parenthesized_expression(expr);
@@ -20,15 +20,15 @@ impl<'a> Prepass<'a> {
     }
 }
 
-impl<'a, 'b> VisitMut<'a, 'b> for Prepass<'a> {
-    fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
+impl<'a> VisitMut<'a> for Prepass<'a> {
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
     }
 
-    fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.strip_parenthesized_expression(expr);
         self.visit_expression_match(expr);
     }
