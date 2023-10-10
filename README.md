@@ -167,6 +167,11 @@ To address this, we are actively working on porting [enhanced-resolve].
 
 [eslint-plugin-import] will be our first application for the resolver, since it is currently a performance and complexity blocker for a lot of projects.
 
+### 🔸 Transpiler
+
+A transpiler is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
+We are currently focusing on an esnext to es2015 transpiler. See the [umbrella issue](https://github.com/web-infra-dev/oxc/issues/974) for details.
+
 ### 🔸 Minifier
 
 JavaScript minification plays a crucial role in optimizing website performance as it reduces the amount of data sent to users,
@@ -187,14 +192,6 @@ With the Oxc minifier, you can expect faster minification times without sacrific
 
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
 Unfortunately we are currently lacking the resources to do so.
-
-### 🔸 Transpiler
-
-Creating a robust transpiler requires significant investment in terms of time, expertise, and resources.
-It necessitates deep knowledge of ECMAScript specifications, compatibility analysis, and code transformation techniques.
-Unfortunately, we currently lack the necessary resources to embark on this endeavor.
-
-If there is any interest, this project will be limited to an esnext to es6 transpiler.
 
 ### 🔸 Ezno Type Checker
 
