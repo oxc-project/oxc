@@ -156,6 +156,8 @@ impl Case for Test262Case {
 
     fn skip_test_case(&self) -> bool {
         [
+            // Regex parser is required. See https://github.com/web-infra-dev/oxc/issues/385#issuecomment-1755566240
+            "regexp-v-flag",
             "regexp-unicode-property-escapes",
             // Stage 3 `https://github.com/tc39/proposal-json-modules`
             "json-modules",
