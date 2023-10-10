@@ -14,11 +14,13 @@ mod es2021;
 mod es2022;
 mod options;
 mod react_jsx;
+mod regexp;
 mod typescript;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::SourceType;
+use regexp::RegexpFlags;
 use std::rc::Rc;
 
 use es2015::ShorthandProperties;
@@ -35,6 +37,7 @@ pub use crate::options::{
 #[derive(Default)]
 pub struct Transformer<'a> {
     typescript: Option<TypeScript<'a>>,
+    regexp_flags: Option<RegexpFlags<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
     // es2022
     es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
@@ -46,7 +49,6 @@ pub struct Transformer<'a> {
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
-    es2015_sticky_regex: Option<es2015::StickyRegex<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -64,6 +66,9 @@ impl<'a> Transformer<'a> {
         if let Some(react_options) = options.react {
             t.react_jsx.replace(ReactJsx::new(Rc::clone(&ast), react_options));
         }
+
+        t.regexp_flags = RegexpFlags::new_with_transform_target(Rc::clone(&ast), options.target);
+
         if options.target < TransformTarget::ES2022 {
             t.es2022_class_static_block.replace(es2022::ClassStaticBlock::new(Rc::clone(&ast)));
         }
@@ -79,7 +84,6 @@ impl<'a> Transformer<'a> {
         }
         if options.target < TransformTarget::ES2015 {
             t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
-            t.es2015_sticky_regex.replace(es2015::StickyRegex::new(Rc::clone(&ast)));
         }
         t
     }
@@ -93,9 +97,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
         // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
+        self.regexp_flags.as_mut().map(|t| t.transform_expression(expr));
+
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
-        self.es2015_sticky_regex.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }
