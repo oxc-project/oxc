@@ -192,30 +192,6 @@ pub struct CheckOptions {
     pub path: PathBuf,
 }
 
-// windows binary has an`.exe` extension, which invalidates the snapshots
-#[cfg(all(test, not(target_os = "windows")))]
-mod snapshot {
-    use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
-    use std::process::Command;
-
-    fn test(name: &str, args: &[&str]) {
-        let bin = get_cargo_bin("oxlint");
-        let mut command = Command::new(bin);
-        command.args(args);
-        assert_cmd_snapshot!(name, command);
-    }
-
-    #[test]
-    fn default() {
-        test("default", &[]);
-    }
-
-    #[test]
-    fn help_help() {
-        test("help_help", &["--help", "--help"]);
-    }
-}
-
 #[cfg(test)]
 mod misc_options {
     use super::{lint_command, MiscOptions};

@@ -37,9 +37,6 @@ jobs:
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
 
-      - name: Build oxlint
-        run: cargo build -p oxc_cli --bin oxlint # for cli snapshots
-
       - name: Run
         run: cargo codecov --lcov --output-path lcov.info
 

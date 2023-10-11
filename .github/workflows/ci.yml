@@ -44,9 +44,6 @@ jobs:
       - name: Cargo check
         run: cargo ck
 
-      - name: Build oxlint
-        run: cargo build -p oxc_cli --bin oxlint # for cli snapshots
-
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
@@ -196,9 +193,6 @@ jobs:
       - name: Install cargo-nextest
         if: runner.os != 'Windows'
         uses: taiki-e/install-action@cargo-nextest
-
-      - name: Build oxlint
-        run: cargo build -p oxc_cli --bin oxlint # for cli snapshots
 
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405

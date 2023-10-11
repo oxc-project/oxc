@@ -41,6 +41,3 @@ miette             = { workspace = true }
 rayon              = { workspace = true }
 bpaf               = { workspace = true, features = ["derive", "autocomplete", "bright-color"] }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-
-[dev-dependencies]
-insta-cmd = { workspace = true }
