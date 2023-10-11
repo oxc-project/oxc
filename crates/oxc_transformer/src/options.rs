@@ -10,9 +10,11 @@ pub enum TransformTarget {
     ES5,
     ES2015,
     ES2016,
+    ES2018,
     ES2019,
     ES2021,
     ES2022,
+    ES2024,
     #[default]
     ESNext,
 }
