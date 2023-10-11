@@ -1,4 +1,10 @@
-Passed: 97/1080
+Passed: 97/1091
+
+# babel-plugin-transform-unicode-sets-regex
+* Failed: basic/basic/input.js
+* Failed: basic/string-properties/input.js
+* Failed: transform-u/basic/input.js
+* Failed: transform-u/string-properties/input.js
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -701,6 +707,11 @@ Passed: 97/1080
 * Failed: regression/gh-7388/input.js
 * Failed: regression/gh-8323/input.js
 
+# babel-plugin-transform-dotall-regex
+* Failed: dotall-regex/simple/input.js
+* Failed: dotall-regex/with-unicode-flag/input.js
+* Failed: dotall-regex/with-unicode-property-escape/input.js
+
 # babel-plugin-transform-async-to-generator
 * Failed: assumption-ignoreFunctionLength-true/basic/input.mjs
 * Failed: assumption-ignoreFunctionLength-true/export-default-function/input.mjs
@@ -763,6 +774,12 @@ Passed: 97/1080
 [All passed]
 * Passed: sticky-regex/basic/input.js
 * Passed: sticky-regex/ignore-non-sticky/input.js
+
+# babel-plugin-transform-unicode-regex
+* Failed: unicode-regex/basic/input.js
+* Failed: unicode-regex/ignore-non-unicode/input.js
+* Failed: unicode-regex/negated-set/input.js
+* Failed: unicode-regex/slash/input.js
 
 # babel-plugin-transform-typescript
 * Failed: class/abstract-class-decorated/input.ts
