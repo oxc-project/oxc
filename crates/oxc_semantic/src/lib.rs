@@ -106,10 +106,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Get all resolved references for a symbol
-    pub fn symbol_references(
-        &'a self,
-        symbol_id: SymbolId,
-    ) -> impl Iterator<Item = &'a Reference> + '_ {
+    pub fn symbol_references(&self, symbol_id: SymbolId) -> impl Iterator<Item = &Reference> + '_ {
         self.symbols.get_resolved_references(symbol_id)
     }
 
