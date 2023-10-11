@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
