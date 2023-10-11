@@ -56,9 +56,9 @@ impl CatchErrorName {
         arg0: &Argument,
         ctx: &LintContext,
     ) -> Option<CatchErrorNameDiagnostic> {
-        if let Argument::Expression(k) = arg0 {
-            if let Expression::ArrowExpression(a2) = k {
-                if let Some(arg0) = a2.params.items.get(0) {
+        if let Argument::Expression(expr) = arg0 {
+            if let Expression::ArrowExpression(arrow_expr) = expr {
+                if let Some(arg0) = arrow_expr.params.items.get(0) {
                     if let BindingPatternKind::BindingIdentifier(v) = &arg0.pattern.kind {
                         if self.is_name_allowed(&v.name) {
                             return None;
@@ -85,7 +85,7 @@ impl CatchErrorName {
                 }
             }
 
-            if let Expression::FunctionExpression(fn_expr) = k {
+            if let Expression::FunctionExpression(fn_expr) = expr {
                 if let Some(arg0) = fn_expr.params.items.get(0) {
                     if let BindingPatternKind::BindingIdentifier(binding_ident) = &arg0.pattern.kind
                     {
@@ -176,16 +176,16 @@ impl Rule for CatchErrorName {
             if let Expression::MemberExpression(member_expr) = &call_expr.callee {
                 if member_expr.static_property_name() == Some("catch") {
                     if let Some(arg0) = call_expr.arguments.get(0) {
-                        if let Some(aa) = self.check_function_arguments(arg0, ctx) {
-                            ctx.diagnostic(aa);
+                        if let Some(diagnostic) = self.check_function_arguments(arg0, ctx) {
+                            ctx.diagnostic(diagnostic);
                         }
                     }
                 }
 
                 if member_expr.static_property_name() == Some("then") {
                     if let Some(arg0) = call_expr.arguments.get(1) {
-                        if let Some(aa) = self.check_function_arguments(arg0, ctx) {
-                            ctx.diagnostic(aa);
+                        if let Some(diagnostic) = self.check_function_arguments(arg0, ctx) {
+                            ctx.diagnostic(diagnostic);
                         }
                     }
                 }
