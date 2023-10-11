@@ -1533,8 +1533,10 @@ dependencies = [
  "console",
  "encoding_rs",
  "encoding_rs_io",
+ "jemallocator",
  "lazy_static",
  "miette",
+ "mimalloc",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
@@ -1676,6 +1678,8 @@ dependencies = [
  "brotlic",
  "flate2",
  "humansize",
+ "jemallocator",
+ "mimalloc",
  "oxc_minifier",
  "oxc_span",
  "oxc_tasks_common",
@@ -1803,6 +1807,8 @@ dependencies = [
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
+ "jemallocator",
+ "mimalloc",
  "oxc_allocator",
  "oxc_formatter",
  "oxc_parser",

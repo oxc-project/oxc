@@ -23,3 +23,9 @@ oxc_tasks_common = { workspace = true }
 
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }

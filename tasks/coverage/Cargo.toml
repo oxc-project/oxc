@@ -39,3 +39,9 @@ encoding_rs    = "0.8.33"
 encoding_rs_io = "0.1.7"
 serde_yaml     = "0.9.25"
 similar        = "2.3.0"
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }
