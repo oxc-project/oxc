@@ -1514,6 +1514,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_codegen"
+version = "0.2.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_parser",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
