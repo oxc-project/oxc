@@ -81,6 +81,7 @@ impl<'a> Transformer<'a> {
         if options.target < TransformTarget::ES2015 {
             t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
             t.es2015_sticky_regex.replace(es2015::StickyRegex::new(Rc::clone(&ast)));
+            t.es2015_template_literals.replace(es2015::TemplateLiteral::new(Rc::clone(&ast)));
         }
         t
     }

@@ -1,4 +1,4 @@
-Passed: 97/1080
+Passed: 108/1113
 
 # babel-plugin-transform-class-properties
 * Failed: assumption-constantSuper/complex-super-class/input.js
@@ -763,6 +763,41 @@ Passed: 97/1080
 [All passed]
 * Passed: sticky-regex/basic/input.js
 * Passed: sticky-regex/ignore-non-sticky/input.js
+
+# babel-plugin-transform-template-literals
+* Failed: assumption-ignoreToPrimitiveHint/escape-quotes/input.js
+* Failed: assumption-ignoreToPrimitiveHint/expression-first/input.js
+* Failed: assumption-ignoreToPrimitiveHint/functions/input.js
+* Failed: assumption-ignoreToPrimitiveHint/literals/input.js
+* Failed: assumption-ignoreToPrimitiveHint/multiple/input.js
+* Failed: assumption-ignoreToPrimitiveHint/only/input.js
+* Failed: assumption-ignoreToPrimitiveHint/single/input.js
+* Failed: assumption-ignoreToPrimitiveHint/statement/input.js
+* Failed: assumption-ignoreToPrimitiveHint/tag/input.js
+* Failed: assumption-mutableTemplateObject/tag/input.js
+* Failed: assumption-mutableTemplateObject/template-revision/input.js
+* Failed: default/cache-revision/input.js
+* Failed: default/escape-quotes/input.js
+* Failed: default/literals/input.js
+* Failed: default/simple-tag/input.js
+* Failed: default/tag/input.js
+* Failed: default/tag-with-unicode-escapes/input.js
+* Failed: default/tag-with-unicode-escapes-babel-7/input.js
+* Failed: default/template-revision/input.js
+* Failed: default/ts-literal-type/input.ts
+* Failed: loose/ignoreToPrimitiveHint/input.js
+* Failed: loose/mutableTemplateObject/input.js
+* Passed: assumption-ignoreToPrimitiveHint/multiline/input.js
+* Passed: assumption-ignoreToPrimitiveHint/none/input.js
+* Passed: assumption-mutableTemplateObject/no-tag/input.js
+* Passed: default/expression-first/input.js
+* Passed: default/functions/input.js
+* Passed: default/multiline/input.js
+* Passed: default/multiple/input.js
+* Passed: default/none/input.js
+* Passed: default/only/input.js
+* Passed: default/single/input.js
+* Passed: default/statement/input.js
 
 # babel-plugin-transform-typescript
 * Failed: class/abstract-class-decorated/input.ts
