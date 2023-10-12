@@ -1,0 +1,24 @@
+[package]
+name                   = "oxc_codegen"
+version                = "0.2.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_ast       = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_allocator = { workspace = true }
+
+[dev-dependencies]
+oxc_parser    = { workspace = true }

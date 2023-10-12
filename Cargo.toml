@@ -35,6 +35,7 @@ oxc_resolver       = { path = "crates/oxc_resolver" }
 oxc_query          = { path = "crates/oxc_query" }
 oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_transformer    = { path = "crates/oxc_transformer" }
+oxc_codegen        = { path = "crates/oxc_codegen" }
 
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
