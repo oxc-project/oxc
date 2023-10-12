@@ -44,79 +44,8 @@ declare_oxc_lint!(
     ///
     /// ```
     CatchErrorName,
-    correctness
+    style
 );
-
-impl CatchErrorName {
-    fn is_name_allowed(&self, name: &Atom) -> bool {
-        self.name == name || self.ignore.contains(name)
-    }
-    fn check_function_arguments(
-        &self,
-        arg0: &Argument,
-        ctx: &LintContext,
-    ) -> Option<CatchErrorNameDiagnostic> {
-        if let Argument::Expression(expr) = arg0 {
-            if let Expression::ArrowExpression(arrow_expr) = expr {
-                if let Some(arg0) = arrow_expr.params.items.get(0) {
-                    if let BindingPatternKind::BindingIdentifier(v) = &arg0.pattern.kind {
-                        if self.is_name_allowed(&v.name) {
-                            return None;
-                        }
-
-                        if v.name.starts_with('_') {
-                            if symbol_has_references(v.symbol_id.get(), ctx) {
-                                ctx.diagnostic(CatchErrorNameDiagnostic(
-                                    v.name.clone(),
-                                    self.name.clone(),
-                                    v.span,
-                                ));
-                            }
-
-                            return None;
-                        }
-
-                        return Some(CatchErrorNameDiagnostic(
-                            v.name.clone(),
-                            self.name.clone(),
-                            v.span,
-                        ));
-                    }
-                }
-            }
-
-            if let Expression::FunctionExpression(fn_expr) = expr {
-                if let Some(arg0) = fn_expr.params.items.get(0) {
-                    if let BindingPatternKind::BindingIdentifier(binding_ident) = &arg0.pattern.kind
-                    {
-                        if self.is_name_allowed(&binding_ident.name) {
-                            return None;
-                        }
-
-                        if binding_ident.name.starts_with('_') {
-                            if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
-                                ctx.diagnostic(CatchErrorNameDiagnostic(
-                                    binding_ident.name.clone(),
-                                    self.name.clone(),
-                                    binding_ident.span,
-                                ));
-                            }
-
-                            return None;
-                        }
-
-                        return Some(CatchErrorNameDiagnostic(
-                            binding_ident.name.clone(),
-                            self.name.clone(),
-                            binding_ident.span,
-                        ));
-                    }
-                }
-            }
-        }
-        None
-    }
-}
 
 impl Rule for CatchErrorName {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -191,6 +120,77 @@ impl Rule for CatchErrorName {
                 }
             }
         }
+    }
+}
+
+impl CatchErrorName {
+    fn is_name_allowed(&self, name: &Atom) -> bool {
+        self.name == name || self.ignore.contains(name)
+    }
+    fn check_function_arguments(
+        &self,
+        arg0: &Argument,
+        ctx: &LintContext,
+    ) -> Option<CatchErrorNameDiagnostic> {
+        if let Argument::Expression(expr) = arg0 {
+            if let Expression::ArrowExpression(arrow_expr) = expr {
+                if let Some(arg0) = arrow_expr.params.items.get(0) {
+                    if let BindingPatternKind::BindingIdentifier(v) = &arg0.pattern.kind {
+                        if self.is_name_allowed(&v.name) {
+                            return None;
+                        }
+
+                        if v.name.starts_with('_') {
+                            if symbol_has_references(v.symbol_id.get(), ctx) {
+                                ctx.diagnostic(CatchErrorNameDiagnostic(
+                                    v.name.clone(),
+                                    self.name.clone(),
+                                    v.span,
+                                ));
+                            }
+
+                            return None;
+                        }
+
+                        return Some(CatchErrorNameDiagnostic(
+                            v.name.clone(),
+                            self.name.clone(),
+                            v.span,
+                        ));
+                    }
+                }
+            }
+
+            if let Expression::FunctionExpression(fn_expr) = expr {
+                if let Some(arg0) = fn_expr.params.items.get(0) {
+                    if let BindingPatternKind::BindingIdentifier(binding_ident) = &arg0.pattern.kind
+                    {
+                        if self.is_name_allowed(&binding_ident.name) {
+                            return None;
+                        }
+
+                        if binding_ident.name.starts_with('_') {
+                            if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
+                                ctx.diagnostic(CatchErrorNameDiagnostic(
+                                    binding_ident.name.clone(),
+                                    self.name.clone(),
+                                    binding_ident.span,
+                                ));
+                            }
+
+                            return None;
+                        }
+
+                        return Some(CatchErrorNameDiagnostic(
+                            binding_ident.name.clone(),
+                            self.name.clone(),
+                            binding_ident.span,
+                        ));
+                    }
+                }
+            }
+        }
+        None
     }
 }
 
