@@ -2,28 +2,28 @@
 
 mod compressor;
 mod mangler;
-mod printer;
 
 use oxc_allocator::Allocator;
+use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 pub use crate::{
     compressor::{CompressOptions, Compressor},
     mangler::ManglerBuilder,
-    printer::{Printer, PrinterOptions},
 };
+pub use oxc_codegen::CodegenOptions;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {
     pub mangle: bool,
     pub compress: CompressOptions,
-    pub print: PrinterOptions,
+    pub codegen: CodegenOptions,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: true, compress: CompressOptions::default(), print: PrinterOptions }
+        Self { mangle: true, compress: CompressOptions::default(), codegen: CodegenOptions }
     }
 }
 
@@ -45,11 +45,11 @@ impl<'a> Minifier<'a> {
         let program = allocator.alloc(ret.program);
         Compressor::new(&allocator, self.options.compress).build(program);
 
-        let mut printer = Printer::new(self.source_text.len(), self.options.print);
-        if self.options.mangle {
-            let mangler = ManglerBuilder.build(program);
-            printer.with_mangler(mangler);
-        }
-        printer.build(program)
+        let codegen = Codegen::<true>::new(self.source_text.len(), self.options.codegen);
+        // if self.options.mangle {
+        // let mangler = ManglerBuilder.build(program);
+        // printer.with_mangler(mangler);
+        // }
+        codegen.build(program)
     }
 }

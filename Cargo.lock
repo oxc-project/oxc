@@ -1517,10 +1517,13 @@ dependencies = [
 name = "oxc_codegen"
 version = "0.2.0"
 dependencies = [
+ "bitflags 2.4.0",
+ "num-bigint",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
@@ -1659,6 +1662,7 @@ dependencies = [
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_codegen",
  "oxc_index",
  "oxc_parser",
  "oxc_semantic",

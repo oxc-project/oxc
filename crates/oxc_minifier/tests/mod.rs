@@ -6,7 +6,7 @@ mod oxc;
 mod tdewolff;
 mod terser;
 
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
+use oxc_minifier::{CodegenOptions, CompressOptions, Minifier, MinifierOptions};
 use oxc_span::SourceType;
 
 pub(crate) fn test(source_text: &str, expected: &str) {
@@ -36,7 +36,7 @@ pub(crate) fn test_without_compress_booleans(source_text: &str, expected: &str) 
     let source_type = SourceType::default();
     let compress_options = CompressOptions { booleans: false, ..CompressOptions::default() };
     let options =
-        MinifierOptions { mangle: false, compress: compress_options, print: PrinterOptions };
+        MinifierOptions { mangle: false, compress: compress_options, codegen: CodegenOptions };
     let minified = Minifier::new(source_text, source_type, options).build();
     assert_eq!(expected, minified, "for source {source_text}");
 }

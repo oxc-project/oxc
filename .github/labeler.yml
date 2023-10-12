@@ -10,7 +10,7 @@ A-minifier: 'crates/oxc_minifier/**/*'
 
 A-parser: 'crates/oxc_parser/**/*'
 
-A-printer: 'crates/oxc_minifier/src/printer/**/*'
+A-codegen: 'crates/oxc_codegen/**/*'
 
 A-semantic: 'crates/oxc_semantic/**/*'
 
