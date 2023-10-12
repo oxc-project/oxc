@@ -25,7 +25,6 @@ oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
 oxc_codegen   = { workspace = true }
 
-bitflags      = { workspace = true }
 num-bigint    = { workspace = true }
 itertools     = { workspace = true }
 num-traits    = { workspace = true }

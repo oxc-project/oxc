@@ -87,7 +87,7 @@ stacker                   = { version = "0.1.15" }
 tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
 trustfall                 = { version = "0.6.1" }
-insta                     = { version = "1.33.0", features = ["glob"] }
+insta                     = { version = "1.34.0", features = ["glob"] }
 codspeed-criterion-compat = { version = "2.2.0", default-features = false }
 
 [profile.release.package.oxc_wasm]
