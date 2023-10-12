@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
+use oxc_minifier::{CodegenOptions, CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 use walkdir::WalkDir;
@@ -68,7 +68,7 @@ impl TestCase {
         let options = MinifierOptions {
             mangle: false,
             compress: self.compress_options,
-            print: PrinterOptions,
+            codegen: CodegenOptions,
         };
         let minified_source_text = Minifier::new(self.input.as_ref(), source_type, options).build();
         assert_eq!(
