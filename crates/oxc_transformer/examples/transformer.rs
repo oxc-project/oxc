@@ -1,7 +1,8 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_minifier::Prepass;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -28,19 +29,20 @@ fn main() {
         return;
     }
 
-    let formatter_options = FormatterOptions::default();
-    let printed = Formatter::new(source_text.len(), formatter_options.clone()).build(&ret.program);
+    let codegen_options = CodegenOptions;
+    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
     println!("Original:\n");
     println!("{printed}");
 
     let program = allocator.alloc(ret.program);
+    Prepass::new(&allocator).build(program);
     let _ = SemanticBuilder::new(&source_text, source_type).build(program);
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react: Some(TransformReactOptions::default()),
     };
     Transformer::new(&allocator, source_type, transform_options).build(program);
-    let printed = Formatter::new(source_text.len(), formatter_options).build(program);
+    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
     println!("Transformed:\n");
     println!("{printed}");
 }

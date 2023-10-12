@@ -8,6 +8,7 @@ use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+pub use crate::compressor::Prepass;
 pub use crate::{
     compressor::{CompressOptions, Compressor},
     mangler::ManglerBuilder,

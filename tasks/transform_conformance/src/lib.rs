@@ -6,7 +6,8 @@ use std::{
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_minifier::Prepass;
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
@@ -140,11 +141,13 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
             target: TransformTarget::ES5,
             react: Some(TransformReactOptions::default()),
         };
-        let program = allocator.alloc(ret.program);
-        Transformer::new(&allocator, source_type, transform_options).build(program);
 
-        let formatter_options = FormatterOptions::default();
-        let transformed = Formatter::new(source_text.len(), formatter_options).build(program);
+        let program = allocator.alloc(ret.program);
+
+        Transformer::new(&allocator, source_type, transform_options).build(program);
+        Prepass::new(&allocator).build(program);
+        let transformed = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
+
         let trim_transformed = remove_whitespace(&transformed);
         let trim_expected = remove_whitespace(expected);
         let passed = trim_transformed == trim_expected;

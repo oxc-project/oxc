@@ -12,6 +12,10 @@ impl<'a> Prepass<'a> {
         Self { ast: AstBuilder::new(allocator) }
     }
 
+    pub fn build(&mut self, program: &mut Program<'a>) {
+        self.visit_program(program);
+    }
+
     fn strip_parenthesized_expression(&self, expr: &mut Expression<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = self.ast.move_expression(&mut paren_expr.expression);

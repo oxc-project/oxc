@@ -15,7 +15,7 @@ use oxc_syntax::{
     NumberBase,
 };
 
-use self::prepass::Prepass;
+pub use self::prepass::Prepass;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
@@ -85,7 +85,7 @@ impl<'a> Compressor<'a> {
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
-        self.prepass.visit_program(program);
+        self.prepass.build(program);
         self.visit_program(program);
     }
 
