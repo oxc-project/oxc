@@ -1,5 +1,7 @@
-//! AST Formatter with whitespace minification
-//! code adapted from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_formatter/js_formatter.go)
+//! Prettier
+//!
+//! This crate is intended to be [prettier](https://prettier.io).
+//! Please use the `oxc_codegen ` for code generation.
 
 mod gen;
 

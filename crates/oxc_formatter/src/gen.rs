@@ -109,8 +109,8 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Formatter) {
         p.print_newline();
         p.indent();
         if_stmt.consequent.gen(p);
-        p.dedent();
         p.needs_semicolon = false;
+        p.dedent();
         p.print_indent();
         p.print(b'}');
     }

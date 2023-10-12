@@ -1,4 +1,4 @@
-Passed: 54/1091
+Passed: 92/1091
 
 # babel-plugin-transform-unicode-sets-regex
 * Failed: basic/basic/input.js
@@ -48,6 +48,7 @@ Passed: 54/1091
 * Failed: decorators-legacy-interop/local-define-property/input.js
 * Failed: decorators-legacy-interop/loose/input.js
 * Failed: decorators-legacy-interop/strict/input.js
+* Failed: decorators-legacy-interop/wrong-order/input.js
 * Failed: nested-class/super-call-in-decorator/input.js
 * Failed: nested-class/super-call-in-key/input.js
 * Failed: nested-class/super-property-in-accessor-key/input.js
@@ -195,6 +196,7 @@ Passed: 54/1091
 * Failed: private-loose/super-statement/input.js
 * Failed: private-loose/update/input.js
 * Failed: public/arrow-static-this-without-transform/input.js
+* Failed: public/arrow-this-without-transform/input.js
 * Failed: public/assignment/input.js
 * Failed: public/call/input.js
 * Failed: public/class-shadow-builtins/input.mjs
@@ -228,11 +230,16 @@ Passed: 54/1091
 * Failed: public/static-this/input.js
 * Failed: public/static-undefined/input.js
 * Failed: public/super-call/input.js
+* Failed: public/super-destructuring-array-pattern/input.js
+* Failed: public/super-destructuring-array-pattern-1/input.js
+* Failed: public/super-destructuring-object-pattern/input.js
+* Failed: public/super-destructuring-object-pattern-1/input.js
 * Failed: public/super-expression/input.js
 * Failed: public/super-statement/input.js
 * Failed: public/super-with-collision/input.js
 * Failed: public/update/input.js
 * Failed: public-loose/arrow-static-this-without-transform/input.js
+* Failed: public-loose/arrow-this-without-transform/input.js
 * Failed: public-loose/class-shadow-builtins/input.mjs
 * Failed: public-loose/computed/input.js
 * Failed: public-loose/constructor-collision/input.js
@@ -266,21 +273,8 @@ Passed: 54/1091
 * Failed: regression/T2983/input.mjs
 * Failed: regression/T6719/input.js
 * Failed: regression/T7364/input.mjs
-* Passed: decorators-legacy-interop/wrong-order/input.js
-* Passed: public/arrow-this-without-transform/input.js
-* Passed: public/super-destructuring-array-pattern/input.js
-* Passed: public/super-destructuring-array-pattern-1/input.js
-* Passed: public/super-destructuring-object-pattern/input.js
-* Passed: public/super-destructuring-object-pattern-1/input.js
-* Passed: public-loose/arrow-this-without-transform/input.js
 
 # babel-plugin-transform-class-static-block
-* Failed: class-static-block/class-binding/input.js
-* Failed: class-static-block/class-declaration/input.js
-* Failed: class-static-block/in-class-heritage/input.js
-* Failed: class-static-block/multiple-static-initializers/input.js
-* Failed: class-static-block/name-conflict/input.js
-* Failed: class-static-block/new-target/input.js
 * Failed: class-static-block/preserve-comments/input.js
 * Failed: integration/class-binding/input.js
 * Failed: integration/class-declaration/input.js
@@ -289,6 +283,7 @@ Passed: 54/1091
 * Failed: integration/name-conflict/input.js
 * Failed: integration/new-target/input.js
 * Failed: integration/preserve-comments/input.js
+* Failed: integration-loose/.new-target/input.js
 * Failed: integration-loose/class-binding/input.js
 * Failed: integration-loose/class-declaration/input.js
 * Failed: integration-loose/in-class-heritage/input.js
@@ -296,7 +291,12 @@ Passed: 54/1091
 * Failed: integration-loose/name-conflict/input.js
 * Failed: integration-loose/preserve-comments/input.js
 * Failed: integration-loose/super-static-block/input.js
-* Passed: integration-loose/.new-target/input.js
+* Passed: class-static-block/class-binding/input.js
+* Passed: class-static-block/class-declaration/input.js
+* Passed: class-static-block/in-class-heritage/input.js
+* Passed: class-static-block/multiple-static-initializers/input.js
+* Passed: class-static-block/name-conflict/input.js
+* Passed: class-static-block/new-target/input.js
 
 # babel-plugin-transform-private-methods
 * Failed: accessors/basic/input.js
@@ -498,16 +498,16 @@ Passed: 54/1091
 * Failed: to-native-fields/static-shadowed-binding/input.js
 
 # babel-plugin-transform-logical-assignment-operators
-* Failed: logical-assignment/anonymous-functions-transform/input.js
-* Failed: logical-assignment/arrow-functions-transform/input.js
 * Failed: logical-assignment/general-semantics/input.js
-* Failed: logical-assignment/named-functions-transform/input.js
 * Failed: logical-assignment/null-coalescing/input.js
 * Failed: logical-assignment/null-coalescing-without-other/input.js
+* Passed: logical-assignment/anonymous-functions-transform/input.js
+* Passed: logical-assignment/arrow-functions-transform/input.js
+* Passed: logical-assignment/named-functions-transform/input.js
 
 # babel-plugin-transform-numeric-separator
-* Failed: removal/bigint/input.js
-* Passed: used-with-transform-es2015-literals/input.js
+* Failed: used-with-transform-es2015-literals/input.js
+* Passed: removal/bigint/input.js
 
 # babel-plugin-transform-export-namespace-from
 * Failed: export-namespace/namespace-default/input.mjs
@@ -529,12 +529,12 @@ Passed: 54/1091
 * Failed: commonjs/shadowed-require/input.js
 * Failed: commonjs/template-literal/input.js
 * Failed: commonjs/to-string/input.js
+* Failed: missing-module-transform/missing-module-transform/input.js
+* Failed: systemjs/missing-plugin/input.mjs
 * Failed: systemjs/missing-plugin-babel-7/input.mjs
 * Failed: systemjs/module/input.mjs
 * Failed: systemjs/script/input.js
 * Failed: systemjs/to-string/input.js
-* Passed: missing-module-transform/missing-module-transform/input.js
-* Passed: systemjs/missing-plugin/input.mjs
 
 # babel-plugin-transform-export-namespace-from
 * Failed: export-namespace/namespace-default/input.mjs
@@ -594,7 +594,6 @@ Passed: 54/1091
 * Failed: general/unary/input.js
 * Failed: loose/cast-to-boolean/input.js
 * Failed: regression/10959-transform-optional-chaining/input.ts
-* Failed: regression/10959-transform-ts/input.ts
 * Failed: regression/10959-transform-ts-and-optional-chaining/input.ts
 * Failed: regression/7642/input.js
 * Failed: transparent-expr-wrappers/ts-as-call-context/input.ts
@@ -603,18 +602,20 @@ Passed: 54/1091
 * Failed: transparent-expr-wrappers/ts-as-in-conditional/input.ts
 * Failed: transparent-expr-wrappers/ts-as-member-expression/input.ts
 * Failed: transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+* Passed: regression/10959-transform-ts/input.ts
 
 # babel-plugin-transform-optional-catch-binding
-* Failed: optional-catch-bindings/try-catch-block-binding/input.js
-* Failed: optional-catch-bindings/try-catch-block-no-binding/input.js
-* Failed: optional-catch-bindings/try-catch-finally-binding/input.js
-* Failed: optional-catch-bindings/try-catch-finally-no-binding/input.js
+[All passed]
+* Passed: optional-catch-bindings/try-catch-block-binding/input.js
+* Passed: optional-catch-bindings/try-catch-block-no-binding/input.js
+* Passed: optional-catch-bindings/try-catch-finally-binding/input.js
+* Passed: optional-catch-bindings/try-catch-finally-no-binding/input.js
 
 # babel-plugin-transform-json-strings
 * Failed: json-strings/directive-line-separator/input.js
 * Failed: json-strings/directive-paragraph-separator/input.js
-* Failed: json-strings/string-line-separator/input.js
-* Failed: json-strings/string-paragraph-separator/input.js
+* Passed: json-strings/string-line-separator/input.js
+* Passed: json-strings/string-paragraph-separator/input.js
 
 # babel-plugin-transform-async-generator-functions
 * Failed: async-generators/class-method/input.js
@@ -714,6 +715,7 @@ Passed: 54/1091
 * Failed: assumption-ignoreFunctionLength-true/basic/input.mjs
 * Failed: assumption-ignoreFunctionLength-true/export-default-function/input.mjs
 * Failed: assumption-noNewArrows-false/basic/input.js
+* Failed: assumption-noNewArrows-false/bluebird/input.js
 * Failed: async-to-generator/async/input.js
 * Failed: async-to-generator/async-arrow-in-method/input.js
 * Failed: async-to-generator/async-default-arguments/input.js
@@ -751,38 +753,35 @@ Passed: 54/1091
 * Failed: regression/T7194/input.js
 * Failed: regression/gh-6923/input.js
 * Failed: regression/in-uncompiled-class-fields/input.js
-* Passed: assumption-noNewArrows-false/bluebird/input.js
 
 # babel-plugin-transform-exponentiation-operator
 * Failed: exponentiation-operator/assignment/input.js
-* Failed: exponentiation-operator/binary/input.js
 * Failed: regression/4349/input.js
 * Failed: regression/4403/input.js
+* Passed: exponentiation-operator/binary/input.js
 
 # babel-plugin-transform-shorthand-properties
-* Failed: shorthand-properties/method-plain/input.js
-* Failed: shorthand-properties/method-type-annotations/input.js
-* Failed: shorthand-properties/proto/input.js
-* Failed: shorthand-properties/shorthand-comments/input.js
-* Failed: shorthand-properties/shorthand-mixed/input.js
-* Failed: shorthand-properties/shorthand-multiple/input.js
-* Failed: shorthand-properties/shorthand-single/input.js
+[All passed]
+* Passed: shorthand-properties/method-plain/input.js
+* Passed: shorthand-properties/method-type-annotations/input.js
+* Passed: shorthand-properties/proto/input.js
+* Passed: shorthand-properties/shorthand-comments/input.js
+* Passed: shorthand-properties/shorthand-mixed/input.js
+* Passed: shorthand-properties/shorthand-multiple/input.js
+* Passed: shorthand-properties/shorthand-single/input.js
 
 # babel-plugin-transform-sticky-regex
-* Failed: sticky-regex/basic/input.js
-* Failed: sticky-regex/ignore-non-sticky/input.js
+[All passed]
+* Passed: sticky-regex/basic/input.js
+* Passed: sticky-regex/ignore-non-sticky/input.js
 
 # babel-plugin-transform-unicode-regex
 * Failed: unicode-regex/basic/input.js
-* Failed: unicode-regex/ignore-non-unicode/input.js
 * Failed: unicode-regex/negated-set/input.js
 * Failed: unicode-regex/slash/input.js
+* Passed: unicode-regex/ignore-non-unicode/input.js
 
 # babel-plugin-transform-typescript
-* Failed: cast/as-expression/input.ts
-* Failed: cast/multiple-assert-and-assign/input.ts
-* Failed: cast/non-null-assertion/input.ts
-* Failed: cast/type-assertion/input.ts
 * Failed: class/abstract-class-decorated/input.ts
 * Failed: class/abstract-class-decorated-method/input.ts
 * Failed: class/abstract-class-decorated-parameter/input.ts
@@ -791,24 +790,20 @@ Passed: 54/1091
 * Failed: class/accessor-allowDeclareFields-true-babel-7/input.ts
 * Failed: class/declare/input.ts
 * Failed: class/declare-babel-7/input.ts
+* Failed: class/declare-not-enabled-babel-7/input.ts
 * Failed: class/decorated-declare-properties/input.ts
-* Failed: class/field-not-initialized/input.ts
 * Failed: class/field-not-initialized-babel-7/input.ts
-* Failed: class/methods/input.ts
-* Failed: class/override/input.ts
 * Failed: class/parameter-properties/input.ts
 * Failed: class/parameter-properties-late-super/input.ts
 * Failed: class/parameter-properties-with-class/input.ts
 * Failed: class/parameter-properties-with-class-and-super/input.ts
 * Failed: class/parameter-properties-with-parameters/input.ts
 * Failed: class/parameter-properties-with-super/input.ts
-* Failed: class/private-method-override/input.ts
 * Failed: class/private-method-override-transform-private/input.ts
-* Failed: class/properties/input.ts
 * Failed: class/properties-babel-7/input.ts
-* Failed: class/uninitialized-definite/input.ts
-* Failed: class/uninitialized-definite-babel-7/input.ts
+* Failed: class/transform-properties-declare-wrong-order/input.ts
 * Failed: class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
+* Failed: declarations/const-enum/input.ts
 * Failed: declarations/erased/input.ts
 * Failed: declarations/export-declare-enum/input.ts
 * Failed: declarations/nested-namespace/input.mjs
@@ -827,54 +822,25 @@ Passed: 54/1091
 * Failed: enum/string-value-template/input.ts
 * Failed: enum/string-values-computed/input.ts
 * Failed: enum/ts5.0-const-foldable/input.ts
-* Failed: exports/declare-namespace/input.ts
 * Failed: exports/declare-shadowed/input.ts
 * Failed: exports/declared-types/input.ts
-* Failed: exports/default-function/input.ts
-* Failed: exports/default-literal/input.ts
 * Failed: exports/export-const-enums/input.ts
-* Failed: exports/export-context-variables/input.ts
-* Failed: exports/export-from/input.ts
-* Failed: exports/export-globals/input.ts
 * Failed: exports/export-type/input.ts
 * Failed: exports/export-type-from/input.ts
 * Failed: exports/export-type-star-from/input.ts
+* Failed: exports/export=/input.ts
 * Failed: exports/export=-to-cjs/input.ts
 * Failed: exports/imported-types/input.ts
 * Failed: exports/imported-types-only-remove-type-imports/input.ts
-* Failed: exports/interface/input.ts
-* Failed: exports/issue-9916-1/input.ts
-* Failed: exports/issue-9916-2/input.ts
 * Failed: exports/issue-9916-3/input.ts
-* Failed: exports/simple/input.ts
 * Failed: exports/type-only-export-specifier-1/input.ts
 * Failed: exports/type-only-export-specifier-2/input.ts
 * Failed: exports/type-only-export-specifier-3/input.ts
-* Failed: function/overloads/input.ts
 * Failed: function/overloads-exports/input.mjs
 * Failed: function/this-parameter/input.ts
 * Failed: imports/elide-injected/input.ts
-* Failed: imports/elide-jsx-pragma-namespace-no/input.ts
-* Failed: imports/elide-jsx-pragma-namespace-no-babel-7/input.ts
-* Failed: imports/elide-jsx-pragma-no/input.ts
-* Failed: imports/elide-jsx-pragma-no-babel-7/input.ts
-* Failed: imports/elide-jsx-pragmaFrag-namespace-no/input.ts
-* Failed: imports/elide-jsx-pragmaFrag-namespace-no-babel-7/input.ts
-* Failed: imports/elide-jsx-pragmaFrag-no/input.ts
-* Failed: imports/elide-jsx-pragmaFrag-no-babel-7/input.ts
-* Failed: imports/elide-no-import-specifiers/input.ts
 * Failed: imports/elide-preact/input.ts
-* Failed: imports/elide-preact-no-1/input.ts
-* Failed: imports/elide-preact-no-1-babel-7/input.ts
-* Failed: imports/elide-preact-no-2/input.ts
-* Failed: imports/elide-preact-no-2-babel-7/input.ts
 * Failed: imports/elide-react/input.ts
-* Failed: imports/elide-react-no-1/input.ts
-* Failed: imports/elide-react-no-1-babel-7/input.ts
-* Failed: imports/elide-react-no-2/input.ts
-* Failed: imports/elide-react-no-2-babel-7/input.ts
-* Failed: imports/elide-react-no-3/input.ts
-* Failed: imports/elide-react-no-3-babel-7/input.ts
 * Failed: imports/elide-type-referenced-in-imports-equal-no/input.ts
 * Failed: imports/elide-typeof/input.ts
 * Failed: imports/elision/input.ts
@@ -884,13 +850,12 @@ Passed: 54/1091
 * Failed: imports/elision-rename/input.ts
 * Failed: imports/enum-id/input.ts
 * Failed: imports/enum-value/input.ts
-* Failed: imports/import-named-type/input.ts
-* Failed: imports/import-named-type-default-and-named/input.ts
 * Failed: imports/import-removed-exceptions/input.ts
 * Failed: imports/import-type/input.ts
 * Failed: imports/import-type-func-with-duplicate-name/input.ts
 * Failed: imports/import-type-not-removed/input.ts
 * Failed: imports/import=-declaration/input.ts
+* Failed: imports/import=-module/input.ts
 * Failed: imports/import=-module-to-cjs/input.ts
 * Failed: imports/only-remove-type-imports/input.ts
 * Failed: imports/parameter-decorators/input.ts
@@ -901,10 +866,9 @@ Passed: 54/1091
 * Failed: imports/type-only-import-specifier-2/input.ts
 * Failed: imports/type-only-import-specifier-3/input.ts
 * Failed: imports/type-only-import-specifier-4/input.ts
-* Failed: lvalues/as-expression/input.ts
-* Failed: lvalues/non-null/input.ts
-* Failed: lvalues/type-assertion/input.ts
 * Failed: namespace/alias/input.ts
+* Failed: namespace/ambient-module-nested/input.ts
+* Failed: namespace/ambient-module-nested-exported/input.ts
 * Failed: namespace/canonical/input.ts
 * Failed: namespace/clobber-class/input.ts
 * Failed: namespace/clobber-enum/input.ts
@@ -917,6 +881,8 @@ Passed: 54/1091
 * Failed: namespace/module-nested/input.ts
 * Failed: namespace/module-nested-export/input.ts
 * Failed: namespace/multiple/input.ts
+* Failed: namespace/mutable-fail/input.ts
+* Failed: namespace/namespace-flag/input.ts
 * Failed: namespace/namespace-nested-module/input.ts
 * Failed: namespace/nested/input.ts
 * Failed: namespace/nested-destructuring/input.ts
@@ -937,33 +903,70 @@ Passed: 54/1091
 * Failed: regression/10162/input.ts
 * Failed: regression/10338/input.ts
 * Failed: regression/11061/input.mjs
-* Failed: type-arguments/call/input.ts
-* Failed: type-arguments/expr/input.ts
-* Failed: type-arguments/new/input.ts
-* Failed: type-arguments/optional-call/input.ts
-* Failed: type-arguments/tagged-template/input.ts
-* Failed: type-arguments/tsx/input.ts
-* Failed: type-arguments/tsx-babel-7/input.ts
-* Failed: variable-declaration/exclamation/input.ts
 * Failed: variable-declaration/non-null-in-optional-chain/input.ts
-* Failed: variable-declaration/types-erased/input.ts
+* Passed: cast/as-expression/input.ts
+* Passed: cast/multiple-assert-and-assign/input.ts
+* Passed: cast/non-null-assertion/input.ts
+* Passed: cast/type-assertion/input.ts
 * Passed: catch-clause/param-type/input.ts
 * Passed: class/abstract-allowDeclareFields-false/input.ts
 * Passed: class/abstract-allowDeclareFields-true/input.ts
-* Passed: class/declare-not-enabled-babel-7/input.ts
 * Passed: class/export-default-abstract/input.ts
+* Passed: class/field-not-initialized/input.ts
 * Passed: class/head/input.ts
 * Passed: class/index-signature/input.ts
-* Passed: class/transform-properties-declare-wrong-order/input.ts
-* Passed: declarations/const-enum/input.ts
-* Passed: exports/export=/input.ts
+* Passed: class/methods/input.ts
+* Passed: class/override/input.ts
+* Passed: class/private-method-override/input.ts
+* Passed: class/properties/input.ts
+* Passed: class/uninitialized-definite/input.ts
+* Passed: class/uninitialized-definite-babel-7/input.ts
+* Passed: exports/declare-namespace/input.ts
+* Passed: exports/default-function/input.ts
+* Passed: exports/default-literal/input.ts
+* Passed: exports/export-context-variables/input.ts
+* Passed: exports/export-from/input.ts
+* Passed: exports/export-globals/input.ts
+* Passed: exports/interface/input.ts
+* Passed: exports/issue-9916-1/input.ts
+* Passed: exports/issue-9916-2/input.ts
+* Passed: exports/simple/input.ts
+* Passed: function/overloads/input.ts
 * Passed: function/parameters/input.ts
 * Passed: function/tuple-parameter/input.ts
-* Passed: imports/import=-module/input.ts
-* Passed: namespace/ambient-module-nested/input.ts
-* Passed: namespace/ambient-module-nested-exported/input.ts
-* Passed: namespace/mutable-fail/input.ts
-* Passed: namespace/namespace-flag/input.ts
+* Passed: imports/elide-jsx-pragma-namespace-no/input.ts
+* Passed: imports/elide-jsx-pragma-namespace-no-babel-7/input.ts
+* Passed: imports/elide-jsx-pragma-no/input.ts
+* Passed: imports/elide-jsx-pragma-no-babel-7/input.ts
+* Passed: imports/elide-jsx-pragmaFrag-namespace-no/input.ts
+* Passed: imports/elide-jsx-pragmaFrag-namespace-no-babel-7/input.ts
+* Passed: imports/elide-jsx-pragmaFrag-no/input.ts
+* Passed: imports/elide-jsx-pragmaFrag-no-babel-7/input.ts
+* Passed: imports/elide-no-import-specifiers/input.ts
+* Passed: imports/elide-preact-no-1/input.ts
+* Passed: imports/elide-preact-no-1-babel-7/input.ts
+* Passed: imports/elide-preact-no-2/input.ts
+* Passed: imports/elide-preact-no-2-babel-7/input.ts
+* Passed: imports/elide-react-no-1/input.ts
+* Passed: imports/elide-react-no-1-babel-7/input.ts
+* Passed: imports/elide-react-no-2/input.ts
+* Passed: imports/elide-react-no-2-babel-7/input.ts
+* Passed: imports/elide-react-no-3/input.ts
+* Passed: imports/elide-react-no-3-babel-7/input.ts
+* Passed: imports/import-named-type/input.ts
+* Passed: imports/import-named-type-default-and-named/input.ts
+* Passed: lvalues/as-expression/input.ts
+* Passed: lvalues/non-null/input.ts
+* Passed: lvalues/type-assertion/input.ts
+* Passed: type-arguments/call/input.ts
+* Passed: type-arguments/expr/input.ts
+* Passed: type-arguments/new/input.ts
+* Passed: type-arguments/optional-call/input.ts
+* Passed: type-arguments/tagged-template/input.ts
+* Passed: type-arguments/tsx/input.ts
+* Passed: type-arguments/tsx-babel-7/input.ts
+* Passed: variable-declaration/exclamation/input.ts
+* Passed: variable-declaration/types-erased/input.ts
 
 # babel-plugin-transform-react-jsx
 * Failed: autoImport/after-polyfills/input.mjs
@@ -976,20 +979,26 @@ Passed: 54/1091
 * Failed: autoImport/complicated-scope-script/input.js
 * Failed: autoImport/import-source/input.js
 * Failed: autoImport/import-source-pragma/input.js
-* Failed: autoImport/no-jsx/input.js
 * Failed: autoImport/react-defined/input.js
 * Failed: pure/false-default-pragma-automatic-runtime/input.js
 * Failed: pure/false-default-pragma-classic-runtime/input.js
+* Failed: pure/false-pragma-comment-automatic-runtime/input.js
 * Failed: pure/false-pragma-comment-classic-runtime/input.js
+* Failed: pure/false-pragma-option-automatic-runtime/input.js
 * Failed: pure/false-pragma-option-classic-runtime/input.js
 * Failed: pure/true-default-pragma-automatic-runtime/input.js
 * Failed: pure/true-default-pragma-classic-runtime/input.js
+* Failed: pure/true-pragma-comment-automatic-runtime/input.js
 * Failed: pure/true-pragma-comment-classic-runtime/input.js
+* Failed: pure/true-pragma-option-automatic-runtime/input.js
 * Failed: pure/true-pragma-option-classic-runtime/input.js
 * Failed: pure/unset-default-pragma-automatic-runtime/input.js
 * Failed: pure/unset-default-pragma-classic-runtime/input.js
+* Failed: pure/unset-pragma-comment-automatic-runtime/input.js
 * Failed: pure/unset-pragma-comment-classic-runtime/input.js
+* Failed: pure/unset-pragma-option-automatic-runtime/input.js
 * Failed: pure/unset-pragma-option-classic-runtime/input.js
+* Failed: react/.should-properly-handle-comments-adjacent-to-children/input.js
 * Failed: react/adds-appropriate-newlines-when-using-spread-attribute/input.js
 * Failed: react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * Failed: react/arrow-functions/input.js
@@ -1024,6 +1033,9 @@ Passed: 54/1091
 * Failed: react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
 * Failed: react/should-convert-simple-tags/input.js
 * Failed: react/should-convert-simple-text/input.js
+* Failed: react/should-disallow-spread-children/input.js
+* Failed: react/should-disallow-valueless-key/input.js
+* Failed: react/should-disallow-xml-namespacing/input.js
 * Failed: react/should-escape-xhtml-jsxattribute/input.js
 * Failed: react/should-escape-xhtml-jsxattribute-babel-7/input.js
 * Failed: react/should-escape-xhtml-jsxtext/input.js
@@ -1040,7 +1052,10 @@ Passed: 54/1091
 * Failed: react/should-properly-handle-comments-between-props/input.js
 * Failed: react/should-quote-jsx-attributes/input.js
 * Failed: react/should-support-xml-namespaces-if-flag/input.js
+* Failed: react/should-throw-error-namespaces-if-not-flag/input.js
 * Failed: react/should-transform-known-hyphenated-tags/input.js
+* Failed: react/should-warn-when-importSource-is-set/input.js
+* Failed: react/should-warn-when-importSource-pragma-is-set/input.js
 * Failed: react/this-tag-name/input.js
 * Failed: react/weird-symbols/input.js
 * Failed: react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
@@ -1049,6 +1064,7 @@ Passed: 54/1091
 * Failed: react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * Failed: react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
 * Failed: react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
+* Failed: react-automatic/.should-properly-handle-comments-adjacent-to-children/input.js
 * Failed: react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
 * Failed: react-automatic/arrow-functions/input.js
 * Failed: react-automatic/assignment/input.js
@@ -1077,6 +1093,9 @@ Passed: 54/1091
 * Failed: react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
 * Failed: react-automatic/should-convert-simple-tags/input.js
 * Failed: react-automatic/should-convert-simple-text/input.js
+* Failed: react-automatic/should-disallow-spread-children/input.js
+* Failed: react-automatic/should-disallow-valueless-key/input.js
+* Failed: react-automatic/should-disallow-xml-namespacing/input.js
 * Failed: react-automatic/should-escape-xhtml-jsxattribute/input.js
 * Failed: react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
 * Failed: react-automatic/should-escape-xhtml-jsxtext/input.js
@@ -1094,9 +1113,12 @@ Passed: 54/1091
 * Failed: react-automatic/should-properly-handle-null-prop-spread/input.js
 * Failed: react-automatic/should-quote-jsx-attributes/input.js
 * Failed: react-automatic/should-support-xml-namespaces-if-flag/input.js
+* Failed: react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+* Failed: react-automatic/should-throw-when-filter-is-specified/input.js
 * Failed: react-automatic/should-transform-known-hyphenated-tags/input.js
 * Failed: react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
 * Failed: react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
+* Failed: react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * Failed: react-automatic/this-tag-name/input.js
 * Failed: react-automatic/weird-symbols/input.js
 * Failed: react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
@@ -1105,37 +1127,18 @@ Passed: 54/1091
 * Failed: regression/issue-12478-classic/input.js
 * Failed: regression/issue-15353-classic/input.js
 * Failed: regression/pragma-frag-set-default-classic-runtime/input.js
+* Failed: removed-options/invalid-use-builtins-false/input.js
+* Failed: removed-options/invalid-use-builtins-true/input.js
+* Failed: removed-options/invalid-use-spread-false/input.js
+* Failed: removed-options/invalid-use-spread-true/input.js
 * Failed: runtime/classic/input.js
 * Failed: runtime/defaults-to-automatic/input.js
 * Failed: runtime/defaults-to-classis-babel-7/input.js
+* Failed: runtime/invalid-runtime/input.js
 * Failed: runtime/pragma-runtime-classsic/input.js
 * Failed: runtime/runtime-automatic/input.js
 * Failed: sourcemaps/JSXText/input.js
 * Failed: spread-transform/transform-to-babel-extend/input.js
 * Failed: spread-transform/transform-to-object-assign/input.js
-* Passed: pure/false-pragma-comment-automatic-runtime/input.js
-* Passed: pure/false-pragma-option-automatic-runtime/input.js
-* Passed: pure/true-pragma-comment-automatic-runtime/input.js
-* Passed: pure/true-pragma-option-automatic-runtime/input.js
-* Passed: pure/unset-pragma-comment-automatic-runtime/input.js
-* Passed: pure/unset-pragma-option-automatic-runtime/input.js
-* Passed: react/.should-properly-handle-comments-adjacent-to-children/input.js
-* Passed: react/should-disallow-spread-children/input.js
-* Passed: react/should-disallow-valueless-key/input.js
-* Passed: react/should-disallow-xml-namespacing/input.js
-* Passed: react/should-throw-error-namespaces-if-not-flag/input.js
-* Passed: react/should-warn-when-importSource-is-set/input.js
-* Passed: react/should-warn-when-importSource-pragma-is-set/input.js
-* Passed: react-automatic/.should-properly-handle-comments-adjacent-to-children/input.js
-* Passed: react-automatic/should-disallow-spread-children/input.js
-* Passed: react-automatic/should-disallow-valueless-key/input.js
-* Passed: react-automatic/should-disallow-xml-namespacing/input.js
-* Passed: react-automatic/should-throw-error-namespaces-if-not-flag/input.js
-* Passed: react-automatic/should-throw-when-filter-is-specified/input.js
-* Passed: react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
-* Passed: removed-options/invalid-use-builtins-false/input.js
-* Passed: removed-options/invalid-use-builtins-true/input.js
-* Passed: removed-options/invalid-use-spread-false/input.js
-* Passed: removed-options/invalid-use-spread-true/input.js
-* Passed: runtime/invalid-runtime/input.js
+* Passed: autoImport/no-jsx/input.js
 

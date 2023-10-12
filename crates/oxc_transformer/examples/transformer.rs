@@ -2,7 +2,6 @@ use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::Prepass;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -35,7 +34,6 @@ fn main() {
     println!("{printed}");
 
     let program = allocator.alloc(ret.program);
-    Prepass::new(&allocator).build(program);
     let _ = SemanticBuilder::new(&source_text, source_type).build(program);
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,

@@ -7,7 +7,6 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::Prepass;
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
@@ -117,6 +116,7 @@ pub fn babel(options: &BabelOptions) {
     file.write_all(snapshot.as_bytes()).unwrap();
 }
 
+/// Test conformance by comparing the parsed babel code and transformed code.
 fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
     let output_path = input_path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
         let path = entry.ok()?.path();
@@ -128,44 +128,40 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
         options.filter.as_ref().is_some_and(|f| input_path.to_string_lossy().as_ref().contains(f));
 
     if filtered {
-        println!("{input_path:?}");
+        println!("input_path: {input_path:?}");
+        println!("output_path: {output_path:?}");
     }
 
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(input_path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
+    // Get expected code by parsing the source text, so we can get the same code generated result.
     let expected = output_path.and_then(|path| fs::read_to_string(path).ok());
-    if let Some(expected) = &expected {
-        let transform_options = TransformOptions {
-            target: TransformTarget::ES5,
-            react: Some(TransformReactOptions::default()),
-        };
+    let Some(expected) = &expected else { return false };
+    let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
+    let expected_code =
+        Codegen::<false>::new(source_text.len(), CodegenOptions).build(&expected_program);
 
-        let program = allocator.alloc(ret.program);
+    // Get transformed text.
+    let transformed_program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let transform_options = TransformOptions {
+        target: TransformTarget::ES5,
+        react: Some(TransformReactOptions::default()),
+    };
+    let transformed_program = allocator.alloc(transformed_program);
+    Transformer::new(&allocator, source_type, transform_options).build(transformed_program);
+    let transformed_code =
+        Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program);
 
-        Transformer::new(&allocator, source_type, transform_options).build(program);
-        Prepass::new(&allocator).build(program);
-        let transformed = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
-
-        let trim_transformed = remove_whitespace(&transformed);
-        let trim_expected = remove_whitespace(expected);
-        let passed = trim_transformed == trim_expected;
-        if filtered {
-            println!("Expected:\n");
-            println!("{expected}\n");
-            println!("Transformed:\n");
-            println!("{transformed}\n");
-            println!("Diff:\n");
-            println!("{trim_transformed:?}");
-            println!("{trim_expected:?}");
-        }
-        return passed;
+    let passed = transformed_code == expected_code;
+    if filtered {
+        println!("Expected:\n");
+        println!("{expected}\n");
+        println!("Expected codegen:\n");
+        println!("{expected_code}\n");
+        println!("Transformed:\n");
+        println!("{transformed_code}\n");
+        println!("Passed: {passed}");
     }
-
-    ret.errors.is_empty()
-}
-
-fn remove_whitespace(s: &str) -> String {
-    s.replace(|c: char| c.is_ascii_whitespace(), "")
+    passed
 }
