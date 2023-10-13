@@ -1428,13 +1428,16 @@ version = "0.2.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_codegen",
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_index",
+ "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_transformer",
 ]
 
 [[package]]
@@ -1863,15 +1866,9 @@ name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
- "oxc_allocator",
- "oxc_ast",
- "oxc_diagnostics",
- "oxc_formatter",
+ "oxc",
  "oxc_linter",
- "oxc_parser",
  "oxc_query",
- "oxc_semantic",
- "oxc_span",
  "oxc_type_synthesis",
  "serde",
  "serde-wasm-bindgen",

@@ -19,10 +19,15 @@
       #editor { flex: 1; overflow-y: auto; }
       #panel { height: 20%; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
       #right { flex: 1; display:flex; flex-direction: column; min-width: 0; }
-      .controls { color: white; background: #24292e; padding: .8em 1em; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
+      .header { color: white; background: #24292e; border-bottom: 1px solid #444; }
+      .left-container { padding: .8em 1em; display: flex; align-items: center; justify-content: space-between; }
+      .controls { padding: .6em; }
+      .controls > div { padding: .2em 1em; display: flex; align-items: center; }
+      .controls > div > button { margin-right: 4px; }
+      .controls > div > label { margin-right: 8px; }
       .controls label { font-size: 14px; }
+      #duration { margin-left: auto; }
       #viewer { flex: 1; overflow-y: auto; }
-      #mangle { display: inline-flex; align-items: center }
       .query-button-green { background-color: #32CD59; border-color: #15c541; }
       .query-button-red { background-color: #e74c3c; border-color: #c0392b; }
       #query-results-viewer { height: 50%; border-top: 1px solid #444; display: none; }
@@ -36,11 +41,11 @@
 
     <div id="container">
       <div id="left">
-        <div class="controls">
+        <div class="header left-container">
           <div id="logo"><img height="100%" width="20" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico" alt="logo"></img><span>Oxc</span></div>
           <div>
             <label id="type-check">Type Check (experimental)<input id="type-check-checkbox" type="checkbox"></label>
-            <label id="syntax">Check Syntax<input id="syntax-checkbox" type="checkbox" checked></label>
+            <label id="syntax">Syntax Check<input id="syntax-checkbox" type="checkbox" checked></label>
             <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
           </div>
         </div>
@@ -49,18 +54,24 @@
       </div>
       <div id="divider"></div>
       <div id="right">
-        <div class="controls">
+        <div class="header controls">
           <div>
             <button type="button" id="ast">AST</button>
+            <button type="button" id="codegen">Codegen</button>
             <button type="button" id="ir">IR</button>
-            <!-- The formatter is WIP <button type="button" id="format">Format</button> -->
-            <!-- <button type="button" id="minify">Minify</button> -->
             <button type="button" id="query">Query Playground</button>
             <button type="button" id="query-args-or-outputs" class="query-button-red">Show Query Arguments</button>
             <button type="button" id="ir-copy">Copy IR to clipboard</button>
-            <label id="mangle">Mangle<input id="mangle-checkbox" type="checkbox"></label>
           </div>
-          <span id="duration"></span>
+          <div>
+            <!-- Format is experimental <button type="button" id="format">Format</button> -->
+            <label id="transform">Transform<input id="transform-checkbox" type="checkbox"></label>
+            <label>| Minify: </label>
+            <label id="whitespace">whitespace<input id="whitespace-checkbox" type="checkbox"></label>
+            <label id="mangle">mangle<input id="mangle-checkbox" type="checkbox"></label>
+            <label id="compress">compress<input id="compress-checkbox" type="checkbox"></label>
+            <div id="duration" title="Execution Time"></div>
+          </div>
         </div>
         <div id="viewer"></div>
         <div id="query-results-viewer"></div>
