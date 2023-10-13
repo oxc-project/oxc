@@ -126,6 +126,7 @@ mod jest {
 mod unicorn {
     pub mod catch_error_name;
     pub mod filename_case;
+    pub mod no_console_spaces;
     pub mod no_instanceof_array;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
@@ -231,6 +232,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_identical_title,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::no_console_spaces,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
