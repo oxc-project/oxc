@@ -14,7 +14,11 @@ use std::{
 use brotlic::{BlockSize, BrotliEncoderOptions, CompressorWriter, Quality, WindowSize};
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
+
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
 
@@ -41,7 +45,7 @@ pub fn run() -> Result<(), io::Error> {
     ));
     out.push_str(&format!(" {:width$}\n", "Brotli", width = 10));
     for file in files.files() {
-        let minified = minify(file);
+        let minified = minify_twice(file);
         let s = format!(
             "{:width$} -> {:width$} -> {:width$} {:width$} {}\n\n",
             format_size(file.source_text.len(), DECIMAL),
@@ -60,16 +64,24 @@ pub fn run() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn minify(file: &TestFile) -> String {
+fn minify_twice(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
     let options = MinifierOptions {
         compress: CompressOptions { evaluate: false, ..CompressOptions::default() },
         ..MinifierOptions::default()
     };
-    let source_text1 = Minifier::new(&file.source_text, source_type, options).build();
-    let source_text2 = Minifier::new(&source_text1, source_type, options).build();
+    let source_text1 = minify(&file.source_text, source_type, options);
+    let source_text2 = minify(&source_text1, source_type, options);
     assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
     source_text2
+}
+
+fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
+    let allocator = Allocator::default();
+    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let program = allocator.alloc(program);
+    Minifier::new(options).build(&allocator, program);
+    Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
 }
 
 fn gzip_size(s: &str) -> usize {

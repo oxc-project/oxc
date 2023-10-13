@@ -1,7 +1,11 @@
 use std::path::Path;
 
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
+
 use pico_args::Arguments;
 
 #[cfg(not(target_env = "msvc"))]
@@ -29,12 +33,20 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap();
 
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
-    let printed = Minifier::new(&source_text, source_type, options).build();
+    let printed = minify(&source_text, source_type, options);
     println!("{printed}");
 
     if twice {
         let options = MinifierOptions { mangle, ..MinifierOptions::default() };
-        let printed = Minifier::new(&printed, source_type, options).build();
+        let printed = minify(&printed, source_type, options);
         println!("{printed}");
     }
+}
+
+fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
+    let allocator = Allocator::default();
+    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let program = allocator.alloc(program);
+    Minifier::new(options).build(&allocator, program);
+    Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
 }

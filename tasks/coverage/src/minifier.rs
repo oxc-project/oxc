@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::{
@@ -83,11 +86,19 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
         compress: CompressOptions { evaluate: false, ..CompressOptions::default() },
         ..MinifierOptions::default()
     };
-    let source_text1 = Minifier::new(source_text, source_type, options).build();
-    let source_text2 = Minifier::new(&source_text1, source_type, options).build();
+    let source_text1 = minify(source_text, source_type, options);
+    let source_text2 = minify(&source_text1, source_type, options);
     if source_text1 == source_text2 {
         TestResult::Passed
     } else {
         TestResult::ParseError(String::new(), false)
     }
+}
+
+fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
+    let allocator = Allocator::default();
+    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let program = allocator.alloc(program);
+    Minifier::new(options).build(&allocator, program);
+    Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
 }

@@ -25,4 +25,4 @@ bitflags   = { workspace = true }
 num-bigint = { workspace = true }
 
 [dev-dependencies]
-oxc_parser    = { workspace = true }
+oxc_parser = { workspace = true }

@@ -18,18 +18,19 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
-oxc_parser    = { workspace = true }
 oxc_ast       = { workspace = true }
 oxc_semantic  = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
-oxc_codegen   = { workspace = true }
 
-num-bigint    = { workspace = true }
-itertools     = { workspace = true }
-num-traits    = { workspace = true }
+num-bigint = { workspace = true }
+itertools  = { workspace = true }
+num-traits = { workspace = true }
 
 [dev-dependencies]
+oxc_parser  = { workspace = true }
+oxc_codegen = { workspace = true }
+
 insta     = { workspace = true }
 walkdir   = { workspace = true }
 pico-args = { workspace = true }

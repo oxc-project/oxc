@@ -6,9 +6,12 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_allocator::Allocator;
 use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
+
+use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_tasks_common::TestFiles;
 
 fn bench_minifier(criterion: &mut Criterion) {
@@ -20,7 +23,13 @@ fn bench_minifier(criterion: &mut Criterion) {
             |b, source_text| {
                 let source_type = SourceType::from_path(&file.file_name).unwrap();
                 let options = MinifierOptions::default();
-                b.iter_with_large_drop(|| Minifier::new(source_text, source_type, options).build());
+                b.iter_with_large_drop(|| {
+                    let allocator = Allocator::default();
+                    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                    let program = allocator.alloc(program);
+                    Minifier::new(options).build(&allocator, program);
+                    allocator
+                });
             },
         );
     }
