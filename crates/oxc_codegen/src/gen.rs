@@ -65,9 +65,6 @@ fn print_directives_and_statements<const MINIFY: bool>(
         p.print_semicolon_if_needed();
         stmt.gen(p, ctx);
     }
-    if !MINIFY && !statements.is_empty() {
-        p.print_semicolon_if_needed();
-    }
 }
 
 impl<const MINIFY: bool> Gen<MINIFY> for Hashbang {
@@ -80,9 +77,9 @@ impl<const MINIFY: bool> Gen<MINIFY> for Hashbang {
 impl<const MINIFY: bool> Gen<MINIFY> for Directive {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_indent();
-        p.print(b'"');
+        p.print(b'\'');
         p.print_str(self.directive.as_bytes());
-        p.print(b'"');
+        p.print(b'\'');
         p.print_semicolon();
     }
 }
@@ -110,15 +107,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<Statement<'a>> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        match self {
-            Some(stmt) => stmt.gen(p, ctx),
-            None => p.print(b';'),
         }
     }
 }
@@ -494,7 +482,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleDeclaration<'a> {
             Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
-            _ => {}
+            _ => p.needs_semicolon = false,
         }
     }
 }
@@ -502,19 +490,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleDeclaration<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::VariableDeclaration(stmt) => {
-                p.print_indent();
-                stmt.gen(p, ctx);
-                p.print_semicolon_after_statement();
+            Self::VariableDeclaration(decl) => {
+                if !decl.is_typescript_syntax() {
+                    p.print_indent();
+                    decl.gen(p, ctx);
+                    p.print_semicolon_after_statement();
+                }
             }
-            Self::FunctionDeclaration(stmt) => {
-                p.print_indent();
-                p.print_space_before_identifier();
-                stmt.gen(p, ctx);
+            Self::FunctionDeclaration(decl) => {
+                if !decl.is_typescript_syntax() {
+                    p.print_indent();
+                    p.print_space_before_identifier();
+                    decl.gen(p, ctx);
+                }
             }
-            Self::ClassDeclaration(declaration) => {
+            Self::ClassDeclaration(decl) => {
                 p.print_space_before_identifier();
-                declaration.gen(p, ctx);
+                decl.gen(p, ctx);
             }
             Self::UsingDeclaration(declaration) => {
                 p.print_space_before_identifier();
@@ -738,7 +730,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                     p.print_str(b"from");
                     source.gen(p, ctx);
                 }
-                p.print_semicolon_after_statement();
+                p.needs_semicolon = true;
             }
         }
     }
@@ -1747,8 +1739,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeName<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.name.gen(p, ctx);
-        p.print(b'=');
         if let Some(value) = &self.value {
+            p.print(b'=');
             value.gen(p, ctx);
         }
     }
@@ -1788,7 +1780,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        p.print_str(b"{...");
         self.argument.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print(b'}');
     }
 }
 
@@ -1806,6 +1800,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
         p.print_str(b"<");
         self.name.gen(p, ctx);
         for attr in &self.attributes {
+            p.print_hard_space();
             attr.gen(p, ctx);
         }
         if self.self_closing {
