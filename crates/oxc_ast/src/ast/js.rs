@@ -1049,7 +1049,7 @@ pub enum Declaration<'a> {
 impl<'a> Declaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            Self::VariableDeclaration(_) => false,
+            Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_declare(),
             _ => true,
@@ -1067,6 +1067,12 @@ pub struct VariableDeclaration<'a> {
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
     /// Valid Modifiers: `export`, `declare`
     pub modifiers: Modifiers<'a>,
+}
+
+impl<'a> VariableDeclaration<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.modifiers.contains(ModifierKind::Declare)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

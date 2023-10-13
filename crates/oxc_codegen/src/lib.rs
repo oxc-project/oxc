@@ -88,7 +88,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    // pub fn with_mangler(&mut self, mangler: Mangler) {
+    // fn with_mangler(&mut self, mangler: Mangler) {
     // self.mangler = Some(mangler);
     // }
 
@@ -97,7 +97,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.into_code()
     }
 
-    fn into_code(self) -> String {
+    pub fn into_code(self) -> String {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
@@ -129,8 +129,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.print(b' ');
     }
 
-    #[inline]
-    pub fn print_soft_newline(&mut self) {
+    fn print_soft_newline(&mut self) {
         if !MINIFY {
             self.print(b'\n');
         }
@@ -157,21 +156,19 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
-    #[inline]
-    pub fn indent(&mut self) {
+    fn indent(&mut self) {
         if !MINIFY {
             self.indentation += 1;
         }
     }
 
-    #[inline]
-    pub fn dedent(&mut self) {
+    fn dedent(&mut self) {
         if !MINIFY {
             self.indentation -= 1;
         }
     }
 
-    pub fn print_indent(&mut self) {
+    fn print_indent(&mut self) {
         if !MINIFY {
             for _ in 0..self.indentation {
                 self.print(b'\t');
@@ -219,14 +216,12 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    #[inline]
     fn print_block_start(&mut self) {
         self.print(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    #[inline]
     fn print_block_end(&mut self) {
         self.dedent();
         self.print_indent();
