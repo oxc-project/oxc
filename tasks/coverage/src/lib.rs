@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use crate::{
     babel::{BabelCase, BabelSuite},
-    codegen::{CodegenBabelCase, CodegenTest262Case},
+    codegen::{CodegenBabelCase, CodegenTest262Case, CodegenTypeScriptCase},
     minifier::{MinifierBabelCase, MinifierTest262Case},
     misc::{MiscCase, MiscSuite},
     suite::Suite,
@@ -53,6 +53,7 @@ impl AppArgs {
     pub fn run_codegen(&self) {
         Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self);
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
+        TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
     }
 
     pub fn run_minifier(&self) {
