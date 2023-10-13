@@ -1,5 +1,5 @@
 mod babel;
-mod formatter;
+mod codegen;
 mod minifier;
 mod misc;
 mod suite;
@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use crate::{
     babel::{BabelCase, BabelSuite},
-    formatter::{FormatterBabelCase, FormatterTest262Case},
+    codegen::{CodegenBabelCase, CodegenTest262Case},
     minifier::{MinifierBabelCase, MinifierTest262Case},
     misc::{MiscCase, MiscSuite},
     suite::Suite,
@@ -39,7 +39,7 @@ impl AppArgs {
 
     pub fn run_all(&self) {
         self.run_parser();
-        self.run_formatter();
+        self.run_codegen();
         self.run_minifier();
     }
 
@@ -50,9 +50,9 @@ impl AppArgs {
         TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
     }
 
-    pub fn run_formatter(&self) {
-        Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self);
-        BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
+    pub fn run_codegen(&self) {
+        Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self);
+        BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
     }
 
     pub fn run_minifier(&self) {

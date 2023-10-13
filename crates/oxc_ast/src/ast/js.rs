@@ -1465,7 +1465,9 @@ pub struct Function<'a> {
 
 impl<'a> Function<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare) || self.body.is_none()
+        self.r#type == FunctionType::TSDeclareFunction
+            || self.body.is_none()
+            || self.modifiers.contains(ModifierKind::Declare)
     }
 
     pub fn is_expression(&self) -> bool {
@@ -1939,6 +1941,12 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName, // `default`
 }
 
+impl<'a> ExportDefaultDeclaration<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.declaration.is_typescript_syntax()
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportAllDeclaration<'a> {
@@ -1948,6 +1956,12 @@ pub struct ExportAllDeclaration<'a> {
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind,              // `export type *`
+}
+
+impl<'a> ExportAllDeclaration<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
+    }
 }
 
 #[derive(Debug, Hash)]

@@ -1,0 +1,19 @@
+codegen_babel Summary:
+AST Parsed     : 2078/2078 (100.00%)
+Positive Passed: 2062/2078 (99.23%)
+Expect to Parse: "typescript/declare/interface-new-line/input.ts"
+Expect to Parse: "typescript/export/nested-same-name/input.ts"
+Expect to Parse: "typescript/scope/export-declare-function-before/input.ts"
+Expect to Parse: "typescript/scope/export-enum-before/input.ts"
+Expect to Parse: "typescript/scope/export-interface-before/input.ts"
+Expect to Parse: "typescript/scope/export-type-before/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-const-type/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-import-ambient-class/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-in-different-module-and-top-level/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-let-interface/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-let-type/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-var-interface/input.ts"
+Expect to Parse: "typescript/scope/redeclaration-var-type/input.ts"
+Expect to Parse: "typescript/tsx/type-arguments/input.ts"
+Expect to Parse: "typescript/types/intrinsic-identifier/input.ts"
+Expect to Parse: "typescript/types/union-intersection/input.ts"

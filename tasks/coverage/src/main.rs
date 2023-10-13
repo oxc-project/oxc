@@ -23,7 +23,7 @@ fn main() {
 
     match task {
         "parser" => args.run_parser(),
-        "formatter" => args.run_formatter(),
+        "codegen" => args.run_codegen(),
         "minifier" => args.run_minifier(),
         _ => args.run_all(),
     };

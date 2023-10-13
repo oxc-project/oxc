@@ -55,6 +55,9 @@ pub struct Codegen<const MINIFY: bool> {
     start_of_stmt: usize,
     start_of_arrow_expr: usize,
     start_of_default_export: usize,
+
+    /// Track the current indentation level
+    indentation: u8,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -81,6 +84,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
+            indentation: 0,
         }
     }
 
@@ -115,6 +119,23 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.code.extend_from_slice(s);
     }
 
+    fn print_soft_space(&mut self) {
+        if !MINIFY {
+            self.print(b' ');
+        }
+    }
+
+    fn print_hard_space(&mut self) {
+        self.print(b' ');
+    }
+
+    #[inline]
+    pub fn print_soft_newline(&mut self) {
+        if !MINIFY {
+            self.print(b'\n');
+        }
+    }
+
     fn print_semicolon(&mut self) {
         self.print(b';');
     }
@@ -123,44 +144,12 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.print(b',');
     }
 
-    fn print_space_before_operator(&mut self, next: Operator) {
-        if self.prev_op_end != self.code.len() {
-            return;
-        }
-        let Some(prev) = self.prev_op else { return };
-        // "+ + y" => "+ +y"
-        // "+ ++ y" => "+ ++y"
-        // "x + + y" => "x+ +y"
-        // "x ++ + y" => "x+++y"
-        // "x + ++ y" => "x+ ++y"
-        // "-- >" => "-- >"
-        // "< ! --" => "<! --"
-        let bin_op_add = Operator::Binary(BinaryOperator::Addition);
-        let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
-        let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
-        let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
-        let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
-        let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
-        let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
-        if ((prev == bin_op_add || prev == un_op_pos)
-            && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
-            || ((prev == bin_op_sub || prev == un_op_neg)
-                && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
-            || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
-        {
-            self.print(b' ');
-        }
-    }
-
     fn print_space_before_identifier(&mut self) {
         if self
             .peek_nth(0)
             .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
         {
-            self.print(b' ');
+            self.print_hard_space();
         }
     }
 
@@ -168,8 +157,34 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
+    #[inline]
+    pub fn indent(&mut self) {
+        if !MINIFY {
+            self.indentation += 1;
+        }
+    }
+
+    #[inline]
+    pub fn dedent(&mut self) {
+        if !MINIFY {
+            self.indentation -= 1;
+        }
+    }
+
+    pub fn print_indent(&mut self) {
+        if !MINIFY {
+            for _ in 0..self.indentation {
+                self.print(b'\t');
+            }
+        }
+    }
+
     fn print_semicolon_after_statement(&mut self) {
-        self.needs_semicolon = true;
+        if MINIFY {
+            self.needs_semicolon = true;
+        } else {
+            self.print_str(b";\n");
+        }
     }
 
     fn print_semicolon_if_needed(&mut self) {
@@ -204,34 +219,41 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    // fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
-    // if let Statement::BlockStatement(block) = stmt {
-    // self.print_block1(block, ctx);
-    // } else {
-    // stmt.gen(self, ctx);
-    // }
-    // }
+    #[inline]
+    fn print_block_start(&mut self) {
+        self.print(b'{');
+        self.print_soft_newline();
+        self.indent();
+    }
+
+    #[inline]
+    fn print_block_end(&mut self) {
+        self.dedent();
+        self.print_indent();
+        self.print(b'}');
+    }
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.print(b'{');
+        self.print_block_start();
         for item in &stmt.body {
             self.print_semicolon_if_needed();
             item.gen(self, ctx);
         }
+        self.print_block_end();
         self.needs_semicolon = false;
-        self.print(b'}');
     }
 
     fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
-        self.print(b'{');
+        self.print_block_start();
         self.print_sequence(items, separator, ctx);
-        self.print(b'}');
+        self.print_block_end();
     }
 
     fn print_list<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
+                self.print_soft_space();
             }
             item.gen(self, ctx);
         }
@@ -260,6 +282,42 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // }
         // }
         self.print_str(fallback.as_bytes());
+    }
+
+    fn print_space_before_operator(&mut self, next: Operator) {
+        if !MINIFY {
+            self.print_hard_space();
+            return;
+        }
+        if self.prev_op_end != self.code.len() {
+            return;
+        }
+        let Some(prev) = self.prev_op else { return };
+        // "+ + y" => "+ +y"
+        // "+ ++ y" => "+ ++y"
+        // "x + + y" => "x+ +y"
+        // "x ++ + y" => "x+++y"
+        // "x + ++ y" => "x+ ++y"
+        // "-- >" => "-- >"
+        // "< ! --" => "<! --"
+        let bin_op_add = Operator::Binary(BinaryOperator::Addition);
+        let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
+        let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
+        let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
+        let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
+        let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
+        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
+        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
+        let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
+        if ((prev == bin_op_add || prev == un_op_pos)
+            && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
+            || ((prev == bin_op_sub || prev == un_op_neg)
+                && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
+            || (prev == un_op_post_dec && next == bin_op_gt)
+            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
+        {
+            self.print_hard_space();
+        }
     }
 
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {

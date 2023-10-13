@@ -25,4 +25,3 @@ oxc_semantic  = { workspace = true }
 [dev-dependencies]
 oxc_parser    = { workspace = true }
 oxc_codegen   = { workspace = true }
-oxc_minifier  = { workspace = true }

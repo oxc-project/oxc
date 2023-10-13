@@ -15,7 +15,7 @@ use oxc_syntax::{
     NumberBase,
 };
 
-pub use self::prepass::Prepass;
+use self::prepass::Prepass;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
