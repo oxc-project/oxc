@@ -1,10 +1,12 @@
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_minifier::{CodegenOptions, CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 use walkdir::WalkDir;
+
+use super::minify;
 
 #[test]
 fn test() {
@@ -65,12 +67,8 @@ impl TestCase {
         }
 
         let source_type = SourceType::default();
-        let options = MinifierOptions {
-            mangle: false,
-            compress: self.compress_options,
-            codegen: CodegenOptions,
-        };
-        let minified_source_text = Minifier::new(self.input.as_ref(), source_type, options).build();
+        let options = MinifierOptions { mangle: false, compress: self.compress_options };
+        let minified_source_text = minify(self.input.as_ref(), source_type, options);
         assert_eq!(
             remove_whitespace(minified_source_text.as_str()),
             remove_whitespace(self.expect.as_ref()),

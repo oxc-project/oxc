@@ -23,5 +23,5 @@ oxc_syntax    = { workspace = true }
 oxc_semantic  = { workspace = true }
 
 [dev-dependencies]
-oxc_parser    = { workspace = true }
-oxc_codegen   = { workspace = true }
+oxc_parser  = { workspace = true }
+oxc_codegen = { workspace = true }
