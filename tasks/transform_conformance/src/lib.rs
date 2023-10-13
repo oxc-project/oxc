@@ -83,7 +83,8 @@ pub fn babel(options: &BabelOptions) {
             .map(walkdir::DirEntry::into_path)
             .collect::<Vec<_>>();
         paths.sort_unstable();
-        total += paths.len();
+        let num_of_tests = paths.len();
+        total += num_of_tests;
 
         // Run the test
         let (passed, failed): (Vec<PathBuf>, Vec<PathBuf>) =
@@ -93,17 +94,13 @@ pub fn babel(options: &BabelOptions) {
         // Snapshot
         snapshot.push_str("# ");
         snapshot.push_str(case);
-        snapshot.push('\n');
         if failed.is_empty() {
-            snapshot.push_str("[All passed]\n");
+            snapshot.push_str(" (All passed)\n");
+        } else {
+            snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
         }
         for path in failed {
             snapshot.push_str("* Failed: ");
-            snapshot.push_str(&normalize_path(path.strip_prefix(&root).unwrap()));
-            snapshot.push('\n');
-        }
-        for path in passed {
-            snapshot.push_str("* Passed: ");
             snapshot.push_str(&normalize_path(path.strip_prefix(&root).unwrap()));
             snapshot.push('\n');
         }
