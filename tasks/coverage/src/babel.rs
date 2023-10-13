@@ -21,16 +21,47 @@ pub struct BabelOutput {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BabelOptions {
-    pub source_type: Option<String>,
-    pub throws: Option<String>,
+    source_type: Option<String>,
+    throws: Option<String>,
     #[serde(default)]
-    pub plugins: Vec<Value>, // Can be a string or an array
+    plugins: Vec<Value>, // Can be a string or an array
     #[serde(default)]
-    pub allow_return_outside_function: bool,
+    allow_return_outside_function: bool,
     #[serde(default)]
-    pub allow_await_outside_function: bool,
+    allow_await_outside_function: bool,
     #[serde(default)]
-    pub allow_undeclared_exports: bool,
+    allow_undeclared_exports: bool,
+}
+
+impl BabelOptions {
+    fn is_jsx(&self) -> bool {
+        self.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
+    }
+
+    fn is_typescript(&self) -> bool {
+        self.plugins.iter().any(|v| {
+            let string_value = v.as_str().is_some_and(|v| v == "typescript");
+            let array_value = v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+            string_value || array_value
+        })
+    }
+
+    fn is_typescript_definition(&self) -> bool {
+        self.plugins.iter().filter_map(Value::as_array).any(|p| {
+            let typescript = p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+            let dts = p
+                .get(1)
+                .and_then(Value::as_object)
+                .and_then(|v| v.get("dts"))
+                .and_then(Value::as_bool)
+                .is_some_and(|v| v);
+            typescript && dts
+        })
+    }
+
+    fn is_module(&self) -> bool {
+        self.source_type.as_ref().map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
+    }
 }
 
 pub struct BabelSuite<T: Case> {
@@ -79,6 +110,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
 pub struct BabelCase {
     path: PathBuf,
     code: String,
+    source_type: SourceType,
     options: BabelOptions,
     should_fail: bool,
     result: TestResult,
@@ -87,6 +119,10 @@ pub struct BabelCase {
 impl BabelCase {
     pub fn set_result(&mut self, result: TestResult) {
         self.result = result;
+    }
+
+    pub fn source_type(&self) -> SourceType {
+        self.source_type
     }
 
     fn read_file<T>(path: &Path, file_name: &'static str) -> Option<T>
@@ -150,56 +186,21 @@ impl BabelCase {
         // both files doesn't exist
         true
     }
-
-    fn is_jsx(&self) -> bool {
-        self.options.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
-    }
-
-    fn is_typescript(&self) -> bool {
-        self.options.plugins.iter().any(|v| {
-            let string_value = v.as_str().is_some_and(|v| v == "typescript");
-            let array_value = v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-            string_value || array_value
-        })
-    }
-
-    fn is_typescript_definition(&self) -> bool {
-        self.options.plugins.iter().filter_map(Value::as_array).any(|p| {
-            let typescript = p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-            let dts = p
-                .get(1)
-                .and_then(Value::as_object)
-                .and_then(|v| v.get("dts"))
-                .and_then(Value::as_bool)
-                .is_some_and(|v| v);
-            typescript && dts
-        })
-    }
-
-    fn is_module(&self) -> bool {
-        self.options
-            .source_type
-            .as_ref()
-            .map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
-    }
-
-    /// # Panics
-    pub fn source_type(&self) -> SourceType {
-        SourceType::from_path(self.path())
-            .unwrap()
-            .with_script(true)
-            .with_jsx(self.is_jsx())
-            .with_typescript(self.is_typescript())
-            .with_typescript_definition(self.is_typescript_definition())
-            .with_module(self.is_module())
-    }
 }
 
 impl Case for BabelCase {
+    /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
         let options = Self::read_options_json(&path);
+        let source_type = SourceType::from_path(&path)
+            .unwrap()
+            .with_script(true)
+            .with_jsx(options.is_jsx())
+            .with_typescript(options.is_typescript())
+            .with_typescript_definition(options.is_typescript_definition())
+            .with_module(options.is_module());
         let should_fail = Self::determine_should_fail(&path, &options);
-        Self { path, code, options, should_fail, result: TestResult::ToBeRun }
+        Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }
     }
 
     fn code(&self) -> &str {

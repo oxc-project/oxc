@@ -65,14 +65,35 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
 pub struct TypeScriptCase {
     path: PathBuf,
     code: String,
+    source_type: SourceType,
     result: TestResult,
     meta: TypeScriptTestMeta,
+}
+
+impl TypeScriptCase {
+    pub fn source_type(&self) -> SourceType {
+        self.source_type
+    }
+
+    pub fn set_result(&mut self, result: TestResult) {
+        self.result = result;
+    }
 }
 
 impl Case for TypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let meta = TypeScriptTestMeta::from_source(&path, &code);
-        Self { path, code, result: TestResult::ToBeRun, meta }
+        let compiler_options = &meta.options;
+        let is_module = ["esnext", "es2022", "es2020", "es2015"]
+            .into_iter()
+            .any(|module| compiler_options.modules.contains(&module.to_string()));
+        let source_type = SourceType::from_path(&path)
+            .unwrap()
+            .with_script(true)
+            .with_module(is_module)
+            .with_jsx(!compiler_options.jsx.is_empty())
+            .with_typescript_definition(compiler_options.declaration);
+        Self { path, code, source_type, result: TestResult::ToBeRun, meta }
     }
 
     fn code(&self) -> &str {
@@ -97,17 +118,7 @@ impl Case for TypeScriptCase {
     }
 
     fn run(&mut self) {
-        let compiler_options = &self.meta.options;
-        let is_module = ["esnext", "es2022", "es2020", "es2015"]
-            .into_iter()
-            .any(|module| compiler_options.modules.contains(&module.to_string()));
-        let source_type = SourceType::from_path(self.path())
-            .unwrap()
-            .with_script(true)
-            .with_module(is_module)
-            .with_jsx(!compiler_options.jsx.is_empty())
-            .with_typescript_definition(compiler_options.declaration);
-        self.result = self.execute(source_type);
+        self.result = self.execute(self.source_type);
     }
 }
 
