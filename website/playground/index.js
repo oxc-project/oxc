@@ -106,6 +106,7 @@ class Playground {
     this.viewer = this.initViewer();
     this.queryResultsViewer = this.initQueryResultsViewer();
     this.showingQueryResultsOrArguments = "results";
+
   }
 
   initOxc() {
@@ -117,7 +118,11 @@ class Playground {
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
 
+    this.runOptions.syntax = true;
+    this.runOptions.lint = true;
+
     this.runOxc(this.editor.state.doc.toString());
+    this.updateDiagnostics();
   }
 
   runOxc(text) {
@@ -154,16 +159,7 @@ class Playground {
         autocompletion(),
         linter(
           () => {
-            const diagnostics = this.oxc
-              ? this.oxc.getDiagnostics().map((d) => ({
-                  from: d.start,
-                  to: d.end,
-                  severity: d.severity.toLowerCase(),
-                  message: d.message,
-                }))
-              : [];
-            this.updatePanel(diagnostics);
-            return diagnostics;
+            return this.updateDiagnostics();
           },
           { delay: 0 }
         ),
@@ -175,6 +171,17 @@ class Playground {
       state,
       parent: document.querySelector("#editor"),
     });
+  }
+
+  updateDiagnostics() {
+    const diagnostics = (this.oxc ? this.oxc.getDiagnostics() : []).map((d) => ({
+      from: d.start,
+      to: d.end,
+      severity: d.severity.toLowerCase(),
+      message: d.message,
+    }));
+    this.updatePanel(diagnostics);
+    return diagnostics;
   }
 
   runQuery() {
@@ -412,8 +419,7 @@ class Playground {
       this.parserOptions,
       this.linterOptions,
       this.formatterOptions,
-      // TODO: minifierOptions is not used temporarily, see: #917
-      // this.minifierOptions,
+      this.minifierOptions,
       this.typeCheckOptions
     );
     const elapsed = new Date() - start;
@@ -452,7 +458,6 @@ class Playground {
     view = view || this.currentView;
     this.currentView = view;
 
-    document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
     document.getElementById("query-args-or-outputs").style.display = "none";
     document.getElementById("query-results-viewer").style.display = "none";
@@ -468,6 +473,10 @@ class Playground {
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
         break;
+      case "codegen":
+        this.run();
+        text = this.oxc.codegenText;
+        break;
       case "ir":
         document.getElementById("ir-copy").style.display = "inline";
         this.runOptions.ir = true;
@@ -478,12 +487,6 @@ class Playground {
         this.runOptions.format = true;
         this.run();
         text = this.oxc.formattedText;
-        break;
-      case "minify":
-        document.getElementById("mangle").style.visibility = "visible";
-        this.runOptions.minify = true;
-        this.run();
-        text = this.oxc.minifiedText;
         break;
       case "query":
         document.getElementById("query-args-or-outputs").style.display =
@@ -734,6 +737,10 @@ async function main() {
     playground.updateView("ast");
   };
 
+  document.getElementById("codegen").onclick = () => {
+    playground.updateView("codegen");
+  };
+
   document.getElementById("ir").onclick = () => {
     playground.updateView("ir");
   };
@@ -746,9 +753,30 @@ async function main() {
   // playground.updateView("format");
   // };
 
-  // document.getElementById("minify").onclick = function () {
-  //   playground.updateView("minify");
-  // };
+  document.getElementById("transform").onchange = function () {
+    const checked = document.getElementById("transform-checkbox").checked;
+    playground.runOptions.transform = checked;
+    playground.updateView("codegen");
+  };
+
+  document.getElementById("whitespace").onchange = function () {
+    const checked = document.getElementById("whitespace-checkbox").checked;
+    playground.minifierOptions.whitespace = checked;
+    playground.updateView("codegen");
+  };
+
+  document.getElementById("mangle").onchange = function () {
+    const checked = document.getElementById("mangle-checkbox").checked;
+    playground.minifierOptions.mangle = checked;
+    playground.updateView("codegen");
+  };
+
+  document.getElementById("compress").onchange = function () {
+    const checked = document.getElementById("compress-checkbox").checked;
+    playground.minifierOptions.compress = checked;
+    playground.updateView("codegen");
+  };
+
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
@@ -785,12 +813,6 @@ async function main() {
     playground.updateEditorText(playground.editor, sourceText);
   };
 
-  document.getElementById("mangle").onchange = function () {
-    const checked = document.getElementById("mangle-checkbox").checked;
-    playground.minifierOptions.mangle = checked;
-    playground.updateView("minify");
-  };
-
   document.getElementById("type-check").onchange = function () {
     const checked = document.getElementById("type-check-checkbox").checked;
     playground.runOptions.type_check = checked;
@@ -798,7 +820,7 @@ async function main() {
   };
 }
 
-// port from https://github.com/fkling/astexplorer/blob/541552fe45885c225fbb67d54dc4c6d6107b65b5/website/src/components/SplitPane.js#L26-L55 
+// port from https://github.com/fkling/astexplorer/blob/541552fe45885c225fbb67d54dc4c6d6107b65b5/website/src/components/SplitPane.js#L26-L55
 function addHorizontalResize() {
   const container = document.getElementById("container");
   const left = document.getElementById("left");

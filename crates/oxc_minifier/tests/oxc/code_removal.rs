@@ -23,7 +23,6 @@ fn console_removal() {
     let options = MinifierOptions {
         mangle: false,
         compress: CompressOptions { drop_console: true, ..CompressOptions::default() },
-        ..MinifierOptions::default()
     };
     test_with_options("console.log('hi')", "", options);
     test_with_options("let x = console.error('oops')", "let x", options);
