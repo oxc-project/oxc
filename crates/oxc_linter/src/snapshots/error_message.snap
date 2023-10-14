@@ -1,0 +1,131 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: error_message
+---
+  × eslint-plugin-unicorn(error-message): Pass a message to the Error constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error()
+   ·       ───────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the Error constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw Error()
+   ·       ───────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should not be an empty string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error('')
+   ·                 ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should not be an empty string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error(``)
+   ·                 ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the TypeError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ const foo = new TypeError()
+   ·             ───────────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the SyntaxError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ const foo = new SyntaxError()
+   ·             ─────────────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error([])
+   ·                 ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error([foo])
+   ·                 ─────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error({})
+   ·                 ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ throw new Error({foo})
+   ·                 ─────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the RangeError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ const error = new RangeError;
+   ·               ──────────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors)
+   · ──────────────────────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ AggregateError(errors)
+   · ──────────────────────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should not be an empty string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, "")
+   ·                            ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should not be an empty string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, ``)
+   ·                            ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should not be an empty string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, "", extraArgument)
+   ·                            ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, [])
+   ·                            ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, [foo])
+   ·                            ─────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, {})
+   ·                            ──
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Error message should be a string.
+   ╭─[error_message.tsx:1:1]
+ 1 │ new AggregateError(errors, {foo})
+   ·                            ─────
+   ╰────
+
+  × eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
+   ╭─[error_message.tsx:1:1]
+ 1 │ const error = new AggregateError;
+   ·               ──────────────────
+   ╰────
+
+
