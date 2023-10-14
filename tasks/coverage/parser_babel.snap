@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1342/1507 (89.05%)
+Negative Passed: 1343/1507 (89.12%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -24,7 +24,6 @@ Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
-Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
@@ -3557,6 +3556,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/uncategorised/219/input.js:1:1]
  1 │ "\u{FFZ}"
    ·  ─────
+   ╰────
+
+  × Invalid left-hand side in assignment
+   ╭─[es2015/uncategorised/220/input.js:1:1]
+ 1 │ [v] += ary
+   · ───
    ╰────
 
   × Cannot assign to this expression

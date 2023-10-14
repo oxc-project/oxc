@@ -807,6 +807,10 @@ pub enum AssignmentTarget<'a> {
 }
 
 impl<'a> AssignmentTarget<'a> {
+    pub fn is_simple(&self) -> bool {
+        matches!(self, Self::SimpleAssignmentTarget(_))
+    }
+
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::AssignmentTargetPattern(_))
     }
