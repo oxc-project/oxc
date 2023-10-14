@@ -77,6 +77,16 @@ impl<'a> AstBuilder<'a> {
         mem::replace(stmts, self.new_vec())
     }
 
+    pub fn move_assignment_target(
+        &self,
+        target: &mut AssignmentTarget<'a>,
+    ) -> AssignmentTarget<'a> {
+        let ident = IdentifierReference::new(Span::default(), "".into());
+        let dummy = self.simple_assignment_target_identifier(ident);
+        let dummy = AssignmentTarget::SimpleAssignmentTarget(dummy);
+        mem::replace(target, dummy)
+    }
+
     pub fn program(
         &self,
         span: Span,
@@ -89,10 +99,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     /* ---------- Literals ---------- */
-
-    pub fn string_literal(&self, span: Span, value: Atom) -> StringLiteral {
-        StringLiteral { span, value }
-    }
 
     pub fn number_literal(
         &self,
@@ -415,6 +421,13 @@ impl<'a> AstBuilder<'a> {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident))
     }
 
+    pub fn simple_assignment_target_member_expression(
+        &self,
+        expr: MemberExpression<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        SimpleAssignmentTarget::MemberAssignmentTarget(self.alloc(expr))
+    }
+
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
         Expression::AwaitExpression(self.alloc(AwaitExpression { span, argument }))
     }
@@ -496,6 +509,21 @@ impl<'a> AstBuilder<'a> {
         Expression::MemberExpression(self.alloc(expr))
     }
 
+    pub fn computed_member(
+        &self,
+        span: Span,
+        object: Expression<'a>,
+        expression: Expression<'a>,
+        optional: bool, // for optional chaining
+    ) -> MemberExpression<'a> {
+        MemberExpression::ComputedMemberExpression(ComputedMemberExpression {
+            span,
+            object,
+            expression,
+            optional,
+        })
+    }
+
     pub fn computed_member_expression(
         &self,
         span: Span,
@@ -503,9 +531,22 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool, // for optional chaining
     ) -> Expression<'a> {
-        self.member_expression(MemberExpression::ComputedMemberExpression(
-            ComputedMemberExpression { span, object, expression, optional },
-        ))
+        self.member_expression(self.computed_member(span, object, expression, optional))
+    }
+
+    pub fn static_member(
+        &self,
+        span: Span,
+        object: Expression<'a>,
+        property: IdentifierName,
+        optional: bool, // for optional chaining
+    ) -> MemberExpression<'a> {
+        MemberExpression::StaticMemberExpression(StaticMemberExpression {
+            span,
+            object,
+            property,
+            optional,
+        })
     }
 
     pub fn static_member_expression(
@@ -515,12 +556,7 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName,
         optional: bool, // for optional chaining
     ) -> Expression<'a> {
-        self.member_expression(MemberExpression::StaticMemberExpression(StaticMemberExpression {
-            span,
-            object,
-            property,
-            optional,
-        }))
+        self.member_expression(self.static_member(span, object, property, optional))
     }
 
     pub fn private_field_expression(

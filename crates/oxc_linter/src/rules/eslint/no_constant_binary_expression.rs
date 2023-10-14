@@ -167,7 +167,7 @@ impl NoConstantBinaryExpression {
             | Expression::UpdateExpression(_)
             | Expression::BinaryExpression(_)
             | Expression::UnaryExpression(_) => true,
-            expr if expr.is_literal_expression() => true,
+            expr if expr.is_literal() => true,
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
@@ -267,7 +267,7 @@ impl NoConstantBinaryExpression {
             Expression::ParenthesizedExpression(paren_expr) => {
                 Self::has_constant_loose_boolean_comparison(&paren_expr.expression, ctx)
             }
-            expr if expr.is_literal_expression() => true,
+            expr if expr.is_literal() => true,
             expr if expr.evaluate_to_undefined() => true,
             _ => false,
         }
@@ -288,7 +288,7 @@ impl NoConstantBinaryExpression {
             | Expression::NewExpression(_)
             | Expression::TemplateLiteral(_)
             | Expression::UpdateExpression(_) => true,
-            expr if expr.is_literal_expression() => true,
+            expr if expr.is_literal() => true,
             Expression::BinaryExpression(binary_expr) => {
                 binary_expr.operator.is_numeric_or_string_binary_operator()
             }

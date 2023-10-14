@@ -6,11 +6,12 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::{fs, hint::black_box};
+use std::{cell::RefCell, fs, hint::black_box, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
 use oxc_transformer::{TransformOptions, Transformer};
@@ -28,11 +29,14 @@ fn bench_transformer(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(file);
         group.bench_with_input(id, &source_text, |b, source_text| {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, source_text, source_type).parse();
-            let program = allocator.alloc(ret.program);
+            let program = Parser::new(&allocator, source_text, source_type).parse().program;
+            let semantic = SemanticBuilder::new(source_text, source_type).build(&program).semantic;
+            let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+            let symbols = Rc::new(RefCell::new(symbols));
+            let program = allocator.alloc(program);
             b.iter(|| {
                 let transform_options = TransformOptions::default();
-                Transformer::new(&allocator, source_type, transform_options)
+                Transformer::new(&allocator, source_type, &symbols, transform_options)
                     .build(black_box(program));
             });
         });

@@ -264,7 +264,7 @@ impl<'a> Compressor<'a> {
                 let right_string = get_string_value(right)?;
                 // let value = left_string.to_owned().
                 let value = left_string + right_string;
-                let string_literal = self.ast.string_literal(span, Atom::from(value));
+                let string_literal = StringLiteral::new(span, Atom::from(value));
                 Some(self.ast.literal_string_expression(string_literal))
             },
 
@@ -587,7 +587,7 @@ impl<'a> Compressor<'a> {
             };
 
             if let Some(type_name) = type_name {
-                let string_literal = self.ast.string_literal(span, Atom::from(type_name));
+                let string_literal = StringLiteral::new(span, Atom::from(type_name));
                 return Some(self.ast.literal_string_expression(string_literal));
             }
         }

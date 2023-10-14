@@ -92,6 +92,10 @@ impl SymbolTable {
         &self.references[reference_id]
     }
 
+    pub fn has_binding(&self, reference_id: ReferenceId) -> bool {
+        self.references[reference_id].symbol_id().is_some()
+    }
+
     pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
         self.references[reference_id].symbol_id().is_none()
     }

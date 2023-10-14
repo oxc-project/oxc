@@ -92,29 +92,18 @@ pub enum Expression<'a> {
 impl<'a> Expression<'a> {
     /// `PrimaryExpression`
     /// [tc39/ecma262#prod-PrimaryExpression](https://tc39.es/ecma262/#prod-PrimaryExpression)
+    #[rustfmt::skip]
     pub fn is_primary_expression(&self) -> bool {
-        self.is_literal_expression()
-            || matches!(
-                self,
-                Self::Identifier(_)
-                    | Self::ThisExpression(_)
-                    | Self::FunctionExpression(_)
-                    | Self::ClassExpression(_)
-                    | Self::ParenthesizedExpression(_)
-                    | Self::ArrayExpression(_)
-                    | Self::ObjectExpression(_)
-            )
+        self.is_literal() || matches!(self, Self::Identifier(_) | Self::ThisExpression(_) | Self::FunctionExpression(_)
+                                          | Self::ClassExpression(_) | Self::ParenthesizedExpression(_)
+                                          | Self::ArrayExpression(_) | Self::ObjectExpression(_))
     }
 
-    pub fn is_literal_expression(&self) -> bool {
-        matches!(
-            self,
-            Self::BooleanLiteral(_)
-                | Self::NullLiteral(_)
-                | Self::NumberLiteral(_)
-                | Self::BigintLiteral(_)
-                | Self::RegExpLiteral(_)
-                | Self::StringLiteral(_) // TemplateLiteral is not `Literal` type per oxc_ast
+    #[rustfmt::skip]
+    pub fn is_literal(&self) -> bool {
+        // Note: TemplateLiteral is not `Literal`
+        matches!(self, Self::BooleanLiteral(_) | Self::NullLiteral(_) | Self::NumberLiteral(_)
+                     | Self::BigintLiteral(_) | Self::RegExpLiteral(_) | Self::StringLiteral(_)
         )
     }
 
@@ -540,6 +529,10 @@ pub enum MemberExpression<'a> {
 }
 
 impl<'a> MemberExpression<'a> {
+    pub fn is_computed(&self) -> bool {
+        matches!(self, MemberExpression::ComputedMemberExpression(_))
+    }
+
     pub fn optional(&self) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
@@ -813,6 +806,13 @@ impl<'a> AssignmentTarget<'a> {
 
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::AssignmentTargetPattern(_))
+    }
+
+    pub fn is_identifier(&self) -> bool {
+        matches!(
+            self,
+            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
+        )
     }
 }
 

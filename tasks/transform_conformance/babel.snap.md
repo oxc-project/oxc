@@ -1,4 +1,4 @@
-Passed: 92/1091
+Passed: 94/1091
 
 # babel-plugin-transform-unicode-sets-regex (0/4)
 * Failed: basic/basic/input.js
@@ -736,10 +736,8 @@ Passed: 92/1091
 * Failed: regression/gh-6923/input.js
 * Failed: regression/in-uncompiled-class-fields/input.js
 
-# babel-plugin-transform-exponentiation-operator (1/4)
-* Failed: exponentiation-operator/assignment/input.js
+# babel-plugin-transform-exponentiation-operator (3/4)
 * Failed: regression/4349/input.js
-* Failed: regression/4403/input.js
 
 # babel-plugin-transform-shorthand-properties (All passed)
 
