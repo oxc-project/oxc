@@ -7,7 +7,7 @@ pub struct OxcRunOptions {
     syntax: bool,
     lint: bool,
     format: bool,
-    minify: bool,
+    transform: bool,
     type_check: bool,
 }
 
@@ -49,13 +49,13 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn minify(self) -> bool {
-        self.minify
+    pub fn transform(self) -> bool {
+        self.transform
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_minify(&mut self, yes: bool) {
-        self.minify = yes;
+    pub fn set_transform(&mut self, yes: bool) {
+        self.transform = yes;
     }
 
     #[wasm_bindgen(getter)]
@@ -113,7 +113,9 @@ impl OxcFormatterOptions {
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcMinifierOptions {
+    whitespace: bool,
     mangle: bool,
+    compress: bool,
 }
 
 #[wasm_bindgen]
@@ -124,6 +126,16 @@ impl OxcMinifierOptions {
     }
 
     #[wasm_bindgen(getter)]
+    pub fn whitespace(self) -> bool {
+        self.whitespace
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_whitespace(&mut self, yes: bool) {
+        self.whitespace = yes;
+    }
+
+    #[wasm_bindgen(getter)]
     pub fn mangle(self) -> bool {
         self.mangle
     }
@@ -131,6 +143,16 @@ impl OxcMinifierOptions {
     #[wasm_bindgen(setter)]
     pub fn set_mangle(&mut self, yes: bool) {
         self.mangle = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn compress(self) -> bool {
+        self.compress
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_compress(&mut self, yes: bool) {
+        self.compress = yes;
     }
 }
 

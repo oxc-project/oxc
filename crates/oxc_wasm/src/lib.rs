@@ -2,23 +2,27 @@ mod options;
 
 use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc, sync::Arc};
 
-use oxc_allocator::Allocator;
-use oxc_diagnostics::Error;
-use oxc_formatter::{Formatter, FormatterOptions};
+use oxc::{
+    allocator::Allocator,
+    codegen::{Codegen, CodegenOptions},
+    diagnostics::Error,
+    formatter::{Formatter, FormatterOptions},
+    minifier::{CompressOptions, Minifier, MinifierOptions},
+    parser::{Parser, ParserReturn},
+    semantic::{SemanticBuilder, SemanticBuilderReturn},
+    span::SourceType,
+    transformer::{TransformOptions, TransformTarget, Transformer},
+};
 use oxc_linter::{LintContext, Linter};
-// use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
-use oxc_parser::{Parser, ParserReturn};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
-use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
-use oxc_span::SourceType;
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
 use trustfall::{execute_query, TransparentValue};
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
-    OxcFormatterOptions, OxcLinterOptions, /*OxcMinifierOptions, */ OxcParserOptions,
-    OxcRunOptions, OxcTypeCheckingOptions,
+    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
+    OxcTypeCheckingOptions,
 };
 
 #[wasm_bindgen(start)]
@@ -40,8 +44,8 @@ pub struct Oxc {
     ast: JsValue,
     ir: JsValue,
 
+    codegen_text: String,
     formatted_text: String,
-    minified_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -92,9 +96,9 @@ impl Oxc {
         self.formatted_text.clone()
     }
 
-    #[wasm_bindgen(getter = minifiedText)]
-    pub fn minified_text(&self) -> String {
-        self.minified_text.clone()
+    #[wasm_bindgen(getter = codegenText)]
+    pub fn codegen_text(&self) -> String {
+        self.codegen_text.clone()
     }
 
     /// Returns Array of String
@@ -152,7 +156,7 @@ impl Oxc {
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
         formatter_options: &OxcFormatterOptions,
-        // minifier_options: &OxcMinifierOptions,
+        minifier_options: &OxcMinifierOptions,
         _type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
@@ -200,26 +204,35 @@ impl Oxc {
             self.formatted_text = printed;
         }
 
-        // if run_options.minify() {
-        // let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
-        // let semantic = ast_lower_ret.semantic;
-
-        // let mut printer = Printer::new(self.source_text.len(), PrinterOptions);
-        // let _semantic =
-        // Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
-        // if minifier_options.mangle() {
-        // let mangler = ManglerBuilder::new(source_text, source_type).build(hir);
-        // printer.with_mangler(mangler);
-        // }
-
-        // self.minified_text = printer.build(hir);
-        // }
-
         if run_options.type_check() {
             let (diagnostics, ..) = synthesize_program(program, |_: &std::path::Path| None);
-
             *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }
+
+        if run_options.transform() {
+            let options = TransformOptions { target: TransformTarget::ES2015, react: None };
+            Transformer::new(&allocator, source_type, options).build(program);
+        }
+
+        let program = allocator.alloc(program);
+
+        if minifier_options.compress() || minifier_options.mangle() {
+            let options = MinifierOptions {
+                mangle: minifier_options.mangle(),
+                compress: if minifier_options.compress() {
+                    CompressOptions::all_true()
+                } else {
+                    CompressOptions::all_false()
+                },
+            };
+            Minifier::new(options).build(&allocator, program);
+        }
+
+        self.codegen_text = if minifier_options.whitespace() {
+            Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
+        } else {
+            Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
+        };
 
         Ok(())
     }
