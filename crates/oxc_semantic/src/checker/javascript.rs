@@ -11,7 +11,7 @@ use oxc_diagnostics::{
 use oxc_span::{Atom, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
 use phf::{phf_set, Set};
@@ -65,12 +65,14 @@ impl EarlyErrorJavaScript {
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
             AstKind::ArrayPattern(pat) => check_array_pattern(pat, ctx),
-            AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
+
+            AstKind::AssignmentExpression(expr) => check_assignment_expression(expr, ctx),
+            AstKind::AwaitExpression(expr) => check_await_expression(expr, node, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
             AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
             AstKind::MemberExpression(expr) => check_member_expression(expr, ctx),
+            AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::UnaryExpression(expr) => check_unary_expression(expr, node, ctx),
-            AstKind::AwaitExpression(expr) => check_await_expression(expr, node, ctx),
             AstKind::YieldExpression(expr) => check_yield_expression(expr, node, ctx),
             _ => {}
         }
@@ -986,6 +988,22 @@ fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
         if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
             ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
         }
+    }
+}
+
+fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Invalid left-hand side in assignment")]
+    #[diagnostic()]
+    struct AssignmentIsNotSimple(#[label] Span);
+    // AssignmentExpression :
+    //     LeftHandSideExpression AssignmentOperator AssignmentExpression
+    //     LeftHandSideExpression &&= AssignmentExpression
+    //     LeftHandSideExpression ||= AssignmentExpression
+    //     LeftHandSideExpression ??= AssignmentExpression
+    // It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is not SIMPLE.
+    if assign_expr.operator != AssignmentOperator::Assign && !assign_expr.left.is_simple() {
+        ctx.error(AssignmentIsNotSimple(assign_expr.left.span()));
     }
 }
 
