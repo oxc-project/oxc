@@ -491,6 +491,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::VariableDeclaration(decl) => {
+                // Codegen is not intended to be used as a code formatting tool, so we need filter out the TypeScript syntax here.
                 if !decl.is_typescript_syntax() {
                     p.print_indent();
                     decl.gen(p, ctx);
@@ -505,8 +506,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                 }
             }
             Self::ClassDeclaration(decl) => {
-                p.print_space_before_identifier();
-                decl.gen(p, ctx);
+                if !decl.is_typescript_syntax() {
+                    p.print_space_before_identifier();
+                    decl.gen(p, ctx);
+                    p.print_soft_newline();
+                }
             }
             Self::UsingDeclaration(declaration) => {
                 p.print_space_before_identifier();
@@ -796,7 +800,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
-            Self::ClassDeclaration(value) => value.gen(p, ctx),
+            Self::ClassDeclaration(class) => {
+                if !class.is_typescript_syntax() {
+                    class.gen(p, ctx);
+                    p.print_soft_newline();
+                }
+            }
             _ => {}
         }
     }
@@ -1658,6 +1667,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
             p.print_soft_space();
             p.print_block_start();
             for item in &self.body.body {
+                if item.is_typescript_syntax() {
+                    continue;
+                }
+                p.print_indent();
                 p.print_semicolon_if_needed();
                 item.gen(p, ctx);
                 if matches!(
@@ -1666,9 +1679,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 ) {
                     p.print_semicolon_after_statement();
                 }
+                p.print_soft_newline();
             }
             p.print_block_end();
-            p.print_soft_newline();
             p.needs_semicolon = false;
         });
     }
