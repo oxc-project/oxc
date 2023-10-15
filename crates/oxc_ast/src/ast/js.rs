@@ -1622,9 +1622,6 @@ pub struct Class<'a> {
 }
 
 impl<'a> Class<'a> {
-    pub fn is_typescript_syntax(&self) -> bool {
-        self.is_declare() || self.is_abstract()
-    }
     pub fn is_expression(&self) -> bool {
         self.r#type == ClassType::ClassExpression
     }
@@ -1636,8 +1633,9 @@ impl<'a> Class<'a> {
     pub fn is_declare(&self) -> bool {
         self.modifiers.contains(ModifierKind::Declare)
     }
-    fn is_abstract(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Abstract)
+
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.is_declare()
     }
 }
 
@@ -1743,7 +1741,7 @@ impl<'a> ClassElement<'a> {
             | Self::TSAbstractMethodDefinition(_)
             | Self::TSAbstractPropertyDefinition(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
-            Self::PropertyDefinition(property) => property.type_annotation.is_some(),
+            Self::PropertyDefinition(property) => property.declare,
             _ => false,
         }
     }
