@@ -1055,7 +1055,7 @@ impl<'a> Declaration<'a> {
         match self {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
-            Self::ClassDeclaration(class) => class.is_declare(),
+            Self::ClassDeclaration(class) => class.is_typescript_syntax(),
             _ => true,
         }
     }
@@ -1633,6 +1633,10 @@ impl<'a> Class<'a> {
     pub fn is_declare(&self) -> bool {
         self.modifiers.contains(ModifierKind::Declare)
     }
+
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.is_declare()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1728,6 +1732,17 @@ impl<'a> ClassElement<'a> {
             | Self::TSIndexSignature(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
             Self::TSAbstractMethodDefinition(_) => true,
+        }
+    }
+
+    pub fn is_typescript_syntax(&self) -> bool {
+        match self {
+            Self::TSIndexSignature(_)
+            | Self::TSAbstractMethodDefinition(_)
+            | Self::TSAbstractPropertyDefinition(_) => true,
+            Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
+            Self::PropertyDefinition(property) => property.declare,
+            _ => false,
         }
     }
 }
@@ -2001,6 +2016,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         match self {
             ExportDefaultDeclarationKind::FunctionDeclaration(func)
                 if func.is_typescript_syntax() =>
+            {
+                true
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(class)
+                if class.is_typescript_syntax() =>
             {
                 true
             }
