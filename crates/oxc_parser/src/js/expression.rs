@@ -47,7 +47,7 @@ impl<'a> Parser<'a> {
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Result<Expression<'a>> {
         let ident = self.parse_identifier_reference()?;
-        Ok(self.ast.identifier_expression(ident))
+        Ok(self.ast.identifier_reference_expression(ident))
     }
 
     pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference> {
@@ -506,7 +506,7 @@ impl<'a> Parser<'a> {
     fn parse_decorator_member_expression(&mut self) -> Result<Expression<'a>> {
         let lhs_span = self.start_span();
         let lhs = self.parse_identifier_reference()?;
-        let mut lhs = self.ast.identifier_expression(lhs);
+        let mut lhs = self.ast.identifier_reference_expression(lhs);
         while self.at(Kind::Dot) {
             lhs = self.parse_static_member_expression(lhs_span, lhs, false)?;
         }

@@ -215,7 +215,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.union_await_if(r#async).union_yield_if(generator);
         let params_span = self.start_span();
         let param = self.parse_binding_identifier()?;
-        let ident = self.ast.binding_identifier(param);
+        let ident = self.ast.binding_pattern_identifier(param);
         let pattern = self.ast.binding_pattern(ident, None, false);
         let params_span = self.end_span(params_span);
         let formal_parameter = self.ast.formal_parameter(

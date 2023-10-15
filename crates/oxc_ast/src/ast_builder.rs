@@ -108,10 +108,6 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn null_literal(&self, span: Span) -> NullLiteral {
-        NullLiteral { span }
-    }
-
     pub fn bigint_literal(&self, span: Span, value: BigInt) -> BigintLiteral {
         BigintLiteral { span, value }
     }
@@ -166,21 +162,12 @@ impl<'a> AstBuilder<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
-    pub fn literal_template_expression(&mut self, literal: TemplateLiteral<'a>) -> Expression<'a> {
+    pub fn literal_template_expression(&self, literal: TemplateLiteral<'a>) -> Expression<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
     }
 
-    pub fn identifier_reference_expression(
-        &mut self,
-        ident: IdentifierReference,
-    ) -> Expression<'a> {
+    pub fn identifier_reference_expression(&self, ident: IdentifierReference) -> Expression<'a> {
         Expression::Identifier(self.alloc(ident))
-    }
-
-    /* ---------- Identifiers ---------- */
-
-    pub fn identifier_expression(&self, identifier: IdentifierReference) -> Expression<'a> {
-        Expression::Identifier(self.alloc(identifier))
     }
 
     /* ---------- Statements ---------- */
@@ -865,7 +852,10 @@ impl<'a> AstBuilder<'a> {
         BindingPattern { kind, type_annotation, optional }
     }
 
-    pub fn binding_identifier(&self, identifier: BindingIdentifier) -> BindingPatternKind<'a> {
+    pub fn binding_pattern_identifier(
+        &self,
+        identifier: BindingIdentifier,
+    ) -> BindingPatternKind<'a> {
         BindingPatternKind::BindingIdentifier(self.alloc(identifier))
     }
 

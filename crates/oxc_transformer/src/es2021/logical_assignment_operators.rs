@@ -35,7 +35,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let left2 = match &assignment_expr.left {
             AssignmentTarget::SimpleAssignmentTarget(target) => match target {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    self.ast.identifier_expression((*ident).clone())
+                    self.ast.identifier_reference_expression((*ident).clone())
                 }
                 SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
                     let member_expr = self.ast.copy(&**member_expr);

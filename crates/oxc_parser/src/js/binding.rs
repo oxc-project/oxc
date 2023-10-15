@@ -30,7 +30,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_binding_pattern_identifier(&mut self) -> Result<BindingPatternKind<'a>> {
-        self.parse_binding_identifier().map(|ident| self.ast.binding_identifier(ident))
+        self.parse_binding_identifier().map(|ident| self.ast.binding_pattern_identifier(ident))
     }
 
     /// Section 14.3.3 Object Binding Pattern
@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
             if let PropertyKey::Identifier(ident) = &key {
                 shorthand = true;
                 let binding_identifier = BindingIdentifier::new(ident.span, ident.name.clone());
-                let identifier = self.ast.binding_identifier(binding_identifier);
+                let identifier = self.ast.binding_pattern_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
                 self.with_context(Context::In, |p| p.parse_initializer(span, left))?
             } else {

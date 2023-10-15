@@ -933,7 +933,7 @@ impl<'a> Compressor<'a> {
     }
 
     fn move_out_expression(&mut self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_literal = self.ast.null_literal(expr.span());
+        let null_literal = NullLiteral::new(expr.span());
         let null_expr = self.ast.literal_null_expression(null_literal);
         mem::replace(expr, null_expr)
     }
