@@ -50,6 +50,16 @@ fn print_directives_and_statements<const MINIFY: bool>(
     statements: &[Statement<'_>],
     ctx: Context,
 ) {
+    print_directives_and_statements_with_semicolon_order(p, directives, statements, ctx, false);
+}
+
+fn print_directives_and_statements_with_semicolon_order<const MINIFY: bool>(
+    p: &mut Codegen<{ MINIFY }>,
+    directives: &[Directive],
+    statements: &[Statement<'_>],
+    ctx: Context,
+    print_semicolon_first: bool,
+) {
     if directives.is_empty() {
         if let Some(Statement::ExpressionStatement(s)) = statements.first() {
             if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
@@ -62,8 +72,13 @@ fn print_directives_and_statements<const MINIFY: bool>(
         }
     }
     for stmt in statements {
-        p.print_semicolon_if_needed();
-        stmt.gen(p, ctx);
+        if print_semicolon_first {
+            p.print_semicolon_if_needed();
+            stmt.gen(p, ctx);
+        } else {
+            stmt.gen(p, ctx);
+            p.print_semicolon_if_needed();
+        }
     }
 }
 
@@ -594,7 +609,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_block_start();
-        print_directives_and_statements(p, &self.directives, &self.statements, ctx);
+        print_directives_and_statements_with_semicolon_order(
+            p,
+            &self.directives,
+            &self.statements,
+            ctx,
+            true,
+        );
         p.print_block_end();
         p.needs_semicolon = false;
     }

@@ -6,7 +6,7 @@ keep_debugger: {
         debugger;
     }
     expect: {
-        debugger
+        debugger;
     }
 }
 
