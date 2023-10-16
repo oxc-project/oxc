@@ -1,0 +1,159 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: throw_new_error
+---
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw Error()
+   ·       ───────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw (Error)()
+   ·       ─────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw lib.Error()
+   ·       ───────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw lib.mod.Error()
+   ·       ───────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw lib[mod].Error()
+   ·       ────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw (lib.mod).Error()
+   ·       ─────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw Error('foo')
+   ·       ────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw CustomError('foo')
+   ·       ──────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw FooBarBazError('foo')
+   ·       ─────────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw ABCError('foo')
+   ·       ───────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw Abc3Error('foo')
+   ·       ────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw TypeError()
+   ·       ───────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw EvalError()
+   ·       ───────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw RangeError()
+   ·       ────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw ReferenceError()
+   ·       ────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw SyntaxError()
+   ·       ─────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw URIError()
+   ·       ──────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw (( URIError() ))
+   ·          ──────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw (( URIError ))()
+   ·       ────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw getGlobalThis().Error()
+   ·       ───────────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw utils.getGlobalThis().Error()
+   ·       ─────────────────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+  ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:1]
+ 1 │ throw (( getGlobalThis().Error ))()
+   ·       ─────────────────────────────
+   ╰────
+  help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+
+

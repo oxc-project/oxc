@@ -132,6 +132,7 @@ mod unicorn {
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
+    pub mod throw_new_error;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -235,11 +236,12 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_title,
     unicorn::catch_error_name,
     unicorn::error_message,
+    unicorn::filename_case,
     unicorn::no_console_spaces,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
-    unicorn::filename_case,
+    unicorn::throw_new_error,
     unicorn::prefer_array_flat_map,
     import::named,
     import::no_cycle,
