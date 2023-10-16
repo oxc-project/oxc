@@ -2,10 +2,10 @@ use crate::{test, test_snapshot};
 
 #[test]
 fn addition_folding() {
-    test("1 + 1", "2");
-    test("1 + 1 + 1", "3");
-    test("0 + true", "1");
-    test("x+''", "x+''");
+    test("1 + 1", "2;");
+    test("1 + 1 + 1", "3;");
+    test("0 + true", "1;");
+    test("x+''", "x+'';");
 }
 
 #[test]

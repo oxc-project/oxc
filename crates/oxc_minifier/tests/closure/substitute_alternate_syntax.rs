@@ -14,7 +14,7 @@ fn fold_return_result() {
 
 #[test]
 fn undefined() {
-    test("var x = undefined", "var x");
+    test("var x = undefined", "var x;");
     test(
         "var undefined = 1;function f() {var undefined=2;var x;}",
         "var undefined=1;function f(){var undefined=2,x}",
@@ -22,6 +22,6 @@ fn undefined() {
     test("function f(undefined) {}", "function f(undefined){}");
     test("try {} catch(undefined) {}", "try{}catch(undefined){}");
     test("for (undefined in {}) {}", "for(undefined in {}){}");
-    test("undefined++", "undefined++");
-    test("undefined += undefined;", "undefined+=void 0");
+    test("undefined++", "undefined++;");
+    test("undefined += undefined;", "undefined+=void 0;");
 }
