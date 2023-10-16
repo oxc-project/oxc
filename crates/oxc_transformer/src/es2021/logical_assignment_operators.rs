@@ -1,8 +1,10 @@
+use std::rc::Rc;
+
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
-use std::rc::Rc;
+use crate::options::{TransformOptions, TransformTarget};
 
 /// ES2021: Logical Assignment Operators
 ///
@@ -14,8 +16,9 @@ pub struct LogicalAssignmentOperators<'a> {
 }
 
 impl<'a> LogicalAssignmentOperators<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>) -> Self {
-        Self { ast }
+    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
+        (options.target < TransformTarget::ES2021 || options.logical_assignment_operators)
+            .then(|| Self { ast })
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {

@@ -1,8 +1,27 @@
+use oxc_syntax::assumptions::CompilerAssumptions;
+
+use crate::{es2020::NullishCoalescingOperatorOptions, react_jsx::ReactJsxOptions};
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct TransformOptions {
     pub target: TransformTarget,
-    pub react: Option<TransformReactOptions>,
-    pub assumptions: Assumptions,
+    pub assumptions: CompilerAssumptions,
+
+    pub react_jsx: Option<ReactJsxOptions>,
+
+    // es2022
+    pub class_static_block: bool,
+    // es2021
+    pub logical_assignment_operators: bool,
+    // es2020
+    pub nullish_coalescing_operator: Option<NullishCoalescingOperatorOptions>,
+    // es2019
+    pub optional_catch_binding: bool,
+    // es2016
+    pub exponentiation_operator: bool,
+    // es2015
+    pub shorthand_properties: bool,
+    pub sticky_regex: bool,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
@@ -19,26 +38,4 @@ pub enum TransformTarget {
     ES2024,
     #[default]
     ESNext,
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct TransformReactOptions {
-    _runtime: TransformReactRuntime,
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub enum TransformReactRuntime {
-    #[default]
-    Classic,
-    Automatic,
-}
-
-/// Compiler assumptions
-///
-/// See <https://babeljs.io/docs/assumptions>
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Assumptions {
-    /// When using operators that check for null or undefined, assume that they are never used with the special value document.all.
-    /// See <https://babeljs.io/docs/assumptions#nodocumentall>.
-    pub no_document_all: bool,
 }

@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
+mod babel;
 mod request;
 mod test_file;
 
-pub use self::request::agent;
-pub use self::test_file::*;
+pub use crate::{babel::BabelOptions, request::agent, test_file::*};
 
 /// # Panics
 /// Invalid Project Root

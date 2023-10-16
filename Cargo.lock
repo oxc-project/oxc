@@ -1793,7 +1793,10 @@ dependencies = [
 name = "oxc_tasks_common"
 version = "0.0.0"
 dependencies = [
+ "oxc_syntax",
  "project-root",
+ "serde",
+ "serde_json",
  "ureq",
  "url",
 ]
@@ -1809,9 +1812,12 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_syntax",
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
+ "serde",
+ "serde_json",
  "walkdir",
 ]
 
@@ -1826,6 +1832,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "serde",
 ]
 
 [[package]]

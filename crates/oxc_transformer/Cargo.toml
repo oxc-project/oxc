@@ -22,6 +22,8 @@ oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_semantic  = { workspace = true }
 
+serde = { workspace = true }
+
 [dev-dependencies]
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
