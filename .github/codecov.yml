@@ -24,3 +24,4 @@ ignore:
   - "crates/oxc_diagnostics"
   - "crates/oxc_type_synthesis"
   - "crates/oxc_query" # Not aiming for test coverage right now with @u9g
+  - "crates/oxc_linter_plugin"
