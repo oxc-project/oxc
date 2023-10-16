@@ -127,7 +127,7 @@ impl Formatter {
 
     #[inline]
     pub fn into_code(self) -> String {
-        // SAFETY: criterias of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 

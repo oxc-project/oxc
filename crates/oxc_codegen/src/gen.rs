@@ -960,7 +960,7 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
-        // SAFETY: criterias of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 

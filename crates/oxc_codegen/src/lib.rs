@@ -98,7 +98,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     pub fn into_code(self) -> String {
-        // SAFETY: criterias of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
@@ -154,7 +154,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criterias of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
