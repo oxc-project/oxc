@@ -68,7 +68,7 @@ expression: no_conditional_expect
   ⚠ eslint(jest/no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
- 3 │                     something && expect(something).toHaveBeenCalled(); 
+ 3 │                     something && expect(something).toHaveBeenCalled();
    ·                                  ────────────────────────────────────
  4 │                 }
    ╰────
@@ -104,7 +104,7 @@ expression: no_conditional_expect
   ⚠ eslint(jest/no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
- 3 │                     something || expect(something).toHaveBeenCalled(); 
+ 3 │                     something || expect(something).toHaveBeenCalled();
    ·                                  ────────────────────────────────────
  4 │                 }
    ╰────

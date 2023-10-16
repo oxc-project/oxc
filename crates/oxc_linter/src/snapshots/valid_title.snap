@@ -349,7 +349,7 @@ expression: valid_title
 
   ⚠ eslint(jest/valid-title): "Should not have leading or trailing spaces"
    ╭─[valid_title.tsx:3:1]
- 3 │         
+ 3 │ 
  4 │                 testThat('foo works ', () => {});
    ·                          ────────────
  5 │             
