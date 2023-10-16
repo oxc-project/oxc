@@ -101,6 +101,15 @@ impl<'a> AstBuilder<'a> {
         Program { span, source_type, directives, hashbang, body }
     }
 
+    /* ---------- Constructors ---------- */
+
+    /// `void 0`
+    pub fn void_0(&self) -> Expression<'a> {
+        let left = self.number_literal(Span::default(), 0.0, "0", NumberBase::Decimal);
+        let num = self.literal_number_expression(left);
+        self.unary_expression(Span::default(), UnaryOperator::Void, num)
+    }
+
     /* ---------- Literals ---------- */
 
     pub fn number_literal(

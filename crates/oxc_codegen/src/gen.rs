@@ -2,7 +2,7 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::{
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::{BinaryOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
     NumberBase,
 };
@@ -1368,6 +1368,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
                 p.print_space_before_identifier();
             }
             self.operator.gen(p, ctx);
+            p.print_soft_space();
             self.right.gen_expr(p, self.precedence(), ctx.union_in_if(wrap));
         });
     }
@@ -1406,11 +1407,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
         );
         p.wrap(mixed || (precedence > self.precedence()), |p| {
             self.left.gen_expr(p, self.precedence(), ctx);
+            p.print_soft_space();
             p.print_str(self.operator.as_str().as_bytes());
-            let _precedence = match self.operator {
-                LogicalOperator::And | LogicalOperator::Coalesce => Precedence::BitwiseOr,
-                LogicalOperator::Or => Precedence::LogicalAnd,
-            };
+            p.print_soft_space();
             self.right.gen_expr(p, self.precedence(), ctx);
         });
     }
@@ -1421,9 +1420,13 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ConditionalExpression<'a> {
         let wrap = precedence > self.precedence();
         p.wrap(wrap, |p| {
             self.test.gen_expr(p, self.precedence(), ctx);
+            p.print_soft_space();
             p.print(b'?');
+            p.print_soft_space();
             self.consequent.gen_expr(p, Precedence::Assign, ctx.and_in(true));
+            p.print_soft_space();
             p.print(b':');
+            p.print_soft_space();
             self.alternate.gen_expr(p, Precedence::Assign, ctx.union_in_if(wrap));
         });
     }

@@ -40,13 +40,6 @@ impl<'a> Compressor<'a> {
 
     /* Utilities */
 
-    /// `void 0`
-    fn create_void_0(&mut self) -> Expression<'a> {
-        let left = self.ast.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
-        let num = self.ast.literal_number_expression(left);
-        self.ast.unary_expression(SPAN, UnaryOperator::Void, num)
-    }
-
     /// `1/0`
     #[allow(unused)]
     fn create_one_div_zero(&mut self) -> Expression<'a> {
@@ -88,7 +81,7 @@ impl<'a> Compressor<'a> {
 
     fn compress_console(&mut self, expr: &mut Expression<'a>) -> bool {
         if self.options.drop_console && util::is_console(expr) {
-            *expr = self.create_void_0();
+            *expr = self.ast.void_0();
             true
         } else {
             false
@@ -163,12 +156,12 @@ impl<'a> Compressor<'a> {
     /* Expressions */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(&mut self, expr: &mut Expression<'a>) -> bool {
+    fn compress_undefined(&self, expr: &mut Expression<'a>) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         if ident.name == "undefined" {
             // if let Some(reference_id) = ident.reference_id.get() {
             // && self.semantic.symbols().is_global_reference(reference_id)
-            *expr = self.create_void_0();
+            *expr = self.ast.void_0();
             return true;
             // }
         }
@@ -209,14 +202,14 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(&mut self, expr: &mut BinaryExpression<'a>) {
+    fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
         if expr.operator.is_equality() && self.options.typeofs {
             if let Expression::UnaryExpression(unary_expr) = &expr.left {
                 if unary_expr.operator == UnaryOperator::Typeof {
                     if let Expression::Identifier(ident) = &unary_expr.argument {
                         if expr.right.is_specific_string_literal("undefined") {
                             let left = self.ast.identifier_reference_expression((*ident).clone());
-                            let right = self.create_void_0();
+                            let right = self.ast.void_0();
                             let operator = BinaryOperator::StrictEquality;
                             *expr = BinaryExpression { span: SPAN, left, operator, right };
                         }

@@ -1,4 +1,4 @@
-Passed: 94/1091
+Passed: 95/1091
 
 # babel-plugin-transform-unicode-sets-regex (0/4)
 * Failed: basic/basic/input.js
@@ -491,8 +491,11 @@ Passed: 94/1091
 * Failed: to-native-fields/static-shadow/input.js
 * Failed: to-native-fields/static-shadowed-binding/input.js
 
-# babel-plugin-transform-logical-assignment-operators (3/6)
+# babel-plugin-transform-logical-assignment-operators (0/6)
+* Failed: logical-assignment/anonymous-functions-transform/input.js
+* Failed: logical-assignment/arrow-functions-transform/input.js
 * Failed: logical-assignment/general-semantics/input.js
+* Failed: logical-assignment/named-functions-transform/input.js
 * Failed: logical-assignment/null-coalescing/input.js
 * Failed: logical-assignment/null-coalescing-without-other/input.js
 
@@ -532,19 +535,15 @@ Passed: 94/1091
 * Failed: export-namespace/namespace-string/input.mjs
 * Failed: export-namespace/namespace-typescript/input.mjs
 
-# babel-plugin-transform-nullish-coalescing-operator (0/12)
+# babel-plugin-transform-nullish-coalescing-operator (4/12)
 * Failed: assumption-noDocumentAll/transform/input.js
 * Failed: assumption-noDocumentAll/transform-in-default-destructuring/input.js
 * Failed: assumption-noDocumentAll/transform-in-default-param/input.js
 * Failed: assumption-noDocumentAll/transform-in-function/input.js
 * Failed: assumption-noDocumentAll/transform-static-refs-in-default/input.js
 * Failed: assumption-noDocumentAll/transform-static-refs-in-function/input.js
-* Failed: nullish-coalescing/transform-in-default-destructuring/input.js
 * Failed: nullish-coalescing/transform-in-default-param/input.js
-* Failed: nullish-coalescing/transform-in-function/input.js
 * Failed: nullish-coalescing/transform-loose/input.js
-* Failed: nullish-coalescing/transform-static-refs-in-default/input.js
-* Failed: nullish-coalescing/transform-static-refs-in-function/input.js
 
 # babel-plugin-transform-optional-chaining (1/46)
 * Failed: assumption-noDocumentAll/assignment/input.js
