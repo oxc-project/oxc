@@ -740,7 +740,7 @@ impl<'a> Compressor<'a> {
                 let ident = IdentifierReference {
                     span: unary_expr.span,
                     name: ident.name.clone(),
-                    reference_id: ident.reference_id.clone().into_inner().into(),
+                    reference_id: ident.reference_id.clone(),
                     reference_flag: ident.reference_flag,
                 };
                 return Some(self.ast.identifier_reference_expression(ident));

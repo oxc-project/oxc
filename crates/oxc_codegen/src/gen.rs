@@ -861,7 +861,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
 impl<const MINIFY: bool> Gen<MINIFY> for IdentifierReference {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         // if let Some(mangler) = &p.mangler {
-        // if let Some(reference_id) = self.reference_id.clone().into_inner() {
+        // if let Some(reference_id) = self.reference_id.get() {
         // if let Some(name) = mangler.get_reference_name(reference_id) {
         // p.print_str(name.clone().as_bytes());
         // return;
@@ -880,7 +880,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for IdentifierName {
 
 impl<const MINIFY: bool> Gen<MINIFY> for BindingIdentifier {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_symbol(self.symbol_id.clone().into_inner(), &self.name);
+        p.print_symbol(self.symbol_id.get(), &self.name);
     }
 }
 
