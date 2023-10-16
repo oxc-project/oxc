@@ -1,4 +1,3 @@
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
     /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.

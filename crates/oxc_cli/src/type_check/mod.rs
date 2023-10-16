@@ -36,7 +36,6 @@ declare var console: Console;
 
 /// TODO temp
 #[derive(Debug)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct TypeCheckOptions {
     pub path: PathBuf,
     // TODO temp, for exhibition

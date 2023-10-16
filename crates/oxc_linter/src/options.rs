@@ -2,7 +2,6 @@ use crate::{RuleCategory, RuleEnum, RULES};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct LintOptions {
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]

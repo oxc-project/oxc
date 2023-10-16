@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 
-#[allow(clippy::struct_excessive_bools)]
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcRunOptions {

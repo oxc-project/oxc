@@ -13,7 +13,6 @@ use crate::{context::LintContext, rule::Rule};
 #[diagnostic(severity(warning))]
 struct FilenameCaseDiagnostic(#[label] pub Span, &'static str);
 
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct FilenameCase {
     kebab_case: bool,

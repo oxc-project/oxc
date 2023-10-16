@@ -122,7 +122,6 @@ impl Case for TypeScriptCase {
     }
 }
 
-#[allow(clippy::struct_excessive_bools)]
 struct TypeScriptTestMeta {
     pub tests: Vec<TestUnitData>,
     pub options: CompilerOptions,
@@ -213,7 +212,7 @@ struct TestUnitData {
 }
 
 #[derive(Debug)]
-#[allow(unused, clippy::struct_excessive_bools)]
+#[allow(unused)]
 struct CompilerOptions {
     pub modules: Vec<String>,
     pub targets: Vec<String>,

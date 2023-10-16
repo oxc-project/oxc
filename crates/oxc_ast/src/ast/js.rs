@@ -1456,7 +1456,6 @@ pub struct RestElement<'a> {
 /// Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[allow(clippy::struct_excessive_bools)]
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1749,7 +1748,6 @@ impl<'a> ClassElement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[allow(clippy::struct_excessive_bools)]
 pub struct MethodDefinition<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1766,7 +1764,6 @@ pub struct MethodDefinition<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[allow(clippy::struct_excessive_bools)]
 pub struct PropertyDefinition<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
