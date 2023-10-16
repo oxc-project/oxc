@@ -17,18 +17,18 @@ mod react_jsx;
 mod regexp;
 mod typescript;
 
-use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder, VisitMut};
-use oxc_span::SourceType;
-use regexp::RegexpFlags;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
-use es2015::ShorthandProperties;
-use es2016::ExponentiationOperator;
-use es2019::OptionalCatchBinding;
-use es2021::LogicalAssignmentOperators;
-use react_jsx::ReactJsx;
-use typescript::TypeScript;
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_semantic::SymbolTable;
+use oxc_span::SourceType;
+
+use crate::{
+    es2015::ShorthandProperties, es2016::ExponentiationOperator, es2019::OptionalCatchBinding,
+    es2021::LogicalAssignmentOperators, react_jsx::ReactJsx, regexp::RegexpFlags,
+    typescript::TypeScript,
+};
 
 pub use crate::options::{
     TransformOptions, TransformReactOptions, TransformReactRuntime, TransformTarget,
@@ -55,6 +55,7 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_type: SourceType,
+        symbols: &Rc<RefCell<SymbolTable>>,
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
@@ -80,7 +81,8 @@ impl<'a> Transformer<'a> {
             t.es2019_optional_catch_binding.replace(OptionalCatchBinding::new(Rc::clone(&ast)));
         }
         if options.target < TransformTarget::ES2016 {
-            t.es2016_exponentiation_operator.replace(ExponentiationOperator::new(Rc::clone(&ast)));
+            t.es2016_exponentiation_operator
+                .replace(ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols)));
         }
         if options.target < TransformTarget::ES2015 {
             t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
@@ -94,6 +96,13 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        for stmt in stmts.iter_mut() {
+            self.visit_statement(stmt);
+        }
+        self.es2016_exponentiation_operator.as_mut().map(|t| t.leave_statements(stmts));
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
         // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));

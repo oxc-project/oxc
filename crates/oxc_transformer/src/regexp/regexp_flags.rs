@@ -37,8 +37,8 @@ impl<'a> RegexpFlags<'a> {
         }
         let ident = IdentifierReference::new(Span::default(), Atom::from("RegExp"));
         let callee = self.ast.identifier_reference_expression(ident);
-        let pattern = self.ast.string_literal(Span::default(), Atom::from(regex.pattern.as_str()));
-        let flags = self.ast.string_literal(Span::default(), Atom::from(regex.flags.to_string()));
+        let pattern = StringLiteral::new(Span::default(), Atom::from(regex.pattern.as_str()));
+        let flags = StringLiteral::new(Span::default(), Atom::from(regex.flags.to_string()));
         let pattern_literal = self.ast.literal_string_expression(pattern);
         let flags_literal = self.ast.literal_string_expression(flags);
         let mut arguments = self.ast.new_vec_with_capacity(2);

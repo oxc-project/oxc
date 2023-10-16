@@ -1,4 +1,4 @@
-use std::{env, path::Path};
+use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -34,12 +34,16 @@ fn main() {
     println!("{printed}");
 
     let program = allocator.alloc(ret.program);
-    let _ = SemanticBuilder::new(&source_text, source_type).build(program);
+
+    let semantic = SemanticBuilder::new(&source_text, source_type).build(program).semantic;
+    let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+    let symbols = Rc::new(RefCell::new(symbols));
+
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react: Some(TransformReactOptions::default()),
     };
-    Transformer::new(&allocator, source_type, transform_options).build(program);
+    Transformer::new(&allocator, source_type, &symbols, transform_options).build(program);
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
     println!("Transformed:\n");
     println!("{printed}");

@@ -210,8 +210,13 @@ impl Oxc {
         }
 
         if run_options.transform() {
+            // FIXME: this should not be duplicated with the linter semantic,
+            // we need to fix the API so symbols and scopes can be shared.
+            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+            let symbols = Rc::new(RefCell::new(symbols));
             let options = TransformOptions { target: TransformTarget::ES2015, react: None };
-            Transformer::new(&allocator, source_type, options).build(program);
+            Transformer::new(&allocator, source_type, &symbols, options).build(program);
         }
 
         let program = allocator.alloc(program);

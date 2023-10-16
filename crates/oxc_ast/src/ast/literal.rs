@@ -211,6 +211,10 @@ pub struct StringLiteral {
 }
 
 impl StringLiteral {
+    pub fn new(span: Span, value: Atom) -> Self {
+        Self { span, value }
+    }
+
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
     pub fn is_string_well_formed_unicode(&self) -> bool {
