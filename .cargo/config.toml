@@ -53,8 +53,9 @@ rustflags = [
 
   # This rule is too pedantic, I don't want to force this because naming things are hard.
   "-Aclippy::module_name_repetitions",
-  # Most usages are ignored in our codebase, so this is ignored.
+  # All triggers are mostly ignored in our codebase, so this is ignored globally.
   "-Aclippy::struct_excessive_bools",
+  "-Aclippy::too_many_lines",
 
   # #[must_use] is creating too much noise for this codebase, it does not add much value execept nagging
   # the programmer to add a #[must_use] after clippy has been run.

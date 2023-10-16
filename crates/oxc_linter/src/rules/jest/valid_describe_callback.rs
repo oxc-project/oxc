@@ -183,7 +183,6 @@ impl Message {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

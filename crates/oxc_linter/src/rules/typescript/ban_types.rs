@@ -87,7 +87,6 @@ impl Rule for BanTypes {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 
@@ -144,7 +143,7 @@ fn test() {
             "
         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
           constructor(foo: String | Object | Function) {}
-        
+
           arg(): Array<String> {
             const foo: String = 1 as String;
           }

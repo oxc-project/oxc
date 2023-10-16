@@ -204,7 +204,6 @@ fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&
     None
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

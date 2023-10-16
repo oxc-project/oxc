@@ -478,7 +478,6 @@ impl Kind {
         }
     }
 
-    #[allow(clippy::too_many_lines)]
     pub fn to_str(self) -> &'static str {
         match self {
             Undetermined => "Unknown",

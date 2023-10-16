@@ -237,7 +237,6 @@ fn is_jest_call(name: &Atom) -> bool {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

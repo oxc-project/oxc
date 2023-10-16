@@ -64,7 +64,6 @@ impl Rule for NoDuplicateCase {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

@@ -362,7 +362,6 @@ impl Message {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -411,7 +410,7 @@ fn test() {
                     expect(true).toBe(true);
                 });
                 });
-    
+
                 describe('e2e tests #e2e', () => {
                 it('is another test #jest4life', () => {});
                 });
@@ -483,7 +482,7 @@ fn test() {
             None,
         ),
         (
-            "it(`GIVEN... 
+            "it(`GIVEN...
             `, () => {});",
             Some(serde_json::json!([{ "ignoreSpaces": true }])),
         ),
@@ -790,7 +789,7 @@ fn test() {
         (
             "
                 import { test as testThat } from '@jest/globals';
-        
+
                 testThat('foo works ', () => {});
             ",
             None,

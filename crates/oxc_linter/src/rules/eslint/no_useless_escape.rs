@@ -195,7 +195,6 @@ fn check_template(string: &str) -> Vec<usize> {
     offsets
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

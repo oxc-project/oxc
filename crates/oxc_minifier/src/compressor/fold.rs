@@ -595,7 +595,6 @@ impl<'a> Compressor<'a> {
         None
     }
 
-    #[allow(clippy::too_many_lines)]
     fn try_fold_unary_operator(
         &mut self,
         unary_expr: &UnaryExpression<'a>,

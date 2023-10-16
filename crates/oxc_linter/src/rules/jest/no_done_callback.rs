@@ -196,7 +196,6 @@ impl Message {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -283,7 +282,7 @@ fn test() {
         (
             "
                 import { beforeEach } from '@jest/globals';
-        
+
                 beforeEach((done) => {
                     done();
                 });
@@ -293,7 +292,7 @@ fn test() {
         (
             "
                 import { beforeEach as atTheStartOfEachTest } from '@jest/globals';
-        
+
                 atTheStartOfEachTest((done) => {
                     done();
                 });

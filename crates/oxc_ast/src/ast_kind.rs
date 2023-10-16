@@ -239,7 +239,7 @@ impl<'a> AstKind<'a> {
 }
 
 impl<'a> GetSpan for AstKind<'a> {
-    #[allow(clippy::match_same_arms, clippy::too_many_lines)]
+    #[allow(clippy::match_same_arms)]
     fn span(&self) -> Span {
         match self {
             Self::Program(x) => x.span,
@@ -386,7 +386,7 @@ impl<'a> GetSpan for AstKind<'a> {
 
 #[cfg(debug_assertions)]
 impl<'a> AstKind<'a> {
-    #[allow(clippy::match_same_arms, clippy::too_many_lines)]
+    #[allow(clippy::match_same_arms)]
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///

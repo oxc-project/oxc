@@ -159,7 +159,6 @@ impl<'a> Parser<'a> {
         Ok(self.ast.class_body(self.end_span(span), body))
     }
 
-    #[allow(clippy::too_many_lines)]
     pub(crate) fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
         let span = self.start_span();
 

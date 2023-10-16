@@ -251,7 +251,6 @@ fn full_array_method_name(array_method: &'static str) -> Atom {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

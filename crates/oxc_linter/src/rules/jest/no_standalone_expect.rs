@@ -185,7 +185,6 @@ fn is_var_declarator_or_test_block<'a>(
     false
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -212,7 +211,7 @@ fn test() {
                 `('trues', ({ value }) => {
                     expect(value).toBe(true);
                 });
-            ", 
+            ",
             None
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
@@ -277,7 +276,7 @@ fn test() {
                 ]).test('returns the result of adding %d to %d', (a, b, expected) => {
                     expect(a + b).toBe(expected);
                 });
-            ", 
+            ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each"] }]))
         ),
         (
@@ -289,7 +288,7 @@ fn test() {
                 ]).test('returns the result of adding %d to %d', (a, b, expected) => {
                     expect(a + b).toBe(expected);
                 });
-            ", 
+            ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["test"] }]))
         ),
         ("describe('a test', () => { expect(1).toBe(1); });", None),
@@ -304,7 +303,7 @@ fn test() {
             "
                 import { expect as pleaseExpect } from '@jest/globals';
                 describe('a test', () => { pleaseExpect(1).toBe(1); });
-            ", 
+            ",
             None
         ),
         (

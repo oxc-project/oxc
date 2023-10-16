@@ -68,7 +68,6 @@ impl Rule for NoDuplicateEnumValues {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

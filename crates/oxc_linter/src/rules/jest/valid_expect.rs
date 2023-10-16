@@ -372,7 +372,6 @@ fn test_1() {
     Tester::new(ValidExpect::NAME, pass, fail).test_and_snapshot();
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -424,7 +423,7 @@ fn test() {
                         return expect(Promise.resolve(2)).resolves.toBe(1);
                     });
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -434,7 +433,7 @@ fn test() {
                         await expect(Promise.resolve(2)).resolves.toBe(1);
                     });
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -442,7 +441,7 @@ fn test() {
                 test('valid-expect', () => {
                     return expect(functionReturningAPromise()).resolves.toEqual(1).then(() => expect(Promise.resolve(2)).resolves.toBe(1));
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -454,7 +453,7 @@ fn test() {
                         : expect(obj).resolves.not.toThrow();
                     }
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -466,7 +465,7 @@ fn test() {
                         : expect(obj).toBe(true);
                     }
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -480,7 +479,7 @@ fn test() {
                         : expect(obj).toBe(false)
                     }
                 });
-            ", 
+            ",
             None
         ),
         ("expect(1).toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
@@ -526,7 +525,7 @@ fn test() {
                         : expect(obj).resolves.not.toThrow();
                     }
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -538,7 +537,7 @@ fn test() {
                         : expect(obj).toBe(true);
                     }
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -552,7 +551,7 @@ fn test() {
                         : expect(obj).toBe(false)
                     }
                 });
-            ", 
+            ",
             None
         ),
         ("test('valid-expect', () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });", None),
@@ -573,7 +572,7 @@ fn test() {
                 expect(Promise.resolve(2)).resolves.not.toBeDefined();
                 expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -591,7 +590,7 @@ fn test() {
                     expect(Promise.resolve(2)).resolves.not.toBeDefined();
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
-            ", 
+            ",
             Some(serde_json::json!([{ "alwaysAwait": true }]))
         ),
         (
@@ -600,7 +599,7 @@ fn test() {
                     expect(Promise.resolve(2)).resolves.not.toBeDefined();
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -609,7 +608,7 @@ fn test() {
                     await expect(Promise.resolve(2)).resolves.not.toBeDefined();
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
-            ", 
+            ",
             Some(serde_json::json!([{ "alwaysAwait": true }]))
         ),
         (
@@ -626,7 +625,7 @@ fn test() {
                 test('valid-expect', () => {
                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -634,7 +633,7 @@ fn test() {
                 test('valid-expect', () => {
                     Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -642,7 +641,7 @@ fn test() {
                 test('valid-expect', () => {
                     Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -650,7 +649,7 @@ fn test() {
                 test('valid-expect', () => {
                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
-            ", 
+            ",
             Some(serde_json::json!([{ "alwaysAwait": true }]))
         ),
         (
@@ -661,7 +660,7 @@ fn test() {
                     expect(Promise.resolve(3)).resolves.not.toBeDefined(),
                 ]);
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -672,7 +671,7 @@ fn test() {
                     expect(Promise.resolve(3)).resolves.not.toBeDefined(),
                 ]);
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -683,7 +682,7 @@ fn test() {
                     expect(Promise.resolve(3)).resolves.not.toBeDefined(),
                 ]
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -694,7 +693,7 @@ fn test() {
                     expect(Promise.resolve(3)).toReject(),
                 ]
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -705,7 +704,7 @@ fn test() {
                     expect(Promise.resolve(3)).resolves.toReject(),
                 ]
                 });
-            ", 
+            ",
             None
         ),
         ("expect(Promise.resolve(2)).resolves.toBe;", None),
@@ -716,7 +715,7 @@ fn test() {
                         expect(Promise.resolve(2)).resolves.toBe(1);
                     });
                 });
-            ", 
+            ",
             None
         ),
         (
@@ -727,7 +726,7 @@ fn test() {
                         expect(Promise.resolve(4)).resolves.toBe(4);
                     });
                 });
-            ", 
+            ",
             None
         ),
         (

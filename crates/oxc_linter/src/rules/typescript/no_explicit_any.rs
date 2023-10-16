@@ -135,7 +135,6 @@ mod tests {
         Tester::new_without_config(NoExplicitAny::NAME, pass, fail).test();
     }
 
-    #[allow(clippy::too_many_lines)]
     #[test]
     fn test() {
         let pass = vec![

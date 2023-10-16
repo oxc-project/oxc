@@ -59,7 +59,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         }
     }
 
-    #[allow(clippy::too_many_lines)]
     fn resolve_property(
         &self,
         contexts: ContextIterator<'a, Self::Vertex>,
@@ -301,7 +300,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         }
     }
 
-    #[allow(clippy::too_many_lines)]
     fn resolve_neighbors(
         &self,
         contexts: ContextIterator<'a, Self::Vertex>,

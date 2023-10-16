@@ -143,7 +143,6 @@ fn has_error_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

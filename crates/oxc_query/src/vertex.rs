@@ -442,7 +442,6 @@ impl Typename for Vertex<'_> {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 impl<'a> From<AstNode<'a>> for Vertex<'a> {
     fn from(ast_node: AstNode<'a>) -> Self {
         match ast_node.kind() {

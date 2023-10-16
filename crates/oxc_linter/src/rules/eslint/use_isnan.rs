@@ -163,7 +163,6 @@ fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

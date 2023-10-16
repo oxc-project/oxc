@@ -118,7 +118,6 @@ fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: 
     check_parents(parent, ctx, in_conditional)
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -292,7 +291,7 @@ fn test() {
                     } catch {
                         // ignore errors
                     }
-            
+
                     expect(something).toHaveBeenCalled();
                 });
             ",
@@ -351,7 +350,7 @@ fn test() {
             "
                 it('works', async () => {
                     await doSomething().catch(error => error);
-            
+
                     expect(error).toBeInstanceOf(Error);
                 });
             ",
@@ -367,7 +366,7 @@ fn test() {
                     } catch {
                         // ignore errors
                     }
-            
+
                     expect(something).toHaveBeenCalled();
                 });
             ",
@@ -435,9 +434,9 @@ fn test() {
         (
             "
                 function getValue() {
-                    something && expect(something).toHaveBeenCalled(); 
+                    something && expect(something).toHaveBeenCalled();
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -469,9 +468,9 @@ fn test() {
         (
             "
                 function getValue() {
-                    something || expect(something).toHaveBeenCalled(); 
+                    something || expect(something).toHaveBeenCalled();
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -489,7 +488,7 @@ fn test() {
                 function getValue() {
                     something ? expect(something).toHaveBeenCalled() : noop();
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -523,7 +522,7 @@ fn test() {
                 function getValue() {
                     something ? noop() : expect(something).toHaveBeenCalled();
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -590,7 +589,7 @@ fn test() {
                         expect(something).toHaveBeenCalled();
                     }
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -648,7 +647,7 @@ fn test() {
                         expect(something).toHaveBeenCalled();
                     }
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -662,7 +661,7 @@ fn test() {
                     expect(something).toHaveBeenCalled();
                     }
                 }
-        
+
                 it('foo', getValue);
             ",
             None,
@@ -671,7 +670,7 @@ fn test() {
             "
                 it('foo', () => {
                     try {
-            
+
                     } catch (err) {
                     expect(err).toMatch('Error');
                     }
@@ -683,7 +682,7 @@ fn test() {
             "
                 it.each``('foo', () => {
                     try {
-            
+
                     } catch (err) {
                     expect(err).toMatch('Error');
                     }
@@ -695,7 +694,7 @@ fn test() {
             "
                 it.each()('foo', () => {
                     try {
-            
+
                     } catch (err) {
                         expect(err).toMatch('Error');
                     }
@@ -707,7 +706,7 @@ fn test() {
             "
                 it.skip.each``('foo', () => {
                     try {
-            
+
                     } catch (err) {
                         expect(err).toMatch('Error');
                     }
@@ -719,7 +718,7 @@ fn test() {
             "
                 it.skip.each()('foo', () => {
                     try {
-            
+
                     } catch (err) {
                         expect(err).toMatch('Error');
                     }
@@ -736,7 +735,7 @@ fn test() {
                     expect(something).toHaveBeenCalled();
                     }
                 }
-        
+
                 it('foo', getValue);
             ",
             None,

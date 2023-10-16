@@ -201,7 +201,6 @@ fn convert_pattern(pattern: &str) -> String {
     format!("(?ui)^{pattern}(\\.|$)")
 }
 
-#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;

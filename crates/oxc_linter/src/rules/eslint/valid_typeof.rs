@@ -140,7 +140,6 @@ const VALID_TYPES: Set<&'static str> = phf_set! {
 };
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

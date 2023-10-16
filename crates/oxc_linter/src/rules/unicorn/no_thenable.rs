@@ -57,7 +57,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThenable {
-    #[allow(clippy::too_many_lines)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
@@ -281,7 +280,6 @@ fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 

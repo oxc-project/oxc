@@ -1,5 +1,3 @@
-#![allow(clippy::too_many_lines)]
-
 mod closure;
 mod esbuild;
 mod oxc;

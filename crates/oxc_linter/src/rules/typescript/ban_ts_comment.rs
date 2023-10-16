@@ -206,7 +206,6 @@ pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, 
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 
@@ -260,7 +259,7 @@ fn test() {
       (r#"
 			  /*
 			    @ts-nocheck running with long description in a block
-			  */"#, 
+			  */"#,
         Some(serde_json::json!([
         {
           "ts-nocheck": "allow-with-description",

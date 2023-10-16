@@ -84,7 +84,6 @@ fn imports_field(value: serde_json::Value) -> MatchObject {
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
 fn test_cases() {
     let test_cases = [
         TestCase {

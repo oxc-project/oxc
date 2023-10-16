@@ -40,7 +40,7 @@ impl Parse for AllLintRulesMeta {
     }
 }
 
-#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+#[allow(clippy::cognitive_complexity)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
     // all the top-level module trees
