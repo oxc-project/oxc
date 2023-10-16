@@ -255,3 +255,21 @@ fn gather_node_parts(expr: &Expression, parts: &mut std::vec::Vec<Atom>) {
         _ => parts.push(Atom::from("ref")),
     }
 }
+
+#[test]
+fn test() {
+    use crate::{
+        options::{TransformOptions, TransformTarget},
+        tester::Tester,
+    };
+
+    let options =
+        TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
+
+    let tests = &[(
+        "let x = {}; let y = 0; let z = 0; x[z++] **= y;",
+        "var _ref; let x = {}; let y = 0; let z = 0; _ref = z++,x[_ref] = Math.pow(x[_ref], y);",
+    )];
+
+    Tester::new("test.js", options).test(tests);
+}

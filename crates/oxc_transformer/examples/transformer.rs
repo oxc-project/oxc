@@ -33,12 +33,11 @@ fn main() {
     println!("Original:\n");
     println!("{printed}");
 
-    let program = allocator.alloc(ret.program);
-
-    let semantic = SemanticBuilder::new(&source_text, source_type).build(program).semantic;
+    let semantic = SemanticBuilder::new(&source_text, source_type).build(&ret.program).semantic;
     let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
     let symbols = Rc::new(RefCell::new(symbols));
 
+    let program = allocator.alloc(ret.program);
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react: Some(TransformReactOptions::default()),
