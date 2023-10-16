@@ -33,7 +33,7 @@ thiserror = { workspace = true }
 tracing-subscriber = { workspace = true, optional = true, features = ["env-filter"] }
 
 [dev-dependencies]
-vfs = "0.9.0" # for testing with in memory file system
+vfs = "0.10.0" # for testing with in memory file system
 
 [features]
 tracing-subscriber = ["dep:tracing-subscriber"]

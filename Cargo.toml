@@ -43,7 +43,7 @@ oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
 bpaf                      = { version = "0.9.5" }
-bitflags                  = { version = "2.4.0" }
+bitflags                  = { version = "2.4.1" }
 bumpalo                   = { version = "3.14.0" }
 compact_str               = { version = "0.7.1" }
 convert_case              = { version = "0.6.0" }
@@ -51,7 +51,7 @@ criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.8" }
 dashmap                   = { version = "5.5.3" }
 env_logger                = { version = "0.10.0", default-features = false, features = ["auto-color", "humantime"] }
-flate2                    = { version = "1.0.27" }
+flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.28" }
 ignore                    = { version = "0.4.20" }
 itertools                 = { version = "0.11.0" }
@@ -68,11 +68,11 @@ proc-macro2               = { version = "1.0.69" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.33" }
 rayon                     = { version = "1.8.0" }
-regex                     = { version = "1.9.6" }
+regex                     = { version = "1.10.1" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "0.2.2" }
 ropey                     = { version = "1.6.0" }
-serde                     = { version = "1.0.188" }
+serde                     = { version = "1.0.189" }
 serde_json                = { version = "1.0.107" }
 syn                       = { version = "=1" }
 thiserror                 = { version = "1.0.49" }
