@@ -11,7 +11,7 @@ use oxc::{
     parser::{Parser, ParserReturn},
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
-    transformer::{TransformOptions, TransformTarget, Transformer},
+    transformer::{Assumptions, TransformOptions, TransformTarget, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
@@ -215,7 +215,11 @@ impl Oxc {
             let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
             let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
             let symbols = Rc::new(RefCell::new(symbols));
-            let options = TransformOptions { target: TransformTarget::ES2015, react: None };
+            let options = TransformOptions {
+                target: TransformTarget::ES2015,
+                react: None,
+                assumptions: Assumptions::default(),
+            };
             Transformer::new(&allocator, source_type, &symbols, options).build(program);
         }
 

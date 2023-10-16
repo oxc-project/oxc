@@ -38,8 +38,7 @@ impl Tester {
         let symbols = Rc::new(RefCell::new(symbols));
 
         let program = self.allocator.alloc(program);
-        Transformer::new(&self.allocator, self.source_type, &symbols, self.options.clone())
-            .build(program);
+        Transformer::new(&self.allocator, self.source_type, &symbols, self.options).build(program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
     }
 

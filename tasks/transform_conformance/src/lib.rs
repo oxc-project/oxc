@@ -13,7 +13,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
-use oxc_transformer::{TransformOptions, TransformReactOptions, TransformTarget, Transformer};
+use oxc_transformer::{
+    Assumptions, TransformOptions, TransformReactOptions, TransformTarget, Transformer,
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -155,6 +157,7 @@ fn babel_test(input_path: &Path, options: &BabelOptions) -> bool {
     let transform_options = TransformOptions {
         target: TransformTarget::ES5,
         react: Some(TransformReactOptions::default()),
+        assumptions: Assumptions::default(),
     };
 
     let semantic =

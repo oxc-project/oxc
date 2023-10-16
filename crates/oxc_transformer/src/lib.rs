@@ -10,6 +10,7 @@
 mod es2015;
 mod es2016;
 mod es2019;
+mod es2020;
 mod es2021;
 mod es2022;
 mod options;
@@ -18,6 +19,7 @@ mod regexp;
 #[cfg(test)]
 mod tester;
 mod typescript;
+mod utils;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -28,12 +30,12 @@ use oxc_span::SourceType;
 
 use crate::{
     es2015::ShorthandProperties, es2016::ExponentiationOperator, es2019::OptionalCatchBinding,
-    es2021::LogicalAssignmentOperators, react_jsx::ReactJsx, regexp::RegexpFlags,
-    typescript::TypeScript,
+    es2020::NullishCoalescingOperator, es2021::LogicalAssignmentOperators, react_jsx::ReactJsx,
+    regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
 };
 
 pub use crate::options::{
-    TransformOptions, TransformReactOptions, TransformReactRuntime, TransformTarget,
+    Assumptions, TransformOptions, TransformReactOptions, TransformReactRuntime, TransformTarget,
 };
 
 #[derive(Default)]
@@ -47,6 +49,8 @@ pub struct Transformer<'a> {
     es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
+    // es2020
+    es2020_nullish_coalescing_operators: Option<NullishCoalescingOperator<'a>>,
     // es2019
     es2019_optional_catch_binding: Option<OptionalCatchBinding<'a>>,
     // es2016
@@ -70,6 +74,7 @@ impl<'a> Transformer<'a> {
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), options.target),
             es2022_class_static_block: (options.target < TransformTarget::ES2022).then(|| es2022::ClassStaticBlock::new(Rc::clone(&ast))),
             es2021_logical_assignment_operators: (options.target < TransformTarget::ES2021).then(|| LogicalAssignmentOperators::new(Rc::clone(&ast))),
+            es2020_nullish_coalescing_operators: (options.target < TransformTarget::ES2020).then(|| NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(symbols), options.assumptions)),
             es2019_optional_catch_binding: (options.target < TransformTarget::ES2019).then(|| OptionalCatchBinding::new(Rc::clone(&ast))),
             es2016_exponentiation_operator: (options.target < TransformTarget::ES2016).then(|| ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols))),
             es2015_shorthand_properties: (options.target < TransformTarget::ES2015).then(|| ShorthandProperties::new(Rc::clone(&ast))),
@@ -86,7 +91,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
-        self.es2016_exponentiation_operator.as_mut().map(|t| t.leave_statements(stmts));
+        self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
+        self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
@@ -95,6 +101,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.regexp_flags.as_mut().map(|t| t.transform_expression(expr));
 
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
+        self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);

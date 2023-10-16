@@ -1,10 +1,12 @@
+use std::{cell::RefCell, rc::Rc};
+
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_semantic::SymbolTable;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
-use std::{cell::RefCell, mem, rc::Rc};
+use crate::utils::CreateVars;
 
 /// ES2016: Exponentiation Operator
 ///
@@ -23,21 +25,20 @@ struct Exploded<'a> {
     uid: Expression<'a>,
 }
 
+impl<'a> CreateVars<'a> for ExponentiationOperator<'a> {
+    fn ast(&self) -> &AstBuilder<'a> {
+        &self.ast
+    }
+
+    fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
+        &mut self.vars
+    }
+}
+
 impl<'a> ExponentiationOperator<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, symbols: Rc<RefCell<SymbolTable>>) -> Self {
         let vars = ast.new_vec();
         Self { ast, symbols, vars }
-    }
-
-    pub fn leave_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        if self.vars.is_empty() {
-            return;
-        }
-        let decls = mem::replace(&mut self.vars, self.ast.new_vec());
-        let kind = VariableDeclarationKind::Var;
-        let decl = self.ast.variable_declaration(Span::default(), kind, decls, Modifiers::empty());
-        let stmt = Statement::Declaration(Declaration::VariableDeclaration(decl));
-        stmts.insert(0, stmt);
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -218,17 +219,7 @@ impl<'a> ExponentiationOperator<'a> {
         expr: Expression<'a>,
         nodes: &mut Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        let name = generate_uid_identifier_based_on_node(&expr);
-        // TODO: scope.push({ id: temp });
-
-        // Add `var name` to scope
-        let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
-        let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
-        let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
-        let kind = VariableDeclarationKind::Var;
-        let decl = self.ast.variable_declarator(Span::default(), kind, binding, None, false);
-        self.vars.push(decl);
-
+        let name = self.create_new_var(&expr);
         // Add new reference `_name = name` to nodes
         let ident = IdentifierReference::new(Span::default(), name);
         let target = self.ast.simple_assignment_target_identifier(ident.clone());
@@ -236,23 +227,6 @@ impl<'a> ExponentiationOperator<'a> {
         let op = AssignmentOperator::Assign;
         nodes.push(self.ast.assignment_expression(Span::default(), op, target, expr));
         self.ast.identifier_reference_expression(ident)
-    }
-}
-
-// TODO:
-// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
-fn generate_uid_identifier_based_on_node(expr: &Expression) -> Atom {
-    let mut parts = std::vec::Vec::with_capacity(1);
-    gather_node_parts(expr, &mut parts);
-    let name = parts.join("$");
-    Atom::from(format!("_{name}"))
-}
-
-// TODO: use a trait and add this to oxc_ast (syntax directed operations)
-fn gather_node_parts(expr: &Expression, parts: &mut std::vec::Vec<Atom>) {
-    match expr {
-        Expression::Identifier(ident) => parts.push(ident.name.clone()),
-        _ => parts.push(Atom::from("ref")),
     }
 }
 
