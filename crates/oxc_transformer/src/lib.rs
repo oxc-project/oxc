@@ -15,6 +15,8 @@ mod es2022;
 mod options;
 mod react_jsx;
 mod regexp;
+#[cfg(test)]
+mod tester;
 mod typescript;
 
 use std::{cell::RefCell, rc::Rc};

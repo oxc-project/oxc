@@ -15,6 +15,13 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, project_root};
 use oxc_transformer::{TransformOptions, TransformReactOptions, TransformTarget, Transformer};
 
+#[test]
+#[cfg(any(coverage, coverage_nightly))]
+fn test() {
+    babel(&BabelOptions::default());
+}
+
+#[derive(Default)]
 pub struct BabelOptions {
     pub filter: Option<String>,
 }
