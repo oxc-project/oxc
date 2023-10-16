@@ -58,6 +58,9 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn copy<T>(&self, src: &T) -> T {
+        // SAFETY:
+        // This should be safe as long as `src` is an reference from the allocator.
+        // But honestly, I'm not really sure if this is safe.
         unsafe { std::mem::transmute_copy(src) }
     }
 

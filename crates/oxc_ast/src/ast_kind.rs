@@ -150,9 +150,13 @@ pub enum AstKind<'a> {
     TSPropertySignature(&'a TSPropertySignature<'a>),
 }
 
-// SAFETY: The AST is part of the bump allocator,
+// SAFETY:
+// The AST is part of the bump allocator,
 // it is our responsibility to never simultaneously mutate across threads.
 unsafe impl<'a> Send for AstKind<'a> {}
+// SAFETY:
+// The AST is part of the bump allocator,
+// it is our responsibility to never simultaneously mutate across threads.
 unsafe impl<'a> Sync for AstKind<'a> {}
 
 impl<'a> AstKind<'a> {

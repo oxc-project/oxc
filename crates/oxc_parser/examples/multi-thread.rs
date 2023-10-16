@@ -19,9 +19,10 @@ use std::{sync::Arc, thread};
 /// Wrap the AST for unsafe `Send` and `Sync`
 struct BumpaloProgram<'a>(Program<'a>);
 
-// SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 #[allow(clippy::non_send_fields_in_send_ty)]
+// SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Send for BumpaloProgram<'a> {}
+// SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Sync for BumpaloProgram<'a> {}
 
 /// `ouroboros` is used to "bind" the allocator and AST together to remove the lifetime.

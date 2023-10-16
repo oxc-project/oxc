@@ -172,6 +172,8 @@ fn strip_buf(state: &mut State, buf: &mut [u8], settings: CommentSettings) -> Re
 ///
 /// ```
 pub fn strip_comments_in_place(s: &mut str) -> Result<()> {
+    // SAFETY:
+    // The content of the slice is valid UTF-8.
     strip_buf(&mut Top, unsafe { s.as_bytes_mut() }, CommentSettings::all())
 }
 

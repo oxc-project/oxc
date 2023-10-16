@@ -959,7 +959,10 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     let chars = result.as_bytes();
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
-    let u8_to_string = |num: &[u8]| unsafe { String::from_utf8_unchecked(num.to_vec()) };
+    let u8_to_string = |num: &[u8]| {
+        // SAFETY: criterias of `from_utf8_unchecked`.are met.
+        unsafe { String::from_utf8_unchecked(num.to_vec()) }
+    };
 
     if dot == Some(1) && chars[0] == b'0' {
         // Strip off the leading zero when minifying

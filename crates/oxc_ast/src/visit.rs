@@ -20,6 +20,9 @@ pub trait Visit<'a>: Sized {
     fn leave_scope(&mut self) {}
 
     fn alloc<T>(&self, t: &T) -> &'a T {
+        // SAFETY:
+        // This should be safe as long as `src` is an reference from the allocator.
+        // But honestly, I'm not really sure if this is safe.
         unsafe { std::mem::transmute(t) }
     }
 
