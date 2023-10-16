@@ -28,16 +28,20 @@ fn bench_transformer(criterion: &mut Criterion) {
         let source_type = SourceType::from_path(file).unwrap();
         let id = BenchmarkId::from_parameter(file);
         group.bench_with_input(id, &source_text, |b, source_text| {
-            let allocator = Allocator::default();
-            let program = Parser::new(&allocator, source_text, source_type).parse().program;
-            let semantic = SemanticBuilder::new(source_text, source_type).build(&program).semantic;
-            let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
-            let symbols = Rc::new(RefCell::new(symbols));
-            let program = allocator.alloc(program);
-            b.iter(|| {
+            // The whole transformation process needs to be benched otherwise it will end up with
+            // transforming an already transformed AST.
+            b.iter_with_large_drop(|| {
+                let allocator = Allocator::default();
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let semantic =
+                    SemanticBuilder::new(source_text, source_type).build(&program).semantic;
+                let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+                let symbols = Rc::new(RefCell::new(symbols));
+                let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
                 Transformer::new(&allocator, source_type, &symbols, transform_options)
                     .build(black_box(program));
+                allocator
             });
         });
     }
