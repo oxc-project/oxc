@@ -38,9 +38,11 @@ pub use crate::options::{
 
 #[derive(Default)]
 pub struct Transformer<'a> {
+    #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
-    regexp_flags: Option<RegexpFlags<'a>>,
+    #[allow(unused)]
     react_jsx: Option<ReactJsx<'a>>,
+    regexp_flags: Option<RegexpFlags<'a>>,
     // es2022
     es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
     // es2021
@@ -54,6 +56,7 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
+    #[rustfmt::skip]
     pub fn new(
         allocator: &'a Allocator,
         source_type: SourceType,
@@ -61,35 +64,16 @@ impl<'a> Transformer<'a> {
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
-
-        let mut t = Self::default();
-        if source_type.is_typescript() {
-            t.typescript.replace(TypeScript::new(Rc::clone(&ast)));
+        Self {
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast))),
+            react_jsx: options.react.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
+            regexp_flags: RegexpFlags::new(Rc::clone(&ast), options.target),
+            es2022_class_static_block: (options.target < TransformTarget::ES2022).then(|| es2022::ClassStaticBlock::new(Rc::clone(&ast))),
+            es2021_logical_assignment_operators: (options.target < TransformTarget::ES2021).then(|| LogicalAssignmentOperators::new(Rc::clone(&ast))),
+            es2019_optional_catch_binding: (options.target < TransformTarget::ES2019).then(|| OptionalCatchBinding::new(Rc::clone(&ast))),
+            es2016_exponentiation_operator: (options.target < TransformTarget::ES2016).then(|| ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols))),
+            es2015_shorthand_properties: (options.target < TransformTarget::ES2015).then(|| ShorthandProperties::new(Rc::clone(&ast))),
         }
-        if let Some(react_options) = options.react {
-            t.react_jsx.replace(ReactJsx::new(Rc::clone(&ast), react_options));
-        }
-
-        t.regexp_flags = RegexpFlags::new_with_transform_target(Rc::clone(&ast), options.target);
-
-        if options.target < TransformTarget::ES2022 {
-            t.es2022_class_static_block.replace(es2022::ClassStaticBlock::new(Rc::clone(&ast)));
-        }
-        if options.target < TransformTarget::ES2021 {
-            t.es2021_logical_assignment_operators
-                .replace(LogicalAssignmentOperators::new(Rc::clone(&ast)));
-        }
-        if options.target < TransformTarget::ES2019 {
-            t.es2019_optional_catch_binding.replace(OptionalCatchBinding::new(Rc::clone(&ast)));
-        }
-        if options.target < TransformTarget::ES2016 {
-            t.es2016_exponentiation_operator
-                .replace(ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols)));
-        }
-        if options.target < TransformTarget::ES2015 {
-            t.es2015_shorthand_properties.replace(ShorthandProperties::new(Rc::clone(&ast)));
-        }
-        t
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {

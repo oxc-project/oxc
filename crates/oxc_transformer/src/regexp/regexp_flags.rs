@@ -20,10 +20,7 @@ pub struct RegexpFlags<'a> {
 }
 
 impl<'a> RegexpFlags<'a> {
-    pub fn new_with_transform_target(
-        ast: Rc<AstBuilder<'a>>,
-        transform_target: TransformTarget,
-    ) -> Option<Self> {
+    pub fn new(ast: Rc<AstBuilder<'a>>, transform_target: TransformTarget) -> Option<Self> {
         let transform_flags = Self::from_transform_target(transform_target);
         (!transform_flags.is_empty()).then(|| Self { ast, transform_flags })
     }
