@@ -23,7 +23,7 @@ use oxc_transformer::{
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    babel(&BabelOptions::default());
+    TestRunner::new(TestRunnerOptions::default()).run();
 }
 
 #[derive(Default)]
