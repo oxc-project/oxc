@@ -202,45 +202,44 @@ impl TestCase {
         });
 
         let allocator = Allocator::default();
-        let source_text = fs::read_to_string(&self.path).unwrap();
+        let input = fs::read_to_string(&self.path).unwrap();
         let source_type = SourceType::from_path(&self.path).unwrap();
 
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("output_path: {output_path:?}");
-            println!("input: {source_text}");
         }
 
-        // Get expected code by parsing the source text, so we can get the same code generated result.
-        let expected = output_path.and_then(|path| fs::read_to_string(path).ok());
-        let Some(expected) = &expected else { return false };
-        let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
-        let expected_code =
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(&expected_program);
-
-        // Get transformed text.
-
-        let transformed_program =
-            Parser::new(&allocator, &source_text, source_type).parse().program;
-
-        let semantic =
-            SemanticBuilder::new(&source_text, source_type).build(&transformed_program).semantic;
+        // Transform input.js
+        let program = Parser::new(&allocator, &input, source_type).parse().program;
+        let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
         let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
         let symbols = Rc::new(RefCell::new(symbols));
-
-        let transformed_program = allocator.alloc(transformed_program);
-
+        let program = allocator.alloc(program);
         Transformer::new(&allocator, source_type, &symbols, self.transform_options())
-            .build(transformed_program);
-        let transformed_code =
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program);
+            .build(program);
+        let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 
-        let passed = transformed_code == expected_code;
+        // Get output.js by using our codeg so code comparison can match.
+        let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
+            || {
+                // The transformation should be equal to input.js If output.js does not exist.
+                let program = Parser::new(&allocator, &input, source_type).parse().program;
+                Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
+            },
+            |output| {
+                // Get expected code by parsing the source text, so we can get the same code generated result.
+                let program = Parser::new(&allocator, &output, source_type).parse().program;
+                Codegen::<false>::new(output.len(), CodegenOptions).build(&program)
+            },
+        );
+
+        let passed = transformed_code == output;
         if filtered {
-            println!("Expected:\n");
-            println!("{expected}\n");
-            println!("Expected codegen:\n");
-            println!("{expected_code}\n");
+            println!("Input:\n");
+            println!("{input}\n");
+            println!("Output:\n");
+            println!("{output}\n");
             println!("Transformed:\n");
             println!("{transformed_code}\n");
             println!("Passed: {passed}");
