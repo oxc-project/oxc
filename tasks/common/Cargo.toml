@@ -9,7 +9,11 @@ license.workspace = true
 doctest = false
 
 [dependencies]
+oxc_syntax = { workspace = true, features = ["serde"] }
+
 project-root = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
+serde_json   = { workspace = true }
 
 ureq = { workspace = true }
 url  = { workspace = true }

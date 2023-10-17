@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
+
+use oxc_span::SourceType;
+use oxc_tasks_common::BabelOptions;
 
 use crate::{
     project_root,
@@ -15,53 +17,6 @@ const FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-parser/test/fix
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct BabelOutput {
     pub errors: Option<Vec<String>>,
-}
-
-/// options.json
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BabelOptions {
-    source_type: Option<String>,
-    throws: Option<String>,
-    #[serde(default)]
-    plugins: Vec<Value>, // Can be a string or an array
-    #[serde(default)]
-    allow_return_outside_function: bool,
-    #[serde(default)]
-    allow_await_outside_function: bool,
-    #[serde(default)]
-    allow_undeclared_exports: bool,
-}
-
-impl BabelOptions {
-    fn is_jsx(&self) -> bool {
-        self.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
-    }
-
-    fn is_typescript(&self) -> bool {
-        self.plugins.iter().any(|v| {
-            let string_value = v.as_str().is_some_and(|v| v == "typescript");
-            let array_value = v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-            string_value || array_value
-        })
-    }
-
-    fn is_typescript_definition(&self) -> bool {
-        self.plugins.iter().filter_map(Value::as_array).any(|p| {
-            let typescript = p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-            let dts = p
-                .get(1)
-                .and_then(Value::as_object)
-                .and_then(|v| v.get("dts"))
-                .and_then(Value::as_bool)
-                .is_some_and(|v| v);
-            typescript && dts
-        })
-    }
-
-    fn is_module(&self) -> bool {
-        self.source_type.as_ref().map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
-    }
 }
 
 pub struct BabelSuite<T: Case> {
@@ -147,28 +102,6 @@ impl BabelCase {
         Self::read_file::<BabelOutput>(&dir, "output.extended.json")
     }
 
-    /// read options.json, it exists in ancestor folders as well and they need to be merged
-    fn read_options_json(path: &Path) -> BabelOptions {
-        let dir = project_root().join(FIXTURES_PATH).join(path);
-        let mut options_json: Option<BabelOptions> = None;
-        for path in dir.ancestors().take(3) {
-            if let Some(new_json) = Self::read_file::<BabelOptions>(path, "options.json") {
-                if let Some(existing_json) = options_json.as_mut() {
-                    if let Some(source_type) = new_json.source_type {
-                        existing_json.source_type = Some(source_type);
-                    }
-                    if let Some(throws) = new_json.throws {
-                        existing_json.throws = Some(throws);
-                    }
-                    existing_json.plugins.extend(new_json.plugins);
-                } else {
-                    options_json = Some(new_json);
-                }
-            }
-        }
-        options_json.unwrap_or_default()
-    }
-
     // it is an error if:
     //   * its output.json contains an errors field
     //   * the directory contains a options.json with a "throws" field
@@ -191,7 +124,8 @@ impl BabelCase {
 impl Case for BabelCase {
     /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
-        let options = Self::read_options_json(&path);
+        let dir = project_root().join(FIXTURES_PATH).join(&path);
+        let options = BabelOptions::from_path(dir.parent().unwrap());
         let source_type = SourceType::from_path(&path)
             .unwrap()
             .with_script(true)

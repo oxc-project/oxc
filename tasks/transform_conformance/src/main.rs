@@ -6,13 +6,13 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_transform_conformance::{babel, BabelOptions};
+use oxc_transform_conformance::{TestRunner, TestRunnerOptions};
 use pico_args::Arguments;
 
 fn main() {
     let mut args = Arguments::from_env();
 
-    let options = BabelOptions { filter: args.opt_value_from_str("--filter").unwrap() };
+    let options = TestRunnerOptions { filter: args.opt_value_from_str("--filter").unwrap() };
 
-    babel(&options);
+    TestRunner::new(options).run();
 }

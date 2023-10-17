@@ -1,7 +1,9 @@
+use std::{collections::HashSet, rc::Rc};
+
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span};
 
-use std::{collections::HashSet, rc::Rc};
+use crate::options::{TransformOptions, TransformTarget};
 
 /// ES2022: Class Static Block
 ///
@@ -13,8 +15,9 @@ pub struct ClassStaticBlock<'a> {
 }
 
 impl<'a> ClassStaticBlock<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>) -> Self {
-        Self { ast }
+    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
+        (options.target < TransformTarget::ES2022 || options.class_static_block)
+            .then(|| Self { ast })
     }
 
     pub fn transform_class_body<'b>(&mut self, class_body: &'b mut ClassBody<'a>) {

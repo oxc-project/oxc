@@ -6,7 +6,10 @@ use oxc_semantic::SymbolTable;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
-use crate::utils::CreateVars;
+use crate::{
+    options::{TransformOptions, TransformTarget},
+    utils::CreateVars,
+};
 
 /// ES2016: Exponentiation Operator
 ///
@@ -36,9 +39,15 @@ impl<'a> CreateVars<'a> for ExponentiationOperator<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, symbols: Rc<RefCell<SymbolTable>>) -> Self {
-        let vars = ast.new_vec();
-        Self { ast, symbols, vars }
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        symbols: Rc<RefCell<SymbolTable>>,
+        options: &TransformOptions,
+    ) -> Option<Self> {
+        (options.target < TransformTarget::ES2016 || options.exponentiation_operator).then(|| {
+            let vars = ast.new_vec();
+            Self { ast, symbols, vars }
+        })
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {

@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Vec;
@@ -6,7 +7,15 @@ use oxc_semantic::SymbolTable;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::{options::Assumptions, utils::CreateVars};
+use crate::{utils::CreateVars, TransformOptions, TransformTarget};
+
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
+pub struct NullishCoalescingOperatorOptions {
+    /// When true, this transform will pretend `document.all` does not exist,
+    /// and perform loose equality checks with null instead of strict equality checks against both null and undefined.
+    #[serde(default)]
+    loose: bool,
+}
 
 /// ES2020: Nullish Coalescing Operator
 ///
@@ -14,9 +23,10 @@ use crate::{options::Assumptions, utils::CreateVars};
 /// * <https://babeljs.io/docs/babel-plugin-transform-nullish-coalescing-operator>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 pub struct NullishCoalescingOperator<'a> {
+    no_document_all: bool,
+
     ast: Rc<AstBuilder<'a>>,
     symbols: Rc<RefCell<SymbolTable>>,
-    assumptions: Assumptions,
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
@@ -34,10 +44,15 @@ impl<'a> NullishCoalescingOperator<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
         symbols: Rc<RefCell<SymbolTable>>,
-        assumptions: Assumptions,
-    ) -> Self {
-        let vars = ast.new_vec();
-        Self { ast, symbols, assumptions, vars }
+        options: &TransformOptions,
+    ) -> Option<Self> {
+        (options.target < TransformTarget::ES2020 || options.nullish_coalescing_operator.is_some())
+            .then(|| {
+                let no_document_all = options.assumptions.no_document_all
+                    || options.nullish_coalescing_operator.is_some_and(|o| o.loose);
+                let vars = ast.new_vec();
+                Self { no_document_all, ast, symbols, vars }
+            })
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -67,7 +82,7 @@ impl<'a> NullishCoalescingOperator<'a> {
                 self.ast.assignment_expression(span, AssignmentOperator::Assign, left, right);
         };
 
-        let test = if self.assumptions.no_document_all {
+        let test = if self.no_document_all {
             let null = self.ast.literal_null_expression(NullLiteral::new(span));
             self.ast.binary_expression(span, assignment, BinaryOperator::Inequality, null)
         } else {

@@ -30,12 +30,15 @@ use oxc_span::SourceType;
 
 use crate::{
     es2015::ShorthandProperties, es2016::ExponentiationOperator, es2019::OptionalCatchBinding,
-    es2020::NullishCoalescingOperator, es2021::LogicalAssignmentOperators, react_jsx::ReactJsx,
-    regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
+    es2020::NullishCoalescingOperator, es2021::LogicalAssignmentOperators,
+    es2022::ClassStaticBlock, react_jsx::ReactJsx, regexp::RegexpFlags, typescript::TypeScript,
+    utils::CreateVars,
 };
 
-pub use crate::options::{
-    Assumptions, TransformOptions, TransformReactOptions, TransformReactRuntime, TransformTarget,
+pub use crate::{
+    es2020::NullishCoalescingOperatorOptions,
+    options::{TransformOptions, TransformTarget},
+    react_jsx::{ReactJsxOptions, ReactJsxRuntime},
 };
 
 #[derive(Default)]
@@ -46,7 +49,7 @@ pub struct Transformer<'a> {
     react_jsx: Option<ReactJsx<'a>>,
     regexp_flags: Option<RegexpFlags<'a>>,
     // es2022
-    es2022_class_static_block: Option<es2022::ClassStaticBlock<'a>>,
+    es2022_class_static_block: Option<ClassStaticBlock<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
     // es2020
@@ -70,14 +73,14 @@ impl<'a> Transformer<'a> {
         let ast = Rc::new(AstBuilder::new(allocator));
         Self {
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast))),
-            react_jsx: options.react.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
-            regexp_flags: RegexpFlags::new(Rc::clone(&ast), options.target),
-            es2022_class_static_block: (options.target < TransformTarget::ES2022).then(|| es2022::ClassStaticBlock::new(Rc::clone(&ast))),
-            es2021_logical_assignment_operators: (options.target < TransformTarget::ES2021).then(|| LogicalAssignmentOperators::new(Rc::clone(&ast))),
-            es2020_nullish_coalescing_operators: (options.target < TransformTarget::ES2020).then(|| NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(symbols), options.assumptions)),
-            es2019_optional_catch_binding: (options.target < TransformTarget::ES2019).then(|| OptionalCatchBinding::new(Rc::clone(&ast))),
-            es2016_exponentiation_operator: (options.target < TransformTarget::ES2016).then(|| ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols))),
-            es2015_shorthand_properties: (options.target < TransformTarget::ES2015).then(|| ShorthandProperties::new(Rc::clone(&ast))),
+            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
+            regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
+            es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
+            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), &options),
+            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(symbols), &options),
+            es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols), &options),
+            es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
         }
     }
 
