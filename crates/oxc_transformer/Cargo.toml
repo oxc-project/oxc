@@ -22,7 +22,7 @@ oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_semantic  = { workspace = true }
 
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }

@@ -1,5 +1,11 @@
 Passed: 104/1091
 
+# All Passed:
+* babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-shorthand-properties
+* babel-plugin-transform-sticky-regex
+
+
 # babel-plugin-transform-unicode-sets-regex (0/4)
 * Failed: basic/basic/input.js
 * Failed: basic/string-properties/input.js
@@ -583,8 +589,6 @@ Passed: 104/1091
 * Failed: transparent-expr-wrappers/ts-as-member-expression/input.ts
 * Failed: transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
 
-# babel-plugin-transform-optional-catch-binding (All passed)
-
 # babel-plugin-transform-json-strings (2/4)
 * Failed: json-strings/directive-line-separator/input.js
 * Failed: json-strings/directive-paragraph-separator/input.js
@@ -728,10 +732,6 @@ Passed: 104/1091
 
 # babel-plugin-transform-exponentiation-operator (3/4)
 * Failed: regression/4349/input.js
-
-# babel-plugin-transform-shorthand-properties (All passed)
-
-# babel-plugin-transform-sticky-regex (All passed)
 
 # babel-plugin-transform-unicode-regex (1/4)
 * Failed: unicode-regex/basic/input.js

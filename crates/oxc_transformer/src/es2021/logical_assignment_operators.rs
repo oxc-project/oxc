@@ -10,7 +10,7 @@ use crate::options::{TransformOptions, TransformTarget};
 ///
 /// References:
 /// * <https://babel.dev/docs/babel-plugin-transform-logical-assignment-operators>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-logical-assignment-operator>
+/// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-logical-assignment-operators>
 pub struct LogicalAssignmentOperators<'a> {
     ast: Rc<AstBuilder<'a>>,
 }
