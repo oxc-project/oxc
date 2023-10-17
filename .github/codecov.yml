@@ -15,7 +15,6 @@ ignore:
   - "**/examples"
   - "tasks"
   - "editor"
-  - "crates/oxc_ast/src/visit_mut.rs"
   - "crates/oxc_ast/src/ast_kind.rs"
   - "crates/oxc_ast/src/span.rs"
   - "crates/oxc_wasm" # Remove this once wasm is completed
@@ -25,3 +24,4 @@ ignore:
   - "crates/oxc_type_synthesis"
   - "crates/oxc_query" # Not aiming for test coverage right now with @u9g
   - "crates/oxc_linter_plugin"
+  - "crates/oxc_formatter" # The formatter is not being actively worked on
