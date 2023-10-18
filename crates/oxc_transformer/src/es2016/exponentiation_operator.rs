@@ -228,9 +228,8 @@ impl<'a> ExponentiationOperator<'a> {
         expr: Expression<'a>,
         nodes: &mut Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        let name = self.create_new_var(&expr);
+        let ident = self.create_new_var(&expr);
         // Add new reference `_name = name` to nodes
-        let ident = IdentifierReference::new(Span::default(), name);
         let target = self.ast.simple_assignment_target_identifier(ident.clone());
         let target = AssignmentTarget::SimpleAssignmentTarget(target);
         let op = AssignmentOperator::Assign;
@@ -251,7 +250,7 @@ fn test() {
 
     let tests = &[(
         "let x = {}; let y = 0; let z = 0; x[z++] **= y;",
-        "var _ref; let x = {}; let y = 0; let z = 0; _ref = z++,x[_ref] = Math.pow(x[_ref], y);",
+        "var _z; let x = {}; let y = 0; let z = 0; _z = z++,x[_z] = Math.pow(x[_z], y);",
     )];
 
     Tester::new("test.js", options).test(tests);
