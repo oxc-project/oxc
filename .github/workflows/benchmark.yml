@@ -7,12 +7,14 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   push:
     branches:
       - main
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -21,7 +23,7 @@ concurrency:
 jobs:
   benchmark:
     name: Benchmark
-    runs-on: ubuntu-latest
+    runs-on: rspack-ci
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -32,18 +34,22 @@ jobs:
         uses: ./.github/actions/rustup
         with:
           shared-key: benchmark
-          save-cache: ${{ github.ref_name == 'main' }}
+          # self-hosted does not have github cache
+          # save-cache: ${{ github.ref_name == 'main' }}
+          restore-cache: false
 
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
+      # Already installed on self-hosted
+      # - name: Install codspeed
+        # uses: taiki-e/install-action@v2
+        # with:
+          # tool: cargo-codspeed
 
       - name: Build Benchmark
         run: cargo codspeed build --features codspeed -p oxc_benchmark
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@v1
+        # removed `prepare` staged which downloads a `.deb` file, it is already installed on self-hosted
+        uses: Boshen/codspeed-action-self-hosted@main
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
