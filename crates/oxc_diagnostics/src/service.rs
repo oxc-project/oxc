@@ -110,7 +110,7 @@ impl DiagnosticService {
                     }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    if self.quiet {
+                    else if self.quiet {
                         continue;
                     }
 
