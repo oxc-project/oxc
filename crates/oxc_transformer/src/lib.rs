@@ -7,6 +7,7 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
+mod context;
 mod es2015;
 mod es2016;
 mod es2019;
@@ -25,14 +26,14 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
-use oxc_semantic::SymbolTable;
+use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
-    es2015::ShorthandProperties, es2016::ExponentiationOperator, es2019::OptionalCatchBinding,
-    es2020::NullishCoalescingOperator, es2021::LogicalAssignmentOperators,
-    es2022::ClassStaticBlock, react_jsx::ReactJsx, regexp::RegexpFlags, typescript::TypeScript,
-    utils::CreateVars,
+    context::TransformerCtx, es2015::ShorthandProperties, es2016::ExponentiationOperator,
+    es2019::OptionalCatchBinding, es2020::NullishCoalescingOperator,
+    es2021::LogicalAssignmentOperators, es2022::ClassStaticBlock, react_jsx::ReactJsx,
+    regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
 };
 
 pub use crate::{
@@ -41,7 +42,6 @@ pub use crate::{
     react_jsx::{ReactJsxOptions, ReactJsxRuntime},
 };
 
-#[derive(Default)]
 pub struct Transformer<'a> {
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
@@ -68,18 +68,24 @@ impl<'a> Transformer<'a> {
         allocator: &'a Allocator,
         source_type: SourceType,
         symbols: &Rc<RefCell<SymbolTable>>,
+        scopes: &Rc<RefCell<ScopeTree>>,
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
+        let ctx = TransformerCtx {
+            ast: Rc::clone(&ast),
+            symbols: Rc::clone(symbols),
+            scopes: Rc::clone(scopes),
+        };
         Self {
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast))),
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), &options),
-            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(symbols), &options),
+            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
-            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(symbols), &options),
+            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
         }
     }

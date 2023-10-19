@@ -35,11 +35,12 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let semantic =
                     SemanticBuilder::new(source_text, source_type).build(&program).semantic;
-                let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+                let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
                 let symbols = Rc::new(RefCell::new(symbols));
+                let scopes = Rc::new(RefCell::new(scopes));
                 let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
-                Transformer::new(&allocator, source_type, &symbols, transform_options)
+                Transformer::new(&allocator, source_type, &symbols, &scopes, transform_options)
                     .build(black_box(program));
                 allocator
             });

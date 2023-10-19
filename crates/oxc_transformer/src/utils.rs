@@ -1,8 +1,10 @@
 use std::mem;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_span::{Atom, Span};
+
+use crate::context::TransformerCtx;
 
 // TODO:
 // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
@@ -52,7 +54,7 @@ impl GatherNodeParts for PrivateIdentifier {
 }
 
 pub trait CreateVars<'a> {
-    fn ast(&self) -> &AstBuilder<'a>;
+    fn ctx(&self) -> &TransformerCtx<'a>;
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>>;
 
@@ -60,11 +62,11 @@ pub trait CreateVars<'a> {
         if self.vars_mut().is_empty() {
             return;
         }
-        let new_vec = self.ast().new_vec();
+        let new_vec = self.ctx().ast.new_vec();
         let decls = mem::replace(self.vars_mut(), new_vec);
         let kind = VariableDeclarationKind::Var;
         let decl =
-            self.ast().variable_declaration(Span::default(), kind, decls, Modifiers::empty());
+            self.ctx().ast.variable_declaration(Span::default(), kind, decls, Modifiers::empty());
         let stmt = Statement::Declaration(Declaration::VariableDeclaration(decl));
         stmts.insert(0, stmt);
     }
@@ -75,10 +77,10 @@ pub trait CreateVars<'a> {
 
         // Add `var name` to scope
         let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
-        let binding_pattern_kind = self.ast().binding_pattern_identifier(binding_identifier);
-        let binding = self.ast().binding_pattern(binding_pattern_kind, None, false);
+        let binding_pattern_kind = self.ctx().ast.binding_pattern_identifier(binding_identifier);
+        let binding = self.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
         let kind = VariableDeclarationKind::Var;
-        let decl = self.ast().variable_declarator(Span::default(), kind, binding, None, false);
+        let decl = self.ctx().ast.variable_declarator(Span::default(), kind, binding, None, false);
         self.vars_mut().push(decl);
         name
     }

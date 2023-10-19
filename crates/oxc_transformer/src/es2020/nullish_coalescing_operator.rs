@@ -1,13 +1,16 @@
 use serde::Deserialize;
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_semantic::SymbolTable;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::{utils::CreateVars, TransformOptions, TransformTarget};
+use crate::{
+    context::TransformerCtx,
+    options::{TransformOptions, TransformTarget},
+    utils::CreateVars,
+};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct NullishCoalescingOperatorOptions {
@@ -26,13 +29,13 @@ pub struct NullishCoalescingOperator<'a> {
     no_document_all: bool,
 
     ast: Rc<AstBuilder<'a>>,
-    symbols: Rc<RefCell<SymbolTable>>,
+    ctx: TransformerCtx<'a>,
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
 impl<'a> CreateVars<'a> for NullishCoalescingOperator<'a> {
-    fn ast(&self) -> &AstBuilder<'a> {
-        &self.ast
+    fn ctx(&self) -> &TransformerCtx<'a> {
+        &self.ctx
     }
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
@@ -43,7 +46,7 @@ impl<'a> CreateVars<'a> for NullishCoalescingOperator<'a> {
 impl<'a> NullishCoalescingOperator<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        symbols: Rc<RefCell<SymbolTable>>,
+        ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
         (options.target < TransformTarget::ES2020 || options.nullish_coalescing_operator.is_some())
@@ -51,7 +54,7 @@ impl<'a> NullishCoalescingOperator<'a> {
                 let no_document_all = options.assumptions.no_document_all
                     || options.nullish_coalescing_operator.is_some_and(|o| o.loose);
                 let vars = ast.new_vec();
-                Self { no_document_all, ast, symbols, vars }
+                Self { no_document_all, ast, ctx, vars }
             })
     }
 
@@ -67,7 +70,7 @@ impl<'a> NullishCoalescingOperator<'a> {
         let assignment;
 
         // skip creating extra reference when `left` is static
-        if self.symbols.borrow().is_static(&logical_expr.left) {
+        if self.ctx.symbols.borrow().is_static(&logical_expr.left) {
             reference = self.ast.copy(&logical_expr.left);
             assignment = self.ast.copy(&logical_expr.left);
         } else {

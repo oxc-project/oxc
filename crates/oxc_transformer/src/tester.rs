@@ -34,11 +34,13 @@ impl Tester {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
 
         let semantic = SemanticBuilder::new(source_text, self.source_type).build(&program).semantic;
-        let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
         let symbols = Rc::new(RefCell::new(symbols));
+        let scopes = Rc::new(RefCell::new(scopes));
 
         let program = self.allocator.alloc(program);
-        Transformer::new(&self.allocator, self.source_type, &symbols, self.options).build(program);
+        Transformer::new(&self.allocator, self.source_type, &symbols, &scopes, self.options)
+            .build(program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
     }
 

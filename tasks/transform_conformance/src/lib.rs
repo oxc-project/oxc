@@ -213,10 +213,11 @@ impl TestCase {
         // Transform input.js
         let program = Parser::new(&allocator, &input, source_type).parse().program;
         let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
-        let (symbols, _scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
         let symbols = Rc::new(RefCell::new(symbols));
+        let scopes = Rc::new(RefCell::new(scopes));
         let program = allocator.alloc(program);
-        Transformer::new(&allocator, source_type, &symbols, self.transform_options())
+        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 
