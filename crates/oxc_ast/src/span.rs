@@ -1,6 +1,5 @@
 use oxc_span::{GetSpan, Span};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'a> GetSpan for Statement<'a> {

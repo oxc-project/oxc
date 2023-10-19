@@ -8,7 +8,6 @@ use oxc_allocator::Vec;
 use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
-#[allow(clippy::wildcard_imports)]
 use crate::{ast::*, ast_kind::AstKind};
 
 /// Syntax tree traversal

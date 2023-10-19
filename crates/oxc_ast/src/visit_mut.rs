@@ -3,7 +3,6 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.

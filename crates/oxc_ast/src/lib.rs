@@ -1,3 +1,5 @@
+#![allow(clippy::wildcard_imports)]
+
 //! # Oxc AST
 //!
 //! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
