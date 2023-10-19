@@ -1,0 +1,395 @@
+use oxc_ast::{
+    ast::{
+        ArrayExpressionElement, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
+        JSXFragment,
+    },
+    AstKind,
+};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+#[derive(Debug, Error, Diagnostic)]
+enum JsxKeyDiagnostic {
+    #[error("eslint-plugin-react/jsx-key: Missing \"key\" prop for element in array.")]
+    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in array."))]
+    MissingKeyPropForElementInArray(#[label] Span),
+    #[error("eslint-plugin-react/jsx-key: Missing \"key\" prop for element in iterator.")]
+    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in iterator."))]
+    MissingKeyPropForElementInIterator(#[label] Span),
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct JsxKey;
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Enforce `key` prop for elements in array
+    ///
+    /// ### Example
+    /// ```javascript
+    /// // Bad
+    /// [1, 2, 3].map(x => <App />);
+    /// [1, 2, 3]?.map(x => <BabelEslintApp />)
+    ///
+    /// // Good
+    /// [1, 2, 3].map(x => <App key={x} />);
+    /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
+    /// ```
+    JsxKey,
+    correctness
+);
+
+impl Rule for JsxKey {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::ArrayExpressionElement(ArrayExpressionElement::Expression(expr)) => match expr
+            {
+                Expression::JSXElement(jsx_elem) => {
+                    check_jsx_element(node, jsx_elem, ctx);
+                }
+                Expression::JSXFragment(jsx_frag) => {
+                    check_jsx_fragment(node, jsx_frag, ctx);
+                }
+                _ => {}
+            },
+            AstKind::ExpressionStatement(expression_stmt) => match &expression_stmt.expression {
+                Expression::JSXElement(jsx_elem) => {
+                    check_jsx_element(node, jsx_elem, ctx);
+                }
+                Expression::JSXFragment(jsx_frag) => {
+                    check_jsx_fragment(node, jsx_frag, ctx);
+                }
+                _ => {}
+            },
+            AstKind::JSXElement(jsx_elem) => {
+                check_jsx_element(node, jsx_elem, ctx);
+            }
+
+            _ => {}
+        }
+    }
+}
+
+enum InsideArrayOrIterator {
+    Array,
+    Iterator,
+}
+
+fn is_in_array_or_iter<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<InsideArrayOrIterator> {
+    let mut node = node;
+
+    loop {
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return None;
+        };
+
+        match parent.kind() {
+            AstKind::ArrayExpression(_) => return Some(InsideArrayOrIterator::Array),
+            AstKind::CallExpression(v) => {
+                let callee = &v.callee.without_parenthesized();
+
+                if let Expression::MemberExpression(v) = callee {
+                    if let Some(static_property_name) = v.static_property_name() {
+                        if matches!(
+                            static_property_name,
+                            "map"
+                                | "flatMap"
+                                | "from"
+                                | "forEach"
+                                | "filter"
+                                | "some"
+                                | "every"
+                                | "find"
+                                | "findIndex"
+                        ) {
+                            return Some(InsideArrayOrIterator::Iterator);
+                        }
+                    }
+                }
+
+                return None;
+            }
+            AstKind::JSXElement(_) | AstKind::JSXOpeningElement(_) => return None,
+            _ => node = parent,
+        }
+    }
+}
+
+fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+    if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        if !jsx_elem.opening_element.attributes.iter().any(|attr| {
+            let JSXAttributeItem::Attribute(attr) = attr else { return false };
+
+            let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
+                return false;
+            };
+            attr_ident.name == "key"
+        }) {
+            ctx.diagnostic(gen_diagnostic(jsx_elem.span, &outer));
+        }
+    }
+}
+
+fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
+    if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        ctx.diagnostic(gen_diagnostic(fragment.span, &outer));
+    }
+}
+
+fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> JsxKeyDiagnostic {
+    match outer {
+        InsideArrayOrIterator::Array => JsxKeyDiagnostic::MissingKeyPropForElementInArray(span),
+        InsideArrayOrIterator::Iterator => {
+            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(span)
+        }
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (r#"fn()"#, None),
+        (r#"[1, 2, 3].map(function () {})"#, None),
+        (r#"<App />;"#, None),
+        (r#"[<App key={0} />, <App key={1} />];"#, None),
+        (r#"[1, 2, 3].map(function(x) { return <App key={x} /> });"#, None),
+        (r#"[1, 2, 3].map(x => <App key={x} />);"#, None),
+        (r#"[1, 2 ,3].map(x => x && <App x={x} key={x} />);"#, None),
+        (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} key="2" />);"#, None),
+        (r#"[1, 2, 3].map(x => { return <App key={x} /> });"#, None),
+        (r#"Array.from([1, 2, 3], function(x) { return <App key={x} /> });"#, None),
+        (r#"Array.from([1, 2, 3], (x => <App key={x} />));"#, None),
+        (r#"Array.from([1, 2, 3], (x => {return <App key={x} />}));"#, None),
+        (r#"Array.from([1, 2, 3], someFn);"#, None),
+        (r#"Array.from([1, 2, 3]);"#, None),
+        (r#"[1, 2, 3].foo(x => <App />);"#, None),
+        (r#"var App = () => <div />;"#, None),
+        (r#"[1, 2, 3].map(function(x) { return; });"#, None),
+        (r#"foo(() => <div />);"#, None),
+        (r#"foo(() => <></>);"#, None),
+        (r#"<></>;"#, None),
+        (r#"<App {...{}} />;"#, None),
+        (r#"<App key="keyBeforeSpread" {...{}} />;"#, None),
+        (r#"<div key="keyBeforeSpread" {...{}} />;"#, None),
+        (r#"const spans = [<span key="notunique"/>,<span key="notunique"/>];"#, None),
+        (
+            r#"
+            function Component(props) {
+              return hasPayment ? (
+                <div className="stuff">
+                  <BookingDetailSomething {...props} />
+                  {props.modal && props.calculatedPrice && (
+                    <SomeOtherThing items={props.something} discount={props.discount} />
+                  )}
+                </div>
+              ) : null;
+            }
+            "#,
+            None,
+        ),
+        (
+            r#"
+            import React, { FC, useRef, useState } from 'react';
+
+            import './ResourceVideo.sass';
+            import VimeoVideoPlayInModal from '../vimeoVideoPlayInModal/VimeoVideoPlayInModal';
+
+            type Props = {
+              videoUrl: string;
+              videoTitle: string;
+            };
+
+            const ResourceVideo: FC<Props> = ({
+              videoUrl,
+              videoTitle,
+            }: Props): JSX.Element => {
+              return (
+                <div className="resource-video">
+                  <VimeoVideoPlayInModal videoUrl={videoUrl} />
+                  <h3>{videoTitle}</h3>
+                </div>
+              );
+            };
+
+            export default ResourceVideo;
+            "#,
+            None,
+        ),
+        (
+            r#"
+            // testrule.jsx
+            const trackLink = () => {};
+            const getAnalyticsUiElement = () => {};
+
+            const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
+            "#,
+            None,
+        ),
+        (
+            r#"
+            function Component({ allRatings }) {
+                return (
+                  <RatingDetailsStyles>
+                    {Object.entries(allRatings)?.map(([key, value], index) => {
+                      const rate = value?.split(/(?=[%, /])/);
+
+                      if (!rate) return null;
+
+                      return (
+                        <li key={`${entertainment.tmdbId}${index}`}>
+                          <img src={`/assets/rating/${key}.png`} />
+                          <span className="rating-details--rate">{rate?.[0]}</span>
+                          <span className="rating-details--rate-suffix">{rate?.[1]}</span>
+                        </li>
+                      );
+                    })}
+                  </RatingDetailsStyles>
+                );
+              }
+              "#,
+            None,
+        ),
+        (
+            r#"
+            const baz = foo?.bar?.()?.[1] ?? 'qux';
+
+            qux()?.map()
+
+            const directiveRanges = comments?.map(tryParseTSDirective)
+            "#,
+            None,
+        ),
+        (
+            r#"
+            import { observable } from "mobx";
+
+            export interface ClusterFrameInfo {
+              frameId: number;
+              processId: number;
+            }
+
+            export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
+
+          "#,
+            None,
+        ),
+    ];
+
+    let fail = vec![
+        (r#"[<App />];"#, None),
+        (r#"[<App {...key} />];"#, None),
+        (r#"[<App key={0}/>, <App />];"#, None),
+        (r#"[1, 2 ,3].map(function(x) { return <App /> });"#, None),
+        (r#"[1, 2 ,3].map(x => <App />);"#, None),
+        (r#"[1, 2 ,3].map(x => x && <App x={x} />);"#, None),
+        (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);"#, None),
+        (r#"[1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);"#, None),
+        (r#"[1, 2 ,3].map(x => { return <App /> });"#, None),
+        (r#"Array.from([1, 2 ,3], function(x) { return <App /> });"#, None),
+        (r#"Array.from([1, 2 ,3], (x => { return <App /> }));"#, None),
+        (r#"Array.from([1, 2 ,3], (x => <App />));"#, None),
+        (r#"[1, 2, 3]?.map(x => <BabelEslintApp />)"#, None),
+        (r#"[1, 2, 3]?.map(x => <TypescriptEslintApp />)"#, None),
+        (r#"[1, 2, 3]?.map(x => <><OxcCompilerHello /></>)"#, None),
+        ("[1, 2, 3].map(x => <>{x}</>);", None),
+        ("[<></>];", None),
+        //     (r#"[<App {...obj} key="keyAfterSpread" />];"#, None),
+        //     (r#"[<div {...obj} key="keyAfterSpread" />];"#, None),
+        //     (
+        //         r#"
+        //         const spans = [
+        //           <span key="notunique"/>,
+        //           <span key="notunique"/>,
+        //         ];
+        //     "#,
+        //         None,
+        //     ),
+        //     (
+        //         r#"
+        //         const div = (
+        //           <div>
+        //             <span key="notunique"/>
+        //             <span key="notunique"/>
+        //           </div>
+        //         );
+        //     "#,
+        //         None,
+        //     ),
+        (
+            r#"
+                const Test = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => {
+                        if (item < 2) {
+                          return <div>{item}</div>;
+                        }
+
+                        return <div />;
+                      })}
+                    </div>
+                  );
+                };
+            "#,
+            None,
+        ),
+        (
+            r#"
+                const TestO = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => {
+                        if (item < 2) {
+                          return <div>{item}</div>;
+                        } else if (item < 5) {
+                          return <div></div>
+                        }  else {
+                          return <div></div>
+                        }
+
+                        return <div />;
+                      })}
+                    </div>
+                  );
+                };
+            "#,
+            None,
+        ),
+        (
+            r#"
+                const TestCase = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => {
+                        if (item < 2) return <div>{item}</div>;
+                        else if (item < 5) return <div />;
+                        else return <div />;
+                      })}
+                    </div>
+                  );
+                };
+          "#,
+            None,
+        ),
+    ];
+
+    Tester::new(JsxKey::NAME, pass, fail).test_and_snapshot();
+}
