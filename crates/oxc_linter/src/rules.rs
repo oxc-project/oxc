@@ -125,6 +125,7 @@ mod jest {
 
 mod react {
     pub mod jsx_key;
+    pub mod jsx_no_useless_fragment;
 }
 
 mod unicorn {
@@ -248,6 +249,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     unicorn::prefer_array_flat_map,
     react::jsx_key,
+    react::jsx_no_useless_fragment,
     import::named,
     import::no_cycle,
     import::no_self_import,
