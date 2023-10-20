@@ -1,4 +1,3 @@
-use dashmap::DashMap;
 use std::{
     collections::HashMap,
     fs,
@@ -7,16 +6,18 @@ use std::{
     sync::{Arc, Condvar, Mutex},
 };
 
+use dashmap::DashMap;
+use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use rustc_hash::FxHashSet;
 
 use crate::{Fixer, LintContext, LintOptions, Linter, Message};
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 
 #[derive(Clone)]
 pub struct LintService {
@@ -153,7 +154,7 @@ impl Runtime {
 
         if !messages.is_empty() {
             let errors = messages.into_iter().map(|m| m.error).collect();
-            let path = path.strip_prefix(&self.cwd).unwrap();
+            let path = path.strip_prefix(&self.cwd).unwrap_or(path);
             let diagnostics = DiagnosticService::wrap_diagnostics(path, &source_text, errors);
             tx_error.send(Some(diagnostics)).unwrap();
         }
