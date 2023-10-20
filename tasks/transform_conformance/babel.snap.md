@@ -1,4 +1,4 @@
-Passed: 161/1091
+Passed: 160/1087
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -714,15 +714,13 @@ Passed: 161/1091
 * Failed: unicode-regex/negated-set/input.js
 * Failed: unicode-regex/slash/input.js
 
-# babel-plugin-transform-typescript (72/185)
+# babel-plugin-transform-typescript (71/181)
 * Failed: class/abstract-class-decorated/input.ts
 * Failed: class/abstract-class-decorated-method/input.ts
 * Failed: class/abstract-class-decorated-parameter/input.ts
 * Failed: class/accessor-allowDeclareFields-false/input.ts
 * Failed: class/accessor-allowDeclareFields-true/input.ts
 * Failed: class/accessor-allowDeclareFields-true-babel-7/input.ts
-* Failed: class/declare/input.ts
-* Failed: class/declare-babel-7/input.ts
 * Failed: class/decorated-declare-properties/input.ts
 * Failed: class/field-not-initialized-babel-7/input.ts
 * Failed: class/parameter-properties/input.ts
@@ -732,7 +730,6 @@ Passed: 161/1091
 * Failed: class/parameter-properties-with-parameters/input.ts
 * Failed: class/parameter-properties-with-super/input.ts
 * Failed: class/private-method-override-transform-private/input.ts
-* Failed: class/properties-babel-7/input.ts
 * Failed: class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * Failed: declarations/erased/input.ts
 * Failed: declarations/export-declare-enum/input.ts
