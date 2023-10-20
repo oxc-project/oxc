@@ -110,6 +110,7 @@ pub enum AstKind<'a> {
     // JSX
     // Please make sure to add these to `is_jsx` below.
     JSXElement(&'a JSXElement<'a>),
+    JSXFragment(&'a JSXFragment<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
     JSXElementName(&'a JSXElementName<'a>),
 
@@ -231,7 +232,13 @@ impl<'a> AstKind<'a> {
     }
 
     pub fn is_jsx(self) -> bool {
-        matches!(self, Self::JSXElement(_) | Self::JSXOpeningElement(_) | Self::JSXElementName(_))
+        matches!(
+            self,
+            Self::JSXElement(_)
+                | Self::JSXOpeningElement(_)
+                | Self::JSXElementName(_)
+                | Self::JSXFragment(_)
+        )
     }
 
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
@@ -350,6 +357,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXOpeningElement(x) => x.span,
             Self::JSXElementName(x) => x.span(),
             Self::JSXElement(x) => x.span,
+            Self::JSXFragment(x) => x.span,
 
             Self::TSModuleBlock(x) => x.span,
 
@@ -513,6 +521,7 @@ impl<'a> AstKind<'a> {
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXElementName(_) => "JSXElementName".into(),
             Self::JSXElement(_) => "JSXElement".into(),
+            Self::JSXFragment(_) => "JSXFragment".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 

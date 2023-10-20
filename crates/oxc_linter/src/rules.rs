@@ -123,6 +123,10 @@ mod jest {
     pub mod valid_title;
 }
 
+mod react {
+    pub mod jsx_key;
+}
+
 mod unicorn {
     pub mod catch_error_name;
     pub mod error_message;
@@ -243,6 +247,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_thenable,
     unicorn::throw_new_error,
     unicorn::prefer_array_flat_map,
+    react::jsx_key,
     import::named,
     import::no_cycle,
     import::no_self_import,
