@@ -1,4 +1,4 @@
-Passed: 159/1091
+Passed: 161/1091
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -484,10 +484,8 @@ Passed: 159/1091
 * Failed: to-native-fields/static-shadow/input.js
 * Failed: to-native-fields/static-shadowed-binding/input.js
 
-# babel-plugin-transform-logical-assignment-operators (3/6)
-* Failed: logical-assignment/general-semantics/input.js
+# babel-plugin-transform-logical-assignment-operators (5/6)
 * Failed: logical-assignment/null-coalescing/input.js
-* Failed: logical-assignment/null-coalescing-without-other/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
 * Failed: export-namespace/namespace-default/input.mjs

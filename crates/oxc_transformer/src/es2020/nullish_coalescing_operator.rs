@@ -30,6 +30,7 @@ pub struct NullishCoalescingOperator<'a> {
 
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
+
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
@@ -70,12 +71,11 @@ impl<'a> NullishCoalescingOperator<'a> {
         let assignment;
 
         // skip creating extra reference when `left` is static
-        if self.ctx.symbols.borrow().is_static(&logical_expr.left) {
+        if self.ctx.symbols().is_static(&logical_expr.left) {
             reference = self.ast.copy(&logical_expr.left);
             assignment = self.ast.copy(&logical_expr.left);
         } else {
-            let name = self.create_new_var(&logical_expr.left);
-            let ident = IdentifierReference::new(span, name);
+            let ident = self.create_new_var(&logical_expr.left);
             reference = self.ast.identifier_reference_expression(ident.clone());
             let left = AssignmentTarget::SimpleAssignmentTarget(
                 self.ast.simple_assignment_target_identifier(ident),

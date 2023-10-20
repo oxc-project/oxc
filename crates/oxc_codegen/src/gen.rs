@@ -1182,9 +1182,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
         let n = p.code_len();
+        let is_multi_line = !self.properties.is_empty();
         p.wrap(p.start_of_stmt == n || p.start_of_arrow_expr == n, |p| {
             p.print(b'{');
-            p.indent();
+            if is_multi_line {
+                p.indent();
+            }
             for (i, item) in self.properties.iter().enumerate() {
                 if i != 0 {
                     p.print_comma();
@@ -1193,9 +1196,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
                 p.print_indent();
                 item.gen(p, ctx);
             }
-            p.print_soft_newline();
-            p.dedent();
-            p.print_indent();
+            if is_multi_line {
+                p.print_soft_newline();
+                p.dedent();
+                p.print_indent();
+            }
             p.print(b'}');
         });
     }
