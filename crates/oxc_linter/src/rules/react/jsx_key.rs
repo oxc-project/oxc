@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        ArrayExpressionElement, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
-        JSXFragment, JSXIdentifier,
-    },
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment},
     AstKind,
 };
 use oxc_diagnostics::{
