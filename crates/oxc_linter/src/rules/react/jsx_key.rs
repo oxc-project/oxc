@@ -49,27 +49,11 @@ declare_oxc_lint!(
 impl Rule for JsxKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrayExpressionElement(ArrayExpressionElement::Expression(expr)) => match expr
-            {
-                Expression::JSXElement(jsx_elem) => {
-                    check_jsx_element(node, jsx_elem, ctx);
-                }
-                Expression::JSXFragment(jsx_frag) => {
-                    check_jsx_fragment(node, jsx_frag, ctx);
-                }
-                _ => {}
-            },
-            AstKind::ExpressionStatement(expression_stmt) => match &expression_stmt.expression {
-                Expression::JSXElement(jsx_elem) => {
-                    check_jsx_element(node, jsx_elem, ctx);
-                }
-                Expression::JSXFragment(jsx_frag) => {
-                    check_jsx_fragment(node, jsx_frag, ctx);
-                }
-                _ => {}
-            },
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);
+            }
+            AstKind::JSXFragment(jsx_frag) => {
+                check_jsx_fragment(node, jsx_frag, ctx);
             }
 
             _ => {}
@@ -100,18 +84,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Expression::MemberExpression(v) = callee {
                     if let Some(static_property_name) = v.static_property_name() {
-                        if matches!(
-                            static_property_name,
-                            "map"
-                                | "flatMap"
-                                | "from"
-                                | "forEach"
-                                | "filter"
-                                | "some"
-                                | "every"
-                                | "find"
-                                | "findIndex"
-                        ) {
+                        if TARGET_METHODS.contains(static_property_name) {
                             return Some(InsideArrayOrIterator::Iterator);
                         }
                     }
@@ -154,6 +127,15 @@ fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> JsxKeyDiagnostic
         }
     }
 }
+
+const TARGET_METHODS: phf::Set<&'static str> = phf::phf_set! {
+    // <array>.map(() => <jsx />)
+    "map",
+    // <array>.map(() => <jsx />)
+    "flatMap",
+    // Array.from(<array>, () => <jsx />)
+    "from"
+};
 
 #[test]
 fn test() {
