@@ -8,969 +8,969 @@ Passed: 160/1087
 
 
 # babel-plugin-transform-unicode-sets-regex (0/4)
-* Failed: basic/basic/input.js
-* Failed: basic/string-properties/input.js
-* Failed: transform-u/basic/input.js
-* Failed: transform-u/string-properties/input.js
+* basic/basic/input.js
+* basic/string-properties/input.js
+* transform-u/basic/input.js
+* transform-u/string-properties/input.js
 
 # babel-plugin-transform-class-properties (7/266)
-* Failed: assumption-constantSuper/complex-super-class/input.js
-* Failed: assumption-constantSuper/instance-field/input.js
-* Failed: assumption-constantSuper/static-field/input.js
-* Failed: assumption-noDocumentAll/optional-chain-before-member-call/input.js
-* Failed: assumption-noDocumentAll/optional-chain-cast-to-boolean/input.js
-* Failed: assumption-setPublicClassFields/computed/input.js
-* Failed: assumption-setPublicClassFields/constructor-collision/input.js
-* Failed: assumption-setPublicClassFields/derived/input.js
-* Failed: assumption-setPublicClassFields/foobar/input.js
-* Failed: assumption-setPublicClassFields/instance/input.js
-* Failed: assumption-setPublicClassFields/instance-computed/input.js
-* Failed: assumption-setPublicClassFields/instance-undefined/input.js
-* Failed: assumption-setPublicClassFields/length-name-use-define/input.js
-* Failed: assumption-setPublicClassFields/non-block-arrow-func/input.mjs
-* Failed: assumption-setPublicClassFields/regression-T2983/input.mjs
-* Failed: assumption-setPublicClassFields/regression-T6719/input.js
-* Failed: assumption-setPublicClassFields/regression-T7364/input.mjs
-* Failed: assumption-setPublicClassFields/static/input.js
-* Failed: assumption-setPublicClassFields/static-export/input.mjs
-* Failed: assumption-setPublicClassFields/static-infer-name/input.js
-* Failed: assumption-setPublicClassFields/static-super/input.js
-* Failed: assumption-setPublicClassFields/static-super-loose/input.js
-* Failed: assumption-setPublicClassFields/static-this/input.js
-* Failed: assumption-setPublicClassFields/static-undefined/input.js
-* Failed: assumption-setPublicClassFields/super-call/input.js
-* Failed: assumption-setPublicClassFields/super-expression/input.js
-* Failed: assumption-setPublicClassFields/super-statement/input.js
-* Failed: assumption-setPublicClassFields/super-with-collision/input.js
-* Failed: class-name-tdz/decorator-interop/input.js
-* Failed: class-name-tdz/general/input.js
-* Failed: class-name-tdz/static-edgest-case/input.js
-* Failed: class-name-tdz/static-general/input.js
-* Failed: class-name-tdz/static-loose/input.js
-* Failed: compile-to-class/constructor-collision-ignores-types/input.js
-* Failed: compile-to-class/constructor-collision-ignores-types-babel-7/input.js
-* Failed: compile-to-class/constructor-collision-ignores-types-loose/input.js
-* Failed: compile-to-class/constructor-collision-ignores-types-loose-babel-7/input.js
-* Failed: compile-to-class/preserve-comments/input.js
-* Failed: decorators-legacy-interop/local-define-property/input.js
-* Failed: decorators-legacy-interop/loose/input.js
-* Failed: decorators-legacy-interop/strict/input.js
-* Failed: nested-class/super-call-in-decorator/input.js
-* Failed: nested-class/super-call-in-key/input.js
-* Failed: nested-class/super-property-in-accessor-key/input.js
-* Failed: nested-class/super-property-in-decorator/input.js
-* Failed: nested-class/super-property-in-key/input.js
-* Failed: private/1-helpermemberexpressionfunction/input.js
-* Failed: private/assignment/input.js
-* Failed: private/call/input.js
-* Failed: private/canonical/input.js
-* Failed: private/class-shadow-builtins/input.mjs
-* Failed: private/constructor-collision/input.js
-* Failed: private/declaration-order/input.js
-* Failed: private/derived/input.js
-* Failed: private/derived-multiple-supers/input.js
-* Failed: private/destructuring-array-pattern/input.js
-* Failed: private/destructuring-array-pattern-1/input.js
-* Failed: private/destructuring-array-pattern-2/input.js
-* Failed: private/destructuring-array-pattern-3/input.js
-* Failed: private/destructuring-array-pattern-static/input.js
-* Failed: private/destructuring-object-pattern/input.js
-* Failed: private/destructuring-object-pattern-1/input.js
-* Failed: private/destructuring-object-pattern-2/input.js
-* Failed: private/destructuring-object-pattern-3/input.js
-* Failed: private/destructuring-object-pattern-static/input.js
-* Failed: private/extracted-this/input.js
-* Failed: private/foobar/input.js
-* Failed: private/instance/input.js
-* Failed: private/instance-undefined/input.js
-* Failed: private/logical-assignment/input.js
-* Failed: private/multiple/input.js
-* Failed: private/native-classes/input.js
-* Failed: private/nested-class/input.js
-* Failed: private/nested-class-computed/input.js
-* Failed: private/nested-class-computed-redeclared/input.js
-* Failed: private/nested-class-extends-computed/input.js
-* Failed: private/nested-class-extends-computed-redeclared/input.js
-* Failed: private/nested-class-other-redeclared/input.js
-* Failed: private/nested-class-redeclared/input.js
-* Failed: private/non-block-arrow-func/input.mjs
-* Failed: private/optional-chain-before-member-call/input.js
-* Failed: private/optional-chain-before-member-call-with-transform/input.js
-* Failed: private/optional-chain-before-property/input.js
-* Failed: private/optional-chain-before-property-with-transform/input.js
-* Failed: private/optional-chain-cast-to-boolean/input.js
-* Failed: private/optional-chain-delete-property/input.js
-* Failed: private/optional-chain-delete-property-with-transform/input.js
-* Failed: private/optional-chain-in-function-param/input.js
-* Failed: private/optional-chain-in-function-param-with-transform/input.js
-* Failed: private/optional-chain-member-optional-call/input.js
-* Failed: private/optional-chain-member-optional-call-spread-arguments/input.js
-* Failed: private/optional-chain-member-optional-call-with-transform/input.js
-* Failed: private/optional-chain-optional-member-call/input.js
-* Failed: private/optional-chain-optional-member-call-with-transform/input.js
-* Failed: private/optional-chain-optional-property/input.js
-* Failed: private/optional-chain-optional-property-with-transform/input.js
-* Failed: private/parenthesized-optional-member-call/input.js
-* Failed: private/parenthesized-optional-member-call-with-transform/input.js
-* Failed: private/preserve-comments/input.js
-* Failed: private/private-in-derived/input.js
-* Failed: private/reevaluated/input.js
-* Failed: private/reference-in-other-property/input.js
-* Failed: private/regression-T2983/input.mjs
-* Failed: private/regression-T6719/input.js
-* Failed: private/regression-T7364/input.mjs
-* Failed: private/static/input.js
-* Failed: private/static-call/input.js
-* Failed: private/static-export/input.mjs
-* Failed: private/static-infer-name/input.js
-* Failed: private/static-inherited/input.js
-* Failed: private/static-self-field/input.js
-* Failed: private/static-self-method/input.js
-* Failed: private/static-shadow/input.js
-* Failed: private/static-this/input.js
-* Failed: private/static-undefined/input.js
-* Failed: private/super-call/input.js
-* Failed: private/super-expression/input.js
-* Failed: private/super-statement/input.js
-* Failed: private/tagged-template/input.js
-* Failed: private/tagged-template-static/input.js
-* Failed: private/update/input.js
-* Failed: private-loose/assignment/input.js
-* Failed: private-loose/call/input.js
-* Failed: private-loose/canonical/input.js
-* Failed: private-loose/class-shadow-builtins/input.mjs
-* Failed: private-loose/constructor-collision/input.js
-* Failed: private-loose/declaration-order/input.js
-* Failed: private-loose/derived/input.js
-* Failed: private-loose/derived-multiple-supers/input.js
-* Failed: private-loose/destructuring-array-pattern/input.js
-* Failed: private-loose/destructuring-array-pattern-1/input.js
-* Failed: private-loose/destructuring-array-pattern-2/input.js
-* Failed: private-loose/destructuring-array-pattern-3/input.js
-* Failed: private-loose/destructuring-array-pattern-static/input.js
-* Failed: private-loose/destructuring-object-pattern/input.js
-* Failed: private-loose/destructuring-object-pattern-1/input.js
-* Failed: private-loose/destructuring-object-pattern-2/input.js
-* Failed: private-loose/destructuring-object-pattern-3/input.js
-* Failed: private-loose/destructuring-object-pattern-static/input.js
-* Failed: private-loose/extracted-this/input.js
-* Failed: private-loose/foobar/input.js
-* Failed: private-loose/instance/input.js
-* Failed: private-loose/instance-undefined/input.js
-* Failed: private-loose/logical-assignment/input.js
-* Failed: private-loose/multiple/input.js
-* Failed: private-loose/native-classes/input.js
-* Failed: private-loose/nested-class/input.js
-* Failed: private-loose/nested-class-computed/input.js
-* Failed: private-loose/nested-class-computed-redeclared/input.js
-* Failed: private-loose/nested-class-extends-computed/input.js
-* Failed: private-loose/nested-class-extends-computed-redeclared/input.js
-* Failed: private-loose/nested-class-other-redeclared/input.js
-* Failed: private-loose/nested-class-redeclared/input.js
-* Failed: private-loose/non-block-arrow-func/input.mjs
-* Failed: private-loose/optional-chain-before-member-call/input.js
-* Failed: private-loose/optional-chain-before-member-call-with-transform/input.js
-* Failed: private-loose/optional-chain-before-property/input.js
-* Failed: private-loose/optional-chain-before-property-with-transform/input.js
-* Failed: private-loose/optional-chain-cast-to-boolean/input.js
-* Failed: private-loose/optional-chain-delete-property/input.js
-* Failed: private-loose/optional-chain-delete-property-with-transform/input.js
-* Failed: private-loose/optional-chain-in-function-param/input.js
-* Failed: private-loose/optional-chain-in-function-param-with-transform/input.js
-* Failed: private-loose/optional-chain-member-optional-call/input.js
-* Failed: private-loose/optional-chain-member-optional-call-spread-arguments/input.js
-* Failed: private-loose/optional-chain-member-optional-call-with-transform/input.js
-* Failed: private-loose/optional-chain-optional-member-call/input.js
-* Failed: private-loose/optional-chain-optional-member-call-with-transform/input.js
-* Failed: private-loose/optional-chain-optional-property/input.js
-* Failed: private-loose/optional-chain-optional-property-with-transform/input.js
-* Failed: private-loose/parenthesized-optional-member-call/input.js
-* Failed: private-loose/parenthesized-optional-member-call-with-transform/input.js
-* Failed: private-loose/preserve-comments/input.js
-* Failed: private-loose/private-in-derived/input.js
-* Failed: private-loose/reevaluated/input.js
-* Failed: private-loose/reference-in-other-property/input.js
-* Failed: private-loose/static/input.js
-* Failed: private-loose/static-call/input.js
-* Failed: private-loose/static-export/input.mjs
-* Failed: private-loose/static-infer-name/input.js
-* Failed: private-loose/static-inherited/input.js
-* Failed: private-loose/static-shadow/input.js
-* Failed: private-loose/static-this/input.js
-* Failed: private-loose/static-undefined/input.js
-* Failed: private-loose/super-expression/input.js
-* Failed: private-loose/super-statement/input.js
-* Failed: private-loose/update/input.js
-* Failed: public/arrow-static-this-without-transform/input.js
-* Failed: public/assignment/input.js
-* Failed: public/call/input.js
-* Failed: public/class-shadow-builtins/input.mjs
-* Failed: public/computed/input.js
-* Failed: public/computed-toPrimitive/input.js
-* Failed: public/computed-without-block/input.js
-* Failed: public/constructor-collision/input.js
-* Failed: public/delete-super-property/input.js
-* Failed: public/delete-this/input.js
-* Failed: public/derived/input.js
-* Failed: public/derived-multiple-supers/input.js
-* Failed: public/derived-super-in-default-params/input.js
-* Failed: public/derived-super-in-default-params-complex/input.js
-* Failed: public/derived-super-in-default-params-in-arrow/input.js
-* Failed: public/extracted-this/input.js
-* Failed: public/foobar/input.js
-* Failed: public/instance/input.js
-* Failed: public/instance-computed/input.js
-* Failed: public/instance-undefined/input.js
-* Failed: public/native-classes/input.js
-* Failed: public/non-block-arrow-func/input.mjs
-* Failed: public/numeric/input.js
-* Failed: public/preserve-comments/input.js
-* Failed: public/regression-T2983/input.mjs
-* Failed: public/regression-T6719/input.js
-* Failed: public/regression-T7364/input.mjs
-* Failed: public/static/input.js
-* Failed: public/static-export/input.mjs
-* Failed: public/static-infer-name/input.js
-* Failed: public/static-super/input.js
-* Failed: public/static-this/input.js
-* Failed: public/static-undefined/input.js
-* Failed: public/super-call/input.js
-* Failed: public/super-expression/input.js
-* Failed: public/super-statement/input.js
-* Failed: public/super-with-collision/input.js
-* Failed: public/update/input.js
-* Failed: public-loose/arrow-static-this-without-transform/input.js
-* Failed: public-loose/class-shadow-builtins/input.mjs
-* Failed: public-loose/computed/input.js
-* Failed: public-loose/constructor-collision/input.js
-* Failed: public-loose/derived/input.js
-* Failed: public-loose/foobar/input.js
-* Failed: public-loose/instance/input.js
-* Failed: public-loose/instance-computed/input.js
-* Failed: public-loose/instance-undefined/input.js
-* Failed: public-loose/non-block-arrow-func/input.mjs
-* Failed: public-loose/preserve-comments/input.js
-* Failed: public-loose/regression-T2983/input.mjs
-* Failed: public-loose/regression-T6719/input.js
-* Failed: public-loose/regression-T7364/input.mjs
-* Failed: public-loose/static/input.js
-* Failed: public-loose/static-export/input.mjs
-* Failed: public-loose/static-infer-name/input.js
-* Failed: public-loose/static-super/input.js
-* Failed: public-loose/static-this/input.js
-* Failed: public-loose/static-undefined/input.js
-* Failed: public-loose/super-call/input.js
-* Failed: public-loose/super-expression/input.js
-* Failed: public-loose/super-statement/input.js
-* Failed: public-loose/super-with-collision/input.js
-* Failed: regression/15098/input.js
-* Failed: regression/6153/input.js
-* Failed: regression/6154/input.js
-* Failed: regression/7371/input.js
-* Failed: regression/7951/input.mjs
-* Failed: regression/8110/input.js
-* Failed: regression/8882/input.js
-* Failed: regression/T2983/input.mjs
-* Failed: regression/T6719/input.js
-* Failed: regression/T7364/input.mjs
+* assumption-constantSuper/complex-super-class/input.js
+* assumption-constantSuper/instance-field/input.js
+* assumption-constantSuper/static-field/input.js
+* assumption-noDocumentAll/optional-chain-before-member-call/input.js
+* assumption-noDocumentAll/optional-chain-cast-to-boolean/input.js
+* assumption-setPublicClassFields/computed/input.js
+* assumption-setPublicClassFields/constructor-collision/input.js
+* assumption-setPublicClassFields/derived/input.js
+* assumption-setPublicClassFields/foobar/input.js
+* assumption-setPublicClassFields/instance/input.js
+* assumption-setPublicClassFields/instance-computed/input.js
+* assumption-setPublicClassFields/instance-undefined/input.js
+* assumption-setPublicClassFields/length-name-use-define/input.js
+* assumption-setPublicClassFields/non-block-arrow-func/input.mjs
+* assumption-setPublicClassFields/regression-T2983/input.mjs
+* assumption-setPublicClassFields/regression-T6719/input.js
+* assumption-setPublicClassFields/regression-T7364/input.mjs
+* assumption-setPublicClassFields/static/input.js
+* assumption-setPublicClassFields/static-export/input.mjs
+* assumption-setPublicClassFields/static-infer-name/input.js
+* assumption-setPublicClassFields/static-super/input.js
+* assumption-setPublicClassFields/static-super-loose/input.js
+* assumption-setPublicClassFields/static-this/input.js
+* assumption-setPublicClassFields/static-undefined/input.js
+* assumption-setPublicClassFields/super-call/input.js
+* assumption-setPublicClassFields/super-expression/input.js
+* assumption-setPublicClassFields/super-statement/input.js
+* assumption-setPublicClassFields/super-with-collision/input.js
+* class-name-tdz/decorator-interop/input.js
+* class-name-tdz/general/input.js
+* class-name-tdz/static-edgest-case/input.js
+* class-name-tdz/static-general/input.js
+* class-name-tdz/static-loose/input.js
+* compile-to-class/constructor-collision-ignores-types/input.js
+* compile-to-class/constructor-collision-ignores-types-babel-7/input.js
+* compile-to-class/constructor-collision-ignores-types-loose/input.js
+* compile-to-class/constructor-collision-ignores-types-loose-babel-7/input.js
+* compile-to-class/preserve-comments/input.js
+* decorators-legacy-interop/local-define-property/input.js
+* decorators-legacy-interop/loose/input.js
+* decorators-legacy-interop/strict/input.js
+* nested-class/super-call-in-decorator/input.js
+* nested-class/super-call-in-key/input.js
+* nested-class/super-property-in-accessor-key/input.js
+* nested-class/super-property-in-decorator/input.js
+* nested-class/super-property-in-key/input.js
+* private/1-helpermemberexpressionfunction/input.js
+* private/assignment/input.js
+* private/call/input.js
+* private/canonical/input.js
+* private/class-shadow-builtins/input.mjs
+* private/constructor-collision/input.js
+* private/declaration-order/input.js
+* private/derived/input.js
+* private/derived-multiple-supers/input.js
+* private/destructuring-array-pattern/input.js
+* private/destructuring-array-pattern-1/input.js
+* private/destructuring-array-pattern-2/input.js
+* private/destructuring-array-pattern-3/input.js
+* private/destructuring-array-pattern-static/input.js
+* private/destructuring-object-pattern/input.js
+* private/destructuring-object-pattern-1/input.js
+* private/destructuring-object-pattern-2/input.js
+* private/destructuring-object-pattern-3/input.js
+* private/destructuring-object-pattern-static/input.js
+* private/extracted-this/input.js
+* private/foobar/input.js
+* private/instance/input.js
+* private/instance-undefined/input.js
+* private/logical-assignment/input.js
+* private/multiple/input.js
+* private/native-classes/input.js
+* private/nested-class/input.js
+* private/nested-class-computed/input.js
+* private/nested-class-computed-redeclared/input.js
+* private/nested-class-extends-computed/input.js
+* private/nested-class-extends-computed-redeclared/input.js
+* private/nested-class-other-redeclared/input.js
+* private/nested-class-redeclared/input.js
+* private/non-block-arrow-func/input.mjs
+* private/optional-chain-before-member-call/input.js
+* private/optional-chain-before-member-call-with-transform/input.js
+* private/optional-chain-before-property/input.js
+* private/optional-chain-before-property-with-transform/input.js
+* private/optional-chain-cast-to-boolean/input.js
+* private/optional-chain-delete-property/input.js
+* private/optional-chain-delete-property-with-transform/input.js
+* private/optional-chain-in-function-param/input.js
+* private/optional-chain-in-function-param-with-transform/input.js
+* private/optional-chain-member-optional-call/input.js
+* private/optional-chain-member-optional-call-spread-arguments/input.js
+* private/optional-chain-member-optional-call-with-transform/input.js
+* private/optional-chain-optional-member-call/input.js
+* private/optional-chain-optional-member-call-with-transform/input.js
+* private/optional-chain-optional-property/input.js
+* private/optional-chain-optional-property-with-transform/input.js
+* private/parenthesized-optional-member-call/input.js
+* private/parenthesized-optional-member-call-with-transform/input.js
+* private/preserve-comments/input.js
+* private/private-in-derived/input.js
+* private/reevaluated/input.js
+* private/reference-in-other-property/input.js
+* private/regression-T2983/input.mjs
+* private/regression-T6719/input.js
+* private/regression-T7364/input.mjs
+* private/static/input.js
+* private/static-call/input.js
+* private/static-export/input.mjs
+* private/static-infer-name/input.js
+* private/static-inherited/input.js
+* private/static-self-field/input.js
+* private/static-self-method/input.js
+* private/static-shadow/input.js
+* private/static-this/input.js
+* private/static-undefined/input.js
+* private/super-call/input.js
+* private/super-expression/input.js
+* private/super-statement/input.js
+* private/tagged-template/input.js
+* private/tagged-template-static/input.js
+* private/update/input.js
+* private-loose/assignment/input.js
+* private-loose/call/input.js
+* private-loose/canonical/input.js
+* private-loose/class-shadow-builtins/input.mjs
+* private-loose/constructor-collision/input.js
+* private-loose/declaration-order/input.js
+* private-loose/derived/input.js
+* private-loose/derived-multiple-supers/input.js
+* private-loose/destructuring-array-pattern/input.js
+* private-loose/destructuring-array-pattern-1/input.js
+* private-loose/destructuring-array-pattern-2/input.js
+* private-loose/destructuring-array-pattern-3/input.js
+* private-loose/destructuring-array-pattern-static/input.js
+* private-loose/destructuring-object-pattern/input.js
+* private-loose/destructuring-object-pattern-1/input.js
+* private-loose/destructuring-object-pattern-2/input.js
+* private-loose/destructuring-object-pattern-3/input.js
+* private-loose/destructuring-object-pattern-static/input.js
+* private-loose/extracted-this/input.js
+* private-loose/foobar/input.js
+* private-loose/instance/input.js
+* private-loose/instance-undefined/input.js
+* private-loose/logical-assignment/input.js
+* private-loose/multiple/input.js
+* private-loose/native-classes/input.js
+* private-loose/nested-class/input.js
+* private-loose/nested-class-computed/input.js
+* private-loose/nested-class-computed-redeclared/input.js
+* private-loose/nested-class-extends-computed/input.js
+* private-loose/nested-class-extends-computed-redeclared/input.js
+* private-loose/nested-class-other-redeclared/input.js
+* private-loose/nested-class-redeclared/input.js
+* private-loose/non-block-arrow-func/input.mjs
+* private-loose/optional-chain-before-member-call/input.js
+* private-loose/optional-chain-before-member-call-with-transform/input.js
+* private-loose/optional-chain-before-property/input.js
+* private-loose/optional-chain-before-property-with-transform/input.js
+* private-loose/optional-chain-cast-to-boolean/input.js
+* private-loose/optional-chain-delete-property/input.js
+* private-loose/optional-chain-delete-property-with-transform/input.js
+* private-loose/optional-chain-in-function-param/input.js
+* private-loose/optional-chain-in-function-param-with-transform/input.js
+* private-loose/optional-chain-member-optional-call/input.js
+* private-loose/optional-chain-member-optional-call-spread-arguments/input.js
+* private-loose/optional-chain-member-optional-call-with-transform/input.js
+* private-loose/optional-chain-optional-member-call/input.js
+* private-loose/optional-chain-optional-member-call-with-transform/input.js
+* private-loose/optional-chain-optional-property/input.js
+* private-loose/optional-chain-optional-property-with-transform/input.js
+* private-loose/parenthesized-optional-member-call/input.js
+* private-loose/parenthesized-optional-member-call-with-transform/input.js
+* private-loose/preserve-comments/input.js
+* private-loose/private-in-derived/input.js
+* private-loose/reevaluated/input.js
+* private-loose/reference-in-other-property/input.js
+* private-loose/static/input.js
+* private-loose/static-call/input.js
+* private-loose/static-export/input.mjs
+* private-loose/static-infer-name/input.js
+* private-loose/static-inherited/input.js
+* private-loose/static-shadow/input.js
+* private-loose/static-this/input.js
+* private-loose/static-undefined/input.js
+* private-loose/super-expression/input.js
+* private-loose/super-statement/input.js
+* private-loose/update/input.js
+* public/arrow-static-this-without-transform/input.js
+* public/assignment/input.js
+* public/call/input.js
+* public/class-shadow-builtins/input.mjs
+* public/computed/input.js
+* public/computed-toPrimitive/input.js
+* public/computed-without-block/input.js
+* public/constructor-collision/input.js
+* public/delete-super-property/input.js
+* public/delete-this/input.js
+* public/derived/input.js
+* public/derived-multiple-supers/input.js
+* public/derived-super-in-default-params/input.js
+* public/derived-super-in-default-params-complex/input.js
+* public/derived-super-in-default-params-in-arrow/input.js
+* public/extracted-this/input.js
+* public/foobar/input.js
+* public/instance/input.js
+* public/instance-computed/input.js
+* public/instance-undefined/input.js
+* public/native-classes/input.js
+* public/non-block-arrow-func/input.mjs
+* public/numeric/input.js
+* public/preserve-comments/input.js
+* public/regression-T2983/input.mjs
+* public/regression-T6719/input.js
+* public/regression-T7364/input.mjs
+* public/static/input.js
+* public/static-export/input.mjs
+* public/static-infer-name/input.js
+* public/static-super/input.js
+* public/static-this/input.js
+* public/static-undefined/input.js
+* public/super-call/input.js
+* public/super-expression/input.js
+* public/super-statement/input.js
+* public/super-with-collision/input.js
+* public/update/input.js
+* public-loose/arrow-static-this-without-transform/input.js
+* public-loose/class-shadow-builtins/input.mjs
+* public-loose/computed/input.js
+* public-loose/constructor-collision/input.js
+* public-loose/derived/input.js
+* public-loose/foobar/input.js
+* public-loose/instance/input.js
+* public-loose/instance-computed/input.js
+* public-loose/instance-undefined/input.js
+* public-loose/non-block-arrow-func/input.mjs
+* public-loose/preserve-comments/input.js
+* public-loose/regression-T2983/input.mjs
+* public-loose/regression-T6719/input.js
+* public-loose/regression-T7364/input.mjs
+* public-loose/static/input.js
+* public-loose/static-export/input.mjs
+* public-loose/static-infer-name/input.js
+* public-loose/static-super/input.js
+* public-loose/static-this/input.js
+* public-loose/static-undefined/input.js
+* public-loose/super-call/input.js
+* public-loose/super-expression/input.js
+* public-loose/super-statement/input.js
+* public-loose/super-with-collision/input.js
+* regression/15098/input.js
+* regression/6153/input.js
+* regression/6154/input.js
+* regression/7371/input.js
+* regression/7951/input.mjs
+* regression/8110/input.js
+* regression/8882/input.js
+* regression/T2983/input.mjs
+* regression/T6719/input.js
+* regression/T7364/input.mjs
 
 # babel-plugin-transform-class-static-block (6/22)
-* Failed: class-static-block/preserve-comments/input.js
-* Failed: integration/class-binding/input.js
-* Failed: integration/class-declaration/input.js
-* Failed: integration/in-class-heritage/input.js
-* Failed: integration/multiple-static-initializers/input.js
-* Failed: integration/name-conflict/input.js
-* Failed: integration/new-target/input.js
-* Failed: integration/preserve-comments/input.js
-* Failed: integration-loose/.new-target/input.js
-* Failed: integration-loose/class-binding/input.js
-* Failed: integration-loose/class-declaration/input.js
-* Failed: integration-loose/in-class-heritage/input.js
-* Failed: integration-loose/multiple-static-initializers/input.js
-* Failed: integration-loose/name-conflict/input.js
-* Failed: integration-loose/preserve-comments/input.js
-* Failed: integration-loose/super-static-block/input.js
+* class-static-block/preserve-comments/input.js
+* integration/class-binding/input.js
+* integration/class-declaration/input.js
+* integration/in-class-heritage/input.js
+* integration/multiple-static-initializers/input.js
+* integration/name-conflict/input.js
+* integration/new-target/input.js
+* integration/preserve-comments/input.js
+* integration-loose/.new-target/input.js
+* integration-loose/class-binding/input.js
+* integration-loose/class-declaration/input.js
+* integration-loose/in-class-heritage/input.js
+* integration-loose/multiple-static-initializers/input.js
+* integration-loose/name-conflict/input.js
+* integration-loose/preserve-comments/input.js
+* integration-loose/super-static-block/input.js
 
 # babel-plugin-transform-private-methods (7/136)
-* Failed: accessors/basic/input.js
-* Failed: accessors/get-only-setter/input.js
-* Failed: accessors/preserve-comments/input.js
-* Failed: accessors/reassignment/input.js
-* Failed: accessors/set-only-getter/input.js
-* Failed: accessors/tagged-template/input.js
-* Failed: accessors/updates/input.js
-* Failed: accessors/updates-bigint/input.js
-* Failed: accessors-loose/basic/input.js
-* Failed: accessors-loose/get-only-setter/input.js
-* Failed: accessors-loose/preserve-comments/input.js
-* Failed: accessors-loose/reassignment/input.js
-* Failed: accessors-loose/set-only-getter/input.js
-* Failed: accessors-loose/updates/input.js
-* Failed: accessors-privateFieldsAsProperties/basic/input.js
-* Failed: accessors-privateFieldsAsProperties/get-only-setter/input.js
-* Failed: accessors-privateFieldsAsProperties/preserve-comments/input.js
-* Failed: accessors-privateFieldsAsProperties/set-only-getter/input.js
-* Failed: accessors-privateFieldsAsProperties/updates/input.js
-* Failed: accessors-privateFieldsAsSymbols/basic/input.js
-* Failed: accessors-privateFieldsAsSymbols/get-only-setter/input.js
-* Failed: accessors-privateFieldsAsSymbols/preserve-comments/input.js
-* Failed: accessors-privateFieldsAsSymbols/set-only-getter/input.js
-* Failed: accessors-privateFieldsAsSymbols/updates/input.js
-* Failed: assumption-constantSuper/private-method-super/input.js
-* Failed: duplicated-names/get-set/input.js
-* Failed: duplicated-names/set-get/input.js
-* Failed: private-method/assignment/input.js
-* Failed: private-method/async/input.js
-* Failed: private-method/before-fields/input.js
-* Failed: private-method/class-expression/input.js
-* Failed: private-method/context/input.js
-* Failed: private-method/exfiltrated/input.js
-* Failed: private-method/generator/input.js
-* Failed: private-method/preserve-comments/input.js
-* Failed: private-method/read-only/input.js
-* Failed: private-method/reassignment/input.js
-* Failed: private-method/super/input.js
-* Failed: private-method/tagged-template/input.js
-* Failed: private-method-loose/assignment/input.js
-* Failed: private-method-loose/async/input.js
-* Failed: private-method-loose/before-fields/input.js
-* Failed: private-method-loose/class-expression/input.js
-* Failed: private-method-loose/context/input.js
-* Failed: private-method-loose/exfiltrated/input.js
-* Failed: private-method-loose/generator/input.js
-* Failed: private-method-loose/preserve-comments/input.js
-* Failed: private-method-loose/reassignment/input.js
-* Failed: private-method-loose/super/input.js
-* Failed: private-method-privateFieldsAsProperties/assignment/input.js
-* Failed: private-method-privateFieldsAsProperties/async/input.js
-* Failed: private-method-privateFieldsAsProperties/before-fields/input.js
-* Failed: private-method-privateFieldsAsProperties/class-expression/input.js
-* Failed: private-method-privateFieldsAsProperties/context/input.js
-* Failed: private-method-privateFieldsAsProperties/exfiltrated/input.js
-* Failed: private-method-privateFieldsAsProperties/generator/input.js
-* Failed: private-method-privateFieldsAsProperties/super/input.js
-* Failed: private-method-privateFieldsAsSymbols/assignment/input.js
-* Failed: private-method-privateFieldsAsSymbols/async/input.js
-* Failed: private-method-privateFieldsAsSymbols/before-fields/input.js
-* Failed: private-method-privateFieldsAsSymbols/class-expression/input.js
-* Failed: private-method-privateFieldsAsSymbols/context/input.js
-* Failed: private-method-privateFieldsAsSymbols/exfiltrated/input.js
-* Failed: private-method-privateFieldsAsSymbols/generator/input.js
-* Failed: private-method-privateFieldsAsSymbols/super/input.js
-* Failed: private-static-method/async/input.js
-* Failed: private-static-method/basic/input.js
-* Failed: private-static-method/class-check/input.js
-* Failed: private-static-method/class-expression/input.js
-* Failed: private-static-method/exfiltrated/input.js
-* Failed: private-static-method/generator/input.js
-* Failed: private-static-method/preserve-comments/input.js
-* Failed: private-static-method/read-only/input.js
-* Failed: private-static-method/super/input.js
-* Failed: private-static-method/tagged-template/input.js
-* Failed: private-static-method/this/input.js
-* Failed: private-static-method-loose/async/input.js
-* Failed: private-static-method-loose/basic/input.js
-* Failed: private-static-method-loose/class-check/input.js
-* Failed: private-static-method-loose/class-expression/input.js
-* Failed: private-static-method-loose/exfiltrated/input.js
-* Failed: private-static-method-loose/generator/input.js
-* Failed: private-static-method-loose/preserve-comments/input.js
-* Failed: private-static-method-loose/reassignment/input.js
-* Failed: private-static-method-loose/super/input.js
-* Failed: private-static-method-loose/this/input.js
-* Failed: private-static-method-privateFieldsAsProperties/async/input.js
-* Failed: private-static-method-privateFieldsAsProperties/basic/input.js
-* Failed: private-static-method-privateFieldsAsProperties/class-check/input.js
-* Failed: private-static-method-privateFieldsAsProperties/class-expression/input.js
-* Failed: private-static-method-privateFieldsAsProperties/exfiltrated/input.js
-* Failed: private-static-method-privateFieldsAsProperties/generator/input.js
-* Failed: private-static-method-privateFieldsAsProperties/reassignment/input.js
-* Failed: private-static-method-privateFieldsAsProperties/super/input.js
-* Failed: private-static-method-privateFieldsAsProperties/this/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/async/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/basic/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/class-check/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/class-expression/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/exfiltrated/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/generator/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/reassignment/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/super/input.js
-* Failed: private-static-method-privateFieldsAsSymbols/this/input.js
-* Failed: static-accessors/basic/input.js
-* Failed: static-accessors/destructure-set/input.js
-* Failed: static-accessors/get-only-setter/input.js
-* Failed: static-accessors/preserve-comments/input.js
-* Failed: static-accessors/set-only-getter/input.js
-* Failed: static-accessors/tagged-template/input.js
-* Failed: static-accessors/updates/input.js
-* Failed: static-accessors-loose/basic/input.js
-* Failed: static-accessors-loose/destructure-set/input.js
-* Failed: static-accessors-loose/get-only-setter/input.js
-* Failed: static-accessors-loose/preserve-comments/input.js
-* Failed: static-accessors-loose/set-only-getter/input.js
-* Failed: static-accessors-loose/updates/input.js
-* Failed: static-accessors-privateFieldsAsProperties/basic/input.js
-* Failed: static-accessors-privateFieldsAsProperties/destructure-set/input.js
-* Failed: static-accessors-privateFieldsAsProperties/get-only-setter/input.js
-* Failed: static-accessors-privateFieldsAsProperties/preserve-comments/input.js
-* Failed: static-accessors-privateFieldsAsProperties/set-only-getter/input.js
-* Failed: static-accessors-privateFieldsAsProperties/updates/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/basic/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/destructure-set/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/get-only-setter/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/preserve-comments/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/set-only-getter/input.js
-* Failed: static-accessors-privateFieldsAsSymbols/updates/input.js
+* accessors/basic/input.js
+* accessors/get-only-setter/input.js
+* accessors/preserve-comments/input.js
+* accessors/reassignment/input.js
+* accessors/set-only-getter/input.js
+* accessors/tagged-template/input.js
+* accessors/updates/input.js
+* accessors/updates-bigint/input.js
+* accessors-loose/basic/input.js
+* accessors-loose/get-only-setter/input.js
+* accessors-loose/preserve-comments/input.js
+* accessors-loose/reassignment/input.js
+* accessors-loose/set-only-getter/input.js
+* accessors-loose/updates/input.js
+* accessors-privateFieldsAsProperties/basic/input.js
+* accessors-privateFieldsAsProperties/get-only-setter/input.js
+* accessors-privateFieldsAsProperties/preserve-comments/input.js
+* accessors-privateFieldsAsProperties/set-only-getter/input.js
+* accessors-privateFieldsAsProperties/updates/input.js
+* accessors-privateFieldsAsSymbols/basic/input.js
+* accessors-privateFieldsAsSymbols/get-only-setter/input.js
+* accessors-privateFieldsAsSymbols/preserve-comments/input.js
+* accessors-privateFieldsAsSymbols/set-only-getter/input.js
+* accessors-privateFieldsAsSymbols/updates/input.js
+* assumption-constantSuper/private-method-super/input.js
+* duplicated-names/get-set/input.js
+* duplicated-names/set-get/input.js
+* private-method/assignment/input.js
+* private-method/async/input.js
+* private-method/before-fields/input.js
+* private-method/class-expression/input.js
+* private-method/context/input.js
+* private-method/exfiltrated/input.js
+* private-method/generator/input.js
+* private-method/preserve-comments/input.js
+* private-method/read-only/input.js
+* private-method/reassignment/input.js
+* private-method/super/input.js
+* private-method/tagged-template/input.js
+* private-method-loose/assignment/input.js
+* private-method-loose/async/input.js
+* private-method-loose/before-fields/input.js
+* private-method-loose/class-expression/input.js
+* private-method-loose/context/input.js
+* private-method-loose/exfiltrated/input.js
+* private-method-loose/generator/input.js
+* private-method-loose/preserve-comments/input.js
+* private-method-loose/reassignment/input.js
+* private-method-loose/super/input.js
+* private-method-privateFieldsAsProperties/assignment/input.js
+* private-method-privateFieldsAsProperties/async/input.js
+* private-method-privateFieldsAsProperties/before-fields/input.js
+* private-method-privateFieldsAsProperties/class-expression/input.js
+* private-method-privateFieldsAsProperties/context/input.js
+* private-method-privateFieldsAsProperties/exfiltrated/input.js
+* private-method-privateFieldsAsProperties/generator/input.js
+* private-method-privateFieldsAsProperties/super/input.js
+* private-method-privateFieldsAsSymbols/assignment/input.js
+* private-method-privateFieldsAsSymbols/async/input.js
+* private-method-privateFieldsAsSymbols/before-fields/input.js
+* private-method-privateFieldsAsSymbols/class-expression/input.js
+* private-method-privateFieldsAsSymbols/context/input.js
+* private-method-privateFieldsAsSymbols/exfiltrated/input.js
+* private-method-privateFieldsAsSymbols/generator/input.js
+* private-method-privateFieldsAsSymbols/super/input.js
+* private-static-method/async/input.js
+* private-static-method/basic/input.js
+* private-static-method/class-check/input.js
+* private-static-method/class-expression/input.js
+* private-static-method/exfiltrated/input.js
+* private-static-method/generator/input.js
+* private-static-method/preserve-comments/input.js
+* private-static-method/read-only/input.js
+* private-static-method/super/input.js
+* private-static-method/tagged-template/input.js
+* private-static-method/this/input.js
+* private-static-method-loose/async/input.js
+* private-static-method-loose/basic/input.js
+* private-static-method-loose/class-check/input.js
+* private-static-method-loose/class-expression/input.js
+* private-static-method-loose/exfiltrated/input.js
+* private-static-method-loose/generator/input.js
+* private-static-method-loose/preserve-comments/input.js
+* private-static-method-loose/reassignment/input.js
+* private-static-method-loose/super/input.js
+* private-static-method-loose/this/input.js
+* private-static-method-privateFieldsAsProperties/async/input.js
+* private-static-method-privateFieldsAsProperties/basic/input.js
+* private-static-method-privateFieldsAsProperties/class-check/input.js
+* private-static-method-privateFieldsAsProperties/class-expression/input.js
+* private-static-method-privateFieldsAsProperties/exfiltrated/input.js
+* private-static-method-privateFieldsAsProperties/generator/input.js
+* private-static-method-privateFieldsAsProperties/reassignment/input.js
+* private-static-method-privateFieldsAsProperties/super/input.js
+* private-static-method-privateFieldsAsProperties/this/input.js
+* private-static-method-privateFieldsAsSymbols/async/input.js
+* private-static-method-privateFieldsAsSymbols/basic/input.js
+* private-static-method-privateFieldsAsSymbols/class-check/input.js
+* private-static-method-privateFieldsAsSymbols/class-expression/input.js
+* private-static-method-privateFieldsAsSymbols/exfiltrated/input.js
+* private-static-method-privateFieldsAsSymbols/generator/input.js
+* private-static-method-privateFieldsAsSymbols/reassignment/input.js
+* private-static-method-privateFieldsAsSymbols/super/input.js
+* private-static-method-privateFieldsAsSymbols/this/input.js
+* static-accessors/basic/input.js
+* static-accessors/destructure-set/input.js
+* static-accessors/get-only-setter/input.js
+* static-accessors/preserve-comments/input.js
+* static-accessors/set-only-getter/input.js
+* static-accessors/tagged-template/input.js
+* static-accessors/updates/input.js
+* static-accessors-loose/basic/input.js
+* static-accessors-loose/destructure-set/input.js
+* static-accessors-loose/get-only-setter/input.js
+* static-accessors-loose/preserve-comments/input.js
+* static-accessors-loose/set-only-getter/input.js
+* static-accessors-loose/updates/input.js
+* static-accessors-privateFieldsAsProperties/basic/input.js
+* static-accessors-privateFieldsAsProperties/destructure-set/input.js
+* static-accessors-privateFieldsAsProperties/get-only-setter/input.js
+* static-accessors-privateFieldsAsProperties/preserve-comments/input.js
+* static-accessors-privateFieldsAsProperties/set-only-getter/input.js
+* static-accessors-privateFieldsAsProperties/updates/input.js
+* static-accessors-privateFieldsAsSymbols/basic/input.js
+* static-accessors-privateFieldsAsSymbols/destructure-set/input.js
+* static-accessors-privateFieldsAsSymbols/get-only-setter/input.js
+* static-accessors-privateFieldsAsSymbols/preserve-comments/input.js
+* static-accessors-privateFieldsAsSymbols/set-only-getter/input.js
+* static-accessors-privateFieldsAsSymbols/updates/input.js
 
 # babel-plugin-transform-private-property-in-object (0/59)
-* Failed: assumption-privateFieldsAsProperties/accessor/input.js
-* Failed: assumption-privateFieldsAsProperties/compiled-classes/input.js
-* Failed: assumption-privateFieldsAsProperties/field/input.js
-* Failed: assumption-privateFieldsAsProperties/method/input.js
-* Failed: assumption-privateFieldsAsProperties/nested-class/input.js
-* Failed: assumption-privateFieldsAsProperties/nested-class-other-redeclared/input.js
-* Failed: assumption-privateFieldsAsProperties/nested-class-redeclared/input.js
-* Failed: assumption-privateFieldsAsProperties/static-accessor/input.js
-* Failed: assumption-privateFieldsAsProperties/static-field/input.js
-* Failed: assumption-privateFieldsAsProperties/static-method/input.js
-* Failed: assumption-privateFieldsAsSymbols/accessor/input.js
-* Failed: assumption-privateFieldsAsSymbols/compiled-classes/input.js
-* Failed: assumption-privateFieldsAsSymbols/field/input.js
-* Failed: assumption-privateFieldsAsSymbols/method/input.js
-* Failed: assumption-privateFieldsAsSymbols/nested-class/input.js
-* Failed: assumption-privateFieldsAsSymbols/nested-class-other-redeclared/input.js
-* Failed: assumption-privateFieldsAsSymbols/nested-class-redeclared/input.js
-* Failed: assumption-privateFieldsAsSymbols/static-accessor/input.js
-* Failed: assumption-privateFieldsAsSymbols/static-field/input.js
-* Failed: assumption-privateFieldsAsSymbols/static-method/input.js
-* Failed: private/accessor/input.js
-* Failed: private/field/input.js
-* Failed: private/method/input.js
-* Failed: private/native-classes/input.js
-* Failed: private/nested-class/input.js
-* Failed: private/nested-class-other-redeclared/input.js
-* Failed: private/nested-class-redeclared/input.js
-* Failed: private/static-accessor/input.js
-* Failed: private/static-field/input.js
-* Failed: private/static-method/input.js
-* Failed: private/static-shadow/input.js
-* Failed: private-loose/accessor/input.js
-* Failed: private-loose/field/input.js
-* Failed: private-loose/method/input.js
-* Failed: private-loose/native-classes/input.js
-* Failed: private-loose/nested-class/input.js
-* Failed: private-loose/nested-class-other-redeclared/input.js
-* Failed: private-loose/nested-class-redeclared/input.js
-* Failed: private-loose/static-accessor/input.js
-* Failed: private-loose/static-field/input.js
-* Failed: private-loose/static-method/input.js
-* Failed: private-loose/static-shadow/input.js
-* Failed: to-native-fields/accessor/input.js
-* Failed: to-native-fields/class-expression-in-default-param/input.js
-* Failed: to-native-fields/class-expression-instance/input.js
-* Failed: to-native-fields/class-expression-static/input.js
-* Failed: to-native-fields/field/input.js
-* Failed: to-native-fields/half-constructed-instance/input.js
-* Failed: to-native-fields/half-constructed-static/input.js
-* Failed: to-native-fields/method/input.js
-* Failed: to-native-fields/multiple-checks/input.js
-* Failed: to-native-fields/nested-class/input.js
-* Failed: to-native-fields/nested-class-other-redeclared/input.js
-* Failed: to-native-fields/nested-class-redeclared/input.js
-* Failed: to-native-fields/static-accessor/input.js
-* Failed: to-native-fields/static-field/input.js
-* Failed: to-native-fields/static-method/input.js
-* Failed: to-native-fields/static-shadow/input.js
-* Failed: to-native-fields/static-shadowed-binding/input.js
+* assumption-privateFieldsAsProperties/accessor/input.js
+* assumption-privateFieldsAsProperties/compiled-classes/input.js
+* assumption-privateFieldsAsProperties/field/input.js
+* assumption-privateFieldsAsProperties/method/input.js
+* assumption-privateFieldsAsProperties/nested-class/input.js
+* assumption-privateFieldsAsProperties/nested-class-other-redeclared/input.js
+* assumption-privateFieldsAsProperties/nested-class-redeclared/input.js
+* assumption-privateFieldsAsProperties/static-accessor/input.js
+* assumption-privateFieldsAsProperties/static-field/input.js
+* assumption-privateFieldsAsProperties/static-method/input.js
+* assumption-privateFieldsAsSymbols/accessor/input.js
+* assumption-privateFieldsAsSymbols/compiled-classes/input.js
+* assumption-privateFieldsAsSymbols/field/input.js
+* assumption-privateFieldsAsSymbols/method/input.js
+* assumption-privateFieldsAsSymbols/nested-class/input.js
+* assumption-privateFieldsAsSymbols/nested-class-other-redeclared/input.js
+* assumption-privateFieldsAsSymbols/nested-class-redeclared/input.js
+* assumption-privateFieldsAsSymbols/static-accessor/input.js
+* assumption-privateFieldsAsSymbols/static-field/input.js
+* assumption-privateFieldsAsSymbols/static-method/input.js
+* private/accessor/input.js
+* private/field/input.js
+* private/method/input.js
+* private/native-classes/input.js
+* private/nested-class/input.js
+* private/nested-class-other-redeclared/input.js
+* private/nested-class-redeclared/input.js
+* private/static-accessor/input.js
+* private/static-field/input.js
+* private/static-method/input.js
+* private/static-shadow/input.js
+* private-loose/accessor/input.js
+* private-loose/field/input.js
+* private-loose/method/input.js
+* private-loose/native-classes/input.js
+* private-loose/nested-class/input.js
+* private-loose/nested-class-other-redeclared/input.js
+* private-loose/nested-class-redeclared/input.js
+* private-loose/static-accessor/input.js
+* private-loose/static-field/input.js
+* private-loose/static-method/input.js
+* private-loose/static-shadow/input.js
+* to-native-fields/accessor/input.js
+* to-native-fields/class-expression-in-default-param/input.js
+* to-native-fields/class-expression-instance/input.js
+* to-native-fields/class-expression-static/input.js
+* to-native-fields/field/input.js
+* to-native-fields/half-constructed-instance/input.js
+* to-native-fields/half-constructed-static/input.js
+* to-native-fields/method/input.js
+* to-native-fields/multiple-checks/input.js
+* to-native-fields/nested-class/input.js
+* to-native-fields/nested-class-other-redeclared/input.js
+* to-native-fields/nested-class-redeclared/input.js
+* to-native-fields/static-accessor/input.js
+* to-native-fields/static-field/input.js
+* to-native-fields/static-method/input.js
+* to-native-fields/static-shadow/input.js
+* to-native-fields/static-shadowed-binding/input.js
 
 # babel-plugin-transform-logical-assignment-operators (5/6)
-* Failed: logical-assignment/null-coalescing/input.js
+* logical-assignment/null-coalescing/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
-* Failed: export-namespace/namespace-default/input.mjs
-* Failed: export-namespace/namespace-es6/input.mjs
-* Failed: export-namespace/namespace-string/input.mjs
-* Failed: export-namespace/namespace-typescript/input.mjs
+* export-namespace/namespace-default/input.mjs
+* export-namespace/namespace-es6/input.mjs
+* export-namespace/namespace-string/input.mjs
+* export-namespace/namespace-typescript/input.mjs
 
 # babel-plugin-transform-dynamic-import (2/19)
-* Failed: amd/missing-plugin/input.mjs
-* Failed: amd/module/input.mjs
-* Failed: amd/no-interop/input.js
-* Failed: amd/script/input.js
-* Failed: amd/to-string/input.js
-* Failed: amd/with-other-import-export/input.mjs
-* Failed: commonjs/missing-plugin/input.mjs
-* Failed: commonjs/module/input.mjs
-* Failed: commonjs/no-interop/input.js
-* Failed: commonjs/script/input.js
-* Failed: commonjs/shadowed-require/input.js
-* Failed: commonjs/template-literal/input.js
-* Failed: commonjs/to-string/input.js
-* Failed: systemjs/missing-plugin-babel-7/input.mjs
-* Failed: systemjs/module/input.mjs
-* Failed: systemjs/script/input.js
-* Failed: systemjs/to-string/input.js
+* amd/missing-plugin/input.mjs
+* amd/module/input.mjs
+* amd/no-interop/input.js
+* amd/script/input.js
+* amd/to-string/input.js
+* amd/with-other-import-export/input.mjs
+* commonjs/missing-plugin/input.mjs
+* commonjs/module/input.mjs
+* commonjs/no-interop/input.js
+* commonjs/script/input.js
+* commonjs/shadowed-require/input.js
+* commonjs/template-literal/input.js
+* commonjs/to-string/input.js
+* systemjs/missing-plugin-babel-7/input.mjs
+* systemjs/module/input.mjs
+* systemjs/script/input.js
+* systemjs/to-string/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
-* Failed: export-namespace/namespace-default/input.mjs
-* Failed: export-namespace/namespace-es6/input.mjs
-* Failed: export-namespace/namespace-string/input.mjs
-* Failed: export-namespace/namespace-typescript/input.mjs
+* export-namespace/namespace-default/input.mjs
+* export-namespace/namespace-es6/input.mjs
+* export-namespace/namespace-string/input.mjs
+* export-namespace/namespace-typescript/input.mjs
 
 # babel-plugin-transform-nullish-coalescing-operator (10/12)
-* Failed: assumption-noDocumentAll/transform-in-default-param/input.js
-* Failed: nullish-coalescing/transform-in-default-param/input.js
+* assumption-noDocumentAll/transform-in-default-param/input.js
+* nullish-coalescing/transform-in-default-param/input.js
 
 # babel-plugin-transform-optional-chaining (4/46)
-* Failed: assumption-noDocumentAll/assignment/input.js
-* Failed: assumption-noDocumentAll/cast-to-boolean/input.js
-* Failed: assumption-noDocumentAll/in-function-params/input.js
-* Failed: assumption-noDocumentAll/memoize/input.js
-* Failed: assumption-noDocumentAll/optional-eval-call/input.js
-* Failed: assumption-noDocumentAll/super-method-call/input.js
-* Failed: assumption-pureGetters/function-call/input.js
-* Failed: assumption-pureGetters/memoize/input.js
-* Failed: assumption-pureGetters/super-method-call/input.js
-* Failed: general/assignment/input.js
-* Failed: general/cast-to-boolean/input.js
-* Failed: general/containers/input.js
-* Failed: general/delete/input.js
-* Failed: general/function-call/input.js
-* Failed: general/function-call-loose/input.js
-* Failed: general/function-call-spread/input.js
-* Failed: general/in-function-params/input.js
-* Failed: general/in-function-params-loose/input.js
-* Failed: general/in-method-key/input.js
-* Failed: general/in-method-key-loose/input.js
-* Failed: general/in-var-destructuring/input.js
-* Failed: general/member-access/input.js
-* Failed: general/memoize/input.js
-* Failed: general/memoize-loose/input.js
-* Failed: general/optional-eval-call/input.js
-* Failed: general/optional-eval-call-loose/input.js
-* Failed: general/parenthesized-expression-containers/input.js
-* Failed: general/parenthesized-member-call/input.js
-* Failed: general/parenthesized-member-call-loose/input.js
-* Failed: general/super-method-call/input.js
-* Failed: general/super-method-call-loose/input.js
-* Failed: general/unary/input.js
-* Failed: loose/cast-to-boolean/input.js
-* Failed: regression/10959-transform-optional-chaining/input.ts
-* Failed: regression/10959-transform-ts-and-optional-chaining/input.ts
-* Failed: regression/7642/input.js
-* Failed: transparent-expr-wrappers/ts-as-call-context/input.ts
-* Failed: transparent-expr-wrappers/ts-as-call-context-in-if/input.ts
-* Failed: transparent-expr-wrappers/ts-as-function-call-loose/input.ts
-* Failed: transparent-expr-wrappers/ts-as-in-conditional/input.ts
-* Failed: transparent-expr-wrappers/ts-as-member-expression/input.ts
-* Failed: transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+* assumption-noDocumentAll/assignment/input.js
+* assumption-noDocumentAll/cast-to-boolean/input.js
+* assumption-noDocumentAll/in-function-params/input.js
+* assumption-noDocumentAll/memoize/input.js
+* assumption-noDocumentAll/optional-eval-call/input.js
+* assumption-noDocumentAll/super-method-call/input.js
+* assumption-pureGetters/function-call/input.js
+* assumption-pureGetters/memoize/input.js
+* assumption-pureGetters/super-method-call/input.js
+* general/assignment/input.js
+* general/cast-to-boolean/input.js
+* general/containers/input.js
+* general/delete/input.js
+* general/function-call/input.js
+* general/function-call-loose/input.js
+* general/function-call-spread/input.js
+* general/in-function-params/input.js
+* general/in-function-params-loose/input.js
+* general/in-method-key/input.js
+* general/in-method-key-loose/input.js
+* general/in-var-destructuring/input.js
+* general/member-access/input.js
+* general/memoize/input.js
+* general/memoize-loose/input.js
+* general/optional-eval-call/input.js
+* general/optional-eval-call-loose/input.js
+* general/parenthesized-expression-containers/input.js
+* general/parenthesized-member-call/input.js
+* general/parenthesized-member-call-loose/input.js
+* general/super-method-call/input.js
+* general/super-method-call-loose/input.js
+* general/unary/input.js
+* loose/cast-to-boolean/input.js
+* regression/10959-transform-optional-chaining/input.ts
+* regression/10959-transform-ts-and-optional-chaining/input.ts
+* regression/7642/input.js
+* transparent-expr-wrappers/ts-as-call-context/input.ts
+* transparent-expr-wrappers/ts-as-call-context-in-if/input.ts
+* transparent-expr-wrappers/ts-as-function-call-loose/input.ts
+* transparent-expr-wrappers/ts-as-in-conditional/input.ts
+* transparent-expr-wrappers/ts-as-member-expression/input.ts
+* transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
 
 # babel-plugin-transform-json-strings (2/4)
-* Failed: json-strings/directive-line-separator/input.js
-* Failed: json-strings/directive-paragraph-separator/input.js
+* json-strings/directive-line-separator/input.js
+* json-strings/directive-paragraph-separator/input.js
 
 # babel-plugin-transform-async-generator-functions (0/24)
-* Failed: async-generators/class-method/input.js
-* Failed: async-generators/class-private-method/input.js
-* Failed: async-generators/declaration/input.js
-* Failed: async-generators/expression/input.js
-* Failed: async-generators/object-method/input.js
-* Failed: async-generators/static-method/input.js
-* Failed: async-generators/transform-class-keys/input.js
-* Failed: async-generators/yield-star/input.js
-* Failed: async-generators/yield-star-babel-7/input.js
-* Failed: for-await/async-arrow/input.js
-* Failed: for-await/async-function/input.js
-* Failed: for-await/async-function-no-transform/input.js
-* Failed: for-await/async-generator/input.js
-* Failed: for-await/create-async-from-sync-iterator/input.js
-* Failed: for-await/destructuring/input.js
-* Failed: for-await/lhs-member-expression/input.js
-* Failed: for-await/re-declare-var-in-init-body/input.js
-* Failed: nested/arrows-in-declaration/input.js
-* Failed: nested/async-in-params/input.js
-* Failed: nested/generator-in-async/input.js
-* Failed: regression/13801/input.js
-* Failed: regression/5880/input.js
-* Failed: yield-star/create-async-from-sync-iterator/input.js
-* Failed: yield-star/create-async-from-sync-iterator-babel-7/input.js
+* async-generators/class-method/input.js
+* async-generators/class-private-method/input.js
+* async-generators/declaration/input.js
+* async-generators/expression/input.js
+* async-generators/object-method/input.js
+* async-generators/static-method/input.js
+* async-generators/transform-class-keys/input.js
+* async-generators/yield-star/input.js
+* async-generators/yield-star-babel-7/input.js
+* for-await/async-arrow/input.js
+* for-await/async-function/input.js
+* for-await/async-function-no-transform/input.js
+* for-await/async-generator/input.js
+* for-await/create-async-from-sync-iterator/input.js
+* for-await/destructuring/input.js
+* for-await/lhs-member-expression/input.js
+* for-await/re-declare-var-in-init-body/input.js
+* nested/arrows-in-declaration/input.js
+* nested/async-in-params/input.js
+* nested/generator-in-async/input.js
+* regression/13801/input.js
+* regression/5880/input.js
+* yield-star/create-async-from-sync-iterator/input.js
+* yield-star/create-async-from-sync-iterator-babel-7/input.js
 
 # babel-plugin-transform-object-rest-spread (0/61)
-* Failed: assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
-* Failed: assumption-objectRestNoSymbols/rest-assignment-expression/input.js
-* Failed: assumption-objectRestNoSymbols/rest-computed/input.js
-* Failed: assumption-objectRestNoSymbols/rest-nested/input.js
-* Failed: assumption-objectRestNoSymbols/rest-var-declaration/input.js
-* Failed: assumption-pureGetters/rest-remove-unused-excluded-keys/input.js
-* Failed: assumption-pureGetters/spread-single-call/input.js
-* Failed: assumption-setSpreadProperties/assignment/input.js
-* Failed: assumption-setSpreadProperties/expression/input.js
-* Failed: assumption-setSpreadProperties/targets-support-object-assign/input.js
-* Failed: assumption-setSpreadProperties-with-useBuiltIns/assignment/input.js
-* Failed: assumption-setSpreadProperties-with-useBuiltIns/expression/input.js
-* Failed: object-rest/assignment-expression/input.js
-* Failed: object-rest/catch-clause/input.js
-* Failed: object-rest/duplicate-decl-bug/input.js
-* Failed: object-rest/export/input.mjs
-* Failed: object-rest/for-x/input.js
-* Failed: object-rest/for-x-array-pattern/input.js
-* Failed: object-rest/for-x-completion-record/input.js
-* Failed: object-rest/impure-computed/input.js
-* Failed: object-rest/nested/input.js
-* Failed: object-rest/nested-2/input.js
-* Failed: object-rest/nested-array/input.js
-* Failed: object-rest/nested-array-2/input.js
-* Failed: object-rest/nested-computed-key/input.js
-* Failed: object-rest/nested-default-value/input.js
-* Failed: object-rest/nested-literal-property/input.js
-* Failed: object-rest/nested-order/input.js
-* Failed: object-rest/non-string-computed/input.js
-* Failed: object-rest/null-destructuring/input.js
-* Failed: object-rest/null-destructuring-transform-destructuring/input.js
-* Failed: object-rest/object-ref-computed/input.js
-* Failed: object-rest/parameters/input.js
-* Failed: object-rest/parameters-object-rest-used-in-default/input.js
-* Failed: object-rest/remove-unused-excluded-keys-loose/input.js
-* Failed: object-rest/symbol/input.js
-* Failed: object-rest/template-literal-allLiterals-true-no-hoisting/input.js
-* Failed: object-rest/template-literal-property-allLiterals-false/input.js
-* Failed: object-rest/template-literal-property-allLiterals-true/input.js
-* Failed: object-rest/variable-destructuring/input.js
-* Failed: object-rest/with-array-rest/input.js
-* Failed: object-spread/assignment/input.js
-* Failed: object-spread/expression/input.js
-* Failed: object-spread/side-effect/input.js
-* Failed: object-spread/variable-declaration/input.js
-* Failed: object-spread-loose/assignment/input.js
-* Failed: object-spread-loose/expression/input.js
-* Failed: object-spread-loose/parameters-object-rest-used-in-default/input.js
-* Failed: object-spread-loose/side-effect/input.js
-* Failed: object-spread-loose/targets-support-object-assign/input.js
-* Failed: object-spread-loose/variable-declaration/input.js
-* Failed: object-spread-loose-builtins/assignment/input.js
-* Failed: object-spread-loose-builtins/expression/input.js
-* Failed: object-spread-loose-builtins/side-effect/input.js
-* Failed: object-spread-loose-builtins/variable-declaration/input.js
-* Failed: regression/T7178/input.mjs
-* Failed: regression/gh-4904/input.js
-* Failed: regression/gh-5151/input.js
-* Failed: regression/gh-7304/input.mjs
-* Failed: regression/gh-7388/input.js
-* Failed: regression/gh-8323/input.js
+* assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
+* assumption-objectRestNoSymbols/rest-assignment-expression/input.js
+* assumption-objectRestNoSymbols/rest-computed/input.js
+* assumption-objectRestNoSymbols/rest-nested/input.js
+* assumption-objectRestNoSymbols/rest-var-declaration/input.js
+* assumption-pureGetters/rest-remove-unused-excluded-keys/input.js
+* assumption-pureGetters/spread-single-call/input.js
+* assumption-setSpreadProperties/assignment/input.js
+* assumption-setSpreadProperties/expression/input.js
+* assumption-setSpreadProperties/targets-support-object-assign/input.js
+* assumption-setSpreadProperties-with-useBuiltIns/assignment/input.js
+* assumption-setSpreadProperties-with-useBuiltIns/expression/input.js
+* object-rest/assignment-expression/input.js
+* object-rest/catch-clause/input.js
+* object-rest/duplicate-decl-bug/input.js
+* object-rest/export/input.mjs
+* object-rest/for-x/input.js
+* object-rest/for-x-array-pattern/input.js
+* object-rest/for-x-completion-record/input.js
+* object-rest/impure-computed/input.js
+* object-rest/nested/input.js
+* object-rest/nested-2/input.js
+* object-rest/nested-array/input.js
+* object-rest/nested-array-2/input.js
+* object-rest/nested-computed-key/input.js
+* object-rest/nested-default-value/input.js
+* object-rest/nested-literal-property/input.js
+* object-rest/nested-order/input.js
+* object-rest/non-string-computed/input.js
+* object-rest/null-destructuring/input.js
+* object-rest/null-destructuring-transform-destructuring/input.js
+* object-rest/object-ref-computed/input.js
+* object-rest/parameters/input.js
+* object-rest/parameters-object-rest-used-in-default/input.js
+* object-rest/remove-unused-excluded-keys-loose/input.js
+* object-rest/symbol/input.js
+* object-rest/template-literal-allLiterals-true-no-hoisting/input.js
+* object-rest/template-literal-property-allLiterals-false/input.js
+* object-rest/template-literal-property-allLiterals-true/input.js
+* object-rest/variable-destructuring/input.js
+* object-rest/with-array-rest/input.js
+* object-spread/assignment/input.js
+* object-spread/expression/input.js
+* object-spread/side-effect/input.js
+* object-spread/variable-declaration/input.js
+* object-spread-loose/assignment/input.js
+* object-spread-loose/expression/input.js
+* object-spread-loose/parameters-object-rest-used-in-default/input.js
+* object-spread-loose/side-effect/input.js
+* object-spread-loose/targets-support-object-assign/input.js
+* object-spread-loose/variable-declaration/input.js
+* object-spread-loose-builtins/assignment/input.js
+* object-spread-loose-builtins/expression/input.js
+* object-spread-loose-builtins/side-effect/input.js
+* object-spread-loose-builtins/variable-declaration/input.js
+* regression/T7178/input.mjs
+* regression/gh-4904/input.js
+* regression/gh-5151/input.js
+* regression/gh-7304/input.mjs
+* regression/gh-7388/input.js
+* regression/gh-8323/input.js
 
 # babel-plugin-transform-dotall-regex (0/3)
-* Failed: dotall-regex/simple/input.js
-* Failed: dotall-regex/with-unicode-flag/input.js
-* Failed: dotall-regex/with-unicode-property-escape/input.js
+* dotall-regex/simple/input.js
+* dotall-regex/with-unicode-flag/input.js
+* dotall-regex/with-unicode-property-escape/input.js
 
 # babel-plugin-transform-async-to-generator (1/41)
-* Failed: assumption-ignoreFunctionLength-true/basic/input.mjs
-* Failed: assumption-ignoreFunctionLength-true/export-default-function/input.mjs
-* Failed: assumption-noNewArrows-false/basic/input.js
-* Failed: async-to-generator/async/input.js
-* Failed: async-to-generator/async-arrow-in-method/input.js
-* Failed: async-to-generator/async-default-arguments/input.js
-* Failed: async-to-generator/async-iife/input.js
-* Failed: async-to-generator/async-iife-with-regenerator/input.js
-* Failed: async-to-generator/async-iife-with-regenerator-spec/input.js
-* Failed: async-to-generator/deeply-nested-asyncs/input.js
-* Failed: async-to-generator/double-await/input.js
-* Failed: async-to-generator/expression/input.js
-* Failed: async-to-generator/function-arity/input.js
-* Failed: async-to-generator/named-expression/input.js
-* Failed: async-to-generator/no-parameters-and-no-id/input.js
-* Failed: async-to-generator/object-method/input.js
-* Failed: async-to-generator/object-method-with-arrows/input.js
-* Failed: async-to-generator/object-method-with-super/input.js
-* Failed: async-to-generator/parameters/input.js
-* Failed: async-to-generator/shadowed-promise/input.js
-* Failed: async-to-generator/shadowed-promise-import/input.mjs
-* Failed: async-to-generator/shadowed-promise-nested/input.js
-* Failed: async-to-generator/statement/input.js
-* Failed: bluebird-coroutines/arrow-function/input.js
-* Failed: bluebird-coroutines/class/input.js
-* Failed: bluebird-coroutines/expression/input.js
-* Failed: bluebird-coroutines/named-expression/input.js
-* Failed: bluebird-coroutines/statement/input.js
-* Failed: export-async/default-arrow-export/input.mjs
-* Failed: export-async/default-export/input.mjs
-* Failed: export-async/import-and-export/input.mjs
-* Failed: export-async/lone-export/input.mjs
-* Failed: regression/4599/input.js
-* Failed: regression/4943/input.js
-* Failed: regression/7178/input.js
-* Failed: regression/8783/input.js
-* Failed: regression/T7108/input.js
-* Failed: regression/T7194/input.js
-* Failed: regression/gh-6923/input.js
-* Failed: regression/in-uncompiled-class-fields/input.js
+* assumption-ignoreFunctionLength-true/basic/input.mjs
+* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
+* assumption-noNewArrows-false/basic/input.js
+* async-to-generator/async/input.js
+* async-to-generator/async-arrow-in-method/input.js
+* async-to-generator/async-default-arguments/input.js
+* async-to-generator/async-iife/input.js
+* async-to-generator/async-iife-with-regenerator/input.js
+* async-to-generator/async-iife-with-regenerator-spec/input.js
+* async-to-generator/deeply-nested-asyncs/input.js
+* async-to-generator/double-await/input.js
+* async-to-generator/expression/input.js
+* async-to-generator/function-arity/input.js
+* async-to-generator/named-expression/input.js
+* async-to-generator/no-parameters-and-no-id/input.js
+* async-to-generator/object-method/input.js
+* async-to-generator/object-method-with-arrows/input.js
+* async-to-generator/object-method-with-super/input.js
+* async-to-generator/parameters/input.js
+* async-to-generator/shadowed-promise/input.js
+* async-to-generator/shadowed-promise-import/input.mjs
+* async-to-generator/shadowed-promise-nested/input.js
+* async-to-generator/statement/input.js
+* bluebird-coroutines/arrow-function/input.js
+* bluebird-coroutines/class/input.js
+* bluebird-coroutines/expression/input.js
+* bluebird-coroutines/named-expression/input.js
+* bluebird-coroutines/statement/input.js
+* export-async/default-arrow-export/input.mjs
+* export-async/default-export/input.mjs
+* export-async/import-and-export/input.mjs
+* export-async/lone-export/input.mjs
+* regression/4599/input.js
+* regression/4943/input.js
+* regression/7178/input.js
+* regression/8783/input.js
+* regression/T7108/input.js
+* regression/T7194/input.js
+* regression/gh-6923/input.js
+* regression/in-uncompiled-class-fields/input.js
 
 # babel-plugin-transform-exponentiation-operator (3/4)
-* Failed: regression/4349/input.js
+* regression/4349/input.js
 
 # babel-plugin-transform-unicode-regex (1/4)
-* Failed: unicode-regex/basic/input.js
-* Failed: unicode-regex/negated-set/input.js
-* Failed: unicode-regex/slash/input.js
+* unicode-regex/basic/input.js
+* unicode-regex/negated-set/input.js
+* unicode-regex/slash/input.js
 
 # babel-plugin-transform-typescript (71/181)
-* Failed: class/abstract-class-decorated/input.ts
-* Failed: class/abstract-class-decorated-method/input.ts
-* Failed: class/abstract-class-decorated-parameter/input.ts
-* Failed: class/accessor-allowDeclareFields-false/input.ts
-* Failed: class/accessor-allowDeclareFields-true/input.ts
-* Failed: class/accessor-allowDeclareFields-true-babel-7/input.ts
-* Failed: class/decorated-declare-properties/input.ts
-* Failed: class/field-not-initialized-babel-7/input.ts
-* Failed: class/parameter-properties/input.ts
-* Failed: class/parameter-properties-late-super/input.ts
-* Failed: class/parameter-properties-with-class/input.ts
-* Failed: class/parameter-properties-with-class-and-super/input.ts
-* Failed: class/parameter-properties-with-parameters/input.ts
-* Failed: class/parameter-properties-with-super/input.ts
-* Failed: class/private-method-override-transform-private/input.ts
-* Failed: class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
-* Failed: declarations/erased/input.ts
-* Failed: declarations/export-declare-enum/input.ts
-* Failed: declarations/nested-namespace/input.mjs
-* Failed: enum/boolean-value/input.ts
-* Failed: enum/const/input.ts
-* Failed: enum/constant-folding/input.ts
-* Failed: enum/export/input.ts
-* Failed: enum/inferred/input.ts
-* Failed: enum/inner-references/input.ts
-* Failed: enum/mix-references/input.ts
-* Failed: enum/non-foldable-constant/input.ts
-* Failed: enum/non-scoped/input.ts
-* Failed: enum/outer-references/input.ts
-* Failed: enum/scoped/input.ts
-* Failed: enum/string-value/input.ts
-* Failed: enum/string-value-template/input.ts
-* Failed: enum/string-values-computed/input.ts
-* Failed: enum/ts5.0-const-foldable/input.ts
-* Failed: exports/declare-shadowed/input.ts
-* Failed: exports/declared-types/input.ts
-* Failed: exports/export-const-enums/input.ts
-* Failed: exports/export-type/input.ts
-* Failed: exports/export-type-from/input.ts
-* Failed: exports/export-type-star-from/input.ts
-* Failed: exports/export=-to-cjs/input.ts
-* Failed: exports/imported-types/input.ts
-* Failed: exports/imported-types-only-remove-type-imports/input.ts
-* Failed: exports/issue-9916-3/input.ts
-* Failed: exports/type-only-export-specifier-1/input.ts
-* Failed: exports/type-only-export-specifier-2/input.ts
-* Failed: exports/type-only-export-specifier-3/input.ts
-* Failed: function/overloads-exports/input.mjs
-* Failed: function/this-parameter/input.ts
-* Failed: imports/elide-injected/input.ts
-* Failed: imports/elide-preact/input.ts
-* Failed: imports/elide-react/input.ts
-* Failed: imports/elide-type-referenced-in-imports-equal-no/input.ts
-* Failed: imports/elide-typeof/input.ts
-* Failed: imports/elision/input.ts
-* Failed: imports/elision-export-type/input.ts
-* Failed: imports/elision-locations/input.ts
-* Failed: imports/elision-qualifiedname/input.ts
-* Failed: imports/elision-rename/input.ts
-* Failed: imports/enum-id/input.ts
-* Failed: imports/enum-value/input.ts
-* Failed: imports/import-removed-exceptions/input.ts
-* Failed: imports/import-type/input.ts
-* Failed: imports/import-type-func-with-duplicate-name/input.ts
-* Failed: imports/import-type-not-removed/input.ts
-* Failed: imports/import=-declaration/input.ts
-* Failed: imports/import=-module-to-cjs/input.ts
-* Failed: imports/only-remove-type-imports/input.ts
-* Failed: imports/parameter-decorators/input.ts
-* Failed: imports/property-signature/input.ts
-* Failed: imports/type-only-export-specifier-1/input.ts
-* Failed: imports/type-only-export-specifier-2/input.ts
-* Failed: imports/type-only-import-specifier-1/input.ts
-* Failed: imports/type-only-import-specifier-2/input.ts
-* Failed: imports/type-only-import-specifier-3/input.ts
-* Failed: imports/type-only-import-specifier-4/input.ts
-* Failed: namespace/alias/input.ts
-* Failed: namespace/canonical/input.ts
-* Failed: namespace/clobber-class/input.ts
-* Failed: namespace/clobber-enum/input.ts
-* Failed: namespace/clobber-export/input.ts
-* Failed: namespace/clobber-import/input.ts
-* Failed: namespace/contentious-names/input.ts
-* Failed: namespace/declare/input.ts
-* Failed: namespace/declare-global-nested-namespace/input.ts
-* Failed: namespace/export/input.ts
-* Failed: namespace/module-nested/input.ts
-* Failed: namespace/module-nested-export/input.ts
-* Failed: namespace/multiple/input.ts
-* Failed: namespace/namespace-nested-module/input.ts
-* Failed: namespace/nested/input.ts
-* Failed: namespace/nested-destructuring/input.ts
-* Failed: namespace/nested-shorthand/input.ts
-* Failed: namespace/same-name/input.ts
-* Failed: namespace/undeclared/input.ts
-* Failed: optimize-const-enums/custom-values/input.ts
-* Failed: optimize-const-enums/custom-values-exported/input.ts
-* Failed: optimize-const-enums/declare/input.ts
-* Failed: optimize-const-enums/export-const-enum/input.ts
-* Failed: optimize-const-enums/export-const-enum-type-and-value/input.ts
-* Failed: optimize-const-enums/export-const-enum-type-no-deopt/input.ts
-* Failed: optimize-const-enums/exported/input.ts
-* Failed: optimize-const-enums/local/input.ts
-* Failed: optimize-const-enums/local-shadowed/input.ts
-* Failed: optimize-const-enums/merged/input.ts
-* Failed: optimize-const-enums/merged-exported/input.ts
-* Failed: regression/10162/input.ts
-* Failed: regression/10338/input.ts
-* Failed: regression/11061/input.mjs
-* Failed: variable-declaration/non-null-in-optional-chain/input.ts
+* class/abstract-class-decorated/input.ts
+* class/abstract-class-decorated-method/input.ts
+* class/abstract-class-decorated-parameter/input.ts
+* class/accessor-allowDeclareFields-false/input.ts
+* class/accessor-allowDeclareFields-true/input.ts
+* class/accessor-allowDeclareFields-true-babel-7/input.ts
+* class/decorated-declare-properties/input.ts
+* class/field-not-initialized-babel-7/input.ts
+* class/parameter-properties/input.ts
+* class/parameter-properties-late-super/input.ts
+* class/parameter-properties-with-class/input.ts
+* class/parameter-properties-with-class-and-super/input.ts
+* class/parameter-properties-with-parameters/input.ts
+* class/parameter-properties-with-super/input.ts
+* class/private-method-override-transform-private/input.ts
+* class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
+* declarations/erased/input.ts
+* declarations/export-declare-enum/input.ts
+* declarations/nested-namespace/input.mjs
+* enum/boolean-value/input.ts
+* enum/const/input.ts
+* enum/constant-folding/input.ts
+* enum/export/input.ts
+* enum/inferred/input.ts
+* enum/inner-references/input.ts
+* enum/mix-references/input.ts
+* enum/non-foldable-constant/input.ts
+* enum/non-scoped/input.ts
+* enum/outer-references/input.ts
+* enum/scoped/input.ts
+* enum/string-value/input.ts
+* enum/string-value-template/input.ts
+* enum/string-values-computed/input.ts
+* enum/ts5.0-const-foldable/input.ts
+* exports/declare-shadowed/input.ts
+* exports/declared-types/input.ts
+* exports/export-const-enums/input.ts
+* exports/export-type/input.ts
+* exports/export-type-from/input.ts
+* exports/export-type-star-from/input.ts
+* exports/export=-to-cjs/input.ts
+* exports/imported-types/input.ts
+* exports/imported-types-only-remove-type-imports/input.ts
+* exports/issue-9916-3/input.ts
+* exports/type-only-export-specifier-1/input.ts
+* exports/type-only-export-specifier-2/input.ts
+* exports/type-only-export-specifier-3/input.ts
+* function/overloads-exports/input.mjs
+* function/this-parameter/input.ts
+* imports/elide-injected/input.ts
+* imports/elide-preact/input.ts
+* imports/elide-react/input.ts
+* imports/elide-type-referenced-in-imports-equal-no/input.ts
+* imports/elide-typeof/input.ts
+* imports/elision/input.ts
+* imports/elision-export-type/input.ts
+* imports/elision-locations/input.ts
+* imports/elision-qualifiedname/input.ts
+* imports/elision-rename/input.ts
+* imports/enum-id/input.ts
+* imports/enum-value/input.ts
+* imports/import-removed-exceptions/input.ts
+* imports/import-type/input.ts
+* imports/import-type-func-with-duplicate-name/input.ts
+* imports/import-type-not-removed/input.ts
+* imports/import=-declaration/input.ts
+* imports/import=-module-to-cjs/input.ts
+* imports/only-remove-type-imports/input.ts
+* imports/parameter-decorators/input.ts
+* imports/property-signature/input.ts
+* imports/type-only-export-specifier-1/input.ts
+* imports/type-only-export-specifier-2/input.ts
+* imports/type-only-import-specifier-1/input.ts
+* imports/type-only-import-specifier-2/input.ts
+* imports/type-only-import-specifier-3/input.ts
+* imports/type-only-import-specifier-4/input.ts
+* namespace/alias/input.ts
+* namespace/canonical/input.ts
+* namespace/clobber-class/input.ts
+* namespace/clobber-enum/input.ts
+* namespace/clobber-export/input.ts
+* namespace/clobber-import/input.ts
+* namespace/contentious-names/input.ts
+* namespace/declare/input.ts
+* namespace/declare-global-nested-namespace/input.ts
+* namespace/export/input.ts
+* namespace/module-nested/input.ts
+* namespace/module-nested-export/input.ts
+* namespace/multiple/input.ts
+* namespace/namespace-nested-module/input.ts
+* namespace/nested/input.ts
+* namespace/nested-destructuring/input.ts
+* namespace/nested-shorthand/input.ts
+* namespace/same-name/input.ts
+* namespace/undeclared/input.ts
+* optimize-const-enums/custom-values/input.ts
+* optimize-const-enums/custom-values-exported/input.ts
+* optimize-const-enums/declare/input.ts
+* optimize-const-enums/export-const-enum/input.ts
+* optimize-const-enums/export-const-enum-type-and-value/input.ts
+* optimize-const-enums/export-const-enum-type-no-deopt/input.ts
+* optimize-const-enums/exported/input.ts
+* optimize-const-enums/local/input.ts
+* optimize-const-enums/local-shadowed/input.ts
+* optimize-const-enums/merged/input.ts
+* optimize-const-enums/merged-exported/input.ts
+* regression/10162/input.ts
+* regression/10338/input.ts
+* regression/11061/input.mjs
+* variable-declaration/non-null-in-optional-chain/input.ts
 
 # babel-plugin-transform-react-jsx (26/172)
-* Failed: autoImport/after-polyfills/input.mjs
-* Failed: autoImport/after-polyfills-2/input.mjs
-* Failed: autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* Failed: autoImport/after-polyfills-script-not-supported/input.js
-* Failed: autoImport/auto-import-react-source-type-module/input.js
-* Failed: autoImport/auto-import-react-source-type-script/input.js
-* Failed: autoImport/complicated-scope-module/input.js
-* Failed: autoImport/complicated-scope-script/input.js
-* Failed: autoImport/import-source/input.js
-* Failed: autoImport/import-source-pragma/input.js
-* Failed: autoImport/react-defined/input.js
-* Failed: pure/false-default-pragma-automatic-runtime/input.js
-* Failed: pure/false-default-pragma-classic-runtime/input.js
-* Failed: pure/false-pragma-comment-classic-runtime/input.js
-* Failed: pure/false-pragma-option-classic-runtime/input.js
-* Failed: pure/true-default-pragma-automatic-runtime/input.js
-* Failed: pure/true-default-pragma-classic-runtime/input.js
-* Failed: pure/true-pragma-comment-classic-runtime/input.js
-* Failed: pure/true-pragma-option-classic-runtime/input.js
-* Failed: pure/unset-default-pragma-automatic-runtime/input.js
-* Failed: pure/unset-default-pragma-classic-runtime/input.js
-* Failed: pure/unset-pragma-comment-classic-runtime/input.js
-* Failed: pure/unset-pragma-option-classic-runtime/input.js
-* Failed: react/adds-appropriate-newlines-when-using-spread-attribute/input.js
-* Failed: react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
-* Failed: react/arrow-functions/input.js
-* Failed: react/assignment/input.js
-* Failed: react/assignment-babel-7/input.js
-* Failed: react/avoids-spread-babel-7/input.js
-* Failed: react/concatenates-adjacent-string-literals/input.js
-* Failed: react/does-not-add-source-self/input.mjs
-* Failed: react/does-not-add-source-self-babel-7/input.mjs
-* Failed: react/dont-coerce-expression-containers/input.js
-* Failed: react/duplicate-props/input.js
-* Failed: react/flattens-spread/input.js
-* Failed: react/handle-spread-with-proto/input.js
-* Failed: react/handle-spread-with-proto-babel-7/input.js
-* Failed: react/honor-custom-jsx-comment/input.js
-* Failed: react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-* Failed: react/honor-custom-jsx-pragma-option/input.js
-* Failed: react/jsx-with-retainlines-option/input.js
-* Failed: react/jsx-without-retainlines-option/input.js
-* Failed: react/optimisation.react.constant-elements/input.js
-* Failed: react/pragma-works-with-no-space-at-the-end/input.js
-* Failed: react/proto-in-jsx-attribute/input.js
-* Failed: react/should-add-quotes-es3/input.js
-* Failed: react/should-allow-constructor-as-prop/input.js
-* Failed: react/should-allow-deeper-js-namespacing/input.js
-* Failed: react/should-allow-elements-as-attributes/input.js
-* Failed: react/should-allow-js-namespacing/input.js
-* Failed: react/should-allow-jsx-docs-comment-with-pragma/input.js
-* Failed: react/should-allow-nested-fragments/input.js
-* Failed: react/should-allow-no-pragmafrag-if-frag-unused/input.js
-* Failed: react/should-allow-pragmafrag-and-frag/input.js
-* Failed: react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-* Failed: react/should-convert-simple-tags/input.js
-* Failed: react/should-convert-simple-text/input.js
-* Failed: react/should-escape-xhtml-jsxattribute/input.js
-* Failed: react/should-escape-xhtml-jsxattribute-babel-7/input.js
-* Failed: react/should-escape-xhtml-jsxtext/input.js
-* Failed: react/should-escape-xhtml-jsxtext-babel-7/input.js
-* Failed: react/should-handle-attributed-elements/input.js
-* Failed: react/should-handle-has-own-property-correctly/input.js
-* Failed: react/should-have-correct-comma-in-nested-children/input.js
-* Failed: react/should-insert-commas-after-expressions-before-whitespace/input.js
-* Failed: react/should-not-add-quotes-to-identifier-names/input.js
-* Failed: react/should-not-allow-jsx-pragma-to-be-anywhere-in-comment/input.js
-* Failed: react/should-not-mangle-expressioncontainer-attribute-values/input.js
-* Failed: react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-* Failed: react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
-* Failed: react/should-properly-handle-comments-between-props/input.js
-* Failed: react/should-quote-jsx-attributes/input.js
-* Failed: react/should-support-xml-namespaces-if-flag/input.js
-* Failed: react/should-transform-known-hyphenated-tags/input.js
-* Failed: react/this-tag-name/input.js
-* Failed: react/weird-symbols/input.js
-* Failed: react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
-* Failed: react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
-* Failed: react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-* Failed: react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
-* Failed: react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-* Failed: react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
-* Failed: react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
-* Failed: react-automatic/arrow-functions/input.js
-* Failed: react-automatic/assignment/input.js
-* Failed: react-automatic/concatenates-adjacent-string-literals/input.js
-* Failed: react-automatic/does-not-add-source-self-automatic/input.mjs
-* Failed: react-automatic/dont-coerce-expression-containers/input.js
-* Failed: react-automatic/duplicate-props/input.js
-* Failed: react-automatic/flattens-spread/input.js
-* Failed: react-automatic/handle-fragments/input.js
-* Failed: react-automatic/handle-fragments-with-key/input.js
-* Failed: react-automatic/handle-fragments-with-no-children/input.js
-* Failed: react-automatic/handle-nonstatic-children/input.js
-* Failed: react-automatic/handle-spread-with-proto/input.js
-* Failed: react-automatic/handle-static-children/input.js
-* Failed: react-automatic/jsx-with-retainlines-option/input.js
-* Failed: react-automatic/jsx-without-retainlines-option/input.js
-* Failed: react-automatic/key-undefined-works/input.js
-* Failed: react-automatic/optimisation.react.constant-elements/input.js
-* Failed: react-automatic/pragma-works-with-no-space-at-the-end/input.js
-* Failed: react-automatic/should-add-quotes-es3/input.js
-* Failed: react-automatic/should-allow-constructor-as-prop/input.js
-* Failed: react-automatic/should-allow-deeper-js-namespacing/input.js
-* Failed: react-automatic/should-allow-elements-as-attributes/input.js
-* Failed: react-automatic/should-allow-js-namespacing/input.js
-* Failed: react-automatic/should-allow-nested-fragments/input.js
-* Failed: react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-* Failed: react-automatic/should-convert-simple-tags/input.js
-* Failed: react-automatic/should-convert-simple-text/input.js
-* Failed: react-automatic/should-escape-xhtml-jsxattribute/input.js
-* Failed: react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
-* Failed: react-automatic/should-escape-xhtml-jsxtext/input.js
-* Failed: react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
-* Failed: react-automatic/should-handle-attributed-elements/input.js
-* Failed: react-automatic/should-handle-has-own-property-correctly/input.js
-* Failed: react-automatic/should-have-correct-comma-in-nested-children/input.js
-* Failed: react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
-* Failed: react-automatic/should-not-add-quotes-to-identifier-names/input.js
-* Failed: react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
-* Failed: react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-* Failed: react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
-* Failed: react-automatic/should-properly-handle-comments-between-props/input.js
-* Failed: react-automatic/should-properly-handle-keys/input.js
-* Failed: react-automatic/should-properly-handle-null-prop-spread/input.js
-* Failed: react-automatic/should-quote-jsx-attributes/input.js
-* Failed: react-automatic/should-support-xml-namespaces-if-flag/input.js
-* Failed: react-automatic/should-transform-known-hyphenated-tags/input.js
-* Failed: react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
-* Failed: react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
-* Failed: react-automatic/this-tag-name/input.js
-* Failed: react-automatic/weird-symbols/input.js
-* Failed: react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-* Failed: react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-* Failed: regression/issue-12478-automatic/input.js
-* Failed: regression/issue-12478-classic/input.js
-* Failed: regression/issue-15353-classic/input.js
-* Failed: regression/pragma-frag-set-default-classic-runtime/input.js
-* Failed: runtime/classic/input.js
-* Failed: runtime/defaults-to-automatic/input.js
-* Failed: runtime/defaults-to-classis-babel-7/input.js
-* Failed: runtime/pragma-runtime-classsic/input.js
-* Failed: runtime/runtime-automatic/input.js
-* Failed: sourcemaps/JSXText/input.js
-* Failed: spread-transform/transform-to-babel-extend/input.js
-* Failed: spread-transform/transform-to-object-assign/input.js
+* autoImport/after-polyfills/input.mjs
+* autoImport/after-polyfills-2/input.mjs
+* autoImport/after-polyfills-compiled-to-cjs/input.mjs
+* autoImport/after-polyfills-script-not-supported/input.js
+* autoImport/auto-import-react-source-type-module/input.js
+* autoImport/auto-import-react-source-type-script/input.js
+* autoImport/complicated-scope-module/input.js
+* autoImport/complicated-scope-script/input.js
+* autoImport/import-source/input.js
+* autoImport/import-source-pragma/input.js
+* autoImport/react-defined/input.js
+* pure/false-default-pragma-automatic-runtime/input.js
+* pure/false-default-pragma-classic-runtime/input.js
+* pure/false-pragma-comment-classic-runtime/input.js
+* pure/false-pragma-option-classic-runtime/input.js
+* pure/true-default-pragma-automatic-runtime/input.js
+* pure/true-default-pragma-classic-runtime/input.js
+* pure/true-pragma-comment-classic-runtime/input.js
+* pure/true-pragma-option-classic-runtime/input.js
+* pure/unset-default-pragma-automatic-runtime/input.js
+* pure/unset-default-pragma-classic-runtime/input.js
+* pure/unset-pragma-comment-classic-runtime/input.js
+* pure/unset-pragma-option-classic-runtime/input.js
+* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
+* react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
+* react/arrow-functions/input.js
+* react/assignment/input.js
+* react/assignment-babel-7/input.js
+* react/avoids-spread-babel-7/input.js
+* react/concatenates-adjacent-string-literals/input.js
+* react/does-not-add-source-self/input.mjs
+* react/does-not-add-source-self-babel-7/input.mjs
+* react/dont-coerce-expression-containers/input.js
+* react/duplicate-props/input.js
+* react/flattens-spread/input.js
+* react/handle-spread-with-proto/input.js
+* react/handle-spread-with-proto-babel-7/input.js
+* react/honor-custom-jsx-comment/input.js
+* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+* react/honor-custom-jsx-pragma-option/input.js
+* react/jsx-with-retainlines-option/input.js
+* react/jsx-without-retainlines-option/input.js
+* react/optimisation.react.constant-elements/input.js
+* react/pragma-works-with-no-space-at-the-end/input.js
+* react/proto-in-jsx-attribute/input.js
+* react/should-add-quotes-es3/input.js
+* react/should-allow-constructor-as-prop/input.js
+* react/should-allow-deeper-js-namespacing/input.js
+* react/should-allow-elements-as-attributes/input.js
+* react/should-allow-js-namespacing/input.js
+* react/should-allow-jsx-docs-comment-with-pragma/input.js
+* react/should-allow-nested-fragments/input.js
+* react/should-allow-no-pragmafrag-if-frag-unused/input.js
+* react/should-allow-pragmafrag-and-frag/input.js
+* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react/should-convert-simple-tags/input.js
+* react/should-convert-simple-text/input.js
+* react/should-escape-xhtml-jsxattribute/input.js
+* react/should-escape-xhtml-jsxattribute-babel-7/input.js
+* react/should-escape-xhtml-jsxtext/input.js
+* react/should-escape-xhtml-jsxtext-babel-7/input.js
+* react/should-handle-attributed-elements/input.js
+* react/should-handle-has-own-property-correctly/input.js
+* react/should-have-correct-comma-in-nested-children/input.js
+* react/should-insert-commas-after-expressions-before-whitespace/input.js
+* react/should-not-add-quotes-to-identifier-names/input.js
+* react/should-not-allow-jsx-pragma-to-be-anywhere-in-comment/input.js
+* react/should-not-mangle-expressioncontainer-attribute-values/input.js
+* react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
+* react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
+* react/should-properly-handle-comments-between-props/input.js
+* react/should-quote-jsx-attributes/input.js
+* react/should-support-xml-namespaces-if-flag/input.js
+* react/should-transform-known-hyphenated-tags/input.js
+* react/this-tag-name/input.js
+* react/weird-symbols/input.js
+* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
+* react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
+* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+* react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
+* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+* react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
+* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
+* react-automatic/arrow-functions/input.js
+* react-automatic/assignment/input.js
+* react-automatic/concatenates-adjacent-string-literals/input.js
+* react-automatic/does-not-add-source-self-automatic/input.mjs
+* react-automatic/dont-coerce-expression-containers/input.js
+* react-automatic/duplicate-props/input.js
+* react-automatic/flattens-spread/input.js
+* react-automatic/handle-fragments/input.js
+* react-automatic/handle-fragments-with-key/input.js
+* react-automatic/handle-fragments-with-no-children/input.js
+* react-automatic/handle-nonstatic-children/input.js
+* react-automatic/handle-spread-with-proto/input.js
+* react-automatic/handle-static-children/input.js
+* react-automatic/jsx-with-retainlines-option/input.js
+* react-automatic/jsx-without-retainlines-option/input.js
+* react-automatic/key-undefined-works/input.js
+* react-automatic/optimisation.react.constant-elements/input.js
+* react-automatic/pragma-works-with-no-space-at-the-end/input.js
+* react-automatic/should-add-quotes-es3/input.js
+* react-automatic/should-allow-constructor-as-prop/input.js
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+* react-automatic/should-allow-elements-as-attributes/input.js
+* react-automatic/should-allow-js-namespacing/input.js
+* react-automatic/should-allow-nested-fragments/input.js
+* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react-automatic/should-convert-simple-tags/input.js
+* react-automatic/should-convert-simple-text/input.js
+* react-automatic/should-escape-xhtml-jsxattribute/input.js
+* react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
+* react-automatic/should-escape-xhtml-jsxtext/input.js
+* react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
+* react-automatic/should-handle-attributed-elements/input.js
+* react-automatic/should-handle-has-own-property-correctly/input.js
+* react-automatic/should-have-correct-comma-in-nested-children/input.js
+* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
+* react-automatic/should-not-add-quotes-to-identifier-names/input.js
+* react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
+* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
+* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
+* react-automatic/should-properly-handle-comments-between-props/input.js
+* react-automatic/should-properly-handle-keys/input.js
+* react-automatic/should-properly-handle-null-prop-spread/input.js
+* react-automatic/should-quote-jsx-attributes/input.js
+* react-automatic/should-support-xml-namespaces-if-flag/input.js
+* react-automatic/should-transform-known-hyphenated-tags/input.js
+* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
+* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
+* react-automatic/this-tag-name/input.js
+* react-automatic/weird-symbols/input.js
+* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+* regression/issue-12478-automatic/input.js
+* regression/issue-12478-classic/input.js
+* regression/issue-15353-classic/input.js
+* regression/pragma-frag-set-default-classic-runtime/input.js
+* runtime/classic/input.js
+* runtime/defaults-to-automatic/input.js
+* runtime/defaults-to-classis-babel-7/input.js
+* runtime/pragma-runtime-classsic/input.js
+* runtime/runtime-automatic/input.js
+* sourcemaps/JSXText/input.js
+* spread-transform/transform-to-babel-extend/input.js
+* spread-transform/transform-to-object-assign/input.js
 

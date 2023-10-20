@@ -132,7 +132,7 @@ impl TestRunner {
                 snapshot.push_str(case);
                 snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
                 for path in failed {
-                    snapshot.push_str("* Failed: ");
+                    snapshot.push_str("* ");
                     snapshot.push_str(&normalize_path(path.strip_prefix(&root).unwrap()));
                     snapshot.push('\n');
                 }
