@@ -144,4 +144,14 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
             self.visit_class_element(class_element);
         });
     }
+
+    fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
+        self.typescript.as_mut().map(|t| t.transform_formal_parameters(params));
+        for param in params.items.iter_mut() {
+            self.visit_formal_parameter(param);
+        }
+        if let Some(rest) = &mut params.rest {
+            self.visit_rest_element(rest);
+        }
+    }
 }
