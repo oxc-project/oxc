@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         ArrayExpressionElement, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
-        JSXFragment,
+        JSXFragment, JSXIdentifier,
     },
     AstKind,
 };
@@ -22,6 +22,9 @@ enum JsxKeyDiagnostic {
     #[error("eslint-plugin-react/jsx-key: Missing \"key\" prop for element in iterator.")]
     #[diagnostic(severity(warning), help("Missing \"key\" prop for element in iterator."))]
     MissingKeyPropForElementInIterator(#[label] Span),
+    #[error(r#"eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{{...spread}}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html"#)]
+    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in iterator."))]
+    KeyPropMustBePlacedBeforeSpread(#[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -51,6 +54,7 @@ impl Rule for JsxKey {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);
+                check_jsx_element_is_key_before_spread(jsx_elem, ctx);
             }
             AstKind::JSXFragment(jsx_frag) => {
                 check_jsx_fragment(node, jsx_frag, ctx);
@@ -109,6 +113,32 @@ fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &Li
             attr_ident.name == "key"
         }) {
             ctx.diagnostic(gen_diagnostic(jsx_elem.span, &outer));
+        }
+    }
+}
+
+fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+    let mut key_idx: Option<usize> = None;
+    let mut spread_idx: Option<usize> = None;
+
+    for (i, attr) in jsx_elem.opening_element.attributes.iter().enumerate() {
+        match attr {
+            JSXAttributeItem::Attribute(attr) => {
+                let JSXAttributeName::Identifier(ident) = &attr.name else { continue };
+                if ident.name == "key" {
+                    key_idx = Some(i);
+                }
+            }
+            JSXAttributeItem::SpreadAttribute(_) => spread_idx = Some(i),
+        }
+        if key_idx.is_some() && spread_idx.is_some() {
+            break;
+        }
+    }
+
+    if let (Some(key_idx), Some(spread_idx)) = (key_idx, spread_idx) {
+        if key_idx > spread_idx {
+            ctx.diagnostic(JsxKeyDiagnostic::KeyPropMustBePlacedBeforeSpread(jsx_elem.span));
         }
     }
 }
@@ -287,28 +317,8 @@ fn test() {
         (r#"[1, 2, 3]?.map(x => <><OxcCompilerHello /></>)"#, None),
         ("[1, 2, 3].map(x => <>{x}</>);", None),
         ("[<></>];", None),
-        //     (r#"[<App {...obj} key="keyAfterSpread" />];"#, None),
-        //     (r#"[<div {...obj} key="keyAfterSpread" />];"#, None),
-        //     (
-        //         r#"
-        //         const spans = [
-        //           <span key="notunique"/>,
-        //           <span key="notunique"/>,
-        //         ];
-        //     "#,
-        //         None,
-        //     ),
-        //     (
-        //         r#"
-        //         const div = (
-        //           <div>
-        //             <span key="notunique"/>
-        //             <span key="notunique"/>
-        //           </div>
-        //         );
-        //     "#,
-        //         None,
-        //     ),
+        (r#"[<App {...obj} key="keyAfterSpread" />];"#, None),
+        (r#"[<div {...obj} key="keyAfterSpread" />];"#, None),
         (
             r#"
                 const Test = () => {

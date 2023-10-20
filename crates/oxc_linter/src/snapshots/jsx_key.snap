@@ -128,6 +128,22 @@ expression: jsx_key
    ╰────
   help: Missing "key" prop for element in array.
 
+  ⚠ eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{...spread}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-
+  │ jsx-transform.html
+   ╭─[jsx_key.tsx:1:1]
+ 1 │ [<App {...obj} key="keyAfterSpread" />];
+   ·  ─────────────────────────────────────
+   ╰────
+  help: Missing "key" prop for element in iterator.
+
+  ⚠ eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{...spread}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-
+  │ jsx-transform.html
+   ╭─[jsx_key.tsx:1:1]
+ 1 │ [<div {...obj} key="keyAfterSpread" />];
+   ·  ─────────────────────────────────────
+   ╰────
+  help: Missing "key" prop for element in iterator.
+
   ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:8:1]
   8 │                         if (item < 2) {
