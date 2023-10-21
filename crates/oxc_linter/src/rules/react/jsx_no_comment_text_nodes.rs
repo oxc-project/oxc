@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use oxc_ast::{ast::JSXChild, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -11,7 +11,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(jsx-no-comment-TextNodes): TODO")]
+#[error("eslint-plugin-react(jsx-no-comment-TextNodes): Comments inside children section of tag should be placed inside braces")]
 #[diagnostic(severity(warning))]
 struct JsxNoCommentTextNodesDiagnostic(#[label] pub Span);
 
@@ -58,16 +58,14 @@ impl Rule for JsxNoCommentTextNodes {
         let AstKind::JSXText(jsx_text) = node.kind() else { return };
 
         if control_patterns(&jsx_text.value) {
-            println!("CHECK PAT \"{:?}\"", jsx_text);
             ctx.diagnostic(JsxNoCommentTextNodesDiagnostic(jsx_text.span));
         }
     }
 }
 
 fn control_patterns(pattern: &Atom) -> bool {
-    println!("CHECK PAT \"{}\"", pattern.as_str());
     lazy_static! {
-        static ref CTL_PAT: Regex = Regex::new(r#"(?m)^\s*/(/|\*)"#,).unwrap();
+        static ref CTL_PAT: Regex = Regex::new(r"(?m)^\s*/(/|\*)",).unwrap();
     }
     CTL_PAT.is_match(pattern.as_str())
 }
