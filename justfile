@@ -25,8 +25,7 @@ ready:
 
 # Update our local branch with the remote branch (this is for you to sync the submodules)
 update:
-  git pull
-  git submodule update --init
+  git pull --recurse-submodules
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
