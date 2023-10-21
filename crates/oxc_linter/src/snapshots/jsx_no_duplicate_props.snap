@@ -1,0 +1,73 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: jsx_no_duplicate_props
+---
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a a />;
+   ·      ─ ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "A" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App A b c A />;
+   ·      ─     ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a="a" b="b" a="a" />;
+   ·      ─           ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a="a" {...this.props} b="b" a="a" />;
+   ·      ─                           ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a b="b" {...this.props} a="a" />;
+   ·      ─                       ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a={[]} b="b" {...this.props} a="a" />;
+   ·      ─                            ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App a="a" b="b" a="a" {...this.props} />;
+   ·      ─           ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:1:1]
+ 1 │ <App {...this.props} a="a" b="b" a="a" />;
+   ·                      ─           ─
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+  ⚠ eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop "a" is duplicated.
+   ╭─[jsx_no_duplicate_props.tsx:2:1]
+ 2 │             <App
+ 3 │                 a="a"
+   ·                 ─
+ 4 │                 {...this.props}
+ 5 │                 a={{foo: 'bar'}}
+   ·                 ─
+ 6 │                 b="b"
+   ╰────
+  help: Remove one of the props, or rename them so each prop is distinct.
+
+
