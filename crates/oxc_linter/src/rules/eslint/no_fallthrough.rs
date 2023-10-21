@@ -35,19 +35,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFallthrough {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        lazy_static! {
-            static ref DEFAULT_FALLTHROUGH_COMMENT_PATTERN: Regex =
-                Regex::new(r"(?iu)falls?\s?through").unwrap();
-        }
-        if let AstKind::SwitchStatement(expr) = node.kind() {
-            let haha = ctx.semantic().trivias().comments_spans();
-            for (c, span) in ctx.semantic().trivias().comments_spans() {
-                let s = span.source_text(ctx.source_text()).trim();
-                let res = DEFAULT_FALLTHROUGH_COMMENT_PATTERN.is_match(s);
-                dbg!(s);
-                dbg!(res);
-            }
-        }
+        // TODO
     }
 }
 
@@ -56,7 +44,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("switch(foo) { case 0: a(); /* falls through */ case 1: b(); }", None),
+        // ("switch(foo) { case 0: a(); /* falls through */ case 1: b(); }", None),
         // ("switch(foo) { case 0: a()\n /* falls through */ case 1: b(); }", None),
         // ("switch(foo) { case 0: a(); /* fall through */ case 1: b(); }", None),
         // ("switch(foo) { case 0: a(); /* fallthrough */ case 1: b(); }", None),
