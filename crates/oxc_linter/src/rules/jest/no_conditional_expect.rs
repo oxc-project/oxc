@@ -8,13 +8,13 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
     rule::Rule,
+    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-conditional-expect): Unexpected conditional expect")]
+#[error("eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect")]
 #[diagnostic(severity(warning), help("Avoid calling `expect` conditionally`"))]
 struct NoConditionalExpectDiagnostic(#[label] pub Span);
 

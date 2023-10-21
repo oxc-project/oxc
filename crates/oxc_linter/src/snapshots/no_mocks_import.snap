@@ -2,49 +2,49 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_mocks_import
 ---
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('./__mocks__')
    ·         ─────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('./__mocks__/')
    ·         ──────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('./__mocks__/index')
    ·         ───────────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('__mocks__')
    ·         ───────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('__mocks__/')
    ·         ────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ require('__mocks__/index')
    ·         ─────────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
 
-  ⚠ eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
+  ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:1]
  1 │ import thing from './__mocks__/index'
    ·                   ───────────────────

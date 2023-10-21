@@ -14,7 +14,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.")]
+#[error("eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.")]
 #[diagnostic(
     severity(warning),
     help("Instead use `jest.mock` and import from the original module path.")

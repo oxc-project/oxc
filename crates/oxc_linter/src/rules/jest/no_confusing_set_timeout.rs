@@ -12,17 +12,17 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_jest_fn_call, JestFnKind},
     rule::Rule,
+    utils::{parse_jest_fn_call, JestFnKind},
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-confusing-set-timeout)")]
+#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
 #[diagnostic(severity(warning), help("`jest.setTimeout` should be call in `global` scope"))]
 struct NoGlobalSetTimeoutDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-confusing-set-timeout)")]
+#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
 #[diagnostic(
     severity(warning),
     help(
@@ -32,7 +32,7 @@ struct NoGlobalSetTimeoutDiagnostic(#[label] pub Span);
 struct NoMultipleSetTimeoutsDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-confusing-set-timeout)")]
+#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
 #[diagnostic(
     severity(warning),
     help("`jest.setTimeout` should be placed before any other jest methods")

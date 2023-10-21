@@ -9,16 +9,16 @@ use oxc_span::{Atom, GetSpan, Span};
 use crate::{
     context::LintContext,
     fixer::Fix,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
         ParsedGeneralJestFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
+#[error("eslint-plugin-jest(no-test-prefixes): Use {0:?} instead.")]
 #[diagnostic(severity(warning))]
 struct NoTestPrefixesDiagnostic(Atom, #[label] pub Span);
 

@@ -13,9 +13,11 @@ pub enum BanTsCommentDiagnostic {
     #[error("Do not use @ts-{0} because it alters compilation errors.")]
     #[diagnostic(severity(warning))]
     Comment(String, #[label] Span),
+
     #[error("Include a description after the @ts-{0} directive to explain why the @ts-{0} is necessary. The description must be {1} characters or longer.")]
     #[diagnostic(severity(warning))]
     CommentRequiresDescription(String, u64, #[label] Span),
+
     #[error("The description for the @ts-{0} directive must match the {1} format.")]
     #[diagnostic(severity(warning))]
     CommentDescriptionNotMatchPattern(String, String, #[label] Span),

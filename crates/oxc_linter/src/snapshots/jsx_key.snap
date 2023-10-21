@@ -2,227 +2,198 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_key
 ---
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in array.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
    ╭─[jsx_key.tsx:1:1]
  1 │ [<App />];
    ·  ───────
    ╰────
-  help: Missing "key" prop for element in array.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in array.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
    ╭─[jsx_key.tsx:1:1]
  1 │ [<App {...key} />];
    ·  ────────────────
    ╰────
-  help: Missing "key" prop for element in array.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in array.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
    ╭─[jsx_key.tsx:1:1]
  1 │ [<App key={0}/>, <App />];
    ·                  ───────
    ╰────
-  help: Missing "key" prop for element in array.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(function(x) { return <App /> });
    ·                                    ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(x => <App />);
    ·                    ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(x => x && <App x={x} />);
    ·                         ─────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);
    ·                                                ──────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);
    ·                        ─────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2 ,3].map(x => { return <App /> });
    ·                             ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ Array.from([1, 2 ,3], function(x) { return <App /> });
    ·                                            ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ Array.from([1, 2 ,3], (x => { return <App /> }));
    ·                                      ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ Array.from([1, 2 ,3], (x => <App />));
    ·                             ───────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3]?.map(x => <BabelEslintApp />)
    ·                     ──────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3]?.map(x => <TypescriptEslintApp />)
    ·                     ───────────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
    ·                     ─────────────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
    · ──────────────────────────────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3].map(x => <>{x}</>);
    ·                    ────────
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in array.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
    ╭─[jsx_key.tsx:1:1]
  1 │ [<></>];
    ·  ─────
    ╰────
-  help: Missing "key" prop for element in array.
 
-  ⚠ eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{...spread}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-
-  │ jsx-transform.html
+  ⚠ eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`
    ╭─[jsx_key.tsx:1:1]
  1 │ [<App {...obj} key="keyAfterSpread" />];
    ·  ─────────────────────────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
+  help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
-  ⚠ eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{...spread}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-
-  │ jsx-transform.html
+  ⚠ eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`
    ╭─[jsx_key.tsx:1:1]
  1 │ [<div {...obj} key="keyAfterSpread" />];
    ·  ─────────────────────────────────────
    ╰────
-  help: Missing "key" prop for element in iterator.
+  help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:8:1]
   8 │                         if (item < 2) {
   9 │                           return <div>{item}</div>;
     ·                                  ─────────────────
  10 │                         }
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:11:1]
  11 │ 
  12 │                         return <div />;
     ·                                ───────
  13 │                       })}
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:8:1]
   8 │                         if (item < 2) {
   9 │                           return <div>{item}</div>;
     ·                                  ─────────────────
  10 │                         } else if (item < 5) {
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:10:1]
  10 │                         } else if (item < 5) {
  11 │                           return <div></div>
     ·                                  ───────────
  12 │                         }  else {
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:12:1]
  12 │                         }  else {
  13 │                           return <div></div>
     ·                                  ───────────
  14 │                         }
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:15:1]
  15 │ 
  16 │                         return <div />;
     ·                                ───────
  17 │                       })}
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:7:1]
  7 │                       {list.map(item => {
  8 │                         if (item < 2) return <div>{item}</div>;
    ·                                              ─────────────────
  9 │                         else if (item < 5) return <div />;
    ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:8:1]
   8 │                         if (item < 2) return <div>{item}</div>;
   9 │                         else if (item < 5) return <div />;
     ·                                                   ───────
  10 │                         else return <div />;
     ╰────
-  help: Missing "key" prop for element in iterator.
 
-  ⚠ eslint-plugin-react/jsx-key: Missing "key" prop for element in iterator.
+  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
     ╭─[jsx_key.tsx:9:1]
   9 │                         else if (item < 5) return <div />;
  10 │                         else return <div />;
     ·                                     ───────
  11 │                       })}
     ╰────
-  help: Missing "key" prop for element in iterator.
 
 

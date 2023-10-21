@@ -2,175 +2,175 @@
 source: crates/oxc_linter/src/tester.rs
 expression: valid_expect
 ---
-  ⚠ eslint(jest/valid-expect): "Expect takes at most 1 argument "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 1 argument "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(2);
    · ────────
    ╰────
   help: "Remove the extra arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect takes at most 1 argument "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 1 argument "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toBe(true);
    · ────────
    ╰────
   help: "Remove the extra arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect takes at most 1 argument "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 1 argument "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect().toEqual('something');
    · ────────
    ╰────
   help: "Remove the extra arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect requires at least 1 argument "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect requires at least 1 argument "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else').toEqual('something');
    · ───────────────────────────
    ╰────
   help: "Add the missing arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect requires at least 2 arguments "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect requires at least 2 arguments "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else', 'entirely').toEqual('something');
    · ───────────────────────────────────────
    ╰────
   help: "Add the missing arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect requires at least 2 arguments "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect requires at least 2 arguments "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else', 'entirely').toEqual('something');
    · ───────────────────────────────────────
    ╰────
   help: "Add the missing arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect requires at least 2 arguments "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect requires at least 2 arguments "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else', 'entirely').toEqual('something');
    · ───────────────────────────────────────
    ╰────
   help: "Add the missing arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect takes at most 2 arguments "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 2 arguments "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something').toEqual('something');
    · ───────────────────
    ╰────
   help: "Remove the extra arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect takes at most 3 arguments "
+  ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 3 arguments "
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something', 'else').toEqual('something');
    · ───────────────────────────
    ╰────
   help: "Remove the extra arguments."
 
-  ⚠ eslint(jest/valid-expect): "Expect must have a corresponding matcher call."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect must have a corresponding matcher call."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect('something');
    · ───────────────────
    ╰────
   help: "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)"
 
-  ⚠ eslint(jest/valid-expect): "Expect must have a corresponding matcher call."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect must have a corresponding matcher call."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect();
    · ────────
    ╰────
   help: "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)"
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).toBeDefined;
    · ────────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).not.toBeDefined;
    · ────────────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).nope.toBeDefined;
    · ─────────────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Expect has an unknown modifier."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect has an unknown modifier."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).nope.toBeDefined();
    · ───────────────────────────────
    ╰────
   help: "Is it a spelling mistake?"
 
-  ⚠ eslint(jest/valid-expect): "Expect has an unknown modifier."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect has an unknown modifier."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).not.resolves.toBeDefined();
    · ───────────────────────────────────────
    ╰────
   help: "Is it a spelling mistake?"
 
-  ⚠ eslint(jest/valid-expect): "Expect has an unknown modifier."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect has an unknown modifier."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).not.not.toBeDefined();
    · ──────────────────────────────────
    ╰────
   help: "Is it a spelling mistake?"
 
-  ⚠ eslint(jest/valid-expect): "Expect has an unknown modifier."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect has an unknown modifier."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).resolves.not.exactly.toBeDefined();
    · ───────────────────────────────────────────────
    ╰────
   help: "Is it a spelling mistake?"
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).resolves;
    · ─────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).rejects;
    · ────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(true).not;
    · ────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(Promise.resolve(2)).resolves.toBeDefined();
    · ─────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(Promise.resolve(2)).rejects.toBeDefined();
    · ────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(Promise.resolve(2)).resolves.toBeDefined();
    · ─────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:5:1]
  5 │                         ? expect(obj).toBe(true)
  6 │                         : expect(obj).resolves.not.toThrow();
@@ -179,7 +179,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:4:1]
  4 │                         this.isNot
  5 │                         ? expect(obj).resolves.not.toThrow()
@@ -188,7 +188,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:6:1]
  6 │                         : anotherCondition
  7 │                         ? expect(obj).resolves.not.toThrow()
@@ -197,91 +197,91 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });
    ·                              ─────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).toResolve(); });
    ·                              ──────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).toResolve(); });
    ·                              ──────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).toReject(); });
    ·                              ─────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).not.toReject(); });
    ·                              ─────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });
    ·                              ─────────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).rejects.toBeDefined(); });
    ·                              ────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.resolve(2)).rejects.not.toBeDefined(); });
    ·                              ────────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', async () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });
    ·                                    ─────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', async () => { expect(Promise.resolve(2)).resolves.not.toBeDefined(); });
    ·                                    ─────────────────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.reject(2)).toRejectWith(2); });
    ·                              ─────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:1:1]
  1 │ test('valid-expect', () => { expect(Promise.reject(2)).rejects.toBe(2); });
    ·                              ─────────────────────────────────────────
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', async () => {
  3 │                 expect(Promise.resolve(2)).resolves.not.toBeDefined();
@@ -290,7 +290,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                 expect(Promise.resolve(2)).resolves.not.toBeDefined();
  4 │                 expect(Promise.resolve(1)).rejects.toBeDefined();
@@ -299,7 +299,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                     await expect(Promise.resolve(2)).resolves.not.toBeDefined();
  4 │                     expect(Promise.resolve(1)).rejects.toBeDefined();
@@ -308,7 +308,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', async () => {
  3 │                     expect(Promise.resolve(2)).resolves.not.toBeDefined();
@@ -317,7 +317,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                     expect(Promise.resolve(2)).resolves.not.toBeDefined();
  4 │                     return expect(Promise.resolve(1)).rejects.toBeDefined();
@@ -326,7 +326,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', async () => {
  3 │                     expect(Promise.resolve(2)).resolves.not.toBeDefined();
@@ -335,7 +335,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                     await expect(Promise.resolve(2)).resolves.not.toBeDefined();
  4 │                     return expect(Promise.resolve(1)).rejects.toBeDefined();
@@ -344,7 +344,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                     await expect(Promise.resolve(2)).toResolve();
  4 │                     return expect(Promise.resolve(1)).toReject();
@@ -353,7 +353,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', () => {
  3 │                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
@@ -362,7 +362,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', () => {
  3 │                     Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
@@ -371,7 +371,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', () => {
  3 │                     Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
@@ -380,7 +380,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', () => {
  3 │                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
@@ -389,7 +389,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                     test('valid-expect', () => {
  3 │ ╭─▶                 Promise.all([
@@ -400,7 +400,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Promises which return async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
    ╭─[valid_expect.tsx:2:1]
  2 │                     test('valid-expect', () => {
  3 │ ╭─▶                 Promise.x([
@@ -411,7 +411,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                 const assertions = [
  4 │                     expect(Promise.resolve(2)).resolves.not.toBeDefined(),
@@ -420,7 +420,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:4:1]
  4 │                     expect(Promise.resolve(2)).resolves.not.toBeDefined(),
  5 │                     expect(Promise.resolve(3)).resolves.not.toBeDefined(),
@@ -429,7 +429,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                 const assertions = [
  4 │                     expect(Promise.resolve(2)).toResolve(),
@@ -438,7 +438,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:4:1]
  4 │                     expect(Promise.resolve(2)).toResolve(),
  5 │                     expect(Promise.resolve(3)).toReject(),
@@ -447,7 +447,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                 const assertions = [
  4 │                     expect(Promise.resolve(2)).not.toResolve(),
@@ -456,7 +456,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:4:1]
  4 │                     expect(Promise.resolve(2)).not.toResolve(),
  5 │                     expect(Promise.resolve(3)).resolves.toReject(),
@@ -465,14 +465,14 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Matchers must be called to assert."
+  ⚠ eslint-plugin-jest(valid-expect): "Matchers must be called to assert."
    ╭─[valid_expect.tsx:1:1]
  1 │ expect(Promise.resolve(2)).resolves.toBe;
    · ────────────────────────────────────────
    ╰────
   help: "You need call your matcher, e.g. `expect(true).toBe(true)`."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:3:1]
  3 │                     return expect(functionReturningAPromise()).resolves.toEqual(1).then(() => {
  4 │                         expect(Promise.resolve(2)).resolves.toBe(1);
@@ -481,7 +481,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Async assertions must be awaited."
+  ⚠ eslint-plugin-jest(valid-expect): "Async assertions must be awaited."
    ╭─[valid_expect.tsx:4:1]
  4 │                         await expect(Promise.resolve(2)).resolves.toBe(1);
  5 │                         expect(Promise.resolve(4)).resolves.toBe(4);
@@ -490,7 +490,7 @@ expression: valid_expect
    ╰────
   help: "Add `await` to your assertion."
 
-  ⚠ eslint(jest/valid-expect): "Expect must have a corresponding matcher call."
+  ⚠ eslint-plugin-jest(valid-expect): "Expect must have a corresponding matcher call."
    ╭─[valid_expect.tsx:2:1]
  2 │                 test('valid-expect', async () => {
  3 │                     await expect(Promise.resolve(1));

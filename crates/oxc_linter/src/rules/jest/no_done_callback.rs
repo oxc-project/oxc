@@ -11,16 +11,16 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         get_node_name, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
         ParsedGeneralJestFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-done-callback): {0:?}")]
+#[error("eslint-plugin-jest(no-done-callback): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoDoneCallbackDiagnostic(&'static str, &'static str, #[label] pub Span);
 

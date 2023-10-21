@@ -7,11 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext, fixer::Fix, jest_ast_util::parse_expect_jest_fn_call, rule::Rule, AstNode,
+    context::LintContext, fixer::Fix, rule::Rule, utils::parse_expect_jest_fn_call, AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-alias-methods): Unexpected alias {0:?}")]
+#[error("eslint-plugin-jest(no-alias-methods): Unexpected alias {0:?}")]
 #[diagnostic(severity(warning), help("Replace {0:?} with its canonical name of {1:?}"))]
 struct NoAliasMethodsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
 

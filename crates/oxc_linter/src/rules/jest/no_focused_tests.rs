@@ -9,16 +9,16 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     fixer::Fix,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, MemberExpressionElement,
         ParsedGeneralJestFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-focused-tests): Unexpected focused test.")]
+#[error("eslint-plugin-jest(no-focused-tests): Unexpected focused test.")]
 #[diagnostic(severity(warning), help("Remove focus from test."))]
 struct NoFocusedTestsDiagnostic(#[label] pub Span);
 

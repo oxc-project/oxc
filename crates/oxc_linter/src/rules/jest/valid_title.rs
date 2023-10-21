@@ -14,13 +14,13 @@ use regex::Regex;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind},
     rule::Rule,
+    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind},
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/valid-title): {0:?}")]
+#[error("eslint-plugin-jest(valid-title): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidTitleDiagnostic(Atom, &'static str, #[label] pub Span);
 

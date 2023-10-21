@@ -8,13 +8,12 @@ mod context;
 mod disable_directives;
 mod fixer;
 mod globals;
-mod jest_ast_util;
 mod options;
-mod react_ast_utils;
 pub mod rule;
 mod rule_timer;
 mod rules;
 mod service;
+mod utils;
 
 use std::{self, fs, io::Write, rc::Rc, time::Duration};
 

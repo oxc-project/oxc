@@ -8,10 +8,8 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall,
-    },
     rule::Rule,
+    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall},
     AstNode,
 };
 
@@ -56,7 +54,7 @@ declare_oxc_lint!(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-disabled-tests): {0:?}")]
+#[error("eslint-plugin-jest(no-disabled-tests): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoDisabledTestsDiagnostic(&'static str, &'static str, #[label] pub Span);
 

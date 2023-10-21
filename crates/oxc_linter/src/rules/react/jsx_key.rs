@@ -13,14 +13,18 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum JsxKeyDiagnostic {
-    #[error("eslint-plugin-react/jsx-key: Missing \"key\" prop for element in array.")]
-    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in array."))]
+    #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in array.")]
+    #[diagnostic(severity(warning))]
     MissingKeyPropForElementInArray(#[label] Span),
-    #[error("eslint-plugin-react/jsx-key: Missing \"key\" prop for element in iterator.")]
-    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in iterator."))]
+
+    #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in iterator.")]
+    #[diagnostic(severity(warning))]
     MissingKeyPropForElementInIterator(#[label] Span),
-    #[error(r#"eslint-plugin-react/jsx-key: \"key\" prop must be placed before any `{{...spread}}`, to avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html"#)]
-    #[diagnostic(severity(warning), help("Missing \"key\" prop for element in iterator."))]
+
+    #[error(
+        "eslint-plugin-react(jsx-key): \"key\" prop must be placed before any `{{...spread}}`"
+    )]
+    #[diagnostic(severity(warning), help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html"))]
     KeyPropMustBePlacedBeforeSpread(#[label] Span),
 }
 

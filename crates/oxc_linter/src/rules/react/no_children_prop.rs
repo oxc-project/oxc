@@ -9,10 +9,10 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, react_ast_utils::is_create_element_call, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react/no-children-prop: Avoid passing children using a prop.")]
+#[error("eslint-plugin-react(no-children-prop): Avoid passing children using a prop.")]
 #[diagnostic(
     severity(warning),
     help("The canonical way to pass children in React is to use JSX elements")

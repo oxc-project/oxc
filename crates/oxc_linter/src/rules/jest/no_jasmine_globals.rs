@@ -15,7 +15,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-jasmine-globals): {0:?}")]
+#[error("eslint-plugin-jest(no-jasmine-globals): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoJasmineGlobalsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
 

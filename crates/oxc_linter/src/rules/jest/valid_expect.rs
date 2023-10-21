@@ -11,13 +11,13 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_expect_jest_fn_call, ExpectError},
     rule::Rule,
+    utils::{parse_expect_jest_fn_call, ExpectError},
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/valid-expect): {0:?}")]
+#[error("eslint-plugin-jest(valid-expect): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidExpectDiagnostic(pub Atom, pub &'static str, #[label] pub Span);
 

@@ -8,16 +8,16 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
         JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-standalone-expect): Expect must be inside of a test block.")]
+#[error("eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.")]
 #[diagnostic(severity(warning), help("Did you forget to wrap `expect` in a `test` or `it` block?"))]
 struct NoStandaloneExpectDiagnostic(#[label] pub Span);
 
