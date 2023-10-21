@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'React' must be in scope when using JSX")]
+#[error("eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX")]
 #[diagnostic(severity(warning), help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope."))]
 struct ReactInJsxScopeDiagnostic(#[label] pub Span);
 
