@@ -126,6 +126,7 @@ mod jest {
 mod react {
     pub mod jsx_key;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
 }
 
@@ -252,6 +253,8 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_key,
     react::jsx_no_duplicate_props,
     react::no_children_prop,
+    react::jsx_key,
+    react::jsx_no_useless_fragment,
     import::named,
     import::no_cycle,
     import::no_self_import,

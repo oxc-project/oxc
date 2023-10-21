@@ -82,6 +82,9 @@ new-ts-rule name:
 new-unicorn-rule name:
   cargo run -p rulegen {{name}} unicorn
 
+new-react-rule name:
+  cargo run -p rulegen {{name}} react
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote
