@@ -151,7 +151,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
-        if !self.source_type.is_typescript_definition() {
+        if self.source_type.is_typescript_definition() {
+            self.scope.add_scope(None, ScopeFlags::Top);
+        } else {
             self.visit_program(program);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
