@@ -35,6 +35,9 @@ const TYPESCRIPT_ESLINT_TEST_PATH: &str =
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
 
+const REACT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
+
 struct TestCase<'a> {
     source_text: &'a str,
     code: Option<String>,
@@ -286,10 +289,34 @@ impl<'a> Visit<'a> for State<'a> {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
                     self.valid_tests.push(self.alloc(array_expr));
                 }
+
+                // for eslint-plugin-react
+                if let Expression::CallExpression(call_expr) = &prop.value {
+                    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+                        println!("member_expr: {:?}", member_expr.object());
+                        if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
+                            call_expr.arguments.first()
+                        {
+                            self.valid_tests.push(self.alloc(array_expr));
+                        }
+                    }
+                }
             }
             "invalid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
                     self.invalid_tests.push(self.alloc(array_expr));
+                }
+
+                // for eslint-plugin-react
+                if let Expression::CallExpression(call_expr) = &prop.value {
+                    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+                        println!("member_expr: {:?}", member_expr.object());
+                        if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
+                            call_expr.arguments.first()
+                        {
+                            self.invalid_tests.push(self.alloc(array_expr));
+                        }
+                    }
                 }
             }
             _ => {}
@@ -303,6 +330,7 @@ pub enum RuleKind {
     Jest,
     Typescript,
     Unicorn,
+    React,
 }
 
 impl RuleKind {
@@ -311,6 +339,7 @@ impl RuleKind {
             "jest" => Self::Jest,
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
+            "react" => Self::React,
             _ => Self::ESLint,
         }
     }
@@ -323,6 +352,7 @@ impl Display for RuleKind {
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
+            Self::React => write!(f, "eslint-plugin-react"),
         }
     }
 }
@@ -341,6 +371,7 @@ fn main() {
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
+        RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
     };
     println!("Reading test file from {rule_test_path}");
 
