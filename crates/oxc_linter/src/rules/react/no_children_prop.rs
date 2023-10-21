@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName,
-        ObjectPropertyKind,
-    },
+    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -12,7 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, react_ast_utils::is_create_element_call, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react/no-children-prop: Avoid passing children using a prop.")]
@@ -72,7 +69,7 @@ impl Rule for NoChildrenProp {
                 }
             }
             AstKind::CallExpression(call_expr) => {
-                if is_create_element(call_expr) {
+                if is_create_element_call(call_expr) {
                     if let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
                         call_expr.arguments.get(1)
                     {
@@ -93,14 +90,6 @@ impl Rule for NoChildrenProp {
             _ => {}
         }
     }
-}
-
-fn is_create_element(call_expr: &CallExpression) -> bool {
-    if let Some(member_expr) = call_expr.callee.get_member_expr() {
-        return member_expr.static_property_name() == Some("createElement");
-    }
-
-    false
 }
 
 #[test]
