@@ -1036,12 +1036,15 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_jsx_attribute_item(&mut self, item: &JSXAttributeItem<'a>) {
+        let kind = AstKind::JSXAttributeItem(self.alloc(item));
+        self.enter_node(kind);
         match &item {
             JSXAttributeItem::Attribute(attribute) => self.visit_jsx_attribute(attribute),
             JSXAttributeItem::SpreadAttribute(attribute) => {
                 self.visit_jsx_spread_attribute(attribute);
             }
         }
+        self.leave_node(kind);
     }
 
     fn visit_jsx_attribute(&mut self, attribute: &JSXAttribute<'a>) {

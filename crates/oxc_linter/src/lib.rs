@@ -10,6 +10,7 @@ mod fixer;
 mod globals;
 mod jest_ast_util;
 mod options;
+mod react_ast_utils;
 pub mod rule;
 mod rule_timer;
 mod rules;
