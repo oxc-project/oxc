@@ -61,11 +61,11 @@ impl Rule for JsxNoDuplicateProps {
 
             let JSXAttributeName::Identifier(ident) = &jsx_attr.name else { continue };
 
-            if let Some(old_span) = props.insert(ident.name.clone(), jsx_attr.span) {
+            if let Some(old_span) = props.insert(ident.name.clone(), ident.span) {
                 ctx.diagnostic(JsxNoDuplicatePropsDiagnostic(
                     ident.name.clone(),
                     old_span,
-                    jsx_attr.span,
+                    ident.span,
                 ));
             }
         }
