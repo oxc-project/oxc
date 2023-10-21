@@ -1,0 +1,80 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: jsx_no_comment_text_nodes
+---
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       class Comp1 extends Component {
+ 3 │ │                         render() {
+ 4 │ ╰─▶                         return (<div>// invalid</div>);
+ 5 │                           }
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       class Comp1 extends Component {
+ 3 │ │                         render() {
+ 4 │ ╰─▶                         return (<>// invalid</>);
+ 5 │                           }
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       class Comp1 extends Component {
+ 3 │ │                         render() {
+ 4 │ ╰─▶                         return (<div>/* invalid */</div>);
+ 5 │                           }
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       class Comp1 extends Component {
+ 3 │ │                         render() {
+ 4 │ │                           return (
+ 5 │ │                             <div>
+ 6 │ │                               // invalid
+ 7 │ ╰─▶                           </div>
+ 8 │                             );
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+    ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+  1 │ ╭─▶ 
+  2 │ │                       class Comp1 extends Component {
+  3 │ │                         render() {
+  4 │ │                           return (
+  5 │ │                             <div>
+  6 │ │                               asdjfl
+  7 │ │                               /* invalid */
+  8 │ │                               foo
+  9 │ ╰─▶                           </div>
+ 10 │                             );
+    ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       class Comp1 extends Component {
+ 3 │ │                         render() {
+ 4 │ │                           return (
+ 5 │ │                             <div>
+ 6 │ │                               {'asdjfl'}
+ 7 │ │                               // invalid
+ 8 │ ╰─▶                             {'foo'}
+ 9 │                               </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-no-comment-TextNodes): TODO
+   ╭─[jsx_no_comment_text_nodes.tsx:1:1]
+ 1 │ ╭─▶ 
+ 2 │ │                       const Component2 = () => {
+ 3 │ ╰─▶                       return <span>/*</span>;
+ 4 │                         };
+   ╰────
+
+
