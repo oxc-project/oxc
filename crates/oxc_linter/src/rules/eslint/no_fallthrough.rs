@@ -1,16 +1,13 @@
-// Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-fallthrough.js
-use lazy_static::lazy_static;
-use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+// Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-fallthrough.js
 #[derive(Debug, Error, Diagnostic)]
 #[error("")]
 #[diagnostic(severity(warning), help(""))]
@@ -34,7 +31,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFallthrough {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {
         // TODO
     }
 }
