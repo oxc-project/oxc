@@ -79,6 +79,15 @@ fn is_in_array_or_iter<'a, 'b>(
         };
 
         match parent.kind() {
+            AstKind::ArrowExpression(_) | AstKind::Function(_) => {
+                let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
+                    return None;
+                };
+
+                if let AstKind::ObjectProperty(_) = parent.kind() {
+                    return None;
+                }
+            }
             AstKind::ArrayExpression(_) => return Some(InsideArrayOrIterator::Array),
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parenthesized();
@@ -94,8 +103,9 @@ fn is_in_array_or_iter<'a, 'b>(
                 return None;
             }
             AstKind::JSXElement(_) | AstKind::JSXOpeningElement(_) => return None,
-            _ => node = parent,
+            _ => {}
         }
+        node = parent;
     }
 }
 
@@ -290,8 +300,31 @@ fn test() {
             }
 
             export const clusterFrameMap = observable.map<string, ClusterFrameInfo>();
-
           "#,
+            None,
+        ),
+        (
+            r#"
+            const columns: ColumnDef<User>[] = [{
+              accessorKey: 'lastName',
+              header: ({ column }) => <DataTableColumnHeader column={column} title="Last Name" />,
+              cell: ({ row }) => <div>{row.getValue('lastName')}</div>,
+              enableSorting: true,
+              enableHiding: false,
+            }]
+        "#,
+            None,
+        ),
+        (
+            r#"
+            const columns: ColumnDef<User>[] = [{
+              accessorKey: 'lastName',
+              header: function ({ column }) { return <DataTableColumnHeader column={column} title="Last Name" /> },
+              cell: ({ row }) => <div>{row.getValue('lastName')}</div>,
+              enableSorting: true,
+              enableHiding: false,
+            }]
+        "#,
             None,
         ),
     ];

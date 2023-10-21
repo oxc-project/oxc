@@ -244,6 +244,12 @@ Special thanks go to
 * [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
 * [@guan-wy](https://github.com/guan-wy) for the [project logo](https://github.com/Boshen/oxc-assets)
 
+And also
+* [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](#-ezno-type-checker)
+* [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
+* [@u9g](https://github.com/u9g) for the work in progress [oxc_linter_plugin](./crates/oxc_linter_plugin)
+
+
 ## 📖 License
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).

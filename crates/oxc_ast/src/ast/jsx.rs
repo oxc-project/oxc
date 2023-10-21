@@ -147,6 +147,15 @@ pub enum JSXAttributeItem<'a> {
     SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>),
 }
 
+impl JSXAttributeItem<'_> {
+    pub fn span(&self) -> Span {
+        match self {
+            JSXAttributeItem::Attribute(attr) => attr.span,
+            JSXAttributeItem::SpreadAttribute(attr) => attr.span,
+        }
+    }
+}
+
 /// JSX Attribute
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]

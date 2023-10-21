@@ -1,4 +1,4 @@
-Passed: 160/1087
+Passed: 162/1087
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -714,7 +714,7 @@ Passed: 160/1087
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-typescript (71/181)
+# babel-plugin-transform-typescript (73/181)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -749,7 +749,6 @@ Passed: 160/1087
 * enum/string-value-template/input.ts
 * enum/string-values-computed/input.ts
 * enum/ts5.0-const-foldable/input.ts
-* exports/declare-shadowed/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type/input.ts
@@ -763,7 +762,6 @@ Passed: 160/1087
 * exports/type-only-export-specifier-2/input.ts
 * exports/type-only-export-specifier-3/input.ts
 * function/overloads-exports/input.mjs
-* function/this-parameter/input.ts
 * imports/elide-injected/input.ts
 * imports/elide-preact/input.ts
 * imports/elide-react/input.ts
