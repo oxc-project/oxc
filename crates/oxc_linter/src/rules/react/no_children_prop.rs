@@ -65,22 +65,10 @@ declare_oxc_lint!(
 impl Rule for NoChildrenProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXElement(jsx_elem) => {
-                if let Some(span) = jsx_elem.opening_element.attributes.iter().find_map(|attr| {
-                    let JSXAttributeItem::Attribute(attr) = attr else {
-                        return None;
-                    };
-
-                    let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
-                        return None;
-                    };
-                    if attr_ident.name == "children" {
-                        Some(attr.span)
-                    } else {
-                        None
-                    }
-                }) {
-                    ctx.diagnostic(NoChildrenPropDiagnostic(span));
+            AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
+                let JSXAttributeName::Identifier(attr_ident) = &attr.name else { return };
+                if attr_ident.name == "children" {
+                    ctx.diagnostic(NoChildrenPropDiagnostic(attr.span));
                 }
             }
             AstKind::CallExpression(call_expr) => {

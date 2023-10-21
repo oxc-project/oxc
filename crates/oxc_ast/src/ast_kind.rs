@@ -113,6 +113,7 @@ pub enum AstKind<'a> {
     JSXFragment(&'a JSXFragment<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
     JSXElementName(&'a JSXElementName<'a>),
+    JSXAttributeItem(&'a JSXAttributeItem<'a>),
 
     // TypeScript
     TSModuleBlock(&'a TSModuleBlock<'a>),
@@ -238,6 +239,7 @@ impl<'a> AstKind<'a> {
                 | Self::JSXOpeningElement(_)
                 | Self::JSXElementName(_)
                 | Self::JSXFragment(_)
+                | Self::JSXAttributeItem(_)
         )
     }
 
@@ -358,6 +360,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXElementName(x) => x.span(),
             Self::JSXElement(x) => x.span,
             Self::JSXFragment(x) => x.span,
+            Self::JSXAttributeItem(x) => x.span(),
 
             Self::TSModuleBlock(x) => x.span,
 
@@ -522,6 +525,7 @@ impl<'a> AstKind<'a> {
             Self::JSXElementName(_) => "JSXElementName".into(),
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
+            Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
