@@ -127,10 +127,13 @@ impl SymbolTable {
     pub fn is_static(&self, expr: &Expression) -> bool {
         match expr {
             Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident)
-                if ident.reference_id.get().is_some_and(|id| self.has_binding(id)) =>
-            {
-                true
+            Expression::Identifier(ident) => {
+                ident.reference_id.get().map_or(false, |reference_id| {
+                    self.get_reference(reference_id).symbol_id().map_or_else(
+                        || self.has_binding(reference_id),
+                        |symbol_id| self.get_resolved_references(symbol_id).all(|r| !r.is_write()),
+                    )
+                })
             }
             _ => false,
         }

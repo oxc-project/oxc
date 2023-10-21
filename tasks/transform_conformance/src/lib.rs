@@ -99,7 +99,7 @@ impl TestRunner {
 
         for case in CASES {
             let root = root.join(case).join("test/fixtures");
-            let mut paths = WalkDir::new(&root)
+            let mut cases = WalkDir::new(&root)
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| {
@@ -109,16 +109,19 @@ impl TestRunner {
                             .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
                 })
                 .map(walkdir::DirEntry::into_path)
-                .collect::<Vec<_>>();
-            paths.sort_unstable();
-
-            let num_of_tests = paths.len();
+                .map(TestCase::new)
+                .filter(|c| !c.skip_test_case())
+                .collect::<Vec<TestCase>>();
+            cases.sort_unstable_by_key(|c| c.path.clone());
+            let num_of_tests = cases.len();
             total += num_of_tests;
 
             // Run the test
-            let (passed, failed): (Vec<PathBuf>, Vec<PathBuf>) = paths
-                .into_iter()
-                .partition(|path| TestCase::new(path).test(self.options.filter.as_deref()));
+            let (passed, failed): (Vec<TestCase>, Vec<TestCase>) =
+                cases.into_iter().partition(|case| case.test(self.options.filter.as_deref()));
+            let passed = passed.into_iter().map(|case| case.path).collect::<Vec<_>>();
+            let failed = failed.into_iter().map(|case| case.path).collect::<Vec<_>>();
+
             all_passed_count += passed.len();
 
             // Snapshot
@@ -129,7 +132,7 @@ impl TestRunner {
                 snapshot.push_str(case);
                 snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
                 for path in failed {
-                    snapshot.push_str("* Failed: ");
+                    snapshot.push_str("* ");
                     snapshot.push_str(&normalize_path(path.strip_prefix(&root).unwrap()));
                     snapshot.push('\n');
                 }
@@ -189,6 +192,22 @@ impl TestCase {
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
         }
+    }
+
+    fn skip_test_case(&self) -> bool {
+        // Legacy decorators is not supported by the parser
+        if self
+            .options
+            .get_plugin("syntax-decorators")
+            .flatten()
+            .as_ref()
+            .and_then(|o| o.as_object())
+            .and_then(|o| o.get("version"))
+            .is_some_and(|s| s == "legacy")
+        {
+            return true;
+        }
+        false
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.

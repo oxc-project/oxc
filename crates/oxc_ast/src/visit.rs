@@ -1077,9 +1077,12 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_jsx_fragment(&mut self, elem: &JSXFragment<'a>) {
+        let kind = AstKind::JSXFragment(self.alloc(elem));
+        self.enter_node(kind);
         for child in &elem.children {
             self.visit_jsx_child(child);
         }
+        self.leave_node(kind);
     }
 
     fn visit_jsx_child(&mut self, child: &JSXChild<'a>) {

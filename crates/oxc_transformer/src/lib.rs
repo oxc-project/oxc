@@ -82,7 +82,7 @@ impl<'a> Transformer<'a> {
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
-            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), &options),
+            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
@@ -100,8 +100,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
-        self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
+        // TODO: we need scope id to insert the vars into the correct statements
+        self.es2021_logical_assignment_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
+        self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
