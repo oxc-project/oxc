@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext, fixer::Fix, jest_ast_util::parse_expect_jest_fn_call, rule::Rule, AstNode,
+    context::LintContext, fixer::Fix, rule::Rule, utils::parse_expect_jest_fn_call, AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]

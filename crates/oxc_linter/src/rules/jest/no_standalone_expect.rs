@@ -8,11 +8,11 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
         JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 

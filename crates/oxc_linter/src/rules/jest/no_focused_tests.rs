@@ -9,11 +9,11 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     fixer::Fix,
-    jest_ast_util::{
+    rule::Rule,
+    utils::{
         parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, MemberExpressionElement,
         ParsedGeneralJestFnCall,
     },
-    rule::Rule,
     AstNode,
 };
 

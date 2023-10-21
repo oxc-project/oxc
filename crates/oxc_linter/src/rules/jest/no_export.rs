@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, jest_ast_util::is_jest_file, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-export): Do not export from a test file.")]
@@ -69,7 +69,7 @@ fn test() {
         (
             "
               export const myThing = 'invalid';
-      
+
               test.each()('my code', () => {
                 expect(1).toBe(1);
               });
@@ -79,7 +79,7 @@ fn test() {
         (
             "
               export const myThing = 'invalid';
-      
+
               test.each``('my code', () => {
                 expect(1).toBe(1);
               });

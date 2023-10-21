@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, jest_ast_util::parse_expect_jest_fn_call, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::parse_expect_jest_fn_call, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots")]

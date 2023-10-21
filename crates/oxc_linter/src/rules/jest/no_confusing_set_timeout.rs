@@ -12,8 +12,8 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_jest_fn_call, JestFnKind},
     rule::Rule,
+    utils::{parse_jest_fn_call, JestFnKind},
 };
 
 #[derive(Debug, Error, Diagnostic)]

@@ -11,8 +11,8 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_expect_jest_fn_call, ExpectError},
     rule::Rule,
+    utils::{parse_expect_jest_fn_call, ExpectError},
     AstNode,
 };
 
