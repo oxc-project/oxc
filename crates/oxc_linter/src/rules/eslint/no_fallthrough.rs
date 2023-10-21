@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoFallthrough,
-    correctness
+    nursery
 );
 
 impl Rule for NoFallthrough {
