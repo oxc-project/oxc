@@ -1,16 +1,16 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
+#[error("'React' must be in scope when using JSX")]
+#[diagnostic(severity(warning), help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope."))]
 struct ReactInJsxScopeDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -19,66 +19,42 @@ pub struct ReactInJsxScope;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow missing React when using JSX
     ///
     /// ### Why is this bad?
     ///
+    /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
     ///
     /// ### Example
     /// ```javascript
+    /// // Bad
+    /// var a = <a />;
+    ///
+    /// // Good
+    /// import React from "react";
+    /// var a = <a />;
+    ///
     /// ```
     ReactInJsxScope,
-    correctness
+    suspicious
 );
 
 impl Rule for ReactInJsxScope {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::JSXOpeningElement(_) | AstKind::JSXFragment(_)) {
-            return;
-        }
-
-        // const variables = variableUtil.variablesInScope(context);
-        // if (variableUtil.findVariable(variables, pragma)) {
-        //   return;
-        // }
-        // report(context, messages.notInScope, 'notInScope', {
-        //   node,
-        //   data: {
-        //     name: pragma,
-        //   },
-        // });
+        let node_span = match node.kind() {
+            AstKind::JSXOpeningElement(v) => v.span,
+            AstKind::JSXFragment(v) => v.span,
+            _ => return,
+        };
 
         let scope = ctx.scopes();
-        let nodes = ctx.nodes();
-        let symbols = ctx.symbols();
 
-        let mut incl_react = false;
-
-        scope.ancestors(node.scope_id()).for_each(|v| {
-            println!("ancestor: {:?}", v);
-
-            println!("{:?}", scope.get_bindings(v));
-
-            scope.get_bindings(v).iter().for_each(|(k, v)| {
-                println!("{}: {:?}", k, v);
-
-                if k.as_str() == "React" {
-                    incl_react = true;
-                }
-            });
-        });
-
-        if !incl_react {
-            ctx.diagnostic(ReactInJsxScopeDiagnostic(Span { start: 0, end: 1 }));
+        if !scope
+            .ancestors(node.scope_id())
+            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k.as_str() == "React"))
+        {
+            ctx.diagnostic(ReactInJsxScopeDiagnostic(node_span));
         }
-
-        // scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
-        //     || {
-        //         panic!(
-        //             "No binding id found for {}, but this IdentifierReference
-        //         is not a global",
-        //             &ident.name
-        //         );
-        //     },
     }
 }
 
@@ -94,8 +70,6 @@ fn test() {
         ("var React, App, a=1; <App attr={a} />;", None),
         ("var React, App, a=1; function elem() { return <App attr={a} />; }", None),
         ("var React, App; <App />;", None),
-        // ("/** @jsx Foo */ var Foo, App; <App />;", None),
-        // ("/** @jsx Foo.Bar */ var Foo, App; <App />;", None),
         (
             "
 			        import React from 'react/addons';
@@ -110,7 +84,7 @@ fn test() {
 			      ",
             None,
         ),
-        // ("var Foo, App; <App />;", None),
+        ("var React, a = <img />;", None),
     ];
 
     let fail = vec![
@@ -118,9 +92,7 @@ fn test() {
         ("var a = <App />;", None),
         ("var a = <img />;", None),
         ("var a = <>fragment</>;", None),
-        // ("/** @jsx React.DOM */ var a = <img />;", None),
-        // ("/** @jsx Foo.bar */ var React, a = <img />;", None),
-        ("var React, a = <img />;", None),
+        ("var Foo, a = <img />;", None),
     ];
 
     Tester::new(ReactInJsxScope::NAME, pass, fail).test_and_snapshot();
