@@ -2,19 +2,19 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_useless_fragment
 ---
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <></>
    · ─────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <>{}</>
    · ───────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <p>moo<>foo</></p>
    ·       ────────
@@ -26,13 +26,13 @@ expression: jsx_no_useless_fragment
    ·       ────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <>{meow}</>
    · ───────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <p><>{meow}</></p>
    · ──────────────
@@ -44,13 +44,13 @@ expression: jsx_no_useless_fragment
    · ──────────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <><div/></>
    · ───────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │     
  2 │ ╭─▶             <>
@@ -59,13 +59,13 @@ expression: jsx_no_useless_fragment
  5 │             
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <Fragment />
    · ────────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │     
  2 │ ╭─▶                 <React.Fragment>
@@ -74,13 +74,13 @@ expression: jsx_no_useless_fragment
  5 │                 
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <Eeee><>foo</></Eeee>
    · ──────────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><>foo</></div>
    · ─────────────
@@ -141,7 +141,7 @@ expression: jsx_no_useless_fragment
    ·        ─────────────
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:3:1]
  3 │               <html>
  4 │                 <React.Fragment />
@@ -157,7 +157,7 @@ expression: jsx_no_useless_fragment
  5 │               </html>
    ╰────
 
-  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.
+  ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <><Foo>{moo}</Foo></>
    · ─────────────────────

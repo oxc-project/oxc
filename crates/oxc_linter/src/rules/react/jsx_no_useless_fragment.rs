@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{
         Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName,
@@ -13,13 +12,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum JsxNoUselessFragmentDiagnostic {
-    #[error("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child - otherwise, there's no need for a Fragment at all.")]
+    #[error("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.")]
     #[diagnostic(severity(warning))]
     NeedsMoreChildren(#[label] Span),
     #[error("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.")]
@@ -148,11 +146,7 @@ fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
 fn is_html_element(elem_name: &JSXElementName) -> bool {
     let JSXElementName::Identifier(ident) = elem_name else { return false };
 
-    lazy_static! {
-        static ref HTML_ELEM_PAT: Regex = Regex::new(r"^[a-z]+$").unwrap();
-    }
-
-    HTML_ELEM_PAT.is_match(ident.name.as_str())
+    ident.name.starts_with(char::is_lowercase)
 }
 
 fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
