@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-alias-methods): Unexpected alias {0:?}")]
+#[error("eslint-plugin-jest(no-alias-methods): Unexpected alias {0:?}")]
 #[diagnostic(severity(warning), help("Replace {0:?} with its canonical name of {1:?}"))]
 struct NoAliasMethodsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
 

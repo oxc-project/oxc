@@ -19,7 +19,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/expect-expect): Test has no assertions")]
+#[error("eslint-plugin-jest(expect-expect): Test has no assertions")]
 #[diagnostic(severity(warning), help("Add assertion(s) in this Test"))]
 struct ExpectExpectDiagnostic(#[label] pub Span);
 

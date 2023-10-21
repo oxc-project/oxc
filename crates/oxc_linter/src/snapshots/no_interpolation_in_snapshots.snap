@@ -2,42 +2,42 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_interpolation_in_snapshots
 ---
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).toMatchInlineSnapshot(`${interpolated}`);
    ·                                         ─────────────────
    ╰────
   help: Remove string interpolation from snapshots
 
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).not.toMatchInlineSnapshot(`${interpolated}`);
    ·                                             ─────────────────
    ╰────
   help: Remove string interpolation from snapshots
 
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).toMatchInlineSnapshot({}, `${interpolated}`);
    ·                                             ─────────────────
    ╰────
   help: Remove string interpolation from snapshots
 
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).not.toMatchInlineSnapshot({}, `${interpolated}`);
    ·                                                 ─────────────────
    ╰────
   help: Remove string interpolation from snapshots
 
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).toThrowErrorMatchingInlineSnapshot(`${interpolated}`);
    ·                                                      ─────────────────
    ╰────
   help: Remove string interpolation from snapshots
 
-  ⚠ eslint(jest/no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
+  ⚠ eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots
    ╭─[no_interpolation_in_snapshots.tsx:1:1]
  1 │ expect(something).not.toThrowErrorMatchingInlineSnapshot(`${interpolated}`);
    ·                                                          ─────────────────

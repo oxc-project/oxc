@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-standalone-expect): Expect must be inside of a test block.")]
+#[error("eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.")]
 #[diagnostic(severity(warning), help("Did you forget to wrap `expect` in a `test` or `it` block?"))]
 struct NoStandaloneExpectDiagnostic(#[label] pub Span);
 

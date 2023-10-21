@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-disabled-tests): {0:?}")]
+#[error("eslint-plugin-jest(no-disabled-tests): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoDisabledTestsDiagnostic(&'static str, &'static str, #[label] pub Span);
 

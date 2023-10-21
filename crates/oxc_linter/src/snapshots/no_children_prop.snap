@@ -2,105 +2,105 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_children_prop
 ---
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <div children />;
    ·      ────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <div children="Children" />;
    ·      ───────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <div children={<div />} />;
    ·      ──────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <div children={[<div />, <div />]} />;
    ·      ─────────────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <div children="Children">Children</div>;
    ·      ───────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement("div", {children: "Children"});
    ·                             ────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement("div", {children: "Children"}, "Children");
    ·                             ────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement("div", {children: React.createElement("div")});
    ·                             ────────────────────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement("div", {children: [React.createElement("div"), React.createElement("div")]});
    ·                             ──────────────────────────────────────────────────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <MyComponent children="Children" />
    ·              ───────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement(MyComponent, {children: "Children"});
    ·                                   ────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <MyComponent className="class-name" children="Children" />;
    ·                                     ───────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement(MyComponent, {children: "Children", className: "class-name"});
    ·                                   ────────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ <MyComponent {...props} children="Children" />;
    ·                         ───────────────────
    ╰────
   help: The canonical way to pass children in React is to use JSX elements
 
-  ⚠ eslint-plugin-react/no-children-prop: Avoid passing children using a prop.
+  ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:1]
  1 │ React.createElement(MyComponent, {...props, children: "Children"})
    ·                                             ────────────────────

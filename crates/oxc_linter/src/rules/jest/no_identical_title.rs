@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-identical-title): {0:?}")]
+#[error("eslint-plugin-jest(no-identical-title): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoIdenticalTitleDiagnostic(&'static str, &'static str, #[label] pub Span);
 

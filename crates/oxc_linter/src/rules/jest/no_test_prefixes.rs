@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
+#[error("eslint-plugin-jest(no-test-prefixes): Use {0:?} instead.")]
 #[diagnostic(severity(warning))]
 struct NoTestPrefixesDiagnostic(Atom, #[label] pub Span);
 

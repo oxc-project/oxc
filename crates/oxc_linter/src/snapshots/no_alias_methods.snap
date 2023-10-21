@@ -2,105 +2,105 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_alias_methods
 ---
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toBeCalled"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalled"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toBeCalled()
    ·           ──────────
    ╰────
   help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toBeCalledTimes"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalledTimes"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toBeCalledTimes()
    ·           ───────────────
    ╰────
   help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toBeCalledWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalledWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toBeCalledWith()
    ·           ──────────────
    ╰────
   help: Replace "toBeCalledWith" with its canonical name of "toHaveBeenCalledWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "lastCalledWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "lastCalledWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).lastCalledWith()
    ·           ──────────────
    ╰────
   help: Replace "lastCalledWith" with its canonical name of "toHaveBeenLastCalledWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "nthCalledWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "nthCalledWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).nthCalledWith()
    ·           ─────────────
    ╰────
   help: Replace "nthCalledWith" with its canonical name of "toHaveBeenNthCalledWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toReturn"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturn"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toReturn()
    ·           ────────
    ╰────
   help: Replace "toReturn" with its canonical name of "toHaveReturned"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toReturnTimes"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturnTimes"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toReturnTimes()
    ·           ─────────────
    ╰────
   help: Replace "toReturnTimes" with its canonical name of "toHaveReturnedTimes"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toReturnWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturnWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toReturnWith()
    ·           ────────────
    ╰────
   help: Replace "toReturnWith" with its canonical name of "toHaveReturnedWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "lastReturnedWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "lastReturnedWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).lastReturnedWith()
    ·           ────────────────
    ╰────
   help: Replace "lastReturnedWith" with its canonical name of "toHaveLastReturnedWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "nthReturnedWith"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "nthReturnedWith"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).nthReturnedWith()
    ·           ───────────────
    ╰────
   help: Replace "nthReturnedWith" with its canonical name of "toHaveNthReturnedWith"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).toThrowError()
    ·           ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).resolves.toThrowError()
    ·                    ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).rejects.toThrowError()
    ·                   ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).not.toThrowError()
    ·               ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
 
-  ⚠ eslint(jest/no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:1]
  1 │ expect(a).not['toThrowError']()
    ·               ──────────────

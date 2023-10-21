@@ -8,7 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-export): Do not export from a test file.")]
+#[error("eslint-plugin-jest(no-export): Do not export from a test file.")]
 #[diagnostic(severity(warning), help("If you want to share code between tests, move it into a separate file and import it from there."))]
 struct NoExportDiagnostic(#[label] pub Span);
 

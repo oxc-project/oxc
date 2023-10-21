@@ -9,7 +9,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/no-commented-out-tests): Some tests seem to be commented")]
+#[error("eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented")]
 #[diagnostic(severity(warning), help("Remove or uncomment this comment"))]
 struct NoCommentedOutTestsDiagnostic(#[label] pub Span);
 
@@ -108,14 +108,14 @@ fn test() {
               test("foo", () => {
                 const pending = getPending()
                 expect(pending()).toEqual({})
-              }) 
+              })
             "#,
             None,
         ),
         (
             r#"
               test("foo", () => { expect(pending()).toEqual({}) })
-              function pending() { return {} } 
+              function pending() { return {} }
             "#,
             None,
         ),

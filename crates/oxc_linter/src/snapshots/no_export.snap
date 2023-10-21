@@ -2,32 +2,32 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_export
 ---
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:1]
  1 │ export const myThing = 'invalid'; test('a test', () => { expect(1).toBe(1);});
    ·        ──────────────────────────
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:1]
  1 │ 
  2 │               export const myThing = 'invalid';
    ·                      ──────────────────────────
- 3 │       
+ 3 │ 
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:1]
  1 │ 
  2 │               export const myThing = 'invalid';
    ·                      ──────────────────────────
- 3 │       
+ 3 │ 
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:1]
  1 │ 
  2 │               export const myThing = 'invalid';
@@ -36,14 +36,14 @@ expression: no_export
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:1]
  1 │ export default function() {};  test('a test', () => { expect(1).toBe(1);});
    ·                ─────────────
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:5:1]
  5 │ 
  6 │               export {foo, bar};
@@ -52,7 +52,7 @@ expression: no_export
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
 
-  ⚠ eslint(jest/no-export): Do not export from a test file.
+  ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:5:1]
  5 │ 
  6 │               export {foo, bar};

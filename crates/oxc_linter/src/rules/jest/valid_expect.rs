@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/valid-expect): {0:?}")]
+#[error("eslint-plugin-jest(valid-expect): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidExpectDiagnostic(pub Atom, pub &'static str, #[label] pub Span);
 

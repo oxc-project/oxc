@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(jest/valid-title): {0:?}")]
+#[error("eslint-plugin-jest(valid-title): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidTitleDiagnostic(Atom, &'static str, #[label] pub Span);
 

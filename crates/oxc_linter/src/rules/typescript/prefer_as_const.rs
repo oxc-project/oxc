@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Expected a `const` assertion instead of a literal type annotation.")]
+#[error("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")]
 #[diagnostic(severity(warning), help("You should use `as const` instead of type annotation."))]
 struct PreferAsConstDiagnostic(#[label] pub Span);
 
