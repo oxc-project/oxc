@@ -125,6 +125,7 @@ mod jest {
 
 mod react {
     pub mod jsx_key;
+    pub mod jsx_no_duplicate_props;
     pub mod no_children_prop;
 }
 
@@ -249,6 +250,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     unicorn::prefer_array_flat_map,
     react::jsx_key,
+    react::jsx_no_duplicate_props,
     react::no_children_prop,
     import::named,
     import::no_cycle,
