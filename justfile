@@ -6,10 +6,10 @@ _default:
 alias r := ready
 alias c := coverage
 
-# Initialize the project by installing all the necessary tools.
 # Make sure you have cargo-binstall installed.
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
 # or install via `cargo install cargo-binstall`
+# Initialize the project by installing all the necessary tools.
 init:
   cargo binstall cargo-nextest cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
@@ -25,12 +25,11 @@ ready:
 
 # Update our local branch with the remote branch (this is for you to sync the submodules)
 update:
-  git pull
-  git submodule update --init
+  git pull --recurse-submodules
 
-# Run `cargo watch`
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
+# Run `cargo watch`
 watch command:
   cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
 

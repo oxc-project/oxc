@@ -1,3 +1,7 @@
+//! Source positions and related helper functions.
+//!
+//! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
+
 mod atom;
 mod source_type;
 mod span;

@@ -35,13 +35,13 @@ expression: jsx_no_useless_fragment
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <p><>{meow}</></p>
-   · ──────────────
+   ·    ───────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <p><>{meow}</></p>
-   · ──────────────
+   ·    ───────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
@@ -77,31 +77,31 @@ expression: jsx_no_useless_fragment
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <Eeee><>foo</></Eeee>
-   · ──────────────
+   ·       ────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><>foo</></div>
-   · ─────────────
+   ·      ────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><>foo</></div>
-   · ─────────────
+   ·      ────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><>{"a"}{"b"}</></div>
-   · ────────────────────
+   ·      ───────────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><>{"a"}{"b"}</></div>
-   · ────────────────────
+   ·      ───────────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
@@ -115,7 +115,7 @@ expression: jsx_no_useless_fragment
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <div><Fragment>{"a"}{"b"}</Fragment></div>
-   · ────────────────────────────────────
+   ·      ───────────────────────────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
