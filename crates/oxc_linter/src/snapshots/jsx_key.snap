@@ -95,7 +95,7 @@ expression: jsx_key
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
    ╭─[jsx_key.tsx:1:1]
  1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
-   · ──────────────────────────────────────────
+   ·                       ────────────────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
