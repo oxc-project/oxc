@@ -164,6 +164,7 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn next_jsx_child(&mut self) -> Token<'a> {
+        self.current.token.start = self.offset();
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
