@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, ObjectPropertyKind},
+    ast::{Argument, Expression, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -7,6 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::GetSpan;
 use oxc_span::Span;
 
 use crate::{
@@ -44,10 +45,10 @@ impl Rule for NoDangerouslySetInnerHtml {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
-                if let Some(prop) =
+                if let Some(JSXAttributeItem::Attribute(prop)) =
                     has_jsx_prop(&jsx_elem.opening_element, "dangerouslySetInnerHTML")
                 {
-                    ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(prop.span()));
+                    ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(prop.name.span()));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -63,7 +64,9 @@ impl Rule for NoDangerouslySetInnerHtml {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
                             if prop_name.as_str() == "dangerouslySetInnerHTML" {
-                                ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(obj_prop.span));
+                                ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(
+                                    obj_prop.key.span(),
+                                ));
                             }
                         }
                     }
