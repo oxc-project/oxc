@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: no_find_dom_node
+---
+  ⚠ Do not use findDOMNode. It doesn’t work with function components and is deprecated in StrictMode. See https://reactjs.org/docs/react-dom.html#finddomnode
+   ╭─[no_find_dom_node.tsx:3:1]
+ 3 │               componentDidMount: function() {
+ 4 │                 React.findDOMNode(this).scrollIntoView();
+   ·                 ───────────────────────
+ 5 │               },
+   ╰────
+
+  ⚠ Do not use findDOMNode. It doesn’t work with function components and is deprecated in StrictMode. See https://reactjs.org/docs/react-dom.html#finddomnode
+   ╭─[no_find_dom_node.tsx:3:1]
+ 3 │               componentDidMount: function() {
+ 4 │                 ReactDOM.findDOMNode(this).scrollIntoView();
+   ·                 ──────────────────────────
+ 5 │               },
+   ╰────
+
+  ⚠ Do not use findDOMNode. It doesn’t work with function components and is deprecated in StrictMode. See https://reactjs.org/docs/react-dom.html#finddomnode
+   ╭─[no_find_dom_node.tsx:3:1]
+ 3 │               componentDidMount() {
+ 4 │                 findDOMNode(this).scrollIntoView();
+   ·                 ─────────────────
+ 5 │               }
+   ╰────
+
+  ⚠ Do not use findDOMNode. It doesn’t work with function components and is deprecated in StrictMode. See https://reactjs.org/docs/react-dom.html#finddomnode
+   ╭─[no_find_dom_node.tsx:3:1]
+ 3 │               componentDidMount() {
+ 4 │                 this.node = findDOMNode(this);
+   ·                             ─────────────────
+ 5 │               }
+   ╰────
+
+

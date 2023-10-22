@@ -131,6 +131,7 @@ mod react {
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
+    pub mod no_find_dom_node;
 }
 
 mod unicorn {
@@ -260,6 +261,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_useless_fragment,
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
+    react::no_find_dom_node,
     import::named,
     import::no_cycle,
     import::no_self_import,
