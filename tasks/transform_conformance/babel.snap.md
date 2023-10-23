@@ -1,4 +1,4 @@
-Passed: 162/1087
+Passed: 162/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -511,12 +511,6 @@ Passed: 162/1087
 * systemjs/module/input.mjs
 * systemjs/script/input.js
 * systemjs/to-string/input.js
-
-# babel-plugin-transform-export-namespace-from (0/4)
-* export-namespace/namespace-default/input.mjs
-* export-namespace/namespace-es6/input.mjs
-* export-namespace/namespace-string/input.mjs
-* export-namespace/namespace-typescript/input.mjs
 
 # babel-plugin-transform-nullish-coalescing-operator (10/12)
 * assumption-noDocumentAll/transform-in-default-param/input.js
