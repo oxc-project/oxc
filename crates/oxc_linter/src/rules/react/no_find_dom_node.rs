@@ -47,8 +47,8 @@ impl Rule for NoFindDomNode {
         if let Some(ident) = call_expr.callee.get_identifier_reference() {
             if ident.name == "findDOMNode" {
                 ctx.diagnostic(NoFindDomNodeDiagnostic(ident.span));
-                return;
             }
+            return;
         }
 
         let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
@@ -59,9 +59,7 @@ impl Rule for NoFindDomNode {
         {
             return;
         }
-        let Some((span, "findDOMNode")) = member_expr.static_property_info() else {
-            return;
-        };
+        let Some((span, "findDOMNode")) = member_expr.static_property_info() else { return };
         ctx.diagnostic(NoFindDomNodeDiagnostic(span));
     }
 }
