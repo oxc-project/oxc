@@ -88,11 +88,13 @@ impl JsxNoUselessFragment {
             && !is_fragment_with_only_text_and_is_not_child(node.id(), &elem.children, ctx)
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(elem.span));
+            let span = elem.opening_element.span;
+            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(span));
         }
 
         if is_child_of_html_element(node, ctx) {
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(elem.span));
+            let span = elem.opening_element.span;
+            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(span));
         }
     }
     fn check_fragment(&self, node: &AstNode, elem: &JSXFragment, ctx: &LintContext) {
@@ -100,11 +102,13 @@ impl JsxNoUselessFragment {
             && !is_fragment_with_only_text_and_is_not_child(node.id(), &elem.children, ctx)
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(elem.span));
+            let span = elem.opening_fragment.span;
+            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(span));
         }
 
         if is_child_of_html_element(node, ctx) {
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(elem.span));
+            let span = elem.opening_fragment.span;
+            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(span));
         }
     }
 }
