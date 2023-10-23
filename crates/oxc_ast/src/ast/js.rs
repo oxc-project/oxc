@@ -1864,7 +1864,8 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
+    /// `None` for `import from 'foo'`, `Some([])` for `import {} from 'foo'`
+    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
     pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
@@ -1885,12 +1886,13 @@ pub enum ImportDeclarationSpecifier {
 // import {imported} from "source"
 // import {imported as local} from "source"
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub imported: ModuleExportName,
     pub local: BindingIdentifier,
+    pub import_kind: ImportOrExportKind,
 }
 
 // import local from "source"

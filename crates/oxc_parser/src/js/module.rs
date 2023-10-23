@@ -52,9 +52,9 @@ impl<'a> Parser<'a> {
 
         let specifiers = if self.at(Kind::Str) {
             // import "source"
-            self.ast.new_vec()
+            None
         } else {
-            self.parse_import_declaration_specifiers()?
+            Some(self.parse_import_declaration_specifiers()?)
         };
 
         let source = self.parse_literal_string()?;
@@ -388,7 +388,7 @@ impl<'a> Parser<'a> {
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
             (ModuleExportName::Identifier(imported), local)
         };
-        Ok(ImportSpecifier { span: self.end_span(specifier_span), imported, local })
+        Ok(ImportSpecifier { span: self.end_span(specifier_span), imported, local, import_kind })
     }
 
     // ModuleExportName :

@@ -142,11 +142,19 @@ impl<'a> BoundNames for ModuleDeclaration<'a> {
 
 impl<'a> BoundNames for ImportDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
-        self.specifiers.iter().for_each(|specifier| match specifier {
-            ImportDeclarationSpecifier::ImportSpecifier(specifier) => f(&specifier.local),
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => f(&specifier.local),
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => f(&specifier.local),
-        });
+        if let Some(specifiers) = &self.specifiers {
+            for specifier in specifiers {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => f(&specifier.local),
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        f(&specifier.local)
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        f(&specifier.local)
+                    }
+                }
+            }
+        }
     }
 }
 

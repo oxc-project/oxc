@@ -642,70 +642,72 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameters<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_str(b"import ");
-        if self.specifiers.is_empty() {
-            p.print(b'\'');
-            p.print_str(self.source.value.as_bytes());
-            p.print(b'\'');
-            self.assertions.gen(p, ctx);
-            p.print_semicolon_after_statement();
-            return;
-        }
+        if let Some(specifiers) = &self.specifiers {
+            if specifiers.is_empty() {
+                p.print(b'\'');
+                p.print_str(self.source.value.as_bytes());
+                p.print(b'\'');
+                self.assertions.gen(p, ctx);
+                p.print_semicolon_after_statement();
+                return;
+            }
 
-        let mut in_block = false;
-        for (index, specifier) in self.specifiers.iter().enumerate() {
-            match specifier {
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
-                    if in_block {
-                        p.print_str(b"},");
-                        in_block = false;
-                    } else if index != 0 {
-                        p.print_comma();
-                    }
-                    spec.local.gen(p, ctx);
-                }
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
-                    if in_block {
-                        p.print_str(b"},");
-                        in_block = false;
-                    } else if index != 0 {
-                        p.print_comma();
-                    }
-                    p.print_str(b"* as ");
-                    spec.local.gen(p, ctx);
-                }
-                ImportDeclarationSpecifier::ImportSpecifier(spec) => {
-                    if in_block {
-                        p.print_comma();
-                    } else {
-                        if index != 0 {
+            let mut in_block = false;
+            for (index, specifier) in specifiers.iter().enumerate() {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
+                        if in_block {
+                            p.print_str(b"},");
+                            in_block = false;
+                        } else if index != 0 {
                             p.print_comma();
                         }
-                        in_block = true;
-                        p.print(b'{');
-                    }
-
-                    let imported_name = match &spec.imported {
-                        ModuleExportName::Identifier(identifier) => {
-                            identifier.gen(p, ctx);
-                            identifier.name.as_bytes()
-                        }
-                        ModuleExportName::StringLiteral(literal) => {
-                            literal.gen(p, ctx);
-                            literal.value.as_bytes()
-                        }
-                    };
-
-                    let local_name = spec.local.name.as_bytes();
-
-                    if imported_name != local_name {
-                        p.print_str(b" as ");
                         spec.local.gen(p, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
+                        if in_block {
+                            p.print_str(b"},");
+                            in_block = false;
+                        } else if index != 0 {
+                            p.print_comma();
+                        }
+                        p.print_str(b"* as ");
+                        spec.local.gen(p, ctx);
+                    }
+                    ImportDeclarationSpecifier::ImportSpecifier(spec) => {
+                        if in_block {
+                            p.print_comma();
+                        } else {
+                            if index != 0 {
+                                p.print_comma();
+                            }
+                            in_block = true;
+                            p.print(b'{');
+                        }
+
+                        let imported_name = match &spec.imported {
+                            ModuleExportName::Identifier(identifier) => {
+                                identifier.gen(p, ctx);
+                                identifier.name.as_bytes()
+                            }
+                            ModuleExportName::StringLiteral(literal) => {
+                                literal.gen(p, ctx);
+                                literal.value.as_bytes()
+                            }
+                        };
+
+                        let local_name = spec.local.name.as_bytes();
+
+                        if imported_name != local_name {
+                            p.print_str(b" as ");
+                            spec.local.gen(p, ctx);
+                        }
                     }
                 }
             }
-        }
-        if in_block {
-            p.print(b'}');
+            if in_block {
+                p.print(b'}');
+            }
         }
         p.print_str(b" from ");
         self.source.gen(p, ctx);
@@ -747,11 +749,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
             None => {
                 p.print(b'{');
                 if !self.specifiers.is_empty() {
+                    p.print_soft_space();
                     p.print_list(&self.specifiers, ctx);
+                    p.print_soft_space();
                 }
                 p.print(b'}');
                 if let Some(source) = &self.source {
+                    p.print_soft_space();
                     p.print_str(b"from");
+                    p.print_soft_space();
                     source.gen(p, ctx);
                 }
                 p.needs_semicolon = true;
