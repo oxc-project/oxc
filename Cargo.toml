@@ -68,14 +68,14 @@ proc-macro2               = { version = "1.0.69" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.33" }
 rayon                     = { version = "1.8.0" }
-regex                     = { version = "1.10.1" }
+regex                     = { version = "1.10.2" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "0.2.2" }
-ropey                     = { version = "1.6.0" }
+ropey                     = { version = "1.6.1" }
 serde                     = { version = "1.0.189" }
 serde_json                = { version = "1.0.107" }
 syn                       = { version = "=1" }
-thiserror                 = { version = "1.0.49" }
+thiserror                 = { version = "1.0.50" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
@@ -90,7 +90,7 @@ tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
 trustfall                 = { version = "0.6.1" }
 insta                     = { version = "1.34.0", features = ["glob"] }
-codspeed-criterion-compat = { version = "2.2.0", default-features = false }
+codspeed-criterion-compat = { version = "2.3.0", default-features = false }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
