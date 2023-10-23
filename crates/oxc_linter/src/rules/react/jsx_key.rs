@@ -1,14 +1,12 @@
 use oxc_ast::{
-    ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, MemberExpression,
-    },
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment},
     AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use oxc_macros::declare_oxc_lint;
 
@@ -103,8 +101,8 @@ fn is_in_array_or_iter<'a, 'b>(
                 let callee = &v.callee.without_parenthesized();
 
                 if let Expression::MemberExpression(v) = callee {
-                    if let Some((x, span)) = get_member_expression_name_and_span(v.0) {
-                        if TARGET_METHODS.contains(x.as_str()) {
+                    if let Some((span, ident)) = v.static_property_info() {
+                        if TARGET_METHODS.contains(ident) {
                             return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
@@ -116,28 +114,6 @@ fn is_in_array_or_iter<'a, 'b>(
             _ => {}
         }
         node = parent;
-    }
-}
-
-fn get_member_expression_name_and_span<'a>(
-    member_expr: &'a MemberExpression<'a>,
-) -> Option<(&'a Atom, Span)> {
-    match member_expr {
-        MemberExpression::StaticMemberExpression(expr) => {
-            Some((&expr.property.name, expr.property.span))
-        }
-        MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-            Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
-            Expression::TemplateLiteral(lit) => {
-                if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                    Some((&lit.quasis[0].value.raw, lit.quasis[0].span))
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        },
-        MemberExpression::PrivateFieldExpression(_) => None,
     }
 }
 
