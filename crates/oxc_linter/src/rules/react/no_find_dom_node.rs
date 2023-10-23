@@ -9,8 +9,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Do not use findDOMNode. It doesn’t work with function components and is deprecated in StrictMode. See https://reactjs.org/docs/react-dom.html#finddomnode")]
-#[diagnostic(severity(warning))]
+#[error("eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.")]
+#[diagnostic(severity(warning), help("Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives."))]
 struct NoFindDomNodeDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -21,7 +21,9 @@ declare_oxc_lint!(
     /// This rule disallows the use of `findDOMNode`.
     ///
     /// ### Why is this bad?
-    /// Facebook will eventually deprecate `findDOMNode` as it blocks certain improvements in React in the future.
+    /// `findDOMNode` is an escape hatch used to access the underlying DOM node.
+    /// In most cases, use of this escape hatch is discouraged because it pierces the component abstraction.
+    /// [It has been deprecated in `StrictMode`.](https://legacy.reactjs.org/docs/strict-mode.html#warning-about-deprecated-finddomnode-usage)
     ///
     /// ### Example
     /// ```javascript
@@ -32,7 +34,7 @@ declare_oxc_lint!(
     ///   render() {
     ///     return <div />;
     ///   }
-    ///  }
+    /// }
     /// ```
     NoFindDomNode,
     correctness
@@ -41,16 +43,26 @@ declare_oxc_lint!(
 impl Rule for NoFindDomNode {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        if call_expr.callee.get_identifier_reference().is_some_and(|x| x.name == "findDOMNode") {
-            ctx.diagnostic(NoFindDomNodeDiagnostic(call_expr.span));
-            return;
+
+        if let Some(ident) = call_expr.callee.get_identifier_reference() {
+            if ident.name == "findDOMNode" {
+                ctx.diagnostic(NoFindDomNodeDiagnostic(ident.span));
+                return;
+            }
         }
 
-        let Some(member) = call_expr.callee.get_member_expr() else { return };
-        let Some(prop_name) = member.static_property_name() else { return };
-        if prop_name == "findDOMNode" {
-            ctx.diagnostic(NoFindDomNodeDiagnostic(call_expr.span));
+        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let member = member_expr.object();
+        if !member.is_specific_id("React")
+            && !member.is_specific_id("ReactDOM")
+            && !member.is_specific_id("ReactDom")
+        {
+            return;
         }
+        let Some((span, "findDOMNode")) = member_expr.static_property_info() else {
+            return;
+        };
+        ctx.diagnostic(NoFindDomNodeDiagnostic(span));
     }
 }
 
@@ -97,6 +109,19 @@ fn test() {
             "#,
             None,
         ),
+        (
+            r#"
+            var Hello = createReactClass({
+              componentDidMount: function() {
+                SomeModule.findDOMNode(this).scrollIntoView();
+              },
+              render: function() {
+                return <div>Hello</div>;
+              }
+            });
+            "#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -118,6 +143,19 @@ fn test() {
             var Hello = createReactClass({
               componentDidMount: function() {
                 ReactDOM.findDOMNode(this).scrollIntoView();
+              },
+              render: function() {
+                return <div>Hello</div>;
+              }
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            var Hello = createReactClass({
+              componentDidMount: function() {
+                ReactDom.findDOMNode(this).scrollIntoView();
               },
               render: function() {
                 return <div>Hello</div>;
