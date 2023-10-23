@@ -386,3 +386,12 @@ impl<'a> GetSpan for JSXExpression<'a> {
         }
     }
 }
+
+impl<'a> GetSpan for JSXAttributeName<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            JSXAttributeName::Identifier(ident) => ident.span,
+            JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.span,
+        }
+    }
+}
