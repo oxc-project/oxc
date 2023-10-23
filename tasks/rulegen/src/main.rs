@@ -39,14 +39,14 @@ const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
 
 struct TestCase<'a> {
-    source_text: &'a str,
+    source_text: String,
     code: Option<String>,
-    test_code: Option<Cow<'a, str>>,
+    config: Option<Cow<'a, str>>,
 }
 
 impl<'a> TestCase<'a> {
-    fn new(source_text: &'a str, arg: &'a ArrayExpressionElement<'a>) -> Option<Self> {
-        let mut test_case = TestCase { source_text, code: None, test_code: None };
+    fn new(source_text: &str, arg: &'a ArrayExpressionElement<'a>) -> Option<Self> {
+        let mut test_case = Self { source_text: source_text.to_string(), code: None, config: None };
         if let ArrayExpressionElement::Expression(expr) = arg {
             test_case.visit_expression(expr);
             return Some(test_case);
@@ -54,25 +54,26 @@ impl<'a> TestCase<'a> {
         None
     }
 
-    fn code(&self) -> Option<Cow<'a, str>> {
-        self.code.as_ref().map(|test_code| {
-            let option_code =
-                self.test_code.as_ref().map_or(Cow::Borrowed("None"), |option_code| {
-                    Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
-                });
-            if test_code.contains('\n') {
-                Cow::Owned(format!(
-                    r#"("{}", {option_code})"#,
-                    test_code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
-                ))
-            } else {
-                Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
-            }
-        })
-    }
-
-    fn to_code(test_case: &TestCase) -> String {
-        test_case.code().map_or_else(String::new, |code| code.clone().into_owned())
+    fn code(&self, need_config: bool) -> String {
+        self.code
+            .as_ref()
+            .map(|code| {
+                let code = if code.contains('\n') {
+                    code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+                } else {
+                    code.to_string()
+                };
+                let config = self.config.as_ref().map_or_else(
+                    || "None".to_string(),
+                    |config| format!("Some(serde_json::json!({config}))"),
+                );
+                if need_config {
+                    format!("(\"{code}\", {config})")
+                } else {
+                    format!("\"{code}\"")
+                }
+            })
+            .unwrap_or_default()
     }
 }
 
@@ -104,7 +105,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     code.push('\n');
                 }
                 self.code = Some(code);
-                self.test_code = None;
+                self.config = None;
             }
         }
     }
@@ -169,8 +170,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     PropertyKey::Identifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
-                        self.test_code =
-                            Some(Cow::Owned(json::wrap_property_in_quotes(option_text)));
+                        self.config = Some(Cow::Owned(json::wrap_property_in_quotes(option_text)));
                     }
                     _ => continue,
                 },
@@ -181,12 +181,12 @@ impl<'a> Visit<'a> for TestCase<'a> {
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
         self.code = Some(lit.quasi().unwrap().to_string());
-        self.test_code = None;
+        self.config = None;
     }
 
     fn visit_string_literal(&mut self, lit: &StringLiteral) {
         self.code = Some(lit.value.to_string());
-        self.test_code = None;
+        self.config = None;
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
@@ -197,26 +197,41 @@ impl<'a> Visit<'a> for TestCase<'a> {
             return;
         }
         self.code = expr.quasi.quasi().map(std::string::ToString::to_string);
-        self.test_code = None;
+        self.config = None;
     }
 }
 
 #[derive(Serialize)]
-pub struct Context<'a> {
-    rule: &'a str,
-    rule_name: &'a str,
-    pass_cases: &'a str,
-    fail_cases: &'a str,
+pub struct Context {
+    plugin_name: String,
+    kebab_rule_name: String,
+    pascal_rule_name: String,
+    snake_rule_name: String,
+    pass_cases: String,
+    fail_cases: String,
+    test_method: String,
 }
 
-impl<'a> Context<'a> {
+impl Context {
     fn new(
-        upper_rule_name: &'a str,
-        rule_name: &'a str,
-        pass_cases: &'a str,
-        fail_cases: &'a str,
+        plugin_name: String,
+        rule_name: &str,
+        pass_cases: String,
+        fail_cases: String,
+        test_method: String,
     ) -> Self {
-        Context { rule: upper_rule_name, rule_name, pass_cases, fail_cases }
+        let pascal_rule_name = rule_name.to_case(Case::Pascal);
+        let kebab_rule_name = rule_name.to_case(Case::Kebab);
+        let underscore_rule_name = rule_name.to_case(Case::Snake);
+        Self {
+            plugin_name,
+            kebab_rule_name,
+            pascal_rule_name,
+            snake_rule_name: underscore_rule_name,
+            pass_cases,
+            fail_cases,
+            test_method,
+        }
     }
 }
 
@@ -292,8 +307,7 @@ impl<'a> Visit<'a> for State<'a> {
 
                 // for eslint-plugin-react
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
-                        println!("member_expr: {:?}", member_expr.object());
+                    if let Expression::MemberExpression(_) = &call_expr.callee {
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
                         {
@@ -309,8 +323,7 @@ impl<'a> Visit<'a> for State<'a> {
 
                 // for eslint-plugin-react
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
-                        println!("member_expr: {:?}", member_expr.object());
+                    if let Expression::MemberExpression(_) = &call_expr.callee {
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
                         {
@@ -363,8 +376,8 @@ fn main() {
 
     let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
     let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
-    let upper_rule_name = rule_name.to_case(Case::UpperCamel);
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
+    let plugin_name = rule_kind.to_string();
 
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
@@ -373,11 +386,10 @@ fn main() {
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
     };
+
     println!("Reading test file from {rule_test_path}");
 
     let body = oxc_tasks_common::agent().get(&rule_test_path).call().map(Response::into_string);
-    let pass_cases;
-    let fail_cases;
     let context = match body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
@@ -389,36 +401,44 @@ fn main() {
             let mut state = State::new(&body);
             state.visit_program(program);
 
-            pass_cases = state
-                .pass_cases()
-                .iter()
-                .map(TestCase::to_code)
-                .filter(|t| !t.is_empty())
-                .collect::<Vec<_>>()
-                .join(",\n");
-            fail_cases = state
-                .fail_cases()
-                .iter()
-                .map(TestCase::to_code)
+            let pass_cases = state.pass_cases();
+            let fail_cases = state.fail_cases();
+
+            let pass_has_config = pass_cases.iter().any(|case| case.config.is_some());
+            let fail_has_config = fail_cases.iter().any(|case| case.config.is_some());
+            let has_config = pass_has_config || fail_has_config;
+
+            let pass_cases = pass_cases
+                .into_iter()
+                .map(|c| c.code(has_config))
                 .filter(|t| !t.is_empty())
                 .collect::<Vec<_>>()
                 .join(",\n");
 
-            Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases)
+            let fail_cases = fail_cases
+                .into_iter()
+                .map(|c| c.code(has_config))
+                .filter(|t| !t.is_empty())
+                .collect::<Vec<_>>()
+                .join(",\n");
+
+            let method = if has_config { "new" } else { "new_without_config" }.to_string();
+
+            Context::new(plugin_name, &rule_name, pass_cases, fail_cases, method)
         }
         Err(_err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
-            Context::new(&upper_rule_name, &rule_name, "", "")
+            Context::new(plugin_name, &rule_name, String::new(), String::new(), "new".into())
         }
         Ok(Err(err)) => {
             println!("Failed to convert rule source code to string: {err}, use empty template");
-            Context::new(&upper_rule_name, &rule_name, "", "")
+            Context::new(plugin_name, &rule_name, String::new(), String::new(), "new".into())
         }
     };
 
+    let rule_name = &context.kebab_rule_name;
     let template = template::Template::with_context(&context);
     if let Err(err) = template.render(rule_kind) {
-        let rule_name = context.rule;
         eprintln!("failed to render {rule_name} rule template: {err}");
     }
 }
