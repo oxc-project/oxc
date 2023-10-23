@@ -1,13 +1,16 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment},
+    ast::{
+        Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, MemberExpression,
+    },
     AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
+use oxc_span::{Atom, Span};
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -18,8 +21,11 @@ enum JsxKeyDiagnostic {
     MissingKeyPropForElementInArray(#[label] Span),
 
     #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in iterator.")]
-    #[diagnostic(severity(warning))]
-    MissingKeyPropForElementInIterator(#[label] Span),
+    #[diagnostic(severity(warning), help("Add a \"key\" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."))]
+    MissingKeyPropForElementInIterator(
+        #[label("Iterator starts here")] Span,
+        #[label("Element generated here")] Span,
+    ),
 
     #[error(
         "eslint-plugin-react(jsx-key): \"key\" prop must be placed before any `{{...spread}}`"
@@ -68,7 +74,7 @@ impl Rule for JsxKey {
 
 enum InsideArrayOrIterator {
     Array,
-    Iterator,
+    Iterator(Span),
 }
 
 fn is_in_array_or_iter<'a, 'b>(
@@ -97,9 +103,9 @@ fn is_in_array_or_iter<'a, 'b>(
                 let callee = &v.callee.without_parenthesized();
 
                 if let Expression::MemberExpression(v) = callee {
-                    if let Some(static_property_name) = v.static_property_name() {
-                        if TARGET_METHODS.contains(static_property_name) {
-                            return Some(InsideArrayOrIterator::Iterator);
+                    if let Some((x, span)) = get_member_expression_name_and_span(v.0) {
+                        if TARGET_METHODS.contains(x.as_str()) {
+                            return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
                 }
@@ -110,6 +116,28 @@ fn is_in_array_or_iter<'a, 'b>(
             _ => {}
         }
         node = parent;
+    }
+}
+
+fn get_member_expression_name_and_span<'a>(
+    member_expr: &'a MemberExpression<'a>,
+) -> Option<(&'a Atom, Span)> {
+    match member_expr {
+        MemberExpression::StaticMemberExpression(expr) => {
+            Some((&expr.property.name, expr.property.span))
+        }
+        MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
+            Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
+            Expression::TemplateLiteral(lit) => {
+                if lit.expressions.is_empty() && lit.quasis.len() == 1 {
+                    Some((&lit.quasis[0].value.raw, lit.quasis[0].span))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        },
+        MemberExpression::PrivateFieldExpression(_) => None,
     }
 }
 
@@ -163,8 +191,8 @@ fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &
 fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> JsxKeyDiagnostic {
     match outer {
         InsideArrayOrIterator::Array => JsxKeyDiagnostic::MissingKeyPropForElementInArray(span),
-        InsideArrayOrIterator::Iterator => {
-            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(span)
+        InsideArrayOrIterator::Iterator(v) => {
+            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(*v, span)
         }
     }
 }
