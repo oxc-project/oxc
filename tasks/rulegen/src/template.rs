@@ -12,7 +12,7 @@ use crate::{Context, RuleKind};
 const RULE_TEMPLATE: &str = include_str!("../template.txt");
 
 pub struct Template<'a> {
-    context: &'a Context<'a>,
+    context: &'a Context,
     registry: Handlebars<'a>,
 }
 
@@ -37,7 +37,7 @@ impl<'a> Template<'a> {
             RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
         };
 
-        let out_path = path.join(format!("{}.rs", self.context.rule_name));
+        let out_path = path.join(format!("{}.rs", self.context.snake_rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
         format_rule_output(&out_path)?;
