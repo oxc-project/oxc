@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_is_mounted
+---
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use isMounted.
+   ╭─[no_is_mounted.tsx:3:1]
+ 3 │                       componentDidUpdate: function() {
+ 4 │                         if (!this.isMounted()) {
+   ·                                   ─────────
+ 5 │                           return;
+   ╰────
+  help: isMounted is an anti-pattern, is not available when using ES6 classes, and it is on its way to being officially deprecated.
+
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use isMounted.
+   ╭─[no_is_mounted.tsx:3:1]
+ 3 │                       someMethod: function() {
+ 4 │                         if (!this.isMounted()) {
+   ·                                   ─────────
+ 5 │                           return;
+   ╰────
+  help: isMounted is an anti-pattern, is not available when using ES6 classes, and it is on its way to being officially deprecated.
+
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use isMounted.
+   ╭─[no_is_mounted.tsx:3:1]
+ 3 │                       someMethod() {
+ 4 │                         if (!this.isMounted()) {
+   ·                                   ─────────
+ 5 │                           return;
+   ╰────
+  help: isMounted is an anti-pattern, is not available when using ES6 classes, and it is on its way to being officially deprecated.
+
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use isMounted.
+   ╭─[no_is_mounted.tsx:4:1]
+ 4 │                             setTimeout(function() {
+ 5 │                                 if (this.isMounted()) {
+   ·                                          ─────────
+ 6 │                                     return;
+   ╰────
+  help: isMounted is an anti-pattern, is not available when using ES6 classes, and it is on its way to being officially deprecated.
+
+
