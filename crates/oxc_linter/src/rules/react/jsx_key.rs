@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
 use oxc_macros::declare_oxc_lint;
 
@@ -151,7 +151,7 @@ fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &Li
             };
             attr_ident.name == "key"
         }) {
-            ctx.diagnostic(gen_diagnostic(jsx_elem.span, &outer));
+            ctx.diagnostic(gen_diagnostic(jsx_elem.opening_element.name.span(), &outer));
         }
     }
 }
@@ -184,7 +184,7 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
 
 fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
-        ctx.diagnostic(gen_diagnostic(fragment.span, &outer));
+        ctx.diagnostic(gen_diagnostic(fragment.opening_fragment.span, &outer));
     }
 }
 
@@ -437,6 +437,38 @@ fn test() {
                         else if (item < 5) return <div />;
                         else return <div />;
                       })}
+                    </div>
+                  );
+                };
+          "#,
+            None,
+        ),
+        (
+            r#"
+                const TestCase = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />)}
+                    </div>
+                  );
+                };
+          "#,
+            None,
+        ),
+        (
+            r#"
+                const TestCase = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => (<div>
+                        <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />
+                        </div>)
+                      
+                      )}
                     </div>
                   );
                 };
