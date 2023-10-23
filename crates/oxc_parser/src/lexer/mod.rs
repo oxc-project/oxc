@@ -291,11 +291,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Add string to `SourceAtomSet` and get `TokenValue::Atom`
-    fn string_to_token_value(&mut self, s: &'a str) -> TokenValue<'a> {
-        TokenValue::String(s)
-    }
-
     fn set_numeric_value(&mut self, kind: Kind, src: &'a str) {
         let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
@@ -549,7 +544,7 @@ impl<'a> Lexer<'a> {
             }
         }
         let (_, name) = self.identifier_tail(builder);
-        self.current.token.value = self.string_to_token_value(name);
+        self.current.token.value = TokenValue::String(name);
         Kind::PrivateIdentifier
     }
 
@@ -782,7 +777,7 @@ impl<'a> Lexer<'a> {
                 Some(c @ ('"' | '\'')) => {
                     if c == delimiter {
                         self.current.token.value =
-                            self.string_to_token_value(builder.finish_without_push(self));
+                            TokenValue::String(builder.finish_without_push(self));
                         return Kind::Str;
                     }
                     builder.push_matching(c);
@@ -797,8 +792,8 @@ impl<'a> Lexer<'a> {
                         self.error(diagnostics::InvalidEscapeSequence(range));
                     }
                 }
-                Some(other) => {
-                    builder.push_matching(other);
+                Some(c) => {
+                    builder.push_matching(c);
                 }
             }
         }
@@ -881,7 +876,7 @@ impl<'a> Lexer<'a> {
                 '$' if self.peek() == Some('{') => {
                     if is_valid_escape_sequence {
                         self.current.token.value =
-                            self.string_to_token_value(builder.finish_without_push(self));
+                            TokenValue::String(builder.finish_without_push(self));
                     }
                     self.current.chars.next();
                     return substitute;
@@ -889,7 +884,7 @@ impl<'a> Lexer<'a> {
                 '`' => {
                     if is_valid_escape_sequence {
                         self.current.token.value =
-                            self.string_to_token_value(builder.finish_without_push(self));
+                            TokenValue::String(builder.finish_without_push(self));
                     }
                     return tail;
                 }
@@ -936,7 +931,7 @@ impl<'a> Lexer<'a> {
         }
         let mut s = String::from_str_in(prev_str, self.allocator);
         s.push_str(builder.finish(self));
-        self.current.token.value = self.string_to_token_value(s.into_bump_str());
+        self.current.token.value = TokenValue::String(s.into_bump_str());
         Kind::Ident
     }
 
@@ -971,7 +966,7 @@ impl<'a> Lexer<'a> {
                         break;
                     }
                 }
-                self.current.token.value = self.string_to_token_value(builder.finish(self));
+                self.current.token.value = TokenValue::String(builder.finish(self));
                 Kind::JSXText
             }
             None => Kind::Eof,
@@ -995,7 +990,7 @@ impl<'a> Lexer<'a> {
                 Some(c @ ('"' | '\'')) => {
                     if c == delimiter {
                         self.current.token.value =
-                            self.string_to_token_value(builder.finish_without_push(self));
+                            TokenValue::String(builder.finish_without_push(self));
                         return Kind::Str;
                     }
                     builder.push_matching(c);
@@ -1194,11 +1189,19 @@ impl<'a> Lexer<'a> {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
             }
             Some(c) => match c {
-                // CharacterEscapeSequence
+                // \ LineTerminatorSequence
+                // LineTerminatorSequence ::
+                // <LF>
+                // <CR> [lookahead ≠ <LF>]
+                // <LS>
+                // <PS>
+                // <CR> <LF>
                 LF | LS | PS => {}
                 CR => {
                     self.next_eq(LF);
                 }
+                // SingleEscapeCharacter :: one of
+                //   ' " \ b f n r t v
                 '\'' | '"' | '\\' => text.push(c),
                 'b' => text.push('\u{8}'),
                 'f' => text.push(FF),
