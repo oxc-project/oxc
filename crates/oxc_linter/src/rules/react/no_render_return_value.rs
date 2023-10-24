@@ -4,6 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -43,16 +44,34 @@ impl Rule for NoRenderReturnValue {
         let Expression::Identifier(ident) = member_expr.object() else { return };
         if ident.name == "ReactDOM" {
             if Some("render") == member_expr.static_property_name() {
-                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                    matches!(
+                if let Some(mut parent_node) = ctx.nodes().parent_node(node.id()) {
+                    if matches!(
                         parent_node.kind(),
                         AstKind::VariableDeclarator(_)
                             | AstKind::ObjectProperty(_)
                             | AstKind::ReturnStatement(_)
-                            | AstKind::ArrowExpression(_)
                             | AstKind::AssignmentExpression(_)
-                    )
-                    .then(|| ctx.diagnostic(NoRenderReturnValueDiagnostic(call_expr.span)));
+                    ) {
+                        ctx.diagnostic(NoRenderReturnValueDiagnostic(call_expr.span))
+                    }
+
+                    let is_arrow_function =
+                        ctx.scopes().get_flags(parent_node.scope_id()).contains(ScopeFlags::Arrow);
+
+                    if is_arrow_function {
+                        ctx.nodes().ancestors(parent_node.id()).skip(1).into_iter().find(
+                            |node_id| {
+                                parent_node = ctx.nodes().get_node(*node_id);
+                                matches!(parent_node.kind(), AstKind::ArrowExpression(_))
+                                    .then(|| {
+                                        ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                            call_expr.span,
+                                        ));
+                                    })
+                                    .is_some()
+                            },
+                        );
+                    }
                 }
             }
         }
@@ -67,9 +86,9 @@ fn test() {
         ("ReactDOM.render(<div />, document.body);", None),
         (
             "
-			        let node;
-			        ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
-			      ",
+        	        let node;
+        	        ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
+        	      ",
             None,
         ),
         ("ReactDOM.render(<div ref={ref => this.node = ref}/>, document.body);", None),
@@ -84,18 +103,18 @@ fn test() {
         ("var Hello = ReactDOM.render(<div />, document.body);", None),
         (
             "
-			        var o = {
-			          inst: ReactDOM.render(<div />, document.body)
-			        };
-			      ",
+        	        var o = {
+        	          inst: ReactDOM.render(<div />, document.body)
+        	        };
+        	      ",
             None,
         ),
         (
             "
-			        function render () {
-			          return ReactDOM.render(<div />, document.body)
-			        }
-			      ",
+        	        function render () {
+        	          return ReactDOM.render(<div />, document.body)
+        	        }
+        	      ",
             None,
         ),
         ("var render = (a, b) => ReactDOM.render(a, b)", None),
