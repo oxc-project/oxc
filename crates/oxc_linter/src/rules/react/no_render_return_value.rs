@@ -55,7 +55,7 @@ impl Rule for NoRenderReturnValue {
                         ) {
                             ctx.diagnostic(NoRenderReturnValueDiagnostic(
                                 ident.span.merge(&property_span),
-                            ))
+                            ));
                         }
 
                         let is_arrow_function = ctx
@@ -64,18 +64,16 @@ impl Rule for NoRenderReturnValue {
                             .contains(ScopeFlags::Arrow);
 
                         if is_arrow_function {
-                            ctx.nodes().ancestors(parent_node.id()).skip(1).into_iter().find(
-                                |node_id| {
-                                    let parent_node = ctx.nodes().get_node(*node_id);
-                                    matches!(parent_node.kind(), AstKind::ArrowExpression(_))
-                                        .then(|| {
-                                            ctx.diagnostic(NoRenderReturnValueDiagnostic(
-                                                ident.span.merge(&property_span),
-                                            ));
-                                        })
-                                        .is_some()
-                                },
-                            );
+                            ctx.nodes().ancestors(parent_node.id()).skip(1).find(|node_id| {
+                                let parent_node = ctx.nodes().get_node(*node_id);
+                                matches!(parent_node.kind(), AstKind::ArrowExpression(_))
+                                    .then(|| {
+                                        ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                            ident.span.merge(&property_span),
+                                        ));
+                                    })
+                                    .is_some()
+                            });
                         }
                     }
                 }
