@@ -5,13 +5,13 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct NoRenderReturnValueDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
