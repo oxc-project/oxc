@@ -53,10 +53,9 @@ impl Rule for NoRenderReturnValue {
                                 | AstKind::ReturnStatement(_)
                                 | AstKind::AssignmentExpression(_)
                         ) {
-                            ctx.diagnostic(NoRenderReturnValueDiagnostic(Span::new(
-                                parent_node.kind().span().start,
-                                property_span.end,
-                            )))
+                            ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                ident.span.merge(&property_span),
+                            ))
                         }
 
                         let is_arrow_function = ctx
@@ -71,10 +70,7 @@ impl Rule for NoRenderReturnValue {
                                     matches!(parent_node.kind(), AstKind::ArrowExpression(_))
                                         .then(|| {
                                             ctx.diagnostic(NoRenderReturnValueDiagnostic(
-                                                Span::new(
-                                                    parent_node.kind().span().start,
-                                                    property_span.end,
-                                                ),
+                                                ident.span.merge(&property_span),
                                             ));
                                         })
                                         .is_some()
