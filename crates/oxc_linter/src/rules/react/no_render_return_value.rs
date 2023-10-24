@@ -43,34 +43,44 @@ impl Rule for NoRenderReturnValue {
         let Expression::MemberExpression(member_expr) = &call_expr.callee else { return };
         let Expression::Identifier(ident) = member_expr.object() else { return };
         if ident.name == "ReactDOM" {
-            if Some("render") == member_expr.static_property_name() {
-                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                    if matches!(
-                        parent_node.kind(),
-                        AstKind::VariableDeclarator(_)
-                            | AstKind::ObjectProperty(_)
-                            | AstKind::ReturnStatement(_)
-                            | AstKind::AssignmentExpression(_)
-                    ) {
-                        ctx.diagnostic(NoRenderReturnValueDiagnostic(parent_node.kind().span()))
-                    }
+            if let Some((property_span, property_name)) = member_expr.static_property_info() {
+                if property_name == "render" {
+                    if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
+                        if matches!(
+                            parent_node.kind(),
+                            AstKind::VariableDeclarator(_)
+                                | AstKind::ObjectProperty(_)
+                                | AstKind::ReturnStatement(_)
+                                | AstKind::AssignmentExpression(_)
+                        ) {
+                            ctx.diagnostic(NoRenderReturnValueDiagnostic(Span::new(
+                                parent_node.kind().span().start,
+                                property_span.end,
+                            )))
+                        }
 
-                    let is_arrow_function =
-                        ctx.scopes().get_flags(parent_node.scope_id()).contains(ScopeFlags::Arrow);
+                        let is_arrow_function = ctx
+                            .scopes()
+                            .get_flags(parent_node.scope_id())
+                            .contains(ScopeFlags::Arrow);
 
-                    if is_arrow_function {
-                        ctx.nodes().ancestors(parent_node.id()).skip(1).into_iter().find(
-                            |node_id| {
-                                let parent_node = ctx.nodes().get_node(*node_id);
-                                matches!(parent_node.kind(), AstKind::ArrowExpression(_))
-                                    .then(|| {
-                                        ctx.diagnostic(NoRenderReturnValueDiagnostic(
-                                            parent_node.kind().span(),
-                                        ));
-                                    })
-                                    .is_some()
-                            },
-                        );
+                        if is_arrow_function {
+                            ctx.nodes().ancestors(parent_node.id()).skip(1).into_iter().find(
+                                |node_id| {
+                                    let parent_node = ctx.nodes().get_node(*node_id);
+                                    matches!(parent_node.kind(), AstKind::ArrowExpression(_))
+                                        .then(|| {
+                                            ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                                Span::new(
+                                                    parent_node.kind().span().start,
+                                                    property_span.end,
+                                                ),
+                                            ));
+                                        })
+                                        .is_some()
+                                },
+                            );
+                        }
                     }
                 }
             }
