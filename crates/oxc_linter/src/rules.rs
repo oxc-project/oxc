@@ -133,6 +133,7 @@ mod react {
     pub mod no_dangerously_set_inner_html;
     pub mod no_find_dom_node;
     pub mod no_render_return_value;
+    pub mod no_string_refs;
     pub mod no_unescaped_entities;
 }
 
@@ -266,6 +267,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_dangerously_set_inner_html,
     react::no_find_dom_node,
     react::no_render_return_value,
+    react::no_string_refs,
     import::named,
     import::no_cycle,
     import::no_self_import,
