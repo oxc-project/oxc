@@ -1,18 +1,15 @@
 codegen_typescript Summary:
 AST Parsed     : 5063/5063 (100.00%)
-Positive Passed: 5038/5063 (99.51%)
+Positive Passed: 5041/5063 (99.57%)
 Expect to Parse: "compiler/binopAssignmentShouldHaveType.ts"
 Expect to Parse: "compiler/castExpressionParentheses.ts"
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 Expect to Parse: "compiler/identityRelationNeverTypes.ts"
-Expect to Parse: "compiler/jsxFactoryQualifiedNameWithEs5.ts"
-Expect to Parse: "compiler/jsxImportForSideEffectsNonExtantNoError.tsx"
 Expect to Parse: "compiler/jsxMultilineAttributeStringValues.tsx"
 Expect to Parse: "compiler/jsxMultilineAttributeValuesReact.tsx"
 Expect to Parse: "compiler/jsxNamespacedNameNotComparedToNonMatchingIndexSignature.tsx"
 Expect to Parse: "compiler/localClassesInLoop.ts"
 Expect to Parse: "compiler/localClassesInLoop_ES6.ts"
-Expect to Parse: "compiler/module_augmentUninstantiatedModule2.ts"
 Expect to Parse: "compiler/typeAliasDeclarationEmit3.ts"
 Expect to Parse: "conformance/constEnums/constEnum4.ts"
 Expect to Parse: "conformance/decorators/legacyDecorators-contextualTypes.ts"

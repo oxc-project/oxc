@@ -1,9 +1,4 @@
 codegen_babel Summary:
 AST Parsed     : 2078/2078 (100.00%)
-Positive Passed: 2072/2078 (99.71%)
-Expect to Parse: "core/sourcetype-unambiguous/module-import/input.js"
-Expect to Parse: "es2015/uncategorised/91/input.js"
-Expect to Parse: "esprima/es2015-import-declaration/import-module/input.js"
-Expect to Parse: "esprima/es2015-import-declaration/import-named-empty/input.js"
-Expect to Parse: "typescript/import/import-side-effects/input.ts"
+Positive Passed: 2077/2078 (99.95%)
 Expect to Parse: "typescript/types/intrinsic-identifier/input.ts"

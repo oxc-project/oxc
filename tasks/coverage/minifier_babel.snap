@@ -1,7 +1,3 @@
 minifier_babel Summary:
 AST Parsed     : 1624/1624 (100.00%)
-Positive Passed: 1620/1624 (99.75%)
-Expect to Parse: "core/sourcetype-unambiguous/module-import/input.js"
-Expect to Parse: "es2015/uncategorised/91/input.js"
-Expect to Parse: "esprima/es2015-import-declaration/import-module/input.js"
-Expect to Parse: "esprima/es2015-import-declaration/import-named-empty/input.js"
+Positive Passed: 1624/1624 (100.00%)

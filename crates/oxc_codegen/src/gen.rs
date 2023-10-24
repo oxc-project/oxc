@@ -708,8 +708,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
             if in_block {
                 p.print(b'}');
             }
+            p.print_str(b" from ");
         }
-        p.print_str(b" from ");
         self.source.gen(p, ctx);
         self.assertions.gen(p, ctx);
         p.print_semicolon_after_statement();
