@@ -50,12 +50,36 @@ impl Rule for NoIsMounted {
         if let Expression::MemberExpression(v) = callee {
             let Expression::ThisExpression(_) = &v.object() else { return };
 
-            if let Some((property_span, static_property_name)) = v.static_property_info() {
-                if static_property_name == "isMounted" {
-                    ctx.diagnostic(NoIsMountedDiagnostic(property_span));
-                }
+            let Some((property_span, static_property_name)) = v.static_property_info() else {
+                return;
+            };
+
+            if static_property_name != "isMounted" {
+                return;
+            };
+
+            if is_in_arr_or_iter(node, ctx) {
+                ctx.diagnostic(NoIsMountedDiagnostic(property_span));
             }
         }
+    }
+}
+
+fn is_in_arr_or_iter<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let mut node = node;
+
+    loop {
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return false;
+        };
+
+        match parent.kind() {
+            AstKind::MethodDefinition(_) | AstKind::PropertyDefinition(_) => {
+                return true;
+            }
+            _ => {}
+        }
+        node = parent;
     }
 }
 
