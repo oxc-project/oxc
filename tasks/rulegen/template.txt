@@ -8,30 +8,30 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
+#[error("{{plugin_name}}({{kebab_rule_name}}):")]
 #[diagnostic(severity(warning), help(""))]
-struct {{rule}}Diagnostic(#[label] pub Span);
+struct {{pascal_rule_name}}Diagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct {{rule}};
+pub struct {{pascal_rule_name}};
 
 declare_oxc_lint!(
     /// ### What it does
-    /// 
+    ///
     ///
     /// ### Why is this bad?
-    /// 
+    ///
     ///
     /// ### Example
     /// ```javascript
     /// ```
-    {{rule}},
+    {{pascal_rule_name}},
     correctness
 );
 
-impl Rule for {{rule}} {
+impl Rule for {{pascal_rule_name}} {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        
+
     }
 }
 
@@ -47,5 +47,5 @@ fn test() {
         {{fail_cases}}
     ];
 
-    Tester::new({{rule}}::NAME, pass, fail).test_and_snapshot();
+    Tester::{{test_method}}({{pascal_rule_name}}::NAME, pass, fail).test_and_snapshot();
 }

@@ -1,8 +1,9 @@
-Passed: 162/1087
+Passed: 164/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
 * babel-plugin-transform-sticky-regex
 
@@ -512,12 +513,6 @@ Passed: 162/1087
 * systemjs/script/input.js
 * systemjs/to-string/input.js
 
-# babel-plugin-transform-export-namespace-from (0/4)
-* export-namespace/namespace-default/input.mjs
-* export-namespace/namespace-es6/input.mjs
-* export-namespace/namespace-string/input.mjs
-* export-namespace/namespace-typescript/input.mjs
-
 # babel-plugin-transform-nullish-coalescing-operator (10/12)
 * assumption-noDocumentAll/transform-in-default-param/input.js
 * nullish-coalescing/transform-in-default-param/input.js
@@ -565,10 +560,6 @@ Passed: 162/1087
 * transparent-expr-wrappers/ts-as-in-conditional/input.ts
 * transparent-expr-wrappers/ts-as-member-expression/input.ts
 * transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
-
-# babel-plugin-transform-json-strings (2/4)
-* json-strings/directive-line-separator/input.js
-* json-strings/directive-paragraph-separator/input.js
 
 # babel-plugin-transform-async-generator-functions (0/24)
 * async-generators/class-method/input.js

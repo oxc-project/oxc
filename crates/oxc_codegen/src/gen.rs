@@ -2,6 +2,7 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::{
+    identifier::{LS, PS},
     operator::{BinaryOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
     NumberBase,
@@ -91,10 +92,8 @@ impl<const MINIFY: bool> Gen<MINIFY> for Hashbang {
 
 impl<const MINIFY: bool> Gen<MINIFY> for Directive {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_indent();
-        p.print(b'\'');
-        p.print_str(self.directive.as_bytes());
-        p.print(b'\'');
+        // Use the string value instead of the raw self.directive because it can cannot escaped values.
+        print_str(self.expression.value.as_str(), p);
         p.print_semicolon();
     }
 }
@@ -1062,13 +1061,24 @@ impl<const MINIFY: bool> Gen<MINIFY> for RegExpLiteral {
     }
 }
 
+fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
+    p.print(b'\'');
+    for c in s.chars() {
+        match c {
+            // Allow `U+2028` and `U+2029` in string literals
+            // <https://tc39.es/proposal-json-superset>
+            // <https://github.com/tc39/proposal-json-superset>
+            LS => p.print_str(b"\\u2028"),
+            PS => p.print_str(b"\\u2029"),
+            _ => p.print_str(c.escape_default().to_string().as_bytes()),
+        }
+    }
+    p.print(b'\'');
+}
+
 impl<const MINIFY: bool> Gen<MINIFY> for StringLiteral {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print(b'\'');
-        for c in self.value.chars() {
-            p.print_str(c.escape_default().to_string().as_bytes());
-        }
-        p.print(b'\'');
+        print_str(self.value.as_str(), p);
     }
 }
 

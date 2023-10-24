@@ -6,8 +6,9 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
+use oxc_span::{GetSpan, Span};
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -18,8 +19,11 @@ enum JsxKeyDiagnostic {
     MissingKeyPropForElementInArray(#[label] Span),
 
     #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in iterator.")]
-    #[diagnostic(severity(warning))]
-    MissingKeyPropForElementInIterator(#[label] Span),
+    #[diagnostic(severity(warning), help("Add a \"key\" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."))]
+    MissingKeyPropForElementInIterator(
+        #[label("Iterator starts here")] Span,
+        #[label("Element generated here")] Span,
+    ),
 
     #[error(
         "eslint-plugin-react(jsx-key): \"key\" prop must be placed before any `{{...spread}}`"
@@ -68,7 +72,7 @@ impl Rule for JsxKey {
 
 enum InsideArrayOrIterator {
     Array,
-    Iterator,
+    Iterator(Span),
 }
 
 fn is_in_array_or_iter<'a, 'b>(
@@ -97,9 +101,9 @@ fn is_in_array_or_iter<'a, 'b>(
                 let callee = &v.callee.without_parenthesized();
 
                 if let Expression::MemberExpression(v) = callee {
-                    if let Some(static_property_name) = v.static_property_name() {
-                        if TARGET_METHODS.contains(static_property_name) {
-                            return Some(InsideArrayOrIterator::Iterator);
+                    if let Some((span, ident)) = v.static_property_info() {
+                        if TARGET_METHODS.contains(ident) {
+                            return Some(InsideArrayOrIterator::Iterator(span));
                         }
                     }
                 }
@@ -123,7 +127,7 @@ fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &Li
             };
             attr_ident.name == "key"
         }) {
-            ctx.diagnostic(gen_diagnostic(jsx_elem.span, &outer));
+            ctx.diagnostic(gen_diagnostic(jsx_elem.opening_element.name.span(), &outer));
         }
     }
 }
@@ -156,15 +160,15 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
 
 fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
-        ctx.diagnostic(gen_diagnostic(fragment.span, &outer));
+        ctx.diagnostic(gen_diagnostic(fragment.opening_fragment.span, &outer));
     }
 }
 
 fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> JsxKeyDiagnostic {
     match outer {
         InsideArrayOrIterator::Array => JsxKeyDiagnostic::MissingKeyPropForElementInArray(span),
-        InsideArrayOrIterator::Iterator => {
-            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(span)
+        InsideArrayOrIterator::Iterator(v) => {
+            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(*v, span)
         }
     }
 }
@@ -409,6 +413,38 @@ fn test() {
                         else if (item < 5) return <div />;
                         else return <div />;
                       })}
+                    </div>
+                  );
+                };
+          "#,
+            None,
+        ),
+        (
+            r#"
+                const TestCase = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />)}
+                    </div>
+                  );
+                };
+          "#,
+            None,
+        ),
+        (
+            r#"
+                const TestCase = () => {
+                  const list = [1, 2, 3, 4, 5];
+
+                  return (
+                    <div>
+                      {list.map(item => (<div>
+                        <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />
+                        </div>)
+                      
+                      )}
                     </div>
                   );
                 };

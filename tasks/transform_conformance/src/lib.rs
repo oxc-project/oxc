@@ -55,7 +55,6 @@ const CASES: &[&str] = &[
     // ES2020
     "babel-plugin-transform-export-namespace-from",
     "babel-plugin-transform-dynamic-import",
-    "babel-plugin-transform-export-namespace-from",
     "babel-plugin-transform-nullish-coalescing-operator",
     "babel-plugin-transform-optional-chaining",
     // [Syntax] "babel-plugin-transform-syntax-bigint",
@@ -240,7 +239,7 @@ impl TestCase {
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 
-        // Get output.js by using our codeg so code comparison can match.
+        // Get output.js by using our codegen so code comparison can match.
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
                 // The transformation should be equal to input.js If output.js does not exist.
