@@ -51,8 +51,6 @@ impl Rule for SwitchCaseBraces {
         }
 
         for case in &switch.cases {
-            let Some(case_test) = &case.test else { return };
-
             for case_body in &case.consequent {
                 match case_body {
                     Statement::BlockStatement(case_block) => {
@@ -69,8 +67,13 @@ impl Rule for SwitchCaseBraces {
                             let modified_code = {
                                 let mut formatter = ctx.formatter();
 
-                                formatter.print_str(b"case ");
-                                case_test.gen(&mut formatter);
+                                if let Some(case_test) = &case.test {
+                                    formatter.print_str(b"case ");
+                                    case_test.gen(&mut formatter);
+                                } else {
+                                    formatter.print_str(b"default")
+                                }
+
                                 formatter.print_colon();
                                 formatter.print_space();
                                 formatter.print(b'{');
@@ -82,7 +85,6 @@ impl Rule for SwitchCaseBraces {
 
                             Fix::new(modified_code, case.span)
                         });
-                        ctx.diagnostic(SwitchCaseBracesDiagnostic(switch.span));
                     }
                 }
             }
@@ -94,11 +96,23 @@ impl Rule for SwitchCaseBraces {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["switch(something) { case 1: case 2: {console.log('something'); break;}}"];
+    let pass = vec![
+        "switch(something) { case 1: case 2: {console.log('something'); break;}}",
+        "switch(foo){ case 1: { break; } }",
+        "switch(foo){ case 1: { ; /* <-- not empty */} }",
+        "switch(foo){ case 1: { {} /* <-- not empty */} }",
+        "switch(foo){ case 1: { break; } }",
+        "switch(foo){ default: { doSomething(); } }",
+    ];
 
     let fail = vec![
         "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
         "switch(something) { case 1: case 2: console.log('something'); break;}",
+        "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
+        "switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }",
+        "switch(foo) { default: doSomething(); }",
+        "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
+        "switch(foo) { default: label: {} }",
     ];
 
     let fix = vec![
@@ -110,6 +124,11 @@ fn test() {
         (
             "switch(something) { case 1: {} case 2: console.log('something'); break;}",
             "switch(something) { case 1:  case 2: {console.log(\"something\");\nbreak;\n}}",
+            None,
+        ),
+        (
+            "switch(foo) { default: doSomething(); }",
+            "switch(foo) { default: {doSomething();\n} }",
             None,
         ),
     ];
