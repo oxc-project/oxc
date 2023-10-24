@@ -59,6 +59,7 @@ impl<'a> TypeScript<'a> {
                         return false;
                     }
                     if decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty()) {
+                        // TODO: verbatim_module_syntax
                         return false;
                     }
                     true
@@ -78,8 +79,7 @@ impl<'a> TypeScript<'a> {
         });
 
         if needs_explicit_esm
-            && (program.body.is_empty()
-                || !program.body.iter().any(|s| matches!(s, Statement::ModuleDeclaration(_))))
+            && !program.body.iter().any(|s| matches!(s, Statement::ModuleDeclaration(_)))
         {
             let empty_export = self.ast.export_named_declaration(
                 Span::default(),
