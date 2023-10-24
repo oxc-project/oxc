@@ -132,6 +132,7 @@ mod react {
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
     pub mod no_find_dom_node;
+    pub mod no_unescaped_entities;
 }
 
 mod unicorn {
@@ -258,6 +259,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_key,
     react::jsx_no_comment_text_nodes,
     react::jsx_no_duplicate_props,
+    react::no_unescaped_entities,
     react::jsx_no_useless_fragment,
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
