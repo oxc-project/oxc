@@ -203,7 +203,7 @@ impl Case for Test262Case {
 }
 
 fn are_all_identifiers_resolved(semantic: &oxc_semantic::Semantic<'_>) -> bool {
-    use oxc_ast::{ast, AstKind};
+    use oxc_ast::AstKind;
     use oxc_semantic::AstNode;
 
     let ast_nodes = semantic.nodes();
@@ -212,27 +212,11 @@ fn are_all_identifiers_resolved(semantic: &oxc_semantic::Semantic<'_>) -> bool {
             AstKind::BindingIdentifier(id) => {
                 let mut parents = ast_nodes.iter_parents(node.id()).map(AstNode::kind);
                 parents.next(); // Exclude BindingIdentifier itself
-                match parents.next() {
-                    Some(AstKind::Function(func))
-                        if func.r#type == ast::FunctionType::FunctionExpression =>
-                    {
-                        // FIXME: Currently, the name of `FunctionExpression` won't be assigned a `SymbolId`
-                        return false;
-                    }
-                    _ => {}
+                if let (Some(AstKind::Function(_)), Some(AstKind::IfStatement(_))) =
+                    (parents.next(), parents.next())
+                {
+                    return false;
                 }
-                let mut parents = ast_nodes.iter_parents(node.id()).map(AstNode::kind);
-                parents.next(); // Exclude BindingIdentifier itself
-                match (parents.next(), parents.next()) {
-                    // FIXME: case like `if (xx) ; else function test() {}`
-                    (Some(AstKind::Function(func)), Some(AstKind::IfStatement(_)))
-                        if func.r#type == ast::FunctionType::FunctionDeclaration =>
-                    {
-                        return false;
-                    }
-                    _ => {}
-                }
-
                 id.symbol_id.get().is_none()
             }
             AstKind::IdentifierReference(ref_id) => ref_id.reference_id.get().is_none(),
