@@ -96,6 +96,15 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_program(&mut self, program: &mut Program<'a>) {
+        for directive in program.directives.iter_mut() {
+            self.visit_directive(directive);
+        }
+
+        self.typescript.as_mut().map(|t| t.transform_program(program));
+        self.visit_statements(&mut program.body);
+    }
+
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);

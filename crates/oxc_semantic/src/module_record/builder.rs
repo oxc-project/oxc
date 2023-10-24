@@ -214,29 +214,31 @@ impl ModuleRecordBuilder {
             return;
         }
         let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
-        for specifier in &decl.specifiers {
-            let (import_name, local_name) = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
-                    ImportImportName::Name(NameSpan::new(
-                        specifier.imported.name().clone(),
-                        specifier.imported.span(),
-                    )),
-                    NameSpan::new(specifier.local.name.clone(), specifier.local.span),
-                ),
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
-                    ImportImportName::NamespaceObject,
-                    NameSpan::new(specifier.local.name.clone(), specifier.local.span),
-                ),
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
-                    ImportImportName::Default(specifier.span),
-                    NameSpan::new(specifier.local.name.clone(), specifier.local.span),
-                ),
-            };
-            self.add_import_entry(ImportEntry {
-                module_request: module_request.clone(),
-                import_name,
-                local_name,
-            });
+        if let Some(specifiers) = &decl.specifiers {
+            for specifier in specifiers {
+                let (import_name, local_name) = match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
+                        ImportImportName::Name(NameSpan::new(
+                            specifier.imported.name().clone(),
+                            specifier.imported.span(),
+                        )),
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                    ),
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
+                        ImportImportName::NamespaceObject,
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                    ),
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
+                        ImportImportName::Default(specifier.span),
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                    ),
+                };
+                self.add_import_entry(ImportEntry {
+                    module_request: module_request.clone(),
+                    import_name,
+                    local_name,
+                });
+            }
         }
         self.add_module_request(&module_request);
     }

@@ -1,4 +1,4 @@
-Passed: 164/1083
+Passed: 173/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -705,7 +705,7 @@ Passed: 164/1083
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-typescript (73/181)
+# babel-plugin-transform-typescript (82/181)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -742,33 +742,26 @@ Passed: 164/1083
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
-* exports/export-type/input.ts
-* exports/export-type-from/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=-to-cjs/input.ts
 * exports/imported-types/input.ts
 * exports/imported-types-only-remove-type-imports/input.ts
 * exports/issue-9916-3/input.ts
-* exports/type-only-export-specifier-1/input.ts
-* exports/type-only-export-specifier-2/input.ts
-* exports/type-only-export-specifier-3/input.ts
 * function/overloads-exports/input.mjs
 * imports/elide-injected/input.ts
+* imports/elide-no-import-specifiers/input.ts
 * imports/elide-preact/input.ts
-* imports/elide-react/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
 * imports/elide-typeof/input.ts
 * imports/elision/input.ts
 * imports/elision-export-type/input.ts
 * imports/elision-locations/input.ts
-* imports/elision-qualifiedname/input.ts
 * imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
+* imports/import-named-type/input.ts
+* imports/import-named-type-default-and-named/input.ts
 * imports/import-removed-exceptions/input.ts
-* imports/import-type/input.ts
-* imports/import-type-func-with-duplicate-name/input.ts
-* imports/import-type-not-removed/input.ts
 * imports/import=-declaration/input.ts
 * imports/import=-module-to-cjs/input.ts
 * imports/only-remove-type-imports/input.ts
@@ -776,8 +769,6 @@ Passed: 164/1083
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* imports/type-only-import-specifier-1/input.ts
-* imports/type-only-import-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
 * imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts

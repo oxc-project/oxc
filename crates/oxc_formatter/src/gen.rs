@@ -566,81 +566,83 @@ impl<'a> Gen for FormalParameters<'a> {
 impl<'a> Gen for ImportDeclaration<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print_str(b"import ");
-        if self.specifiers.is_empty() {
-            p.print(b'\'');
-            p.print_str(self.source.value.as_bytes());
-            p.print(b'\'');
-            self.assertions.gen(p);
-            p.print_semicolon_after_statement();
-            return;
-        }
+        if let Some(specifiers) = &self.specifiers {
+            if specifiers.is_empty() {
+                p.print(b'\'');
+                p.print_str(self.source.value.as_bytes());
+                p.print(b'\'');
+                self.assertions.gen(p);
+                p.print_semicolon_after_statement();
+                return;
+            }
 
-        let mut in_block = false;
-        for (index, specifier) in self.specifiers.iter().enumerate() {
-            match specifier {
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
-                    if in_block {
-                        p.print_space();
-                        p.print_str(b"},");
-                        p.print_space();
-                        in_block = false;
-                    } else if index != 0 {
-                        p.print_comma();
-                        p.print_space();
-                    }
-                    spec.local.gen(p);
-                }
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
-                    if in_block {
-                        p.print_space();
-                        p.print_str(b"},");
-                        p.print_space();
-                        in_block = false;
-                    } else if index != 0 {
-                        p.print_comma();
-                        p.print_space();
-                    }
-                    p.print_str(b"* as ");
-                    spec.local.gen(p);
-                }
-                ImportDeclarationSpecifier::ImportSpecifier(spec) => {
-                    if in_block {
-                        p.print_comma();
-                    } else {
-                        if index != 0 {
+            let mut in_block = false;
+            for (index, specifier) in specifiers.iter().enumerate() {
+                match specifier {
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
+                        if in_block {
+                            p.print_space();
+                            p.print_str(b"},");
+                            p.print_space();
+                            in_block = false;
+                        } else if index != 0 {
                             p.print_comma();
                             p.print_space();
                         }
-                        in_block = true;
-                        p.print(b'{');
-                    }
-                    p.print_space();
-
-                    let imported_name = match &spec.imported {
-                        ModuleExportName::Identifier(identifier) => {
-                            identifier.gen(p);
-                            identifier.name.as_bytes()
-                        }
-                        ModuleExportName::StringLiteral(literal) => {
-                            literal.gen(p);
-                            literal.value.as_bytes()
-                        }
-                    };
-
-                    let local_name = spec.local.name.as_bytes();
-
-                    if imported_name != local_name {
-                        p.print_str(b" as ");
                         spec.local.gen(p);
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
+                        if in_block {
+                            p.print_space();
+                            p.print_str(b"},");
+                            p.print_space();
+                            in_block = false;
+                        } else if index != 0 {
+                            p.print_comma();
+                            p.print_space();
+                        }
+                        p.print_str(b"* as ");
+                        spec.local.gen(p);
+                    }
+                    ImportDeclarationSpecifier::ImportSpecifier(spec) => {
+                        if in_block {
+                            p.print_comma();
+                        } else {
+                            if index != 0 {
+                                p.print_comma();
+                                p.print_space();
+                            }
+                            in_block = true;
+                            p.print(b'{');
+                        }
+                        p.print_space();
+
+                        let imported_name = match &spec.imported {
+                            ModuleExportName::Identifier(identifier) => {
+                                identifier.gen(p);
+                                identifier.name.as_bytes()
+                            }
+                            ModuleExportName::StringLiteral(literal) => {
+                                literal.gen(p);
+                                literal.value.as_bytes()
+                            }
+                        };
+
+                        let local_name = spec.local.name.as_bytes();
+
+                        if imported_name != local_name {
+                            p.print_str(b" as ");
+                            spec.local.gen(p);
+                        }
                     }
                 }
             }
+            if in_block {
+                p.print_space();
+                p.print(b'}');
+            }
+            p.print_str(b" from ");
         }
-        if in_block {
-            p.print_space();
-            p.print(b'}');
-        }
-        p.print_str(b" from ");
         self.source.gen(p);
         self.assertions.gen(p);
         p.print_semicolon_after_statement();

@@ -13,7 +13,7 @@ use oxc_transformer::{TransformOptions, TransformTarget, Transformer};
 // or `just watch "run -p oxc_transformer --example transformer"`
 
 fn main() {
-    let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
+    let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
@@ -31,7 +31,7 @@ fn main() {
     let codegen_options = CodegenOptions;
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
     println!("Original:\n");
-    println!("{printed}");
+    println!("{printed}\n");
 
     let semantic = SemanticBuilder::new(&source_text, source_type).build(&ret.program).semantic;
     let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
