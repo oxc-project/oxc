@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -52,7 +52,7 @@ impl Rule for NoRenderReturnValue {
                             | AstKind::ReturnStatement(_)
                             | AstKind::AssignmentExpression(_)
                     ) {
-                        ctx.diagnostic(NoRenderReturnValueDiagnostic(call_expr.span))
+                        ctx.diagnostic(NoRenderReturnValueDiagnostic(parent_node.kind().span()))
                     }
 
                     let is_arrow_function =
@@ -65,7 +65,7 @@ impl Rule for NoRenderReturnValue {
                                 matches!(parent_node.kind(), AstKind::ArrowExpression(_))
                                     .then(|| {
                                         ctx.diagnostic(NoRenderReturnValueDiagnostic(
-                                            call_expr.span,
+                                            parent_node.kind().span(),
                                         ));
                                     })
                                     .is_some()
