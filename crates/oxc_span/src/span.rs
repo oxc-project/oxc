@@ -27,6 +27,11 @@ impl Span {
         self.end - self.start
     }
 
+    #[must_use]
+    pub fn merge(&self, other: &Self) -> Self {
+        Self::new(self.start.min(other.start), self.end.max(other.end))
+    }
+
     pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
         &source_text[self.start as usize..self.end as usize]
     }
