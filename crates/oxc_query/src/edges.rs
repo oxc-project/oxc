@@ -1643,6 +1643,7 @@ mod import {
                     .import
                     .specifiers
                     .iter()
+                    .flatten()
                     .filter_map(|the_specifier| {
                         if let ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) =
                             the_specifier
@@ -1685,6 +1686,7 @@ mod import {
                     .import
                     .specifiers
                     .iter()
+                    .flatten()
                     .filter_map(|the_specifier| {
                         if let ImportDeclarationSpecifier::ImportSpecifier(specifier) =
                             the_specifier

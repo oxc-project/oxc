@@ -1864,7 +1864,7 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    /// `None` for `import from 'foo'`, `Some([])` for `import {} from 'foo'`
+    /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
