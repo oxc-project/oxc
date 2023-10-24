@@ -44,7 +44,7 @@ impl Rule for NoRenderReturnValue {
         let Expression::Identifier(ident) = member_expr.object() else { return };
         if ident.name == "ReactDOM" {
             if Some("render") == member_expr.static_property_name() {
-                if let Some(mut parent_node) = ctx.nodes().parent_node(node.id()) {
+                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
                     if matches!(
                         parent_node.kind(),
                         AstKind::VariableDeclarator(_)
@@ -61,7 +61,7 @@ impl Rule for NoRenderReturnValue {
                     if is_arrow_function {
                         ctx.nodes().ancestors(parent_node.id()).skip(1).into_iter().find(
                             |node_id| {
-                                parent_node = ctx.nodes().get_node(*node_id);
+                                let parent_node = ctx.nodes().get_node(*node_id);
                                 matches!(parent_node.kind(), AstKind::ArrowExpression(_))
                                     .then(|| {
                                         ctx.diagnostic(NoRenderReturnValueDiagnostic(
