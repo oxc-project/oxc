@@ -145,12 +145,14 @@ impl<'a> BoundNames for ImportDeclaration<'a> {
         if let Some(specifiers) = &self.specifiers {
             for specifier in specifiers {
                 match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => f(&specifier.local),
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        f(&specifier.local);
+                    }
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        f(&specifier.local)
+                        f(&specifier.local);
                     }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        f(&specifier.local)
+                        f(&specifier.local);
                     }
                 }
             }
