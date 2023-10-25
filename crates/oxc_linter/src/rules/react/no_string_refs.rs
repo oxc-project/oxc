@@ -80,7 +80,7 @@ fn contains_string_literal(
 ) -> bool {
     if let JSXExpression::Expression(expr) = &expr_container.expression {
         matches!(expr, Expression::StringLiteral(_))
-            || no_template_literals && matches!(expr, Expression::TemplateLiteral(_))
+            || (no_template_literals && matches!(expr, Expression::TemplateLiteral(_)))
     } else {
         false
     }
@@ -106,7 +106,7 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
 impl Rule for NoStringRefs {
     fn from_configuration(value: serde_json::Value) -> Self {
         let no_template_literals =
-            value.get("allowExpressions").and_then(serde_json::Value::as_bool).unwrap_or(false);
+            value.get("noTemplateLiterals").and_then(serde_json::Value::as_bool).unwrap_or(false);
 
         Self { no_template_literals }
     }
@@ -229,7 +229,7 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
+            Some(serde_json::json!({ "noTemplateLiterals": true })),
         ),
         (
             "
@@ -242,30 +242,50 @@ fn test() {
                 }
               });
             ",
-            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
+            Some(serde_json::json!({ "noTemplateLiterals": true })),
         ),
         (
             "
-			        class Hello extends React.Component {
-			          componentDidMount() {
+              var Hello = createReactClass({
+                render: function() {
+                  return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+                }
+              });
+            ",
+            Some(serde_json::json!({ "noTemplateLiterals": true })),
+        ),
+        (
+            "
+              class Hello extends React.Component {
+                componentDidMount() {
                   var component = this.refs.hello;
-			          }
-			        }
-			      ",
+                }
+              }
+            ",
             None,
         ),
         (
             "
-			        class Hello extends React.PureComponent {
-			          componentDidMount() {
+              class Hello extends React.Component {
+                componentDidMount() {
                   var component = this.refs.hello;
-			          }
+                }
+              }
+            ",
+            None,
+        ),
+        (
+            "
+              class Hello extends React.PureComponent {
+                componentDidMount() {
+                  var component = this.refs.hello;
+                }
                 render() {
                   return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
                 }
-			        }
-			      ",
-            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
+              }
+            ",
+            Some(serde_json::json!({ "noTemplateLiterals": true })),
         ),
     ];
 
