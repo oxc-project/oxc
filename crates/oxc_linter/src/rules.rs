@@ -142,6 +142,7 @@ mod unicorn {
     pub mod error_message;
     pub mod filename_case;
     pub mod no_console_spaces;
+    pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
@@ -253,6 +254,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::no_console_spaces,
+    unicorn::no_empty_file,
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
