@@ -209,7 +209,7 @@ impl TestRunner {
 struct TestRunnerEnv;
 
 impl TestRunnerEnv {
-    fn template(&self, code: &str) -> String {
+    fn template(code: &str) -> String {
         format!(
             r#"
                 import {{expect, test}} from 'bun:test';
@@ -220,7 +220,7 @@ impl TestRunnerEnv {
         )
     }
 
-    fn run_test(&self, path: &Path) -> bool {
+    fn run_test(path: &Path) -> bool {
         let output = Command::new("bun")
             .current_dir(path.parent().unwrap())
             .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])

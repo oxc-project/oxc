@@ -221,12 +221,11 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
-    test_runner_env: TestRunnerEnv,
 }
 
 impl ExecTestCase {
-    fn run_test(&self, path: &Path) -> bool {
-        self.test_runner_env.run_test(path)
+    fn run_test(path: &Path) -> bool {
+        TestRunnerEnv::run_test(path)
     }
 
     fn write_to_test_files(&self, content: &str) -> PathBuf {
@@ -238,7 +237,7 @@ impl ExecTestCase {
 
         let mut target_path = fixture_root().join(new_file_name);
         target_path.set_extension("test.js");
-        let content = self.test_runner_env.template(content);
+        let content = TestRunnerEnv::template(content);
         fs::write(&target_path, content).unwrap();
         let source_text = fs::read_to_string(&target_path).unwrap();
         let source_type = SourceType::from_path(&target_path).unwrap();
@@ -261,12 +260,12 @@ impl TestCase for ExecTestCase {
     fn new<P: Into<PathBuf>>(path: P) -> Self {
         let path = path.into();
         let options = BabelOptions::from_path(path.parent().unwrap());
-        Self { path, options, test_runner_env: TestRunnerEnv }
+        Self { path, options }
     }
 
     fn test(&self, _filter: Option<&str>) -> bool {
         let result = self.transform(&self.path);
         let target_path = self.write_to_test_files(&result);
-        self.run_test(&target_path)
+        Self::run_test(&target_path)
     }
 }
