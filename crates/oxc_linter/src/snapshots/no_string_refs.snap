@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 105
 expression: no_string_refs
 ---
   ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
