@@ -1,6 +1,8 @@
-use oxc_ast::ast::{CallExpression, JSXAttributeItem, JSXAttributeName};
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXExpression, JSXExpressionContainer, MemberExpression},
+    ast::{
+        Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
+        JSXExpression, JSXExpressionContainer,
+    },
     AstKind,
 };
 use oxc_diagnostics::{
@@ -8,41 +10,45 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-string-refs):")]
-#[diagnostic(
-    severity(warning),
-    help("Using string literals in ref attributes is deprecated. Use a callback instead.")
-)]
-struct NoStringRefsDiagnostic(#[label] pub Span);
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_parent_es5_component, get_parent_es6_component},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-string-refs):")]
-#[diagnostic(severity(warning), help("Using this.refs is deprecated."))]
-struct NoThisRefsDiagnostic(#[label] pub Span);
+enum NoStringRefsDiagnostic {
+    #[error("eslint-plugin-react(no-string-refs): Using this.refs is deprecated.")]
+    #[diagnostic(severity(warning), help("Using this.xxx instead of this.refs.xxx"))]
+    ThisRefsDeprecated(#[label] Span),
+
+    #[error("eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.")]
+    #[diagnostic(severity(warning), help("Using reference callback instead"))]
+    StringInRefDeprecated(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoStringRefs {
-    /// When set to `true`, it will give a warning when using template literals for refs.
-    pub no_template_literals: bool,
+    no_template_literals: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows using string references in JSX `ref` attributes.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// String refs are considered legacy in the React documentation. Callback refs are preferred.
+    /// This rule prevents using string literals in ref attributes.
     ///
     /// ### Example
     /// ```javascript
     /// // Bad
+    /// var Hello = createReactClass({
+    ///   render: function() {
+    ///     return <div ref="hello">Hello, world.</div>;
+    ///   }
+    /// });
+    ///
     /// var Hello = createReactClass({
     ///   componentDidMount: function() {
     ///     var component = this.refs.hello;
@@ -50,7 +56,7 @@ declare_oxc_lint!(
     ///   },
     ///   render: function() {
     ///     return <div ref="hello">Hello, world.</div>;
-    ///   },
+    ///   }
     /// });
     ///
     /// // Good
@@ -59,76 +65,68 @@ declare_oxc_lint!(
     ///     var component = this.hello;
     ///     // ...do something with component
     ///   },
-    ///   render: function() {
-    ///     return <div ref={c => this.hello = c}>Hello, world.</div>;
-    ///   },
+    ///   render() {
+    ///     return <div ref={(c) => { this.hello = c; }}>Hello, world.</div>;
+    ///   }
     /// });
     /// ```
     NoStringRefs,
     correctness
 );
 
-impl Rule for NoStringRefs {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            no_template_literals: value.get(0).and_then(|x| x.get("noTemplateLiterals")).map_or(
-                false,
-                |x| match x {
-                    serde_json::Value::Bool(b) => *b,
-                    _ => false,
-                },
-            ),
+fn contains_string_literal(
+    expr_container: &JSXExpressionContainer,
+    no_template_literals: bool,
+) -> bool {
+    if let JSXExpression::Expression(expr) = &expr_container.expression {
+        matches!(expr, Expression::StringLiteral(_))
+            || no_template_literals && matches!(expr, Expression::TemplateLiteral(_))
+    } else {
+        false
+    }
+}
+
+fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> bool {
+    let JSXAttributeName::Identifier(attr_ident) = &attr.name else { return false };
+    if attr_ident.name == "ref" {
+        if let Some(attr_value) = &attr.value {
+            return match attr_value {
+                JSXAttributeValue::ExpressionContainer(expr_container) => {
+                    contains_string_literal(expr_container, no_template_literals)
+                }
+                JSXAttributeValue::StringLiteral(_) => true,
+                _ => false,
+            };
         }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attribute)) = node.kind() {
-            let Some(value) = &attribute.0.value else {
-                return;
-            };
-            if let JSXAttributeName::Identifier(iden) = &attribute.0.name {
-                if iden.name.as_str() != "ref" {
-                    return;
-                };
-            }
-            match value {
-                JSXAttributeValue::StringLiteral(s) => {
-                    ctx.diagnostic(NoStringRefsDiagnostic(s.span));
-                }
-                JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                    expression: JSXExpression::Expression(expr),
-                    ..
-                }) => match expr {
-                    Expression::TemplateLiteral(s) if self.no_template_literals => {
-                        ctx.diagnostic(NoStringRefsDiagnostic(s.span));
-                    }
-                    Expression::StringLiteral(s) => {
-                        ctx.diagnostic(NoStringRefsDiagnostic(s.span));
-                    }
-                    _ => return,
-                },
-                _ => return,
-            }
-        }
 
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
-            node.kind()
-        {
-            if let (&Expression::ThisExpression(_), "refs") =
-                (&expr.object, expr.property.name.as_str())
-            {
-                for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
-                    let parent = ctx.nodes().get_node(node_id);
-                    if let AstKind::CallExpression(CallExpression {
-                        callee: Expression::Identifier(iden),
-                        ..
-                    }) = parent.kind()
-                    {
-                        if iden.name.as_str() == "createReactClass" {
-                            ctx.diagnostic(NoThisRefsDiagnostic(expr.span));
-                        }
-                    }
+    false
+}
+
+impl Rule for NoStringRefs {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let no_template_literals =
+            value.get("allowExpressions").and_then(serde_json::Value::as_bool).unwrap_or(false);
+
+        Self { no_template_literals }
+    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
+                if is_literal_ref_attribute(attr, self.no_template_literals) {
+                    ctx.diagnostic(NoStringRefsDiagnostic::StringInRefDeprecated(attr.span));
                 }
             }
+            AstKind::MemberExpression(member_expr) => {
+                if matches!(member_expr.object(), Expression::ThisExpression(_))
+                    && member_expr.static_property_name() == Some("refs")
+                    && (get_parent_es5_component(node, ctx).is_some()
+                        || get_parent_es6_component(node, ctx).is_some())
+                {
+                    ctx.diagnostic(NoStringRefsDiagnostic::ThisRefsDeprecated(member_expr.span()));
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -140,48 +138,35 @@ fn test() {
     let pass = vec![
         (
             "
-			        var Hello = blah({
-			          componentDidMount: function() {
-			            var component = this.refs.hello;
-			          },
-			          render: function() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = React.createReactClass({
+                      componentDidMount: function() {
+                        var component = this.hello;
+                      },
+                      render: function() {
+                        return <div ref={c => this.hello = c}>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          componentDidMount: function() {
-			            var component = this.hello;
-			          },
-			          render: function() {
-			            return <div ref={c => this.hello = c}>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        return <div ref={`hello`}>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          render: function() {
-			            return <div ref={`hello`}>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
-            None,
-        ),
-        (
-            "
-			        var Hello = createReactClass({
-			          render: function() {
-			            return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
         ),
     ];
@@ -189,73 +174,96 @@ fn test() {
     let fail = vec![
         (
             "
-			        var Hello = createReactClass({
-			          componentDidMount: function() {
-			            var component = this.refs.hello;
-			          },
-			          render: function() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+              var Hello = createReactClass({
+                componentDidMount: function() {
+                  var component = this.refs.hello;
+                },
+                render: function() {
+                  return <div>Hello {this.props.name}</div>;
+                }
+              });
+            ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          render: function() {
-			            return <div ref=\"hello\">Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+              var Hello = createReactClass({
+                render: function() {
+                  return <div ref=\"hello\">Hello {this.props.name}</div>;
+                }
+              });
+            ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          render: function() {
-			            return <div ref={'hello'}>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+              var Hello = createReactClass({
+                render: function() {
+                  return <div ref={'hello'}>Hello {this.props.name}</div>;
+                }
+              });
+            ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          componentDidMount: function() {
-			            var component = this.refs.hello;
-			          },
-			          render: function() {
-			            return <div ref=\"hello\">Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+              var Hello = createReactClass({
+                componentDidMount: function() {
+                  var component = this.refs.hello;
+                },
+                render: function() {
+                  return <div ref=\"hello\">Hello {this.props.name}</div>;
+                }
+              });
+            ",
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          componentDidMount: function() {
-			            var component = this.refs.hello;
-			          },
-			          render: function() {
-			            return <div ref={`hello`}>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+              var Hello = createReactClass({
+                componentDidMount: function() {
+                var component = this.refs.hello;
+                },
+                render: function() {
+                  return <div ref={`hello`}>Hello {this.props.name}</div>;
+                }
+              });
+            ",
             Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
         (
             "
-			        var Hello = createReactClass({
-			          componentDidMount: function() {
-			            var component = this.refs.hello;
-			          },
-			          render: function() {
-			            return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+              var Hello = createReactClass({
+                componentDidMount: function() {
+                var component = this.refs.hello;
+                },
+                render: function() {
+                  return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+                }
+              });
+            ",
+            Some(serde_json::json!([{ "noTemplateLiterals": true }])),
+        ),
+        (
+            "
+			        class Hello extends React.Component {
+			          componentDidMount() {
+                  var component = this.refs.hello;
 			          }
-			        });
+			        }
+			      ",
+            None,
+        ),
+        (
+            "
+			        class Hello extends React.PureComponent {
+			          componentDidMount() {
+                  var component = this.refs.hello;
+			          }
+                render() {
+                  return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
+                }
+			        }
 			      ",
             Some(serde_json::json!([{ "noTemplateLiterals": true }])),
         ),
