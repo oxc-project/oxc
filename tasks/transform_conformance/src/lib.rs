@@ -1,24 +1,15 @@
-use serde::de::DeserializeOwned;
-use serde_json::Value;
+use indexmap::IndexMap;
+use oxc_tasks_common::{normalize_path, project_root};
 use std::{
-    cell::RefCell,
     fs::{self, File},
     io::Write,
-    path::PathBuf,
-    rc::Rc,
+    path::{Path, PathBuf},
+    process::Command,
 };
+use test_case::TestCaseKind;
 use walkdir::WalkDir;
 
-use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, project_root, BabelOptions};
-use oxc_transformer::{
-    NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions, TransformTarget,
-    Transformer,
-};
+mod test_case;
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -29,6 +20,7 @@ fn test() {
 #[derive(Default)]
 pub struct TestRunnerOptions {
     pub filter: Option<String>,
+    pub exec: bool,
 }
 
 /// The test runner which walks the babel repository and searches for transformation tests.
@@ -38,6 +30,14 @@ pub struct TestRunner {
 
 fn root() -> PathBuf {
     project_root().join("tasks/coverage/babel/packages")
+}
+
+fn snap_root() -> PathBuf {
+    project_root().join("tasks/transform_conformance")
+}
+
+fn fixture_root() -> PathBuf {
+    snap_root().join("fixtures")
 }
 
 const CASES: &[&str] = &[
@@ -83,6 +83,20 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-react-jsx",
 ];
 
+const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
+const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
+
+struct SnapshotOption {
+    paths: IndexMap<String, Vec<TestCaseKind>>,
+    dest: PathBuf,
+}
+
+impl SnapshotOption {
+    fn new(paths: IndexMap<String, Vec<TestCaseKind>>, file_name: &'static str) -> Self {
+        Self { paths, dest: snap_root().join(file_name) }
+    }
+}
+
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         Self { options }
@@ -91,36 +105,110 @@ impl TestRunner {
     /// # Panics
     pub fn run(self) {
         let root = root();
+        let (transform_paths, mut exec_files) = Self::glob_files(&root);
+        self.generate_snapshot(SnapshotOption::new(transform_paths, CONFORMANCE_SNAPSHOT));
+
+        if self.options.exec {
+            println!("start run exec.js");
+            let bun_installed = Command::new("bun").arg("--version").output().is_ok();
+            let fixture_root = fixture_root();
+            if !fixture_root.exists() {
+                fs::create_dir(&fixture_root).unwrap();
+            }
+            if bun_installed {
+                println!("executing with bun");
+                exec_files = exec_files.into_iter().fold(IndexMap::new(), |mut acc, file| {
+                    let (case, list) = file;
+                    let list = list
+                        .into_iter()
+                        .filter_map(|test_case| {
+                            let TestCaseKind::Exec(exec_case) = test_case else { return None };
+                            let exec_case = exec_case.with_test_runner_env(TestRunnerEnv::Bun);
+                            Some(TestCaseKind::Exec(exec_case))
+                        })
+                        .collect();
+
+                    acc.insert(case, list);
+                    acc
+                });
+            } else {
+                println!("executing with vitest");
+                let has_init_node_js = fixture_root.join("package.json").is_file();
+                if !has_init_node_js {
+                    Command::new("npm")
+                        .current_dir(&fixture_root)
+                        .args(["init", "-y"])
+                        .output()
+                        .unwrap();
+                    Command::new("npm")
+                        .current_dir(&fixture_root)
+                        .args(["install", "-D", "vitest"])
+                        .output()
+                        .unwrap();
+                }
+            }
+            self.generate_snapshot(SnapshotOption::new(exec_files, EXEC_SNAPSHOT));
+            println!("finish run exec.js");
+        }
+    }
+
+    fn glob_files(
+        root: &Path,
+    ) -> (IndexMap<String, Vec<TestCaseKind>>, IndexMap<String, Vec<TestCaseKind>>) {
+        // use `IndexMap` to keep the order of the test cases the same in insert order.
+        let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
+        let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
+
+        for case in CASES {
+            let root = root.join(case).join("test/fixtures");
+            let (mut transform_paths, mut exec_paths): (Vec<TestCaseKind>, Vec<TestCaseKind>) =
+                WalkDir::new(root)
+                    .into_iter()
+                    .filter_map(Result::ok)
+                    .filter_map(|e| {
+                        let test_case = TestCaseKind::from_path(e.path());
+                        if let Some(test_case) = test_case {
+                            if test_case.skip_test_case() {
+                                return None;
+                            }
+
+                            return Some(test_case);
+                        }
+                        None
+                    })
+                    .partition(|p| matches!(p, TestCaseKind::Transform(_)));
+
+            transform_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
+            exec_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
+
+            transform_files.insert((*case).to_string(), transform_paths);
+            exec_files.insert((*case).to_string(), exec_paths);
+        }
+
+        (transform_files, exec_files)
+    }
+
+    fn generate_snapshot(&self, option: SnapshotOption) {
+        let SnapshotOption { paths, dest } = option;
         let mut snapshot = String::new();
         let mut total = 0;
         let mut all_passed = vec![];
         let mut all_passed_count = 0;
 
-        for case in CASES {
-            let root = root.join(case).join("test/fixtures");
-            let mut cases = WalkDir::new(&root)
-                .into_iter()
-                .filter_map(Result::ok)
-                .filter(|e| {
-                    e.path().file_stem().is_some_and(|name| name == "input")
-                        && e.path()
-                            .extension()
-                            .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
-                })
-                .map(walkdir::DirEntry::into_path)
-                .map(TestCase::new)
-                .filter(|c| !c.skip_test_case())
-                .collect::<Vec<TestCase>>();
-            cases.sort_unstable_by_key(|c| c.path.clone());
-            let num_of_tests = cases.len();
+        for (case, test_cases) in paths {
+            // Skip empty test cases, e.g. some cases do not have `exec.js` file.
+            if test_cases.is_empty() {
+                continue;
+            }
+
+            let case_root = root().join(&case).join("test/fixtures");
+            let num_of_tests = test_cases.len();
             total += num_of_tests;
 
             // Run the test
-            let (passed, failed): (Vec<TestCase>, Vec<TestCase>) =
-                cases.into_iter().partition(|case| case.test(self.options.filter.as_deref()));
-            let passed = passed.into_iter().map(|case| case.path).collect::<Vec<_>>();
-            let failed = failed.into_iter().map(|case| case.path).collect::<Vec<_>>();
-
+            let (passed, failed): (Vec<TestCaseKind>, Vec<TestCaseKind>) = test_cases
+                .into_iter()
+                .partition(|test_case| test_case.test(self.options.filter.as_deref()));
             all_passed_count += passed.len();
 
             // Snapshot
@@ -128,11 +216,13 @@ impl TestRunner {
                 all_passed.push(case);
             } else {
                 snapshot.push_str("# ");
-                snapshot.push_str(case);
+                snapshot.push_str(&case);
                 snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
-                for path in failed {
+                for test_case in failed {
                     snapshot.push_str("* ");
-                    snapshot.push_str(&normalize_path(path.strip_prefix(&root).unwrap()));
+                    snapshot.push_str(&normalize_path(
+                        test_case.path().strip_prefix(&case_root).unwrap(),
+                    ));
                     snapshot.push('\n');
                 }
                 snapshot.push('\n');
@@ -145,124 +235,67 @@ impl TestRunner {
             let snapshot = format!(
                 "Passed: {all_passed_count}/{total}\n\n# All Passed:\n{all_passed}\n\n\n{snapshot}"
             );
-            let path = project_root().join("tasks/transform_conformance/babel.snap.md");
-            let mut file = File::create(path).unwrap();
+            let mut file = File::create(dest).unwrap();
             file.write_all(snapshot.as_bytes()).unwrap();
         }
     }
 }
 
-struct TestCase {
-    path: PathBuf,
-    options: BabelOptions,
+pub enum TestRunnerEnv {
+    Bun,
+    NodeJS,
 }
 
-impl TestCase {
-    fn new<P: Into<PathBuf>>(path: P) -> Self {
-        let path = path.into();
-        let options = BabelOptions::from_path(path.parent().unwrap());
-        Self { path, options }
-    }
-
-    fn transform_options(&self) -> TransformOptions {
-        fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
-            value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
-        }
-
-        let options = &self.options;
-        TransformOptions {
-            target: TransformTarget::ESNext,
-            react_jsx: Some(ReactJsxOptions::default()),
-            assumptions: options.assumptions,
-            class_static_block: options.get_plugin("transform-class-static-block").is_some(),
-            logical_assignment_operators: options
-                .get_plugin("transform-logical-assignment-operators")
-                .is_some(),
-            nullish_coalescing_operator: self
-                .options
-                .get_plugin("transform-nullish-coalescing-operator")
-                .map(get_options::<NullishCoalescingOperatorOptions>),
-            optional_catch_binding: options
-                .get_plugin("transform-optional-catch-binding")
-                .is_some(),
-            exponentiation_operator: options
-                .get_plugin("transform-exponentiation-operator")
-                .is_some(),
-            shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
-            sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
+impl TestRunnerEnv {
+    fn template(&self, code: &str) -> String {
+        match self {
+            Self::Bun => format!(
+                r#"
+                    import {{expect, test}} from 'bun:test';
+                    test("exec", () => {{
+                        {code}
+                    }})
+                "#
+            ),
+            Self::NodeJS => format!(
+                r#"
+                    import {{expect, test}} from 'vitest';
+                    test("exec", () => {{
+                        {code}
+                    }})
+                "#
+            ),
         }
     }
 
-    fn skip_test_case(&self) -> bool {
-        // Legacy decorators is not supported by the parser
-        if self
-            .options
-            .get_plugin("syntax-decorators")
-            .flatten()
-            .as_ref()
-            .and_then(|o| o.as_object())
-            .and_then(|o| o.get("version"))
-            .is_some_and(|s| s == "legacy")
-        {
-            return true;
+    fn run_test(&self, path: &Path) -> bool {
+        match self {
+            Self::Bun => {
+                let output = Command::new("bun")
+                    .current_dir(path.parent().unwrap())
+                    .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
+                    .output()
+                    .expect("Try install bun: https://bun.sh/docs/installation");
+
+                let content =
+                    if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
+                let content = String::from_utf8_lossy(content);
+
+                content.contains("1 pass")
+            }
+            Self::NodeJS => {
+                let output = Command::new("npx")
+                    .current_dir(path.parent().unwrap())
+                    .args(["vitest", "run", path.file_name().unwrap().to_string_lossy().as_ref()])
+                    .output()
+                    .expect("Try install nodejs: https://nodejs.org/en/download/");
+
+                let content =
+                    if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
+                let content = String::from_utf8_lossy(content);
+
+                content.contains("1 passed")
+            }
         }
-        false
-    }
-
-    /// Test conformance by comparing the parsed babel code and transformed code.
-    fn test(&self, filter: Option<&str>) -> bool {
-        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
-
-        let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
-            let path = entry.ok()?.path();
-            let file_stem = path.file_stem()?;
-            (file_stem == "output").then_some(path)
-        });
-
-        let allocator = Allocator::default();
-        let input = fs::read_to_string(&self.path).unwrap();
-        let source_type = SourceType::from_path(&self.path).unwrap();
-
-        if filtered {
-            println!("input_path: {:?}", &self.path);
-            println!("output_path: {output_path:?}");
-        }
-
-        // Transform input.js
-        let program = Parser::new(&allocator, &input, source_type).parse().program;
-        let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        let symbols = Rc::new(RefCell::new(symbols));
-        let scopes = Rc::new(RefCell::new(scopes));
-        let program = allocator.alloc(program);
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
-            .build(program);
-        let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
-
-        // Get output.js by using our codegen so code comparison can match.
-        let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
-            || {
-                // The transformation should be equal to input.js If output.js does not exist.
-                let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
-            },
-            |output| {
-                // Get expected code by parsing the source text, so we can get the same code generated result.
-                let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new(output.len(), CodegenOptions).build(&program)
-            },
-        );
-
-        let passed = transformed_code == output;
-        if filtered {
-            println!("Input:\n");
-            println!("{input}\n");
-            println!("Output:\n");
-            println!("{output}\n");
-            println!("Transformed:\n");
-            println!("{transformed_code}\n");
-            println!("Passed: {passed}");
-        }
-        passed
     }
 }
