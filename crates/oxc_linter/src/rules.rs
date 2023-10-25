@@ -274,7 +274,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_render_return_value,
     react::no_string_refs,
     react::no_unescaped_entities,
-    import::default
+    import::default,
     import::named,
     import::no_cycle,
     import::no_self_import,
