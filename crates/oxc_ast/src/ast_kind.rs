@@ -243,6 +243,7 @@ impl<'a> AstKind<'a> {
                 | Self::JSXFragment(_)
                 | Self::JSXAttributeItem(_)
                 | Self::JSXText(_)
+                | Self::JSXExpressionContainer(_)
         )
     }
 
