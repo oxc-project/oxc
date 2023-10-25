@@ -88,7 +88,9 @@ pub trait TestCase {
         let options = self.options();
         TransformOptions {
             target: TransformTarget::ESNext,
-            react_jsx: Some(ReactJsxOptions::default()),
+            react_jsx: options
+                .get_plugin("transform-react-jsx")
+                .map(get_options::<ReactJsxOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             logical_assignment_operators: options
