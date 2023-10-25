@@ -33,12 +33,11 @@ declare_oxc_lint!(
     /// Meaningless files clutter a codebase.
     ///
     NoEmptyFile,
-    restriction,
+    correctness,
 );
 
 impl Rule for NoEmptyFile {
     fn run_once(&self, ctx: &LintContext) {
-        println!("~~~~");
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
 
