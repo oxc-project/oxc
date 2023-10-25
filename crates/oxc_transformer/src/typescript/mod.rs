@@ -10,6 +10,7 @@ use crate::context::TransformerCtx;
 /// References:
 /// * <https://babeljs.io/docs/babel-plugin-transform-typescript>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-typescript>
+/// * <https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax>
 pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
@@ -136,7 +137,7 @@ impl<'a> TypeScript<'a> {
                 self.ctx
                     .symbols()
                     .get_resolved_references(symbol_id)
-                    .any(|x| dbg!(x.is_read()) || dbg!(x.is_write()))
+                    .any(|x| x.is_read() || x.is_write())
             })
             .unwrap_or_default()
     }
