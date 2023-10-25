@@ -1,7 +1,9 @@
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use std::rc::Rc;
+
+use crate::context::TransformerCtx;
 
 /// Transform TypeScript
 ///
@@ -10,11 +12,17 @@ use std::rc::Rc;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-typescript>
 pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
+    ctx: TransformerCtx<'a>,
+    verbatim_module_syntax: bool,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>) -> Self {
-        Self { ast }
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        ctx: TransformerCtx<'a>,
+        verbatim_module_syntax: bool,
+    ) -> Self {
+        Self { ast, ctx, verbatim_module_syntax }
     }
 
     #[allow(clippy::unused_self)]
@@ -37,13 +45,31 @@ impl<'a> TypeScript<'a> {
                     ModuleDeclaration::ExportNamedDeclaration(decl) => {
                         decl.specifiers.retain(|specifier| specifier.export_kind.is_value());
                     }
-                    ModuleDeclaration::ImportDeclaration(decl) => {
+                    ModuleDeclaration::ImportDeclaration(decl) if decl.import_kind.is_value() => {
                         if let Some(specifiers) = &mut decl.specifiers {
                             specifiers.retain(|specifier| match specifier {
                                 ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                    s.import_kind.is_value()
+                                    if s.import_kind.is_type() {
+                                        return false;
+                                    }
+
+                                    if self.verbatim_module_syntax {
+                                        return true;
+                                    }
+
+                                    self.has_value_references(&s.local.name)
                                 }
-                                _ => false,
+                                ImportDeclarationSpecifier::ImportDefaultSpecifier(s)
+                                    if !self.verbatim_module_syntax =>
+                                {
+                                    self.has_value_references(&s.local.name)
+                                }
+                                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s)
+                                    if !self.verbatim_module_syntax =>
+                                {
+                                    self.has_value_references(&s.local.name)
+                                }
+                                _ => true,
                             });
                         }
                     }
@@ -58,19 +84,26 @@ impl<'a> TypeScript<'a> {
                     if decl.import_kind.is_type() {
                         return false;
                     }
-                    if decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty()) {
-                        // TODO: verbatim_module_syntax
-                        return false;
+
+                    if self.verbatim_module_syntax {
+                        return true;
                     }
-                    true
+
+                    !decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
                 }
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         return false;
                     }
+
+                    if self.verbatim_module_syntax {
+                        return true;
+                    }
+
                     if decl.declaration.is_none() && decl.specifiers.is_empty() {
                         return false;
                     }
+
                     true
                 }
                 _ => true,
@@ -91,5 +124,20 @@ impl<'a> TypeScript<'a> {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(empty_export);
             program.body.push(self.ast.module_declaration(export_decl));
         }
+    }
+
+    fn has_value_references(&self, name: &Atom) -> bool {
+        let root_scope_id = self.ctx.scopes().root_scope_id();
+
+        self.ctx
+            .scopes()
+            .get_binding(root_scope_id, name)
+            .map(|symbol_id| {
+                self.ctx
+                    .symbols()
+                    .get_resolved_references(symbol_id)
+                    .any(|x| dbg!(x.is_read()) || dbg!(x.is_write()))
+            })
+            .unwrap_or_default()
     }
 }

@@ -78,7 +78,8 @@ impl<'a> Transformer<'a> {
             scopes: Rc::clone(scopes),
         };
         Self {
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast))),
+            // TODO: pass verbatim_module_syntax from user config
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
