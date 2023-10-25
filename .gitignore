@@ -20,3 +20,4 @@ crates/oxc_napi/*.node
 /*.jsx
 /*.ts
 /*.tsx
+/tasks/transform_conformance/fixtures/*

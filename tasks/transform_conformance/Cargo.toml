@@ -27,6 +27,7 @@ serde_json = { workspace = true }
 serde      = { workspace = true }
 walkdir    = { workspace = true }
 pico-args  = { workspace = true }
+indexmap   = { workspace = true }
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
