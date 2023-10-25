@@ -1064,7 +1064,7 @@ pub trait Visit<'a>: Sized {
             }
             JSXAttributeValue::Element(elem) => self.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => self.visit_jsx_fragment(elem),
-            JSXAttributeValue::StringLiteral(_) => {}
+            JSXAttributeValue::StringLiteral(lit) => self.visit_string_literal(lit),
         }
     }
 

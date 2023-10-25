@@ -147,6 +147,7 @@ mod unicorn {
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
+    pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }
 
@@ -258,6 +259,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_unnecessary_await,
     unicorn::no_thenable,
+    unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
     unicorn::prefer_array_flat_map,
     react::jsx_key,
