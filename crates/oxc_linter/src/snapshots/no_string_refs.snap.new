@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: no_string_refs
+---
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 componentDidMount: function() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 render: function() {
+ 4 │                   return <div ref="hello">Hello {this.props.name}</div>;
+   ·                               ───────────
+ 5 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 render: function() {
+ 4 │                   return <div ref={'hello'}>Hello {this.props.name}</div>;
+   ·                               ─────────────
+ 5 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 componentDidMount: function() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.
+   ╭─[no_string_refs.tsx:6:1]
+ 6 │                 render: function() {
+ 7 │                   return <div ref="hello">Hello {this.props.name}</div>;
+   ·                               ───────────
+ 8 │                 }
+   ╰────
+  help: Using reference callback instead
+
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 componentDidMount: function() {
+ 4 │                 var component = this.refs.hello;
+   ·                                 ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                 componentDidMount: function() {
+ 4 │                 var component = this.refs.hello;
+   ·                                 ─────────
+ 5 │                 },
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                       componentDidMount() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                       }
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+  ⚠ eslint-plugin-react(no-string-refs): Using this.refs is deprecated.
+   ╭─[no_string_refs.tsx:3:1]
+ 3 │                       componentDidMount() {
+ 4 │                   var component = this.refs.hello;
+   ·                                   ─────────
+ 5 │                       }
+   ╰────
+  help: Using this.xxx instead of this.refs.xxx
+
+
