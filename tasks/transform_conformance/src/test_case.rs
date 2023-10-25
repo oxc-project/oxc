@@ -33,6 +33,7 @@ impl TestCaseKind {
             Self::Exec(test_case) => test_case.test(None),
         }
     }
+
     pub fn from_path(path: &Path) -> Option<Self> {
         // in `exec` directory
         if path.parent().is_some_and(|path| path.file_name().is_some_and(|n| n == "exec"))
@@ -56,12 +57,14 @@ impl TestCaseKind {
 
         None
     }
+
     pub fn skip_test_case(&self) -> bool {
         match self {
             Self::Transform(test_case) => test_case.skip_test_case(),
             Self::Exec(exec_case) => exec_case.skip_test_case(),
         }
     }
+
     pub fn path(&self) -> &Path {
         match self {
             Self::Transform(test_case) => &test_case.path,
@@ -72,8 +75,11 @@ impl TestCaseKind {
 
 pub trait TestCase {
     fn new<P: Into<PathBuf>>(path: P) -> Self;
+
     fn options(&self) -> &BabelOptions;
+
     fn test(&self, filter: Option<&str>) -> bool;
+
     fn transform_options(&self) -> TransformOptions {
         fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
@@ -101,6 +107,7 @@ pub trait TestCase {
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
         }
     }
+
     fn skip_test_case(&self) -> bool {
         // Legacy decorators is not supported by the parser
         if self
@@ -116,6 +123,7 @@ pub trait TestCase {
         }
         false
     }
+
     fn transform(&self, path: &Path) -> String {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
@@ -147,6 +155,7 @@ impl TestCase for ConformanceTestCase {
         let options = BabelOptions::from_path(path.parent().unwrap());
         Self { path, options }
     }
+
     fn options(&self) -> &BabelOptions {
         &self.options
     }
@@ -220,6 +229,7 @@ impl ExecTestCase {
         self.test_runner_env = runner_env;
         self
     }
+
     fn run_test(&self, path: &Path) -> bool {
         self.test_runner_env.run_test(path)
     }
@@ -252,11 +262,13 @@ impl TestCase for ExecTestCase {
     fn options(&self) -> &BabelOptions {
         &self.options
     }
+
     fn new<P: Into<PathBuf>>(path: P) -> Self {
         let path = path.into();
         let options = BabelOptions::from_path(path.parent().unwrap());
         Self { path, options, test_runner_env: TestRunnerEnv::NodeJS }
     }
+
     fn test(&self, _filter: Option<&str>) -> bool {
         let result = self.transform(&self.path);
         let target_path = self.write_to_test_files(&result);

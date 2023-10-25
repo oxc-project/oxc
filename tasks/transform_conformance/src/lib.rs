@@ -84,7 +84,7 @@ const CASES: &[&str] = &[
 ];
 
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
-const EXEC_SNAPSHOT: &str = "exec_runner.snap.md";
+const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
 
 struct SnapshotOption {
     paths: IndexMap<String, Vec<TestCaseKind>>,
@@ -116,6 +116,7 @@ impl TestRunner {
                 fs::create_dir(&fixture_root).unwrap();
             }
             if bun_installed {
+                println!("executing with bun");
                 exec_files = exec_files.into_iter().fold(IndexMap::new(), |mut acc, file| {
                     let (case, list) = file;
                     let list = list
@@ -131,6 +132,7 @@ impl TestRunner {
                     acc
                 });
             } else {
+                println!("executing with vitest");
                 let has_init_node_js = fixture_root.join("package.json").is_file();
                 if !has_init_node_js {
                     Command::new("npm")
@@ -265,6 +267,7 @@ impl TestRunnerEnv {
             ),
         }
     }
+
     fn run_test(&self, path: &Path) -> bool {
         match self {
             Self::Bun => {
