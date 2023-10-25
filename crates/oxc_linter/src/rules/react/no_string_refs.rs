@@ -1,4 +1,4 @@
-use oxc_ast::ast::{JSXAttributeItem, JSXAttributeName, CallExpression};
+use oxc_ast::ast::{CallExpression, JSXAttributeItem, JSXAttributeName};
 use oxc_ast::{
     ast::{Expression, JSXAttributeValue, JSXExpression, JSXExpressionContainer, MemberExpression},
     AstKind,
@@ -23,7 +23,7 @@ struct NoStringRefsDiagnostic(#[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react(no-string-refs):")]
 #[diagnostic(severity(warning), help("Using this.refs is deprecated."))]
-struct NoThisRefsDiagnositc(#[label] pub Span);
+struct NoThisRefsDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoStringRefs {
@@ -104,21 +104,27 @@ impl Rule for NoStringRefs {
                     Expression::StringLiteral(s) => {
                         ctx.diagnostic(NoStringRefsDiagnostic(s.span));
                     }
-                    _ => { return },
+                    _ => return,
                 },
-                _ => { return },
+                _ => return,
             }
         }
 
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) = node.kind() {
+        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) =
+            node.kind()
+        {
             if let (&Expression::ThisExpression(_), "refs") =
                 (&expr.object, expr.property.name.as_str())
             {
                 for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
                     let parent = ctx.nodes().get_node(node_id);
-                    if let AstKind::CallExpression(CallExpression { callee: Expression::Identifier(iden), .. }) = parent.kind() {
+                    if let AstKind::CallExpression(CallExpression {
+                        callee: Expression::Identifier(iden),
+                        ..
+                    }) = parent.kind()
+                    {
                         if iden.name.as_str() == "createReactClass" {
-                            ctx.diagnostic(NoThisRefsDiagnositc(expr.span));
+                            ctx.diagnostic(NoThisRefsDiagnostic(expr.span));
                         }
                     }
                 }
