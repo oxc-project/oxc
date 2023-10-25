@@ -114,20 +114,16 @@ impl Rule for NoStringRefs {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {
-                    ctx.diagnostic(NoStringRefsDiagnostic::StringInRefDeprecated(attr.span))
+                    ctx.diagnostic(NoStringRefsDiagnostic::StringInRefDeprecated(attr.span));
                 }
             }
             AstKind::MemberExpression(member_expr) => {
-                if matches!(member_expr.object(), Expression::ThisExpression(_)) {
-                    if member_expr.static_property_name() == Some("refs") {
-                        if get_parent_es5_component(node, ctx).is_some()
-                            || get_parent_es6_component(node, ctx).is_some()
-                        {
-                            ctx.diagnostic(NoStringRefsDiagnostic::ThisRefsDeprecated(
-                                member_expr.span(),
-                            ))
-                        }
-                    }
+                if matches!(member_expr.object(), Expression::ThisExpression(_))
+                    && member_expr.static_property_name() == Some("refs")
+                    && (get_parent_es5_component(node, ctx).is_some()
+                        || get_parent_es6_component(node, ctx).is_some())
+                {
+                    ctx.diagnostic(NoStringRefsDiagnostic::ThisRefsDeprecated(member_expr.span()));
                 }
             }
             _ => {}

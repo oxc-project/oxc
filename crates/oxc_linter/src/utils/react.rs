@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXOpeningElement,
-        MemberExpression,
-    },
+    ast::{CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXOpeningElement},
     AstKind,
 };
 use oxc_semantic::AstNode;
@@ -31,10 +28,10 @@ pub fn has_jsx_prop<'a>(
     })
 }
 
-const PRAGMA: &'static str = "React";
-const CREATE_CLASS: &'static str = "createReactClass";
+const PRAGMA: &str = "React";
+const CREATE_CLASS: &str = "createReactClass";
 
-pub fn is_es5_component<'a>(node: &'a AstNode) -> bool {
+pub fn is_es5_component(node: &AstNode) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else { return false };
 
     if let Expression::MemberExpression(member_expr) = &call_expr.callee {
@@ -51,10 +48,10 @@ pub fn is_es5_component<'a>(node: &'a AstNode) -> bool {
     false
 }
 
-const COMPONENT: &'static str = "Component";
-const PURE_COMPONENT: &'static str = "PureComponent";
+const COMPONENT: &str = "Component";
+const PURE_COMPONENT: &str = "PureComponent";
 
-pub fn is_es6_component<'a>(node: &'a AstNode) -> bool {
+pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else { return false };
     if let Some(super_class) = &class_expr.super_class {
         if let Expression::MemberExpression(member_expr) = super_class {
