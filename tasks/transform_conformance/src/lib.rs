@@ -105,50 +105,15 @@ impl TestRunner {
     /// # Panics
     pub fn run(self) {
         let root = root();
-        let (transform_paths, mut exec_files) = Self::glob_files(&root);
+        let (transform_paths, exec_files) = Self::glob_files(&root);
         self.generate_snapshot(SnapshotOption::new(transform_paths, CONFORMANCE_SNAPSHOT));
 
         if self.options.exec {
-            println!("start run exec.js");
-            let bun_installed = Command::new("bun").arg("--version").output().is_ok();
             let fixture_root = fixture_root();
             if !fixture_root.exists() {
                 fs::create_dir(&fixture_root).unwrap();
             }
-            if bun_installed {
-                println!("executing with bun");
-                exec_files = exec_files.into_iter().fold(IndexMap::new(), |mut acc, file| {
-                    let (case, list) = file;
-                    let list = list
-                        .into_iter()
-                        .filter_map(|test_case| {
-                            let TestCaseKind::Exec(exec_case) = test_case else { return None };
-                            let exec_case = exec_case.with_test_runner_env(TestRunnerEnv::Bun);
-                            Some(TestCaseKind::Exec(exec_case))
-                        })
-                        .collect();
-
-                    acc.insert(case, list);
-                    acc
-                });
-            } else {
-                println!("executing with vitest");
-                let has_init_node_js = fixture_root.join("package.json").is_file();
-                if !has_init_node_js {
-                    Command::new("npm")
-                        .current_dir(&fixture_root)
-                        .args(["init", "-y"])
-                        .output()
-                        .unwrap();
-                    Command::new("npm")
-                        .current_dir(&fixture_root)
-                        .args(["install", "-D", "vitest"])
-                        .output()
-                        .unwrap();
-                }
-            }
             self.generate_snapshot(SnapshotOption::new(exec_files, EXEC_SNAPSHOT));
-            println!("finish run exec.js");
         }
     }
 
@@ -241,61 +206,30 @@ impl TestRunner {
     }
 }
 
-pub enum TestRunnerEnv {
-    Bun,
-    NodeJS,
-}
+struct TestRunnerEnv;
 
 impl TestRunnerEnv {
     fn template(&self, code: &str) -> String {
-        match self {
-            Self::Bun => format!(
-                r#"
-                    import {{expect, test}} from 'bun:test';
-                    test("exec", () => {{
-                        {code}
-                    }})
-                "#
-            ),
-            Self::NodeJS => format!(
-                r#"
-                    import {{expect, test}} from 'vitest';
-                    test("exec", () => {{
-                        {code}
-                    }})
-                "#
-            ),
-        }
+        format!(
+            r#"
+                import {{expect, test}} from 'bun:test';
+                test("exec", () => {{
+                    {code}
+                }})
+            "#
+        )
     }
 
     fn run_test(&self, path: &Path) -> bool {
-        match self {
-            Self::Bun => {
-                let output = Command::new("bun")
-                    .current_dir(path.parent().unwrap())
-                    .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
-                    .output()
-                    .expect("Try install bun: https://bun.sh/docs/installation");
+        let output = Command::new("bun")
+            .current_dir(path.parent().unwrap())
+            .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
+            .output()
+            .expect("Try install bun: https://bun.sh/docs/installation");
 
-                let content =
-                    if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
-                let content = String::from_utf8_lossy(content);
+        let content = if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
+        let content = String::from_utf8_lossy(content);
 
-                content.contains("1 pass")
-            }
-            Self::NodeJS => {
-                let output = Command::new("npx")
-                    .current_dir(path.parent().unwrap())
-                    .args(["vitest", "run", path.file_name().unwrap().to_string_lossy().as_ref()])
-                    .output()
-                    .expect("Try install nodejs: https://nodejs.org/en/download/");
-
-                let content =
-                    if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
-                let content = String::from_utf8_lossy(content);
-
-                content.contains("1 passed")
-            }
-        }
+        content.contains("1 pass")
     }
 }

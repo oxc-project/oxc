@@ -225,11 +225,6 @@ pub struct ExecTestCase {
 }
 
 impl ExecTestCase {
-    pub fn with_test_runner_env(mut self, runner_env: TestRunnerEnv) -> Self {
-        self.test_runner_env = runner_env;
-        self
-    }
-
     fn run_test(&self, path: &Path) -> bool {
         self.test_runner_env.run_test(path)
     }
@@ -266,7 +261,7 @@ impl TestCase for ExecTestCase {
     fn new<P: Into<PathBuf>>(path: P) -> Self {
         let path = path.into();
         let options = BabelOptions::from_path(path.parent().unwrap());
-        Self { path, options, test_runner_env: TestRunnerEnv::NodeJS }
+        Self { path, options, test_runner_env: TestRunnerEnv }
     }
 
     fn test(&self, _filter: Option<&str>) -> bool {
