@@ -113,6 +113,7 @@ pub enum AstKind<'a> {
     JSXFragment(&'a JSXFragment<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
     JSXElementName(&'a JSXElementName<'a>),
+    JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXAttributeItem(&'a JSXAttributeItem<'a>),
     JSXText(&'a JSXText),
 
@@ -364,6 +365,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXFragment(x) => x.span,
             Self::JSXAttributeItem(x) => x.span(),
             Self::JSXText(x) => x.span,
+            Self::JSXExpressionContainer(x) => x.span,
 
             Self::TSModuleBlock(x) => x.span,
 
@@ -530,6 +532,7 @@ impl<'a> AstKind<'a> {
             Self::JSXFragment(_) => "JSXFragment".into(),
             Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
             Self::JSXText(_) => "JSXText".into(),
+            Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 

@@ -276,3 +276,33 @@ pub fn get_declaration_of_variable<'a, 'b>(
     let symbol_id = reference.symbol_id()?;
     Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
+
+pub fn is_boolean_node<'a, 'b>(node: &AstNode, ctx: &'b LintContext<'a>) -> bool {
+    // if (
+    // 	isLogicNot(node)
+    // 	|| isLogicNotArgument(node)
+    // 	|| isBooleanCall(node)
+    // 	|| isBooleanCallArgument(node)
+    // ) {
+    // 	return true;
+    // }
+
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+
+    if matches!(
+        parent.kind(),
+        AstKind::IfStatement(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::DoWhileStatement(_)
+            | AstKind::ForStatement(_)
+    ) {
+        return true;
+    }
+
+    // if is_logical_expression(parent) {
+    // return is_boolean_node(parent, ctx);
+    // }
+
+    return false;
+}

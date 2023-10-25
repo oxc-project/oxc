@@ -32,6 +32,10 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessEscape {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::JSXAttributeItem(_))) {
+            return;
+        }
+
         match node.kind() {
             AstKind::RegExpLiteral(literal)
                 if literal.regex.pattern.len() + literal.regex.flags.iter().count()
@@ -230,10 +234,10 @@ fn test() {
         "var foo = '\\f';",
         "var foo = '\\\n';",
         "var foo = '\\\r\n';",
-        // "<foo attr=\"\\d\"/>",
+        "<foo attr=\"\\d\"/>",
         "<div> Testing: \\ </div>",
         "<div> Testing: &#x5C </div>",
-        // "<foo attr='\\d'></foo>",
+        "<foo attr='\\d'></foo>",
         "<> Testing: \\ </>",
         "<> Testing: &#x5C </>",
         "var foo = `\\x123`",
