@@ -79,8 +79,8 @@ impl Rule for PreferTodo {
 
             if is_empty_function(call_expr) {
                 ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
-                    let (code, span) = build_code(call_expr, ctx);
-                    Fix::new(code, span)
+                    let (content, span) = build_code(call_expr, ctx);
+                    Fix::new(content, span)
                 });
             }
         }
@@ -172,7 +172,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
     } else if let Argument::Expression(Expression::TemplateLiteral(temp)) = &expr.arguments[0] {
         formatter.print(b'`');
         for q in &temp.quasis {
-            formatter.print_str(q.value.raw.as_bytes())
+            formatter.print_str(q.value.raw.as_bytes());
         }
         formatter.print(b'`');
         formatter.print(b')');
@@ -229,8 +229,16 @@ fn tests() {
         ("test(`i need to write this test`);", "test.todo(`i need to write this test`);", None),
         ("it.skip('foo', function () {})", "it.todo('foo')", None),
         ("it(`i need to write this test`, () => {})", "it.todo(`i need to write this test`)", None),
-        ("test.skip('i need to write this test', () => {});", "test.todo('i need to write this test');", None),
-        ("test.skip('i need to write this test', function() {});", "test.todo('i need to write this test');", None),
+        (
+            "test.skip('i need to write this test', () => {});",
+            "test.todo('i need to write this test');",
+            None,
+        ),
+        (
+            "test.skip('i need to write this test', function() {});",
+            "test.todo('i need to write this test');",
+            None,
+        ),
         // Todo
         // ("test['skip']('i need to write this test', function() {});", "test['todo']('i need to write this test');", None),
         // ("test['skip']('i need to write this test', function() {});", "test['todo']('i need to write this test');", None),
