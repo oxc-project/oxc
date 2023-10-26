@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -63,7 +63,19 @@ impl Rule for SwitchCaseBraces {
                     }
                     Statement::EmptyStatement(_) => {}
                     _ => {
-                        ctx.diagnostic_with_fix(SwitchCaseBracesDiagnostic(case.span), || {
+                        let Some(first_statement) = &case.consequent.first() else {
+                            return;
+                        };
+                        let Some(last_statement) = &case.consequent.last() else {
+                            return;
+                        };
+
+                        let case_body_span = Span {
+                            start: first_statement.span().start,
+                            end: last_statement.span().end,
+                        };
+
+                        ctx.diagnostic_with_fix(SwitchCaseBracesDiagnostic(case_body_span), || {
                             let modified_code = {
                                 let mut formatter = ctx.formatter();
 
@@ -71,7 +83,7 @@ impl Rule for SwitchCaseBraces {
                                     formatter.print_str(b"case ");
                                     case_test.gen(&mut formatter);
                                 } else {
-                                    formatter.print_str(b"default")
+                                    formatter.print_str(b"default");
                                 }
 
                                 formatter.print_colon();
@@ -113,6 +125,8 @@ fn test() {
         "switch(foo) { default: doSomething(); }",
         "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
         "switch(foo) { default: label: {} }",
+        "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
+
     ];
 
     let fix = vec![
