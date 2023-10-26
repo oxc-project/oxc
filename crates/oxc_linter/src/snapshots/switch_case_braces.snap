@@ -18,13 +18,6 @@ expression: switch_case_braces
 
   ⚠ eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.
    ╭─[switch_case_braces.tsx:1:1]
- 1 │ switch(something) { case 1: case 2: console.log('something'); break;}
-   ·                                     ────────────────────────────────
-   ╰────
-  help: There is less visual clutter for empty cases and proper scope for non-empty cases.
-
-  ⚠ eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.
-   ╭─[switch_case_braces.tsx:1:1]
  1 │ switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }
    ·                       ──
    ╰────

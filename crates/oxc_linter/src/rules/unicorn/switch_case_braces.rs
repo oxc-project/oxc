@@ -51,8 +51,8 @@ impl Rule for SwitchCaseBraces {
         }
 
         for case in &switch.cases {
-            for case_body in &case.consequent {
-                match case_body {
+            for case_consequent in &case.consequent {
+                match case_consequent {
                     Statement::BlockStatement(case_block) => {
                         if case_block.body.is_empty() {
                             ctx.diagnostic_with_fix(
@@ -97,6 +97,9 @@ impl Rule for SwitchCaseBraces {
 
                             Fix::new(modified_code, case.span)
                         });
+
+                        // After first incorrect consequent we have to break to not repeat the work
+                        break;
                     }
                 }
             }
