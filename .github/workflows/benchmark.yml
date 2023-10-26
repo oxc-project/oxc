@@ -24,11 +24,6 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - bench: linter
-          - bench: minifier
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -42,19 +37,25 @@ jobs:
           sed -i 's/codegen-units = 1/codegen-units = 16/g' Cargo.toml
           sed -i 's/lto           = "fat"/lto           = "thin"/g' Cargo.toml
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: moonrepo/setup-rust@v1
         with:
-          shared-key: benchmark
-          save-cache: ${{ github.ref_name == 'main' }}
+          inherit-toolchain: true
+          cache-target: release
+          bins: cargo-codspeed
 
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
+      # - name: Install Rust Toolchain
+        # uses: ./.github/actions/rustup
+        # with:
+          # shared-key: benchmark
+          # save-cache: ${{ github.ref_name == 'main' }}
+
+      # - name: Install codspeed
+        # uses: taiki-e/install-action@v2
+        # with:
+          # tool: cargo-codspeed
 
       - name: Build Benchmark
-        run: cargo codspeed build --features codspeed -p oxc_benchmark ${{ matrix.bench }}
+        run: cargo codspeed build --features codspeed -p oxc_benchmark
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v1
