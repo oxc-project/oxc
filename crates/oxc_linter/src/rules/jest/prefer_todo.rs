@@ -165,6 +165,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
     }
 
     if let Argument::Expression(Expression::StringLiteral(ident)) = &expr.arguments[0] {
+        // Todo: this punctuation should read from the config
         formatter.print(b'\'');
         formatter.print_str(ident.value.as_bytes());
         formatter.print(b'\'');
