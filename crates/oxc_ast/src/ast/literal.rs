@@ -21,6 +21,10 @@ pub struct BooleanLiteral {
 }
 
 impl BooleanLiteral {
+    pub fn new(span: Span, value: bool) -> Self {
+        Self { span, value }
+    }
+
     pub fn as_str(&self) -> &'static str {
         if self.value {
             "true"
