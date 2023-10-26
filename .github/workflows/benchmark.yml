@@ -7,12 +7,14 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
   push:
     branches:
       - main
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -27,6 +29,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true # Pull submodules for additional files
+
+      - name: Improve compilation speed
+        shell: bash
+        run: |
+          # Change codegen-units to speed up compilation speed
+          sed -i 's/codegen-units = 1/codegen-units = 16/g' Cargo.toml
+          sed -i 's/lto           = "fat"/lto           = "thin"/g' Cargo.toml
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
