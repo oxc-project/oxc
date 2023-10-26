@@ -43,8 +43,35 @@ impl<'a> TypeScript<'a> {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
                 needs_explicit_esm = true;
                 match &mut **module_decl {
-                    ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                    ModuleDeclaration::ExportNamedDeclaration(decl)
+                        if decl.export_kind.is_value() =>
+                    {
                         decl.specifiers.retain(|specifier| specifier.export_kind.is_value());
+
+                        if self.verbatim_module_syntax {
+                            continue;
+                        }
+
+                        if decl.source.is_some() {
+                            // reexport
+                            continue;
+                        }
+
+                        // local export
+                        let root_scope_id = self.ctx.scopes().root_scope_id();
+                        decl.specifiers.retain(|specifier| {
+                            let name = specifier.local.name();
+                            self.ctx
+                                .scopes()
+                                .get_binding(root_scope_id, name)
+                                .map(|symbol_id| {
+                                    let flag = self.ctx.symbols().get_flag(symbol_id);
+
+                                    !flag.is_type()
+                                        || (flag.is_import_binding() && !flag.is_type_only())
+                                })
+                                .unwrap_or_default()
+                        });
                     }
                     ModuleDeclaration::ImportDeclaration(decl) if decl.import_kind.is_value() => {
                         if let Some(specifiers) = &mut decl.specifiers {

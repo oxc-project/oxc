@@ -37,6 +37,7 @@ bitflags! {
         const ValueModule             = 1 << 17;
         // In a dts file or there is a declare flag
         const Ambient                 = 1 << 18;
+        const TypeOnly                = 1 << 19; // import type x, { y } from 'foo'
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
@@ -101,5 +102,9 @@ impl SymbolFlags {
 
     pub fn is_import_binding(&self) -> bool {
         self.contains(Self::ImportBinding)
+    }
+
+    pub fn is_type_only(&self) -> bool {
+        self.contains(Self::TypeOnly)
     }
 }

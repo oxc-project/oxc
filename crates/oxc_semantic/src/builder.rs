@@ -626,10 +626,27 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn symbol_flag_from_module_declaration(module: &ModuleDeclaration) -> SymbolFlags {
-        if matches!(module, ModuleDeclaration::ImportDeclaration(_)) {
-            SymbolFlags::Import
-        } else {
-            SymbolFlags::Export
+        fn type_flag(kind: ImportOrExportKind) -> SymbolFlags {
+            if kind.is_type() {
+                SymbolFlags::TypeOnly
+            } else {
+                SymbolFlags::None
+            }
+        }
+
+        match module {
+            ModuleDeclaration::ImportDeclaration(i) => {
+                SymbolFlags::Import | type_flag(i.import_kind)
+            }
+            ModuleDeclaration::ExportAllDeclaration(e) => {
+                SymbolFlags::Export | type_flag(e.export_kind)
+            }
+            ModuleDeclaration::ExportNamedDeclaration(e) => {
+                SymbolFlags::Export | type_flag(e.export_kind)
+            }
+            ModuleDeclaration::ExportDefaultDeclaration(..)
+            | ModuleDeclaration::TSExportAssignment(..)
+            | ModuleDeclaration::TSNamespaceExportDeclaration(..) => SymbolFlags::Export,
         }
     }
 }
