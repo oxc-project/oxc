@@ -24,6 +24,11 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - bench: linter
+          - bench: minifier
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -49,7 +54,7 @@ jobs:
           tool: cargo-codspeed
 
       - name: Build Benchmark
-        run: cargo codspeed build --features codspeed -p oxc_benchmark
+        run: cargo codspeed build --features codspeed -p oxc_benchmark ${{ matrix.bench }}
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v1
