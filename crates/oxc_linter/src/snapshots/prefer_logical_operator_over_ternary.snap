@@ -1,0 +1,110 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_logical_operator_over_ternary
+---
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo ? foo : bar;
+   · ───────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo.bar ? foo.bar : foo.baz
+   · ───────────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo?.bar ? foo.bar : baz
+   · ────────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo?.bar ? foo?.bar : baz
+   · ─────────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ !bar ? foo : bar;
+   · ────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ !!bar ? foo : !bar;
+   · ──────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo() ? foo() : bar
+   · ───────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo ? foo : a && b
+   · ──────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo ? foo : a || b
+   · ──────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo ? foo : a ?? b
+   · ──────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ a && b ? a && b : bar
+   · ─────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ a || b ? a || b : bar
+   · ─────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ a ?? b ? a ?? b : bar
+   · ─────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ foo ? foo : await a
+   · ───────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
+ 1 │ await a ? await a : foo
+   · ───────────────────────
+   ╰────
+  help: Switch to "||" or "??" operator
+
+
