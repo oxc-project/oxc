@@ -58,11 +58,17 @@ impl<'a> TestCase<'a> {
         self.code
             .as_ref()
             .map(|code| {
-                let code = if code.contains('\n') {
+                let mut code = if code.contains('\n') {
                     code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
                 } else {
                     code.to_string()
                 };
+
+                if code.contains('"') {
+                    // handle " to \" and then \\" to \"
+                    code = code.replace('"', "\\\"").replace("\\\\\"", "\\\"");
+                }
+
                 let config = self.config.as_ref().map_or_else(
                     || "None".to_string(),
                     |config| format!("Some(serde_json::json!({config}))"),

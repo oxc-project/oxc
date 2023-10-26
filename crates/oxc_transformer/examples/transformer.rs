@@ -5,7 +5,7 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, TransformTarget, Transformer};
+use oxc_transformer::{ReactJsxOptions, TransformOptions, TransformTarget, Transformer};
 
 // Instruction:
 // create a `test.js`,
@@ -39,8 +39,11 @@ fn main() {
     let scopes = Rc::new(RefCell::new(scopes));
 
     let program = allocator.alloc(ret.program);
-    let transform_options =
-        TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
+    let transform_options = TransformOptions {
+        target: TransformTarget::ES2015,
+        react_jsx: Some(ReactJsxOptions::default()),
+        ..TransformOptions::default()
+    };
     Transformer::new(&allocator, source_type, &symbols, &scopes, transform_options).build(program);
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
     println!("Transformed:\n");

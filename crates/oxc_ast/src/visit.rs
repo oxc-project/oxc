@@ -1064,12 +1064,15 @@ pub trait Visit<'a>: Sized {
             }
             JSXAttributeValue::Element(elem) => self.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => self.visit_jsx_fragment(elem),
-            JSXAttributeValue::StringLiteral(_) => {}
+            JSXAttributeValue::StringLiteral(lit) => self.visit_string_literal(lit),
         }
     }
 
     fn visit_jsx_expression_container(&mut self, expr: &JSXExpressionContainer<'a>) {
+        let kind = AstKind::JSXExpressionContainer(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_jsx_expression(&expr.expression);
+        self.leave_node(kind);
     }
 
     fn visit_jsx_expression(&mut self, expr: &JSXExpression<'a>) {
