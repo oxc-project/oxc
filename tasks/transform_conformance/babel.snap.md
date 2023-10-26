@@ -1,4 +1,4 @@
-Passed: 173/1083
+Passed: 175/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -705,7 +705,7 @@ Passed: 173/1083
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-typescript (82/181)
+# babel-plugin-transform-typescript (84/181)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -752,9 +752,7 @@ Passed: 173/1083
 * imports/elide-no-import-specifiers/input.ts
 * imports/elide-preact/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-* imports/elide-typeof/input.ts
 * imports/elision/input.ts
-* imports/elision-export-type/input.ts
 * imports/elision-locations/input.ts
 * imports/elision-rename/input.ts
 * imports/enum-id/input.ts
