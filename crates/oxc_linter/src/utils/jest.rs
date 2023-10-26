@@ -369,12 +369,13 @@ fn resolve_to_jest_fn<'a>(
     };
 
     if import_decl.source.value == "@jest/globals" {
-        let original = import_decl.specifiers.iter().find_map(|specifier| match specifier {
-            ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-                Some(import_specifier.imported.name())
-            }
-            _ => None,
-        });
+        let original =
+            import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+                    Some(import_specifier.imported.name())
+                }
+                _ => None,
+            });
 
         return Some(ResolvedJestFn { local: &ident.name, kind: JestFnFrom::Import, original });
     }

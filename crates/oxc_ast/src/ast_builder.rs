@@ -975,7 +975,7 @@ impl<'a> AstBuilder<'a> {
     pub fn import_declaration(
         &self,
         span: Span,
-        specifiers: Vec<'a, ImportDeclarationSpecifier>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>,
         import_kind: ImportOrExportKind,

@@ -78,7 +78,8 @@ impl<'a> Transformer<'a> {
             scopes: Rc::clone(scopes),
         };
         Self {
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast))),
+            // TODO: pass verbatim_module_syntax from user config
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
@@ -96,6 +97,15 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_program(&mut self, program: &mut Program<'a>) {
+        for directive in program.directives.iter_mut() {
+            self.visit_directive(directive);
+        }
+
+        self.typescript.as_mut().map(|t| t.transform_program(program));
+        self.visit_statements(&mut program.body);
+    }
+
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);

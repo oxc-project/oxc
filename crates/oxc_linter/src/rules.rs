@@ -133,6 +133,9 @@ mod react {
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
     pub mod no_find_dom_node;
+    pub mod no_render_return_value;
+    pub mod no_string_refs;
+    pub mod no_unescaped_entities;
 }
 
 mod unicorn {
@@ -140,10 +143,13 @@ mod unicorn {
     pub mod error_message;
     pub mod filename_case;
     pub mod no_console_spaces;
+    pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
+    pub mod prefer_logical_operator_over_ternary;
+    pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }
 
@@ -180,9 +186,9 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
+    eslint::no_empty,
     eslint::no_empty_character_class,
     eslint::no_empty_pattern,
-    eslint::no_empty,
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
@@ -221,42 +227,45 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_empty_interface,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
+    typescript::no_misused_new,
+    typescript::no_namespace,
     typescript::no_non_null_asserted_optional_chain,
+    typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
-    typescript::no_misused_new,
-    typescript::no_this_alias,
-    typescript::no_namespace,
     typescript::no_var_requires,
     typescript::prefer_as_const,
-    jest::no_disabled_tests,
-    jest::no_test_prefixes,
-    jest::no_focused_tests,
-    jest::valid_describe_callback,
-    jest::valid_expect,
-    jest::no_commented_out_tests,
     jest::expect_expect,
     jest::no_alias_methods,
+    jest::no_commented_out_tests,
     jest::no_conditional_expect,
     jest::no_confusing_set_timeout,
+    jest::no_disabled_tests,
     jest::no_done_callback,
+    jest::no_export,
+    jest::no_focused_tests,
+    jest::no_identical_title,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_mocks_import,
-    jest::no_export,
     jest::no_standalone_expect,
-    jest::no_identical_title,
+    jest::no_test_prefixes,
     jest::prefer_todo,
+    jest::valid_describe_callback,
+    jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::no_console_spaces,
+    unicorn::no_empty_file,
     unicorn::no_instanceof_array,
-    unicorn::no_unnecessary_await,
     unicorn::no_thenable,
-    unicorn::throw_new_error,
+    unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_logical_operator_over_ternary,
+    unicorn::text_encoding_identifier_case,
+    unicorn::throw_new_error,
     react::jsx_key,
     react::jsx_no_comment_text_nodes,
     react::jsx_no_duplicate_props,
@@ -264,8 +273,11 @@ oxc_macros::declare_all_lint_rules! {
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
     react::no_find_dom_node,
+    react::no_render_return_value,
+    react::no_string_refs,
+    react::no_unescaped_entities,
+    import::default,
     import::named,
     import::no_cycle,
     import::no_self_import,
-    import::default
 }

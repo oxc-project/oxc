@@ -897,8 +897,10 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        for specifier in decl.specifiers.iter_mut() {
-            self.visit_import_declaration_specifier(specifier);
+        if let Some(specifiers) = &mut decl.specifiers {
+            for specifier in specifiers.iter_mut() {
+                self.visit_import_declaration_specifier(specifier);
+            }
         }
         // TODO: source
         // TODO: assertions

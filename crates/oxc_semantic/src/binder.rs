@@ -138,6 +138,16 @@ impl<'a> Binder for Function<'a> {
                     excludes,
                 );
                 ident.symbol_id.set(Some(symbol_id));
+            } else if self.r#type == FunctionType::FunctionExpression {
+                // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
+                // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
+                let symbol_id = builder.declare_symbol(
+                    ident.span,
+                    &ident.name,
+                    SymbolFlags::empty(),
+                    SymbolFlags::empty(),
+                );
+                ident.symbol_id.set(Some(symbol_id));
             }
         }
 

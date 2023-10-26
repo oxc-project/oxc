@@ -1,3 +1,4 @@
+#![deny(clippy::print_stdout)]
 #![allow(clippy::self_named_module_files)] // for rules.rs
 
 #[cfg(test)]
@@ -135,6 +136,7 @@ impl Linter {
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
     }
 
+    #[allow(clippy::print_stdout)]
     pub fn print_execution_times_if_enable(&self) {
         if !self.options.timing {
             return;

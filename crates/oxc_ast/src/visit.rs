@@ -1064,7 +1064,7 @@ pub trait Visit<'a>: Sized {
             }
             JSXAttributeValue::Element(elem) => self.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => self.visit_jsx_fragment(elem),
-            JSXAttributeValue::StringLiteral(_) => {}
+            JSXAttributeValue::StringLiteral(lit) => self.visit_string_literal(lit),
         }
     }
 
@@ -1279,8 +1279,10 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        for specifier in &decl.specifiers {
-            self.visit_import_declaration_specifier(specifier);
+        if let Some(specifiers) = &decl.specifiers {
+            for specifier in specifiers {
+                self.visit_import_declaration_specifier(specifier);
+            }
         }
         // TODO: source
         // TODO: assertions
