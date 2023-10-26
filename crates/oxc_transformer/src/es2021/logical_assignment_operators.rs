@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::Span;
+use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
 use crate::{
@@ -73,7 +73,6 @@ impl<'a> LogicalAssignmentOperators<'a> {
                     assign_target = self.ast.simple_assignment_target_identifier((*ident).clone());
                 }
                 SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
-                    let span = Span::default();
                     let op = AssignmentOperator::Assign;
 
                     // `a.b &&= c` -> `var _a; (_a = a).b && (_a.b = c)`
@@ -86,7 +85,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                     self.ast.simple_assignment_target_identifier(ident.clone()),
                                 );
                                 expr.object =
-                                    self.ast.assignment_expression(span, op, target, right);
+                                    self.ast.assignment_expression(SPAN, op, target, right);
                                 left_expr = self.ast.member_expression(
                                     MemberExpression::StaticMemberExpression(expr),
                                 );
@@ -122,7 +121,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                     self.ast.simple_assignment_target_identifier(ident.clone()),
                                 );
                                 expr.object =
-                                    self.ast.assignment_expression(span, op, target, right);
+                                    self.ast.assignment_expression(SPAN, op, target, right);
                                 if let Some(property_ident) = &property_ident {
                                     let left = AssignmentTarget::SimpleAssignmentTarget(
                                         self.ast.simple_assignment_target_identifier(
@@ -131,7 +130,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                     );
                                     let right = self.ast.copy(&computed_expr.expression);
                                     expr.expression =
-                                        self.ast.assignment_expression(span, op, left, right);
+                                        self.ast.assignment_expression(SPAN, op, left, right);
                                 }
                                 left_expr = self.ast.member_expression(
                                     MemberExpression::ComputedMemberExpression(expr),
@@ -167,7 +166,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                     );
                                     let right = self.ast.copy(&computed_expr.expression);
                                     expr.expression =
-                                        self.ast.assignment_expression(span, op, left, right);
+                                        self.ast.assignment_expression(SPAN, op, left, right);
                                 }
                                 left_expr = self.ast.member_expression(
                                     MemberExpression::ComputedMemberExpression(expr),
@@ -199,10 +198,9 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let assign_op = AssignmentOperator::Assign;
         let assign_target = AssignmentTarget::SimpleAssignmentTarget(assign_target);
         let right = self.ast.move_expression(&mut assignment_expr.right);
-        let right =
-            self.ast.assignment_expression(Span::default(), assign_op, assign_target, right);
+        let right = self.ast.assignment_expression(SPAN, assign_op, assign_target, right);
 
-        let logical_expr = self.ast.logical_expression(Span::default(), left_expr, operator, right);
+        let logical_expr = self.ast.logical_expression(SPAN, left_expr, operator, right);
 
         *expr = logical_expr;
     }

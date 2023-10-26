@@ -4,11 +4,9 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::Span;
+use oxc_span::SPAN;
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
-
-const SPAN: Span = Span::new(0, 0);
 
 /// Transform React JSX
 ///

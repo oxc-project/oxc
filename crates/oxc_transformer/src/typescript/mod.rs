@@ -1,5 +1,5 @@
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SPAN};
 
 use std::rc::Rc;
 
@@ -116,7 +116,7 @@ impl<'a> TypeScript<'a> {
             && !program.body.iter().any(|s| matches!(s, Statement::ModuleDeclaration(_)))
         {
             let empty_export = self.ast.export_named_declaration(
-                Span::default(),
+                SPAN,
                 None,
                 self.ast.new_vec(),
                 None,

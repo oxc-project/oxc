@@ -1,7 +1,7 @@
 use std::{collections::HashSet, rc::Rc};
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SPAN};
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -38,13 +38,12 @@ impl<'a> ClassStaticBlock<'a> {
                 continue;
             };
 
-            let span = block.span;
-
             let static_block_private_id = generate_uid(&private_names, &mut i);
-            let key = PropertyKey::PrivateIdentifier(self.ast.alloc(PrivateIdentifier {
-                span: Span::default(),
-                name: static_block_private_id.clone(),
-            }));
+            let key =
+                PropertyKey::PrivateIdentifier(self.ast.alloc(PrivateIdentifier {
+                    span: SPAN,
+                    name: static_block_private_id.clone(),
+                }));
 
             let value = match block.body.len() {
                 0 => None,
@@ -75,7 +74,7 @@ impl<'a> ClassStaticBlock<'a> {
                 }
                 _ => {
                     let params = self.ast.formal_parameters(
-                        Span::default(),
+                        SPAN,
                         FormalParameterKind::ArrowFormalParameters,
                         self.ast.new_vec(),
                         None,
@@ -83,10 +82,10 @@ impl<'a> ClassStaticBlock<'a> {
 
                     let statements = self.ast.move_statement_vec(&mut block.body);
                     let function_body =
-                        self.ast.function_body(Span::default(), self.ast.new_vec(), statements);
+                        self.ast.function_body(SPAN, self.ast.new_vec(), statements);
 
                     let callee = self.ast.arrow_expression(
-                        Span::default(),
+                        SPAN,
                         false,
                         false,
                         false,
@@ -96,20 +95,15 @@ impl<'a> ClassStaticBlock<'a> {
                         None,
                     );
 
-                    let callee = self.ast.parenthesized_expression(Span::default(), callee);
+                    let callee = self.ast.parenthesized_expression(SPAN, callee);
 
-                    let value = self.ast.call_expression(
-                        Span::default(),
-                        callee,
-                        self.ast.new_vec(),
-                        false,
-                        None,
-                    );
+                    let value =
+                        self.ast.call_expression(SPAN, callee, self.ast.new_vec(), false, None);
                     Some(value)
                 }
             };
 
-            *element = self.ast.class_property(span, key, value, false, true, self.ast.new_vec());
+            *element = self.ast.class_property(SPAN, key, value, false, true, self.ast.new_vec());
         }
     }
 }
