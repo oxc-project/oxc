@@ -1,4 +1,4 @@
-Passed: 200/1083
+Passed: 204/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 200/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (51/172)
+# babel-plugin-transform-react-jsx (55/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -876,9 +876,7 @@ Passed: 200/1083
 * react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 * react-automatic/dont-coerce-expression-containers/input.js
-* react-automatic/handle-fragments/input.js
 * react-automatic/handle-fragments-with-key/input.js
-* react-automatic/handle-fragments-with-no-children/input.js
 * react-automatic/handle-nonstatic-children/input.js
 * react-automatic/handle-spread-with-proto/input.js
 * react-automatic/handle-static-children/input.js
@@ -889,9 +887,7 @@ Passed: 200/1083
 * react-automatic/should-allow-elements-as-attributes/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-* react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
-* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-escape-xhtml-jsxattribute/input.js
 * react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
@@ -907,7 +903,7 @@ Passed: 200/1083
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-quote-jsx-attributes/input.js
 * react-automatic/should-support-xml-namespaces-if-flag/input.js
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+* react-automatic/should-throw-when-filter-is-specified/input.js
 * react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
 * react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
