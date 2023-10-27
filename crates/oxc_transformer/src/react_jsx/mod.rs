@@ -60,19 +60,119 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx_element(&self, e: &JSXElement<'a>) -> Option<Expression<'a>> {
+        let attributes = &e.opening_element.attributes;
         let callee = self.transform_create_element();
 
         let mut arguments = self.ast.new_vec_with_capacity(2 + e.children.len());
         arguments.push(Argument::Expression(self.transform_element_name(&e.opening_element.name)?));
-        arguments.push(Argument::Expression(
-            self.transform_jsx_attributes(&e.opening_element.attributes)?,
-        ));
-        arguments.extend(
-            e.children
-                .iter()
-                .filter_map(|child| self.transform_jsx_child(child))
-                .map(Argument::Expression),
-        );
+
+        if self.options.runtime.is_classic() && attributes.is_empty() {
+            let null_expr = self.ast.literal_null_expression(NullLiteral::new(SPAN));
+            arguments.push(Argument::Expression(null_expr));
+        }
+
+        let mut properties = self.ast.new_vec_with_capacity(attributes.len());
+        for attribute in attributes {
+            let kind = PropertyKind::Init;
+            match attribute {
+                JSXAttributeItem::Attribute(attr) => {
+                    let key = match &attr.name {
+                        JSXAttributeName::Identifier(ident) => PropertyKey::Identifier(
+                            self.ast.alloc(IdentifierName::new(SPAN, ident.name.clone())),
+                        ),
+                        JSXAttributeName::NamespacedName(_ident) => {
+                            /* TODO */
+                            continue;
+                        }
+                    };
+                    let value = match &attr.value {
+                        Some(value) => {
+                            match value {
+                                JSXAttributeValue::StringLiteral(s) => {
+                                    self.ast.literal_string_expression(s.clone())
+                                }
+                                JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_) => {
+                                    /* TODO */
+                                    continue;
+                                }
+                                JSXAttributeValue::ExpressionContainer(c) => {
+                                    match &c.expression {
+                                        JSXExpression::Expression(e) => self.ast.copy(e),
+                                        JSXExpression::EmptyExpression(_e) =>
+                                        /* TODO */
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        None => {
+                            self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true))
+                        }
+                    };
+                    let object_property =
+                        self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
+                    let object_property = ObjectPropertyKind::ObjectProperty(object_property);
+                    properties.push(object_property);
+                }
+                JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
+                    Expression::ObjectExpression(expr) => {
+                        for object_property in &expr.properties {
+                            properties.push(self.ast.copy(object_property));
+                        }
+                    }
+                    expr => {
+                        let argument = self.ast.copy(expr);
+                        let spread_property = self.ast.spread_element(SPAN, argument);
+                        let object_property = ObjectPropertyKind::SpreadProperty(spread_property);
+                        properties.push(object_property);
+                    }
+                },
+            }
+        }
+
+        if self.options.runtime.is_automatic() && !e.children.is_empty() {
+            let key = PropertyKey::Identifier(
+                self.ast.alloc(IdentifierName::new(SPAN, "children".into())),
+            );
+            let value = if e.children.len() == 1 {
+                self.transform_jsx_child(&e.children[0])?
+            } else {
+                let mut elements = self.ast.new_vec_with_capacity(e.children.len());
+                for child in &e.children {
+                    if let Some(e) = self.transform_jsx_child(child) {
+                        elements.push(ArrayExpressionElement::Expression(e));
+                    }
+                }
+                self.ast.array_expression(SPAN, elements, None)
+            };
+            let object_property = self.ast.object_property(
+                SPAN,
+                PropertyKind::Init,
+                key,
+                value,
+                None,
+                false,
+                false,
+                false,
+            );
+            properties.push(ObjectPropertyKind::ObjectProperty(object_property));
+        }
+
+        if !properties.is_empty() || self.options.runtime.is_automatic() {
+            let object_expression = self.ast.object_expression(SPAN, properties, None);
+            arguments.push(Argument::Expression(object_expression));
+        }
+
+        if self.options.runtime.is_classic() && !e.children.is_empty() {
+            arguments.extend(
+                e.children
+                    .iter()
+                    .filter_map(|child| self.transform_jsx_child(child))
+                    .map(Argument::Expression),
+            );
+        }
 
         Some(self.ast.call_expression(SPAN, callee, arguments, false, None))
     }
@@ -141,71 +241,6 @@ impl<'a> ReactJsx<'a> {
         };
         let property = IdentifierName::new(SPAN, expr.property.name.clone());
         self.ast.static_member_expression(SPAN, object, property, false)
-    }
-
-    fn transform_jsx_attributes(
-        &self,
-        attributes: &Vec<'a, JSXAttributeItem<'a>>,
-    ) -> Option<Expression<'a>> {
-        if attributes.is_empty() {
-            return Some(self.ast.literal_null_expression(NullLiteral::new(SPAN)));
-        }
-
-        let mut properties = self.ast.new_vec_with_capacity(attributes.len());
-        for attribute in attributes {
-            let kind = PropertyKind::Init;
-            let object_property = match attribute {
-                JSXAttributeItem::Attribute(attr) => {
-                    let key = match &attr.name {
-                        JSXAttributeName::Identifier(ident) => PropertyKey::Identifier(
-                            self.ast.alloc(IdentifierName::new(SPAN, ident.name.clone())),
-                        ),
-                        JSXAttributeName::NamespacedName(_ident) => {
-                            /* TODO */
-                            return None;
-                        }
-                    };
-                    let value = match &attr.value {
-                        Some(value) => {
-                            match value {
-                                JSXAttributeValue::StringLiteral(s) => {
-                                    self.ast.literal_string_expression(s.clone())
-                                }
-                                JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_) => {
-                                    /* TODO */
-                                    return None;
-                                }
-                                JSXAttributeValue::ExpressionContainer(c) => {
-                                    match &c.expression {
-                                        JSXExpression::Expression(e) => self.ast.copy(e),
-                                        JSXExpression::EmptyExpression(_e) =>
-                                        /* TODO */
-                                        {
-                                            return None
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        None => {
-                            self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true))
-                        }
-                    };
-                    let object_property =
-                        self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
-                    ObjectPropertyKind::ObjectProperty(object_property)
-                }
-                JSXAttributeItem::SpreadAttribute(attr) => {
-                    let argument = self.ast.copy(&attr.argument);
-                    let spread_property = self.ast.spread_element(SPAN, argument);
-                    ObjectPropertyKind::SpreadProperty(spread_property)
-                }
-            };
-            properties.push(object_property);
-        }
-
-        let object_expression = self.ast.object_expression(SPAN, properties, None);
-        Some(object_expression)
     }
 
     fn transform_jsx_child(&self, child: &JSXChild<'a>) -> Option<Expression<'a>> {
