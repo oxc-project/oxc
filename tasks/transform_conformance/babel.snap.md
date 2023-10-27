@@ -1,4 +1,4 @@
-Passed: 187/1083
+Passed: 190/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 187/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (38/172)
+# babel-plugin-transform-react-jsx (41/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -847,9 +847,7 @@ Passed: 187/1083
 * react/optimisation.react.constant-elements/input.js
 * react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-allow-deeper-js-namespacing/input.js
 * react/should-allow-elements-as-attributes/input.js
-* react/should-allow-js-namespacing/input.js
 * react/should-allow-jsx-docs-comment-with-pragma/input.js
 * react/should-allow-nested-fragments/input.js
 * react/should-allow-no-pragmafrag-if-frag-unused/input.js
@@ -869,7 +867,6 @@ Passed: 187/1083
 * react/should-support-xml-namespaces-if-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
-* react/this-tag-name/input.js
 * react/weird-symbols/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
