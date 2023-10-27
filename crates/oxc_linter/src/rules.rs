@@ -148,6 +148,7 @@ mod unicorn {
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }
@@ -262,6 +263,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
     react::jsx_key,
