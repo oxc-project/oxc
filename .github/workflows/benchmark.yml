@@ -35,7 +35,6 @@ jobs:
         run: |
           # Change codegen-units to speed up compilation speed
           sed -i 's/codegen-units = 1/codegen-units = 16/g' Cargo.toml
-          sed -i 's/lto           = "fat"/lto           = "thin"/g' Cargo.toml
 
       - uses: moonrepo/setup-rust@v1
         with:
