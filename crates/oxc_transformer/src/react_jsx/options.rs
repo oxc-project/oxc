@@ -4,6 +4,9 @@ use serde::Deserialize;
 pub struct ReactJsxOptions {
     /// Decides which runtime to use.
     pub runtime: ReactJsxRuntime,
+    /// Toggles whether or not to throw an error if an XML namespaced tag name is used. e.g. `<f:image />`
+    /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
+    pub throw_if_namespace: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]

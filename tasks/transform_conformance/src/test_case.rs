@@ -210,6 +210,8 @@ impl TestCase for ConformanceTestCase {
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
+            println!("Options:");
+            println!("{:?}\n", self.transform_options());
             println!("Output:\n");
             println!("{output}\n");
             println!("Transformed:\n");

@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::SPAN;
+use oxc_span::{Atom, SPAN};
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 
@@ -105,11 +105,42 @@ impl<'a> ReactJsx<'a> {
                     self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name))
                 })
             }
-            _ => {
-                /* TODO */
+            JSXElementName::MemberExpression(member_expr) => {
+                Some(self.transform_jsx_member_expression(member_expr))
+            }
+            JSXElementName::NamespacedName(namespaced_name) => {
+                if self.options.throw_if_namespace.is_some_and(|v| !v) {
+                    // If the flag "throwIfNamespace" is false
+                    // print XMLNamespace like string literal
+                    let string_literal = StringLiteral::new(
+                        SPAN,
+                        Atom::from(format!(
+                            "{}:{}",
+                            namespaced_name.namespace.name, namespaced_name.property.name
+                        )),
+                    );
+
+                    return Some(self.ast.literal_string_expression(string_literal));
+                }
                 None
             }
         }
+    }
+
+    fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
+        let object = match &expr.object {
+            JSXMemberExpressionObject::Identifier(ident) => {
+                self.ast.identifier_reference_expression(IdentifierReference::new(
+                    SPAN,
+                    ident.name.clone(),
+                ))
+            }
+            JSXMemberExpressionObject::MemberExpression(expr) => {
+                self.transform_jsx_member_expression(expr)
+            }
+        };
+        let property = IdentifierName::new(SPAN, expr.property.name.clone());
+        self.ast.static_member_expression(SPAN, object, property, false)
     }
 
     fn transform_jsx_attributes(
