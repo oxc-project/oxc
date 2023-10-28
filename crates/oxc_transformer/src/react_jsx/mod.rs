@@ -186,15 +186,7 @@ impl<'a> ReactJsx<'a> {
                 let kind = PropertyKind::Init;
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
-                        let key = match &attr.name {
-                            JSXAttributeName::Identifier(ident) => PropertyKey::Identifier(
-                                self.ast.alloc(IdentifierName::new(SPAN, ident.name.clone())),
-                            ),
-                            JSXAttributeName::NamespacedName(_ident) => {
-                                /* TODO */
-                                continue;
-                            }
-                        };
+                        let key = self.get_attribute_name(&attr.name);
                         let value = match &attr.value {
                             Some(value) => {
                                 match value {
@@ -250,9 +242,8 @@ impl<'a> ReactJsx<'a> {
         }
 
         if self.options.runtime.is_automatic() && !children.is_empty() {
-            let key = PropertyKey::Identifier(
-                self.ast.alloc(IdentifierName::new(SPAN, "children".into())),
-            );
+            let key =
+                self.ast.property_key_identifier(IdentifierName::new(SPAN, "children".into()));
             let value = if children.len() == 1 {
                 self.transform_jsx_child(&children[0])?
             } else {
@@ -326,6 +317,26 @@ impl<'a> ReactJsx<'a> {
             ReactJsxRuntime::Automatic => {
                 let ident = IdentifierReference::new(SPAN, "_Fragment".into());
                 self.ast.identifier_reference_expression(ident)
+            }
+        }
+    }
+
+    fn get_attribute_name(&self, name: &JSXAttributeName<'a>) -> PropertyKey<'a> {
+        match name {
+            JSXAttributeName::Identifier(ident) => {
+                let name = ident.name.clone();
+                if ident.name.contains('-') {
+                    let expr = self.ast.literal_string_expression(StringLiteral::new(SPAN, name));
+                    self.ast.property_key_expression(expr)
+                } else {
+                    self.ast.property_key_identifier(IdentifierName::new(SPAN, name))
+                }
+            }
+            JSXAttributeName::NamespacedName(name) => {
+                let name = format!("{}:{}", name.namespace.name, name.property.name);
+                let expr =
+                    self.ast.literal_string_expression(StringLiteral::new(SPAN, name.into()));
+                self.ast.property_key_expression(expr)
             }
         }
     }
