@@ -30,8 +30,10 @@ enum JSXElementOrFragment<'a, 'b> {
 impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
     fn attributes(&self) -> Option<&'b Vec<'a, JSXAttributeItem<'a>>> {
         match self {
-            Self::Element(e) => Some(&e.opening_element.attributes),
-            Self::Fragment(_) => None,
+            Self::Element(e) if !e.opening_element.attributes.is_empty() => {
+                Some(&e.opening_element.attributes)
+            }
+            _ => None,
         }
     }
 
@@ -125,12 +127,6 @@ impl<'a> ReactJsx<'a> {
             JSXElementOrFragment::Fragment(_) => self.get_fragment(),
         }));
 
-        if self.options.runtime.is_classic() && e.attributes().is_some_and(|attrs| attrs.is_empty())
-        {
-            let null_expr = self.ast.literal_null_expression(NullLiteral::new(SPAN));
-            arguments.push(Argument::Expression(null_expr));
-        }
-
         // TODO: compute the correct capacity for both runtimes
         let mut properties = self.ast.new_vec_with_capacity(0);
         if let Some(attributes) = e.attributes() {
@@ -196,6 +192,9 @@ impl<'a> ReactJsx<'a> {
                     },
                 }
             }
+        } else if self.options.runtime.is_classic() {
+            let null_expr = self.ast.literal_null_expression(NullLiteral::new(SPAN));
+            arguments.push(Argument::Expression(null_expr));
         }
 
         if self.options.runtime.is_automatic() && !children.is_empty() {

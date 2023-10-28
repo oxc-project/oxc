@@ -1,4 +1,4 @@
-Passed: 204/1083
+Passed: 206/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 204/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (55/172)
+# babel-plugin-transform-react-jsx (57/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -836,7 +836,6 @@ Passed: 204/1083
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
 * react/avoids-spread-babel-7/input.js
-* react/does-not-add-source-self/input.mjs
 * react/does-not-add-source-self-babel-7/input.mjs
 * react/flattens-spread/input.js
 * react/handle-spread-with-proto/input.js
@@ -849,7 +848,6 @@ Passed: 204/1083
 * react/should-add-quotes-es3/input.js
 * react/should-allow-elements-as-attributes/input.js
 * react/should-allow-jsx-docs-comment-with-pragma/input.js
-* react/should-allow-nested-fragments/input.js
 * react/should-allow-no-pragmafrag-if-frag-unused/input.js
 * react/should-allow-pragmafrag-and-frag/input.js
 * react/should-disallow-spread-children/input.js

@@ -212,7 +212,7 @@ impl TestCase for ConformanceTestCase {
             println!("{input}\n");
             println!("Options:");
             println!("{:?}\n", self.transform_options());
-            println!("Output:\n");
+            println!("Expected:\n");
             println!("{output}\n");
             println!("Transformed:\n");
             println!("{transformed_code}\n");
