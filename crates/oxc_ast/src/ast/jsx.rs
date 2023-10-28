@@ -157,6 +157,12 @@ pub struct JSXAttribute<'a> {
     pub value: Option<JSXAttributeValue<'a>>,
 }
 
+impl<'a> JSXAttribute<'a> {
+    pub fn is_key(&self) -> bool {
+        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == "key")
+    }
+}
+
 /// JSX Spread Attribute
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]

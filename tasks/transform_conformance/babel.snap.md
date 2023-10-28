@@ -1,4 +1,4 @@
-Passed: 214/1083
+Passed: 215/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 214/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (65/172)
+# babel-plugin-transform-react-jsx (66/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -895,7 +895,6 @@ Passed: 214/1083
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-support-xml-namespaces-if-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * react-automatic/weird-symbols/input.js
 * regression/issue-12478-automatic/input.js
