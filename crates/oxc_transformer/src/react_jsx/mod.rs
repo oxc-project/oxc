@@ -53,14 +53,8 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
         for attr in &e.opening_element.attributes {
             if matches!(attr, JSXAttributeItem::SpreadAttribute(_)) {
                 spread = true;
-            } else if spread {
-                if let JSXAttributeItem::Attribute(a) = attr {
-                    if let JSXAttributeName::Identifier(ident) = &a.name {
-                        if ident.name == "key" {
-                            return true;
-                        }
-                    }
-                }
+            } else if spread && matches!(attr, JSXAttributeItem::Attribute(a) if a.is_key()) {
+                return true;
             }
         }
         false
@@ -165,6 +159,8 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Option<Expression<'a>> {
+        let is_classic = self.options.runtime.is_classic();
+        let is_automatic = self.options.runtime.is_automatic();
         let has_key_after_props_spread = e.has_key_after_props_spread();
         let callee = self.get_create_element(has_key_after_props_spread);
         let children = e.children();
@@ -179,6 +175,7 @@ impl<'a> ReactJsx<'a> {
             JSXElementOrFragment::Fragment(_) => self.get_fragment(),
         }));
 
+        let mut key = None;
         // TODO: compute the correct capacity for both runtimes
         let mut properties = self.ast.new_vec_with_capacity(0);
         if let Some(attributes) = e.attributes() {
@@ -186,34 +183,12 @@ impl<'a> ReactJsx<'a> {
                 let kind = PropertyKind::Init;
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
+                        if is_automatic && attr.is_key() && !has_key_after_props_spread {
+                            key = attr.value.as_ref();
+                            continue;
+                        }
                         let key = self.get_attribute_name(&attr.name);
-                        let value = match &attr.value {
-                            Some(value) => {
-                                match value {
-                                    JSXAttributeValue::StringLiteral(s) => {
-                                        self.ast.literal_string_expression(s.clone())
-                                    }
-                                    JSXAttributeValue::Element(_)
-                                    | JSXAttributeValue::Fragment(_) => {
-                                        /* TODO */
-                                        continue;
-                                    }
-                                    JSXAttributeValue::ExpressionContainer(c) => {
-                                        match &c.expression {
-                                            JSXExpression::Expression(e) => self.ast.copy(e),
-                                            JSXExpression::EmptyExpression(_e) =>
-                                            /* TODO */
-                                            {
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            None => {
-                                self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true))
-                            }
-                        };
+                        let value = self.transform_jsx_attribute_value(attr.value.as_ref())?;
                         let object_property = self
                             .ast
                             .object_property(SPAN, kind, key, value, None, false, false, false);
@@ -236,12 +211,12 @@ impl<'a> ReactJsx<'a> {
                     },
                 }
             }
-        } else if self.options.runtime.is_classic() {
+        } else if is_classic {
             let null_expr = self.ast.literal_null_expression(NullLiteral::new(SPAN));
             arguments.push(Argument::Expression(null_expr));
         }
 
-        if self.options.runtime.is_automatic() && !children.is_empty() {
+        if is_automatic && !children.is_empty() {
             let key =
                 self.ast.property_key_identifier(IdentifierName::new(SPAN, "children".into()));
             let value = if children.len() == 1 {
@@ -268,12 +243,16 @@ impl<'a> ReactJsx<'a> {
             properties.push(ObjectPropertyKind::ObjectProperty(object_property));
         }
 
-        if !properties.is_empty() || self.options.runtime.is_automatic() {
+        if !properties.is_empty() || is_automatic {
             let object_expression = self.ast.object_expression(SPAN, properties, None);
             arguments.push(Argument::Expression(object_expression));
         }
 
-        if self.options.runtime.is_classic() && !children.is_empty() {
+        if is_automatic && key.is_some() {
+            arguments.push(Argument::Expression(self.transform_jsx_attribute_value(key)?));
+        }
+
+        if is_classic && !children.is_empty() {
             arguments.extend(
                 children
                     .iter()
@@ -370,6 +349,32 @@ impl<'a> ReactJsx<'a> {
                 }
                 None
             }
+        }
+    }
+
+    fn transform_jsx_attribute_value(
+        &self,
+        value: Option<&JSXAttributeValue<'a>>,
+    ) -> Option<Expression<'a>> {
+        match value {
+            Some(JSXAttributeValue::StringLiteral(s)) => {
+                Some(self.ast.literal_string_expression(s.clone()))
+            }
+            Some(JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_)) => {
+                /* TODO */
+                None
+            }
+            Some(JSXAttributeValue::ExpressionContainer(c)) => {
+                match &c.expression {
+                    JSXExpression::Expression(e) => Some(self.ast.copy(e)),
+                    JSXExpression::EmptyExpression(_e) =>
+                    /* TODO */
+                    {
+                        None
+                    }
+                }
+            }
+            None => Some(self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true))),
         }
     }
 
