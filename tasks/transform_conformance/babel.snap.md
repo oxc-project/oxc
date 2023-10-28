@@ -1,4 +1,4 @@
-Passed: 224/1083
+Passed: 226/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,9 +804,7 @@ Passed: 224/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (75/172)
-* autoImport/after-polyfills/input.mjs
-* autoImport/after-polyfills-2/input.mjs
+# babel-plugin-transform-react-jsx (77/172)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
