@@ -20,6 +20,7 @@ pub struct ReactJsx<'a> {
     imports: Vec<'a, Statement<'a>>,
     import_jsx: bool,
     import_fragment: bool,
+    import_create_element: bool,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -43,12 +44,40 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
             Self::Fragment(e) => &e.children,
         }
     }
+
+    /// The react jsx/jsxs transform falls back to `createElement` when an explicit `key` argument comes after a spread
+    /// <https://github.com/microsoft/TypeScript/blob/6134091642f57c32f50e7b5604635e4d37dd19e8/src/compiler/transformers/jsx.ts#L264-L278>
+    fn has_key_after_props_spread(&self) -> bool {
+        let Self::Element(e) = self else { return false };
+        let mut spread = false;
+        for attr in &e.opening_element.attributes {
+            if matches!(attr, JSXAttributeItem::SpreadAttribute(_)) {
+                spread = true;
+            } else if spread {
+                if let JSXAttributeItem::Attribute(a) = attr {
+                    if let JSXAttributeName::Identifier(ident) = &a.name {
+                        if ident.name == "key" {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
 }
 
 impl<'a> ReactJsx<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: ReactJsxOptions) -> Self {
         let imports = ast.new_vec();
-        Self { ast, options, imports, import_jsx: false, import_fragment: false }
+        Self {
+            ast,
+            options,
+            imports,
+            import_jsx: false,
+            import_fragment: false,
+            import_create_element: false,
+        }
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -75,24 +104,46 @@ impl<'a> ReactJsx<'a> {
         *stmts = self.ast.move_statement_vec(&mut self.imports);
     }
 
-    fn add_import_jsx(&mut self) {
-        if self.options.runtime.is_classic() || self.import_jsx {
+    fn add_import<'b>(
+        &mut self,
+        e: &JSXElementOrFragment<'a, 'b>,
+        has_key_after_props_spread: bool,
+    ) {
+        if self.options.runtime.is_classic() {
             return;
         }
-        self.import_jsx = true;
-        self.add_import_jsx_runtime("jsx", "_jsx");
+        match e {
+            JSXElementOrFragment::Element(_) if has_key_after_props_spread => {
+                self.add_import_create_element();
+            }
+            JSXElementOrFragment::Element(_) => self.add_import_jsx(),
+            JSXElementOrFragment::Fragment(_) => self.add_import_fragment(),
+        }
+    }
+
+    fn add_import_jsx(&mut self) {
+        if !self.import_jsx {
+            self.import_jsx = true;
+            self.add_import_statement("jsx", "_jsx", "react/jsx-runtime");
+        }
     }
 
     fn add_import_fragment(&mut self) {
-        if self.options.runtime.is_classic() || self.import_fragment {
-            return;
+        if !self.import_fragment {
+            self.import_fragment = true;
+            self.add_import_statement("Fragment", "_Fragment", "react/jsx-runtime");
+            self.add_import_jsx();
         }
-        self.import_fragment = true;
-        self.add_import_jsx_runtime("Fragment", "_Fragment");
-        self.add_import_jsx();
     }
 
-    fn add_import_jsx_runtime(&mut self, imported: &str, local: &str) {
+    fn add_import_create_element(&mut self) {
+        if !self.import_create_element {
+            self.import_create_element = true;
+            self.add_import_statement("createElement", "_createElement", "react");
+        }
+    }
+
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: &str) {
         let mut specifiers = self.ast.new_vec_with_capacity(1);
         specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
             span: SPAN,
@@ -100,7 +151,7 @@ impl<'a> ReactJsx<'a> {
             local: BindingIdentifier::new(SPAN, local.into()),
             import_kind: ImportOrExportKind::Value,
         }));
-        let source = StringLiteral::new(SPAN, "react/jsx-runtime".into());
+        let source = StringLiteral::new(SPAN, source.into());
         let import_statement = self.ast.import_declaration(
             SPAN,
             Some(specifiers),
@@ -114,7 +165,8 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Option<Expression<'a>> {
-        let callee = self.get_create_element();
+        let has_key_after_props_spread = e.has_key_after_props_spread();
+        let callee = self.get_create_element(has_key_after_props_spread);
         let children = e.children();
 
         // TODO: compute the correct capacity for both runtimes
@@ -239,10 +291,7 @@ impl<'a> ReactJsx<'a> {
             );
         }
 
-        match e {
-            JSXElementOrFragment::Element(_) => self.add_import_jsx(),
-            JSXElementOrFragment::Fragment(_) => self.add_import_fragment(),
-        }
+        self.add_import(e, has_key_after_props_spread);
 
         Some(self.ast.call_expression(SPAN, callee, arguments, false, None))
     }
@@ -252,7 +301,7 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
-    fn get_create_element(&mut self) -> Expression<'a> {
+    fn get_create_element(&mut self, has_key_after_props_spread: bool) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
                 let object = self.get_react_references();
@@ -260,7 +309,8 @@ impl<'a> ReactJsx<'a> {
                 self.ast.static_member_expression(SPAN, object, property, false)
             }
             ReactJsxRuntime::Automatic => {
-                let ident = IdentifierReference::new(SPAN, "_jsx".into());
+                let name = if has_key_after_props_spread { "_createElement" } else { "_jsx" };
+                let ident = IdentifierReference::new(SPAN, name.into());
                 self.ast.identifier_reference_expression(ident)
             }
         }
