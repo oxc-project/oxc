@@ -92,8 +92,12 @@ impl<'a> ReactJsx<'a> {
         if self.options.runtime.is_classic() {
             return;
         }
-        self.imports.extend(stmts.drain(..));
-        *stmts = self.ast.move_statement_vec(&mut self.imports);
+        let imports = self.ast.move_statement_vec(&mut self.imports);
+        let index = stmts
+            .iter()
+            .position(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
+            .map_or(0, |i| i + 1);
+        stmts.splice(index..index, imports);
     }
 
     fn add_import<'b>(
@@ -169,7 +173,6 @@ impl<'a> ReactJsx<'a> {
         let is_classic = self.options.runtime.is_classic();
         let is_automatic = self.options.runtime.is_automatic();
         let has_key_after_props_spread = e.has_key_after_props_spread();
-        let children = e.children();
 
         // TODO: compute the correct capacity for both runtimes
         let mut arguments = self.ast.new_vec_with_capacity(1);
@@ -181,51 +184,60 @@ impl<'a> ReactJsx<'a> {
             JSXElementOrFragment::Fragment(_) => self.get_fragment(),
         }));
 
-        let mut key = None;
-        // TODO: compute the correct capacity for both runtimes
-        let mut properties = self.ast.new_vec_with_capacity(0);
-        if let Some(attributes) = e.attributes() {
-            for attribute in attributes {
-                let kind = PropertyKind::Init;
-                match attribute {
-                    JSXAttributeItem::Attribute(attr) => {
-                        if is_automatic && attr.is_key() && !has_key_after_props_spread {
-                            key = attr.value.as_ref();
-                            continue;
-                        }
-                        let key = self.get_attribute_name(&attr.name);
-                        let value = self.transform_jsx_attribute_value(attr.value.as_ref());
-                        let object_property = self
-                            .ast
-                            .object_property(SPAN, kind, key, value, None, false, false, false);
-                        let object_property = ObjectPropertyKind::ObjectProperty(object_property);
-                        properties.push(object_property);
-                    }
-                    JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
-                        Expression::ObjectExpression(expr) => {
-                            for object_property in &expr.properties {
-                                properties.push(self.ast.copy(object_property));
-                            }
-                        }
-                        expr => {
-                            let argument = self.ast.copy(expr);
-                            let spread_property = self.ast.spread_element(SPAN, argument);
-                            let object_property =
-                                ObjectPropertyKind::SpreadProperty(spread_property);
-                            properties.push(object_property);
-                        }
-                    },
-                }
-            }
-        } else if is_classic {
+        // The key prop in `<div key={true} />`
+        let mut key_prop = None;
+
+        let attributes = e.attributes();
+        let attributes_len = attributes.map_or(0, |attrs| attrs.len());
+
+        // Add `null` to second argument in classic mode
+        if is_classic && attributes_len == 0 {
             let null_expr = self.ast.literal_null_expression(NullLiteral::new(SPAN));
             arguments.push(Argument::Expression(null_expr));
         }
 
+        // The object properties for the second argument of `React.createElement`
+        let mut properties = self.ast.new_vec_with_capacity(0);
+
+        if let Some(attributes) = attributes {
+            // TODO: compute the correct capacity for both runtimes
+
+            for attribute in attributes {
+                // optimize `{...prop}` to `prop` in static mode
+                if is_classic && attributes_len == 1 {
+                    if let JSXAttributeItem::SpreadAttribute(spread) = attribute {
+                        // deopt if spreading an object with `__proto__` key
+                        if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
+                        {
+                            arguments.push(Argument::Expression(self.ast.copy(&spread.argument)));
+                            continue;
+                        }
+                    }
+                }
+                // In automatic mode, extract the key before spread prop,
+                // and add it to the third argument later.
+                if is_automatic && !has_key_after_props_spread {
+                    if let JSXAttributeItem::Attribute(attr) = attribute {
+                        if attr.is_key() {
+                            key_prop = attr.value.as_ref();
+                            continue;
+                        }
+                    }
+                }
+
+                // Add attribute to prop object
+                self.transform_jsx_attribute_item(&mut properties, attribute);
+            }
+        }
+
         let mut need_jsxs = false;
+
+        let children = e.children();
+
+        // Append children to object properties in automatic mode
         if is_automatic && !children.is_empty() {
-            let key =
-                self.ast.property_key_identifier(IdentifierName::new(SPAN, "children".into()));
+            let ident = IdentifierName::new(SPAN, "children".into());
+            let key = self.ast.property_key_identifier(ident);
             let value = if children.len() == 1 {
                 self.transform_jsx_child(&children[0])
             } else {
@@ -239,16 +251,9 @@ impl<'a> ReactJsx<'a> {
                 Some(self.ast.array_expression(SPAN, elements, None))
             };
             if let Some(value) = value {
-                let object_property = self.ast.object_property(
-                    SPAN,
-                    PropertyKind::Init,
-                    key,
-                    value,
-                    None,
-                    false,
-                    false,
-                    false,
-                );
+                let kind = PropertyKind::Init;
+                let object_property =
+                    self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
                 properties.push(ObjectPropertyKind::ObjectProperty(object_property));
             }
         }
@@ -258,8 +263,8 @@ impl<'a> ReactJsx<'a> {
             arguments.push(Argument::Expression(object_expression));
         }
 
-        if is_automatic && key.is_some() {
-            arguments.push(Argument::Expression(self.transform_jsx_attribute_value(key)));
+        if is_automatic && key_prop.is_some() {
+            arguments.push(Argument::Expression(self.transform_jsx_attribute_value(key_prop)));
         }
 
         if is_classic && !children.is_empty() {
@@ -273,7 +278,6 @@ impl<'a> ReactJsx<'a> {
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs);
         self.add_import(e, has_key_after_props_spread, need_jsxs);
-
         self.ast.call_expression(SPAN, callee, arguments, false, None)
     }
 
@@ -362,6 +366,37 @@ impl<'a> ReactJsx<'a> {
                 let string_literal = StringLiteral::new(SPAN, Atom::from(name.to_string()));
                 self.ast.literal_string_expression(string_literal)
             }
+        }
+    }
+
+    fn transform_jsx_attribute_item(
+        &mut self,
+        properties: &mut Vec<'a, ObjectPropertyKind<'a>>,
+        attribute: &JSXAttributeItem<'a>,
+    ) {
+        match attribute {
+            JSXAttributeItem::Attribute(attr) => {
+                let kind = PropertyKind::Init;
+                let key = self.get_attribute_name(&attr.name);
+                let value = self.transform_jsx_attribute_value(attr.value.as_ref());
+                let object_property =
+                    self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
+                let object_property = ObjectPropertyKind::ObjectProperty(object_property);
+                properties.push(object_property);
+            }
+            JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
+                Expression::ObjectExpression(expr) if !expr.has_proto() => {
+                    for object_property in &expr.properties {
+                        properties.push(self.ast.copy(object_property));
+                    }
+                }
+                expr => {
+                    let argument = self.ast.copy(expr);
+                    let spread_property = self.ast.spread_element(SPAN, argument);
+                    let object_property = ObjectPropertyKind::SpreadProperty(spread_property);
+                    properties.push(object_property);
+                }
+            },
         }
     }
 
