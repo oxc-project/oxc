@@ -1,4 +1,4 @@
-Passed: 214/1083
+Passed: 219/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 214/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (65/172)
+# babel-plugin-transform-react-jsx (70/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -869,13 +869,10 @@ Passed: 214/1083
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/.should-properly-handle-comments-adjacent-to-children/input.js
 * react-automatic/arrow-functions/input.js
-* react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/dont-coerce-expression-containers/input.js
 * react-automatic/handle-fragments-with-key/input.js
 * react-automatic/handle-nonstatic-children/input.js
 * react-automatic/handle-spread-with-proto/input.js
-* react-automatic/handle-static-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
@@ -889,11 +886,9 @@ Passed: 214/1083
 * react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
 * react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
 * react-automatic/should-properly-handle-comments-between-props/input.js
-* react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
