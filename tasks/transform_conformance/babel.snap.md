@@ -1,4 +1,4 @@
-Passed: 219/1083
+Passed: 224/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 219/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (70/172)
+# babel-plugin-transform-react-jsx (75/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -815,7 +815,6 @@ Passed: 219/1083
 * autoImport/complicated-scope-script/input.js
 * autoImport/import-source/input.js
 * autoImport/import-source-pragma/input.js
-* autoImport/react-defined/input.js
 * pure/false-default-pragma-automatic-runtime/input.js
 * pure/false-pragma-comment-automatic-runtime/input.js
 * pure/false-pragma-comment-classic-runtime/input.js
@@ -837,8 +836,6 @@ Passed: 219/1083
 * react/assignment-babel-7/input.js
 * react/avoids-spread-babel-7/input.js
 * react/does-not-add-source-self-babel-7/input.mjs
-* react/flattens-spread/input.js
-* react/handle-spread-with-proto/input.js
 * react/handle-spread-with-proto-babel-7/input.js
 * react/honor-custom-jsx-comment/input.js
 * react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
@@ -870,9 +867,7 @@ Passed: 219/1083
 * react-automatic/.should-properly-handle-comments-adjacent-to-children/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/handle-fragments-with-key/input.js
 * react-automatic/handle-nonstatic-children/input.js
-* react-automatic/handle-spread-with-proto/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js

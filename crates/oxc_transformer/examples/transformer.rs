@@ -44,7 +44,7 @@ fn main() {
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react_jsx: Some(ReactJsxOptions {
-            runtime: ReactJsxRuntime::Automatic,
+            runtime: ReactJsxRuntime::Classic,
             ..ReactJsxOptions::default()
         }),
         ..TransformOptions::default()
