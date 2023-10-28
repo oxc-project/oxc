@@ -1,4 +1,4 @@
-Passed: 190/1083
+Passed: 204/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 190/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (41/172)
+# babel-plugin-transform-react-jsx (55/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -838,8 +838,8 @@ Passed: 190/1083
 * react/avoids-spread-babel-7/input.js
 * react/does-not-add-source-self/input.mjs
 * react/does-not-add-source-self-babel-7/input.mjs
-* react/duplicate-props/input.js
 * react/flattens-spread/input.js
+* react/handle-spread-with-proto/input.js
 * react/handle-spread-with-proto-babel-7/input.js
 * react/honor-custom-jsx-comment/input.js
 * react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
@@ -876,37 +876,25 @@ Passed: 190/1083
 * react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 * react-automatic/dont-coerce-expression-containers/input.js
-* react-automatic/duplicate-props/input.js
-* react-automatic/flattens-spread/input.js
-* react-automatic/handle-fragments/input.js
 * react-automatic/handle-fragments-with-key/input.js
-* react-automatic/handle-fragments-with-no-children/input.js
 * react-automatic/handle-nonstatic-children/input.js
 * react-automatic/handle-spread-with-proto/input.js
 * react-automatic/handle-static-children/input.js
-* react-automatic/jsx-with-retainlines-option/input.js
-* react-automatic/jsx-without-retainlines-option/input.js
 * react-automatic/key-undefined-works/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-deeper-js-namespacing/input.js
 * react-automatic/should-allow-elements-as-attributes/input.js
-* react-automatic/should-allow-js-namespacing/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-* react-automatic/should-convert-simple-tags/input.js
-* react-automatic/should-convert-simple-text/input.js
-* react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
-* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-escape-xhtml-jsxattribute/input.js
 * react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-handle-has-own-property-correctly/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
+* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
 * react-automatic/should-not-add-quotes-to-identifier-names/input.js
 * react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
 * react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
@@ -915,12 +903,10 @@ Passed: 190/1083
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-quote-jsx-attributes/input.js
 * react-automatic/should-support-xml-namespaces-if-flag/input.js
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
-* react-automatic/should-transform-known-hyphenated-tags/input.js
+* react-automatic/should-throw-when-filter-is-specified/input.js
 * react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
 * react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
-* react-automatic/this-tag-name/input.js
 * react-automatic/weird-symbols/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
