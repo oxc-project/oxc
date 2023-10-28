@@ -95,7 +95,7 @@ impl<'a> ReactJsx<'a> {
         let imports = self.ast.move_statement_vec(&mut self.imports);
         let index = stmts
             .iter()
-            .position(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
+            .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
         stmts.splice(index..index, imports);
     }
