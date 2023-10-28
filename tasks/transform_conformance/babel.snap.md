@@ -1,4 +1,4 @@
-Passed: 215/1083
+Passed: 217/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 215/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (66/172)
+# babel-plugin-transform-react-jsx (68/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -846,7 +846,6 @@ Passed: 215/1083
 * react/optimisation.react.constant-elements/input.js
 * react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-allow-elements-as-attributes/input.js
 * react/should-allow-jsx-docs-comment-with-pragma/input.js
 * react/should-allow-no-pragmafrag-if-frag-unused/input.js
 * react/should-allow-pragmafrag-and-frag/input.js
@@ -878,7 +877,6 @@ Passed: 215/1083
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-elements-as-attributes/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
 * react-automatic/should-disallow-valueless-key/input.js

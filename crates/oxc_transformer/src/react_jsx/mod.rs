@@ -353,27 +353,25 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx_attribute_value(
-        &self,
+        &mut self,
         value: Option<&JSXAttributeValue<'a>>,
     ) -> Option<Expression<'a>> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 Some(self.ast.literal_string_expression(s.clone()))
             }
-            Some(JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_)) => {
-                /* TODO */
-                None
+            Some(JSXAttributeValue::Element(e)) => {
+                self.transform_jsx(&JSXElementOrFragment::Element(e))
             }
-            Some(JSXAttributeValue::ExpressionContainer(c)) => {
-                match &c.expression {
-                    JSXExpression::Expression(e) => Some(self.ast.copy(e)),
-                    JSXExpression::EmptyExpression(_e) =>
-                    /* TODO */
-                    {
-                        None
-                    }
+            Some(JSXAttributeValue::Fragment(e)) => {
+                self.transform_jsx(&JSXElementOrFragment::Fragment(e))
+            }
+            Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
+                JSXExpression::Expression(e) => Some(self.ast.copy(e)),
+                JSXExpression::EmptyExpression(_e) => {
+                    Some(self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true)))
                 }
-            }
+            },
             None => Some(self.ast.literal_boolean_expression(BooleanLiteral::new(SPAN, true))),
         }
     }
