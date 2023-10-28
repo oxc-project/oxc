@@ -89,6 +89,12 @@ pub struct JSXNamespacedName {
     pub property: JSXIdentifier,
 }
 
+impl std::fmt::Display for JSXNamespacedName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.namespace.name, self.property.name)
+    }
+}
+
 /// JSX Member Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]

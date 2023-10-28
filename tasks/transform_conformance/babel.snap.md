@@ -1,4 +1,4 @@
-Passed: 217/1083
+Passed: 214/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 217/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (68/172)
+# babel-plugin-transform-react-jsx (65/172)
 * autoImport/after-polyfills/input.mjs
 * autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
@@ -851,6 +851,7 @@ Passed: 217/1083
 * react/should-allow-pragmafrag-and-frag/input.js
 * react/should-disallow-spread-children/input.js
 * react/should-disallow-valueless-key/input.js
+* react/should-disallow-xml-namespacing/input.js
 * react/should-escape-xhtml-jsxattribute/input.js
 * react/should-escape-xhtml-jsxattribute-babel-7/input.js
 * react/should-escape-xhtml-jsxtext/input.js
@@ -859,6 +860,7 @@ Passed: 217/1083
 * react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
 * react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
 * react/should-support-xml-namespaces-if-flag/input.js
+* react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
 * react/weird-symbols/input.js
@@ -879,19 +881,20 @@ Passed: 217/1083
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
+* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-escape-xhtml-jsxattribute/input.js
 * react-automatic/should-escape-xhtml-jsxattribute-babel-7/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
-* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
 * react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
 * react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
 * react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-properly-handle-keys/input.js
-* react-automatic/should-support-xml-namespaces-if-flag/input.js
+* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * react-automatic/weird-symbols/input.js
