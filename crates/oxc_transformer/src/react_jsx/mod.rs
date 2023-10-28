@@ -19,6 +19,7 @@ pub struct ReactJsx<'a> {
 
     imports: Vec<'a, Statement<'a>>,
     import_jsx: bool,
+    import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
 }
@@ -69,6 +70,7 @@ impl<'a> ReactJsx<'a> {
             options,
             imports,
             import_jsx: false,
+            import_jsxs: false,
             import_fragment: false,
             import_create_element: false,
         }
@@ -98,6 +100,7 @@ impl<'a> ReactJsx<'a> {
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,
         has_key_after_props_spread: bool,
+        need_jsxs: bool,
     ) {
         if self.options.runtime.is_classic() {
             return;
@@ -106,6 +109,7 @@ impl<'a> ReactJsx<'a> {
             JSXElementOrFragment::Element(_) if has_key_after_props_spread => {
                 self.add_import_create_element();
             }
+            JSXElementOrFragment::Element(_) if need_jsxs => self.add_import_jsxs(),
             JSXElementOrFragment::Element(_) => self.add_import_jsx(),
             JSXElementOrFragment::Fragment(_) => self.add_import_fragment(),
         }
@@ -115,6 +119,13 @@ impl<'a> ReactJsx<'a> {
         if !self.import_jsx {
             self.import_jsx = true;
             self.add_import_statement("jsx", "_jsx", "react/jsx-runtime");
+        }
+    }
+
+    fn add_import_jsxs(&mut self) {
+        if !self.import_jsxs {
+            self.import_jsxs = true;
+            self.add_import_statement("jsxs", "_jsxs", "react/jsx-runtime");
         }
     }
 
@@ -158,7 +169,6 @@ impl<'a> ReactJsx<'a> {
         let is_classic = self.options.runtime.is_classic();
         let is_automatic = self.options.runtime.is_automatic();
         let has_key_after_props_spread = e.has_key_after_props_spread();
-        let callee = self.get_create_element(has_key_after_props_spread);
         let children = e.children();
 
         // TODO: compute the correct capacity for both runtimes
@@ -212,6 +222,7 @@ impl<'a> ReactJsx<'a> {
             arguments.push(Argument::Expression(null_expr));
         }
 
+        let mut need_jsxs = false;
         if is_automatic && !children.is_empty() {
             let key =
                 self.ast.property_key_identifier(IdentifierName::new(SPAN, "children".into()));
@@ -224,6 +235,7 @@ impl<'a> ReactJsx<'a> {
                         elements.push(ArrayExpressionElement::Expression(e));
                     }
                 }
+                need_jsxs = true;
                 Some(self.ast.array_expression(SPAN, elements, None))
             };
             if let Some(value) = value {
@@ -259,7 +271,8 @@ impl<'a> ReactJsx<'a> {
             );
         }
 
-        self.add_import(e, has_key_after_props_spread);
+        let callee = self.get_create_element(has_key_after_props_spread, need_jsxs);
+        self.add_import(e, has_key_after_props_spread, need_jsxs);
 
         self.ast.call_expression(SPAN, callee, arguments, false, None)
     }
@@ -269,7 +282,11 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
-    fn get_create_element(&mut self, has_key_after_props_spread: bool) -> Expression<'a> {
+    fn get_create_element(
+        &mut self,
+        has_key_after_props_spread: bool,
+        jsxs: bool,
+    ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
                 let object = self.get_react_references();
@@ -277,7 +294,13 @@ impl<'a> ReactJsx<'a> {
                 self.ast.static_member_expression(SPAN, object, property, false)
             }
             ReactJsxRuntime::Automatic => {
-                let name = if has_key_after_props_spread { "_createElement" } else { "_jsx" };
+                let name = if has_key_after_props_spread {
+                    "_createElement"
+                } else if jsxs {
+                    "_jsxs"
+                } else {
+                    "_jsx"
+                };
                 let ident = IdentifierReference::new(SPAN, name.into());
                 self.ast.identifier_reference_expression(ident)
             }
