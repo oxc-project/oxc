@@ -966,6 +966,14 @@ impl<'a> AstBuilder<'a> {
         self.alloc(RestElement { span, argument })
     }
 
+    pub fn property_key_identifier(&self, ident: IdentifierName) -> PropertyKey<'a> {
+        PropertyKey::Identifier(self.alloc(ident))
+    }
+
+    pub fn property_key_expression(&self, expr: Expression<'a>) -> PropertyKey<'a> {
+        PropertyKey::Expression(expr)
+    }
+
     /* ---------- Modules ---------- */
 
     pub fn module_declaration(&self, decl: ModuleDeclaration<'a>) -> Statement<'a> {
