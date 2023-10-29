@@ -29,7 +29,6 @@ impl TestCaseKind {
     pub fn test(&self, filter: Option<&str>) -> bool {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
-            // not support filter yet.
             Self::Exec(test_case) => test_case.test(filter),
         }
     }
