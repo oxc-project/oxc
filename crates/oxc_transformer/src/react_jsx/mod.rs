@@ -88,16 +88,17 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    pub fn add_react_jsx_runtime_import(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
             return;
         }
         let imports = self.ast.move_statement_vec(&mut self.imports);
-        let index = stmts
+        let index = program
+            .body
             .iter()
             .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
-        stmts.splice(index..index, imports);
+        program.body.splice(index..index, imports);
     }
 
     fn add_import<'b>(
