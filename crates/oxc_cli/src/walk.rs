@@ -50,15 +50,17 @@ impl ignore::ParallelVisitor for WalkCollector {
 }
 
 impl Walk {
+    /// Will not canonicalize paths.
     /// # Panics
     pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
         assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
 
-        let paths = paths
-            .iter()
-            .map(|p| p.canonicalize().unwrap_or_else(|_| p.clone()))
-            .collect::<Vec<_>>();
-        let mut inner = ignore::WalkBuilder::new(&paths[0]);
+        let mut inner = ignore::WalkBuilder::new(
+            paths
+                .iter()
+                .next()
+                .expect("Expected paths parameter to Walk::new() to contain atleast one path."),
+        );
 
         if let Some(paths) = paths.get(1..) {
             for path in paths {
