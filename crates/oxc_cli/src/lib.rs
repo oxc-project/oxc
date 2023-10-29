@@ -1,3 +1,4 @@
+mod codeowners;
 mod command;
 mod lint;
 mod result;

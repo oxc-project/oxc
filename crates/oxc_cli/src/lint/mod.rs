@@ -3,7 +3,10 @@ use std::{io::BufWriter, vec::Vec};
 use oxc_diagnostics::DiagnosticService;
 use oxc_linter::{LintOptions, LintService, Linter};
 
-use crate::{command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, LintResult, Runner};
+use crate::{
+    codeowners, command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, LintResult,
+    Runner,
+};
 
 pub struct LintRunner {
     options: CliLintOptions,
