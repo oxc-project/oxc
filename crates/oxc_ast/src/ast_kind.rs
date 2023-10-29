@@ -115,7 +115,7 @@ pub enum AstKind<'a> {
     JSXElementName(&'a JSXElementName<'a>),
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXAttributeItem(&'a JSXAttributeItem<'a>),
-    JSXText(&'a JSXText),
+    JSXString(&'a JSXString),
 
     // TypeScript
     TSModuleBlock(&'a TSModuleBlock<'a>),
@@ -242,7 +242,7 @@ impl<'a> AstKind<'a> {
                 | Self::JSXElementName(_)
                 | Self::JSXFragment(_)
                 | Self::JSXAttributeItem(_)
-                | Self::JSXText(_)
+                | Self::JSXString(_)
                 | Self::JSXExpressionContainer(_)
         )
     }
@@ -365,7 +365,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXElement(x) => x.span,
             Self::JSXFragment(x) => x.span,
             Self::JSXAttributeItem(x) => x.span(),
-            Self::JSXText(x) => x.span,
+            Self::JSXString(x) => x.span,
             Self::JSXExpressionContainer(x) => x.span,
 
             Self::TSModuleBlock(x) => x.span,
@@ -532,7 +532,7 @@ impl<'a> AstKind<'a> {
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
             Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
-            Self::JSXText(_) => "JSXText".into(),
+            Self::JSXString(_) => "JSXString".into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),

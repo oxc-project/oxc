@@ -1838,7 +1838,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p, ctx),
             Self::Element(el) => el.gen(p, ctx),
-            Self::StringLiteral(lit) => lit.gen(p, ctx),
+            Self::String(lit) => lit.gen(p, ctx),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
         }
     }
@@ -1909,7 +1909,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for JSXClosingFragment {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXText {
+impl<const MINIFY: bool> Gen<MINIFY> for JSXString {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(self.value.as_bytes());
     }
