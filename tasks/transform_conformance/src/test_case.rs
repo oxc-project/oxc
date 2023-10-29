@@ -29,8 +29,7 @@ impl TestCaseKind {
     pub fn test(&self, filter: Option<&str>) -> bool {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
-            // not support filter yet.
-            Self::Exec(test_case) => test_case.test(None),
+            Self::Exec(test_case) => test_case.test(filter),
         }
     }
 
@@ -267,9 +266,20 @@ impl TestCase for ExecTestCase {
         Self { path, options }
     }
 
-    fn test(&self, _filter: Option<&str>) -> bool {
+    fn test(&self, filter: Option<&str>) -> bool {
+        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
+
         let result = self.transform(&self.path);
         let target_path = self.write_to_test_files(&result);
-        Self::run_test(&target_path)
+        let passed = Self::run_test(&target_path);
+        if filtered {
+            println!("input_path: {:?}", &self.path);
+            println!("target_path: {:?}", &target_path);
+            println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+            println!("Transformed:\n{result}\n");
+            println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
+        }
+
+        passed
     }
 }
