@@ -1828,6 +1828,7 @@ dependencies = [
  "indexmap 2.0.2",
  "oxc_index",
  "oxc_span",
+ "phf",
  "rustc-hash",
  "serde",
  "unicode-id-start",
