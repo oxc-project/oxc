@@ -1,5 +1,3 @@
-use std::cmp::{max, min};
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -149,18 +147,7 @@ impl NoMixedOperators {
         };
         // Since we don't store the exact span of the operators, approximate that span to be between the lhs
         // and rhs of the expression.
-        #[allow(clippy::cast_possible_truncation)]
-        let node_operator_span = Span::new(node_left_span.end, node_right_span.start)
-            .source_text(ctx.source_text())
-            .find(node_operator)
-            .map_or_else(
-                || Span::new(node_left_span.end, node_right_span.start),
-                |v| {
-                    let length = node_operator.len() as u32;
-                    let length = if length == 1 { 0 } else { length };
-                    Span::new(node_left_span.end + v as u32, node_left_span.end + v as u32 + length)
-                },
-            );
+        let node_operator_span = get_op_span(node_left_span, node_right_span, node_operator, ctx);
 
         let (parent_operator, parent_left_span, parent_right_span) = match parent {
             AstKind::BinaryExpression(expr) => {
@@ -175,7 +162,8 @@ impl NoMixedOperators {
             }
             _ => unreachable!(),
         };
-        let parent_operator_span = Span::new(parent_left_span.end + 1, parent_right_span.start - 1);
+        let parent_operator_span =
+            get_op_span(parent_left_span, parent_right_span, parent_operator, ctx);
 
         let (node_operator, node_precedence) = operator_and_precedence(node_operator).unwrap();
         let (parent_operator, parent_precedence) =
@@ -249,6 +237,26 @@ fn operator_and_precedence(operator: &str) -> Option<(&'static str, u8)> {
     OPERATORS.iter().position(|op| *op == operator).map(|idx| (OPERATORS[idx], PRECEDENCES[idx]))
 }
 
+#[allow(clippy::cast_possible_truncation)]
+fn get_op_span(
+    node_left_span: Span,
+    node_right_span: Span,
+    node_operator: &str,
+    ctx: &LintContext<'_>,
+) -> Span {
+    Span::new(node_left_span.end, node_right_span.start)
+        .source_text(ctx.source_text())
+        .find(node_operator)
+        .map_or_else(
+            || Span::new(node_left_span.end, node_right_span.start),
+            |v| {
+                let length = node_operator.len() as u32;
+                let length = if length == 1 { 0 } else { length };
+                Span::new(node_left_span.end + v as u32, node_left_span.end + v as u32 + length)
+            },
+        )
+}
+
 #[test]
 fn test() {
     use serde_json::json;
@@ -311,6 +319,9 @@ fn test() {
         ("var y = 1.0 - 1/65536.0;", None),
         ("var y = 1.0 - 1 /65536.0;", None),
         ("var y = 1.0 - 1/ 65536.0;", None),
+        ("var y = 1.0- 1 / 65536.0;", None),
+        ("var y = 1.0 -1 / 65536.0;", None),
+        ("var y = 1.0-1 / 65536.0;", None),
     ];
 
     Tester::new(NoMixedOperators::NAME, pass, fail).test_and_snapshot();

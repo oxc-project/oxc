@@ -40,7 +40,7 @@ expression: no_mixed_operators
   ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a && b + c - d / e || f
-   ·            ─   ▲
+   ·            ▲   ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
@@ -54,49 +54,49 @@ expression: no_mixed_operators
   ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a && b + c - d / e || f
-   ·            ─   ▲
+   ·            ▲   ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of + with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a + b - c
-   ·   ▲   ─
+   ·   ▲   ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of * with /
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a * b / c
-   ·   ▲   ─
+   ·   ▲   ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of || with ?:
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a || b ? c : d
-   ·   ──   ─────
+   ·   ──  ───────
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of && with ?:
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a && b ? 1 : 2
-   ·   ──   ─────
+   ·   ──  ───────
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of && with ?:
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ x ? a && b : 0
-   ·   ───────────
+   ·  ─────────────
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of && with ?:
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ x ? 0 : a && b
-   ·   ─────   ──
+   ·  ───────  ──
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
@@ -117,21 +117,42 @@ expression: no_mixed_operators
   ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ var y = 1.0 - 1/65536.0;
-   ·             ─  ▲
+   ·             ▲  ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ var y = 1.0 - 1 /65536.0;
-   ·             ─   ▲
+   ·             ▲   ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
   ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ var y = 1.0 - 1/ 65536.0;
-   ·             ─  ▲
+   ·             ▲  ▲
+   ╰────
+  help: Use parentheses to clarify the intended order of operations.
+
+  ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
+   ╭─[no_mixed_operators.tsx:1:1]
+ 1 │ var y = 1.0- 1 / 65536.0;
+   ·            ▲   ▲
+   ╰────
+  help: Use parentheses to clarify the intended order of operations.
+
+  ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
+   ╭─[no_mixed_operators.tsx:1:1]
+ 1 │ var y = 1.0 -1 / 65536.0;
+   ·             ▲  ▲
+   ╰────
+  help: Use parentheses to clarify the intended order of operations.
+
+  ⚠ eslint(no-mixed-operators): Unexpected mix of / with -
+   ╭─[no_mixed_operators.tsx:1:1]
+ 1 │ var y = 1.0-1 / 65536.0;
+   ·            ▲  ▲
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
