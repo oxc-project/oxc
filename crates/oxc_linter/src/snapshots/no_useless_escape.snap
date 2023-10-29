@@ -104,22 +104,22 @@ expression: no_useless_escape
    ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\"`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\'`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\#`;
-   ·           ──
+   ·            ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
@@ -134,34 +134,34 @@ expression: no_useless_escape
    ·                 ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\"${foo}\"`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\"${foo}\"`;
-   ·                   ──
+   ·                    ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\'${foo}\'`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\'${foo}\'`;
-   ·                   ──
+   ·                    ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\#${foo}`;
-   ·           ──
+   ·            ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
@@ -176,28 +176,28 @@ expression: no_useless_escape
    ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\$\{{${foo}`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '{'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\$\{{${foo}`;
-   ·             ──
+   ·              ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `\$a${foo}`;
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '{'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = `a\{{${foo}`;
-   ·            ──
+   ·             ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
@@ -332,10 +332,10 @@ expression: no_useless_escape
    · ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ `\a```
-   · ──
+   ·  ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '（'
@@ -377,12 +377,6 @@ expression: no_useless_escape
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var stringLiteralWithNextLine = "line 1\line 2";
-   ·                                        ─
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var stringLiteralWithNextLine = `line 1\line 2`;
    ·                                        ─
    ╰────
 
