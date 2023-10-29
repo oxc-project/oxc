@@ -59,7 +59,7 @@ impl Walk {
             paths
                 .iter()
                 .next()
-                .expect("Expected paths parameter to Walk::new() to contain atleast one path."),
+                .expect("Expected paths parameter to Walk::new() to contain at least one path."),
         );
 
         if let Some(paths) = paths.get(1..) {
