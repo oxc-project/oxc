@@ -1871,7 +1871,7 @@ mod jsxattribute {
                             oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
                         },
                         JSXAttributeValue::Fragment(_)
-                        | JSXAttributeValue::StringLiteral(_)
+                        | JSXAttributeValue::String(_)
                         | JSXAttributeValue::Element(_) => None,
                     })
                     .into_iter(),

@@ -407,7 +407,7 @@ impl<'a> ReactJsx<'a> {
         value: Option<&JSXAttributeValue<'a>>,
     ) -> Expression<'a> {
         match value {
-            Some(JSXAttributeValue::StringLiteral(s)) => {
+            Some(JSXAttributeValue::String(s)) => {
                 let jsx_text = Self::decode_jsx_text(&s.value);
                 let literal = StringLiteral::new(s.span, jsx_text.into());
                 self.ast.literal_string_expression(literal)
@@ -460,7 +460,7 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn transform_jsx_text(&self, text: &JSXText) -> Option<Expression<'a>> {
+    fn transform_jsx_text(&self, text: &JSXString) -> Option<Expression<'a>> {
         let text = text.value.trim();
         (!text.trim().is_empty()).then(|| {
             let text = text

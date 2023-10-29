@@ -1556,7 +1556,7 @@ impl<'a> Gen for JSXAttributeValue<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p),
             Self::Element(el) => el.gen(p),
-            Self::StringLiteral(lit) => lit.gen(p),
+            Self::String(lit) => lit.gen(p),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p),
         }
     }
@@ -1625,7 +1625,7 @@ impl Gen for JSXClosingFragment {
     }
 }
 
-impl Gen for JSXText {
+impl Gen for JSXString {
     fn gen(&self, p: &mut Formatter) {
         p.print_str(self.value.as_bytes());
     }
