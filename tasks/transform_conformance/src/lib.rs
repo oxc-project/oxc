@@ -225,7 +225,7 @@ impl TestRunnerEnv {
             .current_dir(path.parent().unwrap())
             .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
             .output()
-            .unwrap();
+            .expect("Try install bun: https://bun.sh/docs/installation");
 
         let content = if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
         String::from_utf8_lossy(content).to_string()
