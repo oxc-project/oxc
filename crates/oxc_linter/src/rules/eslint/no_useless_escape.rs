@@ -19,6 +19,7 @@ pub struct NoUselessEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow unnecessary escape characters
     ///
     /// ### Why is this bad?
     ///
@@ -135,21 +136,25 @@ fn check_string(string: &str) -> Vec<usize> {
     let mut offsets = vec![];
     let quote_string = string.chars().next();
     let mut in_escape = false;
-    let mut offset = 0;
-    for c in string[1..].chars() {
-        offset += c.len_utf8();
+    let mut byte_offset = 0;
+
+    let mut prev_char_len = 0;
+
+    for c in string.chars() {
+        byte_offset += c.len_utf8();
         if in_escape {
             in_escape = false;
             match c {
                 c if c.is_ascii_digit() || quote_string == Some(c) => { /* noop */ }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(offset);
+                    offsets.push(byte_offset - c.len_utf8() - prev_char_len);
                 }
                 _ => {}
             }
         } else if c == '\\' {
             in_escape = true;
         }
+        prev_char_len = c.len_utf8();
     }
     offsets
 }
@@ -162,27 +167,28 @@ fn check_template(string: &str) -> Vec<usize> {
     let mut offsets = vec![];
     let mut in_escape = false;
     let mut prev_char = '`';
-    let mut offset = 0;
+    let mut byte_offset = 0;
 
     let mut chars = string.chars().peekable();
     while let Some(c) = chars.next() {
-        offset += c.len_utf8();
+        byte_offset += c.len_utf8();
+
         if in_escape {
             in_escape = false;
             match c {
                 c if c.is_ascii_digit() || c == '`' => { /* noop */ }
                 '{' => {
                     if prev_char != '$' {
-                        offsets.push(offset);
+                        offsets.push(byte_offset - c.len_utf8());
                     }
                 }
                 '$' => {
                     if chars.peek().is_some_and(|c| *c != '{') {
-                        offsets.push(offset);
+                        offsets.push(byte_offset - c.len_utf8());
                     }
                 }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(offset);
+                    offsets.push(byte_offset - c.len_utf8());
                 }
                 _ => {}
             }
@@ -356,6 +362,8 @@ fn test() {
         "`template literal with mixed linebreaks in line continuations \\\n\\\r\\\r\n\\and useless escape`",
         "`\\a```",
         r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;",
+        r#"var stringLiteralWithNextLine = "line 1\line 2";"#,
+        r#"var stringLiteralWithNextLine = `line 1\line 2`;"#,
     ];
 
     Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();

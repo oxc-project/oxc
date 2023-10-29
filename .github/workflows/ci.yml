@@ -131,7 +131,7 @@ jobs:
         run: cargo lint -- -D warnings
 
   ecosystem-test:
-    name: Testing Linter with VSCode Repository
+    name: Testing Linter with VSCode Repository and Conformance Suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -152,11 +152,20 @@ jobs:
         run: cargo build --release -p oxc_cli --bin oxlint
 
       - name: Run oxlint on VSCode and throw output to a temp file
-        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./log.tmp
+        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./vscode-log.tmp
 
       - name: Using grep to check if oxlint panic
         run: >
-          if grep --quiet --ignore-case panic ./log.tmp; then
+          if grep --quiet --ignore-case panic ./vscode-log.tmp; then
+            exit 1
+          fi
+          
+      - name: Run oxlint on Conformance and throw output to a temp file
+        run: ./target/release/oxlint --quiet --allow no-control-regex ./vscode > ./conformance-log.tmp
+
+      - name: Using grep to check if oxlint panic
+        run: >
+          if grep --quiet --ignore-case panic ./conformance-log.tmp; then
             exit 1
           fi
 
