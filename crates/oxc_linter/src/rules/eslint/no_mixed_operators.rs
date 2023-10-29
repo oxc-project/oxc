@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -147,7 +149,18 @@ impl NoMixedOperators {
         };
         // Since we don't store the exact span of the operators, approximate that span to be between the lhs
         // and rhs of the expression.
-        let node_operator_span = Span::new(node_left_span.end + 1, node_right_span.start - 1);
+        #[allow(clippy::cast_possible_truncation)]
+        let node_operator_span = Span::new(node_left_span.end, node_right_span.start)
+            .source_text(ctx.source_text())
+            .find(node_operator)
+            .map_or_else(
+                || Span::new(node_left_span.end, node_right_span.start),
+                |v| {
+                    let length = node_operator.len() as u32;
+                    let length = if length == 1 { 0 } else { length };
+                    Span::new(node_left_span.end + v as u32, node_left_span.end + v as u32 + length)
+                },
+            );
 
         let (parent_operator, parent_left_span, parent_right_span) = match parent {
             AstKind::BinaryExpression(expr) => {
@@ -295,6 +308,9 @@ fn test() {
         ("x ? 0 : a && b", Some(json!([{ "groups": [["&&", "||", "?:"]] }]))),
         ("a + b ?? c", Some(json!([{ "groups": [["+", "??"]] }]))),
         ("a in b ?? c", Some(json!([{ "groups": [["in", "??"]] }]))),
+        ("var y = 1.0 - 1/65536.0;", None),
+        ("var y = 1.0 - 1 /65536.0;", None),
+        ("var y = 1.0 - 1/ 65536.0;", None),
     ];
 
     Tester::new(NoMixedOperators::NAME, pass, fail).test_and_snapshot();
