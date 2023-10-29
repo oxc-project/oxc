@@ -442,19 +442,7 @@ impl<'a> ReactJsx<'a> {
 
     fn transform_jsx_child(&mut self, child: &JSXChild<'a>) -> Option<Expression<'a>> {
         match child {
-            JSXChild::Text(text) => {
-                let text = text.value.trim();
-                (!text.trim().is_empty()).then(|| {
-                    let text = text
-                        .split(char::is_whitespace)
-                        .map(str::trim)
-                        .filter(|c| !c.is_empty())
-                        .collect::<std::vec::Vec<_>>()
-                        .join(" ");
-                    let s = StringLiteral::new(SPAN, text.into());
-                    self.ast.literal_string_expression(s)
-                })
-            }
+            JSXChild::Text(text) => self.transform_jsx_text(text),
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 JSXExpression::Expression(e) => Some(self.ast.copy(e)),
                 JSXExpression::EmptyExpression(_) => None,
@@ -466,5 +454,54 @@ impl<'a> ReactJsx<'a> {
                 None
             }
         }
+    }
+
+    fn transform_jsx_text(&self, text: &JSXText) -> Option<Expression<'a>> {
+        let text = text.value.trim();
+        (!text.trim().is_empty()).then(|| {
+            let text = text
+                .split(char::is_whitespace)
+                .map(str::trim)
+                .filter(|c| !c.is_empty())
+                .map(Self::decode_jsx_text)
+                .collect::<std::vec::Vec<_>>()
+                .join(" ");
+            let s = StringLiteral::new(SPAN, text.into());
+            self.ast.literal_string_expression(s)
+        })
+    }
+
+    /// * Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
+    /// * See https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+    /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
+    fn decode_jsx_text(s: &str) -> String {
+        let mut buffer = vec![];
+        let mut chars = s.bytes().enumerate();
+        let mut prev = 0;
+        while let Some((i, c)) = chars.next() {
+            if c == b'&' {
+                let start = i;
+                let mut end = None;
+                for (j, c) in chars.by_ref() {
+                    if c == b';' {
+                        end.replace(j);
+                        break;
+                    }
+                }
+                if let Some(end) = end {
+                    let word = &s[start + 1..end];
+                    buffer.extend_from_slice(s[prev..start].as_bytes());
+                    prev = end + 1;
+                    match word {
+                        "amp" => buffer.extend_from_slice(b"&"),
+                        "nbsp" => buffer.extend_from_slice("\u{a0}".as_bytes()),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        buffer.extend_from_slice(s[prev..].as_bytes());
+        // Safety: The buffer is constructed from valid utf chars.
+        unsafe { String::from_utf8_unchecked(buffer) }
     }
 }
