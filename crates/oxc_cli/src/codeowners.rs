@@ -36,11 +36,9 @@ use std::{
     fmt,
     fs::File,
     io::{BufRead, BufReader, Read},
-    path::{Path, PathBuf},
+    path::Path,
     str::FromStr,
 };
-
-const CODEOWNERS: &str = "CODEOWNERS";
 
 /// Various types of owners
 ///
@@ -55,7 +53,7 @@ const CODEOWNERS: &str = "CODEOWNERS";
 ///   raw
 /// );
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Owner {
     /// Owner in the form @username
     Username(String),
@@ -68,9 +66,9 @@ pub enum Owner {
 impl fmt::Display for Owner {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let inner = match *self {
-            Owner::Username(ref u) => u,
-            Owner::Team(ref t) => t,
-            Owner::Email(ref e) => e,
+            Self::Username(ref u) => u,
+            Self::Team(ref t) => t,
+            Self::Email(ref e) => e,
         };
         f.write_str(inner.as_str())
     }
@@ -86,11 +84,11 @@ impl FromStr for Owner {
             static ref EMAIL: Regex = Regex::new(r"^\S+@\S+").unwrap();
         }
         if TEAM.is_match(s) {
-            Ok(Owner::Team(s.into()))
+            Ok(Self::Team(s.into()))
         } else if USERNAME.is_match(s) {
-            Ok(Owner::Username(s.into()))
+            Ok(Self::Username(s.into()))
         } else if EMAIL.is_match(s) {
-            Ok(Owner::Email(s.into()))
+            Ok(Self::Email(s.into()))
         } else {
             Err(String::from("not an owner"))
         }
@@ -98,7 +96,7 @@ impl FromStr for Owner {
 }
 
 /// Mappings of owners to path patterns
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Owners {
     paths: Vec<(Pattern, Vec<Owner>)>,
 }
@@ -109,72 +107,34 @@ impl Owners {
     where
         P: AsRef<Path>,
     {
-        self.paths
-            .iter()
-            .filter_map(|mapping| {
-                let &(ref pattern, ref owners) = mapping;
-                let opts = glob::MatchOptions {
-                    case_sensitive: false,
-                    require_literal_separator: pattern.as_str().contains('/'),
-                    require_literal_leading_dot: false,
-                };
-                if pattern.matches_path_with(path.as_ref(), opts) {
-                    Some(owners)
-                } else {
-                    // this pattern is only meant to match
-                    // direct children
-                    if pattern.as_str().ends_with("/*") {
-                        return None;
-                    }
-                    // case of implied owned children
-                    // foo/bar @owner should indicate that foo/bar/baz.rs is
-                    // owned by @owner
-                    let mut p = path.as_ref();
-                    while let Some(parent) = p.parent() {
-                        if pattern.matches_path_with(parent, opts) {
-                            return Some(owners);
-                        } else {
-                            p = parent;
-                        }
-                    }
-                    None
+        self.paths.iter().find_map(|mapping| {
+            let (ref pattern, ref owners) = mapping;
+            let opts = glob::MatchOptions {
+                case_sensitive: false,
+                require_literal_separator: pattern.as_str().contains('/'),
+                require_literal_leading_dot: false,
+            };
+            if pattern.matches_path_with(path.as_ref(), opts) {
+                Some(owners)
+            } else {
+                // this pattern is only meant to match
+                // direct children
+                if pattern.as_str().ends_with("/*") {
+                    return None;
                 }
-            })
-            .next()
-    }
-}
-
-/// Attempts to locate CODEOWNERS file based on common locations relative to
-/// a given git repo
-///
-/// # Examples
-///
-/// ```rust
-///  match codeowners::locate(".") {
-///   Some(ownersfile)  => {
-///     println!(
-///      "{:#?}",
-///      codeowners::from_path(ownersfile)
-///    )
-///  },
-///   _ => println!("failed to find CODEOWNERS file")
-/// }
-/// ```
-pub fn locate<P>(ctx: P) -> Option<PathBuf>
-where
-    P: AsRef<Path>,
-{
-    let root = ctx.as_ref().join(CODEOWNERS);
-    let github = ctx.as_ref().join(".github").join(CODEOWNERS);
-    let docs = ctx.as_ref().join("docs").join(CODEOWNERS);
-    if root.exists() {
-        Some(root)
-    } else if github.exists() {
-        Some(github)
-    } else if docs.exists() {
-        Some(docs)
-    } else {
-        None
+                // case of implied owned children
+                // foo/bar @owner should indicate that foo/bar/baz.rs is
+                // owned by @owner
+                let mut p = path.as_ref();
+                while let Some(parent) = p.parent() {
+                    if pattern.matches_path_with(parent, opts) {
+                        return Some(owners);
+                    }
+                    p = parent;
+                }
+                None
+            }
+        })
     }
 }
 
@@ -199,18 +159,18 @@ where
 {
     let mut paths = BufReader::new(read)
         .lines()
-        .filter_map(Result::ok)
+        .map_while(Result::ok)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .fold(Vec::new(), |mut paths, line| {
             let mut elements = line.split_whitespace();
             if let Some(path) = elements.next() {
                 let owners = elements.fold(Vec::new(), |mut result, owner| {
                     if let Ok(owner) = owner.parse() {
-                        result.push(owner)
+                        result.push(owner);
                     }
                     result
                 });
-                paths.push((pattern(path), owners))
+                paths.push((pattern(path), owners));
             }
             paths
         });
@@ -225,7 +185,7 @@ fn pattern(path: &str) -> Pattern {
     let prefixed = if path.starts_with('*') || path.starts_with('/') {
         path.to_owned()
     } else {
-        format!("**/{}", path)
+        format!("**/{path}")
     };
     // if pattern starts with anchor it should only match paths
     // relative to root
@@ -322,7 +282,7 @@ apps/ @octocat
                     ),
                 ],
             }
-        )
+        );
     }
 
     #[test]
@@ -341,21 +301,21 @@ apps/ @octocat
                 Owner::Username("@global-owner1".into()),
                 Owner::Username("@global-owner2".into()),
             ])
-        )
+        );
     }
 
     #[test]
-    fn owners_owns_js_extention() {
+    fn owners_owns_js_extension() {
         let owners = from_reader(EXAMPLE.as_bytes());
         assert_eq!(owners.of("foo.js"), Some(&vec![Owner::Username("@js-owner".into())]));
-        assert_eq!(owners.of("foo/bar.js"), Some(&vec![Owner::Username("@js-owner".into())]))
+        assert_eq!(owners.of("foo/bar.js"), Some(&vec![Owner::Username("@js-owner".into())]));
     }
 
     #[test]
-    fn owners_owns_go_extention() {
+    fn owners_owns_go_extension() {
         let owners = from_reader(EXAMPLE.as_bytes());
         assert_eq!(owners.of("foo.go"), Some(&vec![Owner::Email("docs@example.com".into())]));
-        assert_eq!(owners.of("foo/bar.go"), Some(&vec![Owner::Email("docs@example.com".into())]))
+        assert_eq!(owners.of("foo/bar.go"), Some(&vec![Owner::Email("docs@example.com".into())]));
     }
 
     #[test]
@@ -374,7 +334,7 @@ apps/ @octocat
         assert_eq!(
             owners.of("foo/build/logs/foo.go"),
             Some(&vec![Owner::Email("docs@example.com".into())])
-        )
+        );
     }
 
     #[test]
@@ -393,25 +353,26 @@ apps/ @octocat
         assert_eq!(
             owners.of("foo/bar/docs/foo/foo.js"),
             Some(&vec![Owner::Username("@js-owner".into())])
-        )
+        );
     }
 
     #[test]
     fn owners_owns_unanchored_apps() {
         let owners = from_reader(EXAMPLE.as_bytes());
-        assert_eq!(owners.of("foo/apps/foo.js"), Some(&vec![Owner::Username("@octocat".into())]))
+        assert_eq!(owners.of("foo/apps/foo.js"), Some(&vec![Owner::Username("@octocat".into())]));
     }
 
     #[test]
     fn owners_owns_anchored_docs() {
         let owners = from_reader(EXAMPLE.as_bytes());
         // relative to root
-        assert_eq!(owners.of("docs/foo.js"), Some(&vec![Owner::Username("@doctocat".into())]))
+        assert_eq!(owners.of("docs/foo.js"), Some(&vec![Owner::Username("@doctocat".into())]));
     }
 
     #[test]
     fn implied_children_owners() {
+        #[allow(clippy::string_lit_as_bytes)]
         let owners = from_reader("foo/bar @doug".as_bytes());
-        assert_eq!(owners.of("foo/bar/baz.rs"), Some(&vec![Owner::Username("@doug".into())]))
+        assert_eq!(owners.of("foo/bar/baz.rs"), Some(&vec![Owner::Username("@doug".into())]));
     }
 }
