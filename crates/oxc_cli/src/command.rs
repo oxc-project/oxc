@@ -84,6 +84,9 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
+    #[bpaf(external)]
+    pub codeowner_options: CodeownerOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many)]
     pub paths: Vec<PathBuf>,
@@ -127,6 +130,18 @@ impl LintFilter {
             Self::Deny(s) => (AllowWarnDeny::Deny, s),
         }
     }
+}
+
+/// Codeowners
+#[derive(Debug, Clone, Bpaf)]
+pub struct CodeownerOptions {
+    /// Path to CODEOWNERS file
+    #[bpaf(argument("PATH"))]
+    pub codeowners_file: Option<OsString>,
+
+    /// Code owner names, e.g. @Boshen
+    #[bpaf(argument("NAME"))]
+    pub codeowners: Vec<String>,
 }
 
 /// Fix Problems
