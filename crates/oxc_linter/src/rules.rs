@@ -66,6 +66,7 @@ mod eslint {
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
+    pub mod no_regex_spaces;
     pub mod no_return_await;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -204,6 +205,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
+    eslint::no_regex_spaces,
     eslint::no_return_await,
     eslint::no_self_assign,
     eslint::no_self_compare,

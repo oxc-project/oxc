@@ -1,0 +1,192 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_regex_spaces
+---
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /bar  baz/;
+   ·           ──────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /bar    baz/;
+   ·           ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = / a b  c d /;
+   ·           ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp(' a b c d  ');
+   ·                  ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp('bar    baz');
+   ·                  ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('bar    baz');
+   ·                      ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /bar   {3}baz/;
+   ·           ──────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /bar    ?baz/;
+   ·           ─────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('bar   *baz')
+   ·                      ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp('bar   +baz')
+   ·                  ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('bar    ');
+   ·                      ─────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /bar\\  baz/;
+   ·           ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  × Unterminated regular expression
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /\\[  /;
+   ·           ────────
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /\\[  \]/;
+   ·           ──────────
+   ╰────
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /(?:  )/;
+   ·           ────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp('^foo(?=   )');
+   ·                  ─────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /\\  /
+   ·           ──────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = / \\  /
+   ·           ───────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /  foo   /;
+   ·           ──────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('\d  ')
+   ·                      ──────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp('\\u0041   ')
+   ·                  ────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /[   ]  /;
+   ·           ─────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /  [   ] /;
+   ·           ──────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = RegExp('  [ ]');
+   ·                  ───────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = /[[    ]    ]    /v;
+   ·           ───────────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('[   ]  ');
+   ·                      ─────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+  ⚠ eslint(no-regex-spaces): Spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:1]
+ 1 │ var foo = new RegExp('[[    ]    ]    ', 'v');
+   ·                      ──────────────────
+   ╰────
+  help: Use a quantifier, e.g. {2}
+
+
