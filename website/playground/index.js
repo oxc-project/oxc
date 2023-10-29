@@ -102,6 +102,7 @@ class Playground {
     this.urlParams = new URLParams();
     this.viewerIsEditableConf = new Compartment();
     this.queryResultViewerIsEditableConf = new Compartment();
+    this.linterConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
     this.queryResultsViewer = this.initQueryResultsViewer();
@@ -122,7 +123,11 @@ class Playground {
     this.runOptions.lint = true;
 
     this.runOxc(this.editor.state.doc.toString());
-    this.updateDiagnostics();
+    this.editor.dispatch({ effects: this.linterConf.reconfigure(this.linter()) });
+  }
+
+  linter() {
+    return linter(() => this.updateDiagnostics(), { delay: 0 })
   }
 
   runOxc(text) {
@@ -157,12 +162,7 @@ class Playground {
         lintGutter(),
         stateListener,
         autocompletion(),
-        linter(
-          () => {
-            return this.updateDiagnostics();
-          },
-          { delay: 0 }
-        ),
+        this.linterConf.of(this.linter()),
       ],
       doc: this.urlParams.code || placeholderText,
     });
