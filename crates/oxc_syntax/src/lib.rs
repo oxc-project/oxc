@@ -8,6 +8,7 @@ pub mod precedence;
 pub mod reference;
 pub mod scope;
 pub mod symbol;
+pub mod xml_entities;
 
 pub use unicode_id_start;
 

@@ -5,6 +5,7 @@ use std::rc::Rc;
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
+use oxc_syntax::xml_entities::XML_ENTITIES;
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 
@@ -407,7 +408,9 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
-                self.ast.literal_string_expression(s.clone())
+                let jsx_text = Self::decode_jsx_text(&s.value);
+                let literal = StringLiteral::new(s.span, jsx_text.into());
+                self.ast.literal_string_expression(literal)
             }
             Some(JSXAttributeValue::Element(e)) => {
                 self.transform_jsx(&JSXElementOrFragment::Element(e))
@@ -493,10 +496,8 @@ impl<'a> ReactJsx<'a> {
                     let word = &s[start + 1..end];
                     buffer.extend_from_slice(s[prev..start].as_bytes());
                     prev = end + 1;
-                    match word {
-                        "amp" => buffer.extend_from_slice(b"&"),
-                        "nbsp" => buffer.extend_from_slice("\u{a0}".as_bytes()),
-                        _ => {}
+                    if let Some(c) = XML_ENTITIES.get(word) {
+                        buffer.extend_from_slice(c.to_string().as_bytes());
                     }
                 }
             }
