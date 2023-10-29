@@ -363,7 +363,7 @@ fn test() {
         "`\\a```",
         r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;",
         r#"var stringLiteralWithNextLine = "line 1\line 2";"#,
-        r#"var stringLiteralWithNextLine = `line 1\line 2`;"#,
+        r"var stringLiteralWithNextLine = `line 1\line 2`;",
     ];
 
     Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();
