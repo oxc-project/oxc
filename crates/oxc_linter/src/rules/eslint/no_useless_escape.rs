@@ -185,7 +185,9 @@ fn check_template(string: &str) -> Vec<usize> {
                     }
                 }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(byte_offset - c.len_utf8());
+                    offsets.push(
+                        byte_offset - c.len_utf8() + chars.peek().map_or(0, |c| c.len_utf8()),
+                    );
                 }
                 _ => {}
             }
