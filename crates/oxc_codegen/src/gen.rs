@@ -1076,6 +1076,9 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
             // <https://github.com/tc39/proposal-json-superset>
             LS => p.print_str(b"\\u2028"),
             PS => p.print_str(b"\\u2029"),
+            '\u{a0}' => {
+                p.print_str(b"\\xA0");
+            }
             _ => p.print_str(c.escape_default().to_string().as_bytes()),
         }
     }

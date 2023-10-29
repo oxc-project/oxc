@@ -1,4 +1,4 @@
-Passed: 226/1083
+Passed: 229/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 226/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (77/172)
+# babel-plugin-transform-react-jsx (80/172)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -853,12 +853,10 @@ Passed: 226/1083
 * react/should-escape-xhtml-jsxtext-babel-7/input.js
 * react/should-handle-attributed-elements/input.js
 * react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-* react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
 * react/should-support-xml-namespaces-if-flag/input.js
 * react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
-* react/weird-symbols/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
@@ -880,7 +878,6 @@ Passed: 226/1083
 * react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
 * react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
