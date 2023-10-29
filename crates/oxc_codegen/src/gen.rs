@@ -517,10 +517,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                     p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
+                    p.print_soft_newline();
                 }
             }
             Self::ClassDeclaration(decl) => {
                 if !decl.is_typescript_syntax() {
+                    p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
                     p.print_soft_newline();
