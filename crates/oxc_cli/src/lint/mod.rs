@@ -1,4 +1,4 @@
-use std::io::BufWriter;
+use std::{io::BufWriter, vec::Vec};
 
 use oxc_diagnostics::DiagnosticService;
 use oxc_linter::{LintOptions, LintService, Linter};
@@ -31,15 +31,53 @@ impl Runner for LintRunner {
             ignore_options,
             fix_options,
             misc_options,
+            codeowner_options,
         } = self.options;
 
         if paths.is_empty() {
             return CliRunResult::InvalidOptions { message: "No paths provided.".to_string() };
         }
 
+        if codeowner_options.codeowners_file.is_some() && codeowner_options.codeowners.is_empty() {
+            return CliRunResult::InvalidOptions {
+                message: "No wanted codeowners provided.".to_string(),
+            };
+        }
+
         let now = std::time::Instant::now();
 
-        let paths = Walk::new(&paths, &ignore_options).paths();
+        let maybe_codeowners_file =
+            codeowner_options.codeowners_file.as_ref().map(codeowners::from_path);
+
+        let mut paths = Walk::new(&paths, &ignore_options).paths();
+
+        if let Some(owners) = maybe_codeowners_file {
+            paths = paths
+                .into_iter()
+                .filter(|path_being_checked| {
+                    let path_to_check = path_being_checked
+                        .strip_prefix("./")
+                        .unwrap_or(path_being_checked)
+                        .to_path_buf();
+
+                    owners.of(path_to_check).map_or(false, |owners_of_path| {
+                        owners_of_path
+                            .iter()
+                            .map(|owner| match owner {
+                                codeowners::Owner::Email(s)
+                                | codeowners::Owner::Team(s)
+                                | codeowners::Owner::Username(s) => s,
+                            })
+                            .any(|owner| codeowner_options.codeowners.contains(owner))
+                    })
+                })
+                .collect::<Vec<_>>();
+        } else if codeowner_options.codeowners_file.is_some() {
+            return CliRunResult::InvalidOptions {
+                message: "Codeowners file could not be read or parsed.".to_string(),
+            };
+        }
+
         let number_of_files = paths.len();
 
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
