@@ -1,4 +1,4 @@
-Passed: 234/1083
+Passed: 241/1083
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -804,7 +804,7 @@ Passed: 234/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (85/172)
+# babel-plugin-transform-react-jsx (92/172)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -847,10 +847,6 @@ Passed: 234/1083
 * react/should-disallow-spread-children/input.js
 * react/should-disallow-valueless-key/input.js
 * react/should-disallow-xml-namespacing/input.js
-* react/should-escape-xhtml-jsxtext/input.js
-* react/should-escape-xhtml-jsxtext-babel-7/input.js
-* react/should-handle-attributed-elements/input.js
-* react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
 * react/should-support-xml-namespaces-if-flag/input.js
 * react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
@@ -870,10 +866,7 @@ Passed: 234/1083
 * react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-disallow-xml-namespacing/input.js
-* react-automatic/should-escape-xhtml-jsxtext/input.js
-* react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
 * react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js

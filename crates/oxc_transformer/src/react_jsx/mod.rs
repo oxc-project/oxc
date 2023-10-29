@@ -5,7 +5,10 @@ use std::rc::Rc;
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
-use oxc_syntax::xml_entities::XML_ENTITIES;
+use oxc_syntax::{
+    identifier::{is_irregular_whitespace, is_line_terminator},
+    xml_entities::XML_ENTITIES,
+};
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 
@@ -408,7 +411,7 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::String(s)) => {
-                let jsx_text = Self::decode_jsx_text(&s.value);
+                let jsx_text = Self::decode_entities(&s.value);
                 let literal = StringLiteral::new(s.span, jsx_text.into());
                 self.ast.literal_string_expression(literal)
             }
@@ -461,24 +464,66 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx_text(&self, text: &JSXString) -> Option<Expression<'a>> {
-        let text = text.value.trim();
-        (!text.trim().is_empty()).then(|| {
-            let text = text
-                .split(char::is_whitespace)
-                .map(str::trim)
-                .filter(|c| !c.is_empty())
-                .map(Self::decode_jsx_text)
-                .collect::<std::vec::Vec<_>>()
-                .join(" ");
-            let s = StringLiteral::new(SPAN, text.into());
+        Self::fixup_whitespace_and_decode_entities(text.value.as_str()).map(|s| {
+            let s = StringLiteral::new(SPAN, s.into());
             self.ast.literal_string_expression(s)
         })
+    }
+
+    /// JSX trims whitespace at the end and beginning of lines, except that the
+    /// start/end of a tag is considered a start/end of a line only if that line is
+    /// on the same line as the closing tag. See examples in
+    /// tests/cases/conformance/jsx/tsxReactEmitWhitespace.tsx
+    /// See also https://www.w3.org/TR/html4/struct/text.html#h-9.1 and https://www.w3.org/TR/CSS2/text.html#white-space-model
+    ///
+    /// An equivalent algorithm would be:
+    /// - If there is only one line, return it.
+    /// - If there is only whitespace (but multiple lines), return `undefined`.
+    /// - Split the text into lines.
+    /// - 'trimRight' the first line, 'trimLeft' the last line, 'trim' middle lines.
+    /// - Decode entities on each line (individually).
+    /// - Remove empty lines and join the rest with " ".
+    ///
+    /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
+    fn fixup_whitespace_and_decode_entities(text: &str) -> Option<String> {
+        let mut acc: Option<String> = None;
+        let mut first_non_whitespace: Option<usize> = Some(0);
+        let mut last_non_whitespace: Option<usize> = None;
+        let mut i: usize = 0;
+        for c in text.chars() {
+            if is_line_terminator(c) {
+                if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
+                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..=last]));
+                }
+                first_non_whitespace = None;
+            } else if c != ' ' && !is_irregular_whitespace(c) {
+                last_non_whitespace = Some(i);
+                if first_non_whitespace.is_none() {
+                    first_non_whitespace.replace(i);
+                }
+            }
+            i += c.len_utf8();
+        }
+        if let Some(first) = first_non_whitespace {
+            Some(Self::add_line_of_jsx_text(acc, &text[first..]))
+        } else {
+            acc
+        }
+    }
+
+    fn add_line_of_jsx_text(acc: Option<String>, trimmed_line: &str) -> String {
+        let decoded = Self::decode_entities(trimmed_line);
+        if let Some(acc) = acc {
+            format!("{acc} {decoded}")
+        } else {
+            decoded
+        }
     }
 
     /// * Replace entities like "&nbsp;", "&#123;", and "&#xDEADBEEF;" with the characters they encode.
     /// * See https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
-    fn decode_jsx_text(s: &str) -> String {
+    fn decode_entities(s: &str) -> String {
         let mut buffer = vec![];
         let mut chars = s.bytes().enumerate();
         let mut prev = 0;
