@@ -55,6 +55,9 @@ impl Runner for LintRunner {
             paths = paths
                 .into_iter()
                 .filter(|path_being_checked| {
+                    // Strips the prefix of "./", because paths will look like "./foo/bar.js"
+                    // however owners.of() will not match against these relative paths.
+                    // So instead we simply strp the prefix and check against "foo/bar.js".
                     let path_to_check = path_being_checked
                         .strip_prefix("./")
                         .unwrap_or(path_being_checked)
