@@ -138,8 +138,6 @@ fn check_string(string: &str) -> Vec<usize> {
     let mut in_escape = false;
     let mut byte_offset = 0;
 
-    let mut prev_char_len = 0;
-
     for c in string.chars() {
         byte_offset += c.len_utf8();
         if in_escape {
@@ -147,14 +145,13 @@ fn check_string(string: &str) -> Vec<usize> {
             match c {
                 c if c.is_ascii_digit() || quote_string == Some(c) => { /* noop */ }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(byte_offset - c.len_utf8() - prev_char_len);
+                    offsets.push(byte_offset - c.len_utf8());
                 }
                 _ => {}
             }
         } else if c == '\\' {
             in_escape = true;
         }
-        prev_char_len = c.len_utf8();
     }
     offsets
 }

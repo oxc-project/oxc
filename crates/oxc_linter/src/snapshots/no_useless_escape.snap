@@ -14,94 +14,94 @@ expression: no_useless_escape
    ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = "\'";
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = "\#/";
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = "\a"
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = "\B";
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = "\@";
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = "foo \a bar";
-   ·               ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\"';
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\#';
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\$';
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\p';
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\p\a\@';
-   ·           ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\p\a\@';
-   ·             ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ var foo = '\p\a\@';
-   ·               ──
-   ╰────
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
-   ╭─[no_useless_escape.tsx:1:1]
- 1 │ <foo attr={"\d"}/>
    ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = "\#/";
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = "\a"
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'B'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = "\B";
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = "\@";
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = "foo \a bar";
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\"';
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\#';
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\$';
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'p'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\p';
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'p'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\p\a\@';
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\p\a\@';
+   ·              ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ var foo = '\p\a\@';
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character 'd'
+   ╭─[no_useless_escape.tsx:1:1]
+ 1 │ <foo attr={"\d"}/>
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = '\`';
-   ·           ──
+   ·            ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
@@ -122,16 +122,16 @@ expression: no_useless_escape
    ·           ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = '\`foo\`';
-   ·           ──
+   ·            ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var foo = '\`foo\`';
-   ·                ──
+   ·                 ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
@@ -164,10 +164,10 @@ expression: no_useless_escape
    ·           ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
    ╭─[no_useless_escape.tsx:1:1]
  1 │ let foo = '\ ';
-   ·           ──
+   ·            ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
@@ -373,10 +373,10 @@ expression: no_useless_escape
    ·                                       ──
    ╰────
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:1]
  1 │ var stringLiteralWithNextLine = "line 1\line 2";
-   ·                                       ──
+   ·                                        ─
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\\'
