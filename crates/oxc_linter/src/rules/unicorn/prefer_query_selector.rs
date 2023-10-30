@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use miette::diagnostic;
 use oxc_ast::{
     ast::{Argument, Expression},
@@ -10,28 +9,23 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use std::collections::HashMap;
+use phf::phf_map;
 
 use crate::{context::LintContext, rule::Rule, utils::is_dom_node_call, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{0}()` over `.{1}()`.")]
-#[diagnostic(severity(Advice), help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors)."))]
+#[diagnostic(severity(Warning), help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors)."))]
 struct PreferQuerySelectorDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferQuerySelector;
 
-lazy_static! {
-    static ref DISALLOWED_IDENTIFIER_NAMES: HashMap<&'static str, &'static str> = [
-        ("getElementById", "querySelector"),
-        ("getElementsByClassName", "querySelectorAll"),
-        ("getElementsByTagName", "querySelectorAll"),
-    ]
-    .iter()
-    .copied()
-    .collect();
-}
+const DISALLOWED_IDENTIFIER_NAMES: phf::Map<&'static str, &'static str> = phf_map!(
+    "getElementById" => "querySelector",
+    "getElementsByClassName" => "querySelectorAll",
+    "getElementsByTagName" => "querySelectorAll"
+);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -85,7 +79,7 @@ impl Rule for PreferQuerySelector {
             return;
         };
 
-        for (cur_property_name, preferred_selector) in &*DISALLOWED_IDENTIFIER_NAMES {
+        for (cur_property_name, preferred_selector) in &DISALLOWED_IDENTIFIER_NAMES {
             if cur_property_name != &property_name {
                 continue;
             }
