@@ -1,7 +1,7 @@
 use oxc_ast::ast::Expression;
 
-pub fn is_node_value(expr: &Expression) -> bool {
-    return !matches!(
+pub fn is_dom_node_call(expr: &Expression) -> bool {
+    !matches!(
         expr,
         Expression::ArrayExpression(_)
             | Expression::ArrowExpression(_)
@@ -9,5 +9,6 @@ pub fn is_node_value(expr: &Expression) -> bool {
             | Expression::FunctionExpression(_)
             | Expression::ObjectExpression(_)
             | Expression::TemplateLiteral(_)
-    );
+            | Expression::StringLiteral(_)
+    )
 }

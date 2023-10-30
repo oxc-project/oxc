@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_query_selector
+---
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementById("foo");
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName("foo");
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName("foo bar");
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByTagName("foo");
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementById("");
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementById('foo');
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName('foo');
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName('foo bar');
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByTagName('foo');
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName('');
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementById(`foo`);
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(`foo`);
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(`foo bar`);
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByTagName(`foo`);
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByTagName(``);
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(`${fn()}`);
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(`foo ${undefined}`);
+   · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(null);
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByTagName(null);
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(fn());
+   · ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName("foo" + fn());
+   · ─────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ document.getElementsByClassName(foo + "bar");
+   · ────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:1]
+ 1 │ e.getElementById(3)
+   · ───────────────────
+   ╰────
+
+
