@@ -66,7 +66,7 @@ impl Rule for PreferQuerySelector {
 
         if member_expr.optional()
             || member_expr.is_computed()
-            || !is_node_value_not_dom_node(member_expr.object())
+            || is_node_value_not_dom_node(member_expr.object())
         {
             return;
         }
