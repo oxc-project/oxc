@@ -55,7 +55,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoCommentTextNodes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXString(jsx_text) = node.kind() else { return };
+        let AstKind::JSXText(jsx_text) = node.kind() else { return };
 
         if control_patterns(&jsx_text.value) {
             ctx.diagnostic(JsxNoCommentTextNodesDiagnostic(jsx_text.span));

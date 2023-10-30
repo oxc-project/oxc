@@ -190,7 +190,7 @@ pub enum JSXAttributeName<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXAttributeValue<'a> {
-    String(JSXString),
+    StringLiteral(StringLiteral),
     ExpressionContainer(JSXExpressionContainer<'a>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
@@ -210,7 +210,7 @@ pub struct JSXIdentifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXChild<'a> {
-    Text(JSXString),
+    Text(JSXText),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
     ExpressionContainer(JSXExpressionContainer<'a>),
@@ -225,12 +225,9 @@ pub struct JSXSpreadChild<'a> {
     pub expression: Expression<'a>,
 }
 
-/// JSX String
-///
-/// <https://facebook.github.io/jsx/#sec-jsx-string>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct JSXString {
+pub struct JSXText {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: Atom,

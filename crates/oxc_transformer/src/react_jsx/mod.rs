@@ -410,8 +410,8 @@ impl<'a> ReactJsx<'a> {
         value: Option<&JSXAttributeValue<'a>>,
     ) -> Expression<'a> {
         match value {
-            Some(JSXAttributeValue::String(s)) => {
-                let jsx_text = Self::decode_entities(&s.value);
+            Some(JSXAttributeValue::StringLiteral(s)) => {
+                let jsx_text = Self::decode_entities(s.value.as_str());
                 let literal = StringLiteral::new(s.span, jsx_text.into());
                 self.ast.literal_string_expression(literal)
             }
@@ -449,7 +449,7 @@ impl<'a> ReactJsx<'a> {
 
     fn transform_jsx_child(&mut self, child: &JSXChild<'a>) -> Option<Expression<'a>> {
         match child {
-            JSXChild::Text(text) => self.transform_jsx_text(text),
+            JSXChild::Text(text) => self.transform_jsx_text(text.value.as_str()),
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 JSXExpression::Expression(e) => Some(self.ast.copy(e)),
                 JSXExpression::EmptyExpression(_) => None,
@@ -463,8 +463,8 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn transform_jsx_text(&self, text: &JSXString) -> Option<Expression<'a>> {
-        Self::fixup_whitespace_and_decode_entities(text.value.as_str()).map(|s| {
+    fn transform_jsx_text(&self, text: &str) -> Option<Expression<'a>> {
+        Self::fixup_whitespace_and_decode_entities(text).map(|s| {
             let s = StringLiteral::new(SPAN, s.into());
             self.ast.literal_string_expression(s)
         })

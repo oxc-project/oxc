@@ -38,7 +38,7 @@ pub enum Vertex<'a> {
     JSXOpeningElement(Rc<JSXOpeningElementVertex<'a>>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXSpreadChild(&'a JSXSpreadChild<'a>),
-    JSXText(&'a JSXString),
+    JSXText(&'a JSXText),
     ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
     NumberLiteral(Rc<NumberLiteralVertex<'a>>),
     Name(Rc<NameVertex<'a>>),
