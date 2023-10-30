@@ -1125,8 +1125,8 @@ impl<'a> AstBuilder<'a> {
         JSXIdentifier { span, name }
     }
 
-    pub fn jsx_string(&self, span: Span, value: Atom) -> JSXString {
-        JSXString { span, value }
+    pub fn jsx_text(&self, span: Span, value: Atom) -> JSXText {
+        JSXText { span, value }
     }
 
     /* ---------- TypeScript ---------- */

@@ -756,7 +756,7 @@ pub trait VisitMut<'a>: Sized {
             }
             JSXAttributeValue::Element(elem) => self.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => self.visit_jsx_fragment(elem),
-            JSXAttributeValue::String(_) => {}
+            JSXAttributeValue::StringLiteral(_) => {}
         }
     }
 
