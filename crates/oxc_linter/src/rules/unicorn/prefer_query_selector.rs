@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule, utils::is_dom_node_call, AstNode, 
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{0}()` over `.{1}()`.")]
-#[diagnostic(severity(Advice))]
+#[diagnostic(severity(Advice), help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors)."))]
 struct PreferQuerySelectorDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// document.querySelector('li').querySelectorAll('a');
     /// ```
     PreferQuerySelector,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferQuerySelector {
@@ -90,11 +90,8 @@ impl Rule for PreferQuerySelector {
                 continue;
             }
 
-            let diagnostic = PreferQuerySelectorDiagnostic(
-                preferred_selector,
-                cur_property_name,
-                call_expr.span,
-            );
+            let diagnostic =
+                PreferQuerySelectorDiagnostic(preferred_selector, cur_property_name, property_span);
 
             if argument_expr.is_null() {
                 return ctx.diagnostic_with_fix(diagnostic, || {
