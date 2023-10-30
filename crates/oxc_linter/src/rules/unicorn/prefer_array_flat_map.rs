@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// const bar = [1,2,3].flatMap(i => [i]); // ✓ pass
     /// ```
     PreferArrayFlatMap,
-    correctness
+    style
 );
 
 impl Rule for PreferArrayFlatMap {
