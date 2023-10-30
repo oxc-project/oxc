@@ -25,3 +25,8 @@ use thiserror::Error;
 #[error("File is too long to fit on the screen")]
 #[diagnostic(help("{0:?} seems like a minified file"))]
 pub struct MinifiedFileError(pub PathBuf);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Failed to open file")]
+#[diagnostic(help("Failed to open file {0:?} with error \"{1}\""))]
+pub struct FailedToOpenFileError(pub PathBuf, pub std::io::Error);
