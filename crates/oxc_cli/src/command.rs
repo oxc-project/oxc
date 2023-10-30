@@ -136,11 +136,11 @@ impl LintFilter {
 #[derive(Debug, Clone, Bpaf)]
 pub struct CodeownerOptions {
     /// Path to CODEOWNERS file
-    #[bpaf(argument("PATH"))]
+    #[bpaf(argument("PATH"), hide_usage)]
     pub codeowners_file: Option<OsString>,
 
     /// Code owner names, e.g. @Boshen
-    #[bpaf(argument("NAME"))]
+    #[bpaf(argument("NAME"), hide_usage)]
     pub codeowners: Vec<String>,
 }
 
