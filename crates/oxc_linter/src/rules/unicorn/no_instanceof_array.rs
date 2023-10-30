@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// [1,2,3] instanceof Array;
     /// ```
     NoInstanceofArray,
-    correctness
+    pedantic
 );
 
 impl Rule for NoInstanceofArray {

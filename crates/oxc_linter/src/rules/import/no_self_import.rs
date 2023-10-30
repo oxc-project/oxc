@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// const foo = require('./foo')
     /// ```
     NoSelfImport,
-    correctness
+    nursery
 );
 
 impl Rule for NoSelfImport {
