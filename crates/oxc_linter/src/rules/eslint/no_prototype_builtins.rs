@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// var barIsEnumerable = foo.propertyIsEnumerable("bar");
     /// ```
     NoPrototypeBuiltins,
-    correctness
+    pedantic
 );
 
 const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable"];
