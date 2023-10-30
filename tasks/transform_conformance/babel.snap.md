@@ -1,4 +1,4 @@
-Passed: 241/1083
+Passed: 241/1080
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -275,7 +275,7 @@ Passed: 241/1083
 * regression/T6719/input.js
 * regression/T7364/input.mjs
 
-# babel-plugin-transform-class-static-block (6/22)
+# babel-plugin-transform-class-static-block (6/21)
 * class-static-block/preserve-comments/input.js
 * integration/class-binding/input.js
 * integration/class-declaration/input.js
@@ -284,7 +284,6 @@ Passed: 241/1083
 * integration/name-conflict/input.js
 * integration/new-target/input.js
 * integration/preserve-comments/input.js
-* integration-loose/.new-target/input.js
 * integration-loose/class-binding/input.js
 * integration-loose/class-declaration/input.js
 * integration-loose/in-class-heritage/input.js
@@ -804,7 +803,7 @@ Passed: 241/1083
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (92/172)
+# babel-plugin-transform-react-jsx (92/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -828,7 +827,6 @@ Passed: 241/1083
 * pure/unset-pragma-comment-classic-runtime/input.js
 * pure/unset-pragma-option-automatic-runtime/input.js
 * pure/unset-pragma-option-classic-runtime/input.js
-* react/.should-properly-handle-comments-adjacent-to-children/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
@@ -854,7 +852,6 @@ Passed: 241/1083
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
-* react-automatic/.should-properly-handle-comments-adjacent-to-children/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 * react-automatic/handle-nonstatic-children/input.js

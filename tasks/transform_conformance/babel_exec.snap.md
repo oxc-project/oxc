@@ -1,4 +1,4 @@
-Passed: 350/409
+Passed: 349/408
 
 # All Passed:
 * babel-plugin-transform-class-static-block
