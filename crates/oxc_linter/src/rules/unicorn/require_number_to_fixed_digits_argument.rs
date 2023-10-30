@@ -10,7 +10,7 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument")]
-#[diagnostic(severity(warning), help("Pass an argument to .toFixed() method."))]
+#[diagnostic(severity(warning), help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0."))]
 struct RequireNumberToFixedDigitsArgumentDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// number.toFixed();
     /// ```
     RequireNumberToFixedDigitsArgument,
-    correctness
+    pedantic
 );
 
 impl Rule for RequireNumberToFixedDigitsArgument {
