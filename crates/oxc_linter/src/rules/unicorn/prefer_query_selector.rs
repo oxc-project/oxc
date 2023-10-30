@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule, utils::is_dom_node_call, AstNode, 
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{0}()` over `.{1}()`.")]
-#[diagnostic(severity(warning))]
+#[diagnostic(severity(Advice))]
 struct PreferQuerySelectorDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -40,6 +40,19 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// // Bad
+    /// document.getElementById('foo');
+    /// document.getElementsByClassName('foo bar');
+    /// document.getElementsByTagName('main');
+    /// document.getElementsByClassName(fn());
+    ///
+    /// // Good
+    /// document.querySelector('#foo');
+    /// document.querySelector('.bar');
+    /// document.querySelector('main #foo .bar');
+    /// document.querySelectorAll('.foo .bar');
+    /// document.querySelectorAll('li a');
+    /// document.querySelector('li').querySelectorAll('a');
     /// ```
     PreferQuerySelector,
     correctness
