@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_map;
 
-use crate::{context::LintContext, rule::Rule, utils::is_dom_node_call, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{0}()` over `.{1}()`.")]
@@ -66,7 +66,7 @@ impl Rule for PreferQuerySelector {
 
         if member_expr.optional()
             || member_expr.is_computed()
-            || !is_dom_node_call(member_expr.object())
+            || !is_node_value_not_dom_node(member_expr.object())
         {
             return;
         }
