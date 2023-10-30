@@ -45,7 +45,7 @@ declare_oxc_lint!(
     // }
     /// ```
     NoCaseDeclarations,
-    correctness
+    pedantic
 );
 
 impl Rule for NoCaseDeclarations {
