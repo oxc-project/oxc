@@ -79,6 +79,8 @@ pub trait TestCase {
 
     fn test(&self, filter: Option<&str>) -> bool;
 
+    fn path(&self) -> &Path;
+
     fn transform_options(&self) -> TransformOptions {
         fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
@@ -122,6 +124,11 @@ pub trait TestCase {
         {
             return true;
         }
+        if self.path().parent().is_some_and(|p| {
+            p.file_name().is_some_and(|n| n.to_str().map_or(false, |s| s.starts_with('.')))
+        }) {
+            return true;
+        }
         false
     }
 
@@ -159,6 +166,10 @@ impl TestCase for ConformanceTestCase {
 
     fn options(&self) -> &BabelOptions {
         &self.options
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.
@@ -258,6 +269,10 @@ impl ExecTestCase {
 impl TestCase for ExecTestCase {
     fn options(&self) -> &BabelOptions {
         &self.options
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
     }
 
     fn new<P: Into<PathBuf>>(path: P) -> Self {
