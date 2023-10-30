@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// <div> {'>'} </div>
     /// ```
     NoUnescapedEntities,
-    correctness
+    pedantic
 );
 
 impl Rule for NoUnescapedEntities {
