@@ -12,51 +12,6 @@ pub struct LintRunner {
     options: CliLintOptions,
 }
 
-fn apply_codeowners_file(
-    options: &CodeownerOptions,
-    paths: Vec<Box<Path>>,
-) -> Result<Vec<Box<Path>>, CliRunResult> {
-    if options.codeowners_file.is_some() && options.codeowners.is_empty() {
-        return Err(CliRunResult::InvalidOptions {
-            message: "No wanted codeowners provided.".to_string(),
-        });
-    }
-
-    let maybe_codeowners_file = options.codeowners_file.as_ref().map(codeowners::from_path);
-
-    if let Some(owners) = maybe_codeowners_file {
-        return Ok(paths
-            .into_iter()
-            .filter(|path_being_checked| {
-                // Strips the prefix of "./", because paths will look like "./foo/bar.js"
-                // however owners.of() will not match against these relative paths.
-                // So instead we simply strp the prefix and check against "foo/bar.js".
-                let path_to_check = path_being_checked
-                    .strip_prefix("./")
-                    .unwrap_or(path_being_checked)
-                    .to_path_buf();
-
-                owners.of(path_to_check).map_or(false, |owners_of_path| {
-                    owners_of_path
-                        .iter()
-                        .map(|owner| match owner {
-                            codeowners::Owner::Email(s)
-                            | codeowners::Owner::Team(s)
-                            | codeowners::Owner::Username(s) => s,
-                        })
-                        .any(|owner| options.codeowners.contains(owner))
-                })
-            })
-            .collect::<Vec<_>>());
-    } else if options.codeowners_file.is_some() {
-        return Err(CliRunResult::InvalidOptions {
-            message: "Codeowners file could not be read or parsed.".to_string(),
-        });
-    }
-
-    Ok(paths)
-}
-
 impl Runner for LintRunner {
     type Options = CliLintOptions;
 
@@ -90,7 +45,7 @@ impl Runner for LintRunner {
 
         let paths = Walk::new(&paths, &ignore_options).paths();
 
-        let paths = match apply_codeowners_file(&codeowner_options, paths) {
+        let paths = match Self::apply_codeowners_file(&codeowner_options, paths) {
             Ok(new_paths) => new_paths,
             Err(err) => return err,
         };
@@ -129,6 +84,53 @@ impl Runner for LintRunner {
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
         })
+    }
+}
+
+impl LintRunner {
+    fn apply_codeowners_file(
+        options: &CodeownerOptions,
+        paths: Vec<Box<Path>>,
+    ) -> Result<Vec<Box<Path>>, CliRunResult> {
+        if options.codeowners_file.is_some() && options.codeowners.is_empty() {
+            return Err(CliRunResult::InvalidOptions {
+                message: "No wanted codeowners provided.".to_string(),
+            });
+        }
+
+        let maybe_codeowners_file = options.codeowners_file.as_ref().map(codeowners::from_path);
+
+        if let Some(owners) = maybe_codeowners_file {
+            return Ok(paths
+                .into_iter()
+                .filter(|path_being_checked| {
+                    // Strips the prefix of "./", because paths will look like "./foo/bar.js"
+                    // however owners.of() will not match against these relative paths.
+                    // So instead we simply strp the prefix and check against "foo/bar.js".
+                    let path_to_check = path_being_checked
+                        .strip_prefix("./")
+                        .unwrap_or(path_being_checked)
+                        .to_path_buf();
+
+                    owners.of(path_to_check).map_or(false, |owners_of_path| {
+                        owners_of_path
+                            .iter()
+                            .map(|owner| match owner {
+                                codeowners::Owner::Email(s)
+                                | codeowners::Owner::Team(s)
+                                | codeowners::Owner::Username(s) => s,
+                            })
+                            .any(|owner| options.codeowners.contains(owner))
+                    })
+                })
+                .collect::<Vec<_>>());
+        } else if options.codeowners_file.is_some() {
+            return Err(CliRunResult::InvalidOptions {
+                message: "Codeowners file could not be read or parsed.".to_string(),
+            });
+        }
+
+        Ok(paths)
     }
 }
 
