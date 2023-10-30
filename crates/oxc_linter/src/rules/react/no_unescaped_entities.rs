@@ -50,8 +50,7 @@ impl Rule for NoUnescapedEntities {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXText(jsx_text) = node.kind() {
             let source = jsx_text.span.source_text(ctx.source_text());
-
-            for (i, char) in source.chars().enumerate() {
+            for (i, char) in source.char_indices() {
                 if let Some(escapes) = DEFAULTS.get(&char) {
                     #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic(NoUnescapedEntitiesDiagnostic(
@@ -181,6 +180,7 @@ fn test() {
         //   });
         // ",
         r#"<script>window.foo = "bar"</script>"#,
+        r#"<script>测试 " 测试</script>"#,
     ];
 
     Tester::new_without_config(NoUnescapedEntities::NAME, pass, fail).test_and_snapshot();
