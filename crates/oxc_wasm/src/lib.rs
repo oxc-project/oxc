@@ -218,7 +218,7 @@ impl Oxc {
             let scopes = Rc::new(RefCell::new(scopes));
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
-            Transformer::new(&allocator, source_type, &symbols, &scopes, options).build(program);
+            Transformer::new(&allocator, source_type, &symbols, &scopes, &options).build(program);
         }
 
         let program = allocator.alloc(program);

@@ -139,7 +139,7 @@ pub trait TestCase {
         let scopes = Rc::new(RefCell::new(scopes));
         let transformed_program = allocator.alloc(transformed_program);
 
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
+        Transformer::new(&allocator, source_type, &symbols, &scopes, &self.transform_options())
             .build(transformed_program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
     }
@@ -187,7 +187,7 @@ impl TestCase for ConformanceTestCase {
         let symbols = Rc::new(RefCell::new(symbols));
         let scopes = Rc::new(RefCell::new(scopes));
         let program = allocator.alloc(program);
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
+        Transformer::new(&allocator, source_type, &symbols, &scopes, &self.transform_options())
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 

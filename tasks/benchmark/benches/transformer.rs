@@ -40,7 +40,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let scopes = Rc::new(RefCell::new(scopes));
                 let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
-                Transformer::new(&allocator, source_type, &symbols, &scopes, transform_options)
+                Transformer::new(&allocator, source_type, &symbols, &scopes, &transform_options)
                     .build(black_box(program));
                 allocator
             });

@@ -124,24 +124,29 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
+    fn get_jsx_runtime_importer(&self) -> String {
+        let import_source = self.options.import_source.as_deref().unwrap_or("react");
+        format!("{import_source}/jsx-runtime")
+    }
+
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", "react/jsx-runtime");
+            self.add_import_statement("jsx", "_jsx", &self.get_jsx_runtime_importer());
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", "react/jsx-runtime");
+            self.add_import_statement("jsxs", "_jsxs", &self.get_jsx_runtime_importer());
         }
     }
 
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", "react/jsx-runtime");
+            self.add_import_statement("Fragment", "_Fragment", &self.get_jsx_runtime_importer());
             self.add_import_jsx();
         }
     }
