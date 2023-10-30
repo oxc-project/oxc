@@ -7,6 +7,7 @@ expression: no_render_return_value
  1 │ var Hello = ReactDOM.render(<div />, document.body);
    ·             ───────────────
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:2:1]
@@ -15,6 +16,7 @@ expression: no_render_return_value
    ·                             ───────────────
  4 │                     };
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:2:1]
@@ -23,29 +25,34 @@ expression: no_render_return_value
    ·                              ───────────────
  4 │                     }
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:1:1]
  1 │ var render = (a, b) => ReactDOM.render(a, b)
    ·                        ───────────────
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:1:1]
  1 │ this.o = ReactDOM.render(<div />, document.body);
    ·          ───────────────
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:1:1]
  1 │ var v; v = ReactDOM.render(<div />, document.body);
    ·            ───────────────
    ╰────
+  help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
    ╭─[no_render_return_value.tsx:1:1]
  1 │ var inst = ReactDOM.render(<div />, document.body);
    ·            ───────────────
    ╰────
+  help: Using the return value is a legacy feature.
 
 
