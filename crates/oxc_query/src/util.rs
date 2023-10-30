@@ -13,7 +13,7 @@ use crate::{
 
 pub fn jsx_attribute_to_constant_string<'a>(attr: &'a JSXAttribute<'a>) -> Option<String> {
     attr.value.as_ref().and_then(|attr_value| match attr_value {
-        JSXAttributeValue::String(slit) => slit.value.to_string().into(),
+        JSXAttributeValue::StringLiteral(slit) => slit.value.to_string().into(),
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
             oxc_ast::ast::JSXExpression::Expression(expr) => expr_to_maybe_const_string(expr),
             oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,

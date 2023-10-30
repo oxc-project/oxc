@@ -36,7 +36,7 @@ declare_oxc_lint!(
     //  }
     /// ```
     NoDuplicateEnumValues,
-    correctness
+    pedantic
 );
 
 impl Rule for NoDuplicateEnumValues {

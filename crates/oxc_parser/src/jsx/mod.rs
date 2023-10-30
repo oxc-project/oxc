@@ -219,7 +219,7 @@ impl<'a> Parser<'a> {
                 .map(JSXChild::ExpressionContainer)
                 .map(Some),
             // text
-            Kind::JSXText => Ok(Some(JSXChild::Text(self.parse_jsx_string()))),
+            Kind::JSXText => Ok(Some(JSXChild::Text(self.parse_jsx_text()))),
             _ => Err(self.unexpected()),
         }
     }
@@ -333,7 +333,7 @@ impl<'a> Parser<'a> {
 
     fn parse_jsx_attribute_value(&mut self) -> Result<JSXAttributeValue<'a>> {
         match self.cur_kind() {
-            Kind::Str => Ok(JSXAttributeValue::String(self.parse_jsx_string())),
+            Kind::Str => self.parse_literal_string().map(JSXAttributeValue::StringLiteral),
             Kind::LCurly => {
                 let expr = self.parse_jsx_expression_container(false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))
@@ -365,10 +365,10 @@ impl<'a> Parser<'a> {
         Ok(self.ast.jsx_identifier(self.end_span(span), name))
     }
 
-    fn parse_jsx_string(&mut self) -> JSXString {
+    fn parse_jsx_text(&mut self) -> JSXText {
         let span = self.start_span();
         let value = Atom::from(self.cur_string().unwrap());
         self.bump_any();
-        self.ast.jsx_string(self.end_span(span), value)
+        self.ast.jsx_text(self.end_span(span), value)
     }
 }

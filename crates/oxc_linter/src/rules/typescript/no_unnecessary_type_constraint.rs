@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// function QuuzAny<T extends any>() {}
     /// ```
     NoUnnecessaryTypeConstraint,
-    correctness
+    suspicious
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {

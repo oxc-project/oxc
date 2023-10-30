@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     SwitchCaseBraces,
-    correctness
+    style
 );
 
 impl Rule for SwitchCaseBraces {
