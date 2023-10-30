@@ -103,7 +103,6 @@ fn test() {
         ("var foo = React.render(<div />, root);", None),
         ("var foo = render(<div />, root)", None),
         ("var foo = ReactDom.renderder(<div />, root)", None),
-        ("var foo = ReactDom.renderder(<div />, root)", None),
         ("export const foo = () => ({ destroy: ({ dom }) => { ReactDOM.unmountComponentAtNode(dom); } });", None),
     ];
 
