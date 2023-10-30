@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
@@ -65,7 +65,7 @@ impl Rule for NoChildrenProp {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 let JSXAttributeName::Identifier(attr_ident) = &attr.name else { return };
                 if attr_ident.name == "children" {
-                    ctx.diagnostic(NoChildrenPropDiagnostic(attr.span));
+                    ctx.diagnostic(NoChildrenPropDiagnostic(attr_ident.span));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -76,7 +76,7 @@ impl Rule for NoChildrenProp {
                         if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
                             if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                                 if prop.key.is_specific_static_name("children") {
-                                    return Some(prop.span);
+                                    return Some(prop.key.span());
                                 }
                             }
 
