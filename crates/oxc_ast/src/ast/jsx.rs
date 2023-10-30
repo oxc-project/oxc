@@ -89,6 +89,12 @@ pub struct JSXNamespacedName {
     pub property: JSXIdentifier,
 }
 
+impl std::fmt::Display for JSXNamespacedName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.namespace.name, self.property.name)
+    }
+}
+
 /// JSX Member Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -157,6 +163,12 @@ pub struct JSXAttribute<'a> {
     pub value: Option<JSXAttributeValue<'a>>,
 }
 
+impl<'a> JSXAttribute<'a> {
+    pub fn is_key(&self) -> bool {
+        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == "key")
+    }
+}
+
 /// JSX Spread Attribute
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -178,7 +190,7 @@ pub enum JSXAttributeName<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXAttributeValue<'a> {
-    StringLiteral(StringLiteral),
+    String(JSXString),
     ExpressionContainer(JSXExpressionContainer<'a>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
@@ -198,7 +210,7 @@ pub struct JSXIdentifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXChild<'a> {
-    Text(JSXText),
+    Text(JSXString),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
     ExpressionContainer(JSXExpressionContainer<'a>),
@@ -213,10 +225,12 @@ pub struct JSXSpreadChild<'a> {
     pub expression: Expression<'a>,
 }
 
-/// JSX Text
+/// JSX String
+///
+/// <https://facebook.github.io/jsx/#sec-jsx-string>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct JSXText {
+pub struct JSXString {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: Atom,

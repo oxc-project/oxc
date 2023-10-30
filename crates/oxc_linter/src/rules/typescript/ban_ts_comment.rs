@@ -178,16 +178,31 @@ impl BanTsComment {
             "check" => &self.ts_check,
             "nocheck" => &self.ts_nocheck,
             "expect-error" => &self.ts_expect_error,
-            _ => unreachable!(),
+            _ => {
+                unreachable!(
+                    "Expected one of ignore/check/nocheck/expect-error, got {}.",
+                    directive,
+                );
+            }
         }
     }
 }
 
 pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
     let prefix = "@ts-";
-    // For multi-line comments, get the last line
-    let mut lines = raw.lines();
-    let line = lines.next_back()?;
+
+    let mut last_line_start = None;
+    let mut char_indices = raw.char_indices().peekable();
+    while let Some((_, c)) = char_indices.next() {
+        if c == '\n' {
+            last_line_start = char_indices.peek().map(|(i, _)| *i);
+        }
+    }
+
+    let multi_len = last_line_start.unwrap_or(0);
+    let line = &raw[multi_len..];
+
+    // Check the content before the prefix
     let index = line.find(prefix)?;
     if !line[..index]
         .chars()
@@ -195,13 +210,20 @@ pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, 
     {
         return None;
     }
-    let multi_len = lines.map(|line| line.len() + 1).sum::<usize>();
+
     let start = index + prefix.len();
     for directive in ["expect-error", "ignore", "nocheck", "check"] {
         if line.get(start..start + directive.len()) == Some(directive) {
             let start = multi_len + index + prefix.len();
             let end = start + directive.len();
-            return Some((&raw[start..end], &raw[end..]));
+            let (directive, description) = (&raw[start..end], &raw[end..]);
+
+            debug_assert!(
+                matches!(directive, "expect-error" | "ignore" | "nocheck" | "check"),
+                "Expected one of ignore/check/nocheck/expect-error, got {directive}",
+            );
+
+            return Some((directive, description));
         }
     }
     None

@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::Span;
+use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::{
@@ -66,7 +66,6 @@ impl<'a> NullishCoalescingOperator<'a> {
             return;
         }
 
-        let span = Span::default();
         let reference;
         let assignment;
 
@@ -82,25 +81,25 @@ impl<'a> NullishCoalescingOperator<'a> {
             );
             let right = self.ast.copy(&logical_expr.left);
             assignment =
-                self.ast.assignment_expression(span, AssignmentOperator::Assign, left, right);
+                self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
         };
 
         let test = if self.no_document_all {
-            let null = self.ast.literal_null_expression(NullLiteral::new(span));
-            self.ast.binary_expression(span, assignment, BinaryOperator::Inequality, null)
+            let null = self.ast.literal_null_expression(NullLiteral::new(SPAN));
+            self.ast.binary_expression(SPAN, assignment, BinaryOperator::Inequality, null)
         } else {
             let op = BinaryOperator::StrictInequality;
-            let null = self.ast.literal_null_expression(NullLiteral::new(span));
-            let left = self.ast.binary_expression(span, self.ast.copy(&assignment), op, null);
+            let null = self.ast.literal_null_expression(NullLiteral::new(SPAN));
+            let left = self.ast.binary_expression(SPAN, self.ast.copy(&assignment), op, null);
 
             let right =
-                self.ast.binary_expression(span, self.ast.copy(&reference), op, self.ast.void_0());
+                self.ast.binary_expression(SPAN, self.ast.copy(&reference), op, self.ast.void_0());
 
-            self.ast.logical_expression(span, left, LogicalOperator::And, right)
+            self.ast.logical_expression(SPAN, left, LogicalOperator::And, right)
         };
 
         let right = self.ast.move_expression(&mut logical_expr.right);
 
-        *expr = self.ast.conditional_expression(span, test, reference, right);
+        *expr = self.ast.conditional_expression(SPAN, test, reference, right);
     }
 }

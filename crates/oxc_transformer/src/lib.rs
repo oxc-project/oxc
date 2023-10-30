@@ -103,13 +103,14 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
         self.typescript.as_mut().map(|t| t.transform_program(program));
         self.visit_statements(&mut program.body);
+
+        self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
     }
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
-        self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_import(stmts));
         // TODO: we need scope id to insert the vars into the correct statements
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));

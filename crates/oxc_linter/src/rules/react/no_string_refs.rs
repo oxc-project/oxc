@@ -94,7 +94,7 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
                 JSXAttributeValue::ExpressionContainer(expr_container) => {
                     contains_string_literal(expr_container, no_template_literals)
                 }
-                JSXAttributeValue::StringLiteral(_) => true,
+                JSXAttributeValue::String(_) => true,
                 _ => false,
             };
         }

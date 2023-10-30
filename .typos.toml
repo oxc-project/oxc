@@ -9,6 +9,7 @@ extend-exclude = [
   "tasks/coverage/typescript",
   "crates/oxc_parser/src/lexer/mod.rs",
   "crates/oxc_linter/fixtures",
+  "crates/oxc_syntax/src/xml_entities.rs",
   "**/*.snap",
   "pnpm-lock.yaml",
   "crates/oxc_linter_plugin/examples/queries/unicorn/prefer-string-slice/rule.yml"

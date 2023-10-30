@@ -11,7 +11,7 @@ use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
@@ -140,8 +140,18 @@ impl Runtime {
         }
 
         let allocator = Allocator::default();
-        let source_text =
-            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"));
+        let source_text = match fs::read_to_string(path) {
+            Ok(source_text) => source_text,
+            Err(e) => {
+                tx_error
+                    .send(Some((
+                        path.to_path_buf(),
+                        vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))],
+                    )))
+                    .unwrap();
+                return;
+            }
+        };
 
         let mut messages =
             self.process_source(path, &allocator, &source_text, source_type, true, tx_error);

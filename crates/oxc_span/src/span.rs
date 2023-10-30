@@ -4,6 +4,9 @@ use miette::{SourceOffset, SourceSpan};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
+/// An Empty span useful for creating AST nodes.
+pub const SPAN: Span = Span::new(0, 0);
+
 /// Newtype for working with text ranges
 ///
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.

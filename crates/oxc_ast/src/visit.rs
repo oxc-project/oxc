@@ -1064,7 +1064,7 @@ pub trait Visit<'a>: Sized {
             }
             JSXAttributeValue::Element(elem) => self.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => self.visit_jsx_fragment(elem),
-            JSXAttributeValue::StringLiteral(lit) => self.visit_string_literal(lit),
+            JSXAttributeValue::String(s) => self.visit_jsx_string(s),
         }
     }
 
@@ -1097,7 +1097,7 @@ pub trait Visit<'a>: Sized {
             JSXChild::Fragment(elem) => self.visit_jsx_fragment(elem),
             JSXChild::ExpressionContainer(expr) => self.visit_jsx_expression_container(expr),
             JSXChild::Spread(expr) => self.visit_jsx_spread_child(expr),
-            JSXChild::Text(expr) => self.visit_jsx_text(expr),
+            JSXChild::Text(expr) => self.visit_jsx_string(expr),
         }
     }
 
@@ -1105,8 +1105,8 @@ pub trait Visit<'a>: Sized {
         self.visit_expression(&child.expression);
     }
 
-    fn visit_jsx_text(&mut self, child: &JSXText) {
-        let kind = AstKind::JSXText(self.alloc(child));
+    fn visit_jsx_string(&mut self, child: &JSXString) {
+        let kind = AstKind::JSXString(self.alloc(child));
         self.enter_node(kind);
         self.leave_node(kind);
     }

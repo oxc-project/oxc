@@ -9,5 +9,5 @@ mod span;
 pub use crate::{
     atom::Atom,
     source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS},
-    span::{GetSpan, Span},
+    span::{GetSpan, Span, SPAN},
 };
