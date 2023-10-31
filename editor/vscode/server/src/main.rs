@@ -63,10 +63,10 @@ impl LanguageServer for Backend {
             // let result = self.server_linter.run_full(root_uri);
 
             // self.publish_all_diagnostics(
-                // &result
-                    // .into_iter()
-                    // .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
-                    // .collect(),
+            // &result
+            // .into_iter()
+            // .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
+            // .collect(),
             // )
             // .await;
         }
