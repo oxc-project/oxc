@@ -279,7 +279,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license-url]: ./LICENSE
+[license-url]: https://github.com/web-infra-dev/oxc/blob/main/LICENSE
 [ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
 [ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
