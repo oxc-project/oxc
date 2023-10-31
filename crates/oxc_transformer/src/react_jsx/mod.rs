@@ -26,6 +26,7 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
+    jsx_runtime_importer: String,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -69,10 +70,15 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 impl<'a> ReactJsx<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: ReactJsxOptions) -> Self {
         let imports = ast.new_vec();
+
+        let import_source = options.import_source.as_deref().unwrap_or("react");
+        let jsx_runtime_importer = format!("{import_source}/jsx-runtime");
+
         Self {
             ast,
             options,
             imports,
+            jsx_runtime_importer,
             import_jsx: false,
             import_jsxs: false,
             import_fragment: false,
@@ -124,29 +130,24 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn get_jsx_runtime_importer(&self) -> String {
-        let import_source = self.options.import_source.as_deref().unwrap_or("react");
-        format!("{import_source}/jsx-runtime")
-    }
-
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", &self.get_jsx_runtime_importer());
+            self.add_import_statement("jsx", "_jsx", &self.jsx_runtime_importer);
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", &self.get_jsx_runtime_importer());
+            self.add_import_statement("jsxs", "_jsxs", &self.jsx_runtime_importer);
         }
     }
 
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", &self.get_jsx_runtime_importer());
+            self.add_import_statement("Fragment", "_Fragment", &self.jsx_runtime_importer);
             self.add_import_jsx();
         }
     }
