@@ -8,10 +8,10 @@ use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
-        ExpressionStatement, MemberExpression, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, Program, PropertyKey, Statement, StringLiteral,
-        TaggedTemplateExpression, TemplateLiteral,
+        Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
+        MemberExpression, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
+        TemplateLiteral,
     },
     Visit,
 };
@@ -38,6 +38,9 @@ const UNICORN_TEST_PATH: &str =
 const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
 
+const JSX_A11Y_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules";
+
 struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
@@ -45,13 +48,10 @@ struct TestCase<'a> {
 }
 
 impl<'a> TestCase<'a> {
-    fn new(source_text: &str, arg: &'a ArrayExpressionElement<'a>) -> Option<Self> {
+    fn new(source_text: &str, arg: &'a Expression<'a>) -> Self {
         let mut test_case = Self { source_text: source_text.to_string(), code: None, config: None };
-        if let ArrayExpressionElement::Expression(expr) = arg {
-            test_case.visit_expression(expr);
-            return Some(test_case);
-        }
-        None
+        test_case.visit_expression(arg);
+        test_case
     }
 
     fn code(&self, need_config: bool) -> String {
@@ -74,9 +74,9 @@ impl<'a> TestCase<'a> {
                     |config| format!("Some(serde_json::json!({config}))"),
                 );
                 if need_config {
-                    format!("(\"{code}\", {config})")
+                    format!("(r#\"{code}\"#, {config})")
                 } else {
-                    format!("\"{code}\"")
+                    format!("r#\"{code}\"#")
                 }
             })
             .unwrap_or_default()
@@ -243,8 +243,8 @@ impl Context {
 
 struct State<'a> {
     source_text: &'a str,
-    valid_tests: Vec<&'a ArrayExpression<'a>>,
-    invalid_tests: Vec<&'a ArrayExpression<'a>>,
+    valid_tests: Vec<&'a Expression<'a>>,
+    invalid_tests: Vec<&'a Expression<'a>>,
 }
 
 impl<'a> State<'a> {
@@ -253,18 +253,13 @@ impl<'a> State<'a> {
     }
 
     fn pass_cases(&self) -> Vec<TestCase> {
-        self.valid_tests
-            .iter()
-            .flat_map(|array_expr| (&array_expr.elements).into_iter())
-            .filter_map(|arg| TestCase::new(self.source_text, arg))
-            .collect::<Vec<_>>()
+        self.valid_tests.iter().map(|arg| TestCase::new(self.source_text, arg)).collect::<Vec<_>>()
     }
 
     fn fail_cases(&self) -> Vec<TestCase> {
         self.invalid_tests
             .iter()
-            .flat_map(|array_expr| (&array_expr.elements).into_iter())
-            .filter_map(|arg| TestCase::new(self.source_text, arg))
+            .map(|arg| TestCase::new(self.source_text, arg))
             .collect::<Vec<_>>()
     }
 }
@@ -308,23 +303,58 @@ impl<'a> Visit<'a> for State<'a> {
         match ident.name.as_str() {
             "valid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
-                    self.valid_tests.push(self.alloc(array_expr));
+                    let array_expr = self.alloc(array_expr);
+                    for arg in &array_expr.elements {
+                        if let ArrayExpressionElement::Expression(expr) = arg {
+                            self.valid_tests.push(expr);
+                        }
+                    }
                 }
 
-                // for eslint-plugin-react
+                // for eslint-plugin-jsx-a11y
+                if let Some(args) = find_parser_arguments(&prop.value).map(|args| self.alloc(args))
+                {
+                    for arg in args {
+                        if let Argument::Expression(expr) = arg {
+                            self.valid_tests.push(expr);
+                        }
+                    }
+                }
+
                 if let Expression::CallExpression(call_expr) = &prop.value {
                     if let Expression::MemberExpression(_) = &call_expr.callee {
+                        // for eslint-plugin-react
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
                         {
-                            self.valid_tests.push(self.alloc(array_expr));
+                            let array_expr = self.alloc(array_expr);
+                            for arg in &array_expr.elements {
+                                if let ArrayExpressionElement::Expression(expr) = arg {
+                                    self.valid_tests.push(expr);
+                                }
+                            }
                         }
                     }
                 }
             }
             "invalid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
-                    self.invalid_tests.push(self.alloc(array_expr));
+                    let array_expr = self.alloc(array_expr);
+                    for arg in &array_expr.elements {
+                        if let ArrayExpressionElement::Expression(expr) = arg {
+                            self.invalid_tests.push(expr);
+                        }
+                    }
+                }
+
+                // for eslint-plugin-jsx-a11y
+                if let Some(args) = find_parser_arguments(&prop.value).map(|args| self.alloc(args))
+                {
+                    for arg in args {
+                        if let Argument::Expression(expr) = arg {
+                            self.invalid_tests.push(expr);
+                        }
+                    }
                 }
 
                 // for eslint-plugin-react
@@ -333,13 +363,46 @@ impl<'a> Visit<'a> for State<'a> {
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
                         {
-                            self.invalid_tests.push(self.alloc(array_expr));
+                            let array_expr = self.alloc(array_expr);
+                            for arg in &array_expr.elements {
+                                if let ArrayExpressionElement::Expression(expr) = arg {
+                                    self.invalid_tests.push(expr);
+                                }
+                            }
                         }
                     }
                 }
             }
             _ => {}
         }
+    }
+}
+
+fn find_parser_arguments<'a, 'b>(
+    expr: &'b Expression<'a>,
+) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
+    let Expression::CallExpression(call_expr) = expr else { return None };
+    let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+        return None;
+    };
+    let MemberExpression::StaticMemberExpression(StaticMemberExpression {
+        object, property, ..
+    }) = &member_expr.0
+    else {
+        return None;
+    };
+    match (object, call_expr.arguments.first()) {
+        (Expression::Identifier(iden), Some(Argument::Expression(arg)))
+            if iden.name == "parsers" && property.name == "all" =>
+        {
+            if let Expression::CallExpression(call_expr) = arg {
+                if let Expression::MemberExpression(_) = &call_expr.callee {
+                    return Some(&call_expr.arguments);
+                }
+            }
+            None
+        }
+        _ => find_parser_arguments(object),
     }
 }
 
@@ -350,6 +413,7 @@ pub enum RuleKind {
     Typescript,
     Unicorn,
     React,
+    JSXA11y,
 }
 
 impl RuleKind {
@@ -359,6 +423,7 @@ impl RuleKind {
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
             "react" => Self::React,
+            "jsx-a11y" => Self::JSXA11y,
             _ => Self::ESLint,
         }
     }
@@ -372,6 +437,7 @@ impl Display for RuleKind {
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
             Self::React => write!(f, "eslint-plugin-react"),
+            Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
         }
     }
 }
@@ -391,6 +457,7 @@ fn main() {
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
     };
 
     println!("Reading test file from {rule_test_path}");

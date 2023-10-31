@@ -35,6 +35,7 @@ impl<'a> Template<'a> {
             RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
             RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
             RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
+            RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
         };
 
         let out_path = path.join(format!("{}.rs", self.context.snake_rule_name));
