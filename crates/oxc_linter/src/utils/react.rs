@@ -14,16 +14,30 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     false
 }
 
-pub fn has_jsx_prop<'a>(
-    node: &'a JSXOpeningElement<'a>,
-    target_prop: &str,
-) -> Option<&'a JSXAttributeItem<'a>> {
+pub fn has_jsx_prop<'a, 'b>(
+    node: &'b JSXOpeningElement<'a>,
+    target_prop: &'b str,
+) -> Option<&'b JSXAttributeItem<'a>> {
     node.attributes.iter().find(|attr| match attr {
         JSXAttributeItem::SpreadAttribute(_) => false,
         JSXAttributeItem::Attribute(attr) => {
             let JSXAttributeName::Identifier(name) = &attr.name else { return false };
 
             name.name.as_str() == target_prop
+        }
+    })
+}
+
+pub fn has_jsx_prop_lowercase<'a, 'b>(
+    node: &'b JSXOpeningElement<'a>,
+    target_prop: &'b str,
+) -> Option<&'b JSXAttributeItem<'a>> {
+    node.attributes.iter().find(|attr| match attr {
+        JSXAttributeItem::SpreadAttribute(_) => false,
+        JSXAttributeItem::Attribute(attr) => {
+            let JSXAttributeName::Identifier(name) = &attr.name else { return false };
+
+            name.name.as_str().to_lowercase() == target_prop
         }
     })
 }

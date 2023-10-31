@@ -155,6 +155,10 @@ mod unicorn {
     pub mod throw_new_error;
 }
 
+mod jsx_a11y {
+    pub mod alt_text;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -280,8 +284,9 @@ oxc_macros::declare_all_lint_rules! {
     react::no_render_return_value,
     react::no_string_refs,
     react::no_unescaped_entities,
-    import::default,
     import::named,
     import::no_cycle,
     import::no_self_import,
+    import::default,
+    jsx_a11y::alt_text
 }
