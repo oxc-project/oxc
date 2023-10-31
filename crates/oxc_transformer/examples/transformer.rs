@@ -1,4 +1,4 @@
-use std::{cell::RefCell, env, path::Path, rc::Rc};
+use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -36,9 +36,6 @@ fn main() {
     println!("{printed}\n");
 
     let semantic = SemanticBuilder::new(&source_text, source_type).build(&ret.program).semantic;
-    let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-    let symbols = Rc::new(RefCell::new(symbols));
-    let scopes = Rc::new(RefCell::new(scopes));
 
     let program = allocator.alloc(ret.program);
     let transform_options = TransformOptions {
@@ -49,7 +46,7 @@ fn main() {
         }),
         ..TransformOptions::default()
     };
-    Transformer::new(&allocator, source_type, &symbols, &scopes, transform_options).build(program);
+    Transformer::new(&allocator, source_type, semantic, transform_options).build(program);
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
     println!("Transformed:\n");
     println!("{printed}");

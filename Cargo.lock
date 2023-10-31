@@ -1871,6 +1871,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.2.0"
 dependencies = [
+ "lazy_static",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -1878,6 +1879,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "regex",
  "serde",
 ]
 
