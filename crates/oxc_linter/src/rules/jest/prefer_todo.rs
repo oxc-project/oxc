@@ -119,7 +119,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
             let Some(func_body) = &func.body else {
                 return false;
             };
-            return func_body.is_empty();
+            func_body.is_empty()
         }
         _ => false,
     }
