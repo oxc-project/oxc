@@ -1,5 +1,14 @@
-use oxc_ast::{AstKind, ast::{JSXOpeningElement, JSXElementName, JSXAttributeItem, JSXAttributeValue, JSXExpressionContainer, JSXExpression, JSXElement, JSXChild}};
-use oxc_diagnostics::{miette::{self, Diagnostic}, thiserror::Error};
+use oxc_ast::{
+    ast::{
+        JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXExpressionContainer, JSXOpeningElement,
+    },
+    AstKind,
+};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -14,7 +23,10 @@ enum AltTextDiagnostic {
     MissingAltProp(#[label] Span),
 
     #[error("eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.")]
-    #[diagnostic(severity(warning), help("Must have meaningful value for `alt` prop. Use alt=\"\" for presentational images."))]
+    #[diagnostic(
+        severity(warning),
+        help("Must have meaningful value for `alt` prop. Use alt=\"\" for presentational images.")
+    )]
     MissingAltValue(#[label] Span),
 
     #[error("eslint-plugin-jsx-a11y(alt-text): Missing value for aria-label attribute.")]
@@ -22,7 +34,10 @@ enum AltTextDiagnostic {
     AriaLabelValue(#[label] Span),
 
     #[error("eslint-plugin-jsx-a11y(alt-text): Missing value for aria-labelledby attribute.")]
-    #[diagnostic(severity(warning), help("The alt attribute is preferred over aria-labelledby for images."))]
+    #[diagnostic(
+        severity(warning),
+        help("The alt attribute is preferred over aria-labelledby for images.")
+    )]
     AriaLabelledByValue(#[label] Span),
 
     #[error("eslint-plugin-jsx-a11y(alt-text): ARIA used where native HTML could suffice.")]
@@ -64,9 +79,7 @@ impl std::default::Default for AltText {
     }
 }
 
-fn get_prop_value<'a, 'b>(
-    item: &'b JSXAttributeItem<'a>,
-) -> Option<&'b JSXAttributeValue<'a>> {
+fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
     if let JSXAttributeItem::Attribute(attr) = item {
         attr.0.value.as_ref()
     } else {
@@ -74,9 +87,7 @@ fn get_prop_value<'a, 'b>(
     }
 }
 
-fn get_literal_prop_value<'a>(
-    item: &'a JSXAttributeItem<'_>,
-) -> Option<&'a str> {
+fn get_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
     get_prop_value(item).and_then(|v| {
         if let JSXAttributeValue::StringLiteral(s) = v {
             Some(s.value.as_str())
@@ -89,55 +100,53 @@ fn get_literal_prop_value<'a>(
 fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
     match get_prop_value(item) {
         None => false,
-        Some(
-            JSXAttributeValue::ExpressionContainer(
-                JSXExpressionContainer { expression: JSXExpression::Expression(expr), .. }
-            )
-        ) => !expr.is_null_or_undefined(),
+        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        })) => !expr.is_null_or_undefined(),
         _ => true,
     }
 }
 
 fn is_presentation_role<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
-    get_literal_prop_value(item).map_or(false, |value| {
-        value == "presentation" || value == "none"
-    })
+    get_literal_prop_value(item).map_or(false, |value| value == "presentation" || value == "none")
 }
 
 fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
     match get_prop_value(item) {
         None => false,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value.is_empty() => false,
-        Some(JSXAttributeValue::ExpressionContainer(
-            JSXExpressionContainer { expression: JSXExpression::Expression(expr), .. }
-        )) => !expr.is_undefined(),
+        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        })) => !expr.is_undefined(),
         _ => true,
     }
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
 fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
-    node.children.iter().any(|child| {
-        match child {
-            JSXChild::Text(text) => !text.value.is_empty(),
-            JSXChild::Fragment(_) => true,
-            JSXChild::Element(el) => {
-                let is_hidden_from_screen_reader = has_jsx_prop_lowercase(&el.opening_element, "aria-hidden")
-                    .map_or(false, |v| match get_prop_value(v) {
+    node.children.iter().any(|child| match child {
+        JSXChild::Text(text) => !text.value.is_empty(),
+        JSXChild::Fragment(_) => true,
+        JSXChild::Element(el) => {
+            let is_hidden_from_screen_reader =
+                has_jsx_prop_lowercase(&el.opening_element, "aria-hidden").map_or(false, |v| {
+                    match get_prop_value(v) {
                         None => true,
                         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
                         _ => false,
-                    });
-                !is_hidden_from_screen_reader
-            },
-            JSXChild::ExpressionContainer(
-                JSXExpressionContainer { expression: JSXExpression::Expression(expr), .. }
-            ) => {
-                !expr.is_undefined()
-            },
-            _ => false,
+                    }
+                });
+            !is_hidden_from_screen_reader
         }
-    }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some() || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
+        JSXChild::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        }) => !expr.is_undefined(),
+        _ => false,
+    }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
+        || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
 }
 
 fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
@@ -170,9 +179,15 @@ fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     ctx.diagnostic(AltTextDiagnostic::MissingAltProp(node.span));
 }
 
-fn object_rule<'a>(node: &'a JSXOpeningElement<'a>, parent: &'a JSXElement<'a>, ctx: &LintContext<'a>) {
-    let has_aria_label = has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby = has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+fn object_rule<'a>(
+    node: &'a JSXOpeningElement<'a>,
+    parent: &'a JSXElement<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let has_aria_label =
+        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+    let has_aria_labeledby =
+        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labeledby;
     let has_title_attr = has_jsx_prop_lowercase(node, "title")
         .and_then(get_literal_prop_value)
@@ -185,31 +200,45 @@ fn object_rule<'a>(node: &'a JSXOpeningElement<'a>, parent: &'a JSXElement<'a>, 
 }
 
 fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
-    let has_aria_label = has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby = has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+    let has_aria_label =
+        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+    let has_aria_labeledby =
+        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labeledby;
     if has_label {
         return;
     }
-    has_jsx_prop_lowercase(node, "alt").map_or_else(|| {
-        ctx.diagnostic(AltTextDiagnostic::Area(node.span));
-    }, |alt_prop| if !is_valid_alt_prop(alt_prop) {
-        ctx.diagnostic(AltTextDiagnostic::Area(node.span));
-    });
+    has_jsx_prop_lowercase(node, "alt").map_or_else(
+        || {
+            ctx.diagnostic(AltTextDiagnostic::Area(node.span));
+        },
+        |alt_prop| {
+            if !is_valid_alt_prop(alt_prop) {
+                ctx.diagnostic(AltTextDiagnostic::Area(node.span));
+            }
+        },
+    );
 }
 
 fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
-    let has_aria_label = has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby = has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
+    let has_aria_label =
+        has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
+    let has_aria_labeledby =
+        has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labeledby;
     if has_label {
         return;
     }
-    has_jsx_prop_lowercase(node, "alt").map_or_else(|| {
-        ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
-    }, |alt_prop| if !is_valid_alt_prop(alt_prop) {
-        ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
-    });
+    has_jsx_prop_lowercase(node, "alt").map_or_else(
+        || {
+            ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
+        },
+        |alt_prop| {
+            if !is_valid_alt_prop(alt_prop) {
+                ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
+            }
+        },
+    );
 }
 
 declare_oxc_lint!(
@@ -269,8 +298,12 @@ impl Rule for AltText {
                 (&mut alt_text.area, "area"),
                 (&mut alt_text.input_type_image, "input[type=\"image\"]"),
             ] {
-                if let (Some(tags), Some(elements)) = (tags, config.get(field).and_then(|v| v.as_array())) {
-                    tags.extend(elements.iter().filter_map(|v| v.as_str().map(ToString::to_string)));
+                if let (Some(tags), Some(elements)) =
+                    (tags, config.get(field).and_then(|v| v.as_array()))
+                {
+                    tags.extend(
+                        elements.iter().filter_map(|v| v.as_str().map(ToString::to_string)),
+                    );
                 }
             }
         }
@@ -293,7 +326,7 @@ impl Rule for AltText {
         // <object>
         if let Some(custom_tags) = &self.object {
             if name == "object" || custom_tags.iter().any(|i| i == name) {
-                let maybe_parent = ctx.nodes().parent_node(node.id()).map(|n| n.kind());
+                let maybe_parent = ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
                 if let Some(AstKind::JSXElement(parent)) = maybe_parent {
                     object_rule(jsx_el, parent, ctx);
                     return;
@@ -311,14 +344,13 @@ impl Rule for AltText {
 
         // <input type="image">
         if let Some(custom_tags) = &self.input_type_image {
-            let has_input_with_type_image = name.to_lowercase() == "input" && has_jsx_prop_lowercase(jsx_el, "type").map_or(false, |v| {
-                get_literal_prop_value(v).map_or(false, |v| v == "image")
-            });
+            let has_input_with_type_image = name.to_lowercase() == "input"
+                && has_jsx_prop_lowercase(jsx_el, "type")
+                    .map_or(false, |v| get_literal_prop_value(v).map_or(false, |v| v == "image"));
             if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
                 input_type_image_rule(jsx_el, ctx);
             }
         }
-
     }
 }
 
@@ -334,7 +366,6 @@ fn test() {
             "input[type=\"image\"]": ["InputImage"],
         }])
     }
-
 
     let pass = vec![
         (r#"<img alt="foo" />;"#, None),
@@ -446,7 +477,7 @@ fn test() {
         (r#"<img src="xyz" />"#, None),
         (r#"<img role />"#, None),
         (r#"<img {...this.props} />"#, None),
-        // TODO: Could support if get_prop_value could evaluate 
+        // TODO: Could support if get_prop_value could evaluate
         // some logical expressions
         // (r#"<img alt={false || false} />"#, None),
         (r#"<img alt={undefined} role="presentation" />;"#, None),
