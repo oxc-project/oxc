@@ -159,7 +159,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
         formatter.print_str(ident.name.as_bytes());
         formatter.print_str(b".todo(");
     } else if let Expression::MemberExpression(mem_expr) = &expr.callee {
-        match &**mem_expr {
+        match &mem_expr.0 {
             MemberExpression::ComputedMemberExpression(expr) => {
                 if let Expression::Identifier(ident) = &expr.object {
                     formatter.print_str(ident.name.as_bytes());
