@@ -113,28 +113,16 @@ fn is_string_type(arg: &Argument) -> bool {
 }
 
 fn is_empty_function(expr: &CallExpression) -> bool {
-    let mut is_empty = false;
-
-    for argument in &expr.arguments {
-        match argument {
-            Argument::Expression(Expression::ArrowExpression(arrow)) => {
-                is_empty = arrow.body.is_empty();
-                break;
-            }
-            Argument::Expression(Expression::FunctionExpression(func)) => {
-                let Some(func_body) = &func.body else {
-                    continue;
-                };
-                if func_body.is_empty() {
-                    is_empty = true;
-                    break;
-                }
-            }
-            _ => continue,
+    match &expr.arguments[1] {
+        Argument::Expression(Expression::ArrowExpression(arrow)) => arrow.body.is_empty(),
+        Argument::Expression(Expression::FunctionExpression(func)) => {
+            let Some(func_body) = &func.body else {
+                return false;
+            };
+            return func_body.is_empty();
         }
+        _ => false,
     }
-
-    is_empty
 }
 
 fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
@@ -159,7 +147,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
         formatter.print_str(ident.name.as_bytes());
         formatter.print_str(b".todo(");
     } else if let Expression::MemberExpression(mem_expr) = &expr.callee {
-        match &mem_expr.0 {
+        match &**mem_expr {
             MemberExpression::ComputedMemberExpression(expr) => {
                 if let Expression::Identifier(ident) = &expr.object {
                     formatter.print_str(ident.name.as_bytes());
