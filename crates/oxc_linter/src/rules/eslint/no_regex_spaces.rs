@@ -46,19 +46,19 @@ impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
-                if let Some(span) = self.find_literal_to_report(&lit) {
+                if let Some(span) = Self::find_literal_to_report(lit) {
                     ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // /a  b/
                 }
             }
 
-            AstKind::CallExpression(expr) if self.is_regexp_call_expression(expr) => {
-                if let Some(span) = self.find_expr_to_report(&expr.arguments) {
+            AstKind::CallExpression(expr) if Self::is_regexp_call_expression(expr) => {
+                if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
                     ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // RegExp('a  b')
                 }
             }
 
-            AstKind::NewExpression(expr) if self.is_regexp_new_expression(expr) => {
-                if let Some(span) = self.find_expr_to_report(&expr.arguments) {
+            AstKind::NewExpression(expr) if Self::is_regexp_new_expression(expr) => {
+                if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
                     ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // new RegExp('a  b')
                 }
             }
@@ -69,78 +69,73 @@ impl Rule for NoRegexSpaces {
 }
 
 impl NoRegexSpaces {
-    fn find_literal_to_report(&self, lit: &RegExpLiteral) -> Option<Span> {
-        if self.has_exempted_char_class(&lit.regex.pattern) {
+    fn find_literal_to_report(lit: &RegExpLiteral) -> Option<Span> {
+        if Self::has_exempted_char_class(&lit.regex.pattern) {
             return None;
         }
 
-        if self.has_target_consecutive_spaces(&lit.regex.pattern) {
+        if Self::has_target_consecutive_spaces(&lit.regex.pattern) {
             return Some(lit.span);
         }
 
         None
     }
 
-    fn find_expr_to_report(&self, args: &Vec<'_, Argument<'_>>) -> Option<Span> {
-        if let Some(arg) = args.get(1) {
-            if let Argument::Expression(expr) = arg {
-                if !expr.is_string_literal() {
-                    return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
-                }
+    fn find_expr_to_report(args: &Vec<'_, Argument<'_>>) -> Option<Span> {
+        if let Some(Argument::Expression(expr)) = args.get(1) {
+            if !expr.is_string_literal() {
+                return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
             }
         }
 
-        if let Some(arg) = args.get(0) {
-            if let Argument::Expression(Expression::StringLiteral(pattern)) = arg {
-                if self.has_exempted_char_class(&pattern.value) {
-                    return None; // skip spaces inside char class, e.g. RegExp('[  ]')
-                }
+        if let Some(Argument::Expression(Expression::StringLiteral(pattern))) = args.get(0) {
+            if Self::has_exempted_char_class(&pattern.value) {
+                return None; // skip spaces inside char class, e.g. RegExp('[  ]')
+            }
 
-                if !self.has_unescaped_consecutive_spaces(&pattern.value) {
-                    return None; // skip if not literally consecutive, e.g. RegExp(' \ ')
-                }
+            if !Self::has_unescaped_consecutive_spaces(&pattern.value) {
+                return None; // skip if not literally consecutive, e.g. RegExp(' \ ')
+            }
 
-                if self.has_target_consecutive_spaces(&pattern.value) {
-                    return Some(pattern.span);
-                }
+            if Self::has_target_consecutive_spaces(&pattern.value) {
+                return Some(pattern.span);
             }
         }
 
         None
     }
 
-    fn has_unescaped_consecutive_spaces(&self, pattern: &Atom) -> bool {
+    fn has_unescaped_consecutive_spaces(pattern: &Atom) -> bool {
         regex::Regex::new(" {2}").unwrap().is_match(pattern)
     }
 
-    fn has_target_consecutive_spaces(&self, pattern: &Atom) -> bool {
+    fn has_target_consecutive_spaces(pattern: &Atom) -> bool {
         // https://github.com/eslint/eslint/blob/485ec7d08ed2040c292f52bf9b9152f6c8ef4809/lib/rules/no-regex-spaces.js#L93
         regex::Regex::new("( {2,})(?: [+*{?]|[^+*{?]|$)").unwrap().is_match(pattern)
     }
 
-    fn is_regexp_new_expression(&self, expr: &NewExpression<'_>) -> bool {
+    fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
         expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
     }
 
-    fn is_regexp_call_expression(&self, expr: &CallExpression<'_>) -> bool {
+    fn is_regexp_call_expression(expr: &CallExpression<'_>) -> bool {
         expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
     }
 
-    fn has_exempted_char_class(&self, input: &str) -> bool {
-        self.has_char_class(input) && self.has_no_consecutive_spaces_outside_char_class(input)
+    fn has_exempted_char_class(input: &str) -> bool {
+        Self::has_char_class(input) && Self::has_no_consecutive_spaces_outside_char_class(input)
     }
 
-    fn has_char_class(&self, input: &str) -> bool {
+    fn has_char_class(input: &str) -> bool {
         let mut in_character_class = false;
 
         for c in input.chars() {
             match c {
                 '[' => {
-                    if !in_character_class {
-                        in_character_class = true;
-                    } else {
+                    if in_character_class {
                         return true;
                     }
+                    in_character_class = true;
                 }
                 ']' => {
                     if in_character_class {
@@ -160,7 +155,7 @@ impl NoRegexSpaces {
         false
     }
 
-    fn has_no_consecutive_spaces_outside_char_class(&self, input: &str) -> bool {
+    fn has_no_consecutive_spaces_outside_char_class(input: &str) -> bool {
         let mut inside_class = false;
 
         for (i, c) in input.chars().enumerate() {
