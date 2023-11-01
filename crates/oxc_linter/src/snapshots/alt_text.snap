@@ -109,6 +109,13 @@ expression: alt_text
 
   ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
    ╭─[alt_text.tsx:1:1]
+ 1 │ <object><div aria-hidden /></object>
+   · ────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
  1 │ <object title={undefined} />
    · ────────────────────────────
    ╰────
@@ -347,6 +354,13 @@ expression: alt_text
 
   ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
    ╭─[alt_text.tsx:1:1]
+ 1 │ <Object><div aria-hidden /></Object>
+   · ────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
  1 │ <Object title={undefined} />
    · ────────────────────────────
    ╰────
@@ -419,6 +433,13 @@ expression: alt_text
    ╭─[alt_text.tsx:1:1]
  1 │ <InputImage {...this.props} />
    · ──────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Input type="image" />
+   · ──────────────────────
    ╰────
   help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
 

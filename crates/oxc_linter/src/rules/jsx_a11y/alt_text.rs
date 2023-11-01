@@ -67,15 +67,11 @@ impl std::default::Default for AltText {
 fn get_prop_value<'a, 'b>(
     item: &'b JSXAttributeItem<'a>,
 ) -> Option<&'b JSXAttributeValue<'a>> {
-    match item {
-        JSXAttributeItem::Attribute(attr) => {
-            attr.0.value.as_ref()
-        },
-        JSXAttributeItem::SpreadAttribute(_) => {
-            None
-        },
+    if let JSXAttributeItem::Attribute(attr) = item {
+        attr.0.value.as_ref()
+    } else {
+        None
     }
-
 }
 
 fn get_literal_prop_value<'a>(
@@ -90,15 +86,15 @@ fn get_literal_prop_value<'a>(
     })
 }
 
-fn prop_value_is_none_or_undefined(item: &JSXAttributeItem<'_>) -> bool {
+fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
     match get_prop_value(item) {
-        None => true,
+        None => false,
         Some(
             JSXAttributeValue::ExpressionContainer(
                 JSXExpressionContainer { expression: JSXExpression::Expression(expr), .. }
             )
-        ) => expr.is_undefined(),
-        _ => false,
+        ) => !expr.is_null_or_undefined(),
+        _ => true,
     }
 }
 
@@ -127,15 +123,10 @@ fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
             JSXChild::Fragment(_) => true,
             JSXChild::Element(el) => {
                 let is_hidden_from_screen_reader = has_jsx_prop_lowercase(&el.opening_element, "aria-hidden")
-                    .and_then(get_prop_value)
-                    .map_or(false, |value| {
-                        match value {
-                            JSXAttributeValue::StringLiteral(s) => s.value == "true",
-                            JSXAttributeValue::ExpressionContainer(
-                                JSXExpressionContainer { expression: JSXExpression::Expression(expr), .. }
-                            ) => expr.get_boolean_value().unwrap_or(false),
-                            _ => false,
-                        }
+                    .map_or(false, |v| match get_prop_value(v) {
+                        None => true,
+                        Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
+                        _ => false,
                     });
                 !is_hidden_from_screen_reader
             },
@@ -151,7 +142,7 @@ fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
 
 fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     if let Some(alt_prop) = has_jsx_prop_lowercase(node, "alt") {
-        if prop_value_is_none_or_undefined(alt_prop) {
+        if !is_valid_alt_prop(alt_prop) {
             ctx.diagnostic(AltTextDiagnostic::MissingAltValue(node.span));
         }
         return;
@@ -202,7 +193,7 @@ fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     }
     has_jsx_prop_lowercase(node, "alt").map_or_else(|| {
         ctx.diagnostic(AltTextDiagnostic::Area(node.span));
-    }, |alt_prop| if prop_value_is_none_or_undefined(alt_prop) {
+    }, |alt_prop| if !is_valid_alt_prop(alt_prop) {
         ctx.diagnostic(AltTextDiagnostic::Area(node.span));
     });
 }
@@ -216,7 +207,7 @@ fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<
     }
     has_jsx_prop_lowercase(node, "alt").map_or_else(|| {
         ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
-    }, |alt_prop| if prop_value_is_none_or_undefined(alt_prop) {
+    }, |alt_prop| if !is_valid_alt_prop(alt_prop) {
         ctx.diagnostic(AltTextDiagnostic::InputTypeImage(node.span));
     });
 }
@@ -320,7 +311,7 @@ impl Rule for AltText {
 
         // <input type="image">
         if let Some(custom_tags) = &self.input_type_image {
-            let has_input_with_type_image = name == "input" && has_jsx_prop_lowercase(jsx_el, "type").map_or(false, |v| {
+            let has_input_with_type_image = name.to_lowercase() == "input" && has_jsx_prop_lowercase(jsx_el, "type").map_or(false, |v| {
                 get_literal_prop_value(v).map_or(false, |v| v == "image")
             });
             if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
@@ -401,7 +392,8 @@ fn test() {
         (r#"<input type="image" alt={altText} />"#, None),
         (r#"<InputImage />"#, None),
         (r#"<Input type="image" alt="" />"#, None),
-        (r#"<SomeComponent as="input" type="image" alt="" />"#, None),
+        // TODO: When polymorphic components are supported
+        // (r#"<SomeComponent as="input" type="image" alt="" />"#, None),
         (r#"<Thumbnail alt="foo" />;"#, Some(array())),
         (r#"<Thumbnail alt={"foo"} />;"#, Some(array())),
         (r#"<Thumbnail alt={alt} />;"#, Some(array())),
@@ -454,6 +446,8 @@ fn test() {
         (r#"<img src="xyz" />"#, None),
         (r#"<img role />"#, None),
         (r#"<img {...this.props} />"#, None),
+        // TODO: Could support if get_prop_value could evaluate 
+        // some logical expressions
         // (r#"<img alt={false || false} />"#, None),
         (r#"<img alt={undefined} role="presentation" />;"#, None),
         (r#"<img alt role="presentation" />;"#, None),
@@ -463,9 +457,10 @@ fn test() {
         (r#"<img aria-labelledby={undefined} />"#, None),
         (r#"<img aria-label="" />"#, None),
         (r#"<img aria-labelledby="" />"#, None),
+        // TODO: When polymorphic components are supported
         // (r#"<SomeComponent as="img" aria-label="" />"#, None),
         (r#"<object />"#, None),
-        // (r#"<object><div aria-hidden /></object>"#, None),
+        (r#"<object><div aria-hidden /></object>"#, None),
         (r#"<object title={undefined} />"#, None),
         (r#"<object aria-label="" />"#, None),
         (r#"<object aria-labelledby="" />"#, None),
@@ -500,7 +495,7 @@ fn test() {
         (r#"<Image src="xyz" />"#, Some(array())),
         (r#"<Image {...this.props} />"#, Some(array())),
         (r#"<Object />"#, Some(array())),
-        // (r#"<Object><div aria-hidden /></Object>"#, Some(array())),
+        (r#"<Object><div aria-hidden /></Object>"#, Some(array())),
         (r#"<Object title={undefined} />"#, Some(array())),
         (r#"<Area />"#, Some(array())),
         (r#"<Area alt />"#, Some(array())),
@@ -512,7 +507,7 @@ fn test() {
         (r#"<InputImage alt={undefined} />"#, Some(array())),
         (r#"<InputImage>Foo</InputImage>"#, Some(array())),
         (r#"<InputImage {...this.props} />"#, Some(array())),
-        // (r#"<Input type="image" />"#, None),
+        (r#"<Input type="image" />"#, None),
     ];
 
     Tester::new(AltText::NAME, pass, fail).test_and_snapshot();
