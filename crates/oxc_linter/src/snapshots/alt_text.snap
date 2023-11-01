@@ -1,0 +1,425 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: alt_text
+---
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img />;
+   · ───────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt />;
+   · ───────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt={undefined} />;
+   · ───────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img src="xyz" />
+   · ─────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img role />
+   · ────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img {...this.props} />
+   · ───────────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt={undefined} role="presentation" />;
+   · ───────────────────────────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img alt role="presentation" />;
+   · ───────────────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): ARIA used where native HTML could suffice.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img role="presentation" />;
+   · ───────────────────────────
+   ╰────
+  help: Prefer alt="" over presentational role. Native HTML attributes should be preferred for accessibility before resorting to ARIA attributes.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): ARIA used where native HTML could suffice.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img role="none" />;
+   · ───────────────────
+   ╰────
+  help: Prefer alt="" over presentational role. Native HTML attributes should be preferred for accessibility before resorting to ARIA attributes.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing value for aria-label attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img aria-label={undefined} />
+   · ──────────────────────────────
+   ╰────
+  help: The aria-label attribute must have a value. The alt attribute is preferred over aria-label for images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing value for aria-labelledby attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img aria-labelledby={undefined} />
+   · ───────────────────────────────────
+   ╰────
+  help: The alt attribute is preferred over aria-labelledby for images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing value for aria-label attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img aria-label="" />
+   · ─────────────────────
+   ╰────
+  help: The aria-label attribute must have a value. The alt attribute is preferred over aria-label for images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing value for aria-labelledby attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <img aria-labelledby="" />
+   · ──────────────────────────
+   ╰────
+  help: The alt attribute is preferred over aria-labelledby for images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object />
+   · ──────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object title={undefined} />
+   · ────────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object aria-label="" />
+   · ────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object aria-labelledby="" />
+   · ─────────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object aria-label={undefined} />
+   · ─────────────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <object aria-labelledby={undefined} />
+   · ──────────────────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area />
+   · ────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area alt />
+   · ────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area alt={undefined} />
+   · ────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area src="xyz" />
+   · ──────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area {...this.props} />
+   · ────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area aria-label="" />
+   · ──────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area aria-label={undefined} />
+   · ───────────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area aria-labelledby="" />
+   · ───────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <area aria-labelledby={undefined} />
+   · ────────────────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" />
+   · ──────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" alt />
+   · ──────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" alt={undefined} />
+   · ──────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image">Foo</input>
+   · ────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" {...this.props} />
+   · ──────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" aria-label="" />
+   · ────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" aria-label={undefined} />
+   · ─────────────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" aria-labelledby="" />
+   · ─────────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <input type="image" aria-labelledby={undefined} />
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Thumbnail />;
+   · ─────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Thumbnail alt />;
+   · ─────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Thumbnail alt={undefined} />;
+   · ─────────────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Thumbnail src="xyz" />
+   · ───────────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Thumbnail {...this.props} />
+   · ─────────────────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Image />;
+   · ─────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Image alt />;
+   · ─────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Image alt={undefined} />;
+   · ─────────────────────────
+   ╰────
+  help: Must have meaningful value for `alt` prop. Use alt="" for presentational images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Image src="xyz" />
+   · ───────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Image {...this.props} />
+   · ─────────────────────────
+   ╰────
+  help: Must have `alt` prop, either with meaningful text, or an empty string for decorative images.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Object />
+   · ──────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Object title={undefined} />
+   · ────────────────────────────
+   ╰────
+  help: Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Area />
+   · ────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Area alt />
+   · ────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Area alt={undefined} />
+   · ────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Area src="xyz" />
+   · ──────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <Area {...this.props} />
+   · ────────────────────────
+   ╰────
+  help: Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <InputImage />
+   · ──────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <InputImage alt />
+   · ──────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <InputImage alt={undefined} />
+   · ──────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <InputImage>Foo</InputImage>
+   · ────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(alt-text): Missing alternative text.
+   ╭─[alt_text.tsx:1:1]
+ 1 │ <InputImage {...this.props} />
+   · ──────────────────────────────
+   ╰────
+  help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
+
+
