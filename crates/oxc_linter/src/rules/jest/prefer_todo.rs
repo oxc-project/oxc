@@ -72,13 +72,14 @@ impl Rule for PreferTodo {
 
             if counts == 1 && !filter_todo_case(call_expr) {
                 let (content, span) = get_fix_content(call_expr);
-                ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(call_expr.span), || {
+                ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || {
                     Fix::new(content, span)
                 });
             }
 
             if is_empty_function(call_expr) {
-                ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
+                let (_, span) = get_fix_content(call_expr);
+                ctx.diagnostic_with_fix(EmptyTest(span), || {
                     let (content, span) = build_code(call_expr, ctx);
                     Fix::new(content, span)
                 });
@@ -117,9 +118,8 @@ fn is_empty_function(expr: &CallExpression) -> bool {
     for argument in &expr.arguments {
         match argument {
             Argument::Expression(Expression::ArrowExpression(arrow)) => {
-                if arrow.body.is_empty() {
-                    is_empty = true;
-                }
+                is_empty = arrow.body.is_empty();
+                break;
             }
             Argument::Expression(Expression::FunctionExpression(func)) => {
                 let Some(func_body) = &func.body else {
@@ -127,6 +127,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
                 };
                 if func_body.is_empty() {
                     is_empty = true;
+                    break;
                 }
             }
             _ => continue,
