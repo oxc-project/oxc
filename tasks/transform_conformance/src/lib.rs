@@ -220,7 +220,7 @@ impl TestRunnerEnv {
         )
     }
 
-    fn run_test(path: &Path) -> bool {
+    fn get_test_result(path: &Path) -> String {
         let output = Command::new("bun")
             .current_dir(path.parent().unwrap())
             .args(["test", path.file_name().unwrap().to_string_lossy().as_ref()])
@@ -228,8 +228,10 @@ impl TestRunnerEnv {
             .expect("Try install bun: https://bun.sh/docs/installation");
 
         let content = if output.stderr.is_empty() { &output.stdout } else { &output.stderr };
-        let content = String::from_utf8_lossy(content);
+        String::from_utf8_lossy(content).to_string()
+    }
 
-        content.contains("1 pass")
+    fn run_test(path: &Path) -> bool {
+        Self::get_test_result(path).contains("1 pass")
     }
 }

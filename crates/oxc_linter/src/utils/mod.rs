@@ -1,4 +1,5 @@
 mod jest;
 mod react;
+mod unicorn;
 
-pub use self::{jest::*, react::*};
+pub use self::{jest::*, react::*, unicorn::*};

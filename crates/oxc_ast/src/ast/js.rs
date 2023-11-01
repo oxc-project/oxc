@@ -376,6 +376,13 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+impl<'a> ObjectExpression<'a> {
+    pub fn has_proto(&self) -> bool {
+        use crate::syntax_directed_operations::PropName;
+        self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ObjectPropertyKind<'a> {
@@ -1827,6 +1834,10 @@ pub enum ModuleDeclaration<'a> {
 }
 
 impl<'a> ModuleDeclaration<'a> {
+    pub fn is_import(&self) -> bool {
+        matches!(self, Self::ImportDeclaration(_))
+    }
+
     pub fn is_export(&self) -> bool {
         matches!(
             self,

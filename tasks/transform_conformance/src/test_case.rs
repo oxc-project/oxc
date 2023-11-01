@@ -29,8 +29,7 @@ impl TestCaseKind {
     pub fn test(&self, filter: Option<&str>) -> bool {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
-            // not support filter yet.
-            Self::Exec(test_case) => test_case.test(None),
+            Self::Exec(test_case) => test_case.test(filter),
         }
     }
 
@@ -80,6 +79,8 @@ pub trait TestCase {
 
     fn test(&self, filter: Option<&str>) -> bool;
 
+    fn path(&self) -> &Path;
+
     fn transform_options(&self) -> TransformOptions {
         fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
@@ -88,7 +89,9 @@ pub trait TestCase {
         let options = self.options();
         TransformOptions {
             target: TransformTarget::ESNext,
-            react_jsx: Some(ReactJsxOptions::default()),
+            react_jsx: options
+                .get_plugin("transform-react-jsx")
+                .map(get_options::<ReactJsxOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             logical_assignment_operators: options
@@ -119,6 +122,14 @@ pub trait TestCase {
             .and_then(|o| o.get("version"))
             .is_some_and(|s| s == "legacy")
         {
+            return true;
+        }
+
+        // babel skip test cases that in a directory starting with a dot
+        // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
+        if self.path().parent().is_some_and(|p| {
+            p.file_name().is_some_and(|n| n.to_str().map_or(false, |s| s.starts_with('.')))
+        }) {
             return true;
         }
         false
@@ -158,6 +169,10 @@ impl TestCase for ConformanceTestCase {
 
     fn options(&self) -> &BabelOptions {
         &self.options
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.
@@ -208,7 +223,9 @@ impl TestCase for ConformanceTestCase {
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
-            println!("Output:\n");
+            println!("Options:");
+            println!("{:?}\n", self.transform_options());
+            println!("Expected:\n");
             println!("{output}\n");
             println!("Transformed:\n");
             println!("{transformed_code}\n");
@@ -257,15 +274,30 @@ impl TestCase for ExecTestCase {
         &self.options
     }
 
+    fn path(&self) -> &Path {
+        &self.path
+    }
+
     fn new<P: Into<PathBuf>>(path: P) -> Self {
         let path = path.into();
         let options = BabelOptions::from_path(path.parent().unwrap());
         Self { path, options }
     }
 
-    fn test(&self, _filter: Option<&str>) -> bool {
+    fn test(&self, filter: Option<&str>) -> bool {
+        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
+
         let result = self.transform(&self.path);
         let target_path = self.write_to_test_files(&result);
-        Self::run_test(&target_path)
+        let passed = Self::run_test(&target_path);
+        if filtered {
+            println!("input_path: {:?}", &self.path);
+            println!("target_path: {:?}", &target_path);
+            println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+            println!("Transformed:\n{result}\n");
+            println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
+        }
+
+        passed
     }
 }

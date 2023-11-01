@@ -42,7 +42,7 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferLogicalOperatorOverTernary,
-    correctness
+    style
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {

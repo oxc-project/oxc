@@ -517,10 +517,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                     p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
+                    p.print_soft_newline();
                 }
             }
             Self::ClassDeclaration(decl) => {
                 if !decl.is_typescript_syntax() {
+                    p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
                     p.print_soft_newline();
@@ -1076,6 +1078,9 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
             // <https://github.com/tc39/proposal-json-superset>
             LS => p.print_str(b"\\u2028"),
             PS => p.print_str(b"\\u2029"),
+            '\u{a0}' => {
+                p.print_str(b"\\xA0");
+            }
             _ => p.print_str(c.escape_default().to_string().as_bytes()),
         }
     }
@@ -2128,7 +2133,26 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, Decorator<'a>> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        fn need_wrap(expr: &Expression) -> bool {
+            match expr {
+                // "@foo"
+                Expression::Identifier(_) => false,
+                Expression::MemberExpression(member_expr) => {
+                    // "@foo.bar"
+                    // "@(foo['bar'])"
+                    matches!(&**member_expr, MemberExpression::ComputedMemberExpression(_))
+                }
+                Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
+                // "@(foo + bar)"
+                // "@(() => {})"
+                _ => true,
+            }
+        }
+
         p.print(b'@');
-        self.expression.gen_expr(p, Precedence::Assign, Context::default());
+        let wrap = need_wrap(&self.expression);
+        p.wrap(wrap, |p| {
+            self.expression.gen_expr(p, Precedence::Assign, Context::default());
+        });
     }
 }

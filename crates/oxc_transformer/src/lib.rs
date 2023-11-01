@@ -45,7 +45,6 @@ pub use crate::{
 pub struct Transformer<'a> {
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
-    #[allow(unused)]
     react_jsx: Option<ReactJsx<'a>>,
     regexp_flags: Option<RegexpFlags<'a>>,
     // es2022
@@ -104,6 +103,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
         self.typescript.as_mut().map(|t| t.transform_program(program));
         self.visit_statements(&mut program.body);
+
+        self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
     }
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
@@ -118,7 +119,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
-        // self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
+        self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
         self.regexp_flags.as_mut().map(|t| t.transform_expression(expr));
 
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));

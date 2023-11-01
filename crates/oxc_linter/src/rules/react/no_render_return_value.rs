@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.")]
-#[diagnostic(severity(warning))]
+#[diagnostic(severity(warning), help("Using the return value is a legacy feature."))]
 struct NoRenderReturnValueDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -64,16 +64,18 @@ impl Rule for NoRenderReturnValue {
                             .contains(ScopeFlags::Arrow);
 
                         if is_arrow_function {
-                            ctx.nodes().ancestors(parent_node.id()).skip(1).find(|node_id| {
-                                let parent_node = ctx.nodes().get_node(*node_id);
-                                matches!(parent_node.kind(), AstKind::ArrowExpression(_))
-                                    .then(|| {
+                            for node_id in ctx.nodes().ancestors(parent_node.id()).skip(1) {
+                                let node = ctx.nodes().get_node(node_id);
+                                if let AstKind::ArrowExpression(e) = node.kind() {
+                                    if e.expression {
                                         ctx.diagnostic(NoRenderReturnValueDiagnostic(
                                             ident.span.merge(&property_span),
                                         ));
-                                    })
-                                    .is_some()
-                            });
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -101,6 +103,7 @@ fn test() {
         ("var foo = React.render(<div />, root);", None),
         ("var foo = render(<div />, root)", None),
         ("var foo = ReactDom.renderder(<div />, root)", None),
+        ("export const foo = () => ({ destroy: ({ dom }) => { ReactDOM.unmountComponentAtNode(dom); } });", None),
     ];
 
     let fail = vec![

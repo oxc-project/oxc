@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: require_number_to_fixed_digits_argument
+---
+  ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
+   ╭─[require_number_to_fixed_digits_argument.tsx:1:1]
+ 1 │ const string = number.toFixed();
+   ·                              ──
+   ╰────
+  help: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+  ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
+   ╭─[require_number_to_fixed_digits_argument.tsx:1:1]
+ 1 │ const string = number.toFixed( /* comment */ );
+   ·                              ─────────────────
+   ╰────
+  help: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+  ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
+   ╭─[require_number_to_fixed_digits_argument.tsx:1:1]
+ 1 │ Number(1).toFixed()
+   ·                  ──
+   ╰────
+  help: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+  ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
+   ╭─[require_number_to_fixed_digits_argument.tsx:1:1]
+ 1 │ const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();
+   ·                                                                     ──
+   ╰────
+  help: It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.
+
+

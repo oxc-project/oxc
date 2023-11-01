@@ -84,6 +84,9 @@ new-unicorn-rule name:
 new-react-rule name:
   cargo run -p rulegen {{name}} react
 
+new-jsx-a11y-rule name:
+  cargo run -p rulegen {{name}} jsx-a11y
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote

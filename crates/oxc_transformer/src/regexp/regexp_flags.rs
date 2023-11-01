@@ -1,5 +1,5 @@
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SPAN};
 
 use std::rc::Rc;
 
@@ -57,15 +57,15 @@ impl<'a> RegexpFlags<'a> {
         if regex.flags.intersection(self.transform_flags).is_empty() {
             return;
         }
-        let ident = IdentifierReference::new(Span::default(), Atom::from("RegExp"));
+        let ident = IdentifierReference::new(SPAN, Atom::from("RegExp"));
         let callee = self.ast.identifier_reference_expression(ident);
-        let pattern = StringLiteral::new(Span::default(), Atom::from(regex.pattern.as_str()));
-        let flags = StringLiteral::new(Span::default(), Atom::from(regex.flags.to_string()));
+        let pattern = StringLiteral::new(SPAN, Atom::from(regex.pattern.as_str()));
+        let flags = StringLiteral::new(SPAN, Atom::from(regex.flags.to_string()));
         let pattern_literal = self.ast.literal_string_expression(pattern);
         let flags_literal = self.ast.literal_string_expression(flags);
         let mut arguments = self.ast.new_vec_with_capacity(2);
         arguments.push(Argument::Expression(pattern_literal));
         arguments.push(Argument::Expression(flags_literal));
-        *expr = self.ast.new_expression(Span::default(), callee, arguments, None);
+        *expr = self.ast.new_expression(SPAN, callee, arguments, None);
     }
 }

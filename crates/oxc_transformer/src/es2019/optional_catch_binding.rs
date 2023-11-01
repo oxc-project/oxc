@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::Span;
+use oxc_span::SPAN;
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -24,7 +24,7 @@ impl<'a> OptionalCatchBinding<'a> {
         if clause.param.is_some() {
             return;
         }
-        let binding_identifier = BindingIdentifier::new(Span::default(), "_unused".into());
+        let binding_identifier = BindingIdentifier::new(SPAN, "_unused".into());
         let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
         let binding_pattern = self.ast.binding_pattern(binding_pattern_kind, None, false);
         clause.param = Some(binding_pattern);

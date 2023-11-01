@@ -4,6 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -19,6 +20,7 @@ pub struct NoUselessEscape;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow unnecessary escape characters
     ///
     /// ### Why is this bad?
     ///
@@ -39,12 +41,14 @@ impl Rule for NoUselessEscape {
             {
                 check(
                     ctx,
+                    node.id(),
                     literal.span.start,
                     &check_regexp(literal.span.source_text(ctx.source_text())),
                 );
             }
             AstKind::StringLiteral(literal) => check(
                 ctx,
+                node.id(),
                 literal.span.start,
                 &check_string(literal.span.source_text(ctx.source_text())),
             ),
@@ -52,6 +56,7 @@ impl Rule for NoUselessEscape {
                 for template_element in &literal.quasis {
                     check(
                         ctx,
+                        node.id(),
                         template_element.span.start - 1,
                         &check_template(template_element.span.source_text(ctx.source_text())),
                     );
@@ -62,15 +67,25 @@ impl Rule for NoUselessEscape {
     }
 }
 
+fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
+    if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
+        return true;
+    }
+    false
+}
+
 #[allow(clippy::cast_possible_truncation)]
-fn check(ctx: &LintContext<'_>, start: u32, offsets: &[usize]) {
+fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
         let offset = start as usize + offset;
         let c = source_text[offset..].chars().next().unwrap();
         let offset = offset as u32;
         let len = c.len_utf8() as u32;
-        ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset - 1, offset + len)));
+
+        if !is_within_jsx_attribute_item(node_id, ctx) {
+            ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset - 1, offset + len)));
+        }
     }
 }
 
@@ -134,15 +149,16 @@ fn check_string(string: &str) -> Vec<usize> {
     let mut offsets = vec![];
     let quote_string = string.chars().next();
     let mut in_escape = false;
-    let mut offset = 0;
-    for c in string[1..].chars() {
-        offset += c.len_utf8();
+    let mut byte_offset = 0;
+
+    for c in string.chars() {
+        byte_offset += c.len_utf8();
         if in_escape {
             in_escape = false;
             match c {
                 c if c.is_ascii_digit() || quote_string == Some(c) => { /* noop */ }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(offset);
+                    offsets.push(byte_offset - c.len_utf8());
                 }
                 _ => {}
             }
@@ -161,27 +177,29 @@ fn check_template(string: &str) -> Vec<usize> {
     let mut offsets = vec![];
     let mut in_escape = false;
     let mut prev_char = '`';
-    let mut offset = 0;
+    let mut byte_offset = 1;
 
     let mut chars = string.chars().peekable();
+
     while let Some(c) = chars.next() {
-        offset += c.len_utf8();
+        byte_offset += c.len_utf8();
+
         if in_escape {
             in_escape = false;
             match c {
                 c if c.is_ascii_digit() || c == '`' => { /* noop */ }
                 '{' => {
                     if prev_char != '$' {
-                        offsets.push(offset);
+                        offsets.push(byte_offset - c.len_utf8());
                     }
                 }
                 '$' => {
                     if chars.peek().is_some_and(|c| *c != '{') {
-                        offsets.push(offset);
+                        offsets.push(byte_offset - c.len_utf8());
                     }
                 }
                 c if !VALID_STRING_ESCAPES.contains(c) => {
-                    offsets.push(offset);
+                    offsets.push(byte_offset - c.len_utf8());
                 }
                 _ => {}
             }
@@ -230,10 +248,10 @@ fn test() {
         "var foo = '\\f';",
         "var foo = '\\\n';",
         "var foo = '\\\r\n';",
-        // "<foo attr=\"\\d\"/>",
+        "<foo attr=\"\\d\"/>",
         "<div> Testing: \\ </div>",
         "<div> Testing: &#x5C </div>",
-        // "<foo attr='\\d'></foo>",
+        "<foo attr='\\d'></foo>",
         "<> Testing: \\ </>",
         "<> Testing: &#x5C </>",
         "var foo = `\\x123`",
@@ -355,6 +373,8 @@ fn test() {
         "`template literal with mixed linebreaks in line continuations \\\n\\\r\\\r\n\\and useless escape`",
         "`\\a```",
         r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;",
+        r#"var stringLiteralWithNextLine = "line 1\line 2";"#,
+        r"var stringLiteralWithNextLine = `line 1\line 2`;",
     ];
 
     Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();

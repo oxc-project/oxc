@@ -1069,7 +1069,10 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_jsx_expression_container(&mut self, expr: &JSXExpressionContainer<'a>) {
+        let kind = AstKind::JSXExpressionContainer(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_jsx_expression(&expr.expression);
+        self.leave_node(kind);
     }
 
     fn visit_jsx_expression(&mut self, expr: &JSXExpression<'a>) {

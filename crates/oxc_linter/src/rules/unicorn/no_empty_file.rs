@@ -49,7 +49,7 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        ctx.diagnostic(NoEmptyFileDiagnostic(program.span));
+        ctx.diagnostic(NoEmptyFileDiagnostic(Span::new(0, 0)));
     }
 }
 
