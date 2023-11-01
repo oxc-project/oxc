@@ -3,30 +3,33 @@
   "description": "oxc vscode extension",
   "license": "MIT",
   "version": "0.0.1",
+  "icon": "icon.png",
   "publisher": "oxc",
-	"displayName": "Oxc",
-  "categories": ["Linters"],
+  "displayName": "Oxc",
+  "bugs": {
+    "url": "https://github.com/web-infra-dev/oxc/issues"
+  },
   "repository": {
-		"type": "git",
-		"url": "https://github.com/web-infra-dev/oxc.git",
-		"directory": "editor/vscode"
-	},
-	"bugs": {
-		"url": "https://github.com/web-infra-dev/oxc/issues"
-	},
+    "type": "git",
+    "url": "https://github.com/web-infra-dev/oxc.git",
+    "directory": "editor/vscode"
+  },
+  "categories": ["Linters"],
   "keywords": [
     "linter",
-    "language-server",
     "oxc"
   ],
   "engines": {
     "vscode": "^1.80.0"
   },
-  "enabledApiProposals": [],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
   ],
-  "main": "./dist/extension.js",
+  "main": "./out/main.js",
   "contributes": {
     "commands": [
       {
@@ -47,32 +50,27 @@
     ]
   },
   "scripts": {
-    "ts-build": "tsc -b",
-    "vscode:prepublish": "npm run build && npm run server:build:release",
-    "compile": "cross-env NODE_ENV=production tsc -b",
-    "watch": "tsc -b -w",
-    "test": "node ./dist/test/runTest.js",
-    "build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
-    "package": "vsce package --no-dependencies",
+    "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
+    "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
+    "package": "vsce package --no-dependencies -o oxc_lsp.vsix",
     "publish": "vsce publish --no-dependencies",
+    "install-extension": "code --install-extension oxc_lsp.vsix --force",
     "server:build:debug": "cargo build -p oxc_vscode",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_vscode --release"
   },
   "devDependencies": {
-    "@types/mocha": "^8.0.0",
-    "@types/node": "^20.2.5",
+    "@types/node": "^18.17.5",
+    "@types/resolve": "^1.20.2",
     "@types/vscode": "^1.80.0",
-    "@vscode/test-electron": "^2.3.3",
-    "@vscode/vsce": "^2.20.0",
+    "@vscode/vsce": "^2.22.0",
     "cross-env": "^7.0.2",
-    "mocha": "^8.0.1",
-    "ts-loader": "^9.4.4",
-    "typescript": "^5.1.6",
-    "vscode-uri": "^3.0.7",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+    "esbuild": "^0.19.5",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
+  },
+  "vsce": {
+    "dependencies": false
   }
 }
