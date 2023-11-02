@@ -355,7 +355,6 @@ fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<
     );
 }
 
-
 #[test]
 fn test() {
     use crate::tester::Tester;
