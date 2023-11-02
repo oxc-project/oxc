@@ -18,6 +18,10 @@ impl<'a> TransformerCtx<'a> {
         Self { ast, semantic }
     }
 
+    pub fn semantic(&self) -> Ref<'_, Semantic<'a>> {
+        self.semantic.borrow()
+    }
+
     pub fn symbols(&self) -> Ref<'_, SymbolTable> {
         Ref::map(self.semantic.borrow(), |semantic| semantic.symbols())
     }
