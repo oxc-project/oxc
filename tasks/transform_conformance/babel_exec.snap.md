@@ -1,4 +1,4 @@
-Passed: 349/408
+Passed: 356/415
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -7,6 +7,7 @@ Passed: 349/408
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
+* babel-plugin-transform-template-literals
 
 
 # babel-plugin-transform-class-properties (132/143)

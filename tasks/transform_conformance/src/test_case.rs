@@ -106,6 +106,7 @@ pub trait TestCase {
                 .is_some(),
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
+            template_literals: options.get_plugin("transform-template-literals").is_some(),
         }
     }
 
