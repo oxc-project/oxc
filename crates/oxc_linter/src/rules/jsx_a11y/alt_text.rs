@@ -60,6 +60,40 @@ enum AltTextDiagnostic {
     InputTypeImage(#[label] Span),
 }
 
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Enforce that all elements that require alternative text have meaningful
+    /// information to relay back to the end user.
+    ///
+    /// ### Why is this necessary?
+    ///
+    /// Alternative text is a critical component of accessibility for screen
+    /// reader users, enabling them to understand the content and function
+    /// of an element.
+    ///
+    /// ### What it checks
+    ///
+    /// This rule checks for alternative text on the following elements:
+    /// `<img>`, `<area>`, `<input type="image">`, and `<object>`.
+    ///
+    /// ### How to fix it
+    ///
+    /// Ensure that the `alt` attribute is present and contains meaningful
+    /// text that describes the element's content or purpose.
+    ///
+    /// ### Example
+    /// ```javascript
+    /// // Bad
+    /// <img src="flower.jpg">
+    ///
+    /// // Good
+    /// <img src="flower.jpg" alt="A close-up of a white daisy">
+    /// ```
+    AltText,
+    correctness
+);
+
 #[derive(Debug, Clone)]
 pub struct AltText {
     img: Option<Vec<String>>,
@@ -75,6 +109,86 @@ impl std::default::Default for AltText {
             object: Some(vec![]),
             area: Some(vec![]),
             input_type_image: Some(vec![]),
+        }
+    }
+}
+
+impl Rule for AltText {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut alt_text = Self::default();
+        if let Some(config) = value.get(0) {
+            if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
+                alt_text = Self { img: None, object: None, area: None, input_type_image: None };
+                for el in elements {
+                    match el.as_str() {
+                        Some("img") => alt_text.img = Some(vec![]),
+                        Some("object") => alt_text.object = Some(vec![]),
+                        Some("area") => alt_text.area = Some(vec![]),
+                        Some("input[type=\"image\"]") => alt_text.input_type_image = Some(vec![]),
+                        _ => {}
+                    }
+                }
+            }
+
+            for (tags, field) in [
+                (&mut alt_text.img, "img"),
+                (&mut alt_text.object, "object"),
+                (&mut alt_text.area, "area"),
+                (&mut alt_text.input_type_image, "input[type=\"image\"]"),
+            ] {
+                if let (Some(tags), Some(elements)) =
+                    (tags, config.get(field).and_then(|v| v.as_array()))
+                {
+                    tags.extend(
+                        elements.iter().filter_map(|v| v.as_str().map(ToString::to_string)),
+                    );
+                }
+            }
+        }
+
+        alt_text
+    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
+        let JSXElementName::Identifier(iden) = &jsx_el.name else { return };
+        let name = iden.name.as_str();
+
+        // <img>
+        if let Some(custom_tags) = &self.img {
+            if name == "img" || custom_tags.iter().any(|i| i == name) {
+                img_rule(jsx_el, ctx);
+                return;
+            }
+        }
+
+        // <object>
+        if let Some(custom_tags) = &self.object {
+            if name == "object" || custom_tags.iter().any(|i| i == name) {
+                let maybe_parent =
+                    ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
+                if let Some(AstKind::JSXElement(parent)) = maybe_parent {
+                    object_rule(jsx_el, parent, ctx);
+                    return;
+                }
+            }
+        }
+
+        // <area>
+        if let Some(custom_tags) = &self.area {
+            if name == "area" || custom_tags.iter().any(|i| i == name) {
+                area_rule(jsx_el, ctx);
+                return;
+            }
+        }
+
+        // <input type="image">
+        if let Some(custom_tags) = &self.input_type_image {
+            let has_input_with_type_image = name.to_lowercase() == "input"
+                && has_jsx_prop_lowercase(jsx_el, "type")
+                    .map_or(false, |v| get_literal_prop_value(v).map_or(false, |v| v == "image"));
+            if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
+                input_type_image_rule(jsx_el, ctx);
+            }
         }
     }
 }
@@ -241,119 +355,6 @@ fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<
     );
 }
 
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// Enforce that all elements that require alternative text have meaningful
-    /// information to relay back to the end user.
-    ///
-    /// ### Why is this necessary?
-    ///
-    /// Alternative text is a critical component of accessibility for screen
-    /// reader users, enabling them to understand the content and function
-    /// of an element.
-    ///
-    /// ### What it checks
-    ///
-    /// This rule checks for alternative text on the following elements:
-    /// `<img>`, `<area>`, `<input type="image">`, and `<object>`.
-    ///
-    /// ### How to fix it
-    ///
-    /// Ensure that the `alt` attribute is present and contains meaningful
-    /// text that describes the element's content or purpose.
-    ///
-    /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// <img src="flower.jpg">
-    ///
-    /// // Good
-    /// <img src="flower.jpg" alt="A close-up of a white daisy">
-    /// ```
-    AltText,
-    correctness
-);
-
-impl Rule for AltText {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut alt_text = Self::default();
-        if let Some(config) = value.get(0) {
-            if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
-                alt_text = Self { img: None, object: None, area: None, input_type_image: None };
-                for el in elements {
-                    match el.as_str() {
-                        Some("img") => alt_text.img = Some(vec![]),
-                        Some("object") => alt_text.object = Some(vec![]),
-                        Some("area") => alt_text.area = Some(vec![]),
-                        Some("input[type=\"image\"]") => alt_text.input_type_image = Some(vec![]),
-                        _ => {}
-                    }
-                }
-            }
-
-            for (tags, field) in [
-                (&mut alt_text.img, "img"),
-                (&mut alt_text.object, "object"),
-                (&mut alt_text.area, "area"),
-                (&mut alt_text.input_type_image, "input[type=\"image\"]"),
-            ] {
-                if let (Some(tags), Some(elements)) =
-                    (tags, config.get(field).and_then(|v| v.as_array()))
-                {
-                    tags.extend(
-                        elements.iter().filter_map(|v| v.as_str().map(ToString::to_string)),
-                    );
-                }
-            }
-        }
-
-        alt_text
-    }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        let JSXElementName::Identifier(iden) = &jsx_el.name else { return };
-        let name = iden.name.as_str();
-
-        // <img>
-        if let Some(custom_tags) = &self.img {
-            if name == "img" || custom_tags.iter().any(|i| i == name) {
-                img_rule(jsx_el, ctx);
-                return;
-            }
-        }
-
-        // <object>
-        if let Some(custom_tags) = &self.object {
-            if name == "object" || custom_tags.iter().any(|i| i == name) {
-                let maybe_parent =
-                    ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
-                if let Some(AstKind::JSXElement(parent)) = maybe_parent {
-                    object_rule(jsx_el, parent, ctx);
-                    return;
-                }
-            }
-        }
-
-        // <area>
-        if let Some(custom_tags) = &self.area {
-            if name == "area" || custom_tags.iter().any(|i| i == name) {
-                area_rule(jsx_el, ctx);
-                return;
-            }
-        }
-
-        // <input type="image">
-        if let Some(custom_tags) = &self.input_type_image {
-            let has_input_with_type_image = name.to_lowercase() == "input"
-                && has_jsx_prop_lowercase(jsx_el, "type")
-                    .map_or(false, |v| get_literal_prop_value(v).map_or(false, |v| v == "image"));
-            if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
-                input_type_image_rule(jsx_el, ctx);
-            }
-        }
-    }
-}
 
 #[test]
 fn test() {
