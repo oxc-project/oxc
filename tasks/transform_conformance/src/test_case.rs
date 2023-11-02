@@ -1,8 +1,6 @@
 use std::{
-    cell::RefCell,
     fs,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
@@ -144,12 +142,9 @@ pub trait TestCase {
 
         let semantic =
             SemanticBuilder::new(&source_text, source_type).build(&transformed_program).semantic;
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        let symbols = Rc::new(RefCell::new(symbols));
-        let scopes = Rc::new(RefCell::new(scopes));
         let transformed_program = allocator.alloc(transformed_program);
 
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
+        Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
     }
@@ -197,11 +192,8 @@ impl TestCase for ConformanceTestCase {
         // Transform input.js
         let program = Parser::new(&allocator, &input, source_type).parse().program;
         let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        let symbols = Rc::new(RefCell::new(symbols));
-        let scopes = Rc::new(RefCell::new(scopes));
         let program = allocator.alloc(program);
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
+        Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 
