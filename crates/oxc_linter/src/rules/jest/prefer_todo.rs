@@ -78,8 +78,7 @@ impl Rule for PreferTodo {
             }
 
             if counts > 1 && is_empty_function(call_expr) {
-                let (content, span) = get_fix_content(call_expr);
-                ctx.diagnostic_with_fix(EmptyTest(span), || {
+                ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
                     let (content, span) = build_code(call_expr, ctx);
                     Fix::new(content, span)
                 });
