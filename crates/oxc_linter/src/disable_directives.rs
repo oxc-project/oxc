@@ -81,8 +81,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     let stop = self.source_text[span.end as usize..]
                         .lines()
                         .take(if comment.is_single_line() { 1 } else { 2 })
-                        .map(|line| span.end + line.len() as u32)
-                        .sum();
+                        .fold(span.end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
                         self.add_interval(span.end, stop, DisabledRule::All);
                     } else {
@@ -280,6 +279,19 @@ fn test() {
               quotes,
               semi
             */
+            debugger;
+        ",
+        "
+            /* eslint-disable-next-line no-debugger --
+             * Here's a very long description about why this configuration is necessary
+             * along with some additional information
+            **/
+            debugger;
+            debugger;
+        ",
+        "
+            // eslint-disable-next-line no-debugger
+            debugger;
             debugger;
         ",
     ];
