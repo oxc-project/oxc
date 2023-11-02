@@ -72,6 +72,10 @@ impl<'a> Semantic<'a> {
         &self.scopes
     }
 
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
+        &mut self.scopes
+    }
+
     pub fn trivias(&self) -> &TriviasMap {
         &self.trivias
     }
