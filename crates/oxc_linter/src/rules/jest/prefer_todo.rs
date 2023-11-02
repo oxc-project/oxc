@@ -70,16 +70,15 @@ impl Rule for PreferTodo {
                 return;
             }
 
-
-            let (content, span) = get_fix_content(call_expr);
-
             if counts == 1 && !filter_todo_case(call_expr) {
+                let (content, span) = get_fix_content(call_expr);
                 ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || {
                     Fix::new(content, span)
                 });
             }
 
             if counts > 1 && is_empty_function(call_expr) {
+                let (content, span) = get_fix_content(call_expr);
                 ctx.diagnostic_with_fix(EmptyTest(span), || {
                     let (content, span) = build_code(call_expr, ctx);
                     Fix::new(content, span)
