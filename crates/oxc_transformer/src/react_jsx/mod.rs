@@ -78,7 +78,7 @@ impl<'a> ReactJsx<'a> {
         let imports = ast.new_vec();
         let options = options.with_comments(&ctx.semantic());
 
-        let import_source = options.import_source.clone().unwrap_or("react".to_string());
+        let import_source = options.import_source.clone().unwrap_or_else(|| "react".to_string());
         let jsx_runtime_importer = format!("{import_source}/jsx-runtime");
 
         Self {
