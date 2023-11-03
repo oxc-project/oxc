@@ -27,6 +27,7 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
+    import_source: String,
     jsx_runtime_importer: String,
 }
 
@@ -77,13 +78,14 @@ impl<'a> ReactJsx<'a> {
         let imports = ast.new_vec();
         let options = options.with_comments(&ctx.semantic());
 
-        let import_source = options.import_source.as_deref().unwrap_or("react");
+        let import_source = options.import_source.clone().unwrap_or("react".to_string());
         let jsx_runtime_importer = format!("{import_source}/jsx-runtime");
 
         Self {
             ast,
             options,
             imports,
+            import_source,
             jsx_runtime_importer,
             import_jsx: false,
             import_jsxs: false,
@@ -139,21 +141,21 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", &self.jsx_runtime_importer);
+            self.add_import_statement("jsx", "_jsx", &self.jsx_runtime_importer.clone());
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", &self.jsx_runtime_importer);
+            self.add_import_statement("jsxs", "_jsxs", &self.jsx_runtime_importer.clone());
         }
     }
 
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", &self.jsx_runtime_importer);
+            self.add_import_statement("Fragment", "_Fragment", &self.jsx_runtime_importer.clone());
             self.add_import_jsx();
         }
     }
@@ -161,7 +163,11 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            self.add_import_statement("createElement", "_createElement", "react");
+            self.add_import_statement(
+                "createElement",
+                "_createElement",
+                &self.import_source.clone(),
+            );
         }
     }
 
