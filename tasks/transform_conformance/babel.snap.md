@@ -877,7 +877,6 @@ Passed: 242/1080
 * removed-options/invalid-use-spread-true/input.js
 * runtime/defaults-to-automatic/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
 * runtime/runtime-automatic/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js

@@ -32,7 +32,7 @@ let client: LanguageClient;
 
 
 export async function activate(context: ExtensionContext) {
-  
+
   const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
     if(!client) {
       window.showErrorMessage("oxc client not found");
@@ -69,11 +69,9 @@ export async function activate(context: ExtensionContext) {
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
-  const command = process.env.NODE_ENV === 'production' 
-                ? join(context.extensionPath, './target/release/oxc_vscode') 
-                : process.env.SERVER_PATH_DEV ;
+  const command = join(context.extensionPath, './target/release/oxc_vscode');
 
-  window.showInformationMessage(`oxc server path: ${command}`);
+  // window.showInformationMessage(`oxc server path: ${command}`);
 
   const run: Executable = {
     command: command!,

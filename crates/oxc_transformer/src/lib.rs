@@ -26,7 +26,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{
@@ -66,20 +66,18 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_type: SourceType,
-        symbols: &Rc<RefCell<SymbolTable>>,
-        scopes: &Rc<RefCell<ScopeTree>>,
+        semantic: Semantic<'a>,
         options: &TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
-        let ctx = TransformerCtx {
-            ast: Rc::clone(&ast),
-            symbols: Rc::clone(symbols),
-            scopes: Rc::clone(scopes),
-        };
+        let ctx = TransformerCtx::new(
+            Rc::clone(&ast),
+            Rc::new(RefCell::new(semantic)),
+        );
         Self {
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
-            react_jsx: options.react_jsx.clone().map(|options| ReactJsx::new(Rc::clone(&ast), options)),
+            react_jsx: options.react_jsx.clone().map(|options| ReactJsx::new(Rc::clone(&ast), &ctx, options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), options),
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), options),

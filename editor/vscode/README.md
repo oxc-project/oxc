@@ -1,8 +1,7 @@
-# `oxc_vscode`
+# ⚓ Oxc
 
-## Development
+The Oxidation Compiler is creating a suite of high-performance tools for JavaScript and TypeScript.
 
-1. `pnpm install`
-2. `pnpm run ts-build`
-3. `cargo build -p oxc_vscode`
-4. press `F5`
+## Oxlint
+
+This is the linter for oxc.

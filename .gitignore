@@ -7,7 +7,7 @@ target/
 /benchmark/node_modules/
 /editor/vscode/node_modules/
 
-/editor/vscode/dist/
+/editor/vscode/out/
 /editor/vscode/*.vsix
 
 npm/cli-*

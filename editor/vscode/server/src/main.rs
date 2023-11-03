@@ -1,3 +1,4 @@
+#![allow(unused)]
 mod linter;
 mod options;
 mod walk;
@@ -59,15 +60,15 @@ impl LanguageServer for Backend {
 
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
-            let result = self.server_linter.run_full(root_uri);
+            // let result = self.server_linter.run_full(root_uri);
 
-            self.publish_all_diagnostics(
-                &result
-                    .into_iter()
-                    .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
-                    .collect(),
-            )
-            .await;
+            // self.publish_all_diagnostics(
+            // &result
+            // .into_iter()
+            // .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
+            // .collect(),
+            // )
+            // .await;
         }
     }
 
