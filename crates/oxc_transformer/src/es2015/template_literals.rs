@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span, SPAN};
 use std::{mem, rc::Rc};
 
-use crate::{TransformTarget, TransformOptions};
+use crate::{TransformOptions, TransformTarget};
 
 /// ES2015: Template Literals
 ///
@@ -21,6 +21,7 @@ impl<'a> TemplateLiterals<'a> {
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
+        #[allow(clippy::single_match)]
         match expr {
             Expression::TemplateLiteral(template_literal) => {
                 let quasis = mem::replace(&mut template_literal.quasis, self.ast.new_vec());
@@ -54,9 +55,7 @@ impl<'a> TemplateLiterals<'a> {
                     *expr = call_expr;
                 }
             }
-            Expression::TaggedTemplateExpression(_) => {
-                // TODO
-            }
+            // TODO: Expression::TaggedTemplateExpression
             _ => {}
         }
     }
