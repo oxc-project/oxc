@@ -70,6 +70,11 @@ Make sure the rule is registered in `crates/oxc_linter/src/rules.rs`.
 
 Build the extension and run it inside vscode:
 
+1. create `./editor/vscode/icon.png`  
+  To build the vsix file, an icon image is required.  
+  Because we prefer not to manage large binary files, such as images, with git, they are ignored.  
+  During the development environment setup, please create an icon.png file. (The content can be anything, even empty.)  
+  We have plans to implement a script to download the icon image in the future.  
 1. `pnpm install`
 2. `pnpm run package`
 3. open vscode and run the command palette "Extensions: Install from VSIX..."
