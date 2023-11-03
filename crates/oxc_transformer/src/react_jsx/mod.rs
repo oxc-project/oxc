@@ -11,6 +11,7 @@ use oxc_syntax::{
 };
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
+use crate::context::TransformerCtx;
 
 /// Transform React JSX
 ///
@@ -67,8 +68,13 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: ReactJsxOptions) -> Self {
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        ctx: &TransformerCtx<'a>,
+        options: ReactJsxOptions,
+    ) -> Self {
         let imports = ast.new_vec();
+        let options = options.with_comments(&ctx.semantic());
         Self {
             ast,
             options,

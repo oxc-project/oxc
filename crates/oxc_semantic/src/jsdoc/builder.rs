@@ -35,7 +35,7 @@ impl<'a> JSDocBuilder<'a> {
         comment_text.is_some()
     }
 
-    /// Find the jsdoc doc in frontend this span, a.k.a leading comment
+    /// Find the jsdoc doc in front of this span, a.k.a leading comment
     fn find_jsdoc_comment(&self, span: Span) -> Option<&'a str> {
         let (start, comment) = self.trivias.comments().range(..span.start).next()?;
 

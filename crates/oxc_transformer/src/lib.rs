@@ -77,7 +77,7 @@ impl<'a> Transformer<'a> {
         Self {
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
-            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
+            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), &ctx, options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
