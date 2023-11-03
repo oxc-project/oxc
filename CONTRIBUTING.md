@@ -78,7 +78,7 @@ Build the extension and run it inside vscode:
 6. open a `.js` / `.ts` file, add `debugger;` and save
 7. see the warning `eslint(no-debugger): debugger statement is not allowed - oxc`
 
-# Performance Turing
+# Performance Tuning
 
 ## Mac Xcode Instruments
 
