@@ -70,18 +70,13 @@ Make sure the rule is registered in `crates/oxc_linter/src/rules.rs`.
 
 Build the extension and run it inside vscode:
 
-1. create `./editor/vscode/icon.png`  
-  To build the vsix file, an icon image is required.  
-  Because we prefer not to manage large binary files, such as images, with git, they are ignored.  
-  During the development environment setup, please create an icon.png file. (The content can be anything, even empty.)  
-  We have plans to implement a script to download the icon image in the future.  
-2. `pnpm install`
-3. `pnpm run build`
-4. `pnpm run package`
-5. open vscode and run the command palette "Extensions: Install from VSIX..."
-6. find the `oxc-vscode-x.x.x.vsix` file from `./editor/vscode` directory
-7. open a `.js` / `.ts` file, add `debugger;` and save
-8. see the warning `eslint(no-debugger): debugger statement is not allowed - oxc`
+1. `pnpm install`
+2. `pnpm run build`
+3. `pnpm run package`
+4. open vscode and run the command palette "Extensions: Install from VSIX..."
+5. find the `oxc-vscode-x.x.x.vsix` file from `./editor/vscode` directory
+6. open a `.js` / `.ts` file, add `debugger;` and save
+7. see the warning `eslint(no-debugger): debugger statement is not allowed - oxc`
 
 # Performance Turing
 
