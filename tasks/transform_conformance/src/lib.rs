@@ -77,6 +77,7 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-shorthand-properties",
     "babel-plugin-transform-sticky-regex",
     "babel-plugin-transform-unicode-regex",
+    "babel-plugin-transform-template-literals",
     // TypeScript
     "babel-plugin-transform-typescript",
     // React
