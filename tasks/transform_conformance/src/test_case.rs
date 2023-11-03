@@ -137,12 +137,13 @@ pub trait TestCase {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
-        let transformed_program =
-            Parser::new(&allocator, &source_text, source_type).parse().program;
+        let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-        let semantic =
-            SemanticBuilder::new(&source_text, source_type).build(&transformed_program).semantic;
-        let transformed_program = allocator.alloc(transformed_program);
+        let semantic = SemanticBuilder::new(&source_text, source_type)
+            .with_trivias(ret.trivias)
+            .build(&ret.program)
+            .semantic;
+        let transformed_program = allocator.alloc(ret.program);
 
         Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
@@ -190,9 +191,12 @@ impl TestCase for ConformanceTestCase {
         }
 
         // Transform input.js
-        let program = Parser::new(&allocator, &input, source_type).parse().program;
-        let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
-        let program = allocator.alloc(program);
+        let ret = Parser::new(&allocator, &input, source_type).parse();
+        let semantic = SemanticBuilder::new(&input, source_type)
+            .with_trivias(ret.trivias)
+            .build(&ret.program)
+            .semantic;
+        let program = allocator.alloc(ret.program);
         Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);

@@ -35,7 +35,10 @@ fn main() {
     println!("Original:\n");
     println!("{printed}\n");
 
-    let semantic = SemanticBuilder::new(&source_text, source_type).build(&ret.program).semantic;
+    let semantic = SemanticBuilder::new(&source_text, source_type)
+        .with_trivias(ret.trivias)
+        .build(&ret.program)
+        .semantic;
 
     let program = allocator.alloc(ret.program);
     let transform_options = TransformOptions {
