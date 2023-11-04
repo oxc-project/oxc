@@ -144,12 +144,14 @@ mod unicorn {
     pub mod no_console_spaces;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
+    pub mod no_invalid_remove_event_listener;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
     pub mod prefer_type_error;
+    pub mod prefer_string_trim_start_end;
     pub mod require_number_to_fixed_digits_argument;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
@@ -266,6 +268,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_console_spaces,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
+    unicorn::no_invalid_remove_event_listener,
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
@@ -275,6 +278,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    unicorn::prefer_string_trim_start_end,
     unicorn::prefer_query_selector,
     react::jsx_key,
     react::jsx_no_comment_text_nodes,
