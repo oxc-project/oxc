@@ -155,7 +155,7 @@ impl Tester {
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
             .with_jsx_a11y_plugin(self.jsx_a11y_plugin);
-        let linter = Linter::from_options(options).with_rules(vec![rule]);
+        let linter = Linter::from_options(options).unwrap().with_rules(vec![rule]);
         let path_to_lint = if self.import_plugin {
             self.current_working_directory.join(&self.rule_path)
         } else {

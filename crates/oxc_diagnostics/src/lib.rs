@@ -27,6 +27,6 @@ use thiserror::Error;
 pub struct MinifiedFileError(pub PathBuf);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Failed to open file")]
+#[error("Failed to open file {0:?} with error \"{1}\"")]
 #[diagnostic(help("Failed to open file {0:?} with error \"{1}\""))]
 pub struct FailedToOpenFileError(pub PathBuf, pub std::io::Error);
