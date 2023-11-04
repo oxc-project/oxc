@@ -150,8 +150,8 @@ mod unicorn {
     pub mod prefer_array_flat_map;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
-    pub mod prefer_type_error;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
