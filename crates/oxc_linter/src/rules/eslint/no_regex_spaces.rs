@@ -12,6 +12,8 @@ use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+use lazy_static::lazy_static;
+
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-regex-spaces): Spaces are hard to count.")]
 #[diagnostic(severity(warning), help("Use a quantifier, e.g. {{2}}"))]
@@ -102,8 +104,15 @@ impl NoRegexSpaces {
     }
 
     fn has_target_consecutive_spaces(pattern: &Atom) -> bool {
-        // https://github.com/eslint/eslint/blob/485ec7d08ed2040c292f52bf9b9152f6c8ef4809/lib/rules/no-regex-spaces.js#L93
-        regex::Regex::new("( {2,})(?: [+*{?]|[^+*{?]|$)").unwrap().is_match(pattern)
+        use regex::Regex;
+
+        lazy_static! {
+            // https://github.com/eslint/eslint/blob/485ec7d08ed2040c292f52bf9b9152f6c8ef4809/lib/rules/no-regex-spaces.js#L93
+            static ref CONSECUTIVE_SPACES_MATCHER: Regex =
+                Regex::new("( {2,})(?: [+*{?]|[^+*{?]|$)").unwrap();
+        }
+
+        CONSECUTIVE_SPACES_MATCHER.is_match(pattern)
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
