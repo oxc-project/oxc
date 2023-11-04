@@ -141,6 +141,7 @@ mod unicorn {
     pub mod catch_error_name;
     pub mod error_message;
     pub mod filename_case;
+    pub mod new_for_builtins;
     pub mod no_console_spaces;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
@@ -266,6 +267,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::catch_error_name,
     unicorn::error_message,
     unicorn::filename_case,
+    unicorn::new_for_builtins,
     unicorn::no_console_spaces,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
