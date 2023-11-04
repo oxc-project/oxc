@@ -93,20 +93,12 @@ impl NoRegexSpaces {
                 return None; // skip spaces inside char class, e.g. RegExp('[  ]')
             }
 
-            if !Self::has_unescaped_consecutive_spaces(&pattern.value) {
-                return None; // skip if not literally consecutive, e.g. RegExp(' \ ')
-            }
-
             if Self::has_target_consecutive_spaces(&pattern.value) {
                 return Some(pattern.span);
             }
         }
 
         None
-    }
-
-    fn has_unescaped_consecutive_spaces(pattern: &Atom) -> bool {
-        regex::Regex::new(" {2}").unwrap().is_match(pattern)
     }
 
     fn has_target_consecutive_spaces(pattern: &Atom) -> bool {
