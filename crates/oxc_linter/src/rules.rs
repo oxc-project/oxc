@@ -147,6 +147,7 @@ mod unicorn {
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
+    pub mod prefer_date_now;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
     pub mod require_number_to_fixed_digits_argument;
@@ -268,6 +269,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_date_now,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
