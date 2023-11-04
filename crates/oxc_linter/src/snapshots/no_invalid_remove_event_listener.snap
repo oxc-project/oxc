@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 105
 expression: no_invalid_remove_event_listener
 ---
   ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
