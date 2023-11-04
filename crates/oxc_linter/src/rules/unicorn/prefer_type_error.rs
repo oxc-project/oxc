@@ -226,25 +226,25 @@ fn test() {
         "#,
         r#"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
-                throw Error('This is fo FooBar', foo);
+                throw Error('This is for FooBar', foo);
             }
         "#,
         r#"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
-                new Error('This is fo FooBar', foo);
+                new Error('This is for FooBar', foo);
             }
         "#,
         r#"
             function test(foo) {
                 if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
-                    return new Error('This is fo FooBar', foo);
+                    return new Error('This is for FooBar', foo);
                 }
                 return foo;
             }
         "#,
         r#"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
-                lastError = new Error('This is fo FooBar', foo);
+                lastError = new Error('This is for FooBar', foo);
             }
         "#,
         r#"
