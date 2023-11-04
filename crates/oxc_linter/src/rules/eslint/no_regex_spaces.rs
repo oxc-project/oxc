@@ -103,16 +103,30 @@ impl NoRegexSpaces {
 
     /// Whether a string has 2+ consecutive spaces, unless followed by a quantifier.
     fn has_target_consecutive_spaces(s: &str) -> bool {
-        let chars: std::vec::Vec<char> = s.chars().collect();
+        let mut chars = s.chars().peekable();
 
-        for i in 0..chars.len() - 1 {
-            if chars[i] == ' ' && chars[i + 1] == ' ' {
-                return !(i + 2 < chars.len()
-                    && (chars[i + 2] == '+'
-                        || chars[i + 2] == '*'
-                        || chars[i + 2] == '{'
-                        || chars[i + 2] == '?'));
+        while let Some(&c) = chars.peek() {
+            if c == ' ' {
+                chars.next();
+                if let Some(&next_char) = chars.peek() {
+                    if next_char == ' ' {
+                        chars.next();
+                        if let Some(&after_spaces) = chars.peek() {
+                            if after_spaces != '+'
+                                && after_spaces != '*'
+                                && after_spaces != '{'
+                                && after_spaces != '?'
+                            {
+                                return true;
+                            }
+                        } else {
+                            return true;
+                        }
+                    }
+                }
             }
+
+            chars.next();
         }
 
         false
