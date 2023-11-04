@@ -102,6 +102,27 @@ jobs:
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
 
+  unused-deps:
+    name: Check Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+              - '**/Cargo.toml'
+
+      - name: Install cargo-machete
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-machete
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo machete
+
   format:
     name: Format
     runs-on: ubuntu-latest

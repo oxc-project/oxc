@@ -31,3 +31,6 @@ napi-derive = { version = "2" }
 
 [build-dependencies]
 napi-build = "2"
+
+[package.metadata.cargo-machete]
+ignored = ["napi"]
