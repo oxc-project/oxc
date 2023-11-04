@@ -15,7 +15,6 @@ doctest = false
 
 [dependencies]
 oxc_span         = { workspace = true }
-oxc_syntax       = { workspace = true }
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
 oxc_semantic     = { workspace = true }

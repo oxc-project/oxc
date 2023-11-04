@@ -99,8 +99,39 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         uses: taiki-e/install-action@cargo-deny
 
+      - uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
+
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
+
+  unused-deps:
+    name: Check Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+              - '**/Cargo.toml'
+
+      - name: Install cargo-machete
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-machete
+
+      - name: Install Rust
+        if: steps.filter.outputs.src == 'true'
+        uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo machete
 
   format:
     name: Format
