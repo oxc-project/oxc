@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_invalid_remove_event_listener
+---
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ window.removeEventListener("scroll", handler.bind(abc))
+   ·                                      ─────────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ window.removeEventListener("scroll", this.handler.bind(abc))
+   ·                                      ──────────────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ window.removeEventListener("click", () => {})
+   ·                                     ────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ window.removeEventListener("keydown", function () {})
+   ·                                       ──────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener("click", (e) => { e.preventDefault(); })
+   ·                                 ──────────────────────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener("mouseover", fn.bind(abc))
+   ·                                     ────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener("mouseout", function (e) {})
+   ·                                    ───────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener("mouseout", function (e) {}, true)
+   ·                                    ───────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener("click", function (e) {}, ...moreArguments)
+   ·                                 ───────────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+  ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
+   ╭─[no_invalid_remove_event_listener.tsx:1:1]
+ 1 │ el.removeEventListener(() => {}, () => {}, () => {})
+   ·                                  ────────
+   ╰────
+  help: The listener argument should be a function reference.
+
+
