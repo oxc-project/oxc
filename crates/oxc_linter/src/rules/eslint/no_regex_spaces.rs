@@ -8,11 +8,9 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
-
-use lazy_static::lazy_static;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-regex-spaces): Spaces are hard to count.")]
@@ -103,16 +101,25 @@ impl NoRegexSpaces {
         None
     }
 
-    fn has_target_consecutive_spaces(pattern: &Atom) -> bool {
-        use regex::Regex;
+    /// Whether a string has 2+ consecutive spaces, unless followed by a quantifier.
+    fn has_target_consecutive_spaces(s: &str) -> bool {
+        let chars: std::vec::Vec<char> = s.chars().collect();
 
-        lazy_static! {
-            // https://github.com/eslint/eslint/blob/485ec7d08ed2040c292f52bf9b9152f6c8ef4809/lib/rules/no-regex-spaces.js#L93
-            static ref CONSECUTIVE_SPACES_MATCHER: Regex =
-                Regex::new("( {2,})(?: [+*{?]|[^+*{?]|$)").unwrap();
+        for i in 0..chars.len() - 1 {
+            if chars[i] == ' ' && chars[i + 1] == ' ' {
+                if i + 2 < chars.len()
+                    && (chars[i + 2] == '+'
+                        || chars[i + 2] == '*'
+                        || chars[i + 2] == '{'
+                        || chars[i + 2] == '?')
+                {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
         }
-
-        CONSECUTIVE_SPACES_MATCHER.is_match(pattern)
+        false
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
