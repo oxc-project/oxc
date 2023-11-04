@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_string_trim_start_end
+---
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimLeft` over `trimStart`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ foo.trimLeft()
+   ·     ────────
+   ╰────
+  help: Replace with `trimLeft`
+
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimRight` over `trimEnd`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ foo.trimRight()
+   ·     ─────────
+   ╰────
+  help: Replace with `trimRight`
+
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimRight` over `trimEnd`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ trimLeft.trimRight()
+   ·          ─────────
+   ╰────
+  help: Replace with `trimRight`
+
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimRight` over `trimEnd`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ foo.trimLeft.trimRight()
+   ·              ─────────
+   ╰────
+  help: Replace with `trimRight`
+
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimLeft` over `trimStart`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ "foo".trimLeft()
+   ·       ────────
+   ╰────
+  help: Replace with `trimLeft`
+
+  ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimLeft` over `trimStart`
+   ╭─[prefer_string_trim_start_end.tsx:1:1]
+ 1 │ foo?.trimLeft()
+   ·      ────────
+   ╰────
+  help: Replace with `trimLeft`
+
+
