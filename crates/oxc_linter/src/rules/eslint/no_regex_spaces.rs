@@ -107,18 +107,14 @@ impl NoRegexSpaces {
 
         for i in 0..chars.len() - 1 {
             if chars[i] == ' ' && chars[i + 1] == ' ' {
-                if i + 2 < chars.len()
+                return !(i + 2 < chars.len()
                     && (chars[i + 2] == '+'
                         || chars[i + 2] == '*'
                         || chars[i + 2] == '{'
-                        || chars[i + 2] == '?')
-                {
-                    return false;
-                } else {
-                    return true;
-                }
+                        || chars[i + 2] == '?'));
             }
         }
+
         false
     }
 
