@@ -99,6 +99,10 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         uses: taiki-e/install-action@cargo-deny
 
+      - uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
+
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
 
@@ -119,6 +123,12 @@ jobs:
       - name: Install cargo-machete
         if: steps.filter.outputs.src == 'true'
         uses: taiki-e/install-action@cargo-machete
+
+      - name: Install Rust
+        if: steps.filter.outputs.src == 'true'
+        uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
 
       - if: steps.filter.outputs.src == 'true'
         run: cargo machete
