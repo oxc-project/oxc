@@ -77,8 +77,8 @@ impl NoRegexSpaces {
         if let Some((idx_start, idx_end)) =
             Self::find_consecutive_spaces_indices(&literal.regex.pattern)
         {
-            let start = &literal.span.start + idx_start + 1;
-            let end = &literal.span.start + idx_end + 2;
+            let start = literal.span.start + idx_start + 1;
+            let end = literal.span.start + idx_end + 2;
 
             return Some(Span { start, end });
         }
@@ -101,8 +101,8 @@ impl NoRegexSpaces {
             if let Some((idx_start, idx_end)) =
                 Self::find_consecutive_spaces_indices(&pattern.value)
             {
-                let start = &pattern.span.start + idx_start + 1;
-                let end = &pattern.span.start + idx_end + 2;
+                let start = pattern.span.start + idx_start + 1;
+                let end = pattern.span.start + idx_end + 2;
 
                 return Some(Span { start, end });
             }
@@ -119,23 +119,25 @@ impl NoRegexSpaces {
             if char == ' ' {
                 consecutive_spaces += 1;
                 if start.is_none() {
-                    start = Some(cur_idx as u32);
+                    start = Some(u32::try_from(cur_idx).unwrap());
                 }
                 if consecutive_spaces >= 2 {
                     if let Some(next_char) = input.chars().nth(cur_idx + 1) {
                         if consecutive_spaces > 2 && "+*{?".contains(next_char) {
-                            return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
+                            return start
+                                .map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
                         }
 
                         if !"+*{?".contains(next_char) && next_char != ' ' {
-                            return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
+                            return start
+                                .map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
                         }
                     } else {
-                        return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
+                        return start.map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
                     }
                 }
             } else {
-                start = Some(cur_idx as u32 + 1);
+                start = Some(u32::try_from(cur_idx).unwrap() + 1);
                 consecutive_spaces = 0;
             }
         }
