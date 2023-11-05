@@ -4,7 +4,7 @@ use std::{
 };
 
 /// File System abstraction used for `ResolverGeneric`.
-pub trait FileSystem: Default + Send + Sync {
+pub trait FileSystem: Send + Sync {
     /// See [std::fs::read_to_string]
     ///
     /// # Errors
