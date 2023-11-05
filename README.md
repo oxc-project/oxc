@@ -223,12 +223,16 @@ If you are unable to contribute by code, you can still participate by:
 
 ## 🧑‍💻 Maintenance
 
-* Oxc is currently being developed and maintained by project lead [Boshen] with the help of [contributors] from all over the world
-* APIs should be simple and well-documented
-* All performance issues (runtime and compilation speed) are considered as bugs in this project
-* Third-party dependencies should be minimal
-* Code coverage should be monitored for unused code. Aim for 99% code coverage
-* Embrace data-oriented design
+Oxc is being maintained by [Boshen] as the project lead with the help of [contributors] from all over the world.
+
+Rules of thumb:
+
+* APIs should be simple and well-documented.
+* All performance issues (runtime and compilation speed) are considered as bugs in this project.
+* Third-party dependencies should be minimal.
+* Monitor code coverage for unused code. Aim for 99% code coverage.
+* Embrace data-oriented design.
+* Prefer smaller PRs. Try [graphite.dev](https://graphite.dev).
 
 ## 🤝 Credits
 
