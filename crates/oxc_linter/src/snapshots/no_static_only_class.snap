@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_static_only_class
+---
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static a() {}; }
+   · ──────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static a() {} }
+   · ─────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ const A = class A { static a() {}; }
+   ·           ──────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ const A = class { static a() {}; }
+   ·           ────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static constructor() {}; }
+   · ────────────────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ export default class A { static a() {}; }
+   ·                ──────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ export default class { static a() {}; }
+   ·                ────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ export class A { static a() {}; }
+   ·        ──────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A {static [this.a] = 1}
+   · ─────────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A { static a() {} }
+   · ─────────────────────────
+   ╰────
+  help: Change the class to an object instead, or add some instance members.
+
+
