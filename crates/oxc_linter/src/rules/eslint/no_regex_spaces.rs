@@ -143,16 +143,12 @@ impl NoRegexSpaces {
             // 2 or more consecutive spaces
 
             if let Some(next_char) = input.chars().nth(cur_idx + 1) {
-                if "+*{?".contains(next_char) {
-                    if consecutive_spaces == 2 {
-                        continue; // ignore 2 consecutive spaces before quantifier
-                    }
-
-                    return Some((start.unwrap(), cur_idx));
-                }
-
                 if next_char == ' ' {
                     continue; // keep collecting spaces
+                }
+
+                if "+*{?".contains(next_char) && consecutive_spaces == 2 {
+                    continue; // ignore 2 consecutive spaces before quantifier
                 }
 
                 return Some((start.unwrap(), cur_idx));
