@@ -77,8 +77,8 @@ impl NoRegexSpaces {
         if let Some((idx_start, idx_end)) =
             Self::find_consecutive_spaces_indices(&literal.regex.pattern)
         {
-            let start = literal.span.start + idx_start + 1;
-            let end = literal.span.start + idx_end + 2;
+            let start = literal.span.start + u32::try_from(idx_start).unwrap() + 1;
+            let end = literal.span.start + u32::try_from(idx_end).unwrap() + 2;
 
             return Some(Span { start, end });
         }
@@ -101,8 +101,8 @@ impl NoRegexSpaces {
             if let Some((idx_start, idx_end)) =
                 Self::find_consecutive_spaces_indices(&pattern.value)
             {
-                let start = pattern.span.start + idx_start + 1;
-                let end = pattern.span.start + idx_end + 2;
+                let start = pattern.span.start + u32::try_from(idx_start).unwrap() + 1;
+                let end = pattern.span.start + u32::try_from(idx_end).unwrap() + 2;
 
                 return Some(Span { start, end });
             }
@@ -111,34 +111,53 @@ impl NoRegexSpaces {
         None
     }
 
-    fn find_consecutive_spaces_indices(input: &str) -> Option<(u32, u32)> {
-        let mut start: Option<u32> = None;
+    fn find_consecutive_spaces_indices(input: &str) -> Option<(usize, usize)> {
         let mut consecutive_spaces = 0;
+        let mut start: Option<usize> = None;
+        let mut inside_square_brackets = false;
 
         for (cur_idx, char) in input.char_indices() {
-            if char == ' ' {
-                consecutive_spaces += 1;
-                if start.is_none() {
-                    start = Some(u32::try_from(cur_idx).unwrap());
-                }
-                if consecutive_spaces >= 2 {
-                    if let Some(next_char) = input.chars().nth(cur_idx + 1) {
-                        if consecutive_spaces > 2 && "+*{?".contains(next_char) {
-                            return start
-                                .map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
-                        }
+            if char == '[' {
+                inside_square_brackets = true;
+            } else if char == ']' {
+                inside_square_brackets = false;
+            }
 
-                        if !"+*{?".contains(next_char) && next_char != ' ' {
-                            return start
-                                .map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
-                        }
-                    } else {
-                        return start.map(|start_idx| (start_idx, u32::try_from(cur_idx).unwrap()));
-                    }
-                }
-            } else {
-                start = Some(u32::try_from(cur_idx).unwrap() + 1);
+            if char != ' ' || inside_square_brackets {
                 consecutive_spaces = 0;
+                start = None;
+                continue;
+            }
+
+            if start.is_none() {
+                start = Some(cur_idx);
+            }
+
+            consecutive_spaces += 1;
+
+            if consecutive_spaces < 2 {
+                continue;
+            }
+
+            // 2 or more consecutive spaces
+
+            if let Some(next_char) = input.chars().nth(cur_idx + 1) {
+                if "+*{?".contains(next_char) {
+                    if consecutive_spaces == 2 {
+                        continue; // ignore exception
+                    }
+
+                    return Some((start.unwrap(), cur_idx));
+                }
+
+                if next_char == ' ' {
+                    continue; // keep collecting spaces
+                }
+
+                return Some((start.unwrap(), cur_idx));
+            } else {
+                // end of string
+                return Some((start.unwrap(), cur_idx));
             }
         }
 
