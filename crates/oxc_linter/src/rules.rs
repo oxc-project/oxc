@@ -152,6 +152,7 @@ mod unicorn {
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
@@ -274,6 +275,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_array_flat_map,
     unicorn::prefer_date_now,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
