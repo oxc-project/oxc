@@ -117,7 +117,7 @@ jobs:
 
       - name: Package Extension
         working-directory: editor/vscode
-        run: pnpm exec vsce package --pre-release -o "../../oxc_lsp-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
+        run: pnpm exec vsce package -o "../../oxc_lsp-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
         uses: actions/upload-artifact@v3
@@ -157,8 +157,8 @@ jobs:
         working-directory: editor/vscode
         run: pnpm install
 
-      - name: Publish extension to Microsoft Marketplace (pre-release)
+      - name: Publish extension to Microsoft Marketplace
         working-directory: editor/vscode
-        run: pnpm exec vsce publish --pre-release --packagePath oxc_lsp-*.vsix
+        run: pnpm exec vsce publish --packagePath oxc_lsp-*.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}
