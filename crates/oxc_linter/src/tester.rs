@@ -26,6 +26,8 @@ pub struct Tester {
     snapshot: String,
     current_working_directory: Box<Path>,
     import_plugin: bool,
+    jest_plugin: bool,
+    jsx_a11y_plugin: bool,
 }
 
 impl Tester {
@@ -48,6 +50,8 @@ impl Tester {
             snapshot: String::new(),
             current_working_directory,
             import_plugin: false,
+            jest_plugin: false,
+            jsx_a11y_plugin: false,
         }
     }
 
@@ -136,8 +140,11 @@ impl Tester {
     fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
-        let options =
-            LintOptions::default().with_fix(is_fix).with_import_plugin(self.import_plugin);
+        let options = LintOptions::default()
+            .with_fix(is_fix)
+            .with_import_plugin(self.import_plugin)
+            .with_jest_plugin(self.jest_plugin)
+            .with_jsx_a11y_plugin(self.jsx_a11y_plugin);
         let linter = Linter::from_options(options).with_rules(vec![rule]);
         let path_to_lint = if self.import_plugin {
             self.current_working_directory.join(&self.rule_path)
