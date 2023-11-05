@@ -114,16 +114,17 @@ impl NoRegexSpaces {
     fn find_consecutive_spaces_indices(input: &str) -> Option<(usize, usize)> {
         let mut consecutive_spaces = 0;
         let mut start: Option<usize> = None;
-        let mut inside_square_brackets = false;
+        let mut inside_square_brackets: usize = 0;
 
         for (cur_idx, char) in input.char_indices() {
             if char == '[' {
-                inside_square_brackets = true;
+                inside_square_brackets += 1;
             } else if char == ']' {
-                inside_square_brackets = false;
+                inside_square_brackets = inside_square_brackets.saturating_sub(1);
             }
 
-            if char != ' ' || inside_square_brackets {
+            if char != ' ' || inside_square_brackets > 0 {
+                // ignore spaces inside char class, including nested ones
                 consecutive_spaces = 0;
                 start = None;
                 continue;
@@ -144,7 +145,7 @@ impl NoRegexSpaces {
             if let Some(next_char) = input.chars().nth(cur_idx + 1) {
                 if "+*{?".contains(next_char) {
                     if consecutive_spaces == 2 {
-                        continue; // ignore exception
+                        continue; // ignore 2 consecutive spaces before quantifier
                     }
 
                     return Some((start.unwrap(), cur_idx));
