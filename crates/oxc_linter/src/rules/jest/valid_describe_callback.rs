@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// }));
     /// ```
     ValidDescribeCallback,
-    restriction
+    correctness
 );
 
 impl Rule for ValidDescribeCallback {
@@ -326,5 +326,5 @@ fn test() {
         ("describe('foo', async function (done) {})", None),
     ];
 
-    Tester::new(ValidDescribeCallback::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ValidDescribeCallback::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

@@ -50,7 +50,7 @@ declare_oxc_lint!(
     ///  });
     /// ```
     NoIdenticalTitle,
-    restriction
+    style
 );
 
 impl Rule for NoIdenticalTitle {
@@ -488,5 +488,5 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoIdenticalTitle::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoIdenticalTitle::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

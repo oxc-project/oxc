@@ -86,6 +86,16 @@ impl Tester {
         self
     }
 
+    pub fn with_jest_plugin(mut self, yes: bool) -> Self {
+        self.jest_plugin = yes;
+        self
+    }
+
+    pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
+        self.jsx_a11y_plugin = yes;
+        self
+    }
+
     pub fn expect_fix<S: Into<String>>(mut self, expect_fix: Vec<(S, S, Option<Value>)>) -> Self {
         self.expect_fix =
             expect_fix.into_iter().map(|(s1, s2, r)| (s1.into(), s2.into(), r)).collect::<Vec<_>>();

@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// // test.skip('foo', () => {});
     /// ```
     NoCommentedOutTests,
-    restriction
+    suspicious
 );
 
 impl Rule for NoCommentedOutTests {
@@ -171,5 +171,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoCommentedOutTests::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoCommentedOutTests::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }
