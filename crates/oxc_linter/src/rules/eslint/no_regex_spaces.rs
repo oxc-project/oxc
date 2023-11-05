@@ -69,13 +69,18 @@ impl Rule for NoRegexSpaces {
 }
 
 impl NoRegexSpaces {
-    fn find_literal_to_report(lit: &RegExpLiteral) -> Option<Span> {
-        if Self::has_exempted_char_class(&lit.regex.pattern) {
+    fn find_literal_to_report(literal: &RegExpLiteral) -> Option<Span> {
+        if Self::has_exempted_char_class(&literal.regex.pattern) {
             return None;
         }
 
-        if Self::has_target_consecutive_spaces(&lit.regex.pattern) {
-            return Some(lit.span);
+        if let Some((idx_start, idx_end)) =
+            Self::find_consecutive_spaces_indices(&literal.regex.pattern)
+        {
+            let start = &literal.span.start + idx_start + 1;
+            let end = &literal.span.start + idx_end + 2;
+
+            return Some(Span { start, end });
         }
 
         None
@@ -93,43 +98,49 @@ impl NoRegexSpaces {
                 return None; // skip spaces inside char class, e.g. RegExp('[  ]')
             }
 
-            if Self::has_target_consecutive_spaces(&pattern.value) {
-                return Some(pattern.span);
+            if let Some((idx_start, idx_end)) =
+                Self::find_consecutive_spaces_indices(&pattern.value)
+            {
+                let start = &pattern.span.start + idx_start + 1;
+                let end = &pattern.span.start + idx_end + 2;
+
+                return Some(Span { start, end });
             }
         }
 
         None
     }
 
-    /// Whether a string has 2+ consecutive spaces, unless followed by a quantifier.
-    fn has_target_consecutive_spaces(s: &str) -> bool {
-        let mut chars = s.chars().peekable();
+    fn find_consecutive_spaces_indices(input: &str) -> Option<(u32, u32)> {
+        let mut start: Option<u32> = None;
+        let mut consecutive_spaces = 0;
 
-        while let Some(&c) = chars.peek() {
-            if c == ' ' {
-                chars.next();
-                if let Some(&next_char) = chars.peek() {
-                    if next_char == ' ' {
-                        chars.next();
-                        if let Some(&after_spaces) = chars.peek() {
-                            if after_spaces != '+'
-                                && after_spaces != '*'
-                                && after_spaces != '{'
-                                && after_spaces != '?'
-                            {
-                                return true;
-                            }
-                        } else {
-                            return true;
+        for (cur_idx, char) in input.char_indices() {
+            if char == ' ' {
+                consecutive_spaces += 1;
+                if start.is_none() {
+                    start = Some(cur_idx as u32);
+                }
+                if consecutive_spaces >= 2 {
+                    if let Some(next_char) = input.chars().nth(cur_idx + 1) {
+                        if consecutive_spaces > 2 && "+*{?".contains(next_char) {
+                            return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
                         }
+
+                        if !"+*{?".contains(next_char) && next_char != ' ' {
+                            return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
+                        }
+                    } else {
+                        return start.map(|start_idx| (start_idx as u32, cur_idx as u32));
                     }
                 }
+            } else {
+                start = Some(cur_idx as u32 + 1);
+                consecutive_spaces = 0;
             }
-
-            chars.next();
         }
 
-        false
+        None
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
