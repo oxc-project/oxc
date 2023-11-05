@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// );
     /// ```
     NoInterpolationInSnapshots,
-    restriction
+    style
 );
 
 impl Rule for NoInterpolationInSnapshots {
@@ -110,5 +110,7 @@ fn test() {
         ("expect(something).not.toThrowErrorMatchingInlineSnapshot(`${interpolated}`);", None),
     ];
 
-    Tester::new(NoInterpolationInSnapshots::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoInterpolationInSnapshots::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

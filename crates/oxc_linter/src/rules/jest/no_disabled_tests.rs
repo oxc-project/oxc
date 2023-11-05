@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDisabledTests,
-    restriction
+    correctness
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -206,5 +206,5 @@ fn test() {
         ("import { test } from '@jest/globals';test('something');", None),
     ];
 
-    Tester::new(NoDisabledTests::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDisabledTests::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

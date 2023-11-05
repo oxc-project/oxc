@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// test('should assert something', () => {});
     /// ```
     ExpectExpect,
-    restriction
+    correctness
 );
 
 impl Rule for ExpectExpect {
@@ -424,5 +424,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ExpectExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ExpectExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }
