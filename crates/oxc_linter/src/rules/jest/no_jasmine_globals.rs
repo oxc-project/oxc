@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoJasmineGlobals,
-    restriction
+    style
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];
@@ -293,5 +293,8 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoJasmineGlobals::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoJasmineGlobals::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

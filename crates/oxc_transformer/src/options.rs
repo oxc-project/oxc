@@ -22,6 +22,7 @@ pub struct TransformOptions {
     // es2015
     pub shorthand_properties: bool,
     pub sticky_regex: bool,
+    pub template_literals: bool,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>

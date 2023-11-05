@@ -70,7 +70,7 @@ declare_oxc_lint!(
     /// ```
     NoDoneCallback,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
-    restriction
+    style
 );
 
 impl Rule for NoDoneCallback {
@@ -303,5 +303,5 @@ fn test() {
         ("it.each``('something', ({ a, b }, done) => { done(); })", None),
     ];
 
-    Tester::new(NoDoneCallback::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDoneCallback::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

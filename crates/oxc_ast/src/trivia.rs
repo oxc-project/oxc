@@ -74,10 +74,7 @@ impl TriviasMap {
         self.comments.insert(span.start, comment);
     }
 
-    pub fn comments_spans(&self) -> Vec<(Comment, Span)> {
-        self.comments()
-            .iter()
-            .map(|(start, comment)| (*comment, Span::new(*start, comment.end)))
-            .collect()
+    pub fn comments_spans(&self) -> impl Iterator<Item = (Comment, Span)> + '_ {
+        self.comments().iter().map(|(start, comment)| (*comment, Span::new(*start, comment.end)))
     }
 }

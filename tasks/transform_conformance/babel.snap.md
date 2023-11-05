@@ -1,4 +1,4 @@
-Passed: 241/1080
+Passed: 255/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -704,6 +704,28 @@ Passed: 241/1080
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
+# babel-plugin-transform-template-literals (13/33)
+* assumption-ignoreToPrimitiveHint/escape-quotes/input.js
+* assumption-ignoreToPrimitiveHint/expression-first/input.js
+* assumption-ignoreToPrimitiveHint/functions/input.js
+* assumption-ignoreToPrimitiveHint/literals/input.js
+* assumption-ignoreToPrimitiveHint/multiple/input.js
+* assumption-ignoreToPrimitiveHint/only/input.js
+* assumption-ignoreToPrimitiveHint/single/input.js
+* assumption-ignoreToPrimitiveHint/statement/input.js
+* assumption-ignoreToPrimitiveHint/tag/input.js
+* assumption-mutableTemplateObject/tag/input.js
+* assumption-mutableTemplateObject/template-revision/input.js
+* default/cache-revision/input.js
+* default/literals/input.js
+* default/simple-tag/input.js
+* default/tag/input.js
+* default/tag-with-unicode-escapes/input.js
+* default/tag-with-unicode-escapes-babel-7/input.js
+* default/template-revision/input.js
+* loose/ignoreToPrimitiveHint/input.js
+* loose/mutableTemplateObject/input.js
+
 # babel-plugin-transform-typescript (84/181)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
@@ -803,7 +825,7 @@ Passed: 241/1080
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (92/170)
+# babel-plugin-transform-react-jsx (93/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -878,7 +900,6 @@ Passed: 241/1080
 * removed-options/invalid-use-spread-true/input.js
 * runtime/defaults-to-automatic/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
 * runtime/runtime-automatic/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js

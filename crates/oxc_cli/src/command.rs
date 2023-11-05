@@ -63,6 +63,18 @@ pub struct MiscOptions {
     pub threads: Option<usize>,
 }
 
+/// Enable Plugins
+#[derive(Debug, Clone, Bpaf)]
+pub struct EnablePlugins {
+    /// Enable the Jest plugin and detect test problems
+    #[bpaf(switch, hide_usage)]
+    pub jest_plugin: bool,
+
+    /// Enable the JSX-a11y plugin and detect accessibility problems
+    #[bpaf(switch, hide_usage)]
+    pub jsx_a11y_plugin: bool,
+}
+
 #[derive(Debug, Clone, Bpaf)]
 pub struct LintOptions {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many)]
@@ -71,6 +83,9 @@ pub struct LintOptions {
     /// Use the experimental import plugin and detect ESM problems
     #[bpaf(switch, hide_usage)]
     pub import_plugin: bool,
+
+    #[bpaf(external)]
+    pub enable_plugins: EnablePlugins,
 
     #[bpaf(external)]
     pub fix_options: FixOptions,

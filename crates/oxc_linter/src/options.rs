@@ -9,6 +9,8 @@ pub struct LintOptions {
     pub fix: bool,
     pub timing: bool,
     pub import_plugin: bool,
+    pub jest_plugin: bool,
+    pub jsx_a11y_plugin: bool,
 }
 
 impl Default for LintOptions {
@@ -18,6 +20,8 @@ impl Default for LintOptions {
             fix: false,
             timing: false,
             import_plugin: false,
+            jest_plugin: false,
+            jsx_a11y_plugin: false,
         }
     }
 }
@@ -48,6 +52,18 @@ impl LintOptions {
         self.import_plugin = yes;
         self
     }
+
+    #[must_use]
+    pub fn with_jest_plugin(mut self, yes: bool) -> Self {
+        self.jest_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
+        self.jsx_a11y_plugin = yes;
+        self
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -66,6 +82,9 @@ impl From<&'static str> for AllowWarnDeny {
         }
     }
 }
+
+const JEST_PLUGIN_NAME: &str = "jest";
+const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 
 impl LintOptions {
     pub fn derive_rules(&self) -> Vec<RuleEnum> {
@@ -108,9 +127,24 @@ impl LintOptions {
             }
         }
 
+        self.extends_or_exclude_plugins(&mut rules);
+
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
         rules
+    }
+
+    fn extends_or_exclude_plugins(&self, rules: &mut FxHashSet<RuleEnum>) {
+        let mut extends_or_exclude = |yes: bool, name: &str| {
+            if yes {
+                rules.extend(RULES.iter().filter(|rule| rule.plugin_name() == name).cloned());
+            } else {
+                rules.retain(|rule| rule.plugin_name() != name);
+            }
+        };
+
+        extends_or_exclude(self.jest_plugin, JEST_PLUGIN_NAME);
+        extends_or_exclude(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
     }
 }
