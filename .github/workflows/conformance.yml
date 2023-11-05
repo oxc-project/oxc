@@ -36,6 +36,10 @@ on:
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
 jobs:
   conformance:
     name: Conformance
