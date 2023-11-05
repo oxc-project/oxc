@@ -155,10 +155,10 @@ impl NoRegexSpaces {
                 }
 
                 return Some((start.unwrap(), cur_idx));
-            } else {
-                // end of string
-                return Some((start.unwrap(), cur_idx));
             }
+
+            // end of string
+            return Some((start.unwrap(), cur_idx));
         }
 
         None
