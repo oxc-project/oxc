@@ -149,6 +149,7 @@ mod unicorn {
     pub mod no_invalid_remove_event_listener;
     pub mod no_new_array;
     pub mod no_object_as_default_parameter;
+    pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
@@ -278,6 +279,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_new_array,
     unicorn::no_object_as_default_parameter,
+    unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
