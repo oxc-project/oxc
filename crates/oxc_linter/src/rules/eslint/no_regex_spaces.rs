@@ -173,40 +173,9 @@ impl NoRegexSpaces {
         expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
     }
 
+    /// Whether the input has a character class but no consecutive spaces
+    /// outside the character class.
     fn has_exempted_char_class(input: &str) -> bool {
-        Self::has_char_class(input) && Self::has_no_consecutive_spaces_outside_char_class(input)
-    }
-
-    fn has_char_class(input: &str) -> bool {
-        let mut in_character_class = false;
-
-        for c in input.chars() {
-            match c {
-                '[' => {
-                    if in_character_class {
-                        return true;
-                    }
-                    in_character_class = true;
-                }
-                ']' => {
-                    if in_character_class {
-                        in_character_class = false;
-                    } else {
-                        return true;
-                    }
-                }
-                _ => {
-                    if in_character_class {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        false
-    }
-
-    fn has_no_consecutive_spaces_outside_char_class(input: &str) -> bool {
         let mut inside_class = false;
 
         for (i, c) in input.chars().enumerate() {
