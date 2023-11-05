@@ -263,8 +263,6 @@ fn test() {
         "var foo = RegExp('bar   +baz')",
         "var foo = new RegExp('bar    ');",
         r"var foo = /bar\\  baz/;",
-        r"var foo = /\\[  /;",
-        r"var foo = /\\[  \]/;",
         "var foo = /(?:  )/;",
         "var foo = RegExp('^foo(?=   )');",
         r"var foo = /\\  /",

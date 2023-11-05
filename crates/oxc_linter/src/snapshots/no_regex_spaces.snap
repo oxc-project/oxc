@@ -86,18 +86,6 @@ expression: no_regex_spaces
    ╰────
   help: Use a quantifier, e.g. {2}
 
-  × Unterminated regular expression
-   ╭─[no_regex_spaces.tsx:1:1]
- 1 │ var foo = /\\[  /;
-   ·           ────────
-   ╰────
-
-  × Unterminated regular expression
-   ╭─[no_regex_spaces.tsx:1:1]
- 1 │ var foo = /\\[  \]/;
-   ·           ──────────
-   ╰────
-
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:1]
  1 │ var foo = /(?:  )/;
