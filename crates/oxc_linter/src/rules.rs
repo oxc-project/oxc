@@ -27,7 +27,7 @@ mod deepscan {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
-    pub mod eq_eq_eq;
+    pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
     pub mod no_array_constructor;
@@ -174,7 +174,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
-    eslint::eq_eq_eq,
+    eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
     eslint::no_array_constructor,
