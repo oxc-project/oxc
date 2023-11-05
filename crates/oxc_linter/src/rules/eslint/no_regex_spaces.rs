@@ -270,7 +270,7 @@ fn test() {
         r"var foo = /\\  /",
         r"var foo = / \\  /",
         "var foo = /  foo   /;",
-        "var foo = new RegExp('\\d  ')",
+        r"var foo = new RegExp('\\d  ')",
         r"var foo = RegExp('\\u0041   ')",
         "var foo = /[   ]  /;",
         "var foo = /  [   ] /;",

@@ -135,8 +135,8 @@ expression: no_regex_spaces
 
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:1]
- 1 │ var foo = new RegExp('\d  ')
-   ·                        ──
+ 1 │ var foo = new RegExp('\\d  ')
+   ·                         ──
    ╰────
   help: Use a quantifier, e.g. {2}
 
