@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -13,9 +13,6 @@ devDependencies:
   '@types/node':
     specifier: ^18.17.5
     version: 18.17.5
-  '@types/resolve':
-    specifier: ^1.20.2
-    version: 1.20.2
   '@types/vscode':
     specifier: ^1.80.0
     version: 1.80.0
@@ -234,10 +231,6 @@ packages:
 
   /@types/node@18.17.5:
     resolution: {integrity: sha512-xNbS75FxH6P4UXTPUJp/zNPq6/xsfdJKussCWNOnz4aULWIRwMgP1LgaB5RiBnMX1DPCYenuqGZfnIAx5mbFLA==}
-    dev: true
-
-  /@types/resolve@1.20.2:
-    resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
     dev: true
 
   /@types/vscode@1.80.0:
