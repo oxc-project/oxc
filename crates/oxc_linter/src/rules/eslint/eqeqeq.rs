@@ -15,10 +15,10 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(eqeqeq): Expected {1} and instead saw {0}")]
 #[diagnostic(severity(warning), help("Prefer {1} operator"))]
-struct EqEqEqDiagnostic(&'static str, &'static str, #[label] pub Span);
+struct EqeqeqDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct EqEqEq {
+pub struct Eqeqeq {
     compare_type: CompareType,
     null_type: NullType,
 }
@@ -36,11 +36,11 @@ declare_oxc_lint!(
     /// let b = false
     /// a == b
     /// ```
-    EqEqEq,
+    Eqeqeq,
     pedantic
 );
 
-impl Rule for EqEqEq {
+impl Rule for Eqeqeq {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj1 = value.get(0);
         let obj2 = value.get(1);
@@ -70,7 +70,7 @@ impl Rule for EqEqEq {
                 // There are some uncontrolled cases to auto fix.
                 // In ESlint, `null >= null` will be auto fixed to `null > null` which is also wrong.
                 // So I just report it.
-                ctx.diagnostic(EqEqEqDiagnostic(
+                ctx.diagnostic(EqeqeqDiagnostic(
                     operator,
                     &operator[0..operator.len() - 1],
                     binary_expr.span,
@@ -104,7 +104,7 @@ impl Rule for EqEqEq {
         // If the comparison is a `typeof` comparison or both sides are literals with the same type, then it's safe to fix.
         if is_type_of_binary_bool || are_literals_and_same_type_bool {
             ctx.diagnostic_with_fix(
-                EqEqEqDiagnostic(operator, preferred_operator, binary_expr.span),
+                EqeqeqDiagnostic(operator, preferred_operator, binary_expr.span),
                 || {
                     let start = binary_expr.left.span().end;
                     let end = binary_expr.right.span().start;
@@ -112,7 +112,7 @@ impl Rule for EqEqEq {
                 },
             );
         } else {
-            ctx.diagnostic(EqEqEqDiagnostic(operator, preferred_operator, binary_expr.span));
+            ctx.diagnostic(EqeqeqDiagnostic(operator, preferred_operator, binary_expr.span));
         }
     }
 }
@@ -237,5 +237,5 @@ fn test() {
         ("a == b", "a == b", None),
     ];
 
-    Tester::new(EqEqEq::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Eqeqeq::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
