@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Expression, IdentifierReference},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
