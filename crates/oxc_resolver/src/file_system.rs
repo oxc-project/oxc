@@ -10,28 +10,47 @@ pub trait FileSystem: Send + Sync {
     /// # Errors
     ///
     /// * See [std::fs::read_to_string]
-    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String>;
+    /// ## Warning
+    /// Use `&Path` instead of a generic `P: AsRef<Path>` here,
+    /// because object safety requirements, it is especially useful, when
+    /// you want to store multiple `dyn FileSystem` in a `Vec` or use a `ResolverGeneric<Fs>` in
+    /// napi env.
+    fn read_to_string(&self, path: &Path) -> io::Result<String>;
 
     /// See [std::fs::metadata]
     ///
     /// # Errors
-    ///
     /// See [std::fs::metadata]
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+    /// ## Warning
+    /// Use `&Path` instead of a generic `P: AsRef<Path>` here,
+    /// because object safety requirements, it is especially useful, when
+    /// you want to store multiple `dyn FileSystem` in a `Vec` or use a `ResolverGeneric<Fs>` in
+    /// napi env.
+    fn metadata(&self, path: &Path) -> io::Result<FileMetadata>;
 
     /// See [std::fs::symlink_metadata]
     ///
     /// # Errors
     ///
     /// See [std::fs::symlink_metadata]
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+    /// ## Warning
+    /// Use `&Path` instead of a generic `P: AsRef<Path>` here,
+    /// because object safety requirements, it is especially useful, when
+    /// you want to store multiple `dyn FileSystem` in a `Vec` or use a `ResolverGeneric<Fs>` in
+    /// napi env.
+    fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata>;
 
     /// See [std::fs::canonicalize]
     ///
     /// # Errors
     ///
     /// See [std::fs::read_link]
-    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
+    /// ## Warning
+    /// Use `&Path` instead of a generic `P: AsRef<Path>` here,
+    /// because object safety requirements, it is especially useful, when
+    /// you want to store multiple `dyn FileSystem` in a `Vec` or use a `ResolverGeneric<Fs>` in
+    /// napi env.
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf>;
 }
 
 /// Metadata information about a file.
@@ -59,19 +78,19 @@ impl From<fs::Metadata> for FileMetadata {
 pub struct FileSystemOs;
 
 impl FileSystem for FileSystemOs {
-    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String> {
+    fn read_to_string(&self, path: &Path) -> io::Result<String> {
         fs::read_to_string(path)
     }
 
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         fs::metadata(path).map(FileMetadata::from)
     }
 
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         fs::symlink_metadata(path).map(FileMetadata::from)
     }
 
-    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
         dunce::canonicalize(path)
     }
 }
