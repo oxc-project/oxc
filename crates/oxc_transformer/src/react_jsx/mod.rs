@@ -1,6 +1,6 @@
 mod options;
 
-use std::rc::Rc;
+use std::{borrow::Cow, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -27,8 +27,8 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
-    import_source: String,
-    jsx_runtime_importer: String,
+    // Will be store jsx runtime importer, like `react/jsx-runtime`
+    jsx_runtime_importer: Cow<'a, str>,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -78,14 +78,17 @@ impl<'a> ReactJsx<'a> {
         let imports = ast.new_vec();
         let options = options.with_comments(&ctx.semantic());
 
-        let import_source = options.import_source.clone().unwrap_or_else(|| "react".to_string());
-        let jsx_runtime_importer = format!("{import_source}/jsx-runtime");
+        let jsx_runtime_importer =
+            if options.import_source == "react" || options.runtime.is_classic() {
+                Cow::Borrowed("react/jsx-runtime")
+            } else {
+                Cow::from(format!("{}/jsx-runtime", options.import_source))
+            };
 
         Self {
             ast,
             options,
             imports,
-            import_source,
             jsx_runtime_importer,
             import_jsx: false,
             import_jsxs: false,
@@ -166,7 +169,7 @@ impl<'a> ReactJsx<'a> {
             self.add_import_statement(
                 "createElement",
                 "_createElement",
-                &self.import_source.clone(),
+                &self.options.import_source.clone(),
             );
         }
     }

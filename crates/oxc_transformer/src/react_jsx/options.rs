@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_semantic::Semantic;
 use serde::Deserialize;
 
@@ -10,7 +12,12 @@ pub struct ReactJsxOptions {
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
     pub throw_if_namespace: Option<bool>,
     /// Replaces the import source when importing functions. default to `react`
-    pub import_source: Option<String>,
+    #[serde(default = "default_import_source")]
+    pub import_source: Cow<'static, str>,
+}
+
+fn default_import_source() -> Cow<'static, str> {
+    Cow::Borrowed("react")
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
