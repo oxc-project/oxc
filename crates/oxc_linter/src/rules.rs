@@ -11,6 +11,7 @@ mod import {
     pub mod named;
     pub mod no_cycle;
     pub mod no_self_import;
+    pub mod no_amd;
 }
 
 mod deepscan {
@@ -316,5 +317,6 @@ oxc_macros::declare_all_lint_rules! {
     import::named,
     import::no_cycle,
     import::no_self_import,
-    jsx_a11y::alt_text
+    import::no_amd,
+    jsx_a11y::alt_text,
 }
