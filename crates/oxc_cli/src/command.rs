@@ -66,6 +66,10 @@ pub struct MiscOptions {
 /// Enable Plugins
 #[derive(Debug, Clone, Bpaf)]
 pub struct EnablePlugins {
+    /// Enable the experimental import plugin and detect ESM problems
+    #[bpaf(switch, hide_usage)]
+    pub import_plugin: bool,
+
     /// Enable the Jest plugin and detect test problems
     #[bpaf(switch, hide_usage)]
     pub jest_plugin: bool,
@@ -79,10 +83,6 @@ pub struct EnablePlugins {
 pub struct LintOptions {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many)]
     pub filter: Vec<(AllowWarnDeny, String)>,
-
-    /// Use the experimental import plugin and detect ESM problems
-    #[bpaf(switch, hide_usage)]
-    pub import_plugin: bool,
 
     #[bpaf(external)]
     pub enable_plugins: EnablePlugins,
