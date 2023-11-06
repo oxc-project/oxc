@@ -40,33 +40,33 @@ impl MemoryFS {
 }
 
 impl FileSystem for MemoryFS {
-    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String> {
+    fn read_to_string(&self, path: &Path) -> io::Result<String> {
         use vfs::FileSystem;
         let mut file = self
             .fs
-            .open_file(path.as_ref().to_string_lossy().as_ref())
+            .open_file(path.to_string_lossy().as_ref())
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
         let mut buffer = String::new();
         file.read_to_string(&mut buffer).unwrap();
         Ok(buffer)
     }
 
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         use vfs::FileSystem;
         let metadata = self
             .fs
-            .metadata(path.as_ref().to_string_lossy().as_ref())
+            .metadata(path.to_string_lossy().as_ref())
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
         let is_file = metadata.file_type == vfs::VfsFileType::File;
         let is_dir = metadata.file_type == vfs::VfsFileType::Directory;
         Ok(FileMetadata::new(is_file, is_dir, false))
     }
 
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
         self.metadata(path)
     }
 
-    fn canonicalize<P: AsRef<Path>>(&self, _path: P) -> io::Result<PathBuf> {
+    fn canonicalize(&self, _path: &Path) -> io::Result<PathBuf> {
         Err(io::Error::new(io::ErrorKind::NotFound, "not a symlink"))
     }
 }
