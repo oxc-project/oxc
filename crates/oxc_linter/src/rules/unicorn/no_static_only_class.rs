@@ -14,7 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 )]
 #[diagnostic(
     severity(warning),
-    help("Change the class to an object instead, or add some instance members.")
+    help("A class with only static members could just be an object instead.")
 )]
 struct NoStaticOnlyClassDiagnostic(#[label] pub Span);
 
