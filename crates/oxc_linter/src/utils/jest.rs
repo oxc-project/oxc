@@ -31,6 +31,8 @@ const JEST_METHOD_NAMES: [&str; 14] = [
     "xtest",
 ];
 
+pub const JEST_HOOK_NAMES: [&str; 4] = ["afterAll", "afterEach", "beforeAll", "beforeEach"];
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum JestFnKind {
     Expect,
