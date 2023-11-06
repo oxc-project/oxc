@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// test.todo('i need to write this test');
     /// ```
     PreferTodo,
-    restriction,
+    style,
 );
 
 impl Rule for PreferTodo {
@@ -253,5 +253,8 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferTodo::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferTodo::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
