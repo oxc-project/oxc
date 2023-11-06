@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoExport,
-    restriction
+    correctness
 );
 
 impl Rule for NoExport {
@@ -112,5 +112,5 @@ fn test() {
         // ("module.export.invalid = function() {}; ;  test('a test', () => { expect(1).toBe(1);});", None)
     ];
 
-    Tester::new(NoExport::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoExport::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

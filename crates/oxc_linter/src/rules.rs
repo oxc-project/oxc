@@ -27,7 +27,7 @@ mod deepscan {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
-    pub mod eq_eq_eq;
+    pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
     pub mod no_array_constructor;
@@ -141,14 +141,20 @@ mod unicorn {
     pub mod catch_error_name;
     pub mod error_message;
     pub mod filename_case;
+    pub mod new_for_builtins;
     pub mod no_console_spaces;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
+    pub mod no_invalid_remove_event_listener;
+    pub mod no_new_array;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
     pub mod prefer_array_flat_map;
+    pub mod prefer_date_now;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
+    pub mod prefer_string_trim_start_end;
+    pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
@@ -170,7 +176,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
-    eslint::eq_eq_eq,
+    eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
     eslint::no_array_constructor,
@@ -262,17 +268,23 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::catch_error_name,
     unicorn::error_message,
     unicorn::filename_case,
+    unicorn::new_for_builtins,
     unicorn::no_console_spaces,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
+    unicorn::no_invalid_remove_event_listener,
+    unicorn::no_new_array,
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_date_now,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    unicorn::prefer_string_trim_start_end,
     unicorn::prefer_query_selector,
     react::jsx_key,
     react::jsx_no_comment_text_nodes,

@@ -29,12 +29,12 @@ impl Runner for LintRunner {
         let CliLintOptions {
             paths,
             filter,
-            import_plugin,
             warning_options,
             ignore_options,
             fix_options,
             misc_options,
             codeowner_options,
+            enable_plugins,
         } = self.options;
 
         if paths.is_empty() {
@@ -57,7 +57,9 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_fix(fix_options.fix)
             .with_timing(misc_options.timing)
-            .with_import_plugin(import_plugin);
+            .with_import_plugin(enable_plugins.import_plugin)
+            .with_jest_plugin(enable_plugins.jest_plugin)
+            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin);
         let lint_service = LintService::new(cwd, &paths, lint_options);
 
         let diagnostic_service = DiagnosticService::default()

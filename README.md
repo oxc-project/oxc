@@ -216,19 +216,23 @@ If you are unable to contribute by code, you can still participate by:
 
 ## 📚 Learning Resources
 
-* My small tutorial on [how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
+* My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/javascript-parser-in-rust)
 * My small article [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Andrew Kelley - Practical DOD](https://vimeo.com/649009599)
 
 ## 🧑‍💻 Maintenance
 
-* Oxc is currently being developed and maintained by project lead [Boshen] with the help of [contributors] from all over the world
-* APIs should be simple and well-documented
-* All performance issues (runtime and compilation speed) are considered as bugs in this project
-* Third-party dependencies should be minimal
-* Code coverage should be monitored for unused code. Aim for 99% code coverage
-* Embrace data-oriented design
+Oxc is being maintained by [Boshen] as the project lead with the help of [contributors] from all over the world.
+
+Rules of thumb:
+
+* APIs should be simple and well-documented.
+* All performance issues (runtime and compilation speed) are considered as bugs in this project.
+* Third-party dependencies should be minimal.
+* Monitor code coverage for unused code. Aim for 99% code coverage.
+* Embrace data-oriented design.
+* Prefer smaller PRs. Try [graphite.dev](https://graphite.dev).
 
 ## 🤝 Credits
 

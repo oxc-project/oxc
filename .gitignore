@@ -6,6 +6,7 @@ target/
 /crates/oxc_napi/node_modules/
 /benchmark/node_modules/
 /editor/vscode/node_modules/
+/editor/vscode/icon.png
 
 /editor/vscode/out/
 /editor/vscode/*.vsix

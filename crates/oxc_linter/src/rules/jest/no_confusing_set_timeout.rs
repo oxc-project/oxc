@@ -83,7 +83,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoConfusingSetTimeout,
-    restriction
+    style
 );
 
 impl Rule for NoConfusingSetTimeout {
@@ -481,5 +481,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoConfusingSetTimeout::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConfusingSetTimeout::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

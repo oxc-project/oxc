@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -21,6 +21,9 @@
   ],
   "engines": {
     "vscode": "^1.80.0"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/boshen"
   },
   "activationEvents": [
     "onStartupFinished",
@@ -50,6 +53,7 @@
     ]
   },
   "scripts": {
+    "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
     "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
     "package": "vsce package --no-dependencies -o oxc_lsp.vsix",
@@ -60,7 +64,6 @@
   },
   "devDependencies": {
     "@types/node": "^18.17.5",
-    "@types/resolve": "^1.20.2",
     "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.22.0",
     "cross-env": "^7.0.2",

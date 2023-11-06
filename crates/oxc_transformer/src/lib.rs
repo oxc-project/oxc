@@ -24,6 +24,7 @@ mod utils;
 
 use std::{cell::RefCell, rc::Rc};
 
+use es2015::TemplateLiterals;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_semantic::Semantic;
@@ -59,6 +60,7 @@ pub struct Transformer<'a> {
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
+    es2015_template_literals: Option<TemplateLiterals<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -84,6 +86,7 @@ impl<'a> Transformer<'a> {
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
+            es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), &ctx, options)),
         }
     }
@@ -123,6 +126,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }

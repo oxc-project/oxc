@@ -1,4 +1,4 @@
-Passed: 243/1080
+Passed: 255/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -703,6 +703,28 @@ Passed: 243/1080
 * unicode-regex/basic/input.js
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
+
+# babel-plugin-transform-template-literals (13/33)
+* assumption-ignoreToPrimitiveHint/escape-quotes/input.js
+* assumption-ignoreToPrimitiveHint/expression-first/input.js
+* assumption-ignoreToPrimitiveHint/functions/input.js
+* assumption-ignoreToPrimitiveHint/literals/input.js
+* assumption-ignoreToPrimitiveHint/multiple/input.js
+* assumption-ignoreToPrimitiveHint/only/input.js
+* assumption-ignoreToPrimitiveHint/single/input.js
+* assumption-ignoreToPrimitiveHint/statement/input.js
+* assumption-ignoreToPrimitiveHint/tag/input.js
+* assumption-mutableTemplateObject/tag/input.js
+* assumption-mutableTemplateObject/template-revision/input.js
+* default/cache-revision/input.js
+* default/literals/input.js
+* default/simple-tag/input.js
+* default/tag/input.js
+* default/tag-with-unicode-escapes/input.js
+* default/tag-with-unicode-escapes-babel-7/input.js
+* default/template-revision/input.js
+* loose/ignoreToPrimitiveHint/input.js
+* loose/mutableTemplateObject/input.js
 
 # babel-plugin-transform-typescript (84/181)
 * class/abstract-class-decorated/input.ts

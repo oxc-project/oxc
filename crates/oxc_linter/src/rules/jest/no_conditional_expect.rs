@@ -49,7 +49,7 @@ declare_oxc_lint!(
     // });
     /// ```
     NoConditionalExpect,
-    restriction
+    correctness
 );
 
 impl Rule for NoConditionalExpect {
@@ -807,5 +807,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoConditionalExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConditionalExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

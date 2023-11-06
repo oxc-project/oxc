@@ -134,13 +134,13 @@ struct ResolveContextImpl {
     depth: u8,
 }
 
-impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
+impl<Fs: FileSystem + Default> Default for ResolverGeneric<Fs> {
     fn default() -> Self {
         Self::new(ResolveOptions::default())
     }
 }
 
-impl<Fs: FileSystem> ResolverGeneric<Fs> {
+impl<Fs: FileSystem + Default> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
         #[cfg(feature = "tracing-subscriber")]
         tracing_subscriber::init();
