@@ -32,7 +32,7 @@ impl Tester {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
         let semantic = SemanticBuilder::new(source_text, self.source_type).build(&program).semantic;
         let program = self.allocator.alloc(program);
-        Transformer::new(&self.allocator, self.source_type, semantic, &self.options.clone())
+        Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
             .build(program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
     }

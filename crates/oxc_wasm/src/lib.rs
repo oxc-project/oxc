@@ -215,7 +215,7 @@ impl Oxc {
             let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
-            Transformer::new(&allocator, source_type, semantic, &options).build(program);
+            Transformer::new(&allocator, source_type, semantic, options).build(program);
         }
 
         let program = allocator.alloc(program);

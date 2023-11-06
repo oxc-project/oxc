@@ -145,7 +145,7 @@ pub trait TestCase {
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
 
-        Transformer::new(&allocator, source_type, semantic, &self.transform_options())
+        Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
         Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
     }
@@ -197,7 +197,7 @@ impl TestCase for ConformanceTestCase {
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        Transformer::new(&allocator, source_type, semantic, &self.transform_options())
+        Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(program);
         let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
 

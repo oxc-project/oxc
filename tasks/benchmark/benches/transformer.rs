@@ -37,7 +37,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                     SemanticBuilder::new(source_text, source_type).build(&program).semantic;
                 let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
-                Transformer::new(&allocator, source_type, semantic, &transform_options)
+                Transformer::new(&allocator, source_type, semantic, transform_options)
                     .build(black_box(program));
                 allocator
             });
