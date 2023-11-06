@@ -1776,7 +1776,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "0.3.1"
+version = "0.5.0"
 dependencies = [
  "dashmap",
  "dunce",
