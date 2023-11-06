@@ -97,6 +97,7 @@ impl FileSystem for FileSystemOs {
     }
 }
 
+/// Impl FileSystem for Arc<T> when T satisfies FileSystem, it is useful when the user wants to share the filesystem into multiple threads.
 impl<T> FileSystem for Arc<T>
 where
     T: FileSystem,
