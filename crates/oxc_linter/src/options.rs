@@ -89,6 +89,7 @@ const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 impl LintOptions {
     pub fn derive_rules(&self) -> Vec<RuleEnum> {
         let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+        let all_rules = self.get_filtered_rules();
 
         for (allow_warn_deny, name_or_category) in &self.filter {
             let maybe_category = RuleCategory::from(name_or_category.as_str());
@@ -96,14 +97,14 @@ impl LintOptions {
                 AllowWarnDeny::Deny => {
                     match maybe_category {
                         Some(category) => rules.extend(
-                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
+                            all_rules.iter().filter(|rule| rule.category() == category).cloned(),
                         ),
                         None => {
                             if name_or_category == "all" {
-                                rules.extend(RULES.iter().cloned());
+                                rules.extend(all_rules.iter().cloned());
                             } else {
                                 rules.extend(
-                                    RULES
+                                    all_rules
                                         .iter()
                                         .filter(|rule| rule.name() == name_or_category)
                                         .cloned(),
@@ -127,24 +128,25 @@ impl LintOptions {
             }
         }
 
-        self.extends_or_exclude_plugins(&mut rules);
-
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
         rules
     }
 
-    fn extends_or_exclude_plugins(&self, rules: &mut FxHashSet<RuleEnum>) {
-        let mut extends_or_exclude = |yes: bool, name: &str| {
-            if yes {
-                rules.extend(RULES.iter().filter(|rule| rule.plugin_name() == name).cloned());
-            } else {
+    // get final filtered rules by reading `self.jest_plugin` and `self.jsx_a11y_plugin`
+    fn get_filtered_rules(&self) -> Vec<RuleEnum> {
+        let mut rules = RULES.clone();
+
+        let mut may_exclude_plugin_rules = |yes: bool, name: &str| {
+            if !yes {
                 rules.retain(|rule| rule.plugin_name() != name);
             }
         };
 
-        extends_or_exclude(self.jest_plugin, JEST_PLUGIN_NAME);
-        extends_or_exclude(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
+
+        rules
     }
 }

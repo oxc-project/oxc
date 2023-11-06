@@ -31,8 +31,10 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_trivias(ret.trivias)
                     .build_module_record(PathBuf::new(), program)
                     .build(program);
-                let lint_options =
-                    LintOptions::default().with_filter(vec![(AllowWarnDeny::Deny, "all".into())]);
+                let lint_options = LintOptions::default()
+                    .with_filter(vec![(AllowWarnDeny::Deny, "all".into())])
+                    .with_jest_plugin(true)
+                    .with_jsx_a11y_plugin(true);
                 let linter = Linter::from_options(lint_options);
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
