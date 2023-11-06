@@ -244,6 +244,26 @@ pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     node
 }
 
+pub fn outermost_paren_parent<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b AstNode<'a>> {
+    let mut node = node;
+
+    loop {
+        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+            if let AstKind::ParenthesizedExpression(_) = parent.kind() {
+                node = parent;
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    ctx.nodes().parent_node(node.id())
+}
+
 pub fn get_name_from_property_key(key: &PropertyKey<'_>) -> Option<Atom> {
     match key {
         PropertyKey::Identifier(ident) => Some(ident.name.clone()),
