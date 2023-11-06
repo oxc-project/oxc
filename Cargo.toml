@@ -15,19 +15,19 @@ rust-version = "1.60"
 
 [workspace.dependencies]
 # publish = true
-oxc             = { version = "0.2.0", path = "crates/oxc" }
-oxc_allocator   = { version = "0.2.0", path = "crates/oxc_allocator" }
-oxc_ast         = { version = "0.2.0", path = "crates/oxc_ast" }
-oxc_diagnostics = { version = "0.2.0", path = "crates/oxc_diagnostics" }
-oxc_formatter   = { version = "0.2.0", path = "crates/oxc_formatter" }
-oxc_index       = { version = "0.2.0", path = "crates/oxc_index" }
-oxc_minifier    = { version = "0.2.0", path = "crates/oxc_minifier" }
-oxc_parser      = { version = "0.2.0", path = "crates/oxc_parser" }
-oxc_semantic    = { version = "0.2.0", path = "crates/oxc_semantic" }
-oxc_span        = { version = "0.2.0", path = "crates/oxc_span" }
-oxc_syntax      = { version = "0.2.0", path = "crates/oxc_syntax" }
-oxc_transformer = { version = "0.2.0", path = "crates/oxc_transformer" }
-oxc_codegen     = { version = "0.2.0", path = "crates/oxc_codegen" }
+oxc             = { version = "0.3.0", path = "crates/oxc" }
+oxc_allocator   = { version = "0.3.0", path = "crates/oxc_allocator" }
+oxc_ast         = { version = "0.3.0", path = "crates/oxc_ast" }
+oxc_codegen     = { version = "0.3.0", path = "crates/oxc_codegen" }
+oxc_diagnostics = { version = "0.3.0", path = "crates/oxc_diagnostics" }
+oxc_formatter   = { version = "0.3.0", path = "crates/oxc_formatter" }
+oxc_index       = { version = "0.3.0", path = "crates/oxc_index" }
+oxc_minifier    = { version = "0.3.0", path = "crates/oxc_minifier" }
+oxc_parser      = { version = "0.3.0", path = "crates/oxc_parser" }
+oxc_semantic    = { version = "0.3.0", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.3.0", path = "crates/oxc_span" }
+oxc_syntax      = { version = "0.3.0", path = "crates/oxc_syntax" }
+oxc_transformer = { version = "0.3.0", path = "crates/oxc_transformer" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }
