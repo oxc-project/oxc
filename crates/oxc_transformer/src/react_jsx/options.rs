@@ -86,6 +86,12 @@ impl ReactJsxOptions {
             if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
                 self.import_source = Cow::from(import_source.to_string());
             }
+
+            // Put this condition at the end to avoid breaking @jsxXX
+            // read jsx
+            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
+                self.pragma = Cow::from(pragma.to_string());
+            }
         }
         self
     }
