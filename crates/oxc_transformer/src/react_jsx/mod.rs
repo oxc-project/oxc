@@ -315,6 +315,25 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
+    /// Get the callee from `pragma` and `pragmaFrag`
+    fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
+        let mut callee = literal_callee.split('.');
+        let member = callee.next().unwrap();
+        let property = callee.next();
+        property.map_or_else(
+            || {
+                let ident = IdentifierReference::new(SPAN, member.into());
+                self.ast.identifier_reference_expression(ident)
+            },
+            |property_name| {
+                let property = IdentifierName::new(SPAN, property_name.into());
+                let ident = IdentifierReference::new(SPAN, member.into());
+                let object = self.ast.identifier_reference_expression(ident);
+                self.ast.static_member_expression(SPAN, object, property, false)
+            },
+        )
+    }
+
     fn get_create_element(
         &mut self,
         has_key_after_props_spread: bool,
@@ -322,9 +341,13 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "createElement".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma == "React.createElement" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "createElement".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma.as_ref())
             }
             ReactJsxRuntime::Automatic => {
                 let name = if has_key_after_props_spread {
