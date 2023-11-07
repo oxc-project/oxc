@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, JEST_HOOK_NAMES},
+    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
     AstNode,
 };
 
@@ -99,9 +99,7 @@ impl Rule for NoHooks {
         }
 
         if let Expression::Identifier(ident) = &call_expr.callee {
-            if JEST_HOOK_NAMES.contains(&ident.name.as_str())
-                && !self.allow.contains(&ident.name.to_string())
-            {
+            if !self.allow.contains(&ident.name.to_string()) {
                 ctx.diagnostic(UnexpectedHookDiagonsitc(call_expr.callee.span()));
             }
         }
