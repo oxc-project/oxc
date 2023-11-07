@@ -163,6 +163,7 @@ mod unicorn {
     pub mod prefer_code_point;
     pub mod prefer_date_now;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
@@ -301,7 +302,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_date_now,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_query_selector,
-    unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_optional_catch_binding,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
