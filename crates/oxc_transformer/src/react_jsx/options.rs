@@ -21,6 +21,9 @@ pub struct ReactJsxOptions {
     /// Note that the @jsx React.DOM pragma has been deprecated as of React v0.12
     #[serde(default = "default_pragma")]
     pub pragma: Cow<'static, str>,
+    /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name. default to `React.Fragment`
+    #[serde(default = "default_pragma_frag")]
+    pub pragma_frag: Cow<'static, str>,
 }
 
 fn default_import_source() -> Cow<'static, str> {
@@ -29,6 +32,10 @@ fn default_import_source() -> Cow<'static, str> {
 
 fn default_pragma() -> Cow<'static, str> {
     Cow::Borrowed("React.createElement")
+}
+
+fn default_pragma_frag() -> Cow<'static, str> {
+    Cow::Borrowed("React.Fragment")
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]

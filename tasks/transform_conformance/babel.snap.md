@@ -1,4 +1,4 @@
-Passed: 262/1113
+Passed: 263/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -825,7 +825,7 @@ Passed: 262/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (100/170)
+# babel-plugin-transform-react-jsx (101/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -884,7 +884,6 @@ Passed: 262/1113
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
-* regression/issue-15353-classic/input.js
 * regression/pragma-frag-set-default-classic-runtime/input.js
 * removed-options/invalid-use-builtins-false/input.js
 * removed-options/invalid-use-builtins-true/input.js
