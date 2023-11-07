@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: default_case_last
+---
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: bar(); break; case 1: baz(); break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: break; case 1: break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: break; case 1: }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: case 1: break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: case 1: }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: break; case 1: break; case 2: break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: case 1: break; case 2: break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: case 1: case 2: break; }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { default: case 1: case 2: }
+   ·                ───┬───
+   ·                   ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { case 1: break; default: break; case 2: break; }
+   ·                               ───┬───
+   ·                                  ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { case 1: default: break; case 2: break; }
+   ·                        ───┬───
+   ·                           ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { case 1: break; default: case 2: break; }
+   ·                               ───┬───
+   ·                                  ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { case 1: default: case 2: break; }
+   ·                        ───┬───
+   ·                           ╰── Default clause should be the last clause.
+   ╰────
+
+  ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
+   ╭─[default_case_last.tsx:1:1]
+ 1 │ switch (foo) { case 1: default: case 2: }
+   ·                        ───┬───
+   ·                           ╰── Default clause should be the last clause.
+   ╰────
+
+

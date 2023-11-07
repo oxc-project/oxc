@@ -15,19 +15,19 @@ rust-version = "1.60"
 
 [workspace.dependencies]
 # publish = true
-oxc             = { version = "0.2.0", path = "crates/oxc" }
-oxc_allocator   = { version = "0.2.0", path = "crates/oxc_allocator" }
-oxc_ast         = { version = "0.2.0", path = "crates/oxc_ast" }
-oxc_diagnostics = { version = "0.2.0", path = "crates/oxc_diagnostics" }
-oxc_formatter   = { version = "0.2.0", path = "crates/oxc_formatter" }
-oxc_index       = { version = "0.2.0", path = "crates/oxc_index" }
-oxc_minifier    = { version = "0.2.0", path = "crates/oxc_minifier" }
-oxc_parser      = { version = "0.2.0", path = "crates/oxc_parser" }
-oxc_semantic    = { version = "0.2.0", path = "crates/oxc_semantic" }
-oxc_span        = { version = "0.2.0", path = "crates/oxc_span" }
-oxc_syntax      = { version = "0.2.0", path = "crates/oxc_syntax" }
-oxc_transformer = { version = "0.2.0", path = "crates/oxc_transformer" }
-oxc_codegen     = { version = "0.2.0", path = "crates/oxc_codegen" }
+oxc             = { version = "0.3.0", path = "crates/oxc" }
+oxc_allocator   = { version = "0.3.0", path = "crates/oxc_allocator" }
+oxc_ast         = { version = "0.3.0", path = "crates/oxc_ast" }
+oxc_codegen     = { version = "0.3.0", path = "crates/oxc_codegen" }
+oxc_diagnostics = { version = "0.3.0", path = "crates/oxc_diagnostics" }
+oxc_formatter   = { version = "0.3.0", path = "crates/oxc_formatter" }
+oxc_index       = { version = "0.3.0", path = "crates/oxc_index" }
+oxc_minifier    = { version = "0.3.0", path = "crates/oxc_minifier" }
+oxc_parser      = { version = "0.3.0", path = "crates/oxc_parser" }
+oxc_semantic    = { version = "0.3.0", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.3.0", path = "crates/oxc_span" }
+oxc_syntax      = { version = "0.3.0", path = "crates/oxc_syntax" }
+oxc_transformer = { version = "0.3.0", path = "crates/oxc_transformer" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }
@@ -42,7 +42,7 @@ oxc_resolver = { path = "crates/oxc_resolver" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
-bpaf                      = { version = "0.9.5" }
+bpaf                      = { version = "0.9.6" }
 bitflags                  = { version = "2.4.1" }
 bumpalo                   = { version = "3.14.0" }
 compact_str               = { version = "0.7.1" }
@@ -73,7 +73,7 @@ rustc-hash                = { version = "1.1.0", default-features = false, featu
 ryu-js                    = { version = "0.2.2" }
 ropey                     = { version = "1.6.1" }
 serde                     = { version = "1.0.190" }
-serde_json                = { version = "1.0.107" }
+serde_json                = { version = "1.0.108" }
 syn                       = { version = "=1" }
 thiserror                 = { version = "1.0.50" }
 tokio                     = { version = "1" }
@@ -82,7 +82,7 @@ unicode-id-start          = { version = "1.1.2" }
 ureq                      = { version = "2.8.0", default-features = false, features = ["tls"] }
 url                       = { version = "2.4.1" }
 walkdir                   = { version = "2.4.0" }
-indexmap                  = { version = "2.0.2" }
+indexmap                  = { version = "2.1.0" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }

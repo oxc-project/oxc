@@ -1,0 +1,83 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_object_as_default_parameter
+---
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc(foo = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ async function * abc(foo = {a: 123}) {}
+   ·                            ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc(foo = {a: false}) {}
+   ·                    ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc(foo = {a: "bar"}) {}
+   ·                    ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc(foo = {a: "bar", b: {c: true}}) {}
+   ·                    ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ const abc = (foo = {a: false}) => {};
+   ·                    ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ const abc = (foo = {a: 123, b: false}) => {};
+   ·                    ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ const abc = (foo = {a: false, b: 1, c: "test", d: null}) => {};
+   ·                    ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ const abc = function(foo = {a: 123}) {}
+   ·                            ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc(foo = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ const abc = (foo = {a: false}) => {};
+   ·                    ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc({a} = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default
+   ╭─[no_object_as_default_parameter.tsx:1:1]
+ 1 │ function abc([a] = {a: 123}) {}
+   ·                    ────────
+   ╰────
+
+

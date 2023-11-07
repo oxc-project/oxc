@@ -27,6 +27,7 @@ mod deepscan {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod default_case_last;
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
@@ -119,6 +120,7 @@ mod jest {
     pub mod no_mocks_import;
     pub mod no_standalone_expect;
     pub mod no_test_prefixes;
+    pub mod prefer_todo;
     pub mod valid_describe_callback;
     pub mod valid_expect;
     pub mod valid_title;
@@ -147,9 +149,15 @@ mod unicorn {
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
     pub mod no_new_array;
+    pub mod no_new_buffer;
+    pub mod no_object_as_default_parameter;
+    pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
+    pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
+    pub mod prefer_blob_reading_methods;
+    pub mod prefer_code_point;
     pub mod prefer_date_now;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_query_selector;
@@ -176,6 +184,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::default_case_last,
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
@@ -262,6 +271,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_mocks_import,
     jest::no_standalone_expect,
     jest::no_test_prefixes,
+    jest::prefer_todo,
     jest::valid_describe_callback,
     jest::valid_expect,
     jest::valid_title,
@@ -274,18 +284,24 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_new_array,
+    unicorn::no_new_buffer,
+    unicorn::no_object_as_default_parameter,
+    unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
+    unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_blob_reading_methods,
+    unicorn::prefer_code_point,
     unicorn::prefer_date_now,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_query_selector,
+    unicorn::prefer_string_trim_start_end,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
-    unicorn::prefer_string_trim_start_end,
-    unicorn::prefer_query_selector,
     react::jsx_key,
     react::jsx_no_comment_text_nodes,
     react::jsx_no_duplicate_props,

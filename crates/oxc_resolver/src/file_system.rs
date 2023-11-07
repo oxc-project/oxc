@@ -1,6 +1,8 @@
 use std::{
     fs, io,
+    ops::Deref,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 /// File System abstraction used for `ResolverGeneric`.
@@ -92,5 +94,27 @@ impl FileSystem for FileSystemOs {
 
     fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
         dunce::canonicalize(path)
+    }
+}
+
+/// Impl FileSystem for Arc<T> when T satisfies FileSystem, it is useful when the user wants to share the filesystem into multiple threads.
+impl<T> FileSystem for Arc<T>
+where
+    T: FileSystem,
+{
+    fn read_to_string(&self, path: &Path) -> io::Result<String> {
+        self.deref().read_to_string(path)
+    }
+
+    fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+        self.deref().metadata(path)
+    }
+
+    fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+        self.deref().symlink_metadata(path)
+    }
+
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
+        self.deref().canonicalize(path)
     }
 }
