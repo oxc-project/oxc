@@ -122,7 +122,7 @@ impl<'a> ReactJsx<'a> {
         program.body.splice(index..index, imports);
     }
 
-    fn new_string_literal(&self, name: &str) -> StringLiteral {
+    fn new_string_literal(name: &str) -> StringLiteral {
         StringLiteral::new(SPAN, name.into())
     }
 
@@ -148,7 +148,7 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
             self.add_import_statement("jsx", "_jsx", source);
         }
     }
@@ -156,7 +156,7 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
             self.add_import_statement("jsxs", "_jsxs", source);
         }
     }
@@ -164,7 +164,7 @@ impl<'a> ReactJsx<'a> {
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
             self.add_import_statement("Fragment", "_Fragment", source);
             self.add_import_jsx();
         }
@@ -173,7 +173,7 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            let source = self.new_string_literal(self.options.import_source.as_ref());
+            let source = Self::new_string_literal(self.options.import_source.as_ref());
             self.add_import_statement("createElement", "_createElement", source);
         }
     }
