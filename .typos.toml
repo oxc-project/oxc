@@ -19,3 +19,4 @@ extend-exclude = [
 trivias = "trivias"
 trivia = "trivia"
 xdescribe = "xdescribe"
+seeked = "seeked"
