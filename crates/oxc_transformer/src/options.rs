@@ -2,7 +2,7 @@ use oxc_syntax::assumptions::CompilerAssumptions;
 
 use crate::{es2020::NullishCoalescingOperatorOptions, react_jsx::ReactJsxOptions};
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
     pub target: TransformTarget,
     pub assumptions: CompilerAssumptions,
