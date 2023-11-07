@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-hooks): ")]
+#[error("eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.")]
 #[diagnostic(severity(warning))]
 pub struct UnexpectedHookDiagonsitc(#[label] pub Span);
 
@@ -102,7 +102,7 @@ impl Rule for NoHooks {
             if JEST_HOOK_NAMES.contains(&ident.name.as_str())
                 && !self.allow.contains(&ident.name.to_string())
             {
-                ctx.diagnostic(UnexpectedHookDiagonsitc(call_expr.span));
+                ctx.diagnostic(UnexpectedHookDiagonsitc(call_expr.callee.span()));
             }
         }
     }
