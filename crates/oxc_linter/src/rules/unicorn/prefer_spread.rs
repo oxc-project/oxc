@@ -78,8 +78,6 @@ impl Rule for PreferSpread {
             }
             // `array.concat()`
             "concat" => {
-                // todo!();
-
                 if is_not_array(member_expr.object().without_parenthesized()) {
                     return;
                 }
