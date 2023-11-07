@@ -315,7 +315,7 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
-    /// Get the callee of `React.createElement` or `React.Fragment`
+    /// Get the callee from `pragma` and `pragmaFrag`
     fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
         let mut callee = literal_callee.split('.');
         let member = callee.next().unwrap();
