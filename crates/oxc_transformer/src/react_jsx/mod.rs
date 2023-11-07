@@ -366,9 +366,13 @@ impl<'a> ReactJsx<'a> {
     fn get_fragment(&mut self) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "Fragment".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma_frag == "React.Fragment" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "Fragment".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma_frag.as_ref())
             }
             ReactJsxRuntime::Automatic => {
                 let ident = IdentifierReference::new(SPAN, "_Fragment".into());
