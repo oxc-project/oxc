@@ -56,11 +56,17 @@ impl ReactJsxOptions {
             let comment = comment.strip_prefix('*').unwrap_or(comment).trim_start();
             // strip leading `@`
             let Some(comment) = comment.strip_prefix('@') else { continue };
+
             // read jsxRuntime
             match comment.strip_prefix("jsxRuntime").map(str::trim) {
                 Some("classic") => self.runtime = ReactJsxRuntime::Classic,
                 Some("automatic") => self.runtime = ReactJsxRuntime::Automatic,
                 _ => {}
+            }
+
+            // read jsxImportSource
+            if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
+                self.import_source = Cow::from(import_source.to_string());
             }
         }
         self
