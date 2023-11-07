@@ -9,7 +9,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{ast_util::outermost_paren, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::{outermost_paren, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.")]
@@ -49,10 +54,7 @@ impl Rule for ThrowNewError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Some(outermost_paren_node) = ctx.nodes().parent_node(outermost_paren(node, ctx).id())
-        else {
-            return;
-        };
+        let Some(outermost_paren_node) = outermost_paren_parent(node, ctx) else { return };
 
         let AstKind::ThrowStatement(_) = outermost_paren(outermost_paren_node, ctx).kind() else {
             return;

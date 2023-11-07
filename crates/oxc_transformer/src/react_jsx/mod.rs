@@ -27,6 +27,8 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
+    // Will be store jsx runtime importer, like `react/jsx-runtime`
+    jsx_runtime_importer: Atom,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -75,10 +77,19 @@ impl<'a> ReactJsx<'a> {
     ) -> Self {
         let imports = ast.new_vec();
         let options = options.with_comments(&ctx.semantic());
+
+        let jsx_runtime_importer =
+            if options.import_source == "react" || options.runtime.is_classic() {
+                Atom::new_inline("react/jsx-runtime")
+            } else {
+                Atom::from(format!("{}/jsx-runtime", options.import_source))
+            };
+
         Self {
             ast,
             options,
             imports,
+            jsx_runtime_importer,
             import_jsx: false,
             import_jsxs: false,
             import_fragment: false,
@@ -111,6 +122,10 @@ impl<'a> ReactJsx<'a> {
         program.body.splice(index..index, imports);
     }
 
+    fn new_string_literal(name: &str) -> StringLiteral {
+        StringLiteral::new(SPAN, name.into())
+    }
+
     fn add_import<'b>(
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,
@@ -133,21 +148,24 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", "react/jsx-runtime");
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("jsx", "_jsx", source);
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", "react/jsx-runtime");
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("jsxs", "_jsxs", source);
         }
     }
 
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", "react/jsx-runtime");
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("Fragment", "_Fragment", source);
             self.add_import_jsx();
         }
     }
@@ -155,11 +173,12 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            self.add_import_statement("createElement", "_createElement", "react");
+            let source = Self::new_string_literal(self.options.import_source.as_ref());
+            self.add_import_statement("createElement", "_createElement", source);
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: &str) {
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral) {
         let mut specifiers = self.ast.new_vec_with_capacity(1);
         specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
             span: SPAN,
@@ -167,7 +186,6 @@ impl<'a> ReactJsx<'a> {
             local: BindingIdentifier::new(SPAN, local.into()),
             import_kind: ImportOrExportKind::Value,
         }));
-        let source = StringLiteral::new(SPAN, source.into());
         let import_statement = self.ast.import_declaration(
             SPAN,
             Some(specifiers),
@@ -297,6 +315,25 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
+    /// Get the callee from `pragma` and `pragmaFrag`
+    fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
+        let mut callee = literal_callee.split('.');
+        let member = callee.next().unwrap();
+        let property = callee.next();
+        property.map_or_else(
+            || {
+                let ident = IdentifierReference::new(SPAN, member.into());
+                self.ast.identifier_reference_expression(ident)
+            },
+            |property_name| {
+                let property = IdentifierName::new(SPAN, property_name.into());
+                let ident = IdentifierReference::new(SPAN, member.into());
+                let object = self.ast.identifier_reference_expression(ident);
+                self.ast.static_member_expression(SPAN, object, property, false)
+            },
+        )
+    }
+
     fn get_create_element(
         &mut self,
         has_key_after_props_spread: bool,
@@ -304,9 +341,13 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "createElement".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma == "React.createElement" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "createElement".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma.as_ref())
             }
             ReactJsxRuntime::Automatic => {
                 let name = if has_key_after_props_spread {
@@ -325,9 +366,13 @@ impl<'a> ReactJsx<'a> {
     fn get_fragment(&mut self) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "Fragment".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma_frag == "React.Fragment" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "Fragment".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma_frag.as_ref())
             }
             ReactJsxRuntime::Automatic => {
                 let ident = IdentifierReference::new(SPAN, "_Fragment".into());

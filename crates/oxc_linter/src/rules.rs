@@ -9,6 +9,7 @@
 mod import {
     pub mod default;
     pub mod named;
+    pub mod no_amd;
     pub mod no_cycle;
     pub mod no_self_import;
 }
@@ -27,6 +28,7 @@ mod deepscan {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod default_case_last;
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
@@ -149,10 +151,13 @@ mod unicorn {
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
     pub mod no_new_array;
+    pub mod no_new_buffer;
     pub mod no_object_as_default_parameter;
     pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_unnecessary_await;
+    pub mod no_useless_fallback_in_spread;
+    pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
@@ -182,6 +187,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::default_case_last,
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
@@ -282,10 +288,13 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_new_array,
+    unicorn::no_new_buffer,
     unicorn::no_object_as_default_parameter,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_unnecessary_await,
+    unicorn::no_useless_fallback_in_spread,
+    unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
@@ -312,5 +321,6 @@ oxc_macros::declare_all_lint_rules! {
     import::named,
     import::no_cycle,
     import::no_self_import,
-    jsx_a11y::alt_text
+    import::no_amd,
+    jsx_a11y::alt_text,
 }
