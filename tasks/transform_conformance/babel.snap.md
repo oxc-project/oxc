@@ -1,4 +1,4 @@
-Passed: 260/1113
+Passed: 262/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -825,14 +825,13 @@ Passed: 260/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (98/170)
+# babel-plugin-transform-react-jsx (100/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/complicated-scope-script/input.js
-* autoImport/import-source-pragma/input.js
 * pure/false-default-pragma-automatic-runtime/input.js
 * pure/false-pragma-comment-automatic-runtime/input.js
 * pure/false-pragma-comment-classic-runtime/input.js
@@ -872,7 +871,6 @@ Passed: 260/1113
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 * react-automatic/handle-nonstatic-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
