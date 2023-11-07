@@ -1,6 +1,6 @@
 mod options;
 
-use std::{borrow::Cow, rc::Rc};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -28,7 +28,7 @@ pub struct ReactJsx<'a> {
     import_fragment: bool,
     import_create_element: bool,
     // Will be store jsx runtime importer, like `react/jsx-runtime`
-    jsx_runtime_importer: Cow<'a, str>,
+    jsx_runtime_importer: Atom,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -80,9 +80,9 @@ impl<'a> ReactJsx<'a> {
 
         let jsx_runtime_importer =
             if options.import_source == "react" || options.runtime.is_classic() {
-                Cow::Borrowed("react/jsx-runtime")
+                Atom::new_inline("react/jsx-runtime")
             } else {
-                Cow::from(format!("{}/jsx-runtime", options.import_source))
+                Atom::from(format!("{}/jsx-runtime", options.import_source))
             };
 
         Self {
@@ -122,6 +122,10 @@ impl<'a> ReactJsx<'a> {
         program.body.splice(index..index, imports);
     }
 
+    fn new_string_literal(&self, name: &str) -> StringLiteral {
+        StringLiteral::new(SPAN, name.into())
+    }
+
     fn add_import<'b>(
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,
@@ -144,21 +148,24 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsx(&mut self) {
         if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", &self.jsx_runtime_importer.clone());
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("jsx", "_jsx", source);
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", &self.jsx_runtime_importer.clone());
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("jsxs", "_jsxs", source);
         }
     }
 
     fn add_import_fragment(&mut self) {
         if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", &self.jsx_runtime_importer.clone());
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("Fragment", "_Fragment", source);
             self.add_import_jsx();
         }
     }
@@ -166,15 +173,12 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            self.add_import_statement(
-                "createElement",
-                "_createElement",
-                &self.options.import_source.clone(),
-            );
+            let source = self.new_string_literal(self.options.import_source.as_ref());
+            self.add_import_statement("createElement", "_createElement", source);
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: &str) {
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral) {
         let mut specifiers = self.ast.new_vec_with_capacity(1);
         specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
             span: SPAN,
@@ -182,7 +186,6 @@ impl<'a> ReactJsx<'a> {
             local: BindingIdentifier::new(SPAN, local.into()),
             import_kind: ImportOrExportKind::Value,
         }));
-        let source = StringLiteral::new(SPAN, source.into());
         let import_statement = self.ast.import_declaration(
             SPAN,
             Some(specifiers),
