@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression, ThisExpression},
+    ast::{Argument, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -13,9 +13,9 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-spread):")]
-#[diagnostic(severity(warning), help(""))]
-struct PreferSpreadDiagnostic(#[label] pub Span);
+#[error("eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over {1}")]
+#[diagnostic(severity(warning))]
+struct PreferSpreadDiagnostic(#[label] pub Span, pub &'static str);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferSpread;
@@ -74,7 +74,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span));
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "Array.from()"));
             }
             // `array.concat()`
             "concat" => {
@@ -84,7 +84,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span));
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.concat()"));
             }
             // `array.slice()`
             "slice" => {
@@ -118,7 +118,7 @@ impl Rule for PreferSpread {
                     }
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span));
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.slice()"));
             }
             // `array.toSpliced()`
             "toSpliced" => {
@@ -133,11 +133,10 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span));
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.toSpliced()"));
             }
             // `string.split()`
             "split" => {
-                dbg!(call_expr);
                 if call_expr.arguments.len() != 1 {
                     return;
                 }
@@ -151,7 +150,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span));
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "string.split()"));
             }
             _ => {}
         }

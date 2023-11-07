@@ -2,767 +2,658 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_spread
 ---
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const x = Array.from(set);
    ·           ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(set).map(() => {});
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(new Set([1, 2])).map(() => {});
    · ───────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(document.querySelectorAll("*")).map(() => {});
    · ──────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const foo = `${Array.from(arrayLike)}`
    ·                ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (Array).from(foo)
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (Array.from)(foo)
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ ((Array).from)(foo)
    · ───────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (Array).from((0, foo))
    · ──────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (Array.from)((0, foo))
    · ──────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ ((Array).from)((0, foo))
    · ────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(a ? b : c)
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from([...a, ...b], )
    · ──────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from([1])
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from([...a, ...b])
    · ────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ /* 1 */ Array /* 2 */ .from /* 3 */ ( /* 4 */ a /* 5 */,)
    ·         ─────────────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat(2)
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat([2, 3])
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat(2,)
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat([2, ...bar],)
    · ────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat(2)
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat([2, 3])
    · ───────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat(2,)
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat([2, 3],)
    · ────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( (( [1,] )).concat ))( (([2, 3])) ,) ))
    ·    ──────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( (( [1,] )).concat ))( (([2, 3])) , bar ) ))
    ·    ───────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(2)
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([2, 3])
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(2,)
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([2, 3],)
    · ───────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( ((foo)).concat ))( (([2, 3])) ,) ))
    ·    ───────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( ((foo)).concat ))( (([2, 3])) , bar ) ))
    ·    ────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const foo = foo.concat(2)
    ·             ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const foo = () => foo.concat(2)
    ·                   ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([bar])
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(bar)
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(set).concat([2, 3])
    · ──────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over Array.from()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Array.from(set).concat([2, 3])
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([2, 3]).concat(4)
    · ────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat([2, 3]).concat(4)
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ string.concat("bar")
    · ────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(2, 3)
    · ────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(2, bar)
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [...foo, 2].concat(bar)
    · ───────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ let sortedScores = scores.concat().sort((a, b) => b[0] - a[0]);
    ·                    ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(bar, 2, 3)
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(bar, 2, 3, baz)
    · ──────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ async function a() {return [].concat(await bar)}
    ·                            ────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ async function a() {return [].concat(((await bar)))}
    ·                            ────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat((0, 1))
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ async function a() {return (await bar).concat(1)}
    ·                            ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [].concat(...bar)
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [].concat([,], [])
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [,].concat([,], [,])
    · ────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [,].concat([,,], [,])
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [,].concat([,], [,,])
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat([2,], [3,])
    · ──────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1].concat([2,,], [3,,])
    · ────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat([2,], [3,])
    · ───────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [1,].concat([2,,], [3,,])
    · ─────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [].concat([], [])
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [].concat((a.b.c), 2)
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ [].concat(a.b(), 2)
    · ───────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])
    · ──────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.concat(bar, 2, 3, ...baz)
    · ─────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ notClass.concat(1)
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ _A.concat(1)
    · ────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ FOO.concat(1)
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ A.concat(1)
    · ───────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ Foo.x.concat(1)
    · ───────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ if (test) foo.concat(1)
    ·           ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ if (test) {} else foo.concat(1)
    ·                   ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ if (test) {} else foo.concat(1)
    ·                   ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ for (;;) foo.concat(1)
    ·          ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ for (a in b) foo.concat(1)
    ·              ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ for (a in b) foo.concat(1)
    ·              ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ for (const a of b) foo.concat(1)
    ·                    ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ while (test) foo.concat(1)
    ·              ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ do foo.concat(1); while (test)
    ·    ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ with (foo) foo.concat(1)
    ·            ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.concat()
    ╭─[prefer_spread.tsx:1:1]
  1 │ foo.join(foo, bar).concat("...")
    · ────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice()
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice().slice()
    · ─────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice().slice()
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(1).slice()
    · ──────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice().slice(1)
    · ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const copy = array.slice()
    ·              ─────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( (( array )).slice ))() ))
    ·    ─────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ "".slice()
    · ──────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ new Uint8Array([10, 20, 30, 40, 50]).slice()
    · ────────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0)
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0b0)
    · ────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0.00)
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.slice()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0.00, )
    · ───────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.toSpliced()
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.toSpliced().toSpliced()
    · ─────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ array.toSpliced().toSpliced()
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const copy = array.toSpliced()
    ·              ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( (( array )).toSpliced ))() ))
    ·    ─────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ "".toSpliced()
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over array.toSpliced()
    ╭─[prefer_spread.tsx:1:1]
  1 │ new Uint8Array([10, 20, 30, 40, 50]).toSpliced()
    · ────────────────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ "string".split("")
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ "string".split('')
    · ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ unknown.split("")
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const characters = "string".split("")
    ·                    ──────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ (( (( (( "string" )).split ))( (("")) ) ))
    ·    ────────────────────────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ unknown.split("")
    · ─────────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ "🦄".split("")
    · ──────────────
    ╰────
-  help: 
 
-  ⚠ eslint-plugin-unicorn(prefer-spread):
+  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over string.split()
    ╭─[prefer_spread.tsx:1:1]
  1 │ const {length} = "🦄".split("")
    ·                  ──────────────
    ╰────
-  help: 
 
 
