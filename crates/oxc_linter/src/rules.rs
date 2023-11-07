@@ -9,9 +9,9 @@
 mod import {
     pub mod default;
     pub mod named;
+    pub mod no_amd;
     pub mod no_cycle;
     pub mod no_self_import;
-    pub mod no_amd;
 }
 
 mod deepscan {
