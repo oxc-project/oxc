@@ -322,9 +322,24 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "createElement".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma == "React.createElement" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "createElement".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                let mut pragma = self.options.pragma.as_ref().split('.');
+                let member = pragma.next().unwrap();
+                let property = pragma.next();
+                if let Some(property_name) = property {
+                    let property = IdentifierName::new(SPAN, property_name.into());
+                    let ident = IdentifierReference::new(SPAN, member.into());
+                    let object = self.ast.identifier_reference_expression(ident);
+                    self.ast.static_member_expression(SPAN, object, property, false)
+                } else {
+                    let ident = IdentifierReference::new(SPAN, member.into());
+                    self.ast.identifier_reference_expression(ident)
+                }
             }
             ReactJsxRuntime::Automatic => {
                 let name = if has_key_after_props_spread {

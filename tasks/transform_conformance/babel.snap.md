@@ -1,4 +1,4 @@
-Passed: 256/1113
+Passed: 260/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -825,7 +825,7 @@ Passed: 256/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (94/170)
+# babel-plugin-transform-react-jsx (98/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -837,17 +837,14 @@ Passed: 256/1113
 * pure/false-pragma-comment-automatic-runtime/input.js
 * pure/false-pragma-comment-classic-runtime/input.js
 * pure/false-pragma-option-automatic-runtime/input.js
-* pure/false-pragma-option-classic-runtime/input.js
 * pure/true-default-pragma-automatic-runtime/input.js
 * pure/true-pragma-comment-automatic-runtime/input.js
 * pure/true-pragma-comment-classic-runtime/input.js
 * pure/true-pragma-option-automatic-runtime/input.js
-* pure/true-pragma-option-classic-runtime/input.js
 * pure/unset-default-pragma-automatic-runtime/input.js
 * pure/unset-pragma-comment-automatic-runtime/input.js
 * pure/unset-pragma-comment-classic-runtime/input.js
 * pure/unset-pragma-option-automatic-runtime/input.js
-* pure/unset-pragma-option-classic-runtime/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
@@ -856,7 +853,6 @@ Passed: 256/1113
 * react/handle-spread-with-proto-babel-7/input.js
 * react/honor-custom-jsx-comment/input.js
 * react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-* react/honor-custom-jsx-pragma-option/input.js
 * react/optimisation.react.constant-elements/input.js
 * react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
@@ -866,7 +862,6 @@ Passed: 256/1113
 * react/should-disallow-spread-children/input.js
 * react/should-disallow-valueless-key/input.js
 * react/should-disallow-xml-namespacing/input.js
-* react/should-support-xml-namespaces-if-flag/input.js
 * react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
@@ -898,6 +893,7 @@ Passed: 256/1113
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
 * runtime/defaults-to-automatic/input.js
+* runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
 * runtime/runtime-automatic/input.js
 * spread-transform/transform-to-babel-extend/input.js

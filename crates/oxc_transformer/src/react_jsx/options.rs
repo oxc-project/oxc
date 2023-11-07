@@ -14,10 +14,21 @@ pub struct ReactJsxOptions {
     /// Replaces the import source when importing functions. default to `react`
     #[serde(default = "default_import_source")]
     pub import_source: Cow<'static, str>,
+    /// Replace the function used when compiling JSX expressions.
+    /// It should be a qualified name (e.g. React.createElement) or an identifier (e.g. createElement).
+    /// default to `React.createElement`
+    ///
+    /// Note that the @jsx React.DOM pragma has been deprecated as of React v0.12
+    #[serde(default = "default_pragma")]
+    pub pragma: Cow<'static, str>,
 }
 
 fn default_import_source() -> Cow<'static, str> {
     Cow::Borrowed("react")
+}
+
+fn default_pragma() -> Cow<'static, str> {
+    Cow::Borrowed("React.createElement")
 }
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
