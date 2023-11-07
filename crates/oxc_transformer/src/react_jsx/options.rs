@@ -66,7 +66,7 @@ impl ReactJsxOptions {
 
             // read jsxImportSource
             if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Cow::from(import_source.to_string())
+                self.import_source = Cow::from(import_source.to_string());
             }
         }
         self
