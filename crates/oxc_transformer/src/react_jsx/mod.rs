@@ -315,6 +315,25 @@ impl<'a> ReactJsx<'a> {
         self.ast.identifier_reference_expression(ident)
     }
 
+    /// Get the callee of `React.createElement` or `React.Fragment`
+    fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
+        let mut callee = literal_callee.split('.');
+        let member = callee.next().unwrap();
+        let property = callee.next();
+        property.map_or_else(
+            || {
+                let ident = IdentifierReference::new(SPAN, member.into());
+                self.ast.identifier_reference_expression(ident)
+            },
+            |property_name| {
+                let property = IdentifierName::new(SPAN, property_name.into());
+                let ident = IdentifierReference::new(SPAN, member.into());
+                let object = self.ast.identifier_reference_expression(ident);
+                self.ast.static_member_expression(SPAN, object, property, false)
+            },
+        )
+    }
+
     fn get_create_element(
         &mut self,
         has_key_after_props_spread: bool,
@@ -328,18 +347,7 @@ impl<'a> ReactJsx<'a> {
                     return self.ast.static_member_expression(SPAN, object, property, false);
                 }
 
-                let mut pragma = self.options.pragma.as_ref().split('.');
-                let member = pragma.next().unwrap();
-                let property = pragma.next();
-                if let Some(property_name) = property {
-                    let property = IdentifierName::new(SPAN, property_name.into());
-                    let ident = IdentifierReference::new(SPAN, member.into());
-                    let object = self.ast.identifier_reference_expression(ident);
-                    self.ast.static_member_expression(SPAN, object, property, false)
-                } else {
-                    let ident = IdentifierReference::new(SPAN, member.into());
-                    self.ast.identifier_reference_expression(ident)
-                }
+                self.get_call_expression_callee(self.options.pragma.as_ref())
             }
             ReactJsxRuntime::Automatic => {
                 let name = if has_key_after_props_spread {
