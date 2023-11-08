@@ -77,8 +77,14 @@ impl ReactJsxOptions {
 
             // read jsxRuntime
             match comment.strip_prefix("jsxRuntime").map(str::trim) {
-                Some("classic") => self.runtime = ReactJsxRuntime::Classic,
-                Some("automatic") => self.runtime = ReactJsxRuntime::Automatic,
+                Some("classic") => {
+                    self.runtime = ReactJsxRuntime::Classic;
+                    continue;
+                }
+                Some("automatic") => {
+                    self.runtime = ReactJsxRuntime::Automatic;
+                    continue;
+                }
                 _ => {}
             }
 
