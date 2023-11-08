@@ -64,6 +64,11 @@ Allowing / Denying Multiple Lints
     -A, --allow=NAME          Allow the rule or category (suppress the lint)
     -D, --deny=NAME           Deny the rule or category (emit an error)
 
+Enable Plugins
+        --import-plugin       Enable the experimental import plugin and detect ESM problems
+        --jest-plugin         Enable the Jest plugin and detect test problems
+        --jsx-a11y-plugin     Enable the JSX-a11y plugin and detect accessibility problems
+
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in the
                               output
@@ -93,6 +98,5 @@ Available positional items:
     PATH                      Single file, single path or list of paths
 
 Available options:
-        --import-plugin       Use the experimental import plugin and detect ESM problems
     -h, --help                Prints help information
 ```

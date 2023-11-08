@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// const array = [42];
     /// ```
     NoNewArray,
-    correctness
+    suspicious
 );
 
 impl Rule for NoNewArray {

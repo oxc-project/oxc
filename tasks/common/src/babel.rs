@@ -35,11 +35,15 @@ impl BabelOptions {
             let file = std::fs::read_to_string(&file).unwrap();
             let new_json: Self = serde_json::from_str(&file).unwrap();
             if let Some(existing_json) = options_json.as_mut() {
-                if let Some(source_type) = new_json.source_type {
-                    existing_json.source_type = Some(source_type);
+                if existing_json.source_type.is_none() {
+                    if let Some(source_type) = new_json.source_type {
+                        existing_json.source_type = Some(source_type);
+                    }
                 }
-                if let Some(throws) = new_json.throws {
-                    existing_json.throws = Some(throws);
+                if existing_json.throws.is_none() {
+                    if let Some(throws) = new_json.throws {
+                        existing_json.throws = Some(throws);
+                    }
                 }
                 existing_json.plugins.extend(new_json.plugins);
             } else {

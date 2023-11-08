@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-ex-assign): Do not assign to the exception parameter.")]
-#[diagnostic(severity(warning))]
+#[diagnostic(severity(warning), help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive."))]
 struct NoExAssignDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]

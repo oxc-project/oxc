@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// foo.addEventListener('click', () => {});
     /// ```
     PreferAddEventListener,
-    correctness
+    suspicious
 );
 
 impl Rule for PreferAddEventListener {

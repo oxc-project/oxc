@@ -7,29 +7,39 @@ expression: no_ex_assign
  1 │ try { } catch (e) { e = 10; }
    ·                     ─
    ╰────
+  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is
+        no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:1]
  1 │ try { } catch (ex) { ex = 10; }
    ·                      ──
    ╰────
+  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is
+        no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:1]
  1 │ try { } catch (ex) { [ex] = []; }
    ·                       ──
    ╰────
+  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is
+        no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:1]
  1 │ try { } catch (ex) { ({x: ex = 0} = {}); }
    ·                           ──
    ╰────
+  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is
+        no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:1]
  1 │ try { } catch ({message}) { message = 10; }
    ·                             ───────
    ╰────
+  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is
+        no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
 
 

@@ -77,14 +77,27 @@ impl ReactJsxOptions {
 
             // read jsxRuntime
             match comment.strip_prefix("jsxRuntime").map(str::trim) {
-                Some("classic") => self.runtime = ReactJsxRuntime::Classic,
-                Some("automatic") => self.runtime = ReactJsxRuntime::Automatic,
+                Some("classic") => {
+                    self.runtime = ReactJsxRuntime::Classic;
+                    continue;
+                }
+                Some("automatic") => {
+                    self.runtime = ReactJsxRuntime::Automatic;
+                    continue;
+                }
                 _ => {}
             }
 
             // read jsxImportSource
             if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
                 self.import_source = Cow::from(import_source.to_string());
+                continue;
+            }
+
+            // read jsxFrag
+            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
+                self.pragma_frag = Cow::from(pragma_frag.to_string());
+                continue;
             }
 
             // Put this condition at the end to avoid breaking @jsxXX
