@@ -184,7 +184,18 @@ impl TestCase for ConformanceTestCase {
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
-        let source_type = SourceType::from_path(&self.path).unwrap();
+        let input_is_js = self.path.extension().and_then(std::ffi::OsStr::to_str) == Some("js");
+        let output_is_js = output_path
+            .as_ref()
+            .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
+
+        let source_type = SourceType::from_path(&self.path).unwrap().with_script(
+            if self.options.source_type.is_some() {
+                !self.options.is_module()
+            } else {
+                input_is_js && output_is_js
+            },
+        );
 
         if filtered {
             println!("input_path: {:?}", &self.path);
