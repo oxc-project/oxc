@@ -7,13 +7,11 @@ use crate::ast::*;
 
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {
-    fn visit_program(&mut self, program: &mut Program<'a>) -> Result<(), String> {
+    fn visit_program(&mut self, program: &mut Program<'a>) {
         for directive in program.directives.iter_mut() {
             self.visit_directive(directive);
         }
         self.visit_statements(&mut program.body);
-
-        Ok(())
     }
 
     /* ----------  Statement ---------- */
