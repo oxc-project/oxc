@@ -7,14 +7,14 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-spread): Prefer the spread operator over {1}")]
-#[diagnostic(severity(warning))]
+#[error("eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over {1}")]
+#[diagnostic(severity(warning), help("The spread operator (`...`) is more concise and readable."))]
 struct PreferSpreadDiagnostic(#[label] pub Span, pub &'static str);
 
 #[derive(Debug, Default, Clone)]
@@ -74,7 +74,15 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "Array.from()"));
+                ctx.diagnostic_with_fix(
+                    PreferSpreadDiagnostic(call_expr.span, "Array.from()"),
+                    || {
+                        Fix::new(
+                            format!("[...{}]", expr.span().source_text(ctx.source_text())),
+                            call_expr.span,
+                        )
+                    },
+                );
             }
             // `array.concat()`
             "concat" => {
@@ -82,7 +90,18 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.concat()"));
+                ctx.diagnostic_with_fix(
+                    PreferSpreadDiagnostic(call_expr.span, "array.concat()"),
+                    || {
+                        Fix::new(
+                            format!(
+                                "[...{}]",
+                                member_expr.object().span().source_text(ctx.source_text())
+                            ),
+                            call_expr.span,
+                        )
+                    },
+                );
             }
             // `array.slice()`
             "slice" => {
@@ -148,7 +167,16 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "string.split()"));
+                ctx.diagnostic_with_fix(
+                    PreferSpreadDiagnostic(call_expr.span, "string.split()"),
+                    || {
+                        let callee_obj = member_expr.object().without_parenthesized();
+                        Fix::new(
+                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
+                            call_expr.span,
+                        )
+                    },
+                );
             }
             _ => {}
         }
@@ -417,5 +445,16 @@ fn test() {
         r#"const {length} = "🦄".split("")"#,
     ];
 
-    Tester::new_without_config(PreferSpread::NAME, pass, fail).test_and_snapshot();
+    let expect_fix = vec![
+        // `Array.from()`
+        // `array.slice()`
+        // `array.toSpliced()`
+        // `string.split()`
+        (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
+        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
+    ];
+
+    Tester::new_without_config(PreferSpread::NAME, pass, fail)
+        .expect_fix(expect_fix)
+        .test_and_snapshot();
 }
