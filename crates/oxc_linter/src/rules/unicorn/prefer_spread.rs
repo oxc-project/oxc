@@ -74,15 +74,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic_with_fix(
-                    PreferSpreadDiagnostic(call_expr.span, "Array.from()"),
-                    || {
-                        Fix::new(
-                            format!("[...{}]", expr.span().source_text(ctx.source_text())),
-                            call_expr.span,
-                        )
-                    },
-                );
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "Array.from()"));
             }
             // `array.concat()`
             "concat" => {
@@ -90,18 +82,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic_with_fix(
-                    PreferSpreadDiagnostic(call_expr.span, "array.concat()"),
-                    || {
-                        Fix::new(
-                            format!(
-                                "[...{}]",
-                                member_expr.object().span().source_text(ctx.source_text())
-                            ),
-                            call_expr.span,
-                        )
-                    },
-                );
+                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.concat()"));
             }
             // `array.slice()`
             "slice" => {
