@@ -53,7 +53,7 @@ declare_oxc_lint!(
     /// const ts = Date.now();
     /// ```
     PreferDateNow,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferDateNow {

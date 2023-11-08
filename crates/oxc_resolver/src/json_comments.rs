@@ -2,8 +2,8 @@
 
 //! Replace json comments with string in place.
 //!
-//! <https://github.com/tmccombs/json-comments-rs/pull/11>
-
+//! <https://github.com/parcel-bundler/parcel/blob/v2/crates/json-comments-rs/src/lib.rs>
+//!
 //! `json_comments` is a library to strip out comments from JSON-like test. By processing text
 //! through a [`StripComments`] adapter first, it is possible to use a standard JSON parser (such
 //! as [serde_json](https://crates.io/crates/serde_json) with quasi-json input that contains
@@ -47,7 +47,10 @@
 //! # }
 //! ```
 //!
-use std::io::{ErrorKind, Read, Result};
+use std::{
+    io::{ErrorKind, Read, Result},
+    slice::IterMut,
+};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 enum State {
@@ -128,7 +131,7 @@ where
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let count = self.inner.read(buf)?;
         if count > 0 {
-            strip_buf(&mut self.state, &mut buf[..count], self.settings)?;
+            strip_buf(&mut self.state, &mut buf[..count], self.settings, false)?;
         } else if self.state != Top && self.state != InLineComment {
             invalid_data!();
         }
@@ -136,19 +139,59 @@ where
     }
 }
 
-fn strip_buf(state: &mut State, buf: &mut [u8], settings: CommentSettings) -> Result<()> {
-    for c in &mut *buf {
+fn consume_comment_whitespace_until_maybe_bracket(
+    state: &mut State,
+    it: &mut IterMut<u8>,
+    settings: CommentSettings,
+) -> Result<bool> {
+    for c in it.by_ref() {
         *state = match state {
-            Top => top(c, settings),
+            Top => {
+                *state = top(c, settings);
+                if c.is_ascii_whitespace() {
+                    continue;
+                }
+                return Ok(*c == b'}' || *c == b']');
+            }
             InString => in_string(*c),
             StringEscape => InString,
             InComment => in_comment(c, settings)?,
             InBlockComment => in_block_comment(c),
             MaybeCommentEnd => maybe_comment_end(c),
             InLineComment => in_line_comment(c),
+        };
+    }
+    Ok(false)
+}
+
+fn strip_buf(
+    state: &mut State,
+    buf: &mut [u8],
+    settings: CommentSettings,
+    remove_trailing_commas: bool,
+) -> Result<()> {
+    let mut it = buf.iter_mut();
+    while let Some(c) = it.next() {
+        if matches!(state, Top) {
+            *state = top(c, settings);
+            if remove_trailing_commas
+                && *c == b','
+                && consume_comment_whitespace_until_maybe_bracket(state, &mut it, settings)?
+            {
+                *c = b' ';
+            }
+        } else {
+            *state = match state {
+                Top => unreachable!(),
+                InString => in_string(*c),
+                StringEscape => InString,
+                InComment => in_comment(c, settings)?,
+                InBlockComment => in_block_comment(c),
+                MaybeCommentEnd => maybe_comment_end(c),
+                InLineComment => in_line_comment(c),
+            }
         }
     }
-
     Ok(())
 }
 
@@ -164,17 +207,24 @@ fn strip_buf(state: &mut State, buf: &mut [u8], settings: CommentSettings) -> Re
 /// ## shell line comment
 /// } /** end */"#);
 ///
-/// strip_comments_in_place(&mut string, Default::default()).unwrap();
+/// strip_comments_in_place(&mut string, CommentSettings::default(), false).unwrap();
 ///
 /// assert_eq!(string, "{
 ///                  \n\"a\": \"comment in string /* a */\",
 ///                     \n}           ");
 ///
 /// ```
-pub fn strip_comments_in_place(s: &mut str) -> Result<()> {
-    // SAFETY:
-    // The content of the slice is valid UTF-8.
-    strip_buf(&mut Top, unsafe { s.as_bytes_mut() }, CommentSettings::all())
+pub fn strip_comments_in_place(
+    s: &mut str,
+    settings: CommentSettings,
+    remove_trailing_commas: bool,
+) -> Result<()> {
+    // Safety: we have made sure the text is UTF-8
+    strip_buf(&mut Top, unsafe { s.as_bytes_mut() }, settings, remove_trailing_commas)
+}
+
+pub fn strip(s: &mut str) -> Result<()> {
+    strip_comments_in_place(s, CommentSettings::all(), true)
 }
 
 /// Settings for `StripComments`
@@ -430,7 +480,45 @@ mod tests {
     #[test]
     fn strip_in_place() {
         let mut json = String::from(r#"{/* Comment */"hi": /** abc */ "bye"}"#);
-        strip_comments_in_place(&mut json).unwrap();
+        strip_comments_in_place(&mut json, CommentSettings::default(), false).unwrap();
         assert_eq!(json, r#"{             "hi":            "bye"}"#);
+    }
+
+    #[test]
+    fn trailing_comma() {
+        let mut json = String::from(
+            r#"{
+            "a1": [1,],
+            "a2": [1,/* x */],
+            "a3": [
+                1, // x
+            ],
+            "o1": {v:1,},
+            "o2": {v:1,/* x */},
+            "o3": {
+                "v":1, // x
+            },
+            # another
+        }"#,
+        );
+        strip_comments_in_place(&mut json, CommentSettings::default(), true).unwrap();
+
+        let expected = r#"{
+            "a1": [1 ],
+            "a2": [1        ],
+            "a3": [
+                1
+            ],
+            "o1": {v:1 },
+            "o2": {v:1        },
+            "o3": {
+                "v":1
+            }
+        }"#;
+
+        assert_eq!(
+            json.replace(|s: char| s.is_ascii_whitespace(), ""),
+            expected.replace(|s: char| s.is_ascii_whitespace(), "")
+        );
     }
 }

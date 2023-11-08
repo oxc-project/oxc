@@ -1,7 +1,11 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::{CallExpression, Expression, TemplateLiteral};
-use oxc_semantic::AstNode;
+use oxc_ast::{
+    ast::{CallExpression, Expression, ModuleDeclaration, TemplateLiteral},
+    AstKind,
+};
+use oxc_semantic::{AstNode, ReferenceId};
+use phf::phf_set;
 
 use crate::LintContext;
 
@@ -14,7 +18,7 @@ pub use crate::utils::jest::parse_jest_fn::{
     ParsedGeneralJestFnCall,
 };
 
-const JEST_METHOD_NAMES: [&str; 14] = [
+const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -29,9 +33,8 @@ const JEST_METHOD_NAMES: [&str; 14] = [
     "xdescribe",
     "xit",
     "xtest",
+    "pending"
 ];
-
-pub const JEST_HOOK_NAMES: [&str; 4] = ["afterAll", "afterEach", "beforeAll", "beforeEach"];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum JestFnKind {
@@ -126,6 +129,91 @@ pub fn parse_expect_jest_fn_call<'a>(
         return Some(jest_fn_call);
     }
     None
+}
+
+/// Collect all possible Jest fn Call Expression,
+/// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
+pub fn collect_possible_jest_call_node<'a, 'b>(ctx: &'b LintContext<'a>) -> Vec<&'b AstNode<'a>> {
+    let import_entries = &ctx.semantic().module_record().import_entries;
+
+    // Whether test functions are imported from 'jest/globals'.
+    // Not support mix global Jest functions with import Jest functions
+    let is_import_mode = import_entries
+        .iter()
+        .any(|import_entry| matches!(import_entry.module_request.name().as_str(), "@jest/globals"));
+
+    let reference_ids = if is_import_mode {
+        collect_ids_referenced_to_import(ctx)
+    } else if JEST_METHOD_NAMES
+        .iter()
+        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
+    {
+        collect_ids_referenced_to_global(ctx)
+    } else {
+        // we are not test file, just return empty vec.
+        vec![]
+    };
+
+    // The longest length of Jest chains is 4, e.g.`expect(1).not.resolved.toBe()`.
+    // We take 4 ancestors of node and collect all Call Expression.
+    // The invalid Jest Call Expression will be bypassed in `parse_jest_fn_call`
+    reference_ids.iter().fold(vec![], |mut acc, id| {
+        let mut id = ctx.symbols().get_reference(*id).node_id();
+        for _ in 0..4 {
+            let parent = ctx.nodes().parent_node(id);
+            if let Some(parent) = parent {
+                let parent_kind = parent.kind();
+                if matches!(parent_kind, AstKind::CallExpression(_)) {
+                    acc.push(parent);
+                    id = parent.id();
+                } else if matches!(
+                    parent_kind,
+                    AstKind::MemberExpression(_) | AstKind::TaggedTemplateExpression(_)
+                ) {
+                    id = parent.id();
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        acc
+    })
+}
+
+fn collect_ids_referenced_to_import(ctx: &LintContext) -> Vec<ReferenceId> {
+    ctx.symbols()
+        .resolved_references
+        .iter_enumerated()
+        .filter(|(symbol_id, _)| {
+            if ctx.symbols().get_flag(*symbol_id).is_import_binding() {
+                let id = ctx.symbols().get_declaration(*symbol_id);
+                let node = ctx.nodes().get_node(id);
+                let AstKind::ModuleDeclaration(module_decl) = node.kind() else {
+                    return false;
+                };
+                let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else {
+                    return false;
+                };
+
+                return import_decl.source.value == "@jest/globals";
+            }
+
+            false
+        })
+        .flat_map(|(_, reference_ids)| reference_ids.clone())
+        .collect::<Vec<ReferenceId>>()
+}
+
+fn collect_ids_referenced_to_global(ctx: &LintContext) -> Vec<ReferenceId> {
+    ctx.scopes()
+        .root_unresolved_references()
+        .iter()
+        .filter(|(name, _)| JEST_METHOD_NAMES.contains(name.as_str()))
+        .flat_map(|(_, reference_ids)| reference_ids.clone())
+        .collect::<Vec<ReferenceId>>()
 }
 
 /// join name of the expression. e.g.

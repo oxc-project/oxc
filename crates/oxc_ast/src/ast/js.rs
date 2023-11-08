@@ -722,6 +722,12 @@ pub enum Argument<'a> {
     Expression(Expression<'a>),
 }
 
+impl Argument<'_> {
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadElement(_))
+    }
+}
+
 /// Update Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
