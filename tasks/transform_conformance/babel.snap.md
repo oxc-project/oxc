@@ -1,4 +1,4 @@
-Passed: 269/1113
+Passed: 272/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -825,7 +825,7 @@ Passed: 269/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (107/170)
+# babel-plugin-transform-react-jsx (110/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
@@ -850,14 +850,12 @@ Passed: 269/1113
 * react/optimisation.react.constant-elements/input.js
 * react/should-add-quotes-es3/input.js
 * react/should-allow-jsx-docs-comment-with-pragma/input.js
-* react/should-allow-pragmafrag-and-frag/input.js
 * react/should-disallow-spread-children/input.js
 * react/should-disallow-valueless-key/input.js
 * react/should-disallow-xml-namespacing/input.js
 * react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
-* react/weird-symbols/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
@@ -885,7 +883,6 @@ Passed: 269/1113
 * runtime/defaults-to-automatic/input.js
 * runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
 * runtime/runtime-automatic/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
