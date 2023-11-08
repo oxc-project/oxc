@@ -134,7 +134,7 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> String {
+    fn transform(&self, path: &Path) -> Result<String, String> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
@@ -146,9 +146,12 @@ pub trait TestCase {
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
 
-        Transformer::new(&allocator, source_type, semantic, self.transform_options())
+        let builded = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
-        Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+
+        builded.map(|_| {
+            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+        })
     }
 }
 
@@ -209,13 +212,27 @@ impl TestCase for ConformanceTestCase {
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        Transformer::new(&allocator, source_type, semantic, self.transform_options())
-            .build(program);
-        let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        let transform_options = self.transform_options();
+        let transformer =
+            Transformer::new(&allocator, source_type, semantic, transform_options.clone());
+
+        let mut transformed_code = String::from("");
+        let mut actual_throws = String::from("");
+        let builded = transformer.build(program);
+        if builded.is_ok() {
+            transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        } else {
+            actual_throws = builded.err().unwrap().into();
+        }
+
+        let babel_options = self.options();
 
         // Get output.js by using our codeg so code comparison can match.
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
+                if let Some(throws) = &babel_options.throws {
+                    return throws.to_string();
+                }
                 // The transformation should be equal to input.js If output.js does not exist.
                 let program = Parser::new(&allocator, &input, source_type).parse().program;
                 Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
@@ -227,16 +244,22 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output;
+        let passed = transformed_code == output || actual_throws == output;
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
             println!("Options:");
-            println!("{:?}\n", self.transform_options());
-            println!("Expected:\n");
-            println!("{output}\n");
-            println!("Transformed:\n");
-            println!("{transformed_code}\n");
+            println!("{transform_options:?}\n");
+            if babel_options.throws.is_some() {
+                println!("Expected Throws:\n");
+                println!("{output}\n");
+                println!("Actual Throws:\n");
+            } else {
+                println!("Expected:\n");
+                println!("{output}\n");
+                println!("Transformed:\n");
+            }
+            println!("{actual_throws}\n");
             println!("Passed: {passed}");
         }
         passed
@@ -295,7 +318,7 @@ impl TestCase for ExecTestCase {
     fn test(&self, filter: Option<&str>) -> bool {
         let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
 
-        let result = self.transform(&self.path);
+        let result = self.transform(&self.path).expect("Transform failed");
         let target_path = self.write_to_test_files(&result);
         let passed = Self::run_test(&target_path);
         if filtered {

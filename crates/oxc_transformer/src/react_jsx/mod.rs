@@ -110,10 +110,20 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
+    pub fn add_react_jsx_runtime_imports(
+        &mut self,
+        program: &mut Program<'a>,
+    ) -> Result<(), String> {
         if self.options.runtime.is_classic() {
-            return;
+            return Ok(());
         }
+
+        if self.options.pragma != "React.createElement"
+            || self.options.pragma_frag != "React.Fragment"
+        {
+            return Err("pragma and pragmaFrag cannot be set when runtime is automatic".into());
+        }
+
         let imports = self.ast.move_statement_vec(&mut self.imports);
         let index = program
             .body
@@ -121,6 +131,8 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
+
+        Ok(())
     }
 
     fn new_string_literal(name: &str) -> StringLiteral {

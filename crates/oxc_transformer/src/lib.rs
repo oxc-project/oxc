@@ -91,13 +91,13 @@ impl<'a> Transformer<'a> {
         }
     }
 
-    pub fn build(mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
+    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), String> {
+        self.visit_program(program)
     }
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
-    fn visit_program(&mut self, program: &mut Program<'a>) {
+    fn visit_program(&mut self, program: &mut Program<'a>) -> Result<(), String> {
         for directive in program.directives.iter_mut() {
             self.visit_directive(directive);
         }
@@ -105,7 +105,11 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.typescript.as_mut().map(|t| t.transform_program(program));
         self.visit_statements(&mut program.body);
 
-        self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
+        if let Some(react_jsx) = self.react_jsx.as_mut() {
+            return react_jsx.add_react_jsx_runtime_imports(program);
+        }
+
+        Ok(())
     }
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
