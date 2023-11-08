@@ -24,7 +24,7 @@ pub enum TestCaseKind {
 }
 
 impl TestCaseKind {
-    pub fn test(&self, filter: Option<&str>) -> bool {
+    pub fn test(&self, filter: bool) -> bool {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
             Self::Exec(test_case) => test_case.test(filter),
@@ -75,7 +75,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn test(&self, filter: Option<&str>) -> bool;
+    fn test(&self, filtered: bool) -> bool;
 
     fn path(&self) -> &Path;
 
@@ -176,9 +176,7 @@ impl TestCase for ConformanceTestCase {
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.
-    fn test(&self, filter: Option<&str>) -> bool {
-        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
-
+    fn test(&self, filtered: bool) -> bool {
         let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
             let path = entry.ok()?.path();
             let file_stem = path.file_stem()?;
@@ -315,9 +313,7 @@ impl TestCase for ExecTestCase {
         Self { path, options }
     }
 
-    fn test(&self, filter: Option<&str>) -> bool {
-        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
-
+    fn test(&self, filtered: bool) -> bool {
         let result = self.transform(&self.path).expect("Transform failed");
         let target_path = self.write_to_test_files(&result);
         let passed = Self::run_test(&target_path);

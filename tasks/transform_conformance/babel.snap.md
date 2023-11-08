@@ -1,4 +1,4 @@
-Passed: 252/1113
+Passed: 278/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -854,7 +854,6 @@ Passed: 252/1113
 
 # babel-plugin-transform-react-jsx (117/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js

@@ -4,7 +4,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{json_comments::strip_comments_in_place, PathUtil};
+use crate::{json_comments, PathUtil};
 use indexmap::IndexMap;
 use rustc_hash::FxHasher;
 use serde::Deserialize;
@@ -68,7 +68,7 @@ where
 
 impl TsConfig {
     pub fn parse(path: &Path, json: &mut str) -> Result<Self, serde_json::Error> {
-        _ = strip_comments_in_place(json);
+        _ = json_comments::strip(json);
         let mut tsconfig: Self = serde_json::from_str(json)?;
         tsconfig.path = path.to_path_buf();
         let directory = tsconfig.directory().to_path_buf();
