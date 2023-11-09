@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*", "editor/vscode/server"]
+members  = ["crates/*", "tasks/*", "editors/vscode/server"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -40,7 +40,7 @@ oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_resolver = { path = "crates/oxc_resolver" }
 
 oxc_tasks_common = { path = "tasks/common" }
-oxc_vscode       = { path = "editor/vscode/server" }
+oxc_vscode       = { path = "editors/vscode/server" }
 
 bpaf                      = { version = "0.9.6" }
 bitflags                  = { version = "2.4.1" }
