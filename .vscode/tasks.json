@@ -17,9 +17,9 @@
 		},
 		{
 			"type": "shell",
-			"command": "cd ./editor/vscode && npm run watch",
+			"command": "cd ./editors/vscode && npm run watch",
       "windows": {
-        "command": "cd ./editor/vscode; npm run watch",
+        "command": "cd ./editors/vscode; npm run watch",
       },
       "label": "watch",
 			"isBackground": true,

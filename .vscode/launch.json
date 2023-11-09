@@ -7,9 +7,9 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/editor/vscode" ],
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode" ],
 			"sourceMaps": true,
-			"outFiles": ["${workspaceFolder}/editor/vscode/dist/*.js"],
+			"outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
 			"preLaunchTask": "watch",
 			"env": {
         "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_vscode"
