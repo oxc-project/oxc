@@ -166,6 +166,7 @@ mod unicorn {
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
+    pub mod prefer_spread;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
@@ -305,6 +306,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
+    unicorn::prefer_spread,
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
