@@ -147,10 +147,10 @@ pub trait TestCase {
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
 
-        let builded = Transformer::new(&allocator, source_type, semantic, self.transform_options())
+        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
 
-        builded.map(|()| {
+        result.map(|()| {
             Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
         })
     }
@@ -217,12 +217,12 @@ impl TestCase for ConformanceTestCase {
 
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
-        let builded = transformer.build(program);
-        if builded.is_ok() {
+        let result = transformer.build(program);
+        if result.is_ok() {
             transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
         } else {
             actual_errors =
-                builded.err().unwrap().iter().map(std::string::ToString::to_string).collect();
+                result.err().unwrap().iter().map(std::string::ToString::to_string).collect();
         }
 
         let babel_options = self.options();
