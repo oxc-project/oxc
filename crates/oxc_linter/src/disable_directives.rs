@@ -71,7 +71,9 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
             if let Some(text) = text.strip_prefix("eslint-disable") {
                 // `eslint-disable`
                 if text.trim().is_empty() {
-                    self.disable_all_start = Some(span.end);
+                    if self.disable_all_start.is_none() {
+                        self.disable_all_start = Some(span.end);
+                    }
                     continue;
                 }
 
@@ -116,7 +118,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
 
                 // `eslint-disable rule-name1, rule-name2`
                 Self::get_rule_names(text, |rule_name| {
-                    self.disable_start_map.insert(rule_name, span.end);
+                    self.disable_start_map.entry(rule_name).or_insert(span.end);
                 });
 
                 continue;
@@ -235,6 +237,20 @@ fn test() {
               quotes,
               semi
             */
+            debugger;
+        ",
+        // To disable all rules twice:
+        "
+        /* eslint-disable */
+            debugger;
+        /* eslint-disable */
+            debugger;
+        ",
+        // To disable a rule twice:
+        "
+        /* eslint-disable no-debugger */
+            debugger;
+        /* eslint-disable no-debugger */
             debugger;
         ",
         // Comment descriptions
