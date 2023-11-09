@@ -1,0 +1,60 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_optional_catch_binding
+---
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch (_) {}
+   ·               ─
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch (theRealErrorName) {}
+   ·               ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try    {    } catch    (e)  
+   ·                         ─
+ 2 │                   {    }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch(e) {}
+   ·              ─
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch (e){}
+   ·               ─
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch ({}) {}
+   ·               ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch ({message}) {}
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch ({message: notUsedMessage}) {}
+   ·               ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
+   ╭─[prefer_optional_catch_binding.tsx:1:1]
+ 1 │ try {} catch ({cause: {message}}) {}
+   ·               ──────────────────
+   ╰────
+
+
