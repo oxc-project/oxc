@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - editor/vscode/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
+      - editors/vscode/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,7 +28,7 @@ jobs:
         id: version
         with:
           diff-search: true
-          file-name: editor/vscode/package.json
+          file-name: editors/vscode/package.json
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
@@ -70,18 +70,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache-dependency-path: ./editor/vscode/package.json
+          cache-dependency-path: ./editors/vscode/package.json
           cache: pnpm
 
       - name: Build JS
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         shell: bash
         run: |
           pnpm install
@@ -104,19 +104,19 @@ jobs:
       - name: Copy binary
         if: runner.os == 'Windows'
         run: |
-          mkdir -p editor/vscode/target/release
+          mkdir -p editors/vscode/target/release
           # .vscodeignore uses `!target/release/oxc_vscode` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode.exe editor/vscode/target/release/oxc_vscode.exe
+          cp target/${{ matrix.target }}/release/oxc_vscode.exe editors/vscode/target/release/oxc_vscode.exe
 
       - name: Copy binary
         if: runner.os != 'Windows'
         run: |
-          mkdir -p editor/vscode/target/release/
+          mkdir -p editors/vscode/target/release/
           # .vscodeignore uses `!target/release/oxc_vscode.exe` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode editor/vscode/target/release/oxc_vscode
+          cp target/${{ matrix.target }}/release/oxc_vscode editors/vscode/target/release/oxc_vscode
 
       - name: Package Extension
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         run: pnpm exec vsce package -o "../../oxc_lsp-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
@@ -140,25 +140,25 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: vscode_packages
-          path: editor/vscode
+          path: editors/vscode
 
       - name: Install pnpm
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache-dependency-path: ./editor/vscode/package.json
+          cache-dependency-path: ./editors/vscode/package.json
           cache: pnpm
 
       - name: Install
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         run: pnpm install
 
       - name: Publish extension to Microsoft Marketplace
-        working-directory: editor/vscode
+        working-directory: editors/vscode
         run: pnpm exec vsce publish --packagePath oxc_lsp-*.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}

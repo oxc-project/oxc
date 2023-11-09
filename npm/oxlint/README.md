@@ -44,8 +44,8 @@ This is the linter for oxc.
 
 Run
 
-* `npx --yes oxlint@latest .` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
-* `npx oxlint@latest` --help for usage instructions.
+* `npx --yes oxlint@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
+* `npx oxlint@latest --help` for usage instructions.
 * `npx oxlint@latest --rules` for the list of rules.
 
 

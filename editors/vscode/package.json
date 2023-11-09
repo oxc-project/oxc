@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -12,7 +12,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/web-infra-dev/oxc.git",
-    "directory": "editor/vscode"
+    "directory": "editors/vscode"
   },
   "categories": ["Linters"],
   "keywords": [

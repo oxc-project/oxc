@@ -36,7 +36,7 @@ The linter is ready to catch mistakes for you. It comes with over 60 default rul
 To start using, install [oxlint][npm-oxlint] or via `npx`:
 
 ```bash
-npx oxlint@latest .
+npx oxlint@latest
 ```
 
 To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4000+ files in 0.5 seconds.
@@ -127,7 +127,7 @@ Unlike other linters like [ESLint], which often require intricate configurations
 our linter only requires a single command that you can immediately run on your codebase:
 
 ```bash
-npx oxlint@latest .
+npx oxlint@latest
 ```
 
 We also plan to port essential plugins such as [eslint-plugin-import] and [eslint-plugin-jest].
