@@ -251,9 +251,9 @@ impl TestCase for ConformanceTestCase {
             println!("Options:");
             println!("{transform_options:?}\n");
             if babel_options.throws.is_some() {
-                println!("Expected Throws:\n");
+                println!("Expected Errors:\n");
                 println!("{output}\n");
-                println!("Actual Throws:\n");
+                println!("Actual Errors:\n");
                 println!("{actual_errors}\n");
             } else {
                 println!("Expected:\n");
