@@ -14,7 +14,7 @@ fn main() -> CliRunResult {
     init_tracing();
     init_miette();
 
-    let command = oxc_cli::lint_command().fallback_to_usage().run();
+    let command = oxc_cli::lint_command().run();
     command.handle_threads();
     LintRunner::new(command.lint_options).run()
 }
