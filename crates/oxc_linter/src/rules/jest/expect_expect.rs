@@ -162,6 +162,9 @@ fn check_assert_function_used<'a>(
             };
             return check_statements(&body.statements, assert_function_names, ctx);
         }
+        Expression::AwaitExpression(expr) => {
+            return check_assert_function_used(&expr.argument, assert_function_names, ctx);
+        }
         _ => {}
     };
 
@@ -354,6 +357,17 @@ fn test() {
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
         ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                const asyncFunction = async () => {
+                    throw new Error('nope')
+                };
+                await expect(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -420,6 +434,17 @@ fn test() {
         	// ...
         	});
         ",
+            None,
+        ),
+        (
+            r#"
+            it("should warn on non-assert await expression", async () => {
+                const asyncFunction = async () => {
+                    throw new Error('nope')
+                };
+                await foo(asyncFunction()).rejects.toThrow();
+            });
+            "#,
             None,
         ),
     ];
