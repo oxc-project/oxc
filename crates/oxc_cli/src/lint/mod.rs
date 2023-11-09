@@ -1,4 +1,4 @@
-use std::{io::BufWriter, path::Path, vec::Vec};
+use std::{env, io::BufWriter, path::Path, vec::Vec};
 
 use oxc_diagnostics::DiagnosticService;
 use oxc_linter::{LintOptions, LintService, Linter};
@@ -37,8 +37,16 @@ impl Runner for LintRunner {
             enable_plugins,
         } = self.options;
 
+        let mut paths = paths;
+
         if paths.is_empty() {
-            return CliRunResult::InvalidOptions { message: "No paths provided.".to_string() };
+            if let Ok(cwd) = env::current_dir() {
+                paths.push(cwd);
+            } else {
+                return CliRunResult::InvalidOptions {
+                    message: "Failed to get current working directory.".to_string(),
+                };
+            }
         }
 
         let now = std::time::Instant::now();
@@ -156,6 +164,16 @@ mod test {
         let args = &["--timing", "fixtures"];
         // make sure this doesn't crash
         test(args);
+    }
+
+    #[test]
+    fn no_arg() {
+        let args = &[];
+        let result = test(args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]

@@ -112,7 +112,7 @@ The binary is located at `./target/release/oxlint` once the project is built.
 Under the hood, `cargo instruments` invokes the `xcrun` command, equivalent to
 
 ```bash
-xcrun xctrace record --template 'Time Profile' --output . --launch -- /path/to/oxc/target/release/oxlint --quiet .
+xcrun xctrace record --template 'Time Profile' --output . --launch -- /path/to/oxc/target/release/oxlint --quiet
 ```
 
 Running the command above produces the following output
