@@ -150,7 +150,7 @@ pub trait TestCase {
         let builded = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
 
-        builded.map(|_| {
+        builded.map(|()| {
             Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
         })
     }
@@ -215,13 +215,14 @@ impl TestCase for ConformanceTestCase {
         let transformer =
             Transformer::new(&allocator, source_type, semantic, transform_options.clone());
 
-        let mut transformed_code = String::from("");
-        let mut actual_throws = String::from("");
+        let mut transformed_code = String::new();
+        let mut actual_errors = String::new();
         let builded = transformer.build(program);
         if builded.is_ok() {
             transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
         } else {
-            actual_throws = builded.err().unwrap().iter().map(|item| item.to_string()).collect();
+            actual_errors =
+                builded.err().unwrap().iter().map(std::string::ToString::to_string).collect();
         }
 
         let babel_options = self.options();
@@ -243,7 +244,7 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output || actual_throws.contains(&output);
+        let passed = transformed_code == output || actual_errors.contains(&output);
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
@@ -258,7 +259,7 @@ impl TestCase for ConformanceTestCase {
                 println!("{output}\n");
                 println!("Transformed:\n");
             }
-            println!("{actual_throws}\n");
+            println!("{actual_errors}\n");
             println!("Passed: {passed}");
         }
         passed

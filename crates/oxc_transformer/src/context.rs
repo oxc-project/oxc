@@ -43,7 +43,7 @@ impl<'a> TransformerCtx<'a> {
     }
 
     pub fn errors(&self) -> Vec<Error> {
-        mem::replace(&mut self.errors.borrow_mut(), vec![])
+        mem::take(&mut self.errors.borrow_mut())
     }
 
     /// Push a Transform Error

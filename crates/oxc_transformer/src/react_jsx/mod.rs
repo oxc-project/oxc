@@ -20,7 +20,7 @@ use crate::context::TransformerCtx;
 #[derive(Debug, Error, Diagnostic)]
 #[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
 #[diagnostic(severity(error), help("Remove `pragma` and `pragmaFrag` options."))]
-struct PragmaAndPragmaFragCannotBeSet();
+struct PragmaAndPragmaFragCannotBeSet;
 
 /// Transform React JSX
 ///
@@ -130,7 +130,7 @@ impl<'a> ReactJsx<'a> {
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            self.ctx.borrow_mut().error(PragmaAndPragmaFragCannotBeSet());
+            self.ctx.borrow_mut().error(PragmaAndPragmaFragCannotBeSet);
             return;
         }
 

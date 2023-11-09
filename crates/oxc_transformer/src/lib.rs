@@ -22,7 +22,7 @@ mod tester;
 mod typescript;
 mod utils;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
@@ -95,10 +95,21 @@ impl<'a> Transformer<'a> {
         }
     }
 
+    /// # Errors
+    /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         self.visit_program(program);
-        let errors = self.ctx.borrow().errors();
-        if errors.len() == 0 {
+        let errors: Vec<_> = self
+            .ctx
+            .borrow()
+            .errors()
+            .into_iter()
+            .map(|e| {
+                e.with_source_code(Arc::new(self.ctx.borrow().semantic().source_text().to_string()))
+            })
+            .collect();
+
+        if errors.is_empty() {
             Ok(())
         } else {
             Err(errors)
