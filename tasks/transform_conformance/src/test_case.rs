@@ -254,12 +254,13 @@ impl TestCase for ConformanceTestCase {
                 println!("Expected Throws:\n");
                 println!("{output}\n");
                 println!("Actual Throws:\n");
+                println!("{actual_errors}\n");
             } else {
                 println!("Expected:\n");
                 println!("{output}\n");
                 println!("Transformed:\n");
+                println!("{transformed_code}");
             }
-            println!("{actual_errors}\n");
             println!("Passed: {passed}");
         }
         passed
