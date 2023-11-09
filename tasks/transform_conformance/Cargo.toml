@@ -21,6 +21,7 @@ oxc_semantic     = { workspace = true }
 oxc_codegen      = { workspace = true }
 oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_diagnostics  = { workspace = true }
 
 serde_json = { workspace = true }
 serde      = { workspace = true }

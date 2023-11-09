@@ -1855,6 +1855,7 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_codegen",
+ "oxc_diagnostics",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",

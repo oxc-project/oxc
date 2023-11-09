@@ -1,4 +1,7 @@
-use std::rc::Rc;
+use std::{
+    cell::{Ref, RefCell},
+    rc::Rc,
+};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -18,14 +21,14 @@ use crate::{
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-logical-assignment-operators>
 pub struct LogicalAssignmentOperators<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: TransformerCtx<'a>,
+    ctx: Rc<RefCell<TransformerCtx<'a>>>,
 
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
 impl<'a> CreateVars<'a> for LogicalAssignmentOperators<'a> {
-    fn ctx(&self) -> &TransformerCtx<'a> {
-        &self.ctx
+    fn ctx(&self) -> Ref<'_, TransformerCtx<'a>> {
+        self.ctx.borrow()
     }
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
@@ -36,7 +39,7 @@ impl<'a> CreateVars<'a> for LogicalAssignmentOperators<'a> {
 impl<'a> LogicalAssignmentOperators<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
+        ctx: Rc<RefCell<TransformerCtx<'a>>>,
         options: &TransformOptions,
     ) -> Option<Self> {
         (options.target < TransformTarget::ES2021 || options.logical_assignment_operators).then(

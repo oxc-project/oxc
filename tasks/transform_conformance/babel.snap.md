@@ -1,4 +1,4 @@
-Passed: 251/1113
+Passed: 258/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -852,17 +852,11 @@ Passed: 251/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (116/170)
+# babel-plugin-transform-react-jsx (123/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
-* pure/false-pragma-comment-automatic-runtime/input.js
-* pure/false-pragma-option-automatic-runtime/input.js
-* pure/true-pragma-comment-automatic-runtime/input.js
-* pure/true-pragma-option-automatic-runtime/input.js
-* pure/unset-pragma-comment-automatic-runtime/input.js
-* pure/unset-pragma-option-automatic-runtime/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
@@ -895,7 +889,6 @@ Passed: 251/1113
 * react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
 * removed-options/invalid-use-builtins-false/input.js

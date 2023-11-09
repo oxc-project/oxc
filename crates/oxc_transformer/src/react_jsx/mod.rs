@@ -1,9 +1,13 @@
 mod options;
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -13,6 +17,11 @@ use oxc_syntax::{
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 use crate::context::TransformerCtx;
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
+#[diagnostic(severity(error), help("Remove `pragma` and `pragmaFrag` options."))]
+struct PragmaAndPragmaFragCannotBeSet();
+
 /// Transform React JSX
 ///
 /// References:
@@ -20,7 +29,7 @@ use crate::context::TransformerCtx;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: Rc<TransformerCtx<'a>>,
+    ctx: Rc<RefCell<TransformerCtx<'a>>>,
     options: ReactJsxOptions,
 
     imports: Vec<'a, Statement<'a>>,
@@ -72,9 +81,13 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, ctx: TransformerCtx<'a>, options: ReactJsxOptions) -> Self {
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        ctx: Rc<RefCell<TransformerCtx<'a>>>,
+        options: ReactJsxOptions,
+    ) -> Self {
         let imports = ast.new_vec();
-        let options = options.with_comments(&ctx.semantic());
+        let options = options.with_comments(&ctx.borrow().semantic());
 
         let jsx_runtime_importer =
             if options.import_source == "react" || options.runtime.is_classic() {
@@ -83,7 +96,6 @@ impl<'a> ReactJsx<'a> {
                 Atom::from(format!("{}/jsx-runtime", options.import_source))
             };
 
-        let ctx = Rc::new(ctx);
         Self {
             ast,
             ctx,
@@ -110,18 +122,16 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    pub fn add_react_jsx_runtime_imports(
-        &mut self,
-        program: &mut Program<'a>,
-    ) -> Result<(), String> {
+    pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
-            return Ok(());
+            return;
         }
 
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            return Err("pragma and pragmaFrag cannot be set when runtime is automatic".into());
+            self.ctx.borrow_mut().error(PragmaAndPragmaFragCannotBeSet());
+            return;
         }
 
         let imports = self.ast.move_statement_vec(&mut self.imports);
@@ -131,8 +141,6 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
-
-        Ok(())
     }
 
     fn new_string_literal(name: &str) -> StringLiteral {
@@ -166,7 +174,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_jsx(&mut self) {
-        if self.ctx.semantic().source_type().is_script() {
+        if self.ctx.borrow().semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
             self.import_jsx = true;
@@ -179,7 +187,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_jsxs(&mut self) {
-        if self.ctx.semantic().source_type().is_script() {
+        if self.ctx.borrow().semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsxs {
             self.import_jsxs = true;
@@ -189,7 +197,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_fragment(&mut self) {
-        if self.ctx.semantic().source_type().is_script() {
+        if self.ctx.borrow().semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_fragment {
             self.import_fragment = true;

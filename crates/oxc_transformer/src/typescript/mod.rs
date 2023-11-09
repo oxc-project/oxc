@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::context::TransformerCtx;
 
@@ -13,14 +13,14 @@ use crate::context::TransformerCtx;
 /// * <https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax>
 pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: TransformerCtx<'a>,
+    ctx: Rc<RefCell<TransformerCtx<'a>>>,
     verbatim_module_syntax: bool,
 }
 
 impl<'a> TypeScript<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
+        ctx: Rc<RefCell<TransformerCtx<'a>>>,
         verbatim_module_syntax: bool,
     ) -> Self {
         Self { ast, ctx, verbatim_module_syntax }
@@ -128,13 +128,15 @@ impl<'a> TypeScript<'a> {
     }
 
     fn has_value_references(&self, name: &Atom) -> bool {
-        let root_scope_id = self.ctx.scopes().root_scope_id();
+        let root_scope_id = self.ctx.borrow().scopes().root_scope_id();
 
         self.ctx
+            .borrow()
             .scopes()
             .get_binding(root_scope_id, name)
             .map(|symbol_id| {
                 self.ctx
+                    .borrow()
                     .symbols()
                     .get_resolved_references(symbol_id)
                     .any(|x| x.is_read() || x.is_write())

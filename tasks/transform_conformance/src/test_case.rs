@@ -5,6 +5,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::Error;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -134,7 +135,7 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> Result<String, String> {
+    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
@@ -220,7 +221,7 @@ impl TestCase for ConformanceTestCase {
         if builded.is_ok() {
             transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
         } else {
-            actual_throws = builded.err().unwrap().into();
+            actual_throws = builded.err().unwrap().iter().map(|item| item.to_string()).collect();
         }
 
         let babel_options = self.options();
@@ -242,7 +243,7 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output || actual_throws == output;
+        let passed = transformed_code == output || actual_throws.contains(&output);
         if filtered {
             println!("Input:\n");
             println!("{input}\n");

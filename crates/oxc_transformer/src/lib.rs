@@ -25,8 +25,9 @@ mod utils;
 use std::{cell::RefCell, rc::Rc};
 
 use es2015::TemplateLiterals;
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
@@ -44,6 +45,7 @@ pub use crate::{
 };
 
 pub struct Transformer<'a> {
+    ctx: Rc<RefCell<TransformerCtx<'a>>>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
@@ -72,28 +74,35 @@ impl<'a> Transformer<'a> {
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
-        let ctx = TransformerCtx::new(
+        let ctx = Rc::new(RefCell::new(TransformerCtx::new(
             Rc::clone(&ast),
             Rc::new(RefCell::new(semantic)),
-        );
+        )));
+
         Self {
+            ctx: Rc::clone(&ctx),
             // TODO: pass verbatim_module_syntax from user config
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), Rc::clone(&ctx), false)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
-            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
-            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
+            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
-            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
-            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)),
+            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), Rc::clone(&ctx), options)),
         }
     }
 
-    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), String> {
+    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         self.visit_program(program);
-        Ok(())
+        let errors = self.ctx.borrow().errors();
+        if errors.len() == 0 {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 
@@ -109,7 +118,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
     }
 
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
