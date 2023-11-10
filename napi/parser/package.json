@@ -1,5 +1,6 @@
 {
-  "name": "@oxidation-compiler/napi",
+  "name": "@oxc-parser/binding",
+  "private": true,
   "scripts": {
     "build": "napi build --platform --release"
   },
@@ -11,7 +12,7 @@
   },
   "packageManager": "pnpm@8.2.0",
   "napi": {
-    "name": "napi",
+    "name": "parser",
     "triples": {
       "defaults": false,
       "additional": [

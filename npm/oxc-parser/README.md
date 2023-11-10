@@ -7,7 +7,7 @@ TypeScript typings for the AST is currently work in progress.
 ## cjs
 
 ```javascript
-const oxc = require("@oxidation-compiler/napi");
+const oxc = require("oxc-parser");
 const assert = require('assert');
 
 function test(ret) {
@@ -27,7 +27,7 @@ main()
 ## ESM
 
 ```javascript
-import oxc from '@oxidation-compiler/napi';
+import oxc from 'oxc-parser';
 import assert from 'assert';
 
 function test(ret) {

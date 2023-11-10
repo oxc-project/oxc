@@ -1,13 +1,11 @@
-name: Release NAPI
+name: Release NAPI Parser
 
-# When main is pushed and npm/napi/package.json has been changed,
-# trigger the jobs after the ci workflow has been passed.
 on:
   push:
     branches:
       - main
     paths:
-      - npm/napi/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+      - npm/oxc-parser/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,8 +26,8 @@ jobs:
         id: version
         with:
           static-checking: localIsNew
-          file-url: https://unpkg.com/@oxidation-compiler/napi@latest/package.json
-          file-name: npm/napi/package.json
+          file-url: https://unpkg.com/oxc-parser@latest/package.json
+          file-name: npm/oxc-parser/package.json
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
@@ -38,8 +36,6 @@ jobs:
           echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
 
   build:
-    needs: check
-    if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
     outputs:
@@ -84,18 +80,18 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build with cross
-        run: cross build -p oxc_napi --release --target=${{ matrix.target }}
+        run: cross build -p oxc_napi_parser --release --target=${{ matrix.target }}
 
       - name: Move file on ${{ matrix.os }}
         shell: bash
         run: |
           shopt -s extglob
           ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
-          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) crates/oxc_napi/napi.${{ matrix.code-target }}.node
-          ls crates/oxc_napi
+          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/parser/parser.${{ matrix.code-target }}.node
+          ls napi/parser
 
       - name: Test
-        working-directory: crates/oxc_napi
+        working-directory: napi/parser
         if: ${{ contains(matrix.target, 'x86') }} # Need docker for aarch64
         run: |
           ls
@@ -105,13 +101,13 @@ jobs:
       - name: Archive Binary
         if: runner.os == 'Windows'
         shell: bash
-        run: 7z a ${{ matrix.code-target }}.zip crates/oxc_napi/napi.${{ matrix.code-target }}.node
+        run: 7z a ${{ matrix.code-target }}.zip napi/parser/parser.${{ matrix.code-target }}.node
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os != 'Windows'
         shell: bash
-        run: tar czf ${{ matrix.code-target }}.tar.gz crates/oxc_napi/napi.${{ matrix.code-target }}.node
+        run: tar czf ${{ matrix.code-target }}.tar.gz napi/parser/parser.${{ matrix.code-target }}.node
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -157,10 +153,10 @@ jobs:
         shell: bash
         run: |
           ls
-          ls crates/oxc_napi
-          node npm/napi/scripts/generate-packages.mjs
-          cat npm/napi/package.json
-          for package in npm/napi*
+          ls napi/parser
+          node npm/oxc-parser/scripts/generate-packages.mjs
+          cat npm/oxc-parser/package.json
+          for package in npm/oxc-parser*
           do
             ls $package
             cat $package/package.json
@@ -170,11 +166,13 @@ jobs:
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
         shell: bash
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
-          for package in npm/napi*
+          # publish subpackages first
+          for package in npm/oxc-parser-*
           do
             npm publish $package/ --tag latest --provenance --access public
-            echo '----'
           done
+          # publish root package last
+          npm publish npm/oxc-parser/ --tag latest --provenance --access public

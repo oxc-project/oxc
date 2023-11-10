@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*", "editors/vscode/server"]
+members  = ["crates/*", "tasks/*", "editors/vscode/server", "napi/*"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]

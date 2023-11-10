@@ -1725,7 +1725,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_napi"
+name = "oxc_napi_parser"
 version = "0.0.0"
 dependencies = [
  "miette",

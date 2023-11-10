@@ -75,7 +75,7 @@ where warm runs complete in 5 minutes.
 
 ### Node.js
 
-* You may use the parser via napi: [@oxidation-compiler/napi][npm-napi]
+* You may use the parser via napi: [oxc-parser][npm-napi]
 
 ----
 
@@ -321,7 +321,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [ezno]: https://github.com/kaleidawave/ezno
 [google-closure-compiler]: https://github.com/google/closure-compiler
 [minification-benchmarks]: https://github.com/privatenumber/minification-benchmarks
-[npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
+[npm-napi]: https://www.npmjs.com/package/oxc-parser
 [npm-oxlint]: https://www.npmjs.com/package/oxlint
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
 [prettier]: https://github.com/prettier/prettier
