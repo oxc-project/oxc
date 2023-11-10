@@ -1,7 +1,3 @@
-# Contributor License Agreement
-
-Please note that you will be required to sign the [Contributor License Agreement](https://cla-assistant.io/oxc-project/oxc) before your pull request can be accepted.
-
 # Installation
 
 ## Clone Repo
