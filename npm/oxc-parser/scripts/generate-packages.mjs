@@ -5,20 +5,27 @@ import { fileURLToPath } from "node:url";
 import * as fs from "node:fs";
 
 const OXC_ROOT = resolve(fileURLToPath(import.meta.url), "../..");
-console.log(OXC_ROOT);
 const PACKAGES_ROOT = resolve(OXC_ROOT, "..");
-const BINARY_ROOT = resolve(OXC_ROOT, "../../crates/oxc_napi");
+const BINARY_ROOT = resolve(OXC_ROOT, "../../napi/parser");
 const MANIFEST_PATH = resolve(OXC_ROOT, "package.json");
+
+console.log('OXC_ROOT', OXC_ROOT);
+console.log('PACKAGES_ROOT', PACKAGES_ROOT);
+console.log('BINARY_ROOT', BINARY_ROOT);
+console.log('MANIFEST_PATH', MANIFEST_PATH);
 
 const rootManifest = JSON.parse(
   fs.readFileSync(MANIFEST_PATH).toString("utf-8")
 );
 
-function generateNativePackage(target) {
-  const packageName = `@oxidation-compiler/napi-${target}`;
-  const binaryName = `napi.${target}.node`;
+function package_name(target) {
+  return `@oxc-parser/binding-${target}`
+}
 
-  const packageRoot = resolve(PACKAGES_ROOT, `napi-${target}`);
+function generateNativePackage(target) {
+  const binaryName = `parser.${target}.node`;
+
+  const packageRoot = resolve(PACKAGES_ROOT, `oxc-parser-${target}`);
   const binarySource = resolve(BINARY_ROOT, binaryName);
   const binaryTarget = resolve(packageRoot, binaryName);
 
@@ -35,7 +42,7 @@ function generateNativePackage(target) {
 
   const [os, cpu, third] = target.split("-");
   const manifest = {
-    name: packageName,
+    name: package_name(target),
     version,
     main: binaryName,
     files: [binaryName],
@@ -57,23 +64,27 @@ function generateNativePackage(target) {
   fs.copyFileSync(binarySource, binaryTarget);
 }
 
-function writeManifest(packagePath) {
-  const packageRoot = resolve(PACKAGES_ROOT, packagePath);
+function writeManifest() {
+  const packageRoot = resolve(PACKAGES_ROOT, 'oxc-parser');
   const manifestPath = resolve(packageRoot, "package.json");
+
+  console.log('packageRoot', packageRoot);
 
   const manifestData = JSON.parse(
     fs.readFileSync(manifestPath).toString("utf-8")
   );
 
   const nativePackages = TARGETS.map((target) => [
-    `@oxidation-compiler/napi-${target}`,
+    package_name(target),
     rootManifest.version,
   ]);
 
   manifestData["version"] = rootManifest.version;
   manifestData["optionalDependencies"] = Object.fromEntries(nativePackages);
 
-  console.log(`Update manifest ${manifestPath}`);
+  console.log('manifestPath', manifestPath);
+  console.log('manifestData', manifestData);
+
   const content = JSON.stringify(manifestData);
   fs.writeFileSync(manifestPath, content);
 
@@ -96,4 +107,4 @@ for (const target of TARGETS) {
   generateNativePackage(target);
 }
 
-writeManifest("napi");
+writeManifest();
