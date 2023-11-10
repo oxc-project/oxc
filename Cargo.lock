@@ -1741,6 +1741,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_napi_resolver"
+version = "0.0.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_resolver",
+]
+
+[[package]]
 name = "oxc_parser"
 version = "0.3.0"
 dependencies = [

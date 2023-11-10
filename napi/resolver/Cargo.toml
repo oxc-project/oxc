@@ -1,0 +1,28 @@
+[package]
+name                   = "oxc_napi_resolver"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
+
+[lib]
+crate-type = ["cdylib"]
+doctest    = false
+
+[dependencies]
+oxc_resolver = { workspace = true }
+napi         = { version = "2", features = ["serde-json", "async"] }
+napi-derive  = { version = "2" }
+
+[build-dependencies]
+napi-build = "2"
+
+[package.metadata.cargo-machete]
+ignored = ["napi"]

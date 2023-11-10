@@ -1,5 +1,5 @@
 {
-  "name": "@oxc-parser/binding",
+  "name": "@oxc-resolver/binding",
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
@@ -13,7 +13,7 @@
   },
   "packageManager": "pnpm@8.2.0",
   "napi": {
-    "name": "parser",
+    "name": "resolver",
     "triples": {
       "defaults": false,
       "additional": [
