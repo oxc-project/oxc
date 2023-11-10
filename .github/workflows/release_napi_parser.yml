@@ -36,6 +36,8 @@ jobs:
           echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
 
   build:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
     outputs:
