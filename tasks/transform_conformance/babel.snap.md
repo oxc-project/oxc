@@ -1,4 +1,4 @@
-Passed: 278/1113
+Passed: 283/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -825,9 +825,8 @@ Passed: 278/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (116/170)
+# babel-plugin-transform-react-jsx (121/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* autoImport/auto-import-react-source-type-module/input.js
 * autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
 * pure/false-pragma-comment-automatic-runtime/input.js
@@ -855,17 +854,13 @@ Passed: 278/1113
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/arrow-functions/input.js
-* react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/handle-nonstatic-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
 * react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
