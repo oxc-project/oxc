@@ -10,10 +10,9 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedGeneralJestFnCall,
+        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, ParsedGeneralJestFnCallNew, PossibleJestNode,
     },
-    AstNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -85,16 +84,18 @@ impl Message {
 
 impl Rule for NoDisabledTests {
     fn run_once(&self, ctx: &LintContext) {
-        for node in collect_possible_jest_call_node(ctx) {
-            run(node, ctx);
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            run(possible_jest_node, ctx);
         }
     }
 }
 
-fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    let original = possible_jest_node.original;
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
-            let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
+        if let Some(jest_fn_call) = parse_general_jest_fn_call_new(call_expr, node, original, ctx) {
+            let ParsedGeneralJestFnCallNew { kind, members, name } = jest_fn_call;
             // `test('foo')`
             let kind = match kind {
                 JestFnKind::Expect | JestFnKind::Unknown => return,
