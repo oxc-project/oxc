@@ -1,0 +1,180 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_useless_fallback_in_spread
+---
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(foo || {})}
+   ·                 ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(foo ?? {})}
+   ·                 ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(foo ?? (( {} )))}
+   ·                 ────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...((( foo )) ?? (( {} )))}
+   ·                 ──────────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(( (( foo )) ?? (( {} )) ))}
+   ·                 ──────────────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ async ()=> ({...((await foo) || {})})
+   ·              ──────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(0 || {})}
+   ·                 ────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...((-0) || {})}
+   ·                 ───────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(.0 || {})}
+   ·                 ─────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(0n || {})}
+   ·                 ─────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(false || {})}
+   ·                 ────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(null || {})}
+   ·                 ───────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(undefined || {})}
+   ·                 ────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...((a && b) || {})}
+   ·                 ───────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(NaN || {})}
+   ·                 ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...("" || {})}
+   ·                 ─────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...([] || {})}
+   ·                 ─────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...({} || {})}
+   ·                 ─────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(foo || {}),}
+   ·                 ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...((foo ?? {}) || {})}
+   ·                 ──────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...((foo && {}) || {})}
+   ·                 ──────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(foo && {} || {})}
+   ·                 ────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...({...(foo || {})})}
+   ·                      ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ function foo(a = {...(bar || {})}){}
+   ·                   ──────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
+   ╭─[no_useless_fallback_in_spread.tsx:1:1]
+ 1 │ const object = {...(document.all || {})}
+   ·                 ───────────────────────
+   ╰────
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+

@@ -71,7 +71,9 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
             if let Some(text) = text.strip_prefix("eslint-disable") {
                 // `eslint-disable`
                 if text.trim().is_empty() {
-                    self.disable_all_start = Some(span.end);
+                    if self.disable_all_start.is_none() {
+                        self.disable_all_start = Some(span.end);
+                    }
                     continue;
                 }
 
@@ -81,8 +83,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     let stop = self.source_text[span.end as usize..]
                         .lines()
                         .take(if comment.is_single_line() { 1 } else { 2 })
-                        .map(|line| span.end + line.len() as u32)
-                        .sum();
+                        .fold(span.end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
                         self.add_interval(span.end, stop, DisabledRule::All);
                     } else {
@@ -117,7 +118,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
 
                 // `eslint-disable rule-name1, rule-name2`
                 Self::get_rule_names(text, |rule_name| {
-                    self.disable_start_map.insert(rule_name, span.end);
+                    self.disable_start_map.entry(rule_name).or_insert(span.end);
                 });
 
                 continue;
@@ -238,6 +239,20 @@ fn test() {
             */
             debugger;
         ",
+        // To disable all rules twice:
+        "
+        /* eslint-disable */
+            debugger;
+        /* eslint-disable */
+            debugger;
+        ",
+        // To disable a rule twice:
+        "
+        /* eslint-disable no-debugger */
+            debugger;
+        /* eslint-disable no-debugger */
+            debugger;
+        ",
         // Comment descriptions
         "
             // eslint-disable-next-line no-debugger -- Here's a description about why this configuration is necessary.
@@ -280,6 +295,19 @@ fn test() {
               quotes,
               semi
             */
+            debugger;
+        ",
+        "
+            /* eslint-disable-next-line no-debugger --
+             * Here's a very long description about why this configuration is necessary
+             * along with some additional information
+            **/
+            debugger;
+            debugger;
+        ",
+        "
+            // eslint-disable-next-line no-debugger
+            debugger;
             debugger;
         ",
     ];

@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoStandaloneExpect,
-    restriction
+    correctness
 );
 
 impl Rule for NoStandaloneExpect {
@@ -315,5 +315,5 @@ fn test() {
         )
     ];
 
-    Tester::new(NoStandaloneExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoStandaloneExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

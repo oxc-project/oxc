@@ -1,12 +1,11 @@
 use std::{
-    cell::RefCell,
     fs,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::Error;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -26,7 +25,7 @@ pub enum TestCaseKind {
 }
 
 impl TestCaseKind {
-    pub fn test(&self, filter: Option<&str>) -> bool {
+    pub fn test(&self, filter: bool) -> bool {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
             Self::Exec(test_case) => test_case.test(filter),
@@ -77,7 +76,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn test(&self, filter: Option<&str>) -> bool;
+    fn test(&self, filtered: bool) -> bool;
 
     fn path(&self) -> &Path;
 
@@ -108,6 +107,7 @@ pub trait TestCase {
                 .is_some(),
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
+            template_literals: options.get_plugin("transform-template-literals").is_some(),
         }
     }
 
@@ -135,23 +135,24 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> String {
+    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
-        let transformed_program =
-            Parser::new(&allocator, &source_text, source_type).parse().program;
+        let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-        let semantic =
-            SemanticBuilder::new(&source_text, source_type).build(&transformed_program).semantic;
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        let symbols = Rc::new(RefCell::new(symbols));
-        let scopes = Rc::new(RefCell::new(scopes));
-        let transformed_program = allocator.alloc(transformed_program);
+        let semantic = SemanticBuilder::new(&source_text, source_type)
+            .with_trivias(ret.trivias)
+            .build(&ret.program)
+            .semantic;
+        let transformed_program = allocator.alloc(ret.program);
 
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
+        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
-        Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+
+        result.map(|()| {
+            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+        })
     }
 }
 
@@ -176,9 +177,7 @@ impl TestCase for ConformanceTestCase {
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.
-    fn test(&self, filter: Option<&str>) -> bool {
-        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
-
+    fn test(&self, filtered: bool) -> bool {
         let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
             let path = entry.ok()?.path();
             let file_stem = path.file_stem()?;
@@ -187,7 +186,18 @@ impl TestCase for ConformanceTestCase {
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
-        let source_type = SourceType::from_path(&self.path).unwrap();
+        let input_is_js = self.path.extension().and_then(std::ffi::OsStr::to_str) == Some("js");
+        let output_is_js = output_path
+            .as_ref()
+            .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
+
+        let source_type = SourceType::from_path(&self.path).unwrap().with_script(
+            if self.options.source_type.is_some() {
+                !self.options.is_module()
+            } else {
+                input_is_js && output_is_js
+            },
+        );
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -195,19 +205,34 @@ impl TestCase for ConformanceTestCase {
         }
 
         // Transform input.js
-        let program = Parser::new(&allocator, &input, source_type).parse().program;
-        let semantic = SemanticBuilder::new(&input, source_type).build(&program).semantic;
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        let symbols = Rc::new(RefCell::new(symbols));
-        let scopes = Rc::new(RefCell::new(scopes));
-        let program = allocator.alloc(program);
-        Transformer::new(&allocator, source_type, &symbols, &scopes, self.transform_options())
-            .build(program);
-        let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        let ret = Parser::new(&allocator, &input, source_type).parse();
+        let semantic = SemanticBuilder::new(&input, source_type)
+            .with_trivias(ret.trivias)
+            .build(&ret.program)
+            .semantic;
+        let program = allocator.alloc(ret.program);
+        let transform_options = self.transform_options();
+        let transformer =
+            Transformer::new(&allocator, source_type, semantic, transform_options.clone());
+
+        let mut transformed_code = String::new();
+        let mut actual_errors = String::new();
+        let result = transformer.build(program);
+        if result.is_ok() {
+            transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        } else {
+            actual_errors =
+                result.err().unwrap().iter().map(std::string::ToString::to_string).collect();
+        }
+
+        let babel_options = self.options();
 
         // Get output.js by using our codeg so code comparison can match.
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
+                if let Some(throws) = &babel_options.throws {
+                    return throws.to_string();
+                }
                 // The transformation should be equal to input.js If output.js does not exist.
                 let program = Parser::new(&allocator, &input, source_type).parse().program;
                 Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
@@ -219,16 +244,23 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output;
+        let passed = transformed_code == output || actual_errors.contains(&output);
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
             println!("Options:");
-            println!("{:?}\n", self.transform_options());
-            println!("Expected:\n");
-            println!("{output}\n");
-            println!("Transformed:\n");
-            println!("{transformed_code}\n");
+            println!("{transform_options:?}\n");
+            if babel_options.throws.is_some() {
+                println!("Expected Errors:\n");
+                println!("{output}\n");
+                println!("Actual Errors:\n");
+                println!("{actual_errors}\n");
+            } else {
+                println!("Expected:\n");
+                println!("{output}\n");
+                println!("Transformed:\n");
+                println!("{transformed_code}");
+            }
             println!("Passed: {passed}");
         }
         passed
@@ -284,10 +316,8 @@ impl TestCase for ExecTestCase {
         Self { path, options }
     }
 
-    fn test(&self, filter: Option<&str>) -> bool {
-        let filtered = filter.is_some_and(|f| self.path.to_string_lossy().as_ref().contains(f));
-
-        let result = self.transform(&self.path);
+    fn test(&self, filtered: bool) -> bool {
+        let result = self.transform(&self.path).expect("Transform failed");
         let target_path = self.write_to_test_files(&result);
         let passed = Self::run_test(&target_path);
         if filtered {

@@ -163,7 +163,7 @@ impl<'a> ExponentiationOperator<'a> {
                 if ident
                     .reference_id
                     .get()
-                    .is_some_and(|reference_id| self.ctx.symbols.borrow().has_binding(reference_id))
+                    .is_some_and(|reference_id| self.ctx.symbols().has_binding(reference_id))
                 {
                     // this variable is declared in scope so we can be 100% sure
                     // that evaluating it multiple times won't trigger a getter
@@ -185,7 +185,7 @@ impl<'a> ExponentiationOperator<'a> {
                 // Super cannot be directly assigned so lets return it also
                 if matches!(expr, Expression::Super(_))
                     || matches!(&expr, Expression::Identifier(ident) if
-                        ident.reference_id.get().is_some_and(|reference_id| self.ctx.symbols.borrow().has_binding(reference_id)))
+                        ident.reference_id.get().is_some_and(|reference_id| self.ctx.symbols().has_binding(reference_id)))
                 {
                     return Some(expr);
                 }

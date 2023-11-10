@@ -1,4 +1,4 @@
-use std::{io::BufWriter, path::Path, vec::Vec};
+use std::{env, io::BufWriter, path::Path, vec::Vec};
 
 use oxc_diagnostics::DiagnosticService;
 use oxc_linter::{LintOptions, LintService, Linter};
@@ -29,16 +29,24 @@ impl Runner for LintRunner {
         let CliLintOptions {
             paths,
             filter,
-            import_plugin,
             warning_options,
             ignore_options,
             fix_options,
             misc_options,
             codeowner_options,
+            enable_plugins,
         } = self.options;
 
+        let mut paths = paths;
+
         if paths.is_empty() {
-            return CliRunResult::InvalidOptions { message: "No paths provided.".to_string() };
+            if let Ok(cwd) = env::current_dir() {
+                paths.push(cwd);
+            } else {
+                return CliRunResult::InvalidOptions {
+                    message: "Failed to get current working directory.".to_string(),
+                };
+            }
         }
 
         let now = std::time::Instant::now();
@@ -57,7 +65,9 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_fix(fix_options.fix)
             .with_timing(misc_options.timing)
-            .with_import_plugin(import_plugin);
+            .with_import_plugin(enable_plugins.import_plugin)
+            .with_jest_plugin(enable_plugins.jest_plugin)
+            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin);
         let lint_service = LintService::new(cwd, &paths, lint_options);
 
         let diagnostic_service = DiagnosticService::default()
@@ -154,6 +164,16 @@ mod test {
         let args = &["--timing", "fixtures"];
         // make sure this doesn't crash
         test(args);
+    }
+
+    #[test]
+    fn no_arg() {
+        let args = &[];
+        let result = test(args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]

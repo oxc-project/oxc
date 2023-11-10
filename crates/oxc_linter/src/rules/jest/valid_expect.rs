@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ValidExpect,
-    restriction
+    correctness
 );
 
 impl Rule for ValidExpect {
@@ -369,7 +369,7 @@ fn test_1() {
     ];
     let fail = vec![];
 
-    Tester::new(ValidExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }
 
 #[test]
@@ -739,5 +739,5 @@ fn test() {
         )
     ];
 
-    Tester::new(ValidExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

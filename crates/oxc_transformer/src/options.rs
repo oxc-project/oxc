@@ -2,7 +2,7 @@ use oxc_syntax::assumptions::CompilerAssumptions;
 
 use crate::{es2020::NullishCoalescingOperatorOptions, react_jsx::ReactJsxOptions};
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
     pub target: TransformTarget,
     pub assumptions: CompilerAssumptions,
@@ -22,6 +22,7 @@ pub struct TransformOptions {
     // es2015
     pub shorthand_properties: bool,
     pub sticky_regex: bool,
+    pub template_literals: bool,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>

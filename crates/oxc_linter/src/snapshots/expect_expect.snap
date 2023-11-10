@@ -123,4 +123,17 @@ expression: expect_expect
    ╰────
   help: Add assertion(s) in this Test
 
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             it("should warn on non-assert await expression", async () => {
+ 3 │ │                   const asyncFunction = async () => {
+ 4 │ │                       throw new Error('nope')
+ 5 │ │                   };
+ 6 │ │                   await foo(asyncFunction()).rejects.toThrow();
+ 7 │ ╰─▶             });
+ 8 │                 
+   ╰────
+  help: Add assertion(s) in this Test
+
 

@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_code_point
+---
+  ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `codePointAt` over `charCodeAt`
+   ╭─[prefer_code_point.tsx:1:1]
+ 1 │ string.charCodeAt(index)
+   ·        ──────────
+   ╰────
+  help: Unicode is better supported in `codePointAt` than `charCodeAt`
+
+  ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `codePointAt` over `charCodeAt`
+   ╭─[prefer_code_point.tsx:1:1]
+ 1 │ (( (( string )).charCodeAt( ((index)), )))
+   ·                 ──────────
+   ╰────
+  help: Unicode is better supported in `codePointAt` than `charCodeAt`
+
+  ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `fromCodePoint` over `fromCharCode`
+   ╭─[prefer_code_point.tsx:1:1]
+ 1 │ String.fromCharCode( code )
+   ·        ────────────
+   ╰────
+  help: Unicode is better supported in `fromCodePoint` than `fromCharCode`
+
+  ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `fromCodePoint` over `fromCharCode`
+   ╭─[prefer_code_point.tsx:1:1]
+ 1 │ (( (( String )).fromCharCode( ((code)), ) ))
+   ·                 ────────────
+   ╰────
+  help: Unicode is better supported in `fromCodePoint` than `fromCharCode`
+
+

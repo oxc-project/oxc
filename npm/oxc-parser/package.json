@@ -1,0 +1,19 @@
+{
+  "name": "oxc-parser",
+  "version": "0.2.0",
+  "description": "Oxc Parser Node API",
+  "main": "index.js",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxc-parser"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  }
+}

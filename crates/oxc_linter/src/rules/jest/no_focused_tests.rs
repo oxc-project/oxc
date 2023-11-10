@@ -54,7 +54,7 @@ declare_oxc_lint!(
     /// `();
     /// ```
     NoFocusedTests,
-    restriction
+    correctness
 );
 
 impl Rule for NoFocusedTests {
@@ -143,5 +143,8 @@ fn test() {
         ("fdescribe('foo', () => {})", "describe('foo', () => {})", None),
     ];
 
-    Tester::new(NoFocusedTests::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoFocusedTests::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

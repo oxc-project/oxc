@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// require('__mocks__');
     ///
     NoMocksImport,
-    restriction
+    style
 );
 
 impl Rule for NoMocksImport {
@@ -112,5 +112,5 @@ fn test() {
         ("import thing from './__mocks__/index'", None),
     ];
 
-    Tester::new(NoMocksImport::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoMocksImport::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

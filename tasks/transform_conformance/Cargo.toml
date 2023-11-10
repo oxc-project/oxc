@@ -15,13 +15,13 @@ doctest = false
 
 [dependencies]
 oxc_span         = { workspace = true }
-oxc_syntax       = { workspace = true }
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
 oxc_semantic     = { workspace = true }
 oxc_codegen      = { workspace = true }
 oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_diagnostics  = { workspace = true }
 
 serde_json = { workspace = true }
 serde      = { workspace = true }

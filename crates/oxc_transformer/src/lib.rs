@@ -22,11 +22,13 @@ mod tester;
 mod typescript;
 mod utils;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
-use oxc_allocator::{Allocator, Vec};
+use es2015::TemplateLiterals;
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_diagnostics::Error;
+use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{
@@ -43,6 +45,7 @@ pub use crate::{
 };
 
 pub struct Transformer<'a> {
+    ctx: TransformerCtx<'a>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
@@ -59,6 +62,7 @@ pub struct Transformer<'a> {
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
+    es2015_template_literals: Option<TemplateLiterals<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -66,20 +70,19 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_type: SourceType,
-        symbols: &Rc<RefCell<SymbolTable>>,
-        scopes: &Rc<RefCell<ScopeTree>>,
+        semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
-        let ctx = TransformerCtx {
-            ast: Rc::clone(&ast),
-            symbols: Rc::clone(symbols),
-            scopes: Rc::clone(scopes),
-        };
+        let ctx = TransformerCtx::new(
+            Rc::clone(&ast),
+            Rc::new(RefCell::new(semantic)),
+        );
+
         Self {
+            ctx: ctx.clone(),
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
-            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
@@ -87,11 +90,27 @@ impl<'a> Transformer<'a> {
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
+            es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
+            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)),
         }
     }
 
-    pub fn build(mut self, program: &mut Program<'a>) {
+    /// # Errors
+    /// Returns `Vec<Error>` if any errors were collected during the transformation.
+    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         self.visit_program(program);
+        let errors: Vec<_> = self
+            .ctx
+            .errors()
+            .into_iter()
+            .map(|e| e.with_source_code(Arc::new(self.ctx.semantic().source_text().to_string())))
+            .collect();
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 
@@ -107,7 +126,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
     }
 
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }
@@ -125,6 +144,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }

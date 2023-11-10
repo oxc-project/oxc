@@ -176,7 +176,7 @@ fn test() {
             }",
             None,
         ),
-        // https://github.com/web-infra-dev/oxc/pull/508#issuecomment-1618850742
+        // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
     ];
 

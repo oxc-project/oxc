@@ -110,7 +110,9 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 return None;
             }
-            AstKind::JSXElement(_) | AstKind::JSXOpeningElement(_) => return None,
+            AstKind::JSXElement(_) | AstKind::JSXOpeningElement(_) | AstKind::ObjectProperty(_) => {
+                return None
+            }
             _ => {}
         }
         node = parent;
@@ -332,6 +334,23 @@ fn test() {
               enableSorting: true,
               enableHiding: false,
             }]
+        "#,
+            None,
+        ),
+        (
+            r#"
+            const router = createBrowserRouter([
+              {
+                path: "/",
+                element: <Root />,
+                children: [
+                  {
+                    path: "team",
+                    element: <Team />,
+                  },
+                ],
+              },
+            ]);
         "#,
             None,
         ),

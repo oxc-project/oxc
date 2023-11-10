@@ -77,6 +77,7 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-shorthand-properties",
     "babel-plugin-transform-sticky-regex",
     "babel-plugin-transform-unicode-regex",
+    "babel-plugin-transform-template-literals",
     // TypeScript
     "babel-plugin-transform-typescript",
     // React
@@ -105,7 +106,7 @@ impl TestRunner {
     /// # Panics
     pub fn run(self) {
         let root = root();
-        let (transform_paths, exec_files) = Self::glob_files(&root);
+        let (transform_paths, exec_files) = Self::glob_files(&root, self.options.filter.as_ref());
         self.generate_snapshot(SnapshotOption::new(transform_paths, CONFORMANCE_SNAPSHOT));
 
         if self.options.exec {
@@ -119,6 +120,7 @@ impl TestRunner {
 
     fn glob_files(
         root: &Path,
+        filter: Option<&String>,
     ) -> (IndexMap<String, Vec<TestCaseKind>>, IndexMap<String, Vec<TestCaseKind>>) {
         // use `IndexMap` to keep the order of the test cases the same in insert order.
         let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
@@ -131,7 +133,14 @@ impl TestRunner {
                     .into_iter()
                     .filter_map(Result::ok)
                     .filter_map(|e| {
-                        let test_case = TestCaseKind::from_path(e.path());
+                        let path = e.path();
+                        if let Some(filter) = filter {
+                            if !path.to_string_lossy().contains(filter) {
+                                return None;
+                            }
+                        }
+
+                        let test_case = TestCaseKind::from_path(path);
                         if let Some(test_case) = test_case {
                             if test_case.skip_test_case() {
                                 return None;
@@ -173,7 +182,7 @@ impl TestRunner {
             // Run the test
             let (passed, failed): (Vec<TestCaseKind>, Vec<TestCaseKind>) = test_cases
                 .into_iter()
-                .partition(|test_case| test_case.test(self.options.filter.as_deref()));
+                .partition(|test_case| test_case.test(self.options.filter.is_some()));
             all_passed_count += passed.len();
 
             // Snapshot

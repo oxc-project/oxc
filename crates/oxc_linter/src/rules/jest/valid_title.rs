@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// xtest('', () => {});
     /// ```
     ValidTitle,
-    restriction
+    correctness
 );
 
 impl Rule for ValidTitle {
@@ -860,5 +860,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidTitle::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ValidTitle::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

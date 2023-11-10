@@ -4,6 +4,10 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -11,6 +15,12 @@ use oxc_syntax::{
 };
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
+use crate::context::TransformerCtx;
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
+#[diagnostic(severity(warning), help("Remove `pragma` and `pragmaFrag` options."))]
+struct PragmaAndPragmaFragCannotBeSet;
 
 /// Transform React JSX
 ///
@@ -19,6 +29,7 @@ pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
     ast: Rc<AstBuilder<'a>>,
+    ctx: TransformerCtx<'a>,
     options: ReactJsxOptions,
 
     imports: Vec<'a, Statement<'a>>,
@@ -26,6 +37,9 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
+    require_jsx_runtime: bool,
+    // Will be store jsx runtime importer, like `react/jsx-runtime`
+    jsx_runtime_importer: Atom,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -67,12 +81,24 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: ReactJsxOptions) -> Self {
+    pub fn new(ast: Rc<AstBuilder<'a>>, ctx: TransformerCtx<'a>, options: ReactJsxOptions) -> Self {
         let imports = ast.new_vec();
+        let options = options.with_comments(&ctx.semantic());
+
+        let jsx_runtime_importer =
+            if options.import_source == "react" || options.runtime.is_classic() {
+                Atom::new_inline("react/jsx-runtime")
+            } else {
+                Atom::from(format!("{}/jsx-runtime", options.import_source))
+            };
+
         Self {
             ast,
+            ctx,
             options,
             imports,
+            jsx_runtime_importer,
+            require_jsx_runtime: false,
             import_jsx: false,
             import_jsxs: false,
             import_fragment: false,
@@ -96,6 +122,14 @@ impl<'a> ReactJsx<'a> {
         if self.options.runtime.is_classic() {
             return;
         }
+
+        if self.options.pragma != "React.createElement"
+            || self.options.pragma_frag != "React.Fragment"
+        {
+            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
+            return;
+        }
+
         let imports = self.ast.move_statement_vec(&mut self.imports);
         let index = program
             .body
@@ -103,6 +137,10 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
+    }
+
+    fn new_string_literal(name: &str) -> StringLiteral {
+        StringLiteral::new(SPAN, name.into())
     }
 
     fn add_import<'b>(
@@ -124,24 +162,47 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
+    fn add_require_jsx_runtime(&mut self) {
+        if !self.require_jsx_runtime {
+            self.require_jsx_runtime = true;
+            self.add_require_statement(
+                "_reactJsxRuntime",
+                Self::new_string_literal(self.jsx_runtime_importer.as_str()),
+                false,
+            );
+        }
+    }
+
     fn add_import_jsx(&mut self) {
-        if !self.import_jsx {
+        if self.ctx.source_type().is_script() {
+            self.add_require_jsx_runtime();
+        } else if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", "react/jsx-runtime");
+            self.add_import_statement(
+                "jsx",
+                "_jsx",
+                Self::new_string_literal(self.jsx_runtime_importer.as_str()),
+            );
         }
     }
 
     fn add_import_jsxs(&mut self) {
-        if !self.import_jsxs {
+        if self.ctx.source_type().is_script() {
+            self.add_require_jsx_runtime();
+        } else if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", "react/jsx-runtime");
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("jsxs", "_jsxs", source);
         }
     }
 
     fn add_import_fragment(&mut self) {
-        if !self.import_fragment {
+        if self.ctx.source_type().is_script() {
+            self.add_require_jsx_runtime();
+        } else if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", "react/jsx-runtime");
+            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement("Fragment", "_Fragment", source);
             self.add_import_jsx();
         }
     }
@@ -149,11 +210,21 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            self.add_import_statement("createElement", "_createElement", "react");
+
+            if self.ctx.source_type().is_script() {
+                self.add_require_statement(
+                    "_react",
+                    Self::new_string_literal(self.options.import_source.as_ref()),
+                    true,
+                );
+            } else {
+                let source = Self::new_string_literal(self.options.import_source.as_ref());
+                self.add_import_statement("createElement", "_createElement", source);
+            }
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: &str) {
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral) {
         let mut specifiers = self.ast.new_vec_with_capacity(1);
         specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
             span: SPAN,
@@ -161,7 +232,6 @@ impl<'a> ReactJsx<'a> {
             local: BindingIdentifier::new(SPAN, local.into()),
             import_kind: ImportOrExportKind::Value,
         }));
-        let source = StringLiteral::new(SPAN, source.into());
         let import_statement = self.ast.import_declaration(
             SPAN,
             Some(specifiers),
@@ -172,6 +242,42 @@ impl<'a> ReactJsx<'a> {
         let decl =
             self.ast.module_declaration(ModuleDeclaration::ImportDeclaration(import_statement));
         self.imports.push(decl);
+    }
+
+    fn add_require_statement(&mut self, variable_name: &str, source: StringLiteral, front: bool) {
+        let callee = self
+            .ast
+            .identifier_reference_expression(IdentifierReference::new(SPAN, "require".into()));
+        let arguments = self
+            .ast
+            .new_vec_single(Argument::Expression(self.ast.literal_string_expression(source)));
+        let init = self.ast.call_expression(SPAN, callee, arguments, false, None);
+        let id = self.ast.binding_pattern(
+            self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, variable_name.into())),
+            None,
+            false,
+        );
+        let decl = self.ast.new_vec_single(self.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            id,
+            Some(init),
+            false,
+        ));
+
+        let variable_declaration = self.ast.variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            decl,
+            Modifiers::empty(),
+        );
+        let stmt = Statement::Declaration(Declaration::VariableDeclaration(variable_declaration));
+
+        if front {
+            self.imports.insert(0, stmt);
+        } else {
+            self.imports.push(stmt);
+        }
     }
 
     fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Expression<'a> {
@@ -240,28 +346,35 @@ impl<'a> ReactJsx<'a> {
         let children = e.children();
 
         // Append children to object properties in automatic mode
-        if is_automatic && !children.is_empty() {
-            let ident = IdentifierName::new(SPAN, "children".into());
-            let key = self.ast.property_key_identifier(ident);
-            let value = if children.len() == 1 {
-                self.transform_jsx_child(&children[0])
-            } else {
-                let mut elements = self.ast.new_vec_with_capacity(children.len());
-                for child in children {
-                    if let Some(e) = self.transform_jsx_child(child) {
-                        elements.push(ArrayExpressionElement::Expression(e));
-                    }
-                }
-                need_jsxs = true;
-                Some(self.ast.array_expression(SPAN, elements, None))
-            };
-            if let Some(value) = value {
+        if is_automatic {
+            let allocator = self.ast.allocator;
+            let mut children = Vec::from_iter_in(
+                children.iter().filter_map(|child| self.transform_jsx_child(child)),
+                allocator,
+            );
+            let children_len = children.len();
+            if children_len != 0 {
+                let value = if children_len == 1 {
+                    children.pop().unwrap()
+                } else {
+                    let elements = Vec::from_iter_in(
+                        children.into_iter().map(ArrayExpressionElement::Expression),
+                        allocator,
+                    );
+                    need_jsxs = true;
+                    self.ast.array_expression(SPAN, elements, None)
+                };
+
                 let kind = PropertyKind::Init;
+                let ident = IdentifierName::new(SPAN, "children".into());
+                let key = self.ast.property_key_identifier(ident);
                 let object_property =
                     self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
                 properties.push(ObjectPropertyKind::ObjectProperty(object_property));
             }
         }
+
+        self.add_import(e, has_key_after_props_spread, need_jsxs);
 
         if !properties.is_empty() || is_automatic {
             let object_expression = self.ast.object_expression(SPAN, properties, None);
@@ -282,13 +395,37 @@ impl<'a> ReactJsx<'a> {
         }
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs);
-        self.add_import(e, has_key_after_props_spread, need_jsxs);
         self.ast.call_expression(SPAN, callee, arguments, false, None)
     }
 
     fn get_react_references(&mut self) -> Expression<'a> {
         let ident = IdentifierReference::new(SPAN, "React".into());
         self.ast.identifier_reference_expression(ident)
+    }
+
+    fn get_static_member_expression(
+        &self,
+        object_ident_name: &str,
+        property_name: &str,
+    ) -> Expression<'a> {
+        let property = IdentifierName::new(SPAN, property_name.into());
+        let ident = IdentifierReference::new(SPAN, object_ident_name.into());
+        let object = self.ast.identifier_reference_expression(ident);
+        self.ast.static_member_expression(SPAN, object, property, false)
+    }
+
+    /// Get the callee from `pragma` and `pragmaFrag`
+    fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
+        let mut callee = literal_callee.split('.');
+        let member = callee.next().unwrap();
+        let property = callee.next();
+        property.map_or_else(
+            || {
+                let ident = IdentifierReference::new(SPAN, member.into());
+                self.ast.identifier_reference_expression(ident)
+            },
+            |property_name| self.get_static_member_expression(member, property_name),
+        )
     }
 
     fn get_create_element(
@@ -298,20 +435,40 @@ impl<'a> ReactJsx<'a> {
     ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "createElement".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma == "React.createElement" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "createElement".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma.as_ref())
             }
             ReactJsxRuntime::Automatic => {
-                let name = if has_key_after_props_spread {
+                let is_script = self.ctx.source_type().is_script();
+                let name = if is_script {
+                    if has_key_after_props_spread {
+                        "createElement"
+                    } else if jsxs {
+                        "jsxs"
+                    } else {
+                        "jsx"
+                    }
+                } else if has_key_after_props_spread {
                     "_createElement"
                 } else if jsxs {
                     "_jsxs"
                 } else {
                     "_jsx"
                 };
-                let ident = IdentifierReference::new(SPAN, name.into());
-                self.ast.identifier_reference_expression(ident)
+
+                if is_script {
+                    let object_ident_name =
+                        if has_key_after_props_spread { "_react" } else { "_reactJsxRuntime" };
+                    self.get_static_member_expression(object_ident_name, name)
+                } else {
+                    let ident = IdentifierReference::new(SPAN, name.into());
+                    self.ast.identifier_reference_expression(ident)
+                }
             }
         }
     }
@@ -319,13 +476,21 @@ impl<'a> ReactJsx<'a> {
     fn get_fragment(&mut self) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                let object = self.get_react_references();
-                let property = IdentifierName::new(SPAN, "Fragment".into());
-                self.ast.static_member_expression(SPAN, object, property, false)
+                if self.options.pragma_frag == "React.Fragment" {
+                    let object = self.get_react_references();
+                    let property = IdentifierName::new(SPAN, "Fragment".into());
+                    return self.ast.static_member_expression(SPAN, object, property, false);
+                }
+
+                self.get_call_expression_callee(self.options.pragma_frag.as_ref())
             }
             ReactJsxRuntime::Automatic => {
-                let ident = IdentifierReference::new(SPAN, "_Fragment".into());
-                self.ast.identifier_reference_expression(ident)
+                if self.ctx.source_type().is_script() {
+                    self.get_static_member_expression("_reactJsxRuntime", "Fragment")
+                } else {
+                    let ident = IdentifierReference::new(SPAN, "_Fragment".into());
+                    self.ast.identifier_reference_expression(ident)
+                }
             }
         }
     }

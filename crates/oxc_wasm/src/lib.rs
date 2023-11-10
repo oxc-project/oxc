@@ -213,12 +213,13 @@ impl Oxc {
             // FIXME: this should not be duplicated with the linter semantic,
             // we need to fix the API so symbols and scopes can be shared.
             let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
-            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-            let symbols = Rc::new(RefCell::new(symbols));
-            let scopes = Rc::new(RefCell::new(scopes));
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
-            Transformer::new(&allocator, source_type, &symbols, &scopes, options).build(program);
+            let result =
+                Transformer::new(&allocator, source_type, semantic, options).build(program);
+            if let Err(errs) = result {
+                self.save_diagnostics(errs);
+            }
         }
 
         let program = allocator.alloc(program);
@@ -260,7 +261,7 @@ impl Oxc {
         let allocator = Allocator::default();
         let source_text = &self.source_text;
         let Ok(source_type) = SourceType::from_path("test.tsx") else {
-            return "'test.tsx' source type invalid, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".to_string().serialize(&self.serializer);
+            return "'test.tsx' source type invalid, this should never happen.\nPlease open an issue at https://github.com/oxc-project/oxc".to_string().serialize(&self.serializer);
         };
 
         let ParserReturn { errors: parse_errors, panicked, program: returned_program, trivias } =
@@ -299,7 +300,7 @@ impl Oxc {
         let Ok(arguments): Result<BTreeMap<Arc<str>, TransparentValue>, _> =
             serde_json::from_str(query_arguments)
         else {
-            return "Query arguments is not valid json string, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".serialize(&self.serializer);
+            return "Query arguments is not valid json string, this should never happen.\nPlease open an issue at https://github.com/oxc-project/oxc".serialize(&self.serializer);
         };
 
         execute_query(schema(), arc_adapter, query, arguments).map_or_else(

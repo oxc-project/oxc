@@ -1,0 +1,173 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_date_now
+---
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date().getTime();
+   ·            ────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = (new Date).getTime();
+   ·            ────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = (new Date()).getTime();
+   ·            ──────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date().valueOf();
+   ·            ────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = (new Date).valueOf();
+   ·            ────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = (new Date()).valueOf();
+   ·            ──────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = /* 1 */ Number(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */
+   ·                    ───────────────────────────────────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const tsBigInt = /* 1 */ BigInt(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */
+   ·                          ───────────────────────────────────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = + /* 1 */ new Date;
+   ·                      ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = - /* 1 */ new Date();
+   ·                      ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date() - 0
+   ·            ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const foo = bar - new Date
+   ·                   ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const foo = new Date() * bar
+   ·             ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date() / 1
+   ·            ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date() % Infinity
+   ·            ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const ts = new Date() ** 1
+   ·            ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const zero = (new Date(/* 1 */) /* 2 */) /* 3 */ - /* 4 */new Date
+   ·                                                           ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo -= new Date()
+   ·        ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo *= new Date()
+   ·        ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo /= new Date
+   ·        ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo %= new Date()
+   ·        ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo **= new Date()
+   ·         ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ function foo(){return+new Date}
+   ·                       ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ function foo(){return-new Date}
+   ·                       ────────
+   ╰────
+  help: Change to `Date.now()`.
+
+

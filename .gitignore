@@ -3,17 +3,14 @@ target/
 
 /node_modules/
 /website/node_modules/
-/crates/oxc_napi/node_modules/
 /benchmark/node_modules/
-/editor/vscode/node_modules/
+/editors/vscode/node_modules/
+/editors/vscode/icon.png
 
-/editor/vscode/dist/
-/editor/vscode/*.vsix
+/editors/vscode/out/
+/editors/vscode/*.vsix
 
 npm/cli-*
-
-# From napi build
-crates/oxc_napi/*.node
 
 # Ignore accidental files from the root
 /*.js

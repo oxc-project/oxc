@@ -1,0 +1,164 @@
+# Reference: https://github.com/biomejs/biome/blob/main/.github/workflows/release_lsp.yml
+
+name: Release VSCode
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - editors/vscode/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.version }}
+      version_changed: ${{ steps.version.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check vscode version changes
+        uses: EndBug/version-check@v2
+        id: version
+        with:
+          diff-search: true
+          file-name: editors/vscode/package.json
+
+      - name: Set version name
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
+          echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
+
+  build:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    env:
+      version: ${{ needs.check.outputs.version }}
+    outputs:
+      version: ${{ env.version }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            code-target: win32-x64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            code-target: win32-arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
+    name: Package ${{ matrix.code-target }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        working-directory: editors/vscode
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache-dependency-path: ./editors/vscode/package.json
+          cache: pnpm
+
+      - name: Build JS
+        working-directory: editors/vscode
+        shell: bash
+        run: |
+          pnpm install
+          pnpm run compile
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-${{ matrix.target }}
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build with cross
+        run: cross build -p oxc_vscode --release --target=${{ matrix.target }}
+
+      - name: Copy binary
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p editors/vscode/target/release
+          # .vscodeignore uses `!target/release/oxc_vscode` to package the binary
+          cp target/${{ matrix.target }}/release/oxc_vscode.exe editors/vscode/target/release/oxc_vscode.exe
+
+      - name: Copy binary
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p editors/vscode/target/release/
+          # .vscodeignore uses `!target/release/oxc_vscode.exe` to package the binary
+          cp target/${{ matrix.target }}/release/oxc_vscode editors/vscode/target/release/oxc_vscode
+
+      - name: Package Extension
+        working-directory: editors/vscode
+        run: pnpm exec vsce package -o "../../oxc_lsp-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
+
+      - name: Upload VSCode extension artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: vscode_packages
+          path: ./oxc_lsp-${{ matrix.code-target }}.vsix
+          if-no-files-found: error
+
+  publish:
+    name: Publish VSCode
+    runs-on: ubuntu-latest
+    needs: build
+    environment: marketplace
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download extension artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: vscode_packages
+          path: editors/vscode
+
+      - name: Install pnpm
+        working-directory: editors/vscode
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache-dependency-path: ./editors/vscode/package.json
+          cache: pnpm
+
+      - name: Install
+        working-directory: editors/vscode
+        run: pnpm install
+
+      - name: Publish extension to Microsoft Marketplace
+        working-directory: editors/vscode
+        run: pnpm exec vsce publish --packagePath oxc_lsp-*.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}

@@ -1,13 +1,9 @@
-# Contributor License Agreement
-
-Please note that you will be required to sign the [Contributor License Agreement](https://cla-assistant.io/web-infra-dev/oxc) before your pull request can be accepted.
-
 # Installation
 
 ## Clone Repo
 
 ```bash
-git clone --recurse-submodules git@github.com:web-infra-dev/oxc.git
+git clone --recurse-submodules git@github.com:oxc-project/oxc.git
 ```
 
 The `--recurse-submodules` flag will install the following submodules:
@@ -64,7 +60,21 @@ Run `just r` (alias for `just ready`) to make sure the whole project builds and 
 Take a look at `just new-rule` if you need to start porting a new ESLint rule.
 Make sure the rule is registered in `crates/oxc_linter/src/rules.rs`.
 
-# Performance Turing
+# Vscode
+
+## Development
+
+Build the extension and run it inside vscode:
+
+1. `pnpm install`
+2. `pnpm run build`
+3. `pnpm run package`
+4. open vscode and run the command palette "Extensions: Install from VSIX..."
+5. find the `oxc-vscode-x.x.x.vsix` file from `./editors/vscode` directory
+6. open a `.js` / `.ts` file, add `debugger;` and save
+7. see the warning `eslint(no-debugger): debugger statement is not allowed - oxc`
+
+# Performance Tuning
 
 ## Mac Xcode Instruments
 
@@ -98,7 +108,7 @@ The binary is located at `./target/release/oxlint` once the project is built.
 Under the hood, `cargo instruments` invokes the `xcrun` command, equivalent to
 
 ```bash
-xcrun xctrace record --template 'Time Profile' --output . --launch -- /path/to/oxc/target/release/oxlint --quiet .
+xcrun xctrace record --template 'Time Profile' --output . --launch -- /path/to/oxc/target/release/oxlint --quiet
 ```
 
 Running the command above produces the following output

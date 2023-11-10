@@ -1,4 +1,4 @@
-Passed: 241/1080
+Passed: 265/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -14,7 +14,7 @@ Passed: 241/1080
 * transform-u/basic/input.js
 * transform-u/string-properties/input.js
 
-# babel-plugin-transform-class-properties (7/266)
+# babel-plugin-transform-class-properties (0/266)
 * assumption-constantSuper/complex-super-class/input.js
 * assumption-constantSuper/instance-field/input.js
 * assumption-constantSuper/static-field/input.js
@@ -56,6 +56,7 @@ Passed: 241/1080
 * decorators-legacy-interop/local-define-property/input.js
 * decorators-legacy-interop/loose/input.js
 * decorators-legacy-interop/strict/input.js
+* decorators-legacy-interop/wrong-order/input.js
 * nested-class/super-call-in-decorator/input.js
 * nested-class/super-call-in-key/input.js
 * nested-class/super-property-in-accessor-key/input.js
@@ -203,6 +204,7 @@ Passed: 241/1080
 * private-loose/super-statement/input.js
 * private-loose/update/input.js
 * public/arrow-static-this-without-transform/input.js
+* public/arrow-this-without-transform/input.js
 * public/assignment/input.js
 * public/call/input.js
 * public/class-shadow-builtins/input.mjs
@@ -236,11 +238,16 @@ Passed: 241/1080
 * public/static-this/input.js
 * public/static-undefined/input.js
 * public/super-call/input.js
+* public/super-destructuring-array-pattern/input.js
+* public/super-destructuring-array-pattern-1/input.js
+* public/super-destructuring-object-pattern/input.js
+* public/super-destructuring-object-pattern-1/input.js
 * public/super-expression/input.js
 * public/super-statement/input.js
 * public/super-with-collision/input.js
 * public/update/input.js
 * public-loose/arrow-static-this-without-transform/input.js
+* public-loose/arrow-this-without-transform/input.js
 * public-loose/class-shadow-builtins/input.mjs
 * public-loose/computed/input.js
 * public-loose/constructor-collision/input.js
@@ -292,7 +299,7 @@ Passed: 241/1080
 * integration-loose/preserve-comments/input.js
 * integration-loose/super-static-block/input.js
 
-# babel-plugin-transform-private-methods (7/136)
+# babel-plugin-transform-private-methods (0/136)
 * accessors/basic/input.js
 * accessors/get-only-setter/input.js
 * accessors/preserve-comments/input.js
@@ -318,8 +325,15 @@ Passed: 241/1080
 * accessors-privateFieldsAsSymbols/set-only-getter/input.js
 * accessors-privateFieldsAsSymbols/updates/input.js
 * assumption-constantSuper/private-method-super/input.js
+* duplicated-names/get-get/input.js
+* duplicated-names/get-method/input.js
 * duplicated-names/get-set/input.js
+* duplicated-names/method-get/input.js
+* duplicated-names/method-method/input.js
+* duplicated-names/method-set/input.js
 * duplicated-names/set-get/input.js
+* duplicated-names/set-method/input.js
+* duplicated-names/set-set/input.js
 * private-method/assignment/input.js
 * private-method/async/input.js
 * private-method/before-fields/input.js
@@ -493,7 +507,7 @@ Passed: 241/1080
 * export-namespace/namespace-string/input.mjs
 * export-namespace/namespace-typescript/input.mjs
 
-# babel-plugin-transform-dynamic-import (2/19)
+# babel-plugin-transform-dynamic-import (0/19)
 * amd/missing-plugin/input.mjs
 * amd/module/input.mjs
 * amd/no-interop/input.js
@@ -507,6 +521,8 @@ Passed: 241/1080
 * commonjs/shadowed-require/input.js
 * commonjs/template-literal/input.js
 * commonjs/to-string/input.js
+* missing-module-transform/missing-module-transform/input.js
+* systemjs/missing-plugin/input.mjs
 * systemjs/missing-plugin-babel-7/input.mjs
 * systemjs/module/input.mjs
 * systemjs/script/input.js
@@ -516,7 +532,7 @@ Passed: 241/1080
 * assumption-noDocumentAll/transform-in-default-param/input.js
 * nullish-coalescing/transform-in-default-param/input.js
 
-# babel-plugin-transform-optional-chaining (4/46)
+# babel-plugin-transform-optional-chaining (1/46)
 * assumption-noDocumentAll/assignment/input.js
 * assumption-noDocumentAll/cast-to-boolean/input.js
 * assumption-noDocumentAll/in-function-params/input.js
@@ -538,6 +554,9 @@ Passed: 241/1080
 * general/in-method-key/input.js
 * general/in-method-key-loose/input.js
 * general/in-var-destructuring/input.js
+* general/lhs-assignment/input.js
+* general/lhs-assignment-read-and-update/input.js
+* general/lhs-update/input.js
 * general/member-access/input.js
 * general/memoize/input.js
 * general/memoize-loose/input.js
@@ -704,13 +723,36 @@ Passed: 241/1080
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-typescript (84/181)
+# babel-plugin-transform-template-literals (13/33)
+* assumption-ignoreToPrimitiveHint/escape-quotes/input.js
+* assumption-ignoreToPrimitiveHint/expression-first/input.js
+* assumption-ignoreToPrimitiveHint/functions/input.js
+* assumption-ignoreToPrimitiveHint/literals/input.js
+* assumption-ignoreToPrimitiveHint/multiple/input.js
+* assumption-ignoreToPrimitiveHint/only/input.js
+* assumption-ignoreToPrimitiveHint/single/input.js
+* assumption-ignoreToPrimitiveHint/statement/input.js
+* assumption-ignoreToPrimitiveHint/tag/input.js
+* assumption-mutableTemplateObject/tag/input.js
+* assumption-mutableTemplateObject/template-revision/input.js
+* default/cache-revision/input.js
+* default/literals/input.js
+* default/simple-tag/input.js
+* default/tag/input.js
+* default/tag-with-unicode-escapes/input.js
+* default/tag-with-unicode-escapes-babel-7/input.js
+* default/template-revision/input.js
+* loose/ignoreToPrimitiveHint/input.js
+* loose/mutableTemplateObject/input.js
+
+# babel-plugin-transform-typescript (76/181)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * class/accessor-allowDeclareFields-true-babel-7/input.ts
+* class/declare-not-enabled-babel-7/input.ts
 * class/decorated-declare-properties/input.ts
 * class/field-not-initialized-babel-7/input.ts
 * class/parameter-properties/input.ts
@@ -720,6 +762,7 @@ Passed: 241/1080
 * class/parameter-properties-with-parameters/input.ts
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
+* class/transform-properties-declare-wrong-order/input.ts
 * class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
@@ -742,6 +785,7 @@ Passed: 241/1080
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type-star-from/input.ts
+* exports/export=/input.ts
 * exports/export=-to-cjs/input.ts
 * exports/imported-types/input.ts
 * exports/imported-types-only-remove-type-imports/input.ts
@@ -760,6 +804,7 @@ Passed: 241/1080
 * imports/import-named-type-default-and-named/input.ts
 * imports/import-removed-exceptions/input.ts
 * imports/import=-declaration/input.ts
+* imports/import=-module/input.ts
 * imports/import=-module-to-cjs/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
@@ -769,6 +814,8 @@ Passed: 241/1080
 * imports/type-only-import-specifier-3/input.ts
 * imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts
+* namespace/ambient-module-nested/input.ts
+* namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
 * namespace/clobber-class/input.ts
 * namespace/clobber-enum/input.ts
@@ -781,6 +828,8 @@ Passed: 241/1080
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
 * namespace/multiple/input.ts
+* namespace/mutable-fail/input.ts
+* namespace/namespace-flag/input.ts
 * namespace/namespace-nested-module/input.ts
 * namespace/nested/input.ts
 * namespace/nested-destructuring/input.ts
@@ -803,49 +852,20 @@ Passed: 241/1080
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (92/170)
+# babel-plugin-transform-react-jsx (130/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* autoImport/after-polyfills-script-not-supported/input.js
-* autoImport/auto-import-react-source-type-module/input.js
-* autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
-* autoImport/complicated-scope-script/input.js
-* autoImport/import-source/input.js
-* autoImport/import-source-pragma/input.js
-* pure/false-default-pragma-automatic-runtime/input.js
-* pure/false-pragma-comment-automatic-runtime/input.js
-* pure/false-pragma-comment-classic-runtime/input.js
-* pure/false-pragma-option-automatic-runtime/input.js
-* pure/false-pragma-option-classic-runtime/input.js
-* pure/true-default-pragma-automatic-runtime/input.js
-* pure/true-pragma-comment-automatic-runtime/input.js
-* pure/true-pragma-comment-classic-runtime/input.js
-* pure/true-pragma-option-automatic-runtime/input.js
-* pure/true-pragma-option-classic-runtime/input.js
-* pure/unset-default-pragma-automatic-runtime/input.js
-* pure/unset-pragma-comment-automatic-runtime/input.js
-* pure/unset-pragma-comment-classic-runtime/input.js
-* pure/unset-pragma-option-automatic-runtime/input.js
-* pure/unset-pragma-option-classic-runtime/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
 * react/avoids-spread-babel-7/input.js
 * react/does-not-add-source-self-babel-7/input.mjs
 * react/handle-spread-with-proto-babel-7/input.js
-* react/honor-custom-jsx-comment/input.js
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-* react/honor-custom-jsx-pragma-option/input.js
 * react/optimisation.react.constant-elements/input.js
-* react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-allow-jsx-docs-comment-with-pragma/input.js
-* react/should-allow-no-pragmafrag-if-frag-unused/input.js
-* react/should-allow-pragmafrag-and-frag/input.js
 * react/should-disallow-spread-children/input.js
 * react/should-disallow-valueless-key/input.js
 * react/should-disallow-xml-namespacing/input.js
-* react/should-support-xml-namespaces-if-flag/input.js
 * react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
@@ -853,33 +873,24 @@ Passed: 241/1080
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/arrow-functions/input.js
-* react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/handle-nonstatic-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
 * react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
-* regression/issue-15353-classic/input.js
-* regression/pragma-frag-set-default-classic-runtime/input.js
 * removed-options/invalid-use-builtins-false/input.js
 * removed-options/invalid-use-builtins-true/input.js
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
 * runtime/defaults-to-automatic/input.js
+* runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
-* runtime/runtime-automatic/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
 

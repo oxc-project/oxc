@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// test('should assert something', () => {});
     /// ```
     ExpectExpect,
-    restriction
+    correctness
 );
 
 impl Rule for ExpectExpect {
@@ -161,6 +161,9 @@ fn check_assert_function_used<'a>(
                 return false;
             };
             return check_statements(&body.statements, assert_function_names, ctx);
+        }
+        Expression::AwaitExpression(expr) => {
+            return check_assert_function_used(&expr.argument, assert_function_names, ctx);
         }
         _ => {}
     };
@@ -354,6 +357,17 @@ fn test() {
         ",
             Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
         ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                const asyncFunction = async () => {
+                    throw new Error('nope')
+                };
+                await expect(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -422,7 +436,18 @@ fn test() {
         ",
             None,
         ),
+        (
+            r#"
+            it("should warn on non-assert await expression", async () => {
+                const asyncFunction = async () => {
+                    throw new Error('nope')
+                };
+                await foo(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
     ];
 
-    Tester::new(ExpectExpect::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ExpectExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

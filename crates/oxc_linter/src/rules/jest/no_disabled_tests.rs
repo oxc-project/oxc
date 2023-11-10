@@ -9,7 +9,10 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall},
+    utils::{
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        ParsedGeneralJestFnCall,
+    },
     AstNode,
 };
 
@@ -50,7 +53,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDisabledTests,
-    restriction
+    correctness
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -81,54 +84,60 @@ impl Message {
 }
 
 impl Rule for NoDisabledTests {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
-                let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
-                // `test('foo')`
-                let kind = match kind {
-                    JestFnKind::Expect | JestFnKind::Unknown => return,
-                    JestFnKind::General(kind) => kind,
+    fn run_once(&self, ctx: &LintContext) {
+        for node in collect_possible_jest_call_node(ctx) {
+            run(node, ctx);
+        }
+    }
+}
+
+fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    if let AstKind::CallExpression(call_expr) = node.kind() {
+        if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
+            let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
+            // `test('foo')`
+            let kind = match kind {
+                JestFnKind::Expect | JestFnKind::Unknown => return,
+                JestFnKind::General(kind) => kind,
+            };
+            if matches!(kind, JestGeneralFnKind::Test)
+                && call_expr.arguments.len() < 2
+                && members.iter().all(|member| member.is_name_unequal("todo"))
+            {
+                let (error, help) = Message::MissingFunction.details();
+                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                return;
+            }
+
+            // the only jest functions that are with "x" are "xdescribe", "xtest", and "xit"
+            // `xdescribe('foo', () => {})`
+            if name.starts_with('x') {
+                let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
+                    Message::DisabledSuiteWithX.details()
+                } else {
+                    Message::DisabledTestWithX.details()
                 };
-                if matches!(kind, JestGeneralFnKind::Test)
-                    && call_expr.arguments.len() < 2
-                    && members.iter().all(|member| member.is_name_unequal("todo"))
-                {
-                    let (error, help) = Message::MissingFunction.details();
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
-                    return;
-                }
+                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
+                return;
+            }
 
-                // the only jest functions that are with "x" are "xdescribe", "xtest", and "xit"
-                // `xdescribe('foo', () => {})`
-                if name.starts_with('x') {
-                    let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
-                        Message::DisabledSuiteWithX.details()
-                    } else {
-                        Message::DisabledTestWithX.details()
-                    };
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
-                    return;
-                }
-
-                // `it.skip('foo', function () {})'`
-                // `describe.skip('foo', function () {})'`
-                if members.iter().any(|member| member.is_name_equal("skip")) {
-                    let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
-                        Message::DisabledSuiteWithSkip.details()
-                    } else {
-                        Message::DisabledTestWithSkip.details()
-                    };
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
-                }
-            } else if let Expression::Identifier(ident) = &call_expr.callee {
-                if ident.name.as_str() == "pending"
-                    && ctx.semantic().is_reference_to_global_variable(ident)
-                {
-                    // `describe('foo', function () { pending() })`
-                    let (error, help) = Message::Pending.details();
-                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
-                }
+            // `it.skip('foo', function () {})'`
+            // `describe.skip('foo', function () {})'`
+            if members.iter().any(|member| member.is_name_equal("skip")) {
+                let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
+                    Message::DisabledSuiteWithSkip.details()
+                } else {
+                    Message::DisabledTestWithSkip.details()
+                };
+                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
+            }
+        } else if let Expression::Identifier(ident) = &call_expr.callee {
+            if ident.name.as_str() == "pending"
+                && ctx.semantic().is_reference_to_global_variable(ident)
+            {
+                // `describe('foo', function () { pending() })`
+                let (error, help) = Message::Pending.details();
+                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
             }
         }
     }
@@ -206,5 +215,5 @@ fn test() {
         ("import { test } from '@jest/globals';test('something');", None),
     ];
 
-    Tester::new(NoDisabledTests::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDisabledTests::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
 }

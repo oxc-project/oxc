@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: no_amd
+---
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ require([a, b], function() {})
+   · ───────
+   ╰────
+  help: Expected imports instead of AMD require()
+
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ define([a, b], function() {})
+   · ──────
+   ╰────
+  help: Expected imports instead of AMD define()
+
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ define([], function() {})
+   · ──────
+   ╰────
+  help: Expected imports instead of AMD define()
+
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ define(["a"], function(a) { console.log(a); })
+   · ──────
+   ╰────
+  help: Expected imports instead of AMD define()
+
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ require([], function() {})
+   · ───────
+   ╰────
+  help: Expected imports instead of AMD require()
+
+  ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
+   ╭─[no-amd.js:1:1]
+ 1 │ require(["a"], function(a) { console.log(a); })
+   · ───────
+   ╰────
+  help: Expected imports instead of AMD require()
+
+

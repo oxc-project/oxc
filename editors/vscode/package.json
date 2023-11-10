@@ -1,0 +1,79 @@
+{
+  "name": "oxc-vscode",
+  "description": "oxc vscode extension",
+  "license": "MIT",
+  "version": "0.0.17",
+  "icon": "icon.png",
+  "publisher": "oxc",
+  "displayName": "Oxc",
+  "bugs": {
+    "url": "https://github.com/oxc-project/oxc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "editors/vscode"
+  },
+  "categories": ["Linters"],
+  "keywords": [
+    "linter",
+    "oxc"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/boshen"
+  },
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./out/main.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "oxc.restartServer",
+        "title": "Restart Oxc Server",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showOutputChannel",
+        "title": "Show Output Channel",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showTraceOutputChannel",
+        "title": "Show Trace Output Channel",
+        "category": "Oxc"
+      }
+    ]
+  },
+  "scripts": {
+    "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square.png --output icon.png",
+    "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
+    "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
+    "package": "vsce package --no-dependencies -o oxc_lsp.vsix",
+    "publish": "vsce publish --no-dependencies",
+    "install-extension": "code --install-extension oxc_lsp.vsix --force",
+    "server:build:debug": "cargo build -p oxc_vscode",
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_vscode --release"
+  },
+  "devDependencies": {
+    "@types/node": "^18.17.5",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "cross-env": "^7.0.2",
+    "esbuild": "^0.19.5",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "vsce": {
+    "dependencies": false
+  }
+}

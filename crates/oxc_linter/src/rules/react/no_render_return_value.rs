@@ -129,7 +129,7 @@ fn test() {
         ("var v; v = ReactDOM.render(<div />, document.body);", None),
         ("var inst = ReactDOM.render(<div />, document.body);", None),
         // This rule is only supported for react versions >= 15.0.0, so the following are not supported.
-        // See https://github.com/web-infra-dev/oxc/pull/1042#discussion_r1369762147
+        // See https://github.com/oxc-project/oxc/pull/1042#discussion_r1369762147
         // ("var inst = React.render(<div />, document.body);", None),
         // ("var inst = React.render(<div />, document.body);", None),
     ];

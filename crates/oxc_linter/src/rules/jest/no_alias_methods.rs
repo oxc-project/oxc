@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// expect(a).toThrowError();
     /// ```
     NoAliasMethods,
-    restriction
+    style
 );
 
 impl Rule for NoAliasMethods {
@@ -171,5 +171,8 @@ fn test() {
         ("expect(a).not[`toThrowError`]()", "expect(a).not[`toThrow`]()", None),
     ];
 
-    Tester::new(NoAliasMethods::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoAliasMethods::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
