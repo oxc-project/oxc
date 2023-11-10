@@ -11,14 +11,15 @@ use oxc_span::{Atom, Span};
 
 use crate::context::LintContext;
 
-use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind};
+use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode};
 
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    original: Option<&'a Atom>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedJestFnCall<'a>> {
+    let original = possible_jest_node.original;
+    let node = possible_jest_node.node;
     let callee = &call_expr.callee;
     // If bailed out, we're not jest function
     let resolved = resolve_to_jest_fn(call_expr, original)?;

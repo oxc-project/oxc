@@ -115,6 +115,24 @@ pub fn is_type_of_jest_fn_call<'a>(
     false
 }
 
+// TODO: The new version of `is_type_of_jest_fn_call`, will rename to `is_type_of_jest_fn_call` after all replaced.
+pub fn is_type_of_jest_fn_call_new<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+    kinds: &[JestFnKind],
+) -> bool {
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx);
+    if let Some(jest_fn_call) = jest_fn_call {
+        let kind = jest_fn_call.kind();
+        if kinds.contains(&kind) {
+            return true;
+        }
+    }
+
+    false
+}
+
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
@@ -131,11 +149,10 @@ pub fn parse_general_jest_fn_call<'a>(
 // TODO: The new version of `parse_general_jest_fn_call`, will rename to `parse_general_jest_fn_call` after all replaced.
 pub fn parse_general_jest_fn_call_new<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    original: Option<&'a Atom>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedGeneralJestFnCallNew<'a>> {
-    let jest_fn_call = parse_jest_fn_call_new(call_expr, node, original, ctx)?;
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
 
     if let ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
