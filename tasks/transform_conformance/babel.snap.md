@@ -854,7 +854,6 @@ Passed: 264/1113
 
 # babel-plugin-transform-react-jsx (129/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js

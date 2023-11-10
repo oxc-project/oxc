@@ -7,7 +7,7 @@ use std::{
 use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
-use oxc_span::Atom;
+use oxc_span::{Atom, SourceType};
 
 #[derive(Clone)]
 pub struct TransformerCtx<'a> {
@@ -40,6 +40,10 @@ impl<'a> TransformerCtx<'a> {
     pub fn add_binding(&self, name: Atom) {
         // TODO: use the correct scope and symbol id
         self.scopes_mut().add_binding(ScopeId::new(0), name, SymbolId::new(0));
+    }
+
+    pub fn source_type(&self) -> Ref<'_, SourceType> {
+        Ref::map(self.semantic.borrow(), |semantic| semantic.source_type())
     }
 
     pub fn errors(&self) -> Vec<Error> {
