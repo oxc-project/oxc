@@ -1,13 +1,13 @@
 # Contributor License Agreement
 
-Please note that you will be required to sign the [Contributor License Agreement](https://cla-assistant.io/web-infra-dev/oxc) before your pull request can be accepted.
+Please note that you will be required to sign the [Contributor License Agreement](https://cla-assistant.io/oxc-project/oxc) before your pull request can be accepted.
 
 # Installation
 
 ## Clone Repo
 
 ```bash
-git clone --recurse-submodules git@github.com:web-infra-dev/oxc.git
+git clone --recurse-submodules git@github.com:oxc-project/oxc.git
 ```
 
 The `--recurse-submodules` flag will install the following submodules:

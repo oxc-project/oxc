@@ -1,3 +1,3 @@
 # Benchmark
 
-See https://codspeed.io/web-infra-dev/oxc
+See https://codspeed.io/oxc-project/oxc

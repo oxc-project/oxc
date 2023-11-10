@@ -1,6 +1,6 @@
 //! # The JavaScript Oxidation Compiler
 //!
-//! <https://github.com/web-infra-dev/oxc>
+//! <https://github.com/oxc-project/oxc>
 
 pub mod allocator {
     #[doc(inline)]
