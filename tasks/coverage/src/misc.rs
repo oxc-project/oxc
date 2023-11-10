@@ -37,14 +37,26 @@ impl<T: Case> Suite<T> for MiscSuite<T> {
 pub struct MiscCase {
     path: PathBuf,
     code: String,
+    source_type: SourceType,
     should_fail: bool,
     result: TestResult,
+}
+
+impl MiscCase {
+    pub fn source_type(&self) -> SourceType {
+        self.source_type
+    }
+
+    pub fn set_result(&mut self, result: TestResult) {
+        self.result = result;
+    }
 }
 
 impl Case for MiscCase {
     fn new(path: PathBuf, code: String) -> Self {
         let should_fail = path.to_string_lossy().contains("fail");
-        Self { path, code, should_fail, result: TestResult::ToBeRun }
+        let source_type = SourceType::from_path(&path).unwrap();
+        Self { path, code, source_type, should_fail, result: TestResult::ToBeRun }
     }
 
     fn code(&self) -> &str {
@@ -64,7 +76,7 @@ impl Case for MiscCase {
     }
 
     fn run(&mut self) {
-        let source_type = SourceType::from_path(&self.path).unwrap();
-        self.result = self.execute(source_type);
+        let result = self.execute(self.source_type);
+        self.set_result(result);
     }
 }
