@@ -1,4 +1,4 @@
-use std::{cell::Ref, mem};
+use std::mem;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::context::TransformerCtx;
 
 pub trait CreateVars<'a> {
-    fn ctx(&self) -> Ref<'_, TransformerCtx<'a>>;
+    fn ctx(&self) -> &TransformerCtx<'a>;
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>>;
 

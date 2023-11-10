@@ -1,7 +1,4 @@
-use std::{
-    cell::{Ref, RefCell},
-    rc::Rc,
-};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -22,7 +19,7 @@ use crate::{
 /// * <https://github.com/babel/babel/blob/main/packages/babel-helper-builder-binary-assignment-operator-visitor>
 pub struct ExponentiationOperator<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: Rc<RefCell<TransformerCtx<'a>>>,
+    ctx: TransformerCtx<'a>,
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
@@ -32,8 +29,8 @@ struct Exploded<'a> {
 }
 
 impl<'a> CreateVars<'a> for ExponentiationOperator<'a> {
-    fn ctx(&self) -> Ref<'_, TransformerCtx<'a>> {
-        self.ctx.borrow()
+    fn ctx(&self) -> &TransformerCtx<'a> {
+        &self.ctx
     }
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
@@ -44,7 +41,7 @@ impl<'a> CreateVars<'a> for ExponentiationOperator<'a> {
 impl<'a> ExponentiationOperator<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        ctx: Rc<RefCell<TransformerCtx<'a>>>,
+        ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
         (options.target < TransformTarget::ES2016 || options.exponentiation_operator).then(|| {
@@ -163,9 +160,11 @@ impl<'a> ExponentiationOperator<'a> {
     ) -> Option<Expression<'a>> {
         let reference = match node {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                if ident.reference_id.get().is_some_and(|reference_id| {
-                    self.ctx.borrow().symbols().has_binding(reference_id)
-                }) {
+                if ident
+                    .reference_id
+                    .get()
+                    .is_some_and(|reference_id| self.ctx.symbols().has_binding(reference_id))
+                {
                     // this variable is declared in scope so we can be 100% sure
                     // that evaluating it multiple times won't trigger a getter
                     // or something else
@@ -186,7 +185,7 @@ impl<'a> ExponentiationOperator<'a> {
                 // Super cannot be directly assigned so lets return it also
                 if matches!(expr, Expression::Super(_))
                     || matches!(&expr, Expression::Identifier(ident) if
-                        ident.reference_id.get().is_some_and(|reference_id| self.ctx.borrow().symbols().has_binding(reference_id)))
+                        ident.reference_id.get().is_some_and(|reference_id| self.ctx.symbols().has_binding(reference_id)))
                 {
                     return Some(expr);
                 }

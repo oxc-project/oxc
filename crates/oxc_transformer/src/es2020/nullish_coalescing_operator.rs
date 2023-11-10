@@ -1,8 +1,5 @@
 use serde::Deserialize;
-use std::{
-    cell::{Ref, RefCell},
-    rc::Rc,
-};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -32,14 +29,14 @@ pub struct NullishCoalescingOperator<'a> {
     no_document_all: bool,
 
     ast: Rc<AstBuilder<'a>>,
-    ctx: Rc<RefCell<TransformerCtx<'a>>>,
+    ctx: TransformerCtx<'a>,
 
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
 impl<'a> CreateVars<'a> for NullishCoalescingOperator<'a> {
-    fn ctx(&self) -> Ref<'_, TransformerCtx<'a>> {
-        self.ctx.borrow()
+    fn ctx(&self) -> &TransformerCtx<'a> {
+        &self.ctx
     }
 
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
@@ -50,7 +47,7 @@ impl<'a> CreateVars<'a> for NullishCoalescingOperator<'a> {
 impl<'a> NullishCoalescingOperator<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        ctx: Rc<RefCell<TransformerCtx<'a>>>,
+        ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
         (options.target < TransformTarget::ES2020 || options.nullish_coalescing_operator.is_some())
@@ -73,7 +70,7 @@ impl<'a> NullishCoalescingOperator<'a> {
         let assignment;
 
         // skip creating extra reference when `left` is static
-        if self.ctx.borrow().symbols().is_static(&logical_expr.left) {
+        if self.ctx.symbols().is_static(&logical_expr.left) {
             reference = self.ast.copy(&logical_expr.left);
             assignment = self.ast.copy(&logical_expr.left);
         } else {

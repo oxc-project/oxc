@@ -1,6 +1,6 @@
 mod options;
 
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -29,7 +29,7 @@ struct PragmaAndPragmaFragCannotBeSet;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: Rc<RefCell<TransformerCtx<'a>>>,
+    ctx: TransformerCtx<'a>,
     options: ReactJsxOptions,
 
     imports: Vec<'a, Statement<'a>>,
@@ -81,13 +81,9 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: Rc<RefCell<TransformerCtx<'a>>>,
-        options: ReactJsxOptions,
-    ) -> Self {
+    pub fn new(ast: Rc<AstBuilder<'a>>, ctx: TransformerCtx<'a>, options: ReactJsxOptions) -> Self {
         let imports = ast.new_vec();
-        let options = options.with_comments(&ctx.borrow().semantic());
+        let options = options.with_comments(&ctx.semantic());
 
         let jsx_runtime_importer =
             if options.import_source == "react" || options.runtime.is_classic() {
@@ -130,7 +126,7 @@ impl<'a> ReactJsx<'a> {
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            self.ctx.borrow_mut().error(PragmaAndPragmaFragCannotBeSet);
+            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
             return;
         }
 
@@ -174,7 +170,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_jsx(&mut self) {
-        if self.ctx.borrow().semantic().source_type().is_script() {
+        if self.ctx.semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
             self.import_jsx = true;
@@ -187,7 +183,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_jsxs(&mut self) {
-        if self.ctx.borrow().semantic().source_type().is_script() {
+        if self.ctx.semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsxs {
             self.import_jsxs = true;
@@ -197,7 +193,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_fragment(&mut self) {
-        if self.ctx.borrow().semantic().source_type().is_script() {
+        if self.ctx.semantic().source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_fragment {
             self.import_fragment = true;

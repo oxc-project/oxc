@@ -45,7 +45,7 @@ pub use crate::{
 };
 
 pub struct Transformer<'a> {
-    ctx: Rc<RefCell<TransformerCtx<'a>>>,
+    ctx: TransformerCtx<'a>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
@@ -74,24 +74,24 @@ impl<'a> Transformer<'a> {
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
-        let ctx = Rc::new(RefCell::new(TransformerCtx::new(
+        let ctx = TransformerCtx::new(
             Rc::clone(&ast),
             Rc::new(RefCell::new(semantic)),
-        )));
+        );
 
         Self {
-            ctx: Rc::clone(&ctx),
+            ctx: ctx.clone(),
             // TODO: pass verbatim_module_syntax from user config
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), Rc::clone(&ctx), false)),
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
-            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
-            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
+            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
-            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), Rc::clone(&ctx), &options),
+            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
-            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), Rc::clone(&ctx), options)),
+            react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)),
         }
     }
 
@@ -101,12 +101,9 @@ impl<'a> Transformer<'a> {
         self.visit_program(program);
         let errors: Vec<_> = self
             .ctx
-            .borrow()
             .errors()
             .into_iter()
-            .map(|e| {
-                e.with_source_code(Arc::new(self.ctx.borrow().semantic().source_text().to_string()))
-            })
+            .map(|e| e.with_source_code(Arc::new(self.ctx.semantic().source_text().to_string())))
             .collect();
 
         if errors.is_empty() {
