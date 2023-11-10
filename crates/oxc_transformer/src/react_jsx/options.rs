@@ -69,9 +69,11 @@ impl ReactJsxOptions {
     /// This behavior is aligned with babel.
     pub(crate) fn with_comments(mut self, semantic: &Semantic) -> Self {
         for (_, span) in semantic.trivias().comments_spans() {
-            let comment = span.source_text(semantic.source_text());
+            let mut comment = span.source_text(semantic.source_text()).trim_start();
             // strip leading jsdoc comment `*` and then whitespaces
-            let comment = comment.strip_prefix('*').unwrap_or(comment).trim_start();
+            while let Some(cur_comment) = comment.strip_prefix('*') {
+                comment = cur_comment.trim_start();
+            }
             // strip leading `@`
             let Some(comment) = comment.strip_prefix('@') else { continue };
 
