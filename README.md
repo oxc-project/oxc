@@ -70,12 +70,12 @@ we have dedicated significant effort to fine-tune the Rust compilation speed.
 Our aim is to minimize any impact on your development workflow,
 ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
 
-This is demonstrated by our [CI runs](https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=branch%3Amain),
+This is demonstrated by our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain),
 where warm runs complete in 5 minutes.
 
 ### Node.js
 
-* You may use the parser via napi: [@oxidation-compiler/napi][npm-napi]
+* You may use the parser via napi: [oxc-parser][npm-napi]
 
 ----
 
@@ -140,7 +140,7 @@ larger monorepos. See [bench-javascript-linter](https://github.com/Boshen/bench-
 
 As an upside, the binary is approximately 3MB, whereas [ESLint] and its associated plugin dependencies can easily exceed 100.
 
-You may also download the linter binary from the [latest release tag](https://github.com/web-infra-dev/oxc/releases/latest) as a standalone binary,
+You may also download the linter binary from the [latest release tag](https://github.com/oxc-project/oxc/releases/latest) as a standalone binary,
 this lets you run the linter without a Node.js installation in your CI.
 
 <details>
@@ -170,7 +170,7 @@ To address this, we are actively working on porting [enhanced-resolve].
 ### 🔸 Transpiler
 
 A transpiler is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
-We are currently focusing on an esnext to es2015 transpiler. See the [umbrella issue](https://github.com/web-infra-dev/oxc/issues/974) for details.
+We are currently focusing on an esnext to es2015 transpiler. See the [umbrella issue](https://github.com/oxc-project/oxc/issues/974) for details.
 
 ### 🔸 Minifier
 
@@ -206,11 +206,11 @@ The type checker is available via `npx oxidation-compiler@latest check path` and
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
 
-Check out some of the [good first issues](https://github.com/web-infra-dev/oxc/contribute) or ask us on [Discord][discord-url].
+Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
 
 If you are unable to contribute by code, you can still participate by:
 
-* Add a [GitHub Star](https://github.com/web-infra-dev/oxc/stargazers) to the project.
+* Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
 * Join us on [Discord][discord-url].
 * [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
@@ -283,19 +283,19 @@ Oxc partially copies code from the following projects, their licenses are listed
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license-url]: https://github.com/web-infra-dev/oxc/blob/main/LICENSE
-[ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[license-url]: https://github.com/oxc-project/oxc/blob/main/LICENSE
+[ci-badge]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxlint/v/latest
-[code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
-[code-size-url]: https://github.com/web-infra-dev/oxc
-[code-coverage-badge]: https://codecov.io/github/web-infra-dev/oxc/branch/main/graph/badge.svg
-[code-coverage-url]: https://codecov.io/gh/web-infra-dev/oxc
+[code-size-badge]: https://img.shields.io/github/languages/code-size/oxc-project/oxc
+[code-size-url]: https://github.com/oxc-project/oxc
+[code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
+[code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://web-infra-dev.github.io/oxc/playground
+[playground-url]: https://oxc-project.github.io/oxc/playground
 
 [crate-oxc-url]: https://crates.io/crates/oxc
 [crate-ast-url]: https://crates.io/crates/oxc_ast
@@ -310,7 +310,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [acorn]: https://github.com/acornjs/acorn
 [babel]: https://babel.dev
 [bumpalo]: https://docs.rs/bumpalo
-[contributors]: https://github.com/web-infra-dev/oxc/graphs/contributors
+[contributors]: https://github.com/oxc-project/oxc/graphs/contributors
 [docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
 [docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
 [enhanced-resolve]: https://github.com/webpack/enhanced-resolve
@@ -321,7 +321,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [ezno]: https://github.com/kaleidawave/ezno
 [google-closure-compiler]: https://github.com/google/closure-compiler
 [minification-benchmarks]: https://github.com/privatenumber/minification-benchmarks
-[npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
+[npm-napi]: https://www.npmjs.com/package/oxc-parser
 [npm-oxlint]: https://www.npmjs.com/package/oxlint
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
 [prettier]: https://github.com/prettier/prettier

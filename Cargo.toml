@@ -1,16 +1,16 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*", "editors/vscode/server"]
+members  = ["crates/*", "tasks/*", "editors/vscode/server", "napi/*"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
 categories   = ["development-tools", "web-programming", "compilers"]
 description  = "Oxc is a JavaScript / TypeScript tooling suite."
 edition      = "2021"
-homepage     = "https://github.com/web-infra-dev/oxc"
+homepage     = "https://github.com/oxc-project/oxc"
 keywords     = ["JavaScript", "TypeScript", "parser", "linter", "minifier"]
 license      = "MIT"
-repository   = "https://github.com/web-infra-dev/oxc"
+repository   = "https://github.com/oxc-project/oxc"
 rust-version = "1.60"
 
 [workspace.dependencies]
@@ -72,7 +72,7 @@ regex                     = { version = "1.10.2" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "0.2.2" }
 ropey                     = { version = "1.6.1" }
-serde                     = { version = "1.0.190" }
+serde                     = { version = "1.0.192" }
 serde_json                = { version = "1.0.108" }
 syn                       = { version = "=1" }
 thiserror                 = { version = "1.0.50" }

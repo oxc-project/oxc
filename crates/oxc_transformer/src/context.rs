@@ -1,9 +1,11 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
+    mem,
     rc::Rc,
 };
 
 use oxc_ast::AstBuilder;
+use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
 use oxc_span::{Atom, SourceType};
 
@@ -11,11 +13,12 @@ use oxc_span::{Atom, SourceType};
 pub struct TransformerCtx<'a> {
     pub ast: Rc<AstBuilder<'a>>,
     semantic: Rc<RefCell<Semantic<'a>>>,
+    errors: Rc<RefCell<Vec<Error>>>,
 }
 
 impl<'a> TransformerCtx<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, semantic: Rc<RefCell<Semantic<'a>>>) -> Self {
-        Self { ast, semantic }
+        Self { ast, semantic, errors: Rc::new(RefCell::new(vec![])) }
     }
 
     pub fn semantic(&self) -> Ref<'_, Semantic<'a>> {
@@ -41,5 +44,14 @@ impl<'a> TransformerCtx<'a> {
 
     pub fn source_type(&self) -> Ref<'_, SourceType> {
         Ref::map(self.semantic.borrow(), |semantic| semantic.source_type())
+    }
+
+    pub fn errors(&self) -> Vec<Error> {
+        mem::take(&mut self.errors.borrow_mut())
+    }
+
+    /// Push a Transform Error
+    pub fn error<T: Into<Error>>(&mut self, error: T) {
+        self.errors.borrow_mut().push(error.into());
     }
 }

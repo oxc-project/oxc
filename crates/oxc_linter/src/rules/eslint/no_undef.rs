@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// var bar = a + 1;
     /// ```
     NoUndef,
-    nursery // https://github.com/web-infra-dev/oxc/issues/732
+    nursery // https://github.com/oxc-project/oxc/issues/732
 );
 
 impl Rule for NoUndef {

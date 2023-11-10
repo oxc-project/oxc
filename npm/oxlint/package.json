@@ -5,11 +5,11 @@
   "keywords": [],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
-  "homepage": "https://github.com/web-infra-dev/oxc",
-  "bugs": "https://github.com/web-infra-dev/oxc/issues",
+  "homepage": "https://github.com/oxc-project/oxc",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/web-infra-dev/oxc",
+    "url": "https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
   "bin": "bin/oxlint",

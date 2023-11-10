@@ -18,19 +18,19 @@
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license-url]: https://github.com/web-infra-dev/oxc/blob/main/LICENSE
-[ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[license-url]: https://github.com/oxc-project/oxc/blob/main/LICENSE
+[ci-badge]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxlint/v/latest
-[code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
-[code-size-url]: https://github.com/web-infra-dev/oxc
-[code-coverage-badge]: https://codecov.io/github/web-infra-dev/oxc/branch/main/graph/badge.svg
-[code-coverage-url]: https://codecov.io/gh/web-infra-dev/oxc
+[code-size-badge]: https://img.shields.io/github/languages/code-size/oxc-project/oxc
+[code-size-url]: https://github.com/oxc-project/oxc
+[code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
+[code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://web-infra-dev.github.io/oxc/playground
+[playground-url]: https://oxc-project.github.io/oxc/playground
 
 </div>
 
