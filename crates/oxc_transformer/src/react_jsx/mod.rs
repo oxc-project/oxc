@@ -332,23 +332,28 @@ impl<'a> ReactJsx<'a> {
         let children = e.children();
 
         // Append children to object properties in automatic mode
-        if is_automatic && !children.is_empty() {
-            let ident = IdentifierName::new(SPAN, "children".into());
-            let key = self.ast.property_key_identifier(ident);
-            let value = if children.len() == 1 {
-                self.transform_jsx_child(&children[0])
-            } else {
-                let mut elements = self.ast.new_vec_with_capacity(children.len());
-                for child in children {
-                    if let Some(e) = self.transform_jsx_child(child) {
-                        elements.push(ArrayExpressionElement::Expression(e));
-                    }
-                }
-                need_jsxs = true;
-                Some(self.ast.array_expression(SPAN, elements, None))
-            };
-            if let Some(value) = value {
+        if is_automatic {
+            let allocator = self.ast.allocator;
+            let mut children = Vec::from_iter_in(
+                children.iter().filter_map(|child| self.transform_jsx_child(child)),
+                allocator,
+            );
+            let children_len = children.len();
+            if children_len != 0 {
+                let value = if children_len == 1 {
+                    children.pop().unwrap()
+                } else {
+                    let elements = Vec::from_iter_in(
+                        children.into_iter().map(ArrayExpressionElement::Expression),
+                        allocator,
+                    );
+                    need_jsxs = true;
+                    self.ast.array_expression(SPAN, elements, None)
+                };
+
                 let kind = PropertyKind::Init;
+                let ident = IdentifierName::new(SPAN, "children".into());
+                let key = self.ast.property_key_identifier(ident);
                 let object_property =
                     self.ast.object_property(SPAN, kind, key, value, None, false, false, false);
                 properties.push(ObjectPropertyKind::ObjectProperty(object_property));
