@@ -4,6 +4,10 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -13,6 +17,11 @@ use oxc_syntax::{
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 use crate::context::TransformerCtx;
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
+#[diagnostic(severity(warning), help("Remove `pragma` and `pragmaFrag` options."))]
+struct PragmaAndPragmaFragCannotBeSet;
+
 /// Transform React JSX
 ///
 /// References:
@@ -20,7 +29,7 @@ use crate::context::TransformerCtx;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
     ast: Rc<AstBuilder<'a>>,
-    ctx: Rc<TransformerCtx<'a>>,
+    ctx: TransformerCtx<'a>,
     options: ReactJsxOptions,
 
     imports: Vec<'a, Statement<'a>>,
@@ -83,7 +92,6 @@ impl<'a> ReactJsx<'a> {
                 Atom::from(format!("{}/jsx-runtime", options.import_source))
             };
 
-        let ctx = Rc::new(ctx);
         Self {
             ast,
             ctx,
@@ -114,6 +122,14 @@ impl<'a> ReactJsx<'a> {
         if self.options.runtime.is_classic() {
             return;
         }
+
+        if self.options.pragma != "React.createElement"
+            || self.options.pragma_frag != "React.Fragment"
+        {
+            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
+            return;
+        }
+
         let imports = self.ast.move_statement_vec(&mut self.imports);
         let index = program
             .body

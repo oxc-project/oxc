@@ -38,7 +38,8 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
                 Transformer::new(&allocator, source_type, semantic, transform_options)
-                    .build(black_box(program));
+                    .build(black_box(program))
+                    .unwrap();
                 allocator
             });
         });

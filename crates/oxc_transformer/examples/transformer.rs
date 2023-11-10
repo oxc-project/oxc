@@ -49,7 +49,8 @@ fn main() {
         }),
         ..TransformOptions::default()
     };
-    Transformer::new(&allocator, source_type, semantic, transform_options).build(program);
+    Transformer::new(&allocator, source_type, semantic, transform_options).build(program).unwrap();
+
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
     println!("Transformed:\n");
     println!("{printed}");

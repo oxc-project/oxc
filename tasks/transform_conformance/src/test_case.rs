@@ -5,6 +5,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::Error;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -134,7 +135,7 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> String {
+    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
@@ -146,9 +147,12 @@ pub trait TestCase {
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
 
-        Transformer::new(&allocator, source_type, semantic, self.transform_options())
+        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
-        Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+
+        result.map(|()| {
+            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+        })
     }
 }
 
@@ -207,13 +211,28 @@ impl TestCase for ConformanceTestCase {
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        Transformer::new(&allocator, source_type, semantic, self.transform_options())
-            .build(program);
-        let transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        let transform_options = self.transform_options();
+        let transformer =
+            Transformer::new(&allocator, source_type, semantic, transform_options.clone());
+
+        let mut transformed_code = String::new();
+        let mut actual_errors = String::new();
+        let result = transformer.build(program);
+        if result.is_ok() {
+            transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+        } else {
+            actual_errors =
+                result.err().unwrap().iter().map(std::string::ToString::to_string).collect();
+        }
+
+        let babel_options = self.options();
 
         // Get output.js by using our codeg so code comparison can match.
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
+                if let Some(throws) = &babel_options.throws {
+                    return throws.to_string();
+                }
                 // The transformation should be equal to input.js If output.js does not exist.
                 let program = Parser::new(&allocator, &input, source_type).parse().program;
                 Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
@@ -225,16 +244,23 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output;
+        let passed = transformed_code == output || actual_errors.contains(&output);
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
             println!("Options:");
-            println!("{:?}\n", self.transform_options());
-            println!("Expected:\n");
-            println!("{output}\n");
-            println!("Transformed:\n");
-            println!("{transformed_code}\n");
+            println!("{transform_options:?}\n");
+            if babel_options.throws.is_some() {
+                println!("Expected Errors:\n");
+                println!("{output}\n");
+                println!("Actual Errors:\n");
+                println!("{actual_errors}\n");
+            } else {
+                println!("Expected:\n");
+                println!("{output}\n");
+                println!("Transformed:\n");
+                println!("{transformed_code}");
+            }
             println!("Passed: {passed}");
         }
         passed
@@ -291,7 +317,7 @@ impl TestCase for ExecTestCase {
     }
 
     fn test(&self, filtered: bool) -> bool {
-        let result = self.transform(&self.path);
+        let result = self.transform(&self.path).expect("Transform failed");
         let target_path = self.write_to_test_files(&result);
         let passed = Self::run_test(&target_path);
         if filtered {
