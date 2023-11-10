@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.")]
@@ -51,29 +51,17 @@ declare_oxc_lint!(
 impl Rule for NoAbusiveEslintDisable {
     fn run_once(&self, ctx: &LintContext) {
         lazy_static! {
-            static ref ESLINT_DISABLE_PATTERN: Regex = Regex::new(
-                r"(?x)
-                ^eslint-disable(?:-next-line|-line)?
-                (?<rule_id>
-                    $
-                    |
-                    (?:\s+(?:@(?:[0-9A-Za-z_-]+\/){1,2})?[0-9A-Za-z_-]+)?
-                )
-                ",
-            )
-            .unwrap();
+            static ref RULE_PATTERN: Regex =
+                Regex::new("^(?:@[0-9A-Za-z_-]+/)?(?:[0-9A-Za-z_-]+/)?[0-9A-Za-z_-]+$").unwrap();
         }
 
-        let comments = ctx.semantic().trivias().comments();
-        for (start, comment) in comments {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
-            let Some(caps) = ESLINT_DISABLE_PATTERN.captures(raw.trim()) else { continue };
-            let rule_id = caps.name("rule_id").unwrap().as_str();
-            if rule_id.is_empty() {
-                ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(Span {
-                    start: *start,
-                    end: comment.end(),
-                }));
+        for span in ctx.disable_directives().disable_all_comments() {
+            ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
+        }
+
+        for DisableRuleComment { span, rules } in ctx.disable_directives().disable_rule_comments() {
+            if rules.is_empty() || !RULE_PATTERN.is_match(rules[0]) {
+                ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
             }
         }
     }
