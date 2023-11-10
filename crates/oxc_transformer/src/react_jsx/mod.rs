@@ -328,7 +328,7 @@ impl<'a> ReactJsx<'a> {
                     children.pop().unwrap()
                 } else {
                     let elements = Vec::from_iter_in(
-                        children.into_iter().map(|child| ArrayExpressionElement::Expression(child)),
+                        children.into_iter().map(ArrayExpressionElement::Expression),
                         allocator,
                     );
                     need_jsxs = true;
