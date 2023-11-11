@@ -1,4 +1,4 @@
-Passed: 265/1113
+Passed: 266/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -852,7 +852,7 @@ Passed: 265/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (130/170)
+# babel-plugin-transform-react-jsx (131/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
@@ -875,7 +875,6 @@ Passed: 265/1113
 * react-automatic/arrow-functions/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-disallow-xml-namespacing/input.js
