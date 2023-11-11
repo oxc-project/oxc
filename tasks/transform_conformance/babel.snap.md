@@ -875,7 +875,6 @@ Passed: 266/1113
 * react-automatic/arrow-functions/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-disallow-spread-children/input.js
 * react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-disallow-xml-namespacing/input.js

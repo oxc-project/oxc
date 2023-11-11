@@ -158,7 +158,12 @@ impl<'a> ReactJsx<'a> {
             }
             JSXElementOrFragment::Element(_) if need_jsxs => self.add_import_jsxs(),
             JSXElementOrFragment::Element(_) => self.add_import_jsx(),
-            JSXElementOrFragment::Fragment(_) => self.add_import_fragment(),
+            JSXElementOrFragment::Fragment(_) => {
+                self.add_import_fragment();
+                if need_jsxs {
+                    self.add_import_jsxs();
+                }
+            }
         }
     }
 
