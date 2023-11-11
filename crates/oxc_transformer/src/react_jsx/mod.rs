@@ -342,7 +342,7 @@ impl<'a> ReactJsx<'a> {
                 if let JSXAttributeItem::Attribute(attr) = attribute {
                     if attr.is_key() {
                         if attr.value.is_none() {
-                            self.ctx.error(ValuelessKey(attr.name.span()))
+                            self.ctx.error(ValuelessKey(attr.name.span()));
                         }
                         // In automatic mode, extract the key before spread prop,
                         // and add it to the third argument later.
