@@ -1304,9 +1304,9 @@ fn test_into_io_error() {
     let resolve_io_error: ResolveError = string_error.into();
 
     if let ResolveError::IOError(io_error) = resolve_io_error {
-      // trait for https://github.com/web-infra-dev/rspack/issues/4564
-      let std_io_error: std::io::Error = io_error.into();
-      assert_eq!(std_io_error.kind(), ErrorKind::Interrupted);
-      assert_eq!(std_io_error.to_string(), error_string)
+        // fix for https://github.com/web-infra-dev/rspack/issues/4564
+        let std_io_error: std::io::Error = io_error.into();
+        assert_eq!(std_io_error.kind(), ErrorKind::Interrupted);
+        assert_eq!(std_io_error.to_string(), error_string);
     }
 }
