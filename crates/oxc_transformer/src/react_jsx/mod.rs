@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, Span, SPAN};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -27,6 +27,11 @@ struct PragmaAndPragmaFragCannotBeSet;
 #[diagnostic(severity(warning))]
 struct NamespaceDoesNotSupport(#[label] Span);
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={{true}}\" is not allowed.")]
+#[diagnostic(severity(warning))]
+struct ValuelessKey(#[label] Span);
+
 /// Transform React JSX
 ///
 /// References:
@@ -43,7 +48,6 @@ pub struct ReactJsx<'a> {
     import_fragment: bool,
     import_create_element: bool,
     require_jsx_runtime: bool,
-    // Will be store jsx runtime importer, like `react/jsx-runtime`
     jsx_runtime_importer: Atom,
 }
 
@@ -335,11 +339,14 @@ impl<'a> ReactJsx<'a> {
                         }
                     }
                 }
-                // In automatic mode, extract the key before spread prop,
-                // and add it to the third argument later.
-                if is_automatic && !has_key_after_props_spread {
-                    if let JSXAttributeItem::Attribute(attr) = attribute {
-                        if attr.is_key() {
+                if let JSXAttributeItem::Attribute(attr) = attribute {
+                    if attr.is_key() {
+                        if attr.value.is_none() {
+                            self.ctx.error(ValuelessKey(attr.name.span()))
+                        }
+                        // In automatic mode, extract the key before spread prop,
+                        // and add it to the third argument later.
+                        if is_automatic && !has_key_after_props_spread {
                             key_prop = attr.value.as_ref();
                             continue;
                         }
