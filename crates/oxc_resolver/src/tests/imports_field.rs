@@ -5,7 +5,7 @@
 use serde_json::json;
 
 use crate::{MatchObject, PathUtil, ResolveContext, ResolveError, ResolveOptions, Resolver};
-use std::path::Path;
+use std::{io::ErrorKind, path::Path};
 
 #[test]
 fn test() {
@@ -1294,5 +1294,19 @@ fn test_cases() {
         } else {
             assert!(resolved.is_err(), "{} {resolved:?}", &case.name);
         }
+    }
+}
+
+#[test]
+fn test_into_io_error() {
+    let error_string = "IOError occurred";
+    let string_error = std::io::Error::new(ErrorKind::Interrupted, error_string.to_string());
+    let resolve_io_error: ResolveError = string_error.into();
+
+    if let ResolveError::IOError(io_error) = resolve_io_error {
+      // trait for https://github.com/web-infra-dev/rspack/issues/4564
+      let std_io_error: std::io::Error = io_error.into();
+      assert_eq!(std_io_error.kind(), ErrorKind::Interrupted);
+      assert_eq!(std_io_error.to_string(), error_string)
     }
 }
