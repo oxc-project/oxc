@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -21,6 +21,11 @@ use crate::context::TransformerCtx;
 #[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
 #[diagnostic(severity(warning), help("Remove `pragma` and `pragmaFrag` options."))]
 struct PragmaAndPragmaFragCannotBeSet;
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")]
+#[diagnostic(severity(warning))]
+struct NamespaceDoesNotSupport(#[label] Span);
 
 /// Transform React JSX
 ///
@@ -519,7 +524,7 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
+    fn transform_element_name(&mut self, name: &JSXElementName<'a>) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
                 let name = ident.name.clone();
@@ -533,11 +538,10 @@ impl<'a> ReactJsx<'a> {
                 self.transform_jsx_member_expression(member_expr)
             }
             JSXElementName::NamespacedName(name) => {
-                // TODO
-                // If the flag "throwIfNamespace" is false
-                // print XMLNamespace like string literal
-                // if self.options.throw_if_namespace.is_some_and(|v| !v) {
-                // }
+                if self.options.throw_if_namespace {
+                    self.ctx.error(NamespaceDoesNotSupport(name.span));
+                }
+
                 let string_literal = StringLiteral::new(SPAN, Atom::from(name.to_string()));
                 self.ast.literal_string_expression(string_literal)
             }

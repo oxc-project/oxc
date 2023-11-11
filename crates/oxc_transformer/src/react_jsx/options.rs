@@ -10,7 +10,8 @@ pub struct ReactJsxOptions {
     pub runtime: ReactJsxRuntime,
     /// Toggles whether or not to throw an error if an XML namespaced tag name is used. e.g. `<f:image />`
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
-    pub throw_if_namespace: Option<bool>,
+    #[serde(default = "default_throw_if_namespace")]
+    pub throw_if_namespace: bool,
     /// Replaces the import source when importing functions. default to `react`
     #[serde(default = "default_import_source")]
     pub import_source: Cow<'static, str>,
@@ -24,6 +25,10 @@ pub struct ReactJsxOptions {
     /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name. default to `React.Fragment`
     #[serde(default = "default_pragma_frag")]
     pub pragma_frag: Cow<'static, str>,
+}
+
+fn default_throw_if_namespace() -> bool {
+    true
 }
 
 fn default_import_source() -> Cow<'static, str> {
@@ -42,7 +47,7 @@ impl Default for ReactJsxOptions {
     fn default() -> Self {
         Self {
             runtime: ReactJsxRuntime::Classic,
-            throw_if_namespace: None,
+            throw_if_namespace: default_throw_if_namespace(),
             import_source: default_import_source(),
             pragma: default_pragma(),
             pragma_frag: default_pragma_frag(),
