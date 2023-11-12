@@ -39,16 +39,6 @@ expression: expect_expect
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
- 1 │     
- 2 │ ╭─▶             theoretically('the number {input} is correctly translated to string', theories, theory => {
- 3 │ │               const output = NumberToLongString(theory.input);
- 4 │ ╰─▶             })
- 5 │             
-   ╰────
-  help: Add assertion(s) in this Test
-
-  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", () => { somePromise.then(() => {}); });
    · ────────────────────────────────────────────────────────
    ╰────
