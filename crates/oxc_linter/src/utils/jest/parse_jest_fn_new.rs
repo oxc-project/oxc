@@ -293,7 +293,6 @@ pub enum ParsedJestFnCall<'a> {
 }
 
 impl<'a> ParsedJestFnCall<'a> {
-    #[allow(unused)]
     pub fn kind(&self) -> JestFnKind {
         match self {
             Self::GeneralJestFnCall(call) => call.kind,
