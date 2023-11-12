@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, parse_general_jest_fn_call_new, JestFnKind,
+        collect_possible_jest_call_node, get_node_name, parse_general_jest_fn_call, JestFnKind,
         JestGeneralFnKind, PossibleJestNode,
     },
 };
@@ -92,9 +92,7 @@ impl Rule for NoDoneCallback {
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        if let Some(jest_fn_call) =
-            parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
-        {
+        if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) {
             let kind = jest_fn_call.kind;
             if !matches!(
                 kind,

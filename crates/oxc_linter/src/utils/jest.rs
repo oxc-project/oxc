@@ -19,7 +19,6 @@ use crate::utils::jest::parse_jest_fn::ParsedJestFnCall;
 pub use crate::utils::jest::parse_jest_fn::{
     parse_jest_fn_call, ExpectError, KnownMemberExpressionParentKind,
     KnownMemberExpressionProperty, MemberExpressionElement, ParsedExpectFnCall,
-    ParsedGeneralJestFnCall,
 };
 
 mod parse_jest_fn_new;
@@ -28,8 +27,8 @@ pub use crate::utils::jest::parse_jest_fn_new::{
     KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
     KnownMemberExpressionProperty as KnownMemberExpressionPropertyNew,
     MemberExpressionElement as MemberExpressionElementNew,
-    ParsedExpectFnCall as ParsedExpectFnCallNew,
-    ParsedGeneralJestFnCall as ParsedGeneralJestFnCallNew, ParsedJestFnCall as ParsedJestFnCallNew,
+    ParsedExpectFnCall as ParsedExpectFnCallNew, ParsedGeneralJestFnCall,
+    ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
 const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
@@ -119,26 +118,11 @@ pub fn is_type_of_jest_fn_call<'a>(
     false
 }
 
-#[allow(unused)]
 pub fn parse_general_jest_fn_call<'a>(
-    call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<ParsedGeneralJestFnCall<'a>> {
-    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx)?;
-
-    if let ParsedJestFnCall::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
-        return Some(jest_fn_call);
-    }
-    None
-}
-
-// TODO: The new version of `parse_general_jest_fn_call`, will rename to `parse_general_jest_fn_call` after all replaced.
-pub fn parse_general_jest_fn_call_new<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<ParsedGeneralJestFnCallNew<'a>> {
+) -> Option<ParsedGeneralJestFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
 
     if let ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call) = jest_fn_call {

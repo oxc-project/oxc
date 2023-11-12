@@ -11,9 +11,8 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
-        JestGeneralFnKind, MemberExpressionElementNew, ParsedGeneralJestFnCallNew,
-        PossibleJestNode,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        MemberExpressionElementNew, ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -68,11 +67,10 @@ impl Rule for NoFocusedTests {
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     let AstKind::CallExpression(call_expr) = node.kind() else { return };
-    let Some(jest_fn_call) = parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
-    else {
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
-    let ParsedGeneralJestFnCallNew { kind, members, name } = jest_fn_call;
+    let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
     if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
         return;
     }

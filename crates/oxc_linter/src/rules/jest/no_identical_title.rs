@@ -16,8 +16,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
     AstNode,
 };
@@ -121,7 +121,7 @@ fn filter_and_process_jest_result<'a>(
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<(Span, &'a Atom, JestFnKind, AstNodeId)> {
-    let Some(result) = parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx) else {
+    let Some(result) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return None;
     };
     let kind = result.kind;
