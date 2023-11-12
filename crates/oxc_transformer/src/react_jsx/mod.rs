@@ -335,7 +335,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         // The object properties for the second argument of `React.createElement`
-        let mut properties = self.ast.new_vec_with_capacity(0);
+        let mut properties = self.ast.new_vec();
 
         if let Some(attributes) = attributes {
             // TODO: compute the correct capacity for both runtimes
@@ -585,9 +585,7 @@ impl<'a> ReactJsx<'a> {
             }
             JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
                 Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    for object_property in &expr.properties {
-                        properties.push(self.ast.copy(object_property));
-                    }
+                    properties.extend(self.ast.copy(&expr.properties));
                 }
                 expr => {
                     let argument = self.ast.copy(expr);
