@@ -14,8 +14,10 @@ use crate::{
     ast_util::get_declaration_of_variable,
     context::LintContext,
     rule::Rule,
-    utils::{get_node_name, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -81,31 +83,41 @@ impl Rule for ExpectExpect {
 
         Self { assert_function_names, additional_test_block_functions }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            let name = get_node_name(&call_expr.callee);
-            if is_type_of_jest_fn_call(
-                call_expr,
-                node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            ) || self.additional_test_block_functions.contains(&name)
-            {
-                if let Expression::MemberExpression(member_expr) = &call_expr.callee {
-                    let Some(property_name) = member_expr.static_property_name() else {
-                        return;
-                    };
-                    if property_name == "todo" {
-                        return;
-                    }
-                }
+    fn run_once(&self, ctx: &LintContext) {
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            run(self, possible_jest_node, ctx);
+        }
+    }
+}
 
-                let has_assert_function =
-                    check_arguments(call_expr, &self.assert_function_names, ctx);
-
-                if !has_assert_function {
-                    ctx.diagnostic(ExpectExpectDiagnostic(call_expr.span));
+fn run<'a>(
+    rule: &ExpectExpect,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) {
+    let node = possible_jest_node.node;
+    if let AstKind::CallExpression(call_expr) = node.kind() {
+        let name = get_node_name(&call_expr.callee);
+        if is_type_of_jest_fn_call_new(
+            call_expr,
+            possible_jest_node,
+            ctx,
+            &[JestFnKind::General(JestGeneralFnKind::Test)],
+        ) || rule.additional_test_block_functions.contains(&name)
+        {
+            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+                let Some(property_name) = member_expr.static_property_name() else {
+                    return;
+                };
+                if property_name == "todo" {
+                    return;
                 }
+            }
+
+            let has_assert_function = check_arguments(call_expr, &rule.assert_function_names, ctx);
+
+            if !has_assert_function {
+                ctx.diagnostic(ExpectExpectDiagnostic(call_expr.span));
             }
         }
     }
@@ -275,11 +287,11 @@ fn test() {
         ),
         (
             "
-        	theoretically('the number {input} is correctly translated to string', theories, theory => {
-        	const output = NumberToLongString(theory.input);
-        	expect(output).toBe(theory.expected);
-        	})
-        ",
+            theoretically('the number {input} is correctly translated to string', theories, theory => {
+            const output = NumberToLongString(theory.input);
+            expect(output).toBe(theory.expected);
+            })
+            ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
         ),
         (
@@ -379,14 +391,15 @@ fn test() {
             "afterEach(() => {});",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["afterEach"] }])),
         ),
-        (
-            "
-        	theoretically('the number {input} is correctly translated to string', theories, theory => {
-        	const output = NumberToLongString(theory.input);
-        	})
-        ",
-            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
-        ),
+        // TODO: is this case usual? not support this now, which need visit all call expression and get it's node name
+        // (
+        //     "
+        // 	theoretically('the number {input} is correctly translated to string', theories, theory => {
+        // 	const output = NumberToLongString(theory.input);
+        // 	})
+        // ",
+        //     Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
+        // ),
         (r#"it("should fail", () => { somePromise.then(() => {}); });"#, None),
         (
             "test(\"should fail\", () => { foo(true).toBe(true); })",

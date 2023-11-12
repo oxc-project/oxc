@@ -23,6 +23,11 @@ use crate::context::TransformerCtx;
 struct PragmaAndPragmaFragCannotBeSet;
 
 #[derive(Debug, Error, Diagnostic)]
+#[error("importSource cannot be set when runtime is classic.")]
+#[diagnostic(severity(warning), help("Remove `importSource` option."))]
+struct ImportSourceCannotBeSet;
+
+#[derive(Debug, Error, Diagnostic)]
 #[error("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")]
 #[diagnostic(severity(warning))]
 struct NamespaceDoesNotSupport(#[label] Span);
@@ -134,6 +139,9 @@ impl<'a> ReactJsx<'a> {
 
     pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
+            if self.options.import_source != "react" {
+                self.ctx.error(ImportSourceCannotBeSet);
+            }
             return;
         }
 

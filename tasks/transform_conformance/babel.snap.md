@@ -1,4 +1,4 @@
-Passed: 275/1113
+Passed: 277/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -852,7 +852,7 @@ Passed: 275/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (140/170)
+# babel-plugin-transform-react-jsx (142/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
@@ -863,8 +863,6 @@ Passed: 275/1113
 * react/handle-spread-with-proto-babel-7/input.js
 * react/optimisation.react.constant-elements/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-warn-when-importSource-is-set/input.js
-* react/should-warn-when-importSource-pragma-is-set/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js

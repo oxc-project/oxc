@@ -50,6 +50,10 @@ impl<'a> LintContext<'a> {
         &self.semantic
     }
 
+    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
+        &self.disable_directives
+    }
+
     pub fn source_text(&self) -> &'a str {
         self.semantic().source_text()
     }
