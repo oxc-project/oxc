@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression},
-    AstKind,
-};
+use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -9,16 +6,16 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoUselessPromiseResolveRejectDiagnostic {
     #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{1} value` over `{1} Promise.resolve(value)`.")]
-    #[diagnostic(severity(warning), help(""))]
-    Resolve(#[label] Span, String),
+    #[diagnostic(severity(warning))]
+    Resolve(#[label] Span, &'static str),
     #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{1} Promise.reject(error)`.")]
-    #[diagnostic(severity(warning), help(""))]
-    Reject(#[label] Span, String),
+    #[diagnostic(severity(warning))]
+    Reject(#[label] Span, &'static str),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,57 +38,58 @@ declare_oxc_lint!(
 impl Rule for NoUselessPromiseResolveReject {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        dbg!("1");
         let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
-        dbg!("2");
 
         if !member_expr.object().is_specific_id("Promise") {
             return;
         }
-        dbg!("3");
 
         let MemberExpression::StaticMemberExpression(static_member_expr) = member_expr else {
             return;
         };
-        dbg!("4");
 
         if !matches!(static_member_expr.property.name.as_str(), "resolve" | "reject") {
             return;
         }
-        dbg!("5");
 
         let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return;
         };
 
-        dbg!("6", parent.kind());
-        match parent.kind() {
-            AstKind::ExpressionStatement(expr_stmt) => {}
-            AstKind::ArrowExpression(arrow_expr) => {}
-            AstKind::ReturnStatement(return_stmt) => {}
-            AstKind::YieldExpression(yield_expr) => {}
-            AstKind::ParenthesizedExpression(paren_expr) => {}
-            _ => return,
+        let mut is_yield = false;
+
+        if let AstKind::YieldExpression(yield_expr) = parent.kind() {
+            is_yield = true;
+            if yield_expr.delegate {
+                return;
+            }
         }
-        dbg!("7");
 
-        let Some((is_async, function_node)) = chchc(node, ctx) else { return };
-        dbg!("7", is_async);
-
-        dbg!(function_node.kind());
+        let Some((is_async, function_node)) = get_function_like_node(node, ctx) else { return };
 
         if !(is_async || is_promise_callback(function_node, ctx)) {
             return;
         }
 
-        ctx.diagnostic(NoUselessPromiseResolveRejectDiagnostic::Reject(
-            node.kind().span(),
-            "".to_string(),
-        ));
+        match static_member_expr.property.name.as_str() {
+            "resolve" => {
+                ctx.diagnostic(NoUselessPromiseResolveRejectDiagnostic::Resolve(
+                    node.kind().span(),
+                    if is_yield { "yield" } else { "return" },
+                ));
+            }
+            "reject" => {
+                ctx.diagnostic(NoUselessPromiseResolveRejectDiagnostic::Reject(
+                    node.kind().span(),
+                    if is_yield { "yield" } else { "return" },
+                ));
+            }
+            _ => unreachable!(),
+        }
     }
 }
 
-fn chchc<'a, 'b>(
+fn get_function_like_node<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
 ) -> Option<(bool, &'a AstNode<'b>)> {
@@ -116,35 +114,26 @@ fn chchc<'a, 'b>(
 }
 
 fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+    let Some(parent) = outermost_paren_parent(node, ctx) else {
         return false;
     };
 
-    dbg!(parent.kind());
-    let AstKind::Argument(Argument::Expression(expr)) = parent.kind() else { return false };
-    dbg!("is_promise_callback 2", expr);
-    let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
+    let Some(parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
-    dbg!("is_promise_callback 2", parent);
+
     let AstKind::CallExpression(call_expr) = parent.kind() else { return false };
 
-    dbg!("is_promise_callback 3",);
     let Some(member_expr) = call_expr.callee.get_member_expr() else { return false };
-    dbg!("is_promise_callback 4",);
 
     if member_expr.is_computed() {
         return false;
     }
-    dbg!("is_promise_callback 5",);
     let Some(static_prop_name) = member_expr.static_property_name() else { return false };
-    dbg!("is_promise_callback 6",);
 
     if call_expr.arguments.len() == 1 && matches!(static_prop_name, "then" | "catch" | "finally") {
         return true;
     }
-
-    dbg!(static_prop_name);
 
     if call_expr.arguments.len() == 2 && matches!(static_prop_name, "then") {
         if call_expr.arguments[0].is_spread() {
@@ -161,7 +150,113 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Async functions returning normal values/throwing values
         r#"async () => bar;"#,
+        r#"
+            async () => {
+                return bar;
+            };
+        "#,
+        r#"
+            async function foo() {
+                return bar;
+            }
+        "#,
+        r#"
+            (async function() {
+                return bar;
+            });
+        "#,
+        r#"
+            async () => {
+                throw bar;
+            };
+        "#,
+        r#"
+            async function foo() {
+                throw bar;
+            }
+        "#,
+        r#"
+            (async function() {
+                throw bar;
+            });
+        "#,
+        // Async functions returning normal values/throwing values
+        // Sync function returning Promise.resolve/reject
+        r#"() => Promise.resolve(bar);"#,
+        r#"
+            () => {
+                return Promise.resolve(bar);
+            };
+        "#,
+        r#"
+            function foo() {
+                return Promise.resolve(bar);
+            };
+        "#,
+        r#"
+            (function() {
+                return Promise.resolve(bar);
+            });
+            "#,
+        r#"() => Promise.reject(bar);"#,
+        r#"
+            () => {
+                return Promise.reject(bar);
+            };
+        "#,
+        r#"
+            function foo() {
+                return Promise.reject(bar);
+            };
+        "#,
+        r#"
+            (function() {
+                return Promise.reject(bar);
+            });
+        "#,
+        // Sync generator yielding Promise.resolve/reject
+        r#"
+            function * foo() {
+                yield Promise.$resolve(bar);
+            }
+        "#,
+        r#"
+            (function * () {
+                yield Promise.$resolve(bar);
+            })
+        "#,
+        r#"
+            function * foo() {
+                yield Promise.reject(bar);
+            }
+        "#,
+        r#"
+            (function * () {
+                yield Promise.reject(bar);
+            })
+        "#,
+        // Sync function nested in async function
+        r#"
+            async function foo() {
+                function bar() {
+                    return Promise.resolve(baz);
+                }
+            }
+        "#,
+        // Delegate yield expressions
+        r#"
+            async function * foo() {
+				yield* Promise.resolve(bar);
+			}
+        "#,
+        r#"
+            async function * foo() {
+				yield* Promise.reject(bar);
+			}
+        "#,
+        // Promise#then/catch/finally
         r#"promise.then(() => foo).catch(() => bar).finally(() => baz)"#,
         r#"promise.then(() => foo, () => bar).finally(() => baz)"#,
         r#"promise.then(x, y, () => Promise.resolve(foo))"#,
@@ -171,17 +266,174 @@ fn test() {
     ];
 
     let fail = vec![
+        r#"
+            const main = async foo => {
+                if (foo > 4) {
+                    return Promise.reject(new Error('🤪'));
+                }
+                return Promise.resolve(result);
+            };
+        "#,
+        // Async function returning Promise.resolve
         r#"async () => Promise.resolve(bar);"#,
+        r#"
+            async () => {
+                return Promise.resolve(bar);
+            };
+        "#,
+        r#"
+            async function foo() {
+                return Promise.resolve(bar);
+            }
+        "#,
+        r#"
+			(async function() {
+				return Promise.resolve(bar);
+			});
+		"#,
+        r#"
+			async function * foo() {
+				return Promise.resolve(bar);
+			}
+        "#,
+        r#"
+		    (async function*() {
+		    	return Promise.resolve(bar);
+		    });
+        "#,
+        // Async function returning Promise.reject
         r#"async () => Promise.reject(bar);"#,
+        r#"
+			async () => {
+				return Promise.reject(bar);
+			};
+		"#,
+        r#"
+			async function foo() {
+				return Promise.reject(bar);
+		    }   
+		"#,
+        r#"
+			(async function() {
+				return Promise.reject(bar);
+			});
+		"#,
+        r#"
+			async function * foo() {
+				return Promise.reject(bar);
+			}
+		"#,
+        r#"
+			(async function*() {
+				return Promise.reject(bar);
+			});
+		"#,
+        // Async generator yielding Promise.resolve
+        r#"
+				async function * foo() {
+					yield Promise.resolve(bar);
+				}
+			"#,
+        r#"
+				(async function * () {
+					yield Promise.resolve(bar);
+				});
+				"#,
+        // Async generator yielding Promise.reject
+        r#"
+				async function * foo() {
+					yield Promise.reject(bar);
+				}
+				"#,
+        r#"
+				(async function * () {
+					yield Promise.reject(bar);
+				});
+				"#,
         r#"async () => Promise.resolve();"#,
+        r#"
+				async function foo() {
+					return Promise.resolve();
+				}
+				"#,
         r#"async () => Promise.reject();"#,
+        r#"
+				async function foo() {
+					return Promise.reject();
+				}
+				"#,
+        r#"
+				async function * foo() {
+					yield Promise.resolve();
+				}
+				"#,
+        // Multiple arguments
         r#"async () => Promise.resolve(bar, baz);"#,
         r#"async () => Promise.reject(bar, baz);"#,
+        // Sequence expressions
+        r#"async
+				async function * foo() {
+					yield Promise.resolve((bar, baz));
+				}
+		"#,
         r#"async () => Promise.resolve((bar, baz))"#,
+        // Arrow function returning an object
         r#"async () => Promise.resolve({})"#,
+        // Try statements
+        r#"
+				async function foo() {
+					try {
+						return Promise.resolve(1);
+					} catch {}
+				}
+		"#,
+        r#"
+				async function foo() {
+					try {
+						return Promise.reject(1);
+					} catch {}
+				}
+				"#,
+        // Spread arguments
         r#"async () => Promise.resolve(...bar);"#,
         r#"async () => Promise.reject(...bar);"#,
+        // Yield not in an ExpressionStatement
+        r"#
+        async function * foo() {
+            const baz = yield Promise.resolve(bar);
+        }
+        #",
+        r#"
+        async function * foo() {
+            const baz = yield Promise.reject(bar);
+        }
+        "#,
+        // Parenthesized Promise.resolve/reject
         r#"async () => (Promise.resolve(bar));"#,
+        r#"async () => (Promise.reject(bar));"#,
+        r#"async () => ((Promise.reject(bar)));"#,
+        r#"
+            async function * foo() {
+     			(yield Promise.reject(bar));
+     		}
+        "#,
+        r#"
+            async function * foo() {
+     			((yield Promise.reject(bar)));
+     		}
+        "#,
+        r#"promise.then(() => Promise.resolve(bar))"#,
+        r#"promise.then(() => { return Promise.resolve(bar); })"#,
+        r#"promise.then(async () => Promise.reject(bar))"#,
+        r#"promise.then(async () => { return Promise.reject(bar); })"#,
+        r#"promise.catch(() => Promise.resolve(bar))"#,
+        r#"promise.catch(() => { return Promise.resolve(bar); })"#,
+        r#"promise.catch(async () => Promise.reject(bar))"#,
+        r#"promise.catch(async () => { return Promise.reject(bar); })"#,
+        r#"promise.finally(() => Promise.resolve(bar))"#,
+        r#"promise.finally(() => { return Promise.resolve(bar); })"#,
+        r#"promise.finally(async () => Promise.reject(bar))"#,
+        r#"promise.finally(async () => { return Promise.reject(bar); })"#,
         r#"promise.then(() => {}, () => Promise.resolve(bar))"#,
         r#"promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))"#,
         r#"promise.then(() => {}, () => { return Promise.resolve(bar); })"#,

@@ -1,0 +1,400 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_useless_promise_resolve_reject
+---
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+ 3 │                 if (foo > 4) {
+ 4 │                     return Promise.reject(new Error('🤪'));
+   ·                            ───────────────────────────────
+ 5 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:5:1]
+ 5 │                 }
+ 6 │                 return Promise.resolve(result);
+   ·                        ───────────────────────
+ 7 │             };
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(bar);
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async () => {
+ 3 │                 return Promise.resolve(bar);
+   ·                        ────────────────────
+ 4 │             };
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function foo() {
+ 3 │                 return Promise.resolve(bar);
+   ·                        ────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             (async function() {
+ 3 │                 return Promise.resolve(bar);
+   ·                        ────────────────────
+ 4 │             });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function * foo() {
+ 3 │                 return Promise.resolve(bar);
+   ·                        ────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             (async function*() {
+ 3 │                 return Promise.resolve(bar);
+   ·                        ────────────────────
+ 4 │             });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(bar);
+   ·             ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async () => {
+ 3 │                 return Promise.reject(bar);
+   ·                        ───────────────────
+ 4 │             };
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function foo() {
+ 3 │                 return Promise.reject(bar);
+   ·                        ───────────────────
+ 4 │             }   
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             (async function() {
+ 3 │                 return Promise.reject(bar);
+   ·                        ───────────────────
+ 4 │             });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function * foo() {
+ 3 │                 return Promise.reject(bar);
+   ·                        ───────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             (async function*() {
+ 3 │                 return Promise.reject(bar);
+   ·                        ───────────────────
+ 4 │             });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function * foo() {
+ 3 │                     yield Promise.resolve(bar);
+   ·                           ────────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 (async function * () {
+ 3 │                     yield Promise.resolve(bar);
+   ·                           ────────────────────
+ 4 │                 });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function * foo() {
+ 3 │                     yield Promise.reject(bar);
+   ·                           ───────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 (async function * () {
+ 3 │                     yield Promise.reject(bar);
+   ·                           ───────────────────
+ 4 │                 });
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve();
+   ·             ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function foo() {
+ 3 │                     return Promise.resolve();
+   ·                            ─────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject();
+   ·             ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function foo() {
+ 3 │                     return Promise.reject();
+   ·                            ────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function * foo() {
+ 3 │                     yield Promise.resolve();
+   ·                           ─────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(bar, baz);
+   ·             ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(bar, baz);
+   ·             ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │                 async function * foo() {
+ 3 │                     yield Promise.resolve((bar, baz));
+   ·                           ───────────────────────────
+ 4 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve((bar, baz))
+   ·             ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve({})
+   ·             ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+ 3 │                     try {
+ 4 │                         return Promise.resolve(1);
+   ·                                ──────────────────
+ 5 │                     } catch {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+ 3 │                     try {
+ 4 │                         return Promise.reject(1);
+   ·                                ─────────────────
+ 5 │                     } catch {}
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(...bar);
+   ·             ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(...bar);
+   ·             ──────────────────────
+   ╰────
+
+  × Invalid Character `
+  │ `
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ #
+   ·  ─
+ 2 │         async function * foo() {
+ 3 │             const baz = yield Promise.resolve(bar);
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │         async function * foo() {
+ 3 │             const baz = yield Promise.reject(bar);
+   ·                               ───────────────────
+ 4 │         }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => (Promise.resolve(bar));
+   ·              ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => (Promise.reject(bar));
+   ·              ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => ((Promise.reject(bar)));
+   ·               ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function * foo() {
+ 3 │                 (yield Promise.reject(bar));
+   ·                        ───────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+ 2 │             async function * foo() {
+ 3 │                 ((yield Promise.reject(bar)));
+   ·                         ───────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => Promise.resolve(bar))
+   ·                    ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => { return Promise.resolve(bar); })
+   ·                             ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(async () => Promise.reject(bar))
+   ·                          ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(async () => { return Promise.reject(bar); })
+   ·                                   ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.catch(() => Promise.resolve(bar))
+   ·                     ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.catch(() => { return Promise.resolve(bar); })
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.catch(async () => Promise.reject(bar))
+   ·                           ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.catch(async () => { return Promise.reject(bar); })
+   ·                                    ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.finally(() => Promise.resolve(bar))
+   ·                       ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.finally(() => { return Promise.resolve(bar); })
+   ·                                ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.finally(async () => Promise.reject(bar))
+   ·                             ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.finally(async () => { return Promise.reject(bar); })
+   ·                                      ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, () => Promise.resolve(bar))
+   ·                              ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
+   ·                    ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
+   ·                                                ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, () => { return Promise.resolve(bar); })
+   ·                                       ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, async () => Promise.reject(bar))
+   ·                                    ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, async () => { return Promise.reject(bar); })
+   ·                                             ───────────────────
+   ╰────
+
+
