@@ -173,6 +173,7 @@ mod unicorn {
     pub mod prefer_regexp_test;
     pub mod prefer_spread;
     pub mod prefer_string_replace_all;
+    pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
@@ -320,8 +321,9 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_regexp_test,
     unicorn::prefer_spread,
     unicorn::prefer_string_replace_all,
-    unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
+    unicorn::prefer_string_trim_start_end,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
