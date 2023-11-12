@@ -1,11 +1,9 @@
-use lazy_static::lazy_static;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
 
@@ -50,20 +48,24 @@ declare_oxc_lint!(
 
 impl Rule for NoAbusiveEslintDisable {
     fn run_once(&self, ctx: &LintContext) {
-        lazy_static! {
-            static ref RULE_PATTERN: Regex =
-                Regex::new("^(?:@[0-9A-Za-z_-]+/)?(?:[0-9A-Za-z_-]+/)?[0-9A-Za-z_-]+$").unwrap();
-        }
-
         for span in ctx.disable_directives().disable_all_comments() {
             ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
         }
 
         for DisableRuleComment { span, rules } in ctx.disable_directives().disable_rule_comments() {
-            if rules.is_empty() || !RULE_PATTERN.is_match(rules[0]) {
+            if rules.is_empty() || !is_valid_rule_name(rules[0]) {
                 ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
             }
         }
+    }
+}
+
+fn is_valid_rule_name(rule_name: &str) -> bool {
+    let segment_count = rule_name.split('/').count();
+    if rule_name.starts_with('@') {
+        segment_count == 2 || segment_count == 3
+    } else {
+        segment_count <= 2
     }
 }
 
