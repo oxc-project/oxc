@@ -1,0 +1,67 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 105
+expression: no_abusive_eslint_disable
+---
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:1:1]
+ 1 │ 
+ 2 │         // eslint-disable-next-line @scopewithoutplugin
+   ·           ──────────────────────────────────────────────
+ 3 │         eval();
+ 4 │         
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:1:1]
+ 1 │ eval(); // eslint-disable-line
+   ·           ────────────────────
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:2:1]
+ 2 │         foo();
+ 3 │         eval(); // eslint-disable-line
+   ·                   ─────────────────────
+ 4 │         
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:1:1]
+ 1 │ /* eslint-disable */
+   ·   ────────────────
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:2:1]
+ 2 │         foo();
+ 3 │         /* eslint-disable */
+   ·           ────────────────
+ 4 │         eval();
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:2:1]
+ 2 │         foo();
+ 3 │         /* eslint-disable-next-line */
+   ·           ──────────────────────────
+ 4 │         eval();
+   ╰────
+  help: Specify the rules you want to disable.
+
+  ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
+   ╭─[no_abusive_eslint_disable.tsx:1:1]
+ 1 │ 
+ 2 │         // eslint-disable-next-line
+   ·           ──────────────────────────
+ 3 │         eval();
+ 4 │         
+   ╰────
+  help: Specify the rules you want to disable.
+
+

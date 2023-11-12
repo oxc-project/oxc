@@ -12,8 +12,10 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -63,73 +65,82 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidDescribeCallback {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
-        if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            return;
+    fn run_once(&self, ctx: &LintContext) {
+        for node in &collect_possible_jest_call_node(ctx) {
+            run(node, ctx);
         }
+    }
+}
 
-        if call_expr.arguments.len() == 0 {
-            diagnostic(ctx, call_expr.span, Message::NameAndCallback);
-            return;
-        }
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+        return;
+    };
+    if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
+        return;
+    }
 
-        if call_expr.arguments.len() == 1 {
-            // For better error notice, we locate it to arguments[0]
-            diagnostic(ctx, call_expr.arguments[0].span(), Message::NameAndCallback);
-            return;
-        }
+    if call_expr.arguments.len() == 0 {
+        diagnostic(ctx, call_expr.span, Message::NameAndCallback);
+        return;
+    }
 
-        let callback = &call_expr.arguments[1];
-        match callback {
-            Argument::Expression(expr) => match expr {
-                Expression::FunctionExpression(fn_expr) => {
-                    if fn_expr.r#async {
-                        diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
-                    }
-                    let no_each_fields =
-                        jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-                    if no_each_fields && fn_expr.params.parameters_count() > 0 {
-                        diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
-                    }
+    if call_expr.arguments.len() == 1 {
+        // For better error notice, we locate it to arguments[0]
+        diagnostic(ctx, call_expr.arguments[0].span(), Message::NameAndCallback);
+        return;
+    }
 
-                    let Some(ref body) = fn_expr.body else {
+    let callback = &call_expr.arguments[1];
+    match callback {
+        Argument::Expression(expr) => match expr {
+            Expression::FunctionExpression(fn_expr) => {
+                if fn_expr.r#async {
+                    diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
+                }
+                let no_each_fields =
+                    jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+                if no_each_fields && fn_expr.params.parameters_count() > 0 {
+                    diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
+                }
+
+                let Some(ref body) = fn_expr.body else {
+                    return;
+                };
+                if let Some(span) = find_first_return_stmt_span(body) {
+                    diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
+                }
+            }
+            Expression::ArrowExpression(arrow_expr) => {
+                if arrow_expr.r#async {
+                    diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
+                }
+                let no_each_fields =
+                    jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+                if no_each_fields && arrow_expr.params.parameters_count() > 0 {
+                    diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
+                }
+
+                if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
+                    let stmt = &arrow_expr.body.statements[0];
+                    let Statement::ExpressionStatement(expr_stmt) = stmt else {
                         return;
                     };
-                    if let Some(span) = find_first_return_stmt_span(body) {
-                        diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
+                    if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                        diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                     }
                 }
-                Expression::ArrowExpression(arrow_expr) => {
-                    if arrow_expr.r#async {
-                        diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
-                    }
-                    let no_each_fields =
-                        jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-                    if no_each_fields && arrow_expr.params.parameters_count() > 0 {
-                        diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
-                    }
 
-                    if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
-                        let stmt = &arrow_expr.body.statements[0];
-                        let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                            return;
-                        };
-                        if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                            diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
-                        }
-                    }
-
-                    if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
-                        diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
-                    }
+                if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
+                    diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
                 }
-                _ => diagnostic(ctx, expr.span(), Message::SecondArgumentMustBeFunction),
-            },
-            Argument::SpreadElement(spreed_element) => {
-                diagnostic(ctx, spreed_element.span, Message::SecondArgumentMustBeFunction);
             }
+            _ => diagnostic(ctx, expr.span(), Message::SecondArgumentMustBeFunction),
+        },
+        Argument::SpreadElement(spreed_element) => {
+            diagnostic(ctx, spreed_element.span, Message::SecondArgumentMustBeFunction);
         }
     }
 }

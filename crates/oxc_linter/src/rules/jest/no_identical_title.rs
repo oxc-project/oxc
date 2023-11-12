@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use oxc_ast::{
-    ast::{Argument, Expression},
+    ast::{Argument, CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -9,20 +9,29 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, ReferenceId};
+use oxc_semantic::AstNodeId;
 use oxc_span::{Atom, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind},
+    utils::{
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
     AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-identical-title): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct NoIdenticalTitleDiagnostic(&'static str, &'static str, #[label] pub Span);
+enum NoIdenticalTitleDiagnostic {
+    #[error("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")]
+    #[diagnostic(severity(warning), help("Change the title of describe block."))]
+    DescribeRepeat(#[label] Span),
+
+    #[error("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.")]
+    #[diagnostic(severity(warning), help("Change the title of test."))]
+    TestRepeat(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoIdenticalTitle;
@@ -55,27 +64,25 @@ declare_oxc_lint!(
 
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {
-        // TODO: support detect import from "@jest/globals"
-        let references = ctx.scopes().root_unresolved_references().iter().filter(|(key, _)| {
-            DESCRIBE_NAMES.contains(&key.as_str()) || TEST_NAMES.contains(&key.as_str())
-        });
+        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let mut title_to_span_mapping = HashMap::new();
         let mut span_to_parent_mapping = HashMap::new();
 
-        for (_, reference_ids) in references {
-            for &reference_id in reference_ids {
-                let Some((span, title, kind, parent_id)) = process_reference(reference_id, ctx)
-                else {
-                    continue;
+        possible_jest_nodes
+            .iter()
+            .filter_map(|possible_jest_node| {
+                let AstKind::CallExpression(call_expr) = possible_jest_node.node.kind() else {
+                    return None;
                 };
-
+                filter_and_process_jest_result(call_expr, possible_jest_node, ctx)
+            })
+            .for_each(|(span, title, kind, parent_id)| {
                 span_to_parent_mapping.insert(span, parent_id);
                 title_to_span_mapping
                     .entry(title)
                     .and_modify(|e: &mut Vec<(JestFnKind, Span)>| e.push((kind, span)))
                     .or_insert_with(|| vec![(kind, span)]);
-            }
-        }
+            });
 
         for kind_and_span in title_to_span_mapping.values() {
             let mut kind_and_spans = kind_and_span
@@ -94,88 +101,62 @@ impl Rule for NoIdenticalTitle {
                 let (_, prev_kind, prev_parent) = kind_and_spans[i - 1];
 
                 if kind == prev_kind && parent_id == prev_parent {
-                    let (error, help) = Message::details(kind);
-                    ctx.diagnostic(NoIdenticalTitleDiagnostic(error, help, span));
+                    match kind {
+                        JestFnKind::General(JestGeneralFnKind::Describe) => {
+                            ctx.diagnostic(NoIdenticalTitleDiagnostic::DescribeRepeat(span));
+                        }
+                        JestFnKind::General(JestGeneralFnKind::Test) => {
+                            ctx.diagnostic(NoIdenticalTitleDiagnostic::TestRepeat(span));
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
     }
 }
 
-const DESCRIBE_NAMES: [&str; 3] = ["describe", "fdescribe", "xdescribe"];
-const TEST_NAMES: [&str; 5] = ["it", "fit", "xit", "test", "xtest"];
-
-fn process_reference<'a>(
-    reference_id: ReferenceId,
+fn filter_and_process_jest_result<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<(Span, &'a Atom, JestFnKind, AstNodeId)> {
-    let reference = ctx.symbols().get_reference(reference_id);
-    let node = ctx.nodes().parent_node(reference.node_id())?;
-    let node = get_closest_call_expr(node, ctx)?;
-    let closest_block = get_closest_block(node, ctx)?;
-    let AstKind::CallExpression(call_expr) = node.kind() else {
+    let Some(result) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return None;
     };
-    let jest_fn_call = parse_general_jest_fn_call(call_expr, node, ctx)?;
+    let kind = result.kind;
+    // we only need check `describe` or `test` block
+    if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
+        return None;
+    }
+
+    if result.members.iter().any(|m| m.is_name_equal("each")) {
+        return None;
+    }
+
+    let Some(parent_id) = get_closest_block(possible_jest_node.node, ctx) else {
+        return None;
+    };
+
     match call_expr.arguments.get(0) {
         Some(Argument::Expression(Expression::StringLiteral(string_lit))) => {
-            Some((call_expr.span, &string_lit.value, jest_fn_call.kind, closest_block.id()))
+            Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
         Some(Argument::Expression(Expression::TemplateLiteral(template_lit))) => {
-            match template_lit.quasi() {
-                Some(quasi) => Some((call_expr.span, quasi, jest_fn_call.kind, closest_block.id())),
-                None => None,
-            }
+            template_lit.quasi().map(|quasi| (template_lit.span, quasi, kind, parent_id))
         }
         _ => None,
     }
 }
 
-fn get_closest_block<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<AstNodeId> {
     match node.kind() {
-        AstKind::BlockStatement(_) | AstKind::FunctionBody(_) | AstKind::Program(_) => Some(node),
+        AstKind::BlockStatement(_) | AstKind::FunctionBody(_) | AstKind::Program(_) => {
+            Some(node.id())
+        }
         _ => {
             let parent = ctx.nodes().parent_node(node.id())?;
             get_closest_block(parent, ctx)
-        }
-    }
-}
-
-fn get_closest_call_expr<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    match node.kind() {
-        AstKind::CallExpression(_) => Some(node),
-        AstKind::MemberExpression(member_expr) => {
-            if member_expr.static_property_name() == Some("each") {
-                return None;
-            }
-            let parent = ctx.nodes().parent_node(node.id())?;
-            get_closest_call_expr(parent, ctx)
-        }
-        _ => None,
-    }
-}
-
-struct Message;
-
-impl Message {
-    fn details(kind: JestFnKind) -> (&'static str, &'static str) {
-        match kind {
-            // (error, help)
-            JestFnKind::General(JestGeneralFnKind::Describe) => (
-                "Describe block title is used multiple times in the same describe block.",
-                "Change the title of describe block.",
-            ),
-            JestFnKind::General(JestGeneralFnKind::Test) => (
-                "Test title is used multiple times in the same describe block.",
-                "Change the title of test.",
-            ),
-            _ => unreachable!(),
         }
     }
 }

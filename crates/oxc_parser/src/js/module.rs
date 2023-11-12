@@ -239,15 +239,32 @@ impl<'a> Parser<'a> {
         };
 
         // ExportDeclaration : export NamedExports ;
-        // * It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
         if source.is_none() {
             for specifier in &specifiers {
-                if let ModuleExportName::StringLiteral(literal) = &specifier.local {
-                    self.error(diagnostics::ExportNamedString(
-                        literal.value.clone(),
-                        specifier.local.name().clone(),
-                        literal.span,
-                    ));
+                match &specifier.local {
+                    // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
+                    ModuleExportName::StringLiteral(literal) => {
+                        self.error(diagnostics::ExportNamedString(
+                            specifier.local.to_string(),
+                            specifier.exported.to_string(),
+                            literal.span,
+                        ));
+                    }
+                    // For each IdentifierName n in ReferencedBindings of NamedExports:
+                    // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
+                    // is one of "implements", "interface", "let", "package", "private", "protected", "public", or "static".
+                    ModuleExportName::Identifier(id) => {
+                        let match_result = Kind::match_keyword(&id.name);
+                        if match_result.is_reserved_keyword()
+                            || match_result.is_future_reserved_keyword()
+                        {
+                            self.error(diagnostics::ExportReservedWord(
+                                specifier.local.to_string(),
+                                specifier.exported.to_string(),
+                                id.span,
+                            ));
+                        }
+                    }
                 }
             }
         }

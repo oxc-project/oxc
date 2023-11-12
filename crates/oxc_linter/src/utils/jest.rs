@@ -1,10 +1,14 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{CallExpression, Expression, ModuleDeclaration, TemplateLiteral},
+    ast::{
+        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        ModuleDeclaration, TemplateLiteral,
+    },
     AstKind,
 };
 use oxc_semantic::{AstNode, ReferenceId};
+use oxc_span::Atom;
 use phf::phf_set;
 
 use crate::LintContext;
@@ -15,7 +19,16 @@ use crate::utils::jest::parse_jest_fn::ParsedJestFnCall;
 pub use crate::utils::jest::parse_jest_fn::{
     parse_jest_fn_call, ExpectError, KnownMemberExpressionParentKind,
     KnownMemberExpressionProperty, MemberExpressionElement, ParsedExpectFnCall,
-    ParsedGeneralJestFnCall,
+};
+
+mod parse_jest_fn_new;
+pub use crate::utils::jest::parse_jest_fn_new::{
+    parse_jest_fn_call as parse_jest_fn_call_new,
+    KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
+    KnownMemberExpressionProperty as KnownMemberExpressionPropertyNew,
+    MemberExpressionElement as MemberExpressionElementNew,
+    ParsedExpectFnCall as ParsedExpectFnCallNew, ParsedGeneralJestFnCall,
+    ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
 const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
@@ -90,11 +103,11 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
 
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
     kinds: &[JestFnKind],
 ) -> bool {
-    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx);
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx);
     if let Some(jest_fn_call) = jest_fn_call {
         let kind = jest_fn_call.kind();
         if kinds.contains(&kind) {
@@ -107,12 +120,12 @@ pub fn is_type_of_jest_fn_call<'a>(
 
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedGeneralJestFnCall<'a>> {
-    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx)?;
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
 
-    if let ParsedJestFnCall::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
+    if let ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
     }
     None
@@ -131,9 +144,29 @@ pub fn parse_expect_jest_fn_call<'a>(
     None
 }
 
+pub fn parse_expect_jest_fn_call_new<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) -> Option<ParsedExpectFnCallNew<'a>> {
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
+
+    if let ParsedJestFnCallNew::ExpectFnCall(jest_fn_call) = jest_fn_call {
+        return Some(jest_fn_call);
+    }
+    None
+}
+
+pub struct PossibleJestNode<'a, 'b> {
+    pub node: &'b AstNode<'a>,
+    pub original: Option<&'a Atom>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+}
+
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
-pub fn collect_possible_jest_call_node<'a, 'b>(ctx: &'b LintContext<'a>) -> Vec<&'b AstNode<'a>> {
+pub fn collect_possible_jest_call_node<'a, 'b>(
+    ctx: &'b LintContext<'a>,
+) -> Vec<PossibleJestNode<'a, 'b>> {
     let import_entries = &ctx.semantic().module_record().import_entries;
 
     // Whether test functions are imported from 'jest/globals'.
@@ -142,29 +175,31 @@ pub fn collect_possible_jest_call_node<'a, 'b>(ctx: &'b LintContext<'a>) -> Vec<
         .iter()
         .any(|import_entry| matches!(import_entry.module_request.name().as_str(), "@jest/globals"));
 
-    let reference_ids = if is_import_mode {
+    let reference_id_with_original_list = if is_import_mode {
         collect_ids_referenced_to_import(ctx)
     } else if JEST_METHOD_NAMES
         .iter()
         .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
     {
-        collect_ids_referenced_to_global(ctx)
+        // set original of global test function to None
+        collect_ids_referenced_to_global(ctx).iter().map(|id| (*id, None)).collect()
     } else {
         // we are not test file, just return empty vec.
         vec![]
     };
 
-    // The longest length of Jest chains is 4, e.g.`expect(1).not.resolved.toBe()`.
-    // We take 4 ancestors of node and collect all Call Expression.
+    // The longest length of Jest chains is 4, and it may be a TaggedTemplateExpression, e.g.`it.concurrent.only.each``()`.
+    // We take 5 ancestors of node and collect all Call Expression.
     // The invalid Jest Call Expression will be bypassed in `parse_jest_fn_call`
-    reference_ids.iter().fold(vec![], |mut acc, id| {
-        let mut id = ctx.symbols().get_reference(*id).node_id();
-        for _ in 0..4 {
+    reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
+        let (reference_id, original) = id_with_original;
+        let mut id = ctx.symbols().get_reference(*reference_id).node_id();
+        for _ in 0..5 {
             let parent = ctx.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
                 if matches!(parent_kind, AstKind::CallExpression(_)) {
-                    acc.push(parent);
+                    acc.push(PossibleJestNode { node: parent, original: *original });
                     id = parent.id();
                 } else if matches!(
                     parent_kind,
@@ -183,28 +218,52 @@ pub fn collect_possible_jest_call_node<'a, 'b>(ctx: &'b LintContext<'a>) -> Vec<
     })
 }
 
-fn collect_ids_referenced_to_import(ctx: &LintContext) -> Vec<ReferenceId> {
+fn collect_ids_referenced_to_import<'a, 'b>(
+    ctx: &'b LintContext<'a>,
+) -> Vec<(ReferenceId, Option<&'a Atom>)> {
     ctx.symbols()
         .resolved_references
         .iter_enumerated()
-        .filter(|(symbol_id, _)| {
-            if ctx.symbols().get_flag(*symbol_id).is_import_binding() {
-                let id = ctx.symbols().get_declaration(*symbol_id);
+        .filter_map(|(symbol_id, reference_ids)| {
+            if ctx.symbols().get_flag(symbol_id).is_import_binding() {
+                let id = ctx.symbols().get_declaration(symbol_id);
                 let node = ctx.nodes().get_node(id);
                 let AstKind::ModuleDeclaration(module_decl) = node.kind() else {
-                    return false;
+                    return None;
                 };
                 let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else {
-                    return false;
+                    return None;
                 };
+                let name = ctx.symbols().get_name(symbol_id);
 
-                return import_decl.source.value == "@jest/globals";
+                if import_decl.source.value == "@jest/globals" {
+                    let original = find_original_name(import_decl, name);
+                    let mut ret = vec![];
+                    for reference_id in reference_ids {
+                        ret.push((*reference_id, original));
+                    }
+
+                    return Some(ret);
+                }
             }
 
-            false
+            None
         })
-        .flat_map(|(_, reference_ids)| reference_ids.clone())
-        .collect::<Vec<ReferenceId>>()
+        .flatten()
+        .collect::<Vec<(ReferenceId, Option<&'a Atom>)>>()
+}
+
+/// Find name in the Import Declaration, not use name because of lifetime not long enough.
+fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &Atom) -> Option<&'a Atom> {
+    import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
+        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+            if import_specifier.local.name.as_str() == name.as_str() {
+                return Some(import_specifier.imported.name());
+            }
+            None
+        }
+        _ => None,
+    })
 }
 
 fn collect_ids_referenced_to_global(ctx: &LintContext) -> Vec<ReferenceId> {

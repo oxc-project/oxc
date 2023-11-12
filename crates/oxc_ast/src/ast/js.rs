@@ -2063,7 +2063,7 @@ impl fmt::Display for ModuleExportName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Identifier(identifier) => identifier.name.to_string(),
-            Self::StringLiteral(literal) => literal.value.to_string(),
+            Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
         };
         write!(f, "{s}")
     }

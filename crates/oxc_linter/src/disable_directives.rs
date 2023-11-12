@@ -9,9 +9,21 @@ enum DisabledRule<'a> {
     Single(&'a str),
 }
 
+/// A comment which disables one or more specific rules
+pub struct DisableRuleComment<'a> {
+    /// Span of the comment
+    pub span: Span,
+    /// Rules disabled by the comment
+    pub rules: Vec<&'a str>,
+}
+
 pub struct DisableDirectives<'a> {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
+    /// Spans of comments that disable all rules
+    disable_all_comments: Vec<Span>,
+    /// All comments that disable one or more specific rules
+    disable_rule_comments: Vec<DisableRuleComment<'a>>,
 }
 
 impl<'a> DisableDirectives<'a> {
@@ -24,6 +36,14 @@ impl<'a> DisableDirectives<'a> {
                 || matches!(interval.val, DisabledRule::Single(name) if name.contains(rule_name))
         })
     }
+
+    pub fn disable_all_comments(&self) -> &Vec<Span> {
+        &self.disable_all_comments
+    }
+
+    pub fn disable_rule_comments(&self) -> &Vec<DisableRuleComment<'a>> {
+        &self.disable_rule_comments
+    }
 }
 
 pub struct DisableDirectivesBuilder<'a, 'b> {
@@ -35,6 +55,10 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
     disable_all_start: Option<u32>,
     /// Start of `eslint-disable rule_name`
     disable_start_map: FxHashMap<&'a str, u32>,
+    /// Spans of comments that disable all rules
+    disable_all_comments: Vec<Span>,
+    /// All comments that disable one or more specific rules
+    disable_rule_comments: Vec<DisableRuleComment<'a>>,
 }
 
 impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
@@ -45,12 +69,18 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
+            disable_all_comments: vec![],
+            disable_rule_comments: vec![],
         }
     }
 
     pub fn build(mut self) -> DisableDirectives<'a> {
         self.build_impl();
-        DisableDirectives { intervals: self.intervals }
+        DisableDirectives {
+            intervals: self.intervals,
+            disable_all_comments: self.disable_all_comments,
+            disable_rule_comments: self.disable_rule_comments,
+        }
     }
 
     fn add_interval(&mut self, start: u32, stop: u32, val: DisabledRule<'a>) {
@@ -74,6 +104,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     if self.disable_all_start.is_none() {
                         self.disable_all_start = Some(span.end);
                     }
+                    self.disable_all_comments.push(span);
                     continue;
                 }
 
@@ -86,11 +117,15 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                         .fold(span.end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
                         self.add_interval(span.end, stop, DisabledRule::All);
+                        self.disable_all_comments.push(span);
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
+                        let mut rules = vec![];
                         Self::get_rule_names(text, |rule_name| {
                             self.add_interval(span.end, stop, DisabledRule::Single(rule_name));
+                            rules.push(rule_name);
                         });
+                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
                     }
                     continue;
                 }
@@ -107,19 +142,26 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
                         self.add_interval(start, stop, DisabledRule::All);
+                        self.disable_all_comments.push(span);
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
+                        let mut rules = vec![];
                         Self::get_rule_names(text, |rule_name| {
                             self.add_interval(start, stop, DisabledRule::Single(rule_name));
+                            rules.push(rule_name);
                         });
+                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
                     }
                     continue;
                 }
 
                 // `eslint-disable rule-name1, rule-name2`
+                let mut rules = vec![];
                 Self::get_rule_names(text, |rule_name| {
                     self.disable_start_map.entry(rule_name).or_insert(span.end);
+                    rules.push(rule_name);
                 });
+                self.disable_rule_comments.push(DisableRuleComment { span, rules });
 
                 continue;
             }

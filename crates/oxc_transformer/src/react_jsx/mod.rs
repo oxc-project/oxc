@@ -23,6 +23,11 @@ use crate::context::TransformerCtx;
 struct PragmaAndPragmaFragCannotBeSet;
 
 #[derive(Debug, Error, Diagnostic)]
+#[error("importSource cannot be set when runtime is classic.")]
+#[diagnostic(severity(warning), help("Remove `importSource` option."))]
+struct ImportSourceCannotBeSet;
+
+#[derive(Debug, Error, Diagnostic)]
 #[error("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")]
 #[diagnostic(severity(warning))]
 struct NamespaceDoesNotSupport(#[label] Span);
@@ -31,6 +36,11 @@ struct NamespaceDoesNotSupport(#[label] Span);
 #[error("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={{true}}\" is not allowed.")]
 #[diagnostic(severity(warning))]
 struct ValuelessKey(#[label] Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Spread children are not supported in React.")]
+#[diagnostic(severity(warning))]
+struct SpreadChildrenAreNotSupported(#[label] Span);
 
 /// Transform React JSX
 ///
@@ -129,6 +139,9 @@ impl<'a> ReactJsx<'a> {
 
     pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
+            if self.options.import_source != "react" {
+                self.ctx.error(ImportSourceCannotBeSet);
+            }
             return;
         }
 
@@ -322,7 +335,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         // The object properties for the second argument of `React.createElement`
-        let mut properties = self.ast.new_vec_with_capacity(0);
+        let mut properties = self.ast.new_vec();
 
         if let Some(attributes) = attributes {
             // TODO: compute the correct capacity for both runtimes
@@ -572,9 +585,7 @@ impl<'a> ReactJsx<'a> {
             }
             JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
                 Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    for object_property in &expr.properties {
-                        properties.push(self.ast.copy(object_property));
-                    }
+                    properties.extend(self.ast.copy(&expr.properties));
                 }
                 expr => {
                     let argument = self.ast.copy(expr);
@@ -637,8 +648,8 @@ impl<'a> ReactJsx<'a> {
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
-            JSXChild::Spread(_) => {
-                // Babel: Spread children are not supported in React.
+            JSXChild::Spread(e) => {
+                self.ctx.error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
         }

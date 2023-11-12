@@ -1,17 +1,21 @@
+use std::collections::HashMap;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_node_name, parse_expect_jest_fn_call, parse_general_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, KnownMemberExpressionParentKind, ParsedExpectFnCall,
+        collect_possible_jest_call_node, get_node_name, parse_expect_jest_fn_call_new,
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        KnownMemberExpressionParentKindNew, ParsedExpectFnCallNew, PossibleJestNode,
     },
     AstNode,
 };
@@ -60,26 +64,52 @@ impl Rule for NoStandaloneExpect {
 
         Self { additional_test_block_functions }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
+            acc.entry(cur.node.id()).or_insert(cur);
+            acc
+        });
+
+        for possible_jest_node in &possible_jest_nodes {
+            self.run(possible_jest_node, &id_nodes_mapping, ctx);
+        }
+    }
+}
+
+impl NoStandaloneExpect {
+    fn run<'a>(
+        &self,
+        possible_jest_node: &PossibleJestNode<'a, '_>,
+        id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+        ctx: &LintContext<'a>,
+    ) {
+        let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, node, ctx) else {
+        let Some(jest_fn_call) = parse_expect_jest_fn_call_new(call_expr, possible_jest_node, ctx)
+        else {
             return;
         };
-        let ParsedExpectFnCall { head, members, .. } = jest_fn_call;
+        let ParsedExpectFnCallNew { head, members, .. } = jest_fn_call;
 
         // only report `expect.hasAssertions` & `expect.assertions` member calls
         if members.len() == 1
             && members[0].is_name_unequal("assertions")
             && members[0].is_name_unequal("hasAssertions")
-            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKind::Member))
+            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKindNew::Member))
         {
             return;
         }
 
-        if is_correct_place_to_call_expect(node, ctx, &self.additional_test_block_functions)
-            .is_none()
+        if is_correct_place_to_call_expect(
+            node,
+            &self.additional_test_block_functions,
+            id_nodes_mapping,
+            ctx,
+        )
+        .is_none()
         {
             ctx.diagnostic(NoStandaloneExpectDiagnostic(head.span));
         }
@@ -88,8 +118,9 @@ impl Rule for NoStandaloneExpect {
 
 fn is_correct_place_to_call_expect<'a>(
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
     additional_test_block_functions: &[String],
+    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    ctx: &LintContext<'a>,
 ) -> Option<()> {
     let mut parent = ctx.nodes().parent_node(node.id())?;
 
@@ -122,8 +153,9 @@ fn is_correct_place_to_call_expect<'a>(
                 // `const foo = function() {expect(1).toBe(1)}`
                 return if is_var_declarator_or_test_block(
                     grandparent,
-                    ctx,
                     additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
                 ) {
                     Some(())
                 } else {
@@ -137,8 +169,9 @@ fn is_correct_place_to_call_expect<'a>(
             // `const foo = () => expect(1).toBe(1)`
             return if is_var_declarator_or_test_block(
                 grandparent,
-                ctx,
                 additional_test_block_functions,
+                id_nodes_mapping,
+                ctx,
             ) {
                 Some(())
             } else {
@@ -153,15 +186,19 @@ fn is_correct_place_to_call_expect<'a>(
 
 fn is_var_declarator_or_test_block<'a>(
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
     additional_test_block_functions: &[String],
+    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    ctx: &LintContext<'a>,
 ) -> bool {
     match node.kind() {
         AstKind::VariableDeclarator(_) => return true,
         AstKind::CallExpression(call_expr) => {
-            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
-                if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test)) {
-                    return true;
+            if let Some(jest_node) = id_nodes_mapping.get(&node.id()) {
+                if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, jest_node, ctx) {
+                    return matches!(
+                        jest_fn_call.kind,
+                        JestFnKind::General(JestGeneralFnKind::Test)
+                    );
                 }
             }
 
@@ -174,8 +211,9 @@ fn is_var_declarator_or_test_block<'a>(
             if let Some(parent) = ctx.nodes().parent_node(node.id()) {
                 return is_var_declarator_or_test_block(
                     parent,
-                    ctx,
                     additional_test_block_functions,
+                    id_nodes_mapping,
+                    ctx,
                 );
             }
         }
