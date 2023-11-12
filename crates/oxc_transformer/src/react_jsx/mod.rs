@@ -32,6 +32,11 @@ struct NamespaceDoesNotSupport(#[label] Span);
 #[diagnostic(severity(warning))]
 struct ValuelessKey(#[label] Span);
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("Spread children are not supported in React.")]
+#[diagnostic(severity(warning))]
+struct SpreadChildrenAreNotSupported(#[label] Span);
+
 /// Transform React JSX
 ///
 /// References:
@@ -361,6 +366,12 @@ impl<'a> ReactJsx<'a> {
         let mut need_jsxs = false;
 
         let children = e.children();
+
+        if children.len() == 1 {
+            if let Some(JSXChild::Spread(s)) = children.get(0) {
+                self.ctx.error(SpreadChildrenAreNotSupported(s.span));
+            }
+        }
 
         // Append children to object properties in automatic mode
         if is_automatic {
