@@ -100,4 +100,13 @@ expression: prefer_type_error
    ╰────
   help: Change to `throw new TypeError(...)`
 
+  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:2:1]
+ 2 │             if (_.isElement(foo)) {
+ 3 │                 throw (new Error());
+   ·                            ─────
+ 4 │             }
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
 
