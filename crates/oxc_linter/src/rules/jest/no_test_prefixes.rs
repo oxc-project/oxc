@@ -11,8 +11,8 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestGeneralFnKind,
-        KnownMemberExpressionPropertyNew, ParsedGeneralJestFnCallNew, PossibleJestNode,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestGeneralFnKind,
+        KnownMemberExpressionPropertyNew, ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -61,11 +61,10 @@ impl Rule for NoTestPrefixes {
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     let AstKind::CallExpression(call_expr) = node.kind() else { return };
-    let Some(jest_fn_call) = parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
-    else {
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
-    let ParsedGeneralJestFnCallNew { kind, name, .. } = &jest_fn_call;
+    let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
     let Some(kind) = kind.to_general() else { return };
 
     if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
@@ -92,8 +91,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     });
 }
 
-fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCallNew) -> Atom {
-    let ParsedGeneralJestFnCallNew { members, name, .. } = jest_fn_call;
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
+    let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
 
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
     let member_names = members

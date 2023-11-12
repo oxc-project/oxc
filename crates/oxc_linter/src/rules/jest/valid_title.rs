@@ -16,8 +16,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
@@ -110,8 +110,7 @@ impl ValidTitle {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) =
-            parse_general_jest_fn_call_new(call_expr, possible_jest_fn_node, ctx)
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_fn_node, ctx)
         else {
             return;
         };
