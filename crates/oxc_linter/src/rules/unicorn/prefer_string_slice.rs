@@ -104,7 +104,7 @@ fn test() {
         r#""foo".substring(-1, -5)"#,
         r#""foo".substring(-1, 2)"#,
         r#""foo".substring(length)"#,
-        r#""foo".substring("fo".length)"#,
+        r#""foobar".substring("foo".length)"#,
         r#""foo".substring(0, length)"#,
         r#""foo".substring(length, 0)"#,
         r#"foo.substring(start)"#,
