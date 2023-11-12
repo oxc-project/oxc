@@ -215,8 +215,13 @@ pub struct ExportLoneSurrogate(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A string literal cannot be used as an exported binding without `from`")]
-#[diagnostic(help("Did you mean `export {{ '{0}' as '{1}' }} from 'some-module'`?"))]
+#[diagnostic(help("Did you mean `export {{ {0} as {1} }} from 'some-module'`?"))]
 pub struct ExportNamedString(pub Atom, pub Atom, #[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("A reserved word cannot be used as an exported binding without `from`")]
+#[diagnostic(help("Did you mean `export {{ {0} as {1} }} from 'some-module'`?"))]
+pub struct ExportReservedWord(pub Atom, pub Atom, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Bad escape sequence in untagged template literal")]
