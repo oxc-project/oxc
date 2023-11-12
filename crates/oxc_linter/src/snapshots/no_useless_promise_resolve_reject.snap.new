@@ -1,0 +1,125 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: no_useless_promise_resolve_reject
+---
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(bar);
+   ·             ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(bar);
+   ·             ───────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve();
+   ·             ─────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject();
+   ·             ────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(bar, baz);
+   ·             ─────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(bar, baz);
+   ·             ────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve((bar, baz))
+   ·             ───────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve({})
+   ·             ───────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.resolve(...bar);
+   ·             ───────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => Promise.reject(...bar);
+   ·             ──────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ async () => (Promise.resolve(bar));
+   ·              ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, () => Promise.resolve(bar))
+   ·                              ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
+   ·                    ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
+   ·                                                ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, () => { return Promise.resolve(bar); })
+   ·                                       ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, async () => Promise.reject(bar))
+   ·                                    ───────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over ` Promise.reject(error)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+ 1 │ promise.then(() => {}, async () => { return Promise.reject(bar); })
+   ·                                             ───────────────────
+   ╰────
+  help: 
+
+
