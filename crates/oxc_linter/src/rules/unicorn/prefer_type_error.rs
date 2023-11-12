@@ -448,6 +448,11 @@ fn test() {
                 throw new Error();
             }
         "#,
+        r#"
+            if (_.isElement(foo)) {
+                throw (new Error());
+            }
+        "#,
     ];
 
     Tester::new_without_config(PreferTypeError::NAME, pass, fail).test_and_snapshot();
