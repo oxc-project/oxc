@@ -1,0 +1,107 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_typeof_undefined
+---
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof a.b === "undefined"
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof a.b !== "undefined"
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof a.b == "undefined"
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof a.b != "undefined"
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof a.b == 'undefined'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ let foo; typeof foo === "undefined"
+   ·          ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ const foo = 1; typeof foo === "undefined"
+   ·                ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ var foo; typeof foo === "undefined"
+   ·          ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ var foo; var foo; typeof foo === "undefined"
+   ·                   ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ for (const foo of bar) typeof foo === "undefined";
+   ·                        ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ function foo() {typeof foo === "undefined"}
+   ·                 ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ function foo(bar) {typeof bar === "undefined"}
+   ·                    ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ function foo({bar}) {typeof bar === "undefined"}
+   ·                      ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ function foo([bar]) {typeof bar === "undefined"}
+   ·                      ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof foo.bar === "undefined"
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ let foo; typeof foo === "undefined"
+   ·          ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
+   ╭─[no_typeof_undefined.tsx:1:1]
+ 1 │ typeof foo === "undefined"
+   · ──────────────────────────
+   ╰────
+
+
