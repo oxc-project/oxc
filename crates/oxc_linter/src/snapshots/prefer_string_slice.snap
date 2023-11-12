@@ -202,8 +202,8 @@ expression: prefer_string_slice
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:1]
- 1 │ "foo".substring("fo".length)
-   ·       ─────────
+ 1 │ "foobar".substring("foo".length)
+   ·          ─────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
