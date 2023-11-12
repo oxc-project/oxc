@@ -49,7 +49,10 @@ impl Rule for PreferTypeError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThrowStatement(throw_stmt) = node.kind() else { return };
 
-        let Expression::NewExpression(new_expr) = &throw_stmt.argument else { return };
+        let Expression::NewExpression(new_expr) = &throw_stmt.argument.without_parenthesized()
+        else {
+            return;
+        };
 
         if !new_expr.callee.is_specific_id("Error") {
             return;
@@ -443,6 +446,11 @@ fn test() {
         r#"
             if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();
+            }
+        "#,
+        r#"
+            if (_.isElement(foo)) {
+                throw (new Error());
             }
         "#,
     ];
