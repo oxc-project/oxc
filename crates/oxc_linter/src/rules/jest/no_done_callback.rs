@@ -13,16 +13,24 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_node_name, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedGeneralJestFnCall,
+        collect_possible_jest_call_node, get_node_name, parse_general_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, PossibleJestNode,
     },
-    AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-done-callback): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct NoDoneCallbackDiagnostic(&'static str, &'static str, #[label] pub Span);
+enum NoDoneCallbackDiagnostic {
+    #[error("eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument")]
+    #[diagnostic(
+        severity(warning),
+        help("Return a Promise instead of relying on callback parameter")
+    )]
+    NoDoneCallback(#[label] Span),
+
+    #[error("eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument")]
+    #[diagnostic(severity(warning), help("Use await instead of callback in async functions"))]
+    UseAwaitInsteadOfCallback(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDoneCallback;
@@ -74,74 +82,78 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDoneCallback {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
-                let ParsedGeneralJestFnCall { kind, .. } = jest_fn_call;
-                if !matches!(
-                    kind,
-                    JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::Hook)
-                ) {
-                    return;
-                }
+    fn run_once(&self, ctx: &LintContext) {
+        for node in &collect_possible_jest_call_node(ctx) {
+            run(node, ctx);
+        }
+    }
+}
 
-                let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    if let AstKind::CallExpression(call_expr) = node.kind() {
+        if let Some(jest_fn_call) =
+            parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
+        {
+            let kind = jest_fn_call.kind;
+            if !matches!(
+                kind,
+                JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::Hook)
+            ) {
+                return;
+            }
 
-                if is_jest_each
-                    && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_))
-                {
-                    // isJestEach but not a TaggedTemplateExpression, so this must be
-                    // the `jest.each([])()` syntax which this rule doesn't support due
-                    // to its complexity (see jest-community/eslint-plugin-jest#710)
-                    return;
-                }
+            let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
 
-                let Some(Argument::Expression(expr)) =
-                    find_argument_of_callback(call_expr, is_jest_each, kind)
-                else {
-                    return;
-                };
+            if is_jest_each && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_))
+            {
+                // isJestEach but not a TaggedTemplateExpression, so this must be
+                // the `jest.each([])()` syntax which this rule doesn't support due
+                // to its complexity (see jest-community/eslint-plugin-jest#710)
+                return;
+            }
 
-                let callback_arg_index = usize::from(is_jest_each);
+            let Some(Argument::Expression(expr)) =
+                find_argument_of_callback(call_expr, is_jest_each, kind)
+            else {
+                return;
+            };
 
-                match expr {
-                    Expression::FunctionExpression(func_expr) => {
-                        if func_expr.params.parameters_count() != 1 + callback_arg_index {
-                            return;
-                        }
-                        let Some(span) = get_span_of_first_parameter(&func_expr.params) else {
-                            return;
-                        };
+            let callback_arg_index = usize::from(is_jest_each);
 
-                        if func_expr.r#async {
-                            let (message, help) = Message::UseAwaitInsteadOfCallback.details();
-                            ctx.diagnostic(NoDoneCallbackDiagnostic(message, help, span));
-                            return;
-                        }
-
-                        let (message, help) = Message::NoDoneCallback.details();
-                        ctx.diagnostic(NoDoneCallbackDiagnostic(message, help, span));
+            match expr {
+                Expression::FunctionExpression(func_expr) => {
+                    if func_expr.params.parameters_count() != 1 + callback_arg_index {
+                        return;
                     }
-                    Expression::ArrowExpression(arrow_expr) => {
-                        if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
-                            return;
-                        }
+                    let Some(span) = get_span_of_first_parameter(&func_expr.params) else {
+                        return;
+                    };
 
-                        let Some(span) = get_span_of_first_parameter(&arrow_expr.params) else {
-                            return;
-                        };
-
-                        if arrow_expr.r#async {
-                            let (message, help) = Message::UseAwaitInsteadOfCallback.details();
-                            ctx.diagnostic(NoDoneCallbackDiagnostic(message, help, span));
-                            return;
-                        }
-
-                        let (message, help) = Message::NoDoneCallback.details();
-                        ctx.diagnostic(NoDoneCallbackDiagnostic(message, help, span));
+                    if func_expr.r#async {
+                        ctx.diagnostic(NoDoneCallbackDiagnostic::UseAwaitInsteadOfCallback(span));
+                        return;
                     }
-                    _ => {}
+
+                    ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
                 }
+                Expression::ArrowExpression(arrow_expr) => {
+                    if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
+                        return;
+                    }
+
+                    let Some(span) = get_span_of_first_parameter(&arrow_expr.params) else {
+                        return;
+                    };
+
+                    if arrow_expr.r#async {
+                        ctx.diagnostic(NoDoneCallbackDiagnostic::UseAwaitInsteadOfCallback(span));
+                        return;
+                    }
+
+                    ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
+                }
+                _ => {}
             }
         }
     }
@@ -174,26 +186,6 @@ fn find_argument_of_callback<'a>(
     }
 
     None
-}
-
-enum Message {
-    NoDoneCallback,
-    UseAwaitInsteadOfCallback,
-}
-
-impl Message {
-    fn details(&self) -> (&'static str, &'static str) {
-        match self {
-            Self::NoDoneCallback => (
-                "Function parameter(s) use the `done` argument",
-                "Return a Promise instead of relying on callback parameter",
-            ),
-            Self::UseAwaitInsteadOfCallback => (
-                "Function parameter(s) use the `done` argument",
-                "Use await instead of callback in async functions",
-            ),
-        }
-    }
 }
 
 #[test]

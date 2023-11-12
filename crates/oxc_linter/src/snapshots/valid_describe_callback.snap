@@ -163,6 +163,18 @@ expression: valid_describe_callback
   help: "Remove return statement in your describe callback"
 
   ⚠ eslint-plugin-jest(valid-describe-callback): "Unexpected return statement in describe callback"
+    ╭─[valid_describe_callback.tsx:8:1]
+  8 │                     describe('nested', () => {
+  9 │ ╭─▶                     return Promise.resolve().then(() => {
+ 10 │ │                           it('breaks', () => {
+ 11 │ │                               throw new Error('Fail')
+ 12 │ │                           })
+ 13 │ ╰─▶                     })
+ 14 │                     })
+    ╰────
+  help: "Remove return statement in your describe callback"
+
+  ⚠ eslint-plugin-jest(valid-describe-callback): "Unexpected return statement in describe callback"
    ╭─[valid_describe_callback.tsx:2:1]
  2 │                 describe('foo', () => {
  3 │ ╭─▶                 return Promise.resolve().then(() => {
@@ -175,14 +187,14 @@ expression: valid_describe_callback
   help: "Remove return statement in your describe callback"
 
   ⚠ eslint-plugin-jest(valid-describe-callback): "Unexpected return statement in describe callback"
-    ╭─[valid_describe_callback.tsx:8:1]
-  8 │                     describe('nested', () => {
-  9 │ ╭─▶                     return Promise.resolve().then(() => {
- 10 │ │                           it('breaks', () => {
- 11 │ │                               throw new Error('Fail')
- 12 │ │                           })
- 13 │ ╰─▶                     })
- 14 │                     })
+    ╭─[valid_describe_callback.tsx:5:1]
+  5 │                     describe('nested', () => {
+  6 │ ╭─▶                     return Promise.resolve().then(() => {
+  7 │ │                           it('breaks', () => {
+  8 │ │                               throw new Error('Fail')
+  9 │ │                           })
+ 10 │ ╰─▶                     })
+ 11 │                     })
     ╰────
   help: "Remove return statement in your describe callback"
 
@@ -203,18 +215,6 @@ expression: valid_describe_callback
  13 │                 
     ╰────
   help: "Remove `async` keyword"
-
-  ⚠ eslint-plugin-jest(valid-describe-callback): "Unexpected return statement in describe callback"
-    ╭─[valid_describe_callback.tsx:5:1]
-  5 │                     describe('nested', () => {
-  6 │ ╭─▶                     return Promise.resolve().then(() => {
-  7 │ │                           it('breaks', () => {
-  8 │ │                               throw new Error('Fail')
-  9 │ │                           })
- 10 │ ╰─▶                     })
- 11 │                     })
-    ╰────
-  help: "Remove return statement in your describe callback"
 
   ⚠ eslint-plugin-jest(valid-describe-callback): "Unexpected return statement in describe callback"
    ╭─[valid_describe_callback.tsx:1:1]

@@ -11,10 +11,9 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
-        ParsedGeneralJestFnCall,
+        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestGeneralFnKind,
+        KnownMemberExpressionPropertyNew, ParsedGeneralJestFnCallNew, PossibleJestNode,
     },
-    AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -51,13 +50,55 @@ declare_oxc_lint!(
     style
 );
 
-fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
-    let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
+impl Rule for NoTestPrefixes {
+    fn run_once(&self, ctx: &LintContext) {
+        for node in &collect_possible_jest_call_node(ctx) {
+            run(node, ctx);
+        }
+    }
+}
+
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(jest_fn_call) = parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
+    else {
+        return;
+    };
+    let ParsedGeneralJestFnCallNew { kind, name, .. } = &jest_fn_call;
+    let Some(kind) = kind.to_general() else { return };
+
+    if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
+        return;
+    }
+
+    if !name.starts_with('f') && !name.starts_with('x') {
+        return;
+    }
+
+    let span = match &call_expr.callee {
+        Expression::TaggedTemplateExpression(tagged_template_expr) => {
+            tagged_template_expr.tag.span()
+        }
+        Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
+        _ => call_expr.callee.span(),
+    };
+
+    let preferred_node_name = get_preferred_node_names(&jest_fn_call);
+    let preferred_node_name_cloned = preferred_node_name.clone();
+
+    ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
+        Fix::new(preferred_node_name_cloned.to_string(), span)
+    });
+}
+
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCallNew) -> Atom {
+    let ParsedGeneralJestFnCallNew { members, name, .. } = jest_fn_call;
 
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
     let member_names = members
         .iter()
-        .filter_map(KnownMemberExpressionProperty::name)
+        .filter_map(KnownMemberExpressionPropertyNew::name)
         .collect::<Vec<_>>()
         .join(".");
     let name_slice = &name[1..];
@@ -66,38 +107,6 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
         Atom::from(format!("{name_slice}.{preferred_modifier}"))
     } else {
         Atom::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
-    }
-}
-
-impl Rule for NoTestPrefixes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
-        let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-        let Some(kind) = kind.to_general() else { return };
-
-        if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
-            return;
-        }
-
-        if !name.starts_with('f') && !name.starts_with('x') {
-            return;
-        }
-
-        let span = match &call_expr.callee {
-            Expression::TaggedTemplateExpression(tagged_template_expr) => {
-                tagged_template_expr.tag.span()
-            }
-            Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
-            _ => call_expr.callee.span(),
-        };
-
-        let preferred_node_name = get_preferred_node_names(&jest_fn_call);
-        let preferred_node_name_cloned = preferred_node_name.clone();
-
-        ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
-            Fix::new(preferred_node_name_cloned.to_string(), span)
-        });
     }
 }
 
