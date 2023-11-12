@@ -375,12 +375,6 @@ impl<'a> ReactJsx<'a> {
 
         let children = e.children();
 
-        if children.len() == 1 {
-            if let Some(JSXChild::Spread(s)) = children.get(0) {
-                self.ctx.error(SpreadChildrenAreNotSupported(s.span));
-            }
-        }
-
         // Append children to object properties in automatic mode
         if is_automatic {
             let allocator = self.ast.allocator;
@@ -656,8 +650,8 @@ impl<'a> ReactJsx<'a> {
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
-            JSXChild::Spread(_) => {
-                // Babel: Spread children are not supported in React.
+            JSXChild::Spread(e) => {
+                self.ctx.error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
         }
