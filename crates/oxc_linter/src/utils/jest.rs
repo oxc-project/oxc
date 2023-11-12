@@ -26,6 +26,8 @@ mod parse_jest_fn_new;
 pub use crate::utils::jest::parse_jest_fn_new::{
     parse_jest_fn_call as parse_jest_fn_call_new,
     KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
+    KnownMemberExpressionProperty as KnownMemberExpressionPropertyNew,
+    MemberExpressionElement as MemberExpressionElementNew,
     ParsedExpectFnCall as ParsedExpectFnCallNew,
     ParsedGeneralJestFnCall as ParsedGeneralJestFnCallNew, ParsedJestFnCall as ParsedJestFnCallNew,
 };
@@ -117,6 +119,7 @@ pub fn is_type_of_jest_fn_call<'a>(
     false
 }
 
+#[allow(unused)]
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
@@ -201,13 +204,13 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
         vec![]
     };
 
-    // The longest length of Jest chains is 4, e.g.`expect(1).not.resolved.toBe()`.
-    // We take 4 ancestors of node and collect all Call Expression.
+    // The longest length of Jest chains is 4, and it may be a TaggedTemplateExpression, e.g.`it.concurrent.only.each``()`.
+    // We take 5 ancestors of node and collect all Call Expression.
     // The invalid Jest Call Expression will be bypassed in `parse_jest_fn_call`
     reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
         let (reference_id, original) = id_with_original;
         let mut id = ctx.symbols().get_reference(*reference_id).node_id();
-        for _ in 0..4 {
+        for _ in 0..5 {
             let parent = ctx.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();
