@@ -11,10 +11,10 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, MemberExpressionElement,
-        ParsedGeneralJestFnCall,
+        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, MemberExpressionElementNew, ParsedGeneralJestFnCallNew,
+        PossibleJestNode,
     },
-    AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -58,39 +58,46 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFocusedTests {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
-        let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
-        if !matches!(
-            kind,
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        ) {
-            return;
+    fn run_once(&self, ctx: &LintContext) {
+        for node in &collect_possible_jest_call_node(ctx) {
+            run(node, ctx);
         }
+    }
+}
 
-        if name.starts_with('f') {
-            ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
-                let start = call_expr.span.start;
-                Fix::delete(Span { start, end: start + 1 })
-            });
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(jest_fn_call) = parse_general_jest_fn_call_new(call_expr, possible_jest_node, ctx)
+    else {
+        return;
+    };
+    let ParsedGeneralJestFnCallNew { kind, members, name } = jest_fn_call;
+    if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
+        return;
+    }
 
-            return;
-        }
+    if name.starts_with('f') {
+        ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
+            let start = call_expr.span.start;
+            Fix::delete(Span { start, end: start + 1 })
+        });
 
-        let only_node = members.iter().find(|member| member.is_name_equal("only"));
-        if let Some(only_node) = only_node {
-            ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
-                let span = only_node.span;
-                let start = span.start - 1;
-                let end = if matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
-                    span.end
-                } else {
-                    span.end + 1
-                };
-                Fix::delete(Span { start, end })
-            });
-        }
+        return;
+    }
+
+    let only_node = members.iter().find(|member| member.is_name_equal("only"));
+    if let Some(only_node) = only_node {
+        ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
+            let span = only_node.span;
+            let start = span.start - 1;
+            let end = if matches!(only_node.element, MemberExpressionElementNew::IdentName(_)) {
+                span.end
+            } else {
+                span.end + 1
+            };
+            Fix::delete(Span { start, end })
+        });
     }
 }
 

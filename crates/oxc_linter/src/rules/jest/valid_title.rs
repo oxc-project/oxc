@@ -15,8 +15,10 @@ use regex::Regex;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, parse_general_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -94,11 +96,23 @@ impl Rule for ValidTitle {
             must_match_patterns,
         }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+
+    fn run_once(&self, ctx: &LintContext) {
+        for node in &collect_possible_jest_call_node(ctx) {
+            self.run(node, ctx);
+        }
+    }
+}
+
+impl ValidTitle {
+    fn run<'a>(&self, possible_jest_fn_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+        let node = possible_jest_fn_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else {
+        let Some(jest_fn_call) =
+            parse_general_jest_fn_call_new(call_expr, possible_jest_fn_node, ctx)
+        else {
             return;
         };
 
