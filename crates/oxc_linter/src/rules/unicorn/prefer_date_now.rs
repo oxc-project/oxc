@@ -149,7 +149,7 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr else { return false };
+    let Expression::NewExpression(new_expr) = expr.without_parenthesized() else { return false };
 
     if let Expression::Identifier(ident) = &new_expr.callee {
         return ident.name == "Date" && new_expr.arguments.is_empty();
@@ -216,6 +216,7 @@ fn test() {
         r#"foo /= new Date"#,
         r#"foo %= new Date()"#,
         r#"foo **= new Date()"#,
+        r#"foo **= (new Date())"#,
         r#"function foo(){return+new Date}"#,
         r#"function foo(){return-new Date}"#,
     ];
