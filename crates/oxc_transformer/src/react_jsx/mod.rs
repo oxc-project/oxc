@@ -591,9 +591,7 @@ impl<'a> ReactJsx<'a> {
             }
             JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
                 Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    for object_property in &expr.properties {
-                        properties.push(self.ast.copy(object_property));
-                    }
+                    properties.extend(self.ast.copy(&expr.properties));
                 }
                 expr => {
                     let argument = self.ast.copy(expr);
