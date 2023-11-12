@@ -296,3 +296,18 @@ pub fn get_declaration_of_variable<'a, 'b>(
     let symbol_id = reference.symbol_id()?;
     Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
+
+pub fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
+    if args.len() <= 1 {
+        return None;
+    }
+    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] else {
+        return None;
+    };
+    let mut flags = RegExpFlags::empty();
+    for ch in flag_arg.value.chars() {
+        let flag = RegExpFlags::try_from(ch).ok()?;
+        flags |= flag;
+    }
+    Some(flags)
+}

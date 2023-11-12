@@ -171,6 +171,7 @@ mod unicorn {
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
     pub mod prefer_spread;
+    pub mod prefer_string_replace_all;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
@@ -316,6 +317,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
     unicorn::prefer_spread,
+    unicorn::prefer_string_replace_all,
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_type_error,

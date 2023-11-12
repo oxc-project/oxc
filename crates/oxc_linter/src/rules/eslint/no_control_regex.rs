@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use regex::{Matches, Regex};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_flags, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-control-regex): Unexpected control character(s)")]
@@ -139,21 +139,6 @@ impl Rule for NoControlRegex {
             }
         }
     }
-}
-
-fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
-        return None;
-    }
-    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] else {
-        return None;
-    };
-    let mut flags = RegExpFlags::empty();
-    for ch in flag_arg.value.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
-        flags |= flag;
-    }
-    Some(flags)
 }
 
 struct RegexPatternData<'a> {

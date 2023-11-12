@@ -1,0 +1,245 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_string_replace_all
+---
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/"'/g, '\'')
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\./g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\\\./g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\|/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/gu, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/ug, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/[a]/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a?/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/.*/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a|b/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\W/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{61}/g, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{61}/gu, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{61}/gv, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/]/g, "bar")
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/gi, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/gui, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/uig, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a/vig, bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(new RegExp("foo", "g"), bar)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a]/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/[a]/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a{1/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/a{1}/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u0022/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u0027/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\cM\cj/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\x22/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\x27/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\uD83D\ude00/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{1f600}/gu, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\n/g, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{20}/gu, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/\u{20}/gv, _)
+   ·     ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replaceAll(/a]/g, _)
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replaceAll(/\r\n\u{1f600}/gu, _)
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replaceAll(/\r\n\u{1f600}/gv, _)
+   ·     ──────────
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replaceAll(/a
+   ·                ──
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.
+   ╭─[prefer_string_replace_all.tsx:1:1]
+ 1 │ foo.replace(/(?!a)+/g, "")
+   ·     ───────
+   ╰────
+
+
