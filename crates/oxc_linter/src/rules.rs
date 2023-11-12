@@ -156,6 +156,7 @@ mod unicorn {
     pub mod no_object_as_default_parameter;
     pub mod no_static_only_class;
     pub mod no_thenable;
+    pub mod no_this_assignment;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
     pub mod prefer_add_event_listener;
@@ -297,6 +298,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_object_as_default_parameter,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
+    unicorn::no_this_assignment,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
     unicorn::prefer_add_event_listener,
