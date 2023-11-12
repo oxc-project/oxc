@@ -19729,7 +19729,7 @@ Negative Passed: 3918/3918 (100.00%)
     ·          ─────
  22 │ 
     ╰────
-  help: Did you mean `export { 'foo' as 'foo' } from 'some-module'`?
+  help: Did you mean `export { "foo" as "bar" } from 'some-module'`?
 
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/export-expname-unpaired-surrogate.js:20:1]
