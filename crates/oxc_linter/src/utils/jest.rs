@@ -100,24 +100,6 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
 
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-    kinds: &[JestFnKind],
-) -> bool {
-    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx);
-    if let Some(jest_fn_call) = jest_fn_call {
-        let kind = jest_fn_call.kind();
-        if kinds.contains(&kind) {
-            return true;
-        }
-    }
-
-    false
-}
-
-// TODO: The new version of `is_type_of_jest_fn_call`, will rename to `is_type_of_jest_fn_call` after all replaced.
-pub fn is_type_of_jest_fn_call_new<'a>(
-    call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
     kinds: &[JestFnKind],

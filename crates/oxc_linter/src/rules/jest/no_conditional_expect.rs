@@ -1,16 +1,21 @@
+use std::collections::HashMap;
+
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -53,27 +58,51 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConditionalExpect {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if !is_type_of_jest_fn_call(call_expr, node, ctx, &[JestFnKind::Expect]) {
-                return;
-            }
-
-            let has_condition_or_catch = check_parents(node, ctx, false);
-            if has_condition_or_catch {
-                ctx.diagnostic(NoConditionalExpectDiagnostic(call_expr.span));
-            }
+    fn run_once(&self, ctx: &LintContext) {
+        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
+        let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
+            acc.entry(cur.node.id()).or_insert(cur);
+            acc
+        });
+        for node in &collect_possible_jest_call_node(ctx) {
+            run(node, &id_nodes_mapping, ctx);
         }
     }
 }
 
-fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: bool) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+fn run<'a>(
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    ctx: &LintContext<'a>,
+) {
+    let node = possible_jest_node.node;
+    if let AstKind::CallExpression(call_expr) = node.kind() {
+        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
+            return;
+        }
+
+        let has_condition_or_catch = check_parents(node, id_nodes_mapping, ctx, false);
+        if has_condition_or_catch {
+            ctx.diagnostic(NoConditionalExpectDiagnostic(call_expr.span));
+        }
+    }
+}
+
+fn check_parents<'a>(
+    node: &AstNode<'a>,
+    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    ctx: &LintContext<'a>,
+    in_conditional: bool,
+) -> bool {
+    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
         return false;
     };
 
-    match parent.kind() {
+    match parent_node.kind() {
         AstKind::CallExpression(call_expr) => {
+            let Some(parent) = id_nodes_mapping.get(&parent_node.id()) else {
+                return check_parents(parent_node, id_nodes_mapping, ctx, in_conditional);
+            };
             if is_type_of_jest_fn_call(
                 call_expr,
                 parent,
@@ -85,7 +114,7 @@ fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: 
 
             if let Expression::MemberExpression(member_expr) = &call_expr.callee {
                 if member_expr.static_property_name() == Some("catch") {
-                    return check_parents(parent, ctx, true);
+                    return check_parents(parent_node, id_nodes_mapping, ctx, true);
                 }
             }
         }
@@ -93,7 +122,10 @@ fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: 
         | AstKind::SwitchStatement(_)
         | AstKind::IfStatement(_)
         | AstKind::ConditionalExpression(_)
-        | AstKind::LogicalExpression(_) => return check_parents(parent, ctx, true),
+        | AstKind::AwaitExpression(_)
+        | AstKind::LogicalExpression(_) => {
+            return check_parents(parent_node, id_nodes_mapping, ctx, true)
+        }
         AstKind::Function(function) => {
             let Some(ident) = &function.id else {
                 return false;
@@ -107,15 +139,14 @@ fn check_parents<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, in_conditional: 
                 let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                     return false;
                 };
-
-                check_parents(parent, ctx, in_conditional)
+                check_parents(parent, id_nodes_mapping, ctx, in_conditional)
             });
         }
         AstKind::Program(_) => return false,
         _ => {}
     }
 
-    check_parents(parent, ctx, in_conditional)
+    check_parents(parent_node, id_nodes_mapping, ctx, in_conditional)
 }
 
 #[test]

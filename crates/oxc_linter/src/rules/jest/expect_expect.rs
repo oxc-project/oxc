@@ -15,7 +15,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call_new, JestFnKind,
+        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call, JestFnKind,
         JestGeneralFnKind, PossibleJestNode,
     },
 };
@@ -98,7 +98,7 @@ fn run<'a>(
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
         let name = get_node_name(&call_expr.callee);
-        if is_type_of_jest_fn_call_new(
+        if is_type_of_jest_fn_call(
             call_expr,
             possible_jest_node,
             ctx,
