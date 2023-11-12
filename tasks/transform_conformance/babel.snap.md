@@ -1,4 +1,4 @@
-Passed: 265/1113
+Passed: 273/1113
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -852,7 +852,7 @@ Passed: 265/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (130/170)
+# babel-plugin-transform-react-jsx (138/170)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
@@ -864,9 +864,6 @@ Passed: 265/1113
 * react/optimisation.react.constant-elements/input.js
 * react/should-add-quotes-es3/input.js
 * react/should-disallow-spread-children/input.js
-* react/should-disallow-valueless-key/input.js
-* react/should-disallow-xml-namespacing/input.js
-* react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
@@ -875,12 +872,8 @@ Passed: 265/1113
 * react-automatic/arrow-functions/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-disallow-spread-children/input.js
-* react-automatic/should-disallow-valueless-key/input.js
-* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
@@ -889,7 +882,6 @@ Passed: 265/1113
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
 * runtime/defaults-to-automatic/input.js
-* runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js

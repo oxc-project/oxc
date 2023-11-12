@@ -129,6 +129,13 @@ impl PartialEq for IOError {
     }
 }
 
+impl From<IOError> for std::io::Error {
+    fn from(error: IOError) -> Self {
+        let io_error = error.0.as_ref();
+        Self::new(io_error.kind(), io_error.to_string())
+    }
+}
+
 impl From<io::Error> for ResolveError {
     fn from(err: io::Error) -> Self {
         Self::IOError(IOError(Arc::new(err)))
