@@ -13,8 +13,10 @@ use crate::{
     context::LintContext,
     fixer::Fix,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, is_type_of_jest_fn_call_new, JestFnKind,
+        JestGeneralFnKind, PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -53,36 +55,41 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTodo {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            let counts = call_expr.arguments.len();
+    fn run_once(&self, ctx: &LintContext) {
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            run(possible_jest_node, ctx);
+        }
+    }
+}
 
-            if counts < 1
-                || should_filter_case(call_expr)
-                || !is_string_type(&call_expr.arguments[0])
-                || !is_type_of_jest_fn_call(
-                    call_expr,
-                    node,
-                    ctx,
-                    &[JestFnKind::General(JestGeneralFnKind::Test)],
-                )
-            {
-                return;
-            }
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    if let AstKind::CallExpression(call_expr) = node.kind() {
+        let counts = call_expr.arguments.len();
 
-            if counts == 1 && !filter_todo_case(call_expr) {
-                let (content, span) = get_fix_content(call_expr);
-                ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || {
-                    Fix::new(content, span)
-                });
-            }
+        if counts < 1
+            || should_filter_case(call_expr)
+            || !is_string_type(&call_expr.arguments[0])
+            || !is_type_of_jest_fn_call_new(
+                call_expr,
+                possible_jest_node,
+                ctx,
+                &[JestFnKind::General(JestGeneralFnKind::Test)],
+            )
+        {
+            return;
+        }
 
-            if counts > 1 && is_empty_function(call_expr) {
-                ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
-                    let (content, span) = build_code(call_expr, ctx);
-                    Fix::new(content, span)
-                });
-            }
+        if counts == 1 && !filter_todo_case(call_expr) {
+            let (content, span) = get_fix_content(call_expr);
+            ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || Fix::new(content, span));
+        }
+
+        if counts > 1 && is_empty_function(call_expr) {
+            ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
+                let (content, span) = build_code(call_expr, ctx);
+                Fix::new(content, span)
+            });
         }
     }
 }
