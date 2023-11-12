@@ -99,7 +99,7 @@ impl Rule for MaxExpects {
                     if let AstKind::CallExpression(_) = parent_node.kind() {
                         let position = grand_node.scope_id().index();
                         if let Some(count) = count_map.get(&position) {
-                            if count >= &self.max {
+                            if count > &self.max {
                                 ctx.diagnostic(ExceededMaxAssertion(
                                     *count,
                                     self.max,
@@ -109,7 +109,7 @@ impl Rule for MaxExpects {
                                 count_map.insert(position, count + 1);
                             }
                         } else {
-                            count_map.insert(position, 1);
+                            count_map.insert(position, 2);
                         }
                     }
                 }

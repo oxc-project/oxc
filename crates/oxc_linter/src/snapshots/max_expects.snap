@@ -10,7 +10,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:7:1]
@@ -19,7 +19,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:7:1]
@@ -28,7 +28,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:7:1]
@@ -37,7 +37,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:7:1]
@@ -46,7 +46,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
     ╭─[max_expects.tsx:15:1]
@@ -55,7 +55,7 @@ expression: max_expects
     ·                     ──────
  17 │                 });
     ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
     ╭─[max_expects.tsx:8:1]
@@ -64,7 +64,7 @@ expression: max_expects
     ·                         ──────
  10 │                     });
     ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:7:1]
@@ -73,7 +73,7 @@ expression: max_expects
    ·                     ──────
  9 │                 });
    ╰────
-  help: Too many assertion calls (5) - maximum allowed is 5
+  help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
    ╭─[max_expects.tsx:3:1]
@@ -82,6 +82,6 @@ expression: max_expects
    ·                     ──────
  5 │                 });
    ╰────
-  help: Too many assertion calls (1) - maximum allowed is 1
+  help: Too many assertion calls (2) - maximum allowed is 1
 
 
