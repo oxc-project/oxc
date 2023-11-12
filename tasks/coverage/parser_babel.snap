@@ -6947,12 +6947,26 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                ─
    ╰────
 
+  × A reserved word cannot be used as an exported binding without `from`
+   ╭─[esprima/es2015-export-declaration/invalid-export-default-token/input.js:1:1]
+ 1 │ export {default} +
+   ·         ───────
+   ╰────
+  help: Did you mean `export { default as default } from 'some-module'`?
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-export-declaration/invalid-export-default-token/input.js:1:1]
  1 │ export {default} +
    ·                 ─
    ╰────
   help: Try insert a semicolon here
+
+  × A reserved word cannot be used as an exported binding without `from`
+   ╭─[esprima/es2015-export-declaration/invalid-export-named-default/input.js:1:1]
+ 1 │ export {default}
+   ·         ───────
+   ╰────
+  help: Did you mean `export { default as default } from 'some-module'`?
 
   × Export 'default' is not defined
    ╭─[esprima/es2015-export-declaration/invalid-export-named-default/input.js:1:1]
