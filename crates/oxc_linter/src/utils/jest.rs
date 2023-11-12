@@ -25,6 +25,8 @@ pub use crate::utils::jest::parse_jest_fn::{
 mod parse_jest_fn_new;
 pub use crate::utils::jest::parse_jest_fn_new::{
     parse_jest_fn_call as parse_jest_fn_call_new,
+    KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
+    ParsedExpectFnCall as ParsedExpectFnCallNew,
     ParsedGeneralJestFnCall as ParsedGeneralJestFnCallNew, ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
@@ -150,6 +152,19 @@ pub fn parse_expect_jest_fn_call<'a>(
     let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx)?;
 
     if let ParsedJestFnCall::ExpectFnCall(jest_fn_call) = jest_fn_call {
+        return Some(jest_fn_call);
+    }
+    None
+}
+
+pub fn parse_expect_jest_fn_call_new<'a>(
+    call_expr: &'a CallExpression<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) -> Option<ParsedExpectFnCallNew<'a>> {
+    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
+
+    if let ParsedJestFnCallNew::ExpectFnCall(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
     }
     None
