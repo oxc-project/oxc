@@ -335,7 +335,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         // The object properties for the second argument of `React.createElement`
-        let mut properties = self.ast.new_vec_with_capacity(0);
+        let mut properties = self.ast.new_vec();
 
         if let Some(attributes) = attributes {
             // TODO: compute the correct capacity for both runtimes
