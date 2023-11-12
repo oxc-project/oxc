@@ -107,6 +107,7 @@ mod typescript {
 
 mod jest {
     pub mod expect_expect;
+    pub mod max_expects;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
@@ -263,6 +264,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_var_requires,
     typescript::prefer_as_const,
     jest::expect_expect,
+    jest::max_expects,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
