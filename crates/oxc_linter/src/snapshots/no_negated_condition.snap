@@ -1,0 +1,131 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_negated_condition
+---
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (!a) {;} else {;}
+   · ────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (a != b) {;} else {;}
+   · ────────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (a !== b) {;} else {;}
+   · ─────────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !a ? b : c
+   · ──────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a != b ? c : d
+   · ──────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a !== b ? c : d
+   · ───────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ (( !a )) ? b : c
+   · ────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !(( a )) ? b : c
+   · ────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if(!(( a ))) b(); else c();
+   · ───────────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if((( !a ))) b(); else c();
+   · ───────────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ function a() {return!a ? b : c}
+   ·                     ──────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ function a() {return!(( a )) ? b : c}
+   ·                     ────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !a ? b : c ? d : e
+   · ──────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !a ? b : (( c ? d : e ))
+   · ────────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if(!a) b(); else c()
+   · ────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if(!a) {b()} else {c()}
+   · ───────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if(!!a) b(); else c();
+   · ──────────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ (!!a) ? b() : c();
+   · ─────────────────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+
