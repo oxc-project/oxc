@@ -14,8 +14,8 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call_new, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
@@ -70,7 +70,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         if counts < 1
             || should_filter_case(call_expr)
             || !is_string_type(&call_expr.arguments[0])
-            || !is_type_of_jest_fn_call_new(
+            || !is_type_of_jest_fn_call(
                 call_expr,
                 possible_jest_node,
                 ctx,

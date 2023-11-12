@@ -9,8 +9,10 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind},
-    AstNode,
+    utils::{
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -85,13 +87,22 @@ impl Rule for NoHooks {
         Self { allow }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
+        for possible_jest_node in collect_possible_jest_call_node(ctx) {
+            self.run(&possible_jest_node, ctx);
+        }
+    }
+}
+
+impl NoHooks {
+    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+        let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
         if !is_type_of_jest_fn_call(
             call_expr,
-            node,
+            possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Hook)],
         ) {
