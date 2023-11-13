@@ -83,11 +83,13 @@ impl TestRunner {
             }
         }
 
+        let total = dirs.len();
+        let passed = total - failed.len();
+        let percentage = passed as f64 / total as f64;
+        let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
+        println!("{heading}");
+
         if self.options.filter.is_none() {
-            let total = dirs.len();
-            let passed = total - failed.len();
-            let percentage = passed as f64 / total as f64;
-            let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
             let failed = failed.join("\n");
             let snapshot = format!("{heading}\n\n# Failed\n\n{failed}");
             fs::write(root().join("prettier.snap.md"), snapshot).unwrap();

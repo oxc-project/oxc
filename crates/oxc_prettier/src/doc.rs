@@ -18,6 +18,7 @@ pub enum Doc<'a> {
     /// Line breaks always indent the next line with the current level of indentation.
     Line,
     Softline,
+    Hardline,
 }
 
 /// Doc Builder

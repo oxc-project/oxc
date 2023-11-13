@@ -10,7 +10,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{document::Doc, format, group, indent, softline, string, Prettier};
+use crate::{array, doc::Doc, format, group, hardline, indent, softline, string, Prettier};
 
 pub trait Format<'a> {
     #[must_use]
@@ -30,6 +30,8 @@ impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
+        parts.push(string!(p, ";"));
+        parts.push(hardline!());
         Doc::Array(parts)
     }
 }
@@ -75,7 +77,7 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
 
 impl<'a> Format<'a> for EmptyStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("")
     }
 }
 
@@ -455,19 +457,19 @@ impl<'a> Format<'a> for LabelIdentifier {
 
 impl<'a> Format<'a> for BooleanLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str(if self.value { "true" } else { "false" })
     }
 }
 
 impl<'a> Format<'a> for NullLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("null")
     }
 }
 
 impl<'a> Format<'a> for NumberLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.str(self.raw)
     }
 }
 
@@ -497,7 +499,11 @@ impl<'a> Format<'a> for ThisExpression {
 
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::ComputedMemberExpression(expr) => expr.format(p),
+            Self::StaticMemberExpression(expr) => expr.format(p),
+            Self::PrivateFieldExpression(expr) => expr.format(p),
+        }
     }
 }
 
@@ -509,7 +515,7 @@ impl<'a> Format<'a> for ComputedMemberExpression<'a> {
 
 impl<'a> Format<'a> for StaticMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![p, format!(p, self.object), string!(p, "."), format!(p, self.property)]
     }
 }
 
@@ -539,7 +545,7 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> Format<'a> for SpreadElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![p, string!(p, "..."), format!(p, self.argument)]
     }
 }
 
@@ -581,7 +587,16 @@ impl<'a> Format<'a> for ArrowExpression<'a> {
 
 impl<'a> Format<'a> for YieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "yield"));
+        if self.delegate {
+            parts.push(string!(p, "*"));
+        }
+        if let Some(argument) = &self.argument {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, argument));
+        }
+        Doc::Array(parts)
     }
 }
 
@@ -629,25 +644,45 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![
+            p,
+            format!(p, self.left),
+            string!(p, " "),
+            string!(p, self.operator.as_str()),
+            string!(p, " "),
+            format!(p, self.right)
+        ]
     }
 }
 
 impl<'a> Format<'a> for AssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::SimpleAssignmentTarget(target) => target.format(p),
+            Self::AssignmentTargetPattern(pat) => pat.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::AssignmentTargetIdentifier(ident) => ident.format(p),
+            Self::MemberAssignmentTarget(member_expr) => member_expr.format(p),
+            Self::TSAsExpression(expr) => expr.expression.format(p),
+            Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
+            Self::TSNonNullExpression(expr) => expr.expression.format(p),
+            Self::TSTypeAssertion(expr) => expr.expression.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::ArrayAssignmentTarget(target) => target.format(p),
+            Self::ObjectAssignmentTarget(target) => target.format(p),
+        }
     }
 }
 
@@ -737,7 +772,10 @@ impl<'a> Format<'a> for Super {
 
 impl<'a> Format<'a> for AwaitExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "await "));
+        parts.push(format!(p, self.argument));
+        Doc::Array(parts)
     }
 }
 
@@ -755,7 +793,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
 
 impl<'a> Format<'a> for MetaProperty {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![p, format!(p, self.meta), string!(p, ","), format!(p, self.property)]
     }
 }
 
@@ -965,6 +1003,6 @@ impl<'a> Format<'a> for ArrayPattern<'a> {
 
 impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![p, format!(p, self.left), string!(p, " = "), format!(p, self.right)]
     }
 }

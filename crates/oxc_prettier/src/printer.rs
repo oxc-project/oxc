@@ -5,7 +5,7 @@
 
 #![allow(unused)]
 
-use crate::document::Doc;
+use crate::doc::Doc;
 
 struct Command<'a> {
     indent: Indent,
@@ -74,7 +74,7 @@ impl<'a> Printer<'a> {
                 Doc::Group(docs) => {
                     cmds.extend(docs.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
                 }
-                Doc::Line | Doc::Softline => {
+                Doc::Line | Doc::Softline | Doc::Hardline => {
                     out.push(b'\n');
                 }
             }

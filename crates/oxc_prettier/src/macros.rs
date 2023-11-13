@@ -15,19 +15,6 @@ macro_rules! string {
 }
 
 #[macro_export]
-macro_rules! group {
-    ($p:ident, $( $x:expr ),* ) => {
-        {
-            let mut temp_vec = $p.vec();
-            $(
-                temp_vec.push($x);
-            )*
-            Doc::Group(temp_vec)
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! indent {
     ($p:ident, $( $x:expr ),* ) => {
         {
@@ -44,5 +31,38 @@ macro_rules! indent {
 macro_rules! softline {
     () => {
         Doc::Softline
+    };
+}
+
+#[macro_export]
+macro_rules! hardline {
+    () => {
+        Doc::Hardline
+    };
+}
+
+#[macro_export]
+macro_rules! array {
+    ($p:ident, $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::Array(temp_vec)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! group {
+    ($p:ident, $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::Group(temp_vec)
+        }
     };
 }
