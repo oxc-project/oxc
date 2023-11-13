@@ -143,6 +143,7 @@ mod react {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod filename_case;
     pub mod new_for_builtins;
@@ -293,6 +294,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::new_for_builtins,
