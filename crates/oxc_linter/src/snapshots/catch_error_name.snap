@@ -70,6 +70,12 @@ expression: catch_error_name
 
   × eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:1:1]
+ 1 │ promise.catch((function (foo) { }))
+   ·                          ───
+   ╰────
+
+  × eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+   ╭─[catch_error_name.tsx:1:1]
  1 │ promise.then(function (foo) { }).catch((foo) => { })
    ·                                         ───
    ╰────
