@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use regex::{Matches, Regex};
 
-use crate::{ast_util::extract_flags, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-control-regex): Unexpected control character(s)")]
@@ -193,7 +193,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
                         pattern: &pattern.value,
-                        flags: extract_flags(&expr.arguments),
+                        flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
                 } else {
@@ -222,7 +222,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
                         pattern: &pattern.value,
-                        flags: extract_flags(&expr.arguments),
+                        flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
                 } else {

@@ -297,7 +297,7 @@ pub fn get_declaration_of_variable<'a, 'b>(
     Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
 }
 
-pub fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
+pub fn extract_regex_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
     if args.len() <= 1 {
         return None;
     }

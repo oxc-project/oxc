@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::extract_flags, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.")]
@@ -73,7 +73,7 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Expression<'a>) -> bool {
             return false;
         }
 
-        if let Some(flags) = extract_flags(&new_expr.arguments) {
+        if let Some(flags) = extract_regex_flags(&new_expr.arguments) {
             return flags.contains(RegExpFlags::G);
         }
     }
