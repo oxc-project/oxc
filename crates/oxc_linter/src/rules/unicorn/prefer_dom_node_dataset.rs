@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -18,25 +18,25 @@ enum PreferDomNodeDatasetDiagnostic {
         severity(warning),
         help("Access the `.dataset` object directly: `element.dataset.{1} = ...;`")
     )]
-    SetAttribute(#[label] Span, String),
+    Set(#[label] Span, String),
     #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.")]
     #[diagnostic(
         severity(warning),
         help("Access the `.dataset` object directly: `element.dataset.{1}`")
     )]
-    GetAttribute(#[label] Span, String),
+    Get(#[label] Span, String),
     #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.")]
     #[diagnostic(
         severity(warning),
         help("Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{1}')")
     )]
-    HasAttribute(#[label] Span, String),
+    Has(#[label] Span, String),
     #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.")]
     #[diagnostic(
         severity(warning),
         help("Access the `.dataset` object directly: `delete element.dataset.{1};")
     )]
-    RemoveAttribute(#[label] Span, String),
+    Remove(#[label] Span, String),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -101,24 +101,21 @@ impl Rule for PreferDomNodeDataset {
         };
 
         match method_name {
-            "setAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::SetAttribute(
-                span,
-                dataset_property_name,
-            )),
-            "getAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::GetAttribute(
-                span,
-                dataset_property_name,
-            )),
+            "setAttribute" => {
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Set(span, dataset_property_name))
+            }
+            "getAttribute" => {
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Get(span, dataset_property_name))
+            }
 
-            "removeAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::RemoveAttribute(
+            "removeAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Remove(
                 string_lit.span,
                 dataset_property_name,
             )),
 
-            "hasAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::HasAttribute(
-                span,
-                dataset_property_name,
-            )),
+            "hasAttribute" => {
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Has(span, dataset_property_name))
+            }
 
             _ => unreachable!(),
         }
