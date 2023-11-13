@@ -112,9 +112,15 @@ pub trait TestCase {
     }
 
     fn skip_test_case(&self) -> bool {
+        let options = self.options();
+
+        // Skip test cases that are not supported by babel 8
+        if let Some(b) = options.babel_8_breaking {
+            return !b;
+        }
+
         // Legacy decorators is not supported by the parser
-        if self
-            .options()
+        if options
             .get_plugin("syntax-decorators")
             .flatten()
             .as_ref()

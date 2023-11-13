@@ -42,7 +42,7 @@ impl Rule for NoInstanceofArray {
             return;
         }
 
-        match &expr.right {
+        match &expr.right.without_parenthesized() {
             Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(NoInstanceofArrayDiagnostic(expr.span), || {
                     let modified_code = {
@@ -78,6 +78,7 @@ fn test() {
     let fail = vec![
         ("arr instanceof Array", None),
         ("[] instanceof Array", None),
+        ("[] instanceof (Array)", None),
         ("[1,2,3] instanceof Array === true", None),
         ("fun.call(1, 2, 3) instanceof Array", None),
         ("obj.arr instanceof Array", None),

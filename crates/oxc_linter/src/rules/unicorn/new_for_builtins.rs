@@ -8,7 +8,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NewForBuiltinsDiagnostic {
@@ -158,13 +158,6 @@ const DISALLOW_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf_set! {
     "Number",
     "Symbol",
     "String",
-};
-
-const GLOBAL_OBJECT_NAMES: phf::Set<&'static str> = phf_set! {
-    "global",
-    "globalThis",
-    "self",
-    "window",
 };
 
 #[test]

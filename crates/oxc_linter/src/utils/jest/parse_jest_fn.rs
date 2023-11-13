@@ -371,16 +371,6 @@ pub struct ParsedExpectFnCall<'a> {
     pub expect_error: Option<ExpectError>,
 }
 
-impl<'a> ParsedExpectFnCall<'a> {
-    pub fn matcher(&self) -> Option<&KnownMemberExpressionProperty<'a>> {
-        let matcher_index = self.matcher_index?;
-        self.members.get(matcher_index)
-    }
-    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
-        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
-    }
-}
-
 struct ResolvedJestFn<'a> {
     pub local: &'a Atom,
     pub original: Option<&'a Atom>,
@@ -462,12 +452,6 @@ impl<'a> MemberExpressionElement<'a> {
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
         }
-    }
-    pub fn is_string_literal(&self) -> bool {
-        matches!(
-            self,
-            Self::Expression(Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
-        )
     }
 }
 

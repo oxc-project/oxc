@@ -3,7 +3,7 @@
 //! A value of true indicates that the variable may be overwritten.
 //! A value of false indicates that the variable should be considered read-only.
 
-use phf::{phf_map, Map};
+use phf::{phf_map, phf_set, Map};
 
 pub const BUILTINS: Map<&'static str, bool> = phf_map! {
     "AggregateError" => false,
@@ -80,4 +80,11 @@ pub const PRE_DEFINE_VAR: Map<&'static str, bool> = phf_map! {
     "NaN" => false,
     "eval" => false,
     "arguments" => false,
+};
+
+pub const GLOBAL_OBJECT_NAMES: phf::Set<&'static str> = phf_set! {
+    "global",
+    "globalThis",
+    "self",
+    "window",
 };

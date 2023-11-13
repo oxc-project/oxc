@@ -149,6 +149,7 @@ mod unicorn {
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_console_spaces;
+    pub mod no_document_cookie;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
@@ -157,6 +158,7 @@ mod unicorn {
     pub mod no_object_as_default_parameter;
     pub mod no_static_only_class;
     pub mod no_thenable;
+    pub mod no_this_assignment;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
     pub mod prefer_add_event_listener;
@@ -164,11 +166,13 @@ mod unicorn {
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
+    pub mod prefer_dom_node_append;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
     pub mod prefer_spread;
+    pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
@@ -291,6 +295,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_console_spaces,
+    unicorn::no_document_cookie,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
@@ -299,6 +304,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_object_as_default_parameter,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
+    unicorn::no_this_assignment,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
     unicorn::prefer_add_event_listener,
@@ -306,12 +312,14 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
+    unicorn::prefer_dom_node_append,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
     unicorn::prefer_spread,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,

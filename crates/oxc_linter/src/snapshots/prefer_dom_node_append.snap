@@ -1,0 +1,145 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_dom_node_append
+---
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child);
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ document.body.appendChild(child);
+   ·               ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(foo)
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ const foo = node.appendChild(child);
+   ·                  ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ console.log(node.appendChild(child));
+   ·                  ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child).appendChild(grandchild);
+   ·                         ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child).appendChild(grandchild);
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child) || "foo";
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child) + 0;
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child) + 0;
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ +node.appendChild(child);
+   ·       ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node.appendChild(child) ? "foo" : "bar";
+   ·      ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ if (node.appendChild(child)) {}
+   ·          ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ const foo = [node.appendChild(child)]
+   ·                   ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ const foo = { bar: node.appendChild(child) }
+   ·                         ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ function foo() { return node.appendChild(child); }
+   ·                              ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ const foo = () => { return node.appendChild(child); }
+   ·                                 ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ foo(bar = node.appendChild(child))
+   ·                ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ node?.appendChild(child);
+   ·       ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
+   ╭─[prefer_dom_node_append.tsx:1:1]
+ 1 │ () => node?.appendChild(child)
+   ·             ───────────
+   ╰────
+  help: Replace `Node#appendChild()` with `Node#append()`.
+
+
