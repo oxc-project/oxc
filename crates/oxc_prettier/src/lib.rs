@@ -2,7 +2,7 @@
 //!
 //! A port of <https://github.com/prettier/prettier>
 
-mod document;
+mod doc;
 mod format;
 mod macros;
 mod printer;

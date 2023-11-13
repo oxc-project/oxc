@@ -1,4 +1,4 @@
-Compatibility: 0/173 (0.00%)
+Compatibility: 1/173 (0.01%)
 
 # Failed
 
@@ -11,7 +11,6 @@ Compatibility: 0/173 (0.00%)
 * arrows-bind
 * assignment
 * assignment-comments
-* assignment-expression
 * async
 * async-do-expressions
 * babel-plugins
