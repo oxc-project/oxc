@@ -1769,6 +1769,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_prettier"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_query"
 version = "0.0.0"
 dependencies = [
