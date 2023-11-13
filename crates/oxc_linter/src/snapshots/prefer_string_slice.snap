@@ -1,0 +1,305 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_string_slice
+---
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr()
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo?.substr()
+   ·      ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar?.substring()
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo?.[0]?.substring()
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar.substr?.()
+   ·         ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar?.substring?.()
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar?.baz?.substr()
+   ·               ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar?.baz.substring()
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.bar.baz?.substr()
+   ·              ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr()
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1, 2)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(bar.length, Math.min(baz, 100))
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1, length)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1, "abc".length)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr("1", 2)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(0, -1)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(0, "foo".length)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1, length)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(start)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(start, length)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substr(1, 2)
+   ·       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(1, 2, 3)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "Sample".substr(0, "Sample".lastIndexOf("/"))
+   ·          ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring()
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring()
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(1)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(1, 2)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(2, 1)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(-1, -5)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(-1, 2)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(length)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foobar".substring("foo".length)
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(0, length)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(length, 0)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring(start)
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(1)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring(start, end)
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ "foo".substring(1, 3)
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring(1, 2, 3)
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(0, ...bar)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(...bar)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(0, (100, 1))
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr(0, 1, extraArgument)
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substr((0, bar.length), (0, baz.length))
+   ·     ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring((10, 1), 0)
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring(0, (10, 1))
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring(0, await 1)
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
+   ╭─[prefer_string_slice.tsx:1:1]
+ 1 │ foo.substring((10, bar))
+   ·     ─────────
+   ╰────
+
+
