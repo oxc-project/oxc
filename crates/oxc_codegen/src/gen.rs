@@ -648,7 +648,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
         match self.import_phase {
             ImportPhase::Source => p.print_str(b"source "),
             ImportPhase::Defer => p.print_str(b"defer "),
-            _ => {}
+            ImportPhase::Evaluation => {}
         }
 
         if let Some(specifiers) = &self.specifiers {

@@ -989,7 +989,14 @@ impl<'a> AstBuilder<'a> {
         import_kind: ImportOrExportKind,
         import_phase: ImportPhase,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind, import_phase })
+        self.alloc(ImportDeclaration {
+            span,
+            specifiers,
+            source,
+            assertions,
+            import_kind,
+            import_phase,
+        })
     }
 
     pub fn export_all_declaration(
