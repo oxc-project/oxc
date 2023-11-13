@@ -8,7 +8,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_syntax::operator::BinaryOperator;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{array, doc::Doc, format, group, hardline, indent, softline, string, Prettier};
 
@@ -623,7 +623,18 @@ impl<'a> Format<'a> for UpdateExpression<'a> {
 
 impl<'a> Format<'a> for UnaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, self.operator.as_str()));
+
+        if matches!(
+            self.operator,
+            UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete
+        ) {
+            parts.push(string!(p, " "));
+        }
+
+        parts.push(format!(p, self.argument));
+        Doc::Array(parts)
     }
 }
 
