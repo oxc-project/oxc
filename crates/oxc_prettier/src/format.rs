@@ -728,7 +728,7 @@ impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
 
 impl<'a> Format<'a> for Super {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("super")
     }
 }
 
