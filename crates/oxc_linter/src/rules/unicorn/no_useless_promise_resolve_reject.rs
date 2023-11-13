@@ -11,10 +11,10 @@ use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, 
 #[derive(Debug, Error, Diagnostic)]
 enum NoUselessPromiseResolveRejectDiagnostic {
     #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{1} value` over `{1} Promise.resolve(value)`.")]
-    #[diagnostic(severity(warning))]
+    #[diagnostic(severity(warning), help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`."))]
     Resolve(#[label] Span, &'static str),
     #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{1} Promise.reject(error)`.")]
-    #[diagnostic(severity(warning))]
+    #[diagnostic(severity(warning), help("Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`."))]
     Reject(#[label] Span, &'static str),
 }
 
@@ -24,15 +24,22 @@ pub struct NoUselessPromiseResolveReject;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows returning values wrapped in `Promise.resolve` or `Promise.reject` in an async function or a `Promise#then`/`catch`/`finally` callback.
     ///
     /// ### Why is this bad?
     ///
+    /// Wrapping a return value in `Promise.resolve` in an async function or a `Promise#then`/`catch`/`finally` callback is unnecessary as all return values in async functions and promise callback functions are already wrapped in a `Promise`. Similarly, returning an error wrapped in `Promise.reject` is equivalent to simply `throw`ing the error. This is the same for `yield`ing in async generators as well.
     ///
     /// ### Example
     /// ```javascript
+    /// // bad
+    /// async () => Promise.resolve(bar);
+    ///
+    /// // good
+    /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,
-    correctness
+    pedantic
 );
 
 impl Rule for NoUselessPromiseResolveReject {
