@@ -12,9 +12,32 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `{1}`")]
-#[diagnostic(severity(warning))]
-struct PreferDomNodeDatasetDiagnostic(#[label] pub Span, pub String);
+enum PreferDomNodeDatasetDiagnostic {
+    #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.")]
+    #[diagnostic(
+        severity(warning),
+        help("Access the `.dataset` object directly: `element.dataset.{1} = ...;`")
+    )]
+    SetAttribute(#[label] Span, String),
+    #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.")]
+    #[diagnostic(
+        severity(warning),
+        help("Access the `.dataset` object directly: `element.dataset.{1}`")
+    )]
+    GetAttribute(#[label] Span, String),
+    #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.")]
+    #[diagnostic(
+        severity(warning),
+        help("Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{1}')")
+    )]
+    HasAttribute(#[label] Span, String),
+    #[error("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.")]
+    #[diagnostic(
+        severity(warning),
+        help("Access the `.dataset` object directly: `delete element.dataset.{1};")
+    )]
+    RemoveAttribute(#[label] Span, String),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeDataset;
@@ -52,7 +75,7 @@ impl Rule for PreferDomNodeDataset {
             return;
         }
 
-        let Some(method_name) = member_expr.static_property_name() else { return };
+        let Some((span, method_name)) = member_expr.static_property_info() else { return };
 
         match method_name {
             "setAttribute" => {
@@ -73,11 +96,41 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
-        if !string_lit.value.to_lowercase().starts_with("data-") {
+        let Some(dataset_property_name) = strip_data_prefix(&string_lit.value) else {
             return;
-        }
+        };
 
-        ctx.diagnostic(PreferDomNodeDatasetDiagnostic(string_lit.span, method_name.to_string()));
+        match method_name {
+            "setAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::SetAttribute(
+                span,
+                dataset_property_name,
+            )),
+            "getAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::GetAttribute(
+                span,
+                dataset_property_name,
+            )),
+
+            "removeAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::RemoveAttribute(
+                string_lit.span,
+                dataset_property_name,
+            )),
+
+            "hasAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::HasAttribute(
+                span,
+                dataset_property_name,
+            )),
+
+            _ => unreachable!(),
+        }
+    }
+}
+
+fn strip_data_prefix(s: &str) -> Option<String> {
+    let prefix = "data-";
+    if s.len() >= prefix.len() && s[..prefix.len()].eq_ignore_ascii_case(prefix) {
+        Some(s[prefix.len()..].to_string())
+    } else {
+        None
     }
 }
 
