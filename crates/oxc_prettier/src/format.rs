@@ -153,7 +153,15 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
 impl<'a> Format<'a> for ContinueStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "continue"));
+
+        if let Some(label) = &self.label {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, label));
+        }
+
+        Doc::Array(parts)
     }
 }
 
