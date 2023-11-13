@@ -187,13 +187,58 @@ impl<'a> Format<'a> for BreakStatement {
 
 impl<'a> Format<'a> for SwitchStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        let mut header_parts = p.vec();
+
+        header_parts.push(string!(p, "switch ("));
+
+        header_parts.push(indent!(p, softline!(), format!(p, self.discriminant)));
+
+        header_parts.push(softline!());
+        header_parts.push(string!(p, ")"));
+
+        parts.push(group!(p, Doc::Array(header_parts)));
+
+        parts.push(p.str(" {"));
+
+        let mut cases_parts = p.vec();
+
+        for case in &self.cases {
+            cases_parts.push(hardline!());
+            cases_parts.push(format!(p, case));
+        }
+
+        parts.push(indent!(p, hardline!(), group!(p, Doc::Array(cases_parts))));
+
+        parts.push(hardline!());
+        parts.push(p.str("}"));
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for SwitchCase<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        if let Some(test) = &self.test {
+            parts.push(string!(p, "case "));
+            parts.push(format!(p, test));
+            parts.push(string!(p, ":"));
+        } else {
+            parts.push(string!(p, "default:"));
+        }
+
+        let mut consequent_parts = p.vec();
+        for stmt in &self.consequent {
+            consequent_parts.push(hardline!());
+            consequent_parts.push(format!(p, stmt));
+        }
+
+        parts.push(indent!(p, hardline!(), group!(p, Doc::Array(consequent_parts))));
+
+        Doc::Array(parts)
     }
 }
 
