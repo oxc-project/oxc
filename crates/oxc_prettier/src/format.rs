@@ -159,7 +159,15 @@ impl<'a> Format<'a> for ContinueStatement {
 
 impl<'a> Format<'a> for BreakStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "break"));
+
+        if let Some(label) = &self.label {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, label));
+        }
+
+        Doc::Array(parts)
     }
 }
 
