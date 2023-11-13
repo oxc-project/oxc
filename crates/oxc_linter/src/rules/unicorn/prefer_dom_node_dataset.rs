@@ -102,10 +102,10 @@ impl Rule for PreferDomNodeDataset {
 
         match method_name {
             "setAttribute" => {
-                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Set(span, dataset_property_name))
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Set(span, dataset_property_name));
             }
             "getAttribute" => {
-                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Get(span, dataset_property_name))
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Get(span, dataset_property_name));
             }
 
             "removeAttribute" => ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Remove(
@@ -114,7 +114,7 @@ impl Rule for PreferDomNodeDataset {
             )),
 
             "hasAttribute" => {
-                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Has(span, dataset_property_name))
+                ctx.diagnostic(PreferDomNodeDatasetDiagnostic::Has(span, dataset_property_name));
             }
 
             _ => unreachable!(),
