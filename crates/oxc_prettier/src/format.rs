@@ -69,7 +69,7 @@ impl<'a> Format<'a> for Statement<'a> {
 
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        self.expression.format(p)
+        array!(p, format!(p, self.expression), Doc::Hardline)
     }
 }
 

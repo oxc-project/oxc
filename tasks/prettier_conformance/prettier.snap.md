@@ -1,4 +1,4 @@
-Compatibility: 1/173 (0.01%)
+Compatibility: 2/173 (0.01%)
 
 # Failed
 
@@ -95,7 +95,6 @@ Compatibility: 1/173 (0.01%)
 * line
 * line-suffix-boundary
 * literal
-* literal-numeric-separator
 * logical-assignment
 * logical_expressions
 * member
