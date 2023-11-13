@@ -777,7 +777,29 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(format!(p, self.left));
+
+        let mut parts_inner = p.vec();
+
+        parts_inner.push(Doc::Str(" "));
+
+        let mut parts_inner_inner = p.vec();
+
+        parts_inner_inner.push(string!(p, self.operator.as_str()));
+
+        parts_inner_inner.push(Doc::Line);
+
+        parts_inner_inner.push(format!(p, self.right));
+
+        let indent = Doc::Indent(parts_inner_inner);
+
+        parts_inner.push(group!(p, indent));
+
+        parts.push(Doc::Indent(parts_inner));
+
+        Doc::Group(parts)
     }
 }
 
