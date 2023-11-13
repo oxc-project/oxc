@@ -481,7 +481,12 @@ impl<'a> Format<'a> for BigintLiteral {
 
 impl<'a> Format<'a> for RegExpLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(p.str("/"));
+        parts.push(p.str(self.regex.pattern.as_str()));
+        parts.push(p.str("/"));
+        parts.push(format!(p, self.regex.flags));
+        Doc::Array(parts)
     }
 }
 
@@ -1009,5 +1014,37 @@ impl<'a> Format<'a> for ArrayPattern<'a> {
 impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array![p, format!(p, self.left), string!(p, " = "), format!(p, self.right)]
+    }
+}
+
+impl<'a> Format<'a> for RegExpFlags {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut str = vec![];
+
+        if self.contains(Self::D) {
+            str.push('d');
+        }
+        if self.contains(Self::G) {
+            str.push('g');
+        }
+        if self.contains(Self::I) {
+            str.push('i');
+        }
+        if self.contains(Self::M) {
+            str.push('m');
+        }
+        if self.contains(Self::S) {
+            str.push('s');
+        }
+        if self.contains(Self::V) {
+            str.push('v');
+        }
+        if self.contains(Self::U) {
+            str.push('u');
+        }
+        if self.contains(Self::Y) {
+            str.push('y');
+        }
+        p.str(str.iter().collect::<String>().as_str())
     }
 }
