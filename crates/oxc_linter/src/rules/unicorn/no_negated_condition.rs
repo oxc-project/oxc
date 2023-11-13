@@ -97,7 +97,7 @@ impl Rule for NoNegatedCondition {
             }
         }
 
-        ctx.diagnostic(NoNegatedConditionDiagnostic(node.kind().span()));
+        ctx.diagnostic(NoNegatedConditionDiagnostic(stmt_test.span()));
     }
 }
 
