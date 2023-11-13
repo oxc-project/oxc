@@ -1780,6 +1780,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_prettier_conformance"
+version = "0.0.0"
+dependencies = [
+ "jemallocator",
+ "mimalloc",
+ "oxc_allocator",
+ "oxc_parser",
+ "oxc_prettier",
+ "oxc_span",
+ "oxc_tasks_common",
+ "pico-args",
+ "walkdir",
+]
+
+[[package]]
 name = "oxc_query"
 version = "0.0.0"
 dependencies = [

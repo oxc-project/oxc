@@ -13,3 +13,8 @@
 	url = git@github.com:microsoft/TypeScript.git
 	shallow = true
 	branch = main
+[submodule "tasks/prettier_conformance/prettier"]
+	path = tasks/prettier_conformance/prettier
+	url = git@github.com:prettier/prettier.git
+	shallow = true
+	branch = main

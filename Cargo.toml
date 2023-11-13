@@ -35,6 +35,7 @@ oxc_linter         = { path = "crates/oxc_linter" }
 oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
 oxc_query          = { path = "crates/oxc_query" }
 oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
+oxc_prettier       = { path = "crates/oxc_prettier" }
 
 # published by its own
 oxc_resolver = { path = "crates/oxc_resolver" }
