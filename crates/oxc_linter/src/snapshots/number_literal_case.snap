@@ -1,0 +1,127 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: number_literal_case
+---
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0B10
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0O1234567
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0XaBcDeF
+   ·             ────────
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`) and uppercase for hexadecimal digits.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0B10n
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0O1234567n
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0XaBcDeFn
+   ·             ─────────
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`) and uppercase for hexadecimal digits.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0B0n
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0O0n
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0X0n
+   ·              ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 1.2E3
+   ·                ─
+   ╰────
+  help: Use lowercase for `e` in exponential notations.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 1.2E-3
+   ·                ─
+   ╰────
+  help: Use lowercase for `e` in exponential notations.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 1.2E+3
+   ·                ─
+   ╰────
+  help: Use lowercase for `e` in exponential notations.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase.
+   ╭─[number_literal_case.tsx:3:1]
+ 3 │ 
+ 4 │             if (foo === 0xff) {
+   ·                           ──
+ 5 │                 console.log('invalid');
+   ╰────
+  help: Use uppercase for hexadecimal digits.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ const foo = 0XdeEd_Beefn
+   ·             ────────────
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`) and uppercase for hexadecimal digits.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+   ·                     ─
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`).
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+   ·                              ─
+   ╰────
+  help: Use lowercase for `e` in exponential notations.
+
+  ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
+   ╭─[number_literal_case.tsx:1:1]
+ 1 │ console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+   ·                                     ────────────
+   ╰────
+  help: Use lowercase for number literal prefixes (`0b`, `0o`, and `0x`) and uppercase for hexadecimal digits.
+
+
