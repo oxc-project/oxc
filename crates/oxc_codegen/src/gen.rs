@@ -644,6 +644,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameters<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_str(b"import ");
+
+        match self.import_phase {
+            ImportPhase::Source => p.print_str(b"source "),
+            ImportPhase::Defer => p.print_str(b"defer "),
+            _ => {}
+        }
+
         if let Some(specifiers) = &self.specifiers {
             if specifiers.is_empty() {
                 p.print(b'\'');

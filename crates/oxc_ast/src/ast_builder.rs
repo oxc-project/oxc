@@ -987,8 +987,9 @@ impl<'a> AstBuilder<'a> {
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>,
         import_kind: ImportOrExportKind,
+        import_phase: ImportPhase,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind })
+        self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind, import_phase })
     }
 
     pub fn export_all_declaration(

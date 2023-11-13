@@ -50,6 +50,8 @@ impl<'a> Parser<'a> {
         // `import type ...`
         let import_kind = self.parse_import_or_export_kind();
 
+        let import_phase = self.parse_import_phase()?;
+
         let specifiers = if self.at(Kind::Str) {
             // import "source"
             None
@@ -67,8 +69,48 @@ impl<'a> Parser<'a> {
             source,
             assertions,
             import_kind,
+            import_phase,
         ));
         Ok(self.ast.module_declaration(decl))
+    }
+
+    /// [Source Phase Imports](https://tc39.es/proposal-source-phase-imports)
+    fn parse_import_phase(&mut self) -> Result<ImportPhase> {
+        let default_phase = ImportPhase::Evaluation;
+
+        if !self.cur_kind().is_binding_identifier() {
+            return Ok(default_phase);
+        }
+
+        // https://github.com/babel/babel/blob/5e1c5f047cbcb3a47de5a09487818661bcce3743/packages/babel-parser/src/parser/statement.ts#L2980-L2994
+        // OK: import <phase> x from "foo";
+        // OK: import <phase> from from "foo";
+        // NO: import <phase> from "foo";
+        // NO: import <phase> from 'foo';
+        // OK: import <phase> { x } from "foo";
+        // OK: import <phase> * as T from "foo";
+        // NO: import <phase> "foo";
+        if !matches!(self.cur_string(), Some("source" | "defer")) {
+            return Ok(default_phase);
+        }
+
+        let phase = match self.cur_string() {
+            Some("source") => ImportPhase::Source,
+            Some("defer") => ImportPhase::Defer,
+            _ => unreachable!(),
+        };
+
+        if matches!(self.peek_kind(), Kind::Star | Kind::LCurly) {
+            self.bump_any();
+            return Ok(phase);
+        }
+
+        if !self.peek_at(Kind::From) || self.nth_at(2, Kind::From) {
+            self.bump_any();
+            return Ok(phase);
+        }
+
+        Ok(default_phase)
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
