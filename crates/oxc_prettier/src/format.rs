@@ -607,7 +607,17 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(p.str(self.operator.as_str()));
+
+        parts.push(format!(p, self.argument));
+
+        if self.prefix {
+            parts.reverse();
+        }
+
+        Doc::Array(parts)
     }
 }
 
