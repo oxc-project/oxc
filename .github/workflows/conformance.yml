@@ -57,6 +57,7 @@ jobs:
 
       - run: cargo coverage
       - run: cargo run --release -p oxc_transform_conformance -- --exec
+      - run: cargo run --release -p oxc_prettier_conformance
 
       # - run: cargo minsize
 
