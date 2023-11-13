@@ -148,6 +148,7 @@ mod unicorn {
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_console_spaces;
+    pub mod no_document_cookie;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
@@ -291,6 +292,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_console_spaces,
+    unicorn::no_document_cookie,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
