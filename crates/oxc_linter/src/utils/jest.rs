@@ -15,20 +15,18 @@ use crate::LintContext;
 
 mod parse_jest_fn;
 
-use crate::utils::jest::parse_jest_fn::ParsedJestFnCall;
 pub use crate::utils::jest::parse_jest_fn::{
-    parse_jest_fn_call, ExpectError, KnownMemberExpressionParentKind,
-    KnownMemberExpressionProperty, MemberExpressionElement, ParsedExpectFnCall,
+    parse_jest_fn_call, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
+    MemberExpressionElement,
 };
 
 mod parse_jest_fn_new;
 pub use crate::utils::jest::parse_jest_fn_new::{
-    parse_jest_fn_call as parse_jest_fn_call_new,
+    parse_jest_fn_call as parse_jest_fn_call_new, ExpectError,
     KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
     KnownMemberExpressionProperty as KnownMemberExpressionPropertyNew,
-    MemberExpressionElement as MemberExpressionElementNew,
-    ParsedExpectFnCall as ParsedExpectFnCallNew, ParsedGeneralJestFnCall,
-    ParsedJestFnCall as ParsedJestFnCallNew,
+    MemberExpressionElement as MemberExpressionElementNew, ParsedExpectFnCall,
+    ParsedGeneralJestFnCall, ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
 const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
@@ -133,22 +131,9 @@ pub fn parse_general_jest_fn_call<'a>(
 
 pub fn parse_expect_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<ParsedExpectFnCall<'a>> {
-    let jest_fn_call = parse_jest_fn_call(call_expr, node, ctx)?;
-
-    if let ParsedJestFnCall::ExpectFnCall(jest_fn_call) = jest_fn_call {
-        return Some(jest_fn_call);
-    }
-    None
-}
-
-pub fn parse_expect_jest_fn_call_new<'a>(
-    call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<ParsedExpectFnCallNew<'a>> {
+) -> Option<ParsedExpectFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
 
     if let ParsedJestFnCallNew::ExpectFnCall(jest_fn_call) = jest_fn_call {
@@ -188,13 +173,11 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
         vec![]
     };
 
-    // The longest length of Jest chains is 4, and it may be a TaggedTemplateExpression, e.g.`it.concurrent.only.each``()`.
-    // We take 5 ancestors of node and collect all Call Expression.
-    // The invalid Jest Call Expression will be bypassed in `parse_jest_fn_call`
+    // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {
         let (reference_id, original) = id_with_original;
         let mut id = ctx.symbols().get_reference(*reference_id).node_id();
-        for _ in 0..5 {
+        loop {
             let parent = ctx.nodes().parent_node(id);
             if let Some(parent) = parent {
                 let parent_kind = parent.kind();

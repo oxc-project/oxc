@@ -9,7 +9,11 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::parse_expect_jest_fn_call, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots")]
@@ -56,26 +60,35 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInterpolationInSnapshots {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, node, ctx) else { return };
-        let Some(matcher) = jest_fn_call.matcher() else {
-            return;
-        };
-
-        if matcher.is_name_unequal("toMatchInlineSnapshot")
-            && matcher.is_name_unequal("toThrowErrorMatchingInlineSnapshot")
-        {
-            return;
+    fn run_once(&self, ctx: &LintContext) {
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            run(possible_jest_node, ctx);
         }
+    }
+}
 
-        // Check all since the optional 'propertyMatchers' argument might be present
-        // `.toMatchInlineSnapshot(propertyMatchers?, inlineSnapshot)`
-        for arg in jest_fn_call.args {
-            if let Argument::Expression(Expression::TemplateLiteral(template_lit)) = arg {
-                if !template_lit.expressions.is_empty() {
-                    ctx.diagnostic(NoInterpolationInSnapshotsDiagnostic(template_lit.span));
-                }
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    let node = possible_jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+        return;
+    };
+    let Some(matcher) = jest_fn_call.matcher() else {
+        return;
+    };
+
+    if matcher.is_name_unequal("toMatchInlineSnapshot")
+        && matcher.is_name_unequal("toThrowErrorMatchingInlineSnapshot")
+    {
+        return;
+    }
+
+    // Check all since the optional 'propertyMatchers' argument might be present
+    // `.toMatchInlineSnapshot(propertyMatchers?, inlineSnapshot)`
+    for arg in jest_fn_call.args {
+        if let Argument::Expression(Expression::TemplateLiteral(template_lit)) = arg {
+            if !template_lit.expressions.is_empty() {
+                ctx.diagnostic(NoInterpolationInSnapshotsDiagnostic(template_lit.span));
             }
         }
     }
