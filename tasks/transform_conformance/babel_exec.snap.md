@@ -1,4 +1,4 @@
-Passed: 356/415
+Passed: 355/414
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -65,7 +65,7 @@ Passed: 356/415
 * general/parenthesized-member-call/exec.js
 * general/parenthesized-member-call-loose/exec.js
 
-# babel-plugin-transform-async-generator-functions (23/26)
+# babel-plugin-transform-async-generator-functions (22/25)
 * yield-star/ecma262-pr-2819/exec.js
 * yield-star/throw-method-with-finally/exec.js
 * yield-star-polyfill-corejs3/throw-method-with-finally/exec.js
