@@ -14,18 +14,9 @@ use phf::phf_set;
 use crate::LintContext;
 
 mod parse_jest_fn;
-
 pub use crate::utils::jest::parse_jest_fn::{
-    parse_jest_fn_call, KnownMemberExpressionParentKind, KnownMemberExpressionProperty,
-    MemberExpressionElement,
-};
-
-mod parse_jest_fn_new;
-pub use crate::utils::jest::parse_jest_fn_new::{
-    parse_jest_fn_call as parse_jest_fn_call_new, ExpectError,
-    KnownMemberExpressionParentKind as KnownMemberExpressionParentKindNew,
-    KnownMemberExpressionProperty as KnownMemberExpressionPropertyNew,
-    MemberExpressionElement as MemberExpressionElementNew, ParsedExpectFnCall,
+    parse_jest_fn_call, ExpectError, KnownMemberExpressionParentKind,
+    KnownMemberExpressionProperty, MemberExpressionElement, ParsedExpectFnCall,
     ParsedGeneralJestFnCall, ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
@@ -105,7 +96,7 @@ pub fn is_type_of_jest_fn_call<'a>(
     ctx: &LintContext<'a>,
     kinds: &[JestFnKind],
 ) -> bool {
-    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx);
+    let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx);
     if let Some(jest_fn_call) = jest_fn_call {
         let kind = jest_fn_call.kind();
         if kinds.contains(&kind) {
@@ -121,7 +112,7 @@ pub fn parse_general_jest_fn_call<'a>(
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedGeneralJestFnCall<'a>> {
-    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
+    let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
     if let ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
@@ -134,7 +125,7 @@ pub fn parse_expect_jest_fn_call<'a>(
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedExpectFnCall<'a>> {
-    let jest_fn_call = parse_jest_fn_call_new(call_expr, possible_jest_node, ctx)?;
+    let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
     if let ParsedJestFnCallNew::ExpectFnCall(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
@@ -152,26 +143,26 @@ pub struct PossibleJestNode<'a, 'b> {
 pub fn collect_possible_jest_call_node<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> Vec<PossibleJestNode<'a, 'b>> {
-    let import_entries = &ctx.semantic().module_record().import_entries;
-
-    // Whether test functions are imported from 'jest/globals'.
-    // Not support mix global Jest functions with import Jest functions
-    let is_import_mode = import_entries
-        .iter()
-        .any(|import_entry| matches!(import_entry.module_request.name().as_str(), "@jest/globals"));
-
-    let reference_id_with_original_list = if is_import_mode {
-        collect_ids_referenced_to_import(ctx)
-    } else if JEST_METHOD_NAMES
+    // Some people may write codes like below, we need lookup imported test function and global test function.
+    // ```
+    // import { jest as Jest } from '@jest/globals';
+    // Jest.setTimeout(800);
+    //     test('test', () => {
+    //     expect(1 + 2).toEqual(3);
+    // });
+    // ```
+    let mut reference_id_with_original_list = collect_ids_referenced_to_import(ctx);
+    if JEST_METHOD_NAMES
         .iter()
         .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
     {
-        // set original of global test function to None
-        collect_ids_referenced_to_global(ctx).iter().map(|id| (*id, None)).collect()
-    } else {
-        // we are not test file, just return empty vec.
-        vec![]
-    };
+        reference_id_with_original_list.extend(
+            collect_ids_referenced_to_global(ctx)
+                .iter()
+                // set the original of global test function to None
+                .map(|id| (*id, None)),
+        );
+    }
 
     // get the longest valid chain of Jest Call Expression
     reference_id_with_original_list.iter().fold(vec![], |mut acc, id_with_original| {

@@ -1,19 +1,18 @@
-use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression},
-    AstKind,
-};
+use std::collections::HashMap;
+
+use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ReferenceId};
+use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_jest_fn_call, JestFnKind},
+    utils::{collect_possible_jest_call_node, parse_jest_fn_call, PossibleJestNode},
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -90,6 +89,11 @@ impl Rule for NoConfusingSetTimeout {
     fn run_once(&self, ctx: &LintContext) {
         let scopes = ctx.scopes();
         let symbol_table = ctx.symbols();
+        let possible_nodes = collect_possible_jest_call_node(ctx);
+        let id_to_jest_node_map = possible_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
+            acc.insert(cur.node.id(), cur);
+            acc
+        });
 
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut seen_jest_set_timeout = false;
@@ -108,6 +112,7 @@ impl Rule for NoConfusingSetTimeout {
                 reference_id_list,
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
+                &id_to_jest_node_map,
             );
         }
 
@@ -117,6 +122,7 @@ impl Rule for NoConfusingSetTimeout {
                 reference_id_list,
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
+                &id_to_jest_node_map,
             );
         }
     }
@@ -145,11 +151,12 @@ fn collect_jest_reference_id(
     }
 }
 
-fn handle_jest_set_time_out(
-    ctx: &LintContext,
+fn handle_jest_set_time_out<'a>(
+    ctx: &LintContext<'a>,
     reference_id_list: &Vec<ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
+    id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
     let scopes = ctx.scopes();
@@ -163,7 +170,7 @@ fn handle_jest_set_time_out(
         };
 
         if !is_jest_call(reference.name()) {
-            if is_jest_fn_call(parent_node, ctx) {
+            if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
                 for (jest_reference_id, span) in jest_reference_id_list {
                     if jest_reference_id > &reference_id {
                         ctx.diagnostic(NoUnorderSetTimeoutDiagnostic(*span));
@@ -195,37 +202,38 @@ fn handle_jest_set_time_out(
     }
 }
 
-fn is_jest_fn_call<'a>(parent_node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_jest_fn_call<'a>(
+    parent_node: &AstNode<'a>,
+    id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    let mut id = parent_node.id();
+    loop {
+        let parent = ctx.nodes().parent_node(id);
+        if let Some(parent) = parent {
+            let parent_kind = parent.kind();
+            if matches!(
+                parent_kind,
+                AstKind::CallExpression(_)
+                    | AstKind::MemberExpression(_)
+                    | AstKind::TaggedTemplateExpression(_)
+            ) {
+                id = parent.id();
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    let Some(possible_jest_node) = id_to_jest_node_map.get(&id) else {
+        return false;
+    };
     let AstKind::CallExpression(call_expr) = parent_node.kind() else {
         return false;
     };
-    if let Expression::Identifier(ident) = &call_expr.callee {
-        if ident.name == "expect" {
-            let Some(grand_node) = ctx.nodes().parent_node(parent_node.id()) else {
-                return false;
-            };
-            let Some(grand_grand_node) = ctx.nodes().parent_node(grand_node.id()) else {
-                return false;
-            };
-            return match_jest_fn_call(call_expr, grand_grand_node, ctx);
-        }
-    };
-
-    match_jest_fn_call(call_expr, parent_node, ctx)
-}
-
-fn match_jest_fn_call<'a>(
-    expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-) -> bool {
-    let Some(jest_fn_call) = parse_jest_fn_call(expr, node, ctx) else {
-        return false;
-    };
-    match jest_fn_call.kind() {
-        JestFnKind::Expect | JestFnKind::General(_) => true,
-        JestFnKind::Unknown => false,
-    }
+    parse_jest_fn_call(call_expr, possible_jest_node, ctx).is_some()
 }
 
 fn is_jest_call(name: &Atom) -> bool {
