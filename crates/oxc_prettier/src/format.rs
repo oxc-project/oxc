@@ -967,7 +967,12 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
 
 impl<'a> Format<'a> for PrivateIdentifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(p.str("#"));
+        parts.push(p.str(self.name.as_str()));
+
+        Doc::Array(parts)
     }
 }
 
