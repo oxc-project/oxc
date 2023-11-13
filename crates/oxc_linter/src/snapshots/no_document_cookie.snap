@@ -1,0 +1,61 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_document_cookie
+---
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ document.cookie = "foo=bar"
+   · ───────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ document.cookie += ";foo=bar"
+   · ─────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ document.cookie = document.cookie + ";foo=bar"
+   · ──────────────────────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ document.cookie &&= true
+   · ────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ foo = document.cookie = "foo=bar"
+   ·       ───────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ var doc = document; doc.cookie = "foo=bar"
+   ·                     ──────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ let doc = document; doc.cookie = "foo=bar"
+   ·                     ──────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(no-document-cookie):
+   ╭─[no_document_cookie.tsx:1:1]
+ 1 │ window.document.cookie = "foo=bar"
+   · ──────────────────────────────────
+   ╰────
+  help: 
+
+
