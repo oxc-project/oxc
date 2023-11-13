@@ -7,6 +7,7 @@ use oxc_allocator::{String, Vec};
 
 use crate::Prettier;
 
+#[derive(Debug)]
 pub enum Doc<'a> {
     Str(&'a str),
     // perf: can we use &[Doc] here?
