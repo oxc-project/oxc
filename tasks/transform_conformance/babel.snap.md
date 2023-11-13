@@ -1,4 +1,4 @@
-Passed: 261/1080
+Passed: 261/1116
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -14,7 +14,7 @@ Passed: 261/1080
 * transform-u/basic/input.js
 * transform-u/string-properties/input.js
 
-# babel-plugin-transform-class-properties (0/264)
+# babel-plugin-transform-class-properties (0/269)
 * assumption-constantSuper/complex-super-class/input.js
 * assumption-constantSuper/instance-field/input.js
 * assumption-constantSuper/static-field/input.js
@@ -33,6 +33,7 @@ Passed: 261/1080
 * assumption-setPublicClassFields/regression-T6719/input.js
 * assumption-setPublicClassFields/regression-T7364/input.mjs
 * assumption-setPublicClassFields/static/input.js
+* assumption-setPublicClassFields/static-class-binding/input.js
 * assumption-setPublicClassFields/static-export/input.mjs
 * assumption-setPublicClassFields/static-infer-name/input.js
 * assumption-setPublicClassFields/static-super/input.js
@@ -121,6 +122,7 @@ Passed: 261/1080
 * private/regression-T7364/input.mjs
 * private/static/input.js
 * private/static-call/input.js
+* private/static-class-binding/input.js
 * private/static-export/input.mjs
 * private/static-infer-name/input.js
 * private/static-inherited/input.js
@@ -192,6 +194,7 @@ Passed: 261/1080
 * private-loose/reference-in-other-property/input.js
 * private-loose/static/input.js
 * private-loose/static-call/input.js
+* private-loose/static-class-binding/input.js
 * private-loose/static-export/input.mjs
 * private-loose/static-infer-name/input.js
 * private-loose/static-inherited/input.js
@@ -230,6 +233,7 @@ Passed: 261/1080
 * public/regression-T6719/input.js
 * public/regression-T7364/input.mjs
 * public/static/input.js
+* public/static-class-binding/input.js
 * public/static-export/input.mjs
 * public/static-infer-name/input.js
 * public/static-super/input.js
@@ -260,6 +264,7 @@ Passed: 261/1080
 * public-loose/regression-T6719/input.js
 * public-loose/regression-T7364/input.mjs
 * public-loose/static/input.js
+* public-loose/static-class-binding/input.js
 * public-loose/static-export/input.mjs
 * public-loose/static-infer-name/input.js
 * public-loose/static-super/input.js
@@ -297,8 +302,9 @@ Passed: 261/1080
 * integration-loose/preserve-comments/input.js
 * integration-loose/super-static-block/input.js
 
-# babel-plugin-transform-private-methods (0/136)
+# babel-plugin-transform-private-methods (0/144)
 * accessors/basic/input.js
+* accessors/class-binding/input.js
 * accessors/get-only-setter/input.js
 * accessors/preserve-comments/input.js
 * accessors/reassignment/input.js
@@ -307,17 +313,20 @@ Passed: 261/1080
 * accessors/updates/input.js
 * accessors/updates-bigint/input.js
 * accessors-loose/basic/input.js
+* accessors-loose/class-binding/input.js
 * accessors-loose/get-only-setter/input.js
 * accessors-loose/preserve-comments/input.js
 * accessors-loose/reassignment/input.js
 * accessors-loose/set-only-getter/input.js
 * accessors-loose/updates/input.js
 * accessors-privateFieldsAsProperties/basic/input.js
+* accessors-privateFieldsAsProperties/class-binding/input.js
 * accessors-privateFieldsAsProperties/get-only-setter/input.js
 * accessors-privateFieldsAsProperties/preserve-comments/input.js
 * accessors-privateFieldsAsProperties/set-only-getter/input.js
 * accessors-privateFieldsAsProperties/updates/input.js
 * accessors-privateFieldsAsSymbols/basic/input.js
+* accessors-privateFieldsAsSymbols/class-binding/input.js
 * accessors-privateFieldsAsSymbols/get-only-setter/input.js
 * accessors-privateFieldsAsSymbols/preserve-comments/input.js
 * accessors-privateFieldsAsSymbols/set-only-getter/input.js
@@ -335,6 +344,7 @@ Passed: 261/1080
 * private-method/assignment/input.js
 * private-method/async/input.js
 * private-method/before-fields/input.js
+* private-method/class-binding/input.js
 * private-method/class-expression/input.js
 * private-method/context/input.js
 * private-method/exfiltrated/input.js
@@ -347,6 +357,7 @@ Passed: 261/1080
 * private-method-loose/assignment/input.js
 * private-method-loose/async/input.js
 * private-method-loose/before-fields/input.js
+* private-method-loose/class-binding/input.js
 * private-method-loose/class-expression/input.js
 * private-method-loose/context/input.js
 * private-method-loose/exfiltrated/input.js
@@ -357,6 +368,7 @@ Passed: 261/1080
 * private-method-privateFieldsAsProperties/assignment/input.js
 * private-method-privateFieldsAsProperties/async/input.js
 * private-method-privateFieldsAsProperties/before-fields/input.js
+* private-method-privateFieldsAsProperties/class-binding/input.js
 * private-method-privateFieldsAsProperties/class-expression/input.js
 * private-method-privateFieldsAsProperties/context/input.js
 * private-method-privateFieldsAsProperties/exfiltrated/input.js
@@ -365,6 +377,7 @@ Passed: 261/1080
 * private-method-privateFieldsAsSymbols/assignment/input.js
 * private-method-privateFieldsAsSymbols/async/input.js
 * private-method-privateFieldsAsSymbols/before-fields/input.js
+* private-method-privateFieldsAsSymbols/class-binding/input.js
 * private-method-privateFieldsAsSymbols/class-expression/input.js
 * private-method-privateFieldsAsSymbols/context/input.js
 * private-method-privateFieldsAsSymbols/exfiltrated/input.js
@@ -505,13 +518,19 @@ Passed: 261/1080
 * export-namespace/namespace-string/input.mjs
 * export-namespace/namespace-typescript/input.mjs
 
-# babel-plugin-transform-dynamic-import (0/18)
+# babel-plugin-transform-dynamic-import (0/35)
 * amd/missing-plugin/input.mjs
 * amd/module/input.mjs
 * amd/no-interop/input.js
 * amd/script/input.js
 * amd/to-string/input.js
 * amd/with-other-import-export/input.mjs
+* amd-createImportExpression-false/missing-plugin/input.mjs
+* amd-createImportExpression-false/module/input.mjs
+* amd-createImportExpression-false/no-interop/input.js
+* amd-createImportExpression-false/script/input.js
+* amd-createImportExpression-false/to-string/input.js
+* amd-createImportExpression-false/with-other-import-export/input.mjs
 * commonjs/missing-plugin/input.mjs
 * commonjs/module/input.mjs
 * commonjs/no-interop/input.js
@@ -519,17 +538,28 @@ Passed: 261/1080
 * commonjs/shadowed-require/input.js
 * commonjs/template-literal/input.js
 * commonjs/to-string/input.js
+* commonjs-createImportExpression-false/missing-plugin/input.mjs
+* commonjs-createImportExpression-false/module/input.mjs
+* commonjs-createImportExpression-false/no-interop/input.js
+* commonjs-createImportExpression-false/script/input.js
+* commonjs-createImportExpression-false/shadowed-require/input.js
+* commonjs-createImportExpression-false/template-literal/input.js
+* commonjs-createImportExpression-false/to-string/input.js
 * missing-module-transform/missing-module-transform/input.js
 * systemjs/missing-plugin/input.mjs
 * systemjs/module/input.mjs
 * systemjs/script/input.js
 * systemjs/to-string/input.js
+* systemjs-createImportExpression-false/missing-plugin/input.mjs
+* systemjs-createImportExpression-false/module/input.mjs
+* systemjs-createImportExpression-false/script/input.js
+* systemjs-createImportExpression-false/to-string/input.js
 
 # babel-plugin-transform-nullish-coalescing-operator (10/12)
 * assumption-noDocumentAll/transform-in-default-param/input.js
 * nullish-coalescing/transform-in-default-param/input.js
 
-# babel-plugin-transform-optional-chaining (1/46)
+# babel-plugin-transform-optional-chaining (1/45)
 * assumption-noDocumentAll/assignment/input.js
 * assumption-noDocumentAll/cast-to-boolean/input.js
 * assumption-noDocumentAll/in-function-params/input.js
@@ -543,6 +573,7 @@ Passed: 261/1080
 * general/cast-to-boolean/input.js
 * general/containers/input.js
 * general/delete/input.js
+* general/delete-in-function-params/input.js
 * general/function-call/input.js
 * general/function-call-loose/input.js
 * general/function-call-spread/input.js
@@ -551,9 +582,6 @@ Passed: 261/1080
 * general/in-method-key/input.js
 * general/in-method-key-loose/input.js
 * general/in-var-destructuring/input.js
-* general/lhs-assignment/input.js
-* general/lhs-assignment-read-and-update/input.js
-* general/lhs-update/input.js
 * general/member-access/input.js
 * general/memoize/input.js
 * general/memoize-loose/input.js
@@ -568,6 +596,7 @@ Passed: 261/1080
 * loose/cast-to-boolean/input.js
 * regression/10959-transform-optional-chaining/input.ts
 * regression/10959-transform-ts-and-optional-chaining/input.ts
+* regression/15887/input.js
 * regression/7642/input.js
 * transparent-expr-wrappers/ts-as-call-context/input.ts
 * transparent-expr-wrappers/ts-as-call-context-in-if/input.ts
@@ -668,7 +697,7 @@ Passed: 261/1080
 * dotall-regex/with-unicode-flag/input.js
 * dotall-regex/with-unicode-property-escape/input.js
 
-# babel-plugin-transform-async-to-generator (1/41)
+# babel-plugin-transform-async-to-generator (1/43)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 * assumption-ignoreFunctionLength-true/export-default-function/input.mjs
 * assumption-noNewArrows-false/basic/input.js
@@ -701,6 +730,7 @@ Passed: 261/1080
 * export-async/default-export/input.mjs
 * export-async/import-and-export/input.mjs
 * export-async/lone-export/input.mjs
+* regression/15978/input.js
 * regression/4599/input.js
 * regression/4943/input.js
 * regression/7178/input.js
@@ -709,6 +739,7 @@ Passed: 261/1080
 * regression/T7194/input.js
 * regression/gh-6923/input.js
 * regression/in-uncompiled-class-fields/input.js
+* regression/regression-2765/input.js
 
 # babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js
@@ -739,7 +770,7 @@ Passed: 261/1080
 * loose/ignoreToPrimitiveHint/input.js
 * loose/mutableTemplateObject/input.js
 
-# babel-plugin-transform-typescript (66/168)
+# babel-plugin-transform-typescript (66/173)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -815,7 +846,9 @@ Passed: 261/1080
 * namespace/contentious-names/input.ts
 * namespace/declare/input.ts
 * namespace/declare-global-nested-namespace/input.ts
+* namespace/empty-removed/input.ts
 * namespace/export/input.ts
+* namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
 * namespace/multiple/input.ts
@@ -824,7 +857,9 @@ Passed: 261/1080
 * namespace/namespace-nested-module/input.ts
 * namespace/nested/input.ts
 * namespace/nested-destructuring/input.ts
+* namespace/nested-namespace/input.ts
 * namespace/nested-shorthand/input.ts
+* namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
 * namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
@@ -841,6 +876,7 @@ Passed: 261/1080
 * regression/10162/input.ts
 * regression/10338/input.ts
 * regression/11061/input.mjs
+* regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
 # babel-plugin-transform-react-jsx (136/156)

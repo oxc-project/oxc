@@ -1,4 +1,4 @@
 codegen_babel Summary:
-AST Parsed     : 2078/2078 (100.00%)
-Positive Passed: 2077/2078 (99.95%)
+AST Parsed     : 2104/2104 (100.00%)
+Positive Passed: 2103/2104 (99.95%)
 Expect to Parse: "typescript/types/intrinsic-identifier/input.ts"

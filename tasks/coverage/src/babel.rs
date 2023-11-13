@@ -36,6 +36,11 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
     }
 
     fn skip_test_path(&self, path: &Path) -> bool {
+        let force_include =
+            ["experimental/deferred-import-evaluation", "experimental/source-phase-imports"]
+                .iter()
+                .any(|p| path.to_string_lossy().contains(p));
+
         let not_supported_directory = [
             "experimental",
             "es2022",
@@ -50,7 +55,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
         let incorrect_extension = path.extension().map_or(true, |ext| ext == "json" || ext == "md");
-        not_supported_directory || incorrect_extension
+        incorrect_extension || (!force_include && not_supported_directory)
     }
 
     fn save_test_cases(&mut self, tests: Vec<T>) {
