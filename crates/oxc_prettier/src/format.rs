@@ -488,7 +488,7 @@ impl<'a> Format<'a> for StringLiteral {
 
 impl<'a> Format<'a> for ThisExpression {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("this")
     }
 }
 
