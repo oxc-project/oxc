@@ -1,4 +1,4 @@
-Passed: 261/1080
+Passed: 262/1080
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -843,7 +843,7 @@ Passed: 261/1080
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (136/156)
+# babel-plugin-transform-react-jsx (137/156)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
 * react/arrow-functions/input.js
@@ -860,7 +860,6 @@ Passed: 261/1080
 * removed-options/invalid-use-builtins-true/input.js
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
-* runtime/defaults-to-automatic/input.js
 * runtime/invalid-runtime/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js

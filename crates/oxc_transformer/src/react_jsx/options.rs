@@ -46,7 +46,7 @@ fn default_pragma_frag() -> Cow<'static, str> {
 impl Default for ReactJsxOptions {
     fn default() -> Self {
         Self {
-            runtime: ReactJsxRuntime::Classic,
+            runtime: ReactJsxRuntime::Automatic,
             throw_if_namespace: default_throw_if_namespace(),
             import_source: default_import_source(),
             pragma: default_pragma(),
@@ -58,10 +58,10 @@ impl Default for ReactJsxOptions {
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ReactJsxRuntime {
-    /// Does not automatically import anything (default).
-    #[default]
+    /// Does not automatically import anything.
     Classic,
-    /// Auto imports the functions that JSX transpiles to.
+    /// Auto imports the functions that JSX transpiles to (default).
+    #[default]
     Automatic,
 }
 
