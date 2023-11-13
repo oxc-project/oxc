@@ -10,7 +10,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{array, doc::Doc, format, group, hardline, indent, softline, string, Prettier};
+use crate::{array, doc::Doc, format, group, indent, softline, string, Prettier};
 
 pub trait Format<'a> {
     #[must_use]
