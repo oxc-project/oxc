@@ -117,6 +117,13 @@ expression: prefer_date_now
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
    ╭─[prefer_date_now.tsx:1:1]
  1 │ const zero = (new Date(/* 1 */) /* 2 */) /* 3 */ - /* 4 */new Date
+   ·              ───────────────────────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ const zero = (new Date(/* 1 */) /* 2 */) /* 3 */ - /* 4 */new Date
    ·                                                           ────────
    ╰────
   help: Change to `Date.now()`.
@@ -153,6 +160,13 @@ expression: prefer_date_now
    ╭─[prefer_date_now.tsx:1:1]
  1 │ foo **= new Date()
    ·         ──────────
+   ╰────
+  help: Change to `Date.now()`.
+
+  ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
+   ╭─[prefer_date_now.tsx:1:1]
+ 1 │ foo **= (new Date())
+   ·         ────────────
    ╰────
   help: Change to `Date.now()`.
 
