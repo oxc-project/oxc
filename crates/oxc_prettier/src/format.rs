@@ -203,7 +203,12 @@ impl<'a> Format<'a> for TryStatement<'a> {
 
 impl<'a> Format<'a> for ThrowStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "throw "));
+        parts.push(string!(p, " "));
+        parts.push(format!(p, self.argument));
+
+        Doc::Array(parts)
     }
 }
 
