@@ -19,6 +19,7 @@ pub enum Doc<'a> {
     Line,
     Softline,
     Hardline,
+    IfBreak(Vec<'a, Doc<'a>>, Vec<'a, Doc<'a>>),
 }
 
 /// Doc Builder
