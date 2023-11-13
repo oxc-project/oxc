@@ -205,6 +205,27 @@ impl<'a> Format<'a> for LabeledStatement<'a> {
 
 impl<'a> Format<'a> for TryStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(string!(p, "try "));
+
+        parts.push(format!(p, self.block));
+
+        if let Some(handler) = &self.handler {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, handler));
+        }
+
+        if let Some(finalizer) = &self.finalizer {
+            parts.push(string!(p, " finally "));
+            parts.push(format!(p, finalizer));
+        }
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for CatchClause<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
     }
 }
