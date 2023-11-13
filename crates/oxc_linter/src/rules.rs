@@ -152,6 +152,7 @@ mod unicorn {
     pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
+    pub mod no_negated_condition;
     pub mod no_new_array;
     pub mod no_new_buffer;
     pub mod no_object_as_default_parameter;
@@ -298,6 +299,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
+    unicorn::no_negated_condition,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
     unicorn::no_object_as_default_parameter,
