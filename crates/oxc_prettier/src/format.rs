@@ -205,7 +205,10 @@ impl<'a> Format<'a> for WithStatement<'a> {
 
 impl<'a> Format<'a> for DebuggerStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(Doc::Str("debugger"));
+        parts.push(Doc::Str(";"));
+        Doc::Array(parts)
     }
 }
 
