@@ -4,14 +4,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.")]
 #[diagnostic(severity(warning), help("Move the inner `if` test to the outer `if` test."))]
-struct NoLonelyIfDiagnostic(#[label] pub Span);
+struct NoLonelyIfDiagnostic(#[label] pub Span, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoLonelyIf;
@@ -55,7 +55,7 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        match parent.kind() {
+        let parent_if_stmt_span = match parent.kind() {
             AstKind::BlockStatement(block_stmt) => {
                 if block_stmt.body.len() != 1 {
                     return;
@@ -72,16 +72,22 @@ impl Rule for NoLonelyIf {
                 if parent_if_stmt.alternate.is_some() {
                     return;
                 }
+                parent_if_stmt.span
             }
             AstKind::IfStatement(parent_if_stmt) => {
                 if parent_if_stmt.alternate.is_some() {
                     return;
                 }
+
+                parent_if_stmt.span
             }
             _ => return,
-        }
+        };
 
-        ctx.diagnostic(NoLonelyIfDiagnostic(if_stmt.span));
+        ctx.diagnostic(NoLonelyIfDiagnostic(
+            Span { start: if_stmt.span.start, end: if_stmt.span.start + 2 },
+            Span { start: parent_if_stmt_span.start, end: parent_if_stmt_span.start + 2 },
+        ));
     }
 }
 
