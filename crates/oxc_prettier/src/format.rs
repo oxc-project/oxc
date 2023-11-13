@@ -30,8 +30,6 @@ impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
-        parts.push(string!(p, ";"));
-        parts.push(hardline!());
         Doc::Array(parts)
     }
 }
