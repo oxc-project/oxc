@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     EmptyBraceSpaces,
-    correctness
+    style
 );
 
 impl Rule for EmptyBraceSpaces {
@@ -46,21 +46,25 @@ impl Rule for EmptyBraceSpaces {
                 }
             }
             AstKind::ObjectExpression(obj) => {
-                remove_empty_braces_spaces(ctx, obj.properties.is_empty(), obj.span)
+                remove_empty_braces_spaces(ctx, obj.properties.is_empty(), obj.span);
             }
-            AstKind::FunctionBody(fb) => remove_empty_braces_spaces(ctx, fb.is_empty(), fb.span),
+            AstKind::FunctionBody(fb) => {
+                remove_empty_braces_spaces(ctx, fb.is_empty(), fb.span);
+            }
             AstKind::Class(class) => {
-                remove_empty_braces_spaces(ctx, class.body.body.is_empty(), class.body.span)
+                remove_empty_braces_spaces(ctx, class.body.body.is_empty(), class.body.span);
             }
             AstKind::BlockStatement(block_stmt) => {
-                remove_empty_braces_spaces(ctx, block_stmt.body.is_empty(), block_stmt.span)
+                remove_empty_braces_spaces(ctx, block_stmt.body.is_empty(), block_stmt.span);
             }
-            AstKind::CatchClause(catch_clause) => remove_empty_braces_spaces(
-                ctx,
-                catch_clause.body.body.is_empty(),
-                catch_clause.body.span,
-            ),
-            _ => return,
+            AstKind::CatchClause(catch_clause) => {
+                remove_empty_braces_spaces(
+                    ctx,
+                    catch_clause.body.body.is_empty(),
+                    catch_clause.body.span,
+                );
+            }
+            _ => (),
         };
     }
 }
