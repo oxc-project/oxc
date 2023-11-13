@@ -49,7 +49,9 @@ impl Rule for NoObjectAsDefaultParameter {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentPattern(assignment_pat) = node.kind() else { return };
 
-        let Expression::ObjectExpression(object_expr) = &assignment_pat.right else {
+        let Expression::ObjectExpression(object_expr) =
+            &assignment_pat.right.without_parenthesized()
+        else {
             return;
         };
 
@@ -98,6 +100,7 @@ fn test() {
         r#"const abc = (foo = 123) => {};"#,
         r#"const abc = (foo = true) => {};"#,
         r#"const abc = (foo = "bar") => {};"#,
+        r#"const abc = (foo = ("bar")) => {};"#,
         r#"const abc = (foo = 123, bar = "foo") => {};"#,
         r#"const abc = (foo = {}) => {};"#,
         r#"const abc = ({a = true, b = "foo"}) => {};"#,
@@ -107,6 +110,7 @@ fn test() {
         r#"const {abc = {foo: undefined}} = undefined;"#,
         r#"const abc = ([{foo = false, bar = 123}]) => {};"#,
         r#"const abc = ({foo = {a: 123}}) => {};"#,
+        r#"const abc = ({foo = ({a: 123})}) => {};"#,
         r#"const abc = ([foo = {a: 123}]) => {};"#,
         r#"const abc = ({foo: bar = {a: 123}}) => {};"#,
         r#"const abc = () => (foo = {a: 123});"#,
@@ -116,6 +120,7 @@ fn test() {
         r#"function abc(foo = {a: 123}) {}"#,
         r#"async function * abc(foo = {a: 123}) {}"#,
         r#"function abc(foo = {a: false}) {}"#,
+        r#"function abc(foo = ({a: false})) {}"#,
         r#"function abc(foo = {a: "bar"}) {}"#,
         r#"function abc(foo = {a: "bar", b: {c: true}}) {}"#,
         r#"const abc = (foo = {a: false}) => {};"#,
