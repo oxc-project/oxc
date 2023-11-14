@@ -5,39 +5,13 @@
 
 #![allow(unused)]
 
+mod command;
+
 use std::{collections::VecDeque, ops::Deref};
 
 use crate::{doc::Doc, PrettierOptions};
 
-struct Command<'a, 'b> {
-    indent: Indent,
-    mode: Mode,
-    doc: &'b Doc<'a>,
-}
-
-impl<'a, 'b> Command<'a, 'b> {
-    fn new(indent: Indent, mode: Mode, doc: &'a Doc<'b>) -> Self {
-        Self { indent, mode, doc }
-    }
-}
-
-#[derive(Clone, Copy)]
-enum Mode {
-    Break,
-    Flat,
-}
-
-#[derive(Clone, Copy)]
-struct Indent {
-    value: &'static str,
-    length: usize,
-}
-
-impl Indent {
-    fn root() -> Self {
-        Self { value: "", length: 0 }
-    }
-}
+use self::command::{Command, Indent, Mode};
 
 pub struct Printer<'a> {
     doc: Doc<'a>,
