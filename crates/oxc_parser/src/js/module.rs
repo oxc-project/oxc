@@ -430,16 +430,35 @@ impl<'a> Parser<'a> {
         if !self.ts_enabled() {
             return ImportOrExportKind::Value;
         }
+        // OK
         // import type { bar } from 'foo';
         // import type * as React from 'react';
         // import type ident from 'foo';
         // export type { bar } from 'foo';
-        if matches!(self.peek_kind(), Kind::LCurly | Kind::Star | Kind::Ident)
-            && self.eat(Kind::Type)
-        {
-            ImportOrExportKind::Type
-        } else {
-            ImportOrExportKind::Value
+
+        // NO
+        // import type from 'foo';
+
+        // OK
+        // import type from from 'foo';
+        if !self.at(Kind::Type) {
+            return ImportOrExportKind::Value;
         }
+
+        if matches!(self.peek_kind(), Kind::LCurly | Kind::Star) {
+            self.bump_any();
+            return ImportOrExportKind::Type;
+        }
+
+        if !self.peek_at(Kind::Ident) && !self.peek_kind().is_contextual_keyword() {
+            return ImportOrExportKind::Value;
+        }
+
+        if !self.peek_at(Kind::From) || self.nth_at(2, Kind::From) {
+            self.bump_any();
+            return ImportOrExportKind::Type;
+        }
+
+        ImportOrExportKind::Value
     }
 }
