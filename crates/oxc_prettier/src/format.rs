@@ -1002,7 +1002,15 @@ impl<'a> Format<'a> for Class<'a> {
 
 impl<'a> Format<'a> for ClassElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            ClassElement::StaticBlock(c) => c.format(p),
+            ClassElement::MethodDefinition(c) => c.format(p),
+            ClassElement::PropertyDefinition(c) => c.format(p),
+            ClassElement::AccessorProperty(c) => c.format(p),
+            ClassElement::TSAbstractMethodDefinition(c) => c.format(p),
+            ClassElement::TSAbstractPropertyDefinition(c) => c.format(p),
+            ClassElement::TSIndexSignature(c) => c.format(p),
+        }
     }
 }
 
@@ -1244,5 +1252,23 @@ impl<'a> Format<'a> for RegExpFlags {
             str.push('y');
         }
         p.str(str.iter().collect::<String>().as_str())
+    }
+}
+
+impl<'a> Format<'a> for TSAbstractMethodDefinition<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSAbstractPropertyDefinition<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSIndexSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
     }
 }
