@@ -1,13 +1,13 @@
-use crate::{doc::Doc, PrettierOptions};
+use crate::doc::Doc;
 
-pub struct Command<'a, 'b> {
+pub struct Command<'a> {
     pub indent: Indent,
     pub mode: Mode,
-    pub doc: &'b Doc<'a>,
+    pub doc: Doc<'a>,
 }
 
-impl<'a, 'b> Command<'a, 'b> {
-    pub fn new(indent: Indent, mode: Mode, doc: &'a Doc<'b>) -> Self {
+impl<'a> Command<'a> {
+    pub fn new(indent: Indent, mode: Mode, doc: Doc<'a>) -> Self {
         Self { indent, mode, doc }
     }
 }
