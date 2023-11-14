@@ -2,13 +2,19 @@
 //!
 //! A port of <https://github.com/prettier/prettier>
 
+mod comment;
 mod doc;
 mod format;
 mod macros;
 mod printer;
 
+use std::{
+    iter::{Peekable, Rev},
+    vec,
+};
+
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{ast::Program, CommentKind, Trivias};
 
 use crate::{format::Format, printer::Printer};
 
@@ -32,12 +38,23 @@ impl Default for PrettierOptions {
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
 
+    source_text: &'a str,
+
     options: PrettierOptions,
+
+    /// A stack of comments that will be carefully placed in the right places.
+    trivias: Peekable<Rev<vec::IntoIter<(u32, u32, CommentKind)>>>,
 }
 
 impl<'a> Prettier<'a> {
-    pub fn new(allocator: &'a Allocator, options: PrettierOptions) -> Self {
-        Self { allocator, options }
+    pub fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        trivias: Trivias,
+        options: PrettierOptions,
+    ) -> Self {
+        let trivias = trivias.into_iter().rev().peekable();
+        Self { allocator, source_text, options, trivias }
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {

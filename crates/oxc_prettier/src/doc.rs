@@ -47,15 +47,36 @@ impl<'a> Doc<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+#[allow(unused)]
+pub enum Separator {
+    Softline,
+    Hardline,
+}
+
 /// Doc Builder
 impl<'a> Prettier<'a> {
     #[inline]
-    pub fn vec<T>(&self) -> Vec<'a, T> {
+    pub(crate) fn vec<T>(&self) -> Vec<'a, T> {
         Vec::new_in(self.allocator)
     }
 
     #[inline]
-    pub fn str(&self, s: &str) -> Doc<'a> {
+    pub(crate) fn str(&self, s: &str) -> Doc<'a> {
         Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
+    }
+
+    pub(crate) fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Doc<'a> {
+        let mut parts = self.vec();
+        for (i, doc) in docs.into_iter().enumerate() {
+            if i != 0 {
+                parts.push(match separator {
+                    Separator::Softline => Doc::Softline,
+                    Separator::Hardline => Doc::Hardline,
+                });
+            }
+            parts.push(doc);
+        }
+        Doc::Array(parts)
     }
 }

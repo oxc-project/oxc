@@ -10,6 +10,7 @@ pub enum CliRunResult {
     InvalidOptions { message: String },
     PathNotFound { paths: Vec<PathBuf> },
     LintResult(LintResult),
+    FormatResult(FormatResult),
     TypeCheckResult { duration: Duration, number_of_diagnostics: usize },
 }
 
@@ -21,6 +22,12 @@ pub struct LintResult {
     pub number_of_warnings: usize,
     pub number_of_errors: usize,
     pub max_warnings_exceeded: bool,
+}
+
+#[derive(Debug)]
+pub struct FormatResult {
+    pub duration: Duration,
+    pub number_of_files: usize,
 }
 
 impl Termination for CliRunResult {
@@ -69,6 +76,15 @@ impl Termination for CliRunResult {
 
                 let exit_code = u8::from(number_of_errors > 0);
                 ExitCode::from(exit_code)
+            }
+            Self::FormatResult(FormatResult { duration, number_of_files }) => {
+                let threads = rayon::current_num_threads();
+                let time = Self::get_execution_time(&duration);
+                let s = if number_of_files == 1 { "" } else { "s" };
+                println!(
+                    "Finished in {time} on {number_of_files} file{s} using {threads} threads."
+                );
+                ExitCode::from(0)
             }
             Self::TypeCheckResult { duration, number_of_diagnostics } => {
                 let time = Self::get_execution_time(&duration);

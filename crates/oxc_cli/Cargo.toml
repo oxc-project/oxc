@@ -19,17 +19,16 @@ doctest = false
 name = "oxlint"
 path = "src/lint/main.rs"
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true }
+[[bin]]
+name = "oxformat"
+path = "src/format/main.rs"
 
 [dependencies]
 oxc_allocator      = { workspace = true }
 oxc_diagnostics    = { workspace = true }
 oxc_linter         = { workspace = true }
 oxc_parser         = { workspace = true }
+oxc_prettier       = { workspace = true }
 oxc_span           = { workspace = true }
 oxc_type_synthesis = { workspace = true }
 glob               = { workspace = true }
@@ -47,3 +46,9 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 [dev_dependencies]
 pretty_assertions = "0.6" # Used in codeowners.rs
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }
