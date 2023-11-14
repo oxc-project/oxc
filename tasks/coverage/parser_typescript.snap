@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5060/5063 (99.94%)
-Positive Passed: 5052/5063 (99.78%)
-Negative Passed: 994/4761 (20.88%)
+AST Parsed     : 5195/5199 (99.92%)
+Positive Passed: 5188/5199 (99.79%)
+Negative Passed: 1023/4855 (21.07%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -44,6 +44,8 @@ Expect Syntax Error: "compiler/accessorsNotAllowedInES3.ts"
 Expect Syntax Error: "compiler/accessors_spec_section-4.5_error-cases.ts"
 Expect Syntax Error: "compiler/addMoreOverloadsToBaseSignature.ts"
 Expect Syntax Error: "compiler/aliasBug.ts"
+Expect Syntax Error: "compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts"
+Expect Syntax Error: "compiler/aliasInstantiationExpressionGenericIntersectionNoCrash2.ts"
 Expect Syntax Error: "compiler/aliasesInSystemModule1.ts"
 Expect Syntax Error: "compiler/aliasesInSystemModule2.ts"
 Expect Syntax Error: "compiler/alwaysStrict.ts"
@@ -79,6 +81,7 @@ Expect Syntax Error: "compiler/argumentsObjectIterator02_ES5.ts"
 Expect Syntax Error: "compiler/argumentsObjectIterator03_ES5.ts"
 Expect Syntax Error: "compiler/argumentsPropertyNameInJsMode1.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInConstructor4_Js.ts"
+Expect Syntax Error: "compiler/argumentsReferenceInFunction1_Js.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInMethod4_Js.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInObjectLiteral_Js.ts"
 Expect Syntax Error: "compiler/argumentsSpreadRestIterables.tsx"
@@ -219,6 +222,7 @@ Expect Syntax Error: "compiler/callOverloads5.ts"
 Expect Syntax Error: "compiler/callSignaturesShouldBeResolvedBeforeSpecialization.ts"
 Expect Syntax Error: "compiler/callWithWrongNumberOfTypeArguments.ts"
 Expect Syntax Error: "compiler/callbackArgsDifferByOptionality.ts"
+Expect Syntax Error: "compiler/cannotIndexGenericWritingError.ts"
 Expect Syntax Error: "compiler/cannotInvokeNewOnIndexExpression.ts"
 Expect Syntax Error: "compiler/capturedLetConstInLoop5.ts"
 Expect Syntax Error: "compiler/capturedLetConstInLoop5_ES6.ts"
@@ -253,6 +257,7 @@ Expect Syntax Error: "compiler/checkSuperCallBeforeThisAccessing5.ts"
 Expect Syntax Error: "compiler/checkSuperCallBeforeThisAccessing8.ts"
 Expect Syntax Error: "compiler/checkTypePredicateForRedundantProperties.ts"
 Expect Syntax Error: "compiler/circularAccessorAnnotations.ts"
+Expect Syntax Error: "compiler/circularBaseConstraint.ts"
 Expect Syntax Error: "compiler/circularBaseTypes.ts"
 Expect Syntax Error: "compiler/circularConstraintYieldsAppropriateError.ts"
 Expect Syntax Error: "compiler/circularModuleImports.ts"
@@ -274,11 +279,17 @@ Expect Syntax Error: "compiler/classExtendsInterfaceThatExtendsClassWithPrivates
 Expect Syntax Error: "compiler/classExtendsInterface_not.ts"
 Expect Syntax Error: "compiler/classExtendsMultipleBaseClasses.ts"
 Expect Syntax Error: "compiler/classExtendsNull.ts"
+Expect Syntax Error: "compiler/classExtendsNull2.ts"
+Expect Syntax Error: "compiler/classExtendsNull3.ts"
+Expect Syntax Error: "compiler/classFieldSuperAccessibleJs1.ts"
+Expect Syntax Error: "compiler/classFieldSuperNotAccessible.ts"
+Expect Syntax Error: "compiler/classFieldSuperNotAccessibleJs.ts"
 Expect Syntax Error: "compiler/classImplementsClass2.ts"
 Expect Syntax Error: "compiler/classImplementsClass4.ts"
 Expect Syntax Error: "compiler/classImplementsClass5.ts"
 Expect Syntax Error: "compiler/classImplementsClass6.ts"
 Expect Syntax Error: "compiler/classImplementsClass7.ts"
+Expect Syntax Error: "compiler/classImplementsPrimitive.ts"
 Expect Syntax Error: "compiler/classIndexer2.ts"
 Expect Syntax Error: "compiler/classIndexer3.ts"
 Expect Syntax Error: "compiler/classIndexer4.ts"
@@ -405,10 +416,13 @@ Expect Syntax Error: "compiler/contextualTypingOfGenericFunctionTypedArguments1.
 Expect Syntax Error: "compiler/contextualTypingOfLambdaReturnExpression.ts"
 Expect Syntax Error: "compiler/contextualTypingOfObjectLiterals2.ts"
 Expect Syntax Error: "compiler/contextualTypingWithFixedTypeParameters1.ts"
+Expect Syntax Error: "compiler/contextuallyTypedParametersOptionalInJSDoc.ts"
 Expect Syntax Error: "compiler/contextuallyTypedParametersWithInitializers.ts"
+Expect Syntax Error: "compiler/contextuallyTypedParametersWithQuestionToken.ts"
 Expect Syntax Error: "compiler/contextuallyTypingRestParameters.ts"
 Expect Syntax Error: "compiler/continueInIterationStatement4.ts"
 Expect Syntax Error: "compiler/continueNotInIterationStatement4.ts"
+Expect Syntax Error: "compiler/controlFlowAliasedDiscriminants.ts"
 Expect Syntax Error: "compiler/controlFlowArrayErrors.ts"
 Expect Syntax Error: "compiler/controlFlowDestructuringVariablesInTryCatch.ts"
 Expect Syntax Error: "compiler/controlFlowForIndexSignatures.ts"
@@ -467,6 +481,7 @@ Expect Syntax Error: "compiler/deepKeysIndexing.ts"
 Expect Syntax Error: "compiler/deeplyNestedAssignabilityErrorsCombined.ts"
 Expect Syntax Error: "compiler/deeplyNestedAssignabilityIssue.ts"
 Expect Syntax Error: "compiler/deeplyNestedCheck.ts"
+Expect Syntax Error: "compiler/deeplyNestedMappedTypes.ts"
 Expect Syntax Error: "compiler/defaultArgsInFunctionExpressions.ts"
 Expect Syntax Error: "compiler/defaultArgsInOverloads.ts"
 Expect Syntax Error: "compiler/defaultBestCommonTypesHaveDecls.ts"
@@ -476,6 +491,7 @@ Expect Syntax Error: "compiler/defaultValueInFunctionTypes.ts"
 Expect Syntax Error: "compiler/definiteAssignmentWithErrorStillStripped.ts"
 Expect Syntax Error: "compiler/deleteOperator1.ts"
 Expect Syntax Error: "compiler/deleteReadonly.ts"
+Expect Syntax Error: "compiler/deleteReadonlyInStrictNullChecks.ts"
 Expect Syntax Error: "compiler/derivedClassOverridesPrivateFunction1.ts"
 Expect Syntax Error: "compiler/derivedClasses.ts"
 Expect Syntax Error: "compiler/derivedInterfaceCallSignature.ts"
@@ -495,12 +511,14 @@ Expect Syntax Error: "compiler/didYouMeanElaborationsForExpressionsWhichCouldBeC
 Expect Syntax Error: "compiler/didYouMeanStringLiteral.ts"
 Expect Syntax Error: "compiler/didYouMeanSuggestionErrors.ts"
 Expect Syntax Error: "compiler/differentTypesWithSameName.ts"
+Expect Syntax Error: "compiler/discriminateWithMissingProperty.ts"
 Expect Syntax Error: "compiler/discriminatedUnionErrorMessage.ts"
 Expect Syntax Error: "compiler/dissallowSymbolAsWeakType.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes2.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes4.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes5.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes6.ts"
+Expect Syntax Error: "compiler/divergentAccessorsTypes8.ts"
 Expect Syntax Error: "compiler/divergentAccessorsVisibility1.ts"
 Expect Syntax Error: "compiler/doNotElaborateAssignabilityToTypeParameters.ts"
 Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2015.ts"
@@ -622,6 +640,7 @@ Expect Syntax Error: "compiler/esModuleInteropUsesExportStarWhenDefaultPlusNames
 Expect Syntax Error: "compiler/evalAfter0.ts"
 Expect Syntax Error: "compiler/evolvingArrayResolvedAssert.ts"
 Expect Syntax Error: "compiler/exactSpellingSuggestion.ts"
+Expect Syntax Error: "compiler/excessPropertiesInOverloads.ts"
 Expect Syntax Error: "compiler/excessPropertyCheckIntersectionWithIndexSignature.ts"
 Expect Syntax Error: "compiler/excessPropertyCheckIntersectionWithRecursiveType.ts"
 Expect Syntax Error: "compiler/excessPropertyCheckWithEmptyObject.ts"
@@ -789,6 +808,7 @@ Expect Syntax Error: "compiler/genericGetter2.ts"
 Expect Syntax Error: "compiler/genericGetter3.ts"
 Expect Syntax Error: "compiler/genericImplements.ts"
 Expect Syntax Error: "compiler/genericIndexTypeHasSensibleErrorMessage.ts"
+Expect Syntax Error: "compiler/genericIndexedAccessVarianceComparisonResultCorrect.ts"
 Expect Syntax Error: "compiler/genericInterfacesWithoutTypeArguments.ts"
 Expect Syntax Error: "compiler/genericLambaArgWithoutTypeArguments.ts"
 Expect Syntax Error: "compiler/genericMappedTypeAsClause.ts"
@@ -902,12 +922,15 @@ Expect Syntax Error: "compiler/indexSignatureWithInitializer.ts"
 Expect Syntax Error: "compiler/indexWithUndefinedAndNull.ts"
 Expect Syntax Error: "compiler/indexWithUndefinedAndNullStrictNullChecks.ts"
 Expect Syntax Error: "compiler/indexWithoutParamType2.ts"
+Expect Syntax Error: "compiler/indexedAccessConstraints.ts"
 Expect Syntax Error: "compiler/indexedAccessImplicitlyAny.ts"
 Expect Syntax Error: "compiler/indexedAccessPrivateMemberOfGenericConstraint.ts"
 Expect Syntax Error: "compiler/indexedAccessRelation.ts"
 Expect Syntax Error: "compiler/indexedAccessWithFreshObjectLiteral.ts"
+Expect Syntax Error: "compiler/indexedAccessWithVariableElement.ts"
 Expect Syntax Error: "compiler/indexer2A.ts"
 Expect Syntax Error: "compiler/indexerConstraints.ts"
+Expect Syntax Error: "compiler/indirectDiscriminantAndExcessProperty.ts"
 Expect Syntax Error: "compiler/indirectSelfReference.ts"
 Expect Syntax Error: "compiler/indirectSelfReferenceGeneric.ts"
 Expect Syntax Error: "compiler/inexistentPropertyInsideToStringType.ts"
@@ -1019,12 +1042,15 @@ Expect Syntax Error: "compiler/jsFileCompilationAmbientVarDeclarationSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationBindDeepExportsAssignment.ts"
 Expect Syntax Error: "compiler/jsFileCompilationBindReachabilityErrors.ts"
 Expect Syntax Error: "compiler/jsFileCompilationClassMethodContainingArrowFunction.ts"
+Expect Syntax Error: "compiler/jsFileCompilationConstructorOverloadSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationEnumSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationExportAssignmentSyntax.ts"
+Expect Syntax Error: "compiler/jsFileCompilationFunctionOverloadSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationHeritageClauseSyntaxOfClass.ts"
 Expect Syntax Error: "compiler/jsFileCompilationImportEqualsSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationInterfaceSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationLetBeingRenamed.ts"
+Expect Syntax Error: "compiler/jsFileCompilationMethodOverloadSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationModuleSyntax.ts"
 Expect Syntax Error: "compiler/jsFileCompilationNonNullAssertion.ts"
 Expect Syntax Error: "compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts"
@@ -1079,9 +1105,11 @@ Expect Syntax Error: "compiler/jsxFactoryIdentifierWithAbsentParameter.ts"
 Expect Syntax Error: "compiler/jsxFactoryMissingErrorInsideAClass.ts"
 Expect Syntax Error: "compiler/jsxFactoryQualifiedNameResolutionError.ts"
 Expect Syntax Error: "compiler/jsxImportSourceNonPragmaComment.tsx"
+Expect Syntax Error: "compiler/jsxIntrinsicDeclaredUsingTemplateLiteralTypeSignatures.tsx"
 Expect Syntax Error: "compiler/jsxIntrinsicElementsTypeArgumentErrors.tsx"
 Expect Syntax Error: "compiler/jsxIssuesErrorWhenTagExpectsTooManyArguments.tsx"
 Expect Syntax Error: "compiler/jsxNamespacePrefixIntrinsics.tsx"
+Expect Syntax Error: "compiler/jsxSpreadTag.ts"
 Expect Syntax Error: "compiler/keyofDoesntContainSymbols.ts"
 Expect Syntax Error: "compiler/keyofIsLiteralContexualType.ts"
 Expect Syntax Error: "compiler/knockout.ts"
@@ -1189,8 +1217,12 @@ Expect Syntax Error: "compiler/multivar.ts"
 Expect Syntax Error: "compiler/mutuallyRecursiveCallbacks.ts"
 Expect Syntax Error: "compiler/namedFunctionExpressionCallErrors.ts"
 Expect Syntax Error: "compiler/namespaceDisambiguationInUnion.ts"
+Expect Syntax Error: "compiler/namespaceNotMergedWithFunctionDefaultExport.ts"
 Expect Syntax Error: "compiler/namespacesDeclaration2.ts"
 Expect Syntax Error: "compiler/nanEquality.ts"
+Expect Syntax Error: "compiler/narrowByClauseExpressionInSwitchTrue3.ts"
+Expect Syntax Error: "compiler/narrowByClauseExpressionInSwitchTrue6.ts"
+Expect Syntax Error: "compiler/narrowByClauseExpressionInSwitchTrue7.ts"
 Expect Syntax Error: "compiler/narrowByEquality.ts"
 Expect Syntax Error: "compiler/narrowingMutualSubtypes.ts"
 Expect Syntax Error: "compiler/narrowingOfDottedNames.ts"
@@ -1361,6 +1393,7 @@ Expect Syntax Error: "compiler/parameterPropertyInConstructor3.ts"
 Expect Syntax Error: "compiler/parameterPropertyOutsideConstructor.ts"
 Expect Syntax Error: "compiler/paramsOnlyHaveLiteralTypesWhenAppropriatelyContextualized.ts"
 Expect Syntax Error: "compiler/paramterDestrcuturingDeclaration.ts"
+Expect Syntax Error: "compiler/parenthesizedJSDocCastDoesNotNarrow.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineNumber.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineString.ts"
 Expect Syntax Error: "compiler/parseTypes.ts"
@@ -1418,6 +1451,7 @@ Expect Syntax Error: "compiler/protoAssignment.ts"
 Expect Syntax Error: "compiler/prototypes.ts"
 Expect Syntax Error: "compiler/publicGetterProtectedSetterFromThisParameter.ts"
 Expect Syntax Error: "compiler/publicMemberImplementedAsPrivateInDerivedClass.ts"
+Expect Syntax Error: "compiler/pushTypeGetTypeOfAlias.ts"
 Expect Syntax Error: "compiler/qualifiedModuleLocals.ts"
 Expect Syntax Error: "compiler/qualifiedName_entity-name-resolution-does-not-affect-class-heritage.ts"
 Expect Syntax Error: "compiler/qualify.ts"
@@ -1467,6 +1501,7 @@ Expect Syntax Error: "compiler/recursiveTypeParameterConstraintReferenceLacksTyp
 Expect Syntax Error: "compiler/recursiveTypeRelations.ts"
 Expect Syntax Error: "compiler/recursivelyExpandingUnionNoStackoverflow.ts"
 Expect Syntax Error: "compiler/redefineArray.ts"
+Expect Syntax Error: "compiler/relationComplexityError.ts"
 Expect Syntax Error: "compiler/relationalOperatorComparable.ts"
 Expect Syntax Error: "compiler/renamingDestructuredPropertyInFunctionType.ts"
 Expect Syntax Error: "compiler/renamingDestructuredPropertyInFunctionType3.ts"
@@ -1515,7 +1550,7 @@ Expect Syntax Error: "compiler/signatureLengthMismatchCall.ts"
 Expect Syntax Error: "compiler/signatureLengthMismatchInOverload.ts"
 Expect Syntax Error: "compiler/signatureLengthMismatchWithOptionalParameters.ts"
 Expect Syntax Error: "compiler/signaturesUseJSDocForOptionalParameters.ts"
-Expect Syntax Error: "compiler/simpleRecursionWithBaseCase.ts"
+Expect Syntax Error: "compiler/simpleRecursionWithBaseCase1.ts"
 Expect Syntax Error: "compiler/slightlyIndirectedDeepObjectLiteralElaborations.ts"
 Expect Syntax Error: "compiler/sourceMap-Comment1.ts"
 Expect Syntax Error: "compiler/sourceMap-EmptyFile1.ts"
@@ -1894,6 +1929,7 @@ Expect Syntax Error: "conformance/ambient/ambientDeclarationsPatterns_tooManyAst
 Expect Syntax Error: "conformance/ambient/ambientErrors.ts"
 Expect Syntax Error: "conformance/ambient/ambientExternalModuleInsideNonAmbient.ts"
 Expect Syntax Error: "conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts"
+Expect Syntax Error: "conformance/async/asyncFunctionDeclarationParameterEvaluation.ts"
 Expect Syntax Error: "conformance/async/es2017/asyncArrowFunction/asyncArrowFunction10_es2017.ts"
 Expect Syntax Error: "conformance/async/es2017/asyncArrowFunction/asyncArrowFunction3_es2017.ts"
 Expect Syntax Error: "conformance/async/es2017/asyncArrowFunction/asyncArrowFunction_allowJs.ts"
@@ -1934,6 +1970,7 @@ Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration15_es6.ts"
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration3_es6.ts"
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts"
+Expect Syntax Error: "conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts"
 Expect Syntax Error: "conformance/classes/awaitAndYieldInProperty.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts"
@@ -2141,6 +2178,7 @@ Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignat
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature3.ts"
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature7.ts"
 Expect Syntax Error: "conformance/constEnums/constEnum2.ts"
+Expect Syntax Error: "conformance/constEnums/constEnumNoObjectPrototypePropertyAccess.ts"
 Expect Syntax Error: "conformance/constEnums/constEnumPropertyAccess1.ts"
 Expect Syntax Error: "conformance/constEnums/constEnumPropertyAccess2.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowAliasing.ts"
@@ -2193,7 +2231,9 @@ Expect Syntax Error: "conformance/dynamicImport/importCallExpressionSpecifierNot
 Expect Syntax Error: "conformance/enums/enumConstantMemberWithString.ts"
 Expect Syntax Error: "conformance/enums/enumConstantMemberWithTemplateLiterals.ts"
 Expect Syntax Error: "conformance/enums/enumConstantMembers.ts"
+Expect Syntax Error: "conformance/enums/enumErrorOnConstantBindingWithInitializer.ts"
 Expect Syntax Error: "conformance/enums/enumMergingErrors.ts"
+Expect Syntax Error: "conformance/enums/enumShadowedInfinityNaN.ts"
 Expect Syntax Error: "conformance/es2017/useObjectValuesAndEntries2.ts"
 Expect Syntax Error: "conformance/es2017/useObjectValuesAndEntries3.ts"
 Expect Syntax Error: "conformance/es2017/useSharedArrayBuffer2.ts"
@@ -2229,6 +2269,7 @@ Expect Syntax Error: "conformance/es6/Symbols/symbolProperty32.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty33.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty34.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty35.ts"
+Expect Syntax Error: "conformance/es6/Symbols/symbolProperty36.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty39.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty42.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty43.ts"
@@ -2590,6 +2631,7 @@ Expect Syntax Error: "conformance/expressions/binaryOperators/comparisonOperator
 Expect Syntax Error: "conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithTypeParameter.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/inOperator/inOperatorWithInvalidOperands.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/inOperator/inOperatorWithValidOperands.ts"
+Expect Syntax Error: "conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidOperands.es2015.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithInvalidOperands.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorStrictMode.ts"
 Expect Syntax Error: "conformance/expressions/binaryOperators/logicalAndOperator/logicalAndOperatorWithEveryType.ts"
@@ -2664,6 +2706,7 @@ Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsInIfStatement
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithAny.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOf.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts"
+Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts"
@@ -2891,6 +2934,7 @@ Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject2.ts"
 Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject3.ts"
 Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject4.ts"
 Expect Syntax Error: "conformance/jsdoc/templateInsideCallback.ts"
+Expect Syntax Error: "conformance/jsdoc/thisTag3.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagCircularReferenceOnConstructorFunction.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagModuleExports.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagNoErasure.ts"
@@ -2973,6 +3017,7 @@ Expect Syntax Error: "conformance/jsx/tsxUnionElementType3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionElementType4.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionElementType6.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionTypeComponent2.tsx"
+Expect Syntax Error: "conformance/jsx/unicodeEscapesInJsxtags.tsx"
 Expect Syntax Error: "conformance/override/override1.ts"
 Expect Syntax Error: "conformance/override/override11.ts"
 Expect Syntax Error: "conformance/override/override13.ts"
@@ -3195,6 +3240,7 @@ Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserExpression
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement1.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement5.ts"
+Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForInStatement8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement1.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Statements/parserForStatement3.ts"
@@ -3301,6 +3347,7 @@ Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatem
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement15.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement20.ts"
+Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement25.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement9.ts"
@@ -3318,6 +3365,7 @@ Expect Syntax Error: "conformance/salsa/moduleExportAliasUnknown.ts"
 Expect Syntax Error: "conformance/salsa/moduleExportsAliasLoop1.ts"
 Expect Syntax Error: "conformance/salsa/moduleExportsAliasLoop2.ts"
 Expect Syntax Error: "conformance/salsa/multipleDeclarations.ts"
+Expect Syntax Error: "conformance/salsa/plainJSTypeErrors.ts"
 Expect Syntax Error: "conformance/salsa/propertyAssignmentOnUnresolvedImportedSymbol.ts"
 Expect Syntax Error: "conformance/salsa/propertyAssignmentUseParentType2.ts"
 Expect Syntax Error: "conformance/salsa/thisPropertyAssignment.ts"
@@ -3349,6 +3397,22 @@ Expect Syntax Error: "conformance/scanner/ecmascript5/scannerS7.6_A4.2_T1.ts"
 Expect Syntax Error: "conformance/scanner/ecmascript5/scannertest1.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/invalidMultipleVariableDeclarations.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.12.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.2.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.3.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.9.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.2.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsWithImportHelpers.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.4.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.9.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithImportHelpers.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/invalidSwitchBreakStatement.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/switchBreakStatements.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatements.ts"
@@ -3765,6 +3829,7 @@ Expect Syntax Error: "conformance/types/union/unionTypeWithIndexSignature.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsInJs.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsInJsErrors.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsErrors.ts"
+Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownControlFlow.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType1.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType2.ts"
@@ -3813,65 +3878,52 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
 
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:27:1]
- 27 │ class StaticPrototype {
- 28 │     static prototype: number; // always an error
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:55:1]
+ 55 │ class StaticPrototype {
+ 56 │     static prototype: number; // always an error
     ·            ─────────
- 29 │     prototype: string; // ok
+ 57 │     prototype: string; // ok
     ╰────
 
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:32:1]
- 32 │ class StaticPrototypeFn {
- 33 │     static prototype() {} // always an error
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:65:1]
+ 65 │ class StaticPrototypeFn {
+ 66 │     static prototype() {} // always an error
     ·            ─────────
- 34 │     prototype() {} // ok
+ 67 │     prototype() {} // ok
     ╰────
 
   × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:86:1]
- 86 │ var StaticPrototype_Anonymous = class {
- 87 │     static prototype: number; // always an error
-    ·            ─────────
- 88 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:91:1]
- 91 │ var StaticPrototypeFn_Anonymous = class {
- 92 │     static prototype() {} // always an error
-    ·            ─────────
- 93 │     prototype() {} // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:153:1]
- 153 │     export default class StaticPrototype {
- 154 │         static prototype: number; // always an error
-     ·                ─────────
- 155 │         prototype: string; // ok
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:163:1]
+ 163 │ var StaticPrototype_Anonymous = class {
+ 164 │     static prototype: number; // always an error
+     ·            ─────────
+ 165 │     prototype: string; // ok
      ╰────
 
   × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:160:1]
- 160 │     export default class StaticPrototypeFn {
- 161 │         static prototype() {} // always an error
-     ·                ─────────
- 162 │         prototype() {} // ok
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:173:1]
+ 173 │ var StaticPrototypeFn_Anonymous = class {
+ 174 │     static prototype() {} // always an error
+     ·            ─────────
+ 175 │     prototype() {} // ok
      ╰────
 
-Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
-  × Identifier `v` has already been declared
-   ╭─[conformance/es6/for-ofStatements/for-of53.ts:1:1]
- 1 │ //@target: ES6
- 2 │ for (let v of []) {
-   ·          ┬
-   ·          ╰── `v` has already been declared here
- 3 │     var v;
-   ·         ┬
-   ·         ╰── It can not be redeclared here
- 4 │ }
-   ╰────
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:280:1]
+ 280 │     export default class StaticPrototype {
+ 281 │         static prototype: number; // always an error
+     ·                ─────────
+ 282 │         prototype: string; // ok
+     ╰────
+
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:292:1]
+ 292 │     export default class StaticPrototypeFn {
+ 293 │         static prototype() {} // always an error
+     ·                ─────────
+ 294 │         prototype() {} // ok
+     ╰────
 
 Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
   × 'with' statements are not allowed
@@ -3880,6 +3932,15 @@ Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJ
  68 │ with (_) {
     · ────
  69 │     var y = _;
+    ╰────
+
+Expect to Parse: "conformance/esDecorators/esDecorators-preservesThis.ts"
+  × Unexpected token
+    ╭─[conformance/esDecorators/esDecorators-preservesThis.ts:26:1]
+ 26 │         class C {
+ 27 │             @super.decorate
+    ·              ─────
+ 28 │             method1() { }
     ╰────
 
 Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
@@ -7993,6 +8054,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·             ─
    ╰────
 
+  × Unexpected token
+   ╭─[compiler/parseUnmatchedTypeAssertion.ts:1:1]
+ 1 │ @<[[import(obju2c77,
+   ·  ─
+   ╰────
+
   × Multiple constructor implementations are not allowed.
    ╭─[compiler/parserConstructorDeclaration12.ts:1:1]
  1 │ class C {
@@ -8153,6 +8220,62 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                   ────────
  4 │ 
    ╰────
+
+  × Identifier `v` has already been declared
+   ╭─[compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:5:1]
+ 5 │ function test1() {
+ 6 │     for (let v; ; ) { var v; }
+   ·              ┬            ┬
+   ·              │            ╰── It can not be redeclared here
+   ·              ╰── `v` has already been declared here
+ 7 │ }
+   ╰────
+
+  × Identifier `v` has already been declared
+    ╭─[compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:8:1]
+  8 │ function test2() {
+  9 │     for (let v in []) { var v; }
+    ·              ┬              ┬
+    ·              │              ╰── It can not be redeclared here
+    ·              ╰── `v` has already been declared here
+ 10 │ }
+    ╰────
+
+  × Identifier `v` has already been declared
+    ╭─[compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:11:1]
+ 11 │ function test3() {
+ 12 │     for (let v of []) { var v; }
+    ·              ┬              ┬
+    ·              │              ╰── It can not be redeclared here
+    ·              ╰── `v` has already been declared here
+ 13 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:15:1]
+ 15 │     {
+ 16 │         let x;
+    ·             ┬
+    ·             ╰── `x` has already been declared here
+ 17 │         {
+ 18 │             var x;
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+ 19 │         }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:24:1]
+ 24 │         {
+ 25 │             var x;
+    ·                 ┬
+    ·                 ╰── `x` has already been declared here
+ 26 │         }
+ 27 │         let x;
+    ·             ┬
+    ·             ╰── It can not be redeclared here
+ 28 │     }
+    ╰────
 
   × Identifier `x` has already been declared
    ╭─[compiler/shadowingViaLocalValue.ts:1:1]
@@ -9434,6 +9557,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ╰── A newline is not expected here
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[compiler/typeAliasDeclareKeywordNewlines.ts:3:1]
+ 3 │ // The following is invalid but should declare a type alias named 'T1':
+ 4 │ declare type /*unexpected newline*/
+   ·        ─
+ 5 │ T1 = null;
+   ╰────
+  help: Try insert a semicolon here
+
   × Cannot assign to 'eval' in strict mode
    ╭─[compiler/unaryOperatorsInStrictMode.ts:2:1]
  2 │ 
@@ -9620,6 +9752,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ─────
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:12:1]
+ 12 │ 
+ 13 │ declare module debugger {} // still an error
+    ·        ─
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:10:1]
+ 10 │ 
+ 11 │ declare namespace debugger {} // still an error
+    ·        ─
+    ╰────
+  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
    ╭─[conformance/async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts:3:1]
@@ -12447,6 +12595,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ ({...[]} = {});
    ╰────
 
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[conformance/es6/for-ofStatements/for-of-excess-declarations.ts:1:1]
+ 1 │ // @target: esnext
+ 2 │ for (const a, { [b]: c} of [1]) {
+   ·      ──────────────────
+ 3 │ 
+   ╰────
+
   × Missing initializer in const declaration
    ╭─[conformance/es6/for-ofStatements/for-of2.ts:1:1]
  1 │ //@target: ES6
@@ -12476,6 +12632,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·           ┬  ┬
    ·           │  ╰── It can not be redeclared here
    ·           ╰── `v` has already been declared here
+   ╰────
+
+  × Identifier `v` has already been declared
+   ╭─[conformance/es6/for-ofStatements/for-of53.ts:1:1]
+ 1 │ //@target: ES6
+ 2 │ for (let v of []) {
+   ·          ┬
+   ·          ╰── `v` has already been declared here
+ 3 │     var v;
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 4 │ }
    ╰────
 
   × Identifier `v` has already been declared
@@ -14871,6 +15039,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[conformance/esDecorators/esDecorators-privateFieldAccess.ts:5:1]
+ 5 │ 
+ 6 │ @dec(x => x.#foo) // error
+   ·             ────
+ 7 │ class A {
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+    ╭─[conformance/esDecorators/esDecorators-privateFieldAccess.ts:13:1]
+ 13 │ 
+ 14 │ @dec((x: B) => x.#foo) // error
+    ·                  ────
+ 15 │ class B {
+    ╰────
+
   × Cannot assign to this expression
    ╭─[conformance/expressions/assignmentOperator/assignmentLHSIsValue.ts:5:1]
  5 │ class C {
@@ -15619,6 +15803,29 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ import * as f from "./first" assert {
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes4.ts:1:1]
+ 1 │ import * as f from "./first" with
+   ·                             ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes5.ts:1:1]
+ 1 │ import * as f from "./first" with {
+   ·                             ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/importAttributes/importAttributes6.ts:2:1]
+ 2 │ // @filename: mod.mts
+ 3 │ import * as thing1 from "./mod.mjs" with { field: 0 };
+   ·                                    ─
+ 4 │ import * as thing2 from "./mod.mjs" with { field: `a` };
+   ╰────
+  help: Try insert a semicolon here
+
   × The keyword 'interface' is reserved
    ╭─[conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:2:1]
  2 │ 
@@ -15730,6 +15937,29 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                              ──────────────
     ╰────
   help: Did you mean to write an array?
+
+  × Missing initializer in const declaration
+    ╭─[conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:10:1]
+ 10 │ 
+ 11 │ const X: any
+    ·       ─
+ 12 │ const a: any
+    ╰────
+
+  × Missing initializer in const declaration
+    ╭─[conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:11:1]
+ 11 │ const X: any
+ 12 │ const a: any
+    ·       ─
+ 13 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:13:1]
+ 13 │ 
+ 14 │ <X a={...a} />
+    ·       ───
+    ╰────
 
   × Unexpected token
     ╭─[conformance/jsx/jsxUnclosedParserRecovery.ts:13:1]
@@ -17972,6 +18202,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  10 │         #p
     ╰────
 
+  × Private field 'b' must be declared in an enclosing class
+    ╭─[conformance/salsa/plainJSGrammarErrors4.ts:9:1]
+  9 │         this.#a; // ok
+ 10 │         this.#b; // error
+    ·              ──
+ 11 │     }
+    ╰────
+
   × Identifier `orbitol` has already been declared
    ╭─[conformance/salsa/plainJSRedeclare.ts:3:1]
  3 │ // @filename: plainJSRedeclare.js
@@ -18130,6 +18368,145 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]
  1 │ \u0076ar x = "hello";
    · ────────
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:5:1]
+ 5 │ 
+ 6 │ export await using x = null;
+   ·        ─────
+ 7 │ declare await using y: null;
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:6:1]
+ 6 │ {
+ 7 │     await using [a] = null;
+   ·     ───────────────
+ 8 │ }
+   ╰────
+
+  × Using declarations may not have binding patterns.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:7:1]
+ 7 │     await using a = null,
+ 8 │                 [b] = null,
+   ·                 ───
+ 9 │                 c = null;
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:6:1]
+ 6 │ {
+ 7 │     await using {a} = null;
+   ·                ─
+ 8 │ }
+   ╰────
+  help: Try insert a semicolon here
+
+  × Using declarations may not have binding patterns.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.7.ts:7:1]
+ 7 │     await using a = null,
+ 8 │                 {b} = null,
+   ·                 ───
+ 9 │                 c = null;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.8.ts:6:1]
+ 6 │ {
+ 7 │     await using a;
+   ·                 ─
+ 8 │ }
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an await using declaration.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts:6:1]
+ 6 │ async function main() {
+ 7 │     for (await using x in {}) {
+   ·          ─────────────
+ 8 │     }
+   ╰────
+
+  × Missing initializer in destructuring declaration
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:6:1]
+ 6 │ async function main() {
+ 7 │     for (await using {} of []) {
+   ·                      ──
+ 8 │     }
+   ╰────
+
+  × Using declarations may not have binding patterns.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:6:1]
+ 6 │ async function main() {
+ 7 │     for (await using {} of []) {
+   ·                      ──
+ 8 │     }
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:5:1]
+ 5 │ 
+ 6 │ export using x = null;
+   ·        ─────
+ 7 │ declare using y: null;
+   ╰────
+
+  × Using declarations may not have binding patterns.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.5.ts:7:1]
+ 7 │     using a = null,
+ 8 │           [b] = null,
+   ·           ───
+ 9 │           c = null;
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:6:1]
+ 6 │ {
+ 7 │     using {a} = null;
+   ·          ─
+ 8 │ }
+   ╰────
+  help: Try insert a semicolon here
+
+  × Using declarations may not have binding patterns.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.7.ts:7:1]
+ 7 │     using a = null,
+ 8 │           {b} = null,
+   ·           ───
+ 9 │           c = null;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.8.ts:6:1]
+ 6 │ {
+ 7 │     using a;
+   ·           ─
+ 8 │ }
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForIn.ts:5:1]
+ 5 │ 
+ 6 │ for (using x in {}) {
+   ·      ───────
+ 7 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.2.ts:5:1]
+ 5 │ 
+ 6 │ for (using of of []) {
+   ·                   ─
+ 7 │ }
+   ╰────
+
+  × Expected `;` but found `{`
+   ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.3.ts:5:1]
+ 5 │ 
+ 6 │ for (using {} of []) {
+   ·            ┬
+   ·            ╰── `;` expected
+ 7 │ }
    ╰────
 
   × Illegal break statement
