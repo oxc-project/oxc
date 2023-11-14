@@ -3,157 +3,171 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/src/document/printer.js>
 
-#![allow(unused)]
-
 mod command;
 
-use std::{collections::VecDeque, ops::Deref};
+use std::collections::VecDeque;
 
-use crate::{doc::Doc, PrettierOptions};
+use crate::{
+    doc::{Doc, IfBreak},
+    PrettierOptions,
+};
 
 use self::command::{Command, Indent, Mode};
 
 pub struct Printer<'a> {
-    doc: Doc<'a>,
     options: PrettierOptions,
+    /// The final output string in bytes
+    out: Vec<u8>,
+    /// The current position in the output
+    pos: usize,
+    /// cmds is basically a stack. We've turned a recursive call into a
+    /// while loop which is much faster. The while loop below adds new
+    /// cmds to the array instead of recursively calling `print`.
+    cmds: Vec<Command<'a>>,
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(doc: Doc<'a>, options: crate::PrettierOptions) -> Self {
-        Self { doc, options }
+    pub fn new(doc: Doc<'a>, options: PrettierOptions) -> Self {
+        // TODO(perf): `with_capacity(source_text.len())`
+        Self {
+            options,
+            out: vec![],
+            pos: 0,
+            cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
+        }
     }
 
-    pub fn build(self) -> String {
-        self.print_doc_to_string()
+    pub fn build(mut self) -> String {
+        self.print_doc_to_string();
+        // SAFETY: We should have constructed valid UTF8 strings
+        unsafe { String::from_utf8_unchecked(self.out) }
     }
-}
 
-impl<'a> Printer<'a> {
     /// Turn Doc into a string
     ///
     /// Reference:
     /// * <https://github.com/prettier/prettier/blob/0176a33db442e498fdb577784deaa77d7c9ae723/src/document/printer.js#L302>
-    fn print_doc_to_string(self) -> String {
-        let mut pos = 0usize;
-        // cmds is basically a stack. We've turned a recursive call into a
-        // while loop which is much faster. The while loop below adds new
-        // cmds to the array instead of recursively calling `print`.
-        let mut cmds: Vec<Command> = vec![Command::new(Indent::root(), Mode::Break, &self.doc)];
-        let mut out = vec![];
+    pub fn print_doc_to_string(&mut self) {
+        while let Some(Command { indent, doc, mode }) = self.cmds.pop() {
+            match doc {
+                Doc::Str(s) => self.handle_str(s),
+                Doc::Array(docs) => self.handle_array(indent, mode, docs),
+                Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
+                Doc::Group(docs) => self.handle_group(indent, mode, docs),
+                Doc::Line => self.handle_line(indent, mode),
+                Doc::Softline => self.handle_softline(indent, mode),
+                Doc::Hardline => self.handle_hardline(),
+                Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
+            }
+        }
+    }
 
-        while let Some(Command { indent, doc, mode }) = cmds.pop() {
-            match &doc {
-                Doc::Str(string) => {
-                    out.extend(string.as_bytes());
-                    pos += string.len();
-                }
-                Doc::Array(docs) => {
-                    cmds.extend(docs.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
-                }
-                Doc::Indent(docs) => {
-                    cmds.extend(docs.into_iter().rev().map(|doc| {
-                        Command::new(Indent { value: " ", length: indent.length + 1 }, mode, doc)
-                    }));
-                }
-                Doc::Group(docs) => {
-                    match mode {
-                        Mode::Flat => {
-                            // TODO: consider supporting `group mode` e.g. Break/Flat
-                            cmds.extend(
-                                docs.into_iter()
-                                    .rev()
-                                    .map(|doc| Command::new(indent, Mode::Flat, doc)),
-                            );
-                        }
-                        Mode::Break => {
-                            #[allow(clippy::cast_possible_wrap)]
-                            let remaining_width = (self.options.print_width - pos) as isize;
+    fn handle_str(&mut self, s: &str) {
+        self.out.extend(s.as_bytes());
+        self.pos += s.len();
+    }
 
-                            if fits(docs, remaining_width) {
-                                cmds.extend(
-                                    docs.into_iter()
-                                        .rev()
-                                        .map(|doc| Command::new(indent, Mode::Flat, doc)),
-                                );
-                            } else {
-                                cmds.extend(
-                                    docs.into_iter()
-                                        .rev()
-                                        .map(|doc| Command::new(indent, Mode::Break, doc)),
-                                );
-                            }
-                        }
-                    }
-                }
-                #[allow(clippy::cast_lossless)]
-                Doc::Line => {
-                    if matches!(mode, Mode::Flat) {
-                        out.push(b' ');
-                    } else {
-                        out.push(b'\n');
-                        out.extend(indent.value.repeat(indent.length).as_bytes());
-                        pos = indent.length;
-                    }
-                }
-                #[allow(clippy::cast_lossless)]
-                Doc::Softline => {
-                    if !matches!(mode, Mode::Flat) {
-                        out.push(b'\n');
-                        out.extend(indent.value.repeat(indent.length).as_bytes());
-                        pos = indent.length;
-                    }
-                }
-                Doc::Hardline => {
-                    out.push(b'\n');
-                }
-                Doc::IfBreak { break_contents, .. } => {
-                    cmds.extend(
-                        break_contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)),
+    fn handle_array(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+        self.cmds.extend(docs.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+    }
+
+    fn handle_indent(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+        self.cmds.extend(
+            docs.into_iter().rev().map(|doc| {
+                Command::new(Indent { value: " ", length: indent.length + 1 }, mode, doc)
+            }),
+        );
+    }
+
+    fn handle_group(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+        match mode {
+            Mode::Flat => {
+                // TODO: consider supporting `group mode` e.g. Break/Flat
+                self.cmds.extend(
+                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                );
+            }
+            Mode::Break => {
+                #[allow(clippy::cast_possible_wrap)]
+                let remaining_width = (self.options.print_width - self.pos) as isize;
+
+                if Self::fits(&docs, remaining_width) {
+                    self.cmds.extend(
+                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                    );
+                } else {
+                    self.cmds.extend(
+                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
                 }
             }
         }
-
-        // SAFETY: We should have constructed valid UTF8 strings
-        unsafe { String::from_utf8_unchecked(out) }
     }
-}
 
-#[allow(clippy::cast_possible_wrap)]
-fn fits<'a, 'b>(doc: &'a oxc_allocator::Vec<'a, Doc<'b>>, remaining_width: isize) -> bool {
-    let mut remaining_width = remaining_width;
+    fn handle_line(&mut self, indent: Indent, mode: Mode) {
+        if matches!(mode, Mode::Flat) {
+            self.out.push(b' ');
+        } else {
+            self.out.push(b'\n');
+            self.out.extend(indent.value.repeat(indent.length).as_bytes());
+            self.pos = indent.length;
+        }
+    }
 
-    // TODO: these should be commands
-    let mut queue: VecDeque<&Doc<'a>> = doc.iter().collect();
+    fn handle_softline(&mut self, indent: Indent, mode: Mode) {
+        if !matches!(mode, Mode::Flat) {
+            self.out.push(b'\n');
+            self.out.extend(indent.value.repeat(indent.length).as_bytes());
+            self.pos = indent.length;
+        }
+    }
 
-    while let Some(next) = queue.pop_front() {
-        match next {
-            Doc::Str(string) => {
-                remaining_width -= string.len() as isize;
-            }
-            Doc::Array(docs) | Doc::Indent(docs) => {
-                // Prepend docs to the queue
-                for d in docs.iter().rev() {
-                    queue.push_front(d);
+    fn handle_hardline(&mut self) {
+        self.out.push(b'\n');
+    }
+
+    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
+        let IfBreak { break_contents, .. } = if_break;
+        self.cmds
+            .extend(break_contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn fits(doc: &oxc_allocator::Vec<'a, Doc<'a>>, remaining_width: isize) -> bool {
+        let mut remaining_width = remaining_width;
+
+        // TODO: these should be commands
+        let mut queue: VecDeque<&Doc<'a>> = doc.iter().collect();
+
+        while let Some(next) = queue.pop_front() {
+            match next {
+                Doc::Str(string) => {
+                    remaining_width -= string.len() as isize;
+                }
+                Doc::Array(docs) | Doc::Indent(docs) => {
+                    // Prepend docs to the queue
+                    for d in docs.iter().rev() {
+                        queue.push_front(d);
+                    }
+                }
+                Doc::Group(doc) => {
+                    for d in doc.iter().rev() {
+                        queue.push_front(d);
+                    }
+                }
+                // trying to fit on a single line, so we don't need to consider line breaks
+                Doc::IfBreak { .. } | Doc::Softline => {}
+                Doc::Line => remaining_width += 1,
+                Doc::Hardline => {
+                    return false;
                 }
             }
-            Doc::Group(doc) => {
-                for d in doc.iter().rev() {
-                    queue.push_front(d);
-                }
-            }
-            // trying to fit on a single line, so we don't need to consider line breaks
-            Doc::IfBreak { .. } | Doc::Softline => {}
-            Doc::Line => remaining_width += 1,
-            Doc::Hardline => {
+
+            if remaining_width < 0 {
                 return false;
             }
         }
 
-        if remaining_width < 0 {
-            return false;
-        }
+        true
     }
-
-    true
 }
