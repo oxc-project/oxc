@@ -1130,7 +1130,13 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(p.str("static {"));
+        parts.push(Doc::Softline);
+        parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
+        parts.push(Doc::Softline);
+        parts.push(p.str("}"));
+        Doc::Array(parts)
     }
 }
 
