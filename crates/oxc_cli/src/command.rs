@@ -9,6 +9,10 @@ pub enum CliCommand {
     #[bpaf(command)]
     Lint(#[bpaf(external(lint_options))] LintOptions),
 
+    /// Format this repository
+    #[bpaf(command)]
+    Format(#[bpaf(external(format_options))] FormatOptions),
+
     /// Use Ezno to type check source code (experimental and work in progress)
     #[bpaf(command)]
     Check(#[bpaf(external(check_options))] CheckOptions),
@@ -18,6 +22,9 @@ impl CliCommand {
     pub fn handle_threads(&self) {
         match self {
             Self::Lint(options) => {
+                Self::set_rayon_threads(options.misc_options.threads);
+            }
+            Self::Format(options) => {
                 Self::set_rayon_threads(options.misc_options.threads);
             }
             Self::Check(_) => {}
@@ -44,6 +51,20 @@ pub struct LintCommand {
 impl LintCommand {
     pub fn handle_threads(&self) {
         CliCommand::set_rayon_threads(self.lint_options.misc_options.threads);
+    }
+}
+
+/// Formatter for the JavaScript Oxidation Compiler
+#[derive(Debug, Clone, Bpaf)]
+#[bpaf(options)]
+pub struct FormatCommand {
+    #[bpaf(external(format_options))]
+    pub format_options: FormatOptions,
+}
+
+impl FormatCommand {
+    pub fn handle_threads(&self) {
+        CliCommand::set_rayon_threads(self.format_options.misc_options.threads);
     }
 }
 
@@ -145,6 +166,19 @@ impl LintFilter {
             Self::Deny(s) => (AllowWarnDeny::Deny, s),
         }
     }
+}
+
+#[derive(Debug, Clone, Bpaf)]
+pub struct FormatOptions {
+    #[bpaf(external)]
+    pub misc_options: MiscOptions,
+
+    #[bpaf(external)]
+    pub ignore_options: IgnoreOptions,
+
+    /// Single file, single path or list of paths
+    #[bpaf(positional("PATH"), many)]
+    pub paths: Vec<PathBuf>,
 }
 
 /// Codeowners

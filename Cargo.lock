@@ -1541,6 +1541,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_parser",
+ "oxc_prettier",
  "oxc_span",
  "oxc_type_synthesis",
  "pretty_assertions",
