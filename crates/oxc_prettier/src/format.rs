@@ -1260,7 +1260,17 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(p.str("{"));
+        let max = self.properties.len() - 1;
+        self.properties.iter().map(|prop| prop.format(p)).enumerate().for_each(|(i, prop)| {
+            parts.push(prop);
+            if i < max {
+                parts.push(Doc::Str(", "));
+            }
+        });
+        parts.push(p.str("}"));
+        Doc::Array(parts)
     }
 }
 
