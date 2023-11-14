@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 6/6 (100.00%)
-Positive Passed: 6/6 (100.00%)
+AST Parsed     : 8/8 (100.00%)
+Positive Passed: 8/8 (100.00%)
 Negative Passed: 2/2 (100.00%)
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]

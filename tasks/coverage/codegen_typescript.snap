@@ -1,6 +1,6 @@
 codegen_typescript Summary:
-AST Parsed     : 5063/5063 (100.00%)
-Positive Passed: 5043/5063 (99.60%)
+AST Parsed     : 5199/5199 (100.00%)
+Positive Passed: 5172/5199 (99.48%)
 Expect to Parse: "compiler/binopAssignmentShouldHaveType.ts"
 Expect to Parse: "compiler/castExpressionParentheses.ts"
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
@@ -20,4 +20,11 @@ Expect to Parse: "conformance/jsx/jsxReactTestSuite.tsx"
 Expect to Parse: "conformance/jsx/tsxNamespacedAttributeName1.tsx"
 Expect to Parse: "conformance/jsx/tsxNamespacedAttributeName2.tsx"
 Expect to Parse: "conformance/jsx/tsxReactEmitEntities.tsx"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInFor.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.1.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.2.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInFor.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForAwaitOf.ts"
+Expect to Parse: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.1.ts"
 Expect to Parse: "conformance/types/thisType/thisTypeInFunctions4.ts"
