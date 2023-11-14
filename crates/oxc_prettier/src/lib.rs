@@ -6,6 +6,7 @@ mod comment;
 mod doc;
 mod format;
 mod macros;
+mod options;
 mod printer;
 
 use std::{
@@ -16,24 +17,8 @@ use std::{
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, CommentKind, Trivias};
 
+pub use crate::options::{ArrowParens, PrettierOptions, QuoteProps, TrailingComma};
 use crate::{format::Format, printer::Printer};
-
-pub struct PrettierOptions {
-    /// Print width (in characters).
-    /// Default: 80
-    #[allow(unused)]
-    print_width: usize,
-
-    /// Print semicolons at the ends of statements.
-    /// Default: true
-    semi: bool,
-}
-
-impl Default for PrettierOptions {
-    fn default() -> Self {
-        Self { semi: true, print_width: 80 }
-    }
-}
 
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
