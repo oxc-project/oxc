@@ -402,7 +402,13 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
 
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(self.id.format(p));
+        if let Some(init) = &self.init {
+            parts.push(p.str(" = "));
+            parts.push(init.format(p));
+        }
+        Doc::Array(parts)
     }
 }
 
