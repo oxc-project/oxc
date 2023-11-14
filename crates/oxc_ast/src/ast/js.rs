@@ -1886,6 +1886,16 @@ pub struct ImportDeclaration<'a> {
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
     pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
+    pub import_phase: ImportPhase,
+}
+
+#[derive(Debug, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+pub enum ImportPhase {
+    #[default]
+    Evaluation,
+    Source,
+    Defer,
 }
 
 #[derive(Debug, Hash)]

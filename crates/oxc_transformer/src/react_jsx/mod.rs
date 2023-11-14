@@ -265,6 +265,7 @@ impl<'a> ReactJsx<'a> {
             source,
             None,
             ImportOrExportKind::Value,
+            ImportPhase::Evaluation,
         );
         let decl =
             self.ast.module_declaration(ModuleDeclaration::ImportDeclaration(import_statement));
