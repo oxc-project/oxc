@@ -5,12 +5,14 @@
 
 #![allow(unused_variables)]
 
+use crate::{
+    array, doc::Doc, format, group, hardline, indent, softline, string, util::is_next_line_empty,
+    Prettier,
+};
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
-
-use crate::{array, doc::Doc, format, group, hardline, indent, softline, string, Prettier};
 
 pub trait Format<'a> {
     #[must_use]
@@ -354,7 +356,22 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
         let mut decls = p.vec();
         decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
 
-        array!(p, p.str(kind), p.str(" "), Doc::Array(decls), p.str(";"), Doc::Hardline)
+        let mut parts = p.vec();
+        parts.push(p.str(kind));
+        parts.push(p.str(" "));
+        parts.push(Doc::Array(decls));
+
+        if p.options.semi {
+            parts.push(p.str(";"));
+        }
+
+        parts.push(Doc::Hardline);
+
+        if is_next_line_empty(&p.source_text, self.span) {
+            parts.push(Doc::Hardline);
+        }
+
+        Doc::Group(parts)
     }
 }
 
