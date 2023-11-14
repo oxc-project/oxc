@@ -770,9 +770,9 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
         parts_inner.push(Doc::Softline);
 
         for (i, element) in self.elements.iter().enumerate() {
-            if i > 0 {
+            if i > 0 && i < self.elements.len() {
                 parts_inner.push(ss!(","));
-                parts_inner.push(Doc::Softline);
+                parts_inner.push(Doc::Line);
             }
             parts_inner.push(format!(p, element));
         }
