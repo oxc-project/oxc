@@ -159,6 +159,10 @@ impl<'a> Format<'a> for ContinueStatement {
             parts.push(format!(p, label));
         }
 
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
         Doc::Array(parts)
     }
 }
@@ -171,6 +175,10 @@ impl<'a> Format<'a> for BreakStatement {
         if let Some(label) = &self.label {
             parts.push(string!(p, " "));
             parts.push(format!(p, label));
+        }
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
         }
 
         Doc::Array(parts)
@@ -249,7 +257,11 @@ impl<'a> Format<'a> for DebuggerStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(Doc::Str("debugger"));
-        parts.push(Doc::Str(";"));
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
         Doc::Array(parts)
     }
 }
