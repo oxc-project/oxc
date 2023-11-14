@@ -353,12 +353,12 @@ impl<'a> Format<'a> for Declaration<'a> {
 
 impl<'a> Format<'a> for VariableDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let kind = self.kind.to_string();
+        let kind = self.kind.as_str();
         let mut decls = p.vec();
         decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
 
         let mut parts = p.vec();
-        parts.push(p.str(kind));
+        parts.push(ss!(kind));
         parts.push(ss!(" "));
         parts.push(Doc::Array(decls));
 
