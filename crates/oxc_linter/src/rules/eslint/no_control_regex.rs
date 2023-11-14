@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use regex::{Matches, Regex};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-control-regex): Unexpected control character(s)")]
@@ -141,21 +141,6 @@ impl Rule for NoControlRegex {
     }
 }
 
-fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() <= 1 {
-        return None;
-    }
-    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] else {
-        return None;
-    };
-    let mut flags = RegExpFlags::empty();
-    for ch in flag_arg.value.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
-        flags |= flag;
-    }
-    Some(flags)
-}
-
 struct RegexPatternData<'a> {
     /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
     /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
@@ -208,7 +193,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
                         pattern: &pattern.value,
-                        flags: extract_flags(&expr.arguments),
+                        flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
                 } else {
@@ -237,7 +222,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
                         pattern: &pattern.value,
-                        flags: extract_flags(&expr.arguments),
+                        flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
                 } else {

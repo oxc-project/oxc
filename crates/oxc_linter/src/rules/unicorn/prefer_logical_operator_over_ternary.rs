@@ -88,6 +88,12 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::UnaryExpression(right_await_expr),
         ) => return is_same_node(&left_await_expr.argument, &right_await_expr.argument, ctx),
         (Expression::UpdateExpression(_), Expression::UpdateExpression(_)) => return false,
+        (Expression::ParenthesizedExpression(left_paren_expr), _) => {
+            return is_same_node(&left_paren_expr.expression, right, ctx)
+        }
+        (_, Expression::ParenthesizedExpression(right_paren_expr)) => {
+            return is_same_node(left, &right_paren_expr.expression, ctx);
+        }
         _ => {}
     }
 
@@ -201,6 +207,9 @@ fn test() {
         "a ?? b ? a ?? b : bar",
         "foo ? foo : await a",
         "await a ? await a : foo",
+        "await a ? (await (a)) : (foo)",
+        "(await a) ? await (a) : (foo)",
+        "(await a) ? (await (a)) : (foo)",
     ];
 
     Tester::new_without_config(PreferLogicalOperatorOverTernary::NAME, pass, fail)

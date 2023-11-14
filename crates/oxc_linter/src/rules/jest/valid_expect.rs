@@ -12,7 +12,9 @@ use oxc_span::{Atom, GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_expect_jest_fn_call, ExpectError},
+    utils::{
+        collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
+    },
     AstNode,
 };
 
@@ -88,9 +90,21 @@ impl Rule for ValidExpect {
 
         Self { async_matchers, min_args, max_args, always_await }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            self.run(possible_jest_node, ctx);
+        }
+    }
+}
+
+impl ValidExpect {
+    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+        let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, node, ctx) else { return };
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
+            return;
+        };
         let reporting_span = jest_fn_call.expect_error.map_or(call_expr.span, |_| {
             find_top_most_member_expression(node, ctx).map_or(call_expr.span, GetSpan::span)
         });

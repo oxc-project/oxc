@@ -35,6 +35,7 @@ oxc_linter         = { path = "crates/oxc_linter" }
 oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
 oxc_query          = { path = "crates/oxc_query" }
 oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
+oxc_prettier       = { path = "crates/oxc_prettier" }
 
 # published by its own
 oxc_resolver = { path = "crates/oxc_resolver" }
@@ -50,7 +51,7 @@ convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.8" }
 dashmap                   = { version = "5.5.3" }
-env_logger                = { version = "0.10.0", default-features = false, features = ["auto-color", "humantime"] }
+env_logger                = { version = "0.10.1", default-features = false, features = ["auto-color", "humantime"] }
 flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.29" }
 ignore                    = { version = "0.4.20" }

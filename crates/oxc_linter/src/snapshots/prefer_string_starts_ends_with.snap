@@ -1,0 +1,203 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_string_starts_ends_with
+---
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ const foo = {}; /^abc/.test(foo);
+   ·                 ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ const foo = 123; /^abc/.test(foo);
+   ·                  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ const foo = "hello"; /^abc/.test(foo);
+   ·                      ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^b/.test((a))
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ (/^b/).test((a))
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ const fn = async () => /^b/.test(await foo)
+   ·                        ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ const fn = async () => (/^b/).test(await foo)
+   ·                        ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test("string")
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test((0, "string"))
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ async function a() {return /^a/.test(await foo())}
+   ·                            ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo + bar)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo || bar)
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new SomeString)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new (SomeString))
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new SomeString())
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new new SomeClassReturnsAStringSubClass())
+   · ────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new SomeString(/* comment */))
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(new SomeString("string"))
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo.bar)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo.bar())
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo?.bar)
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(foo?.bar())
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(`string`)
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(tagged`string`)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ (/^a/).test((0, "string"))
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(true ? a : b)
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /a$/.test(a ??= b)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(a || b)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/.test(a && b)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/u.test("string")
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^a/v.test("string")
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /a$/.test(`${unknown}`)
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /a$/.test(String(unknown))
+   · ──────────────────────────
+   ╰────
+
+

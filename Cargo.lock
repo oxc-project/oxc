@@ -657,9 +657,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
+checksum = "95b3f3e67048839cb0d0781f445682a35113da7121f7c949db0e2be96a4fbece"
 dependencies = [
  "humantime",
  "is-terminal",
@@ -1766,6 +1766,32 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "serde_json",
+]
+
+[[package]]
+name = "oxc_prettier"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+]
+
+[[package]]
+name = "oxc_prettier_conformance"
+version = "0.0.0"
+dependencies = [
+ "jemallocator",
+ "mimalloc",
+ "oxc_allocator",
+ "oxc_parser",
+ "oxc_prettier",
+ "oxc_span",
+ "oxc_tasks_common",
+ "pico-args",
+ "walkdir",
 ]
 
 [[package]]

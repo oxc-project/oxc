@@ -18,6 +18,13 @@ expression: no_instanceof_array
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
+ 1 │ [] instanceof (Array)
+   · ─────────────────────
+   ╰────
+  help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
+   ╭─[no_instanceof_array.tsx:1:1]
  1 │ [1,2,3] instanceof Array === true
    · ────────────────────────
    ╰────

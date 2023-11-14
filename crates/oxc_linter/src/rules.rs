@@ -144,31 +144,43 @@ mod react {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_console_spaces;
+    pub mod no_document_cookie;
     pub mod no_empty_file;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
+    pub mod no_lonely_if;
+    pub mod no_negated_condition;
     pub mod no_new_array;
     pub mod no_new_buffer;
     pub mod no_object_as_default_parameter;
     pub mod no_static_only_class;
     pub mod no_thenable;
+    pub mod no_this_assignment;
+    pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_promise_resolve_reject;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
+    pub mod prefer_dom_node_append;
+    pub mod prefer_dom_node_dataset;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
     pub mod prefer_spread;
+    pub mod prefer_string_replace_all;
+    pub mod prefer_string_slice;
+    pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
     pub mod require_number_to_fixed_digits_argument;
@@ -286,31 +298,43 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_console_spaces,
+    unicorn::no_document_cookie,
     unicorn::no_empty_file,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
+    unicorn::no_lonely_if,
+    unicorn::no_negated_condition,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
     unicorn::no_object_as_default_parameter,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
+    unicorn::no_this_assignment,
+    unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
+    unicorn::no_useless_promise_resolve_reject,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
+    unicorn::prefer_dom_node_append,
+    unicorn::prefer_dom_node_dataset,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
     unicorn::prefer_spread,
+    unicorn::prefer_string_replace_all,
+    unicorn::prefer_string_slice,
+    unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_type_error,
     unicorn::require_number_to_fixed_digits_argument,

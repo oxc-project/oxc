@@ -13,9 +13,9 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, parse_expect_jest_fn_call_new,
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        KnownMemberExpressionParentKindNew, ParsedExpectFnCallNew, PossibleJestNode,
+        collect_possible_jest_call_node, get_node_name, parse_expect_jest_fn_call,
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind,
+        ParsedExpectFnCall, PossibleJestNode,
     },
     AstNode,
 };
@@ -88,17 +88,17 @@ impl NoStandaloneExpect {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_expect_jest_fn_call_new(call_expr, possible_jest_node, ctx)
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;
         };
-        let ParsedExpectFnCallNew { head, members, .. } = jest_fn_call;
+        let ParsedExpectFnCall { head, members, .. } = jest_fn_call;
 
         // only report `expect.hasAssertions` & `expect.assertions` member calls
         if members.len() == 1
             && members[0].is_name_unequal("assertions")
             && members[0].is_name_unequal("hasAssertions")
-            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKindNew::Member))
+            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKind::Member))
         {
             return;
         }

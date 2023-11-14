@@ -8,6 +8,8 @@ use serde_json::Value;
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BabelOptions {
+    #[serde(rename = "BABEL_8_BREAKING")]
+    pub babel_8_breaking: Option<bool>,
     pub source_type: Option<String>,
     pub throws: Option<String>,
     #[serde(default)]

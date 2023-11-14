@@ -267,8 +267,9 @@ Oxc partially copies code from the following projects, their licenses are listed
 | [import-js/eslint-plugin-import](https://github.com/import-js/eslint-plugin-import) | [MIT](https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE)  |
 | [jest-community/eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) | [MIT](https://github.com/jest-community/eslint-plugin-jest/blob/main/LICENSE)  |
 | [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)  |
-| [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
+| [biomejs/biome](https://github.com/biomejs/biome) | [MIT](https://github.com/biomejs/biome/blob/main/LICENSE)  |
 | [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
+| [prettier/prettier](https://github.com/prettier/prettier) | [MIT](https://github.com/prettier/prettier/blob/main/LICENSE)  |
 | [acorn](https://github.com/acornjs/acorn) | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE) |
 | [zkat/miette](https://github.com/zkat/miette) | [Apache 2.0](https://github.com/zkat/miette/blob/main/LICENSE) |
 | [sindresorhus/globals](https://github.com/sindresorhus/globals) | [MIT](https://github.com/sindresorhus/globals/blob/main/license) |
@@ -324,7 +325,6 @@ Oxc partially copies code from the following projects, their licenses are listed
 [npm-napi]: https://www.npmjs.com/package/oxc-parser
 [npm-oxlint]: https://www.npmjs.com/package/oxlint
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
-[prettier]: https://github.com/prettier/prettier
 [prettier]: https://prettier.io
 [biome]: https://biomejs.dev/
 [ruff]: https://beta.ruff.rs

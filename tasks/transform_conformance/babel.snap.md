@@ -1,4 +1,4 @@
-Passed: 277/1113
+Passed: 262/1080
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -14,7 +14,7 @@ Passed: 277/1113
 * transform-u/basic/input.js
 * transform-u/string-properties/input.js
 
-# babel-plugin-transform-class-properties (0/266)
+# babel-plugin-transform-class-properties (0/264)
 * assumption-constantSuper/complex-super-class/input.js
 * assumption-constantSuper/instance-field/input.js
 * assumption-constantSuper/static-field/input.js
@@ -49,9 +49,7 @@ Passed: 277/1113
 * class-name-tdz/static-general/input.js
 * class-name-tdz/static-loose/input.js
 * compile-to-class/constructor-collision-ignores-types/input.js
-* compile-to-class/constructor-collision-ignores-types-babel-7/input.js
 * compile-to-class/constructor-collision-ignores-types-loose/input.js
-* compile-to-class/constructor-collision-ignores-types-loose-babel-7/input.js
 * compile-to-class/preserve-comments/input.js
 * decorators-legacy-interop/local-define-property/input.js
 * decorators-legacy-interop/loose/input.js
@@ -507,7 +505,7 @@ Passed: 277/1113
 * export-namespace/namespace-string/input.mjs
 * export-namespace/namespace-typescript/input.mjs
 
-# babel-plugin-transform-dynamic-import (0/19)
+# babel-plugin-transform-dynamic-import (0/18)
 * amd/missing-plugin/input.mjs
 * amd/module/input.mjs
 * amd/no-interop/input.js
@@ -523,7 +521,6 @@ Passed: 277/1113
 * commonjs/to-string/input.js
 * missing-module-transform/missing-module-transform/input.js
 * systemjs/missing-plugin/input.mjs
-* systemjs/missing-plugin-babel-7/input.mjs
 * systemjs/module/input.mjs
 * systemjs/script/input.js
 * systemjs/to-string/input.js
@@ -579,7 +576,7 @@ Passed: 277/1113
 * transparent-expr-wrappers/ts-as-member-expression/input.ts
 * transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
 
-# babel-plugin-transform-async-generator-functions (0/24)
+# babel-plugin-transform-async-generator-functions (0/22)
 * async-generators/class-method/input.js
 * async-generators/class-private-method/input.js
 * async-generators/declaration/input.js
@@ -588,7 +585,6 @@ Passed: 277/1113
 * async-generators/static-method/input.js
 * async-generators/transform-class-keys/input.js
 * async-generators/yield-star/input.js
-* async-generators/yield-star-babel-7/input.js
 * for-await/async-arrow/input.js
 * for-await/async-function/input.js
 * for-await/async-function-no-transform/input.js
@@ -603,7 +599,6 @@ Passed: 277/1113
 * regression/13801/input.js
 * regression/5880/input.js
 * yield-star/create-async-from-sync-iterator/input.js
-* yield-star/create-async-from-sync-iterator-babel-7/input.js
 
 # babel-plugin-transform-object-rest-spread (0/61)
 * assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
@@ -723,7 +718,7 @@ Passed: 277/1113
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-template-literals (13/33)
+# babel-plugin-transform-template-literals (13/32)
 * assumption-ignoreToPrimitiveHint/escape-quotes/input.js
 * assumption-ignoreToPrimitiveHint/expression-first/input.js
 * assumption-ignoreToPrimitiveHint/functions/input.js
@@ -740,21 +735,18 @@ Passed: 277/1113
 * default/simple-tag/input.js
 * default/tag/input.js
 * default/tag-with-unicode-escapes/input.js
-* default/tag-with-unicode-escapes-babel-7/input.js
 * default/template-revision/input.js
 * loose/ignoreToPrimitiveHint/input.js
 * loose/mutableTemplateObject/input.js
 
-# babel-plugin-transform-typescript (76/181)
+# babel-plugin-transform-typescript (66/168)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/accessor-allowDeclareFields-true-babel-7/input.ts
-* class/declare-not-enabled-babel-7/input.ts
+* class/declare/input.ts
 * class/decorated-declare-properties/input.ts
-* class/field-not-initialized-babel-7/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
 * class/parameter-properties-with-class/input.ts
@@ -763,7 +755,6 @@ Passed: 277/1113
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
-* class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
@@ -852,20 +843,12 @@ Passed: 277/1113
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (142/170)
+# babel-plugin-transform-react-jsx (137/156)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
-* react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
-* react/assignment-babel-7/input.js
-* react/avoids-spread-babel-7/input.js
-* react/does-not-add-source-self-babel-7/input.mjs
-* react/handle-spread-with-proto-babel-7/input.js
 * react/optimisation.react.constant-elements/input.js
 * react/should-add-quotes-es3/input.js
-* react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
 * react-automatic/should-add-quotes-es3/input.js
@@ -877,7 +860,6 @@ Passed: 277/1113
 * removed-options/invalid-use-builtins-true/input.js
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
-* runtime/defaults-to-automatic/input.js
 * runtime/invalid-runtime/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
