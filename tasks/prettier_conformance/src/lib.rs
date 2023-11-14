@@ -85,7 +85,7 @@ impl TestRunner {
 
         let total = dirs.len();
         let passed = total - failed.len();
-        let percentage = passed as f64 / total as f64;
+        let percentage = (passed as f64 / total as f64) * 100.0;
         let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
         println!("{heading}");
 
