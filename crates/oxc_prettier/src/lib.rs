@@ -13,6 +13,11 @@ use oxc_ast::ast::Program;
 use crate::{format::Format, printer::Printer};
 
 pub struct PrettierOptions {
+    /// Print width (in characters).
+    /// Default: 80
+    #[allow(unused)]
+    print_width: usize,
+
     /// Print semicolons at the ends of statements.
     /// Default: true
     semi: bool,
@@ -20,7 +25,7 @@ pub struct PrettierOptions {
 
 impl Default for PrettierOptions {
     fn default() -> Self {
-        Self { semi: true }
+        Self { semi: true, print_width: 80 }
     }
 }
 
@@ -31,12 +36,12 @@ pub struct Prettier<'a> {
 }
 
 impl<'a> Prettier<'a> {
-    pub fn new(allocator: &'a Allocator, _options: PrettierOptions) -> Self {
-        Self { allocator, options: _options }
+    pub fn new(allocator: &'a Allocator, options: PrettierOptions) -> Self {
+        Self { allocator, options }
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {
         let doc = program.format(&mut self);
-        Printer::new(doc).build()
+        Printer::new(doc, self.options).build()
     }
 }

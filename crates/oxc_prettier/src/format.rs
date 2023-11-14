@@ -157,7 +157,19 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
 impl<'a> Format<'a> for ContinueStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "continue"));
+
+        if let Some(label) = &self.label {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, label));
+        }
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -680,7 +692,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
         let mut if_break_comma = p.vec();
         if_break_comma.push(Doc::Str(","));
 
-        parts_inner.push(Doc::IfBreak(if_break_comma, p.vec()));
+        parts_inner.push(Doc::if_break(if_break_comma, p.vec()));
 
         parts.push(group!(p, Doc::Indent(parts_inner)));
 
