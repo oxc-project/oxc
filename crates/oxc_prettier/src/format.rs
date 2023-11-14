@@ -595,7 +595,10 @@ impl<'a> Format<'a> for CallExpression<'a> {
 
 impl<'a> Format<'a> for Argument<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::Expression(expr) => expr.format(p),
+            Self::SpreadElement(expr) => expr.format(p),
+        }
     }
 }
 
