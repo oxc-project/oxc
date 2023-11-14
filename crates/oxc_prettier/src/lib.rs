@@ -15,7 +15,6 @@ use crate::{format::Format, printer::Printer};
 pub struct PrettierOptions {
     /// Print width (in characters).
     /// Default: 80
-    #[allow(unused)]
     print_width: usize,
 
     /// Print semicolons at the ends of statements.
