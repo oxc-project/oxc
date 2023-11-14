@@ -1112,15 +1112,19 @@ impl VariableDeclarationKind {
     pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Var => "var",
+            Self::Const => "const",
+            Self::Let => "let",
+        }
+    }
 }
 
 impl fmt::Display for VariableDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::Var => "var",
-            Self::Const => "const",
-            Self::Let => "let",
-        };
+        let s = self.as_str();
         write!(f, "{s}")
     }
 }

@@ -107,6 +107,7 @@ mod typescript {
 
 mod jest {
     pub mod expect_expect;
+    pub mod max_expects;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
@@ -164,6 +165,7 @@ mod unicorn {
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_promise_resolve_reject;
     pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
@@ -276,6 +278,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_var_requires,
     typescript::prefer_as_const,
     jest::expect_expect,
+    jest::max_expects,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
@@ -317,6 +320,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
+    unicorn::no_useless_promise_resolve_reject,
     unicorn::number_literal_case,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,

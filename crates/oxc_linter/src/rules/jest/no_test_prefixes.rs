@@ -12,7 +12,7 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestGeneralFnKind,
-        KnownMemberExpressionPropertyNew, ParsedGeneralJestFnCall, PossibleJestNode,
+        KnownMemberExpressionProperty, ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -97,7 +97,7 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
     let member_names = members
         .iter()
-        .filter_map(KnownMemberExpressionPropertyNew::name)
+        .filter_map(KnownMemberExpressionProperty::name)
         .collect::<Vec<_>>()
         .join(".");
     let name_slice = &name[1..];

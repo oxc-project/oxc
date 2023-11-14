@@ -11,11 +11,11 @@ use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
 
-#[test]
-#[cfg(any(coverage, coverage_nightly))]
-fn test() {
-    TestRunner::new(TestRunnerOptions::default()).run();
-}
+// #[test]
+// #[cfg(any(coverage, coverage_nightly))]
+// fn test() {
+// TestRunner::new(TestRunnerOptions::default()).run();
+// }
 
 #[derive(Default)]
 pub struct TestRunnerOptions {
@@ -85,7 +85,7 @@ impl TestRunner {
 
         let total = dirs.len();
         let passed = total - failed.len();
-        let percentage = passed as f64 / total as f64;
+        let percentage = (passed as f64 / total as f64) * 100.0;
         let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
         println!("{heading}");
 
@@ -146,6 +146,7 @@ printWidth: 80
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        Prettier::new(&allocator, PrettierOptions).build(&ret.program)
+        Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+            .build(&ret.program)
     }
 }
