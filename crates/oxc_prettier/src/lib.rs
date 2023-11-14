@@ -8,6 +8,7 @@ mod format;
 mod macros;
 mod options;
 mod printer;
+mod util;
 
 use std::{
     iter::{Peekable, Rev},

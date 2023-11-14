@@ -1,4 +1,4 @@
-Compatibility: 2/173 (1.16%)
+Compatibility: 3/173 (1.73%)
 
 # Failed
 
@@ -92,7 +92,6 @@ Compatibility: 2/173 (1.16%)
 * invalid-code
 * label
 * last-argument-expansion
-* line
 * line-suffix-boundary
 * literal
 * logical-assignment
