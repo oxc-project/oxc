@@ -1243,7 +1243,10 @@ impl<'a> Format<'a> for PrivateIdentifier {
 
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self.kind {
+            BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
+            _ => Doc::Line,
+        }
     }
 }
 
