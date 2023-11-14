@@ -347,7 +347,11 @@ impl<'a> Format<'a> for Declaration<'a> {
 
 impl<'a> Format<'a> for VariableDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let kind = self.kind.to_string();
+        let mut decls = p.vec();
+        decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
+
+        array!(p, p.str(kind), p.str(" "), Doc::Array(decls), p.str(";"), Doc::Hardline)
     }
 }
 
