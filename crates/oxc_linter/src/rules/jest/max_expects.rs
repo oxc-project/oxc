@@ -1,12 +1,18 @@
-use crate::{context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
+use std::{collections::HashMap, hash::BuildHasherDefault};
+
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{collect_possible_jest_call_node, PossibleJestNode},
+};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHasher};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -78,41 +84,41 @@ impl Rule for MaxExpects {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let nodes = ctx.nodes();
-        let scopes = ctx.scopes();
-        let symbol_table = ctx.symbols();
-        let references = scopes.root_unresolved_references();
-        let mut count_map = FxHashMap::default();
+        let mut count_map: HashMap<usize, usize, BuildHasherDefault<FxHasher>> =
+            FxHashMap::default();
 
-        for (name, reference_id_list) in references {
-            if name.as_str() == "expect" {
-                for reference_id in reference_id_list {
-                    let reference = symbol_table.get_reference(*reference_id);
-                    let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
-                        continue;
-                    };
+        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
+            self.run(possible_jest_node, &mut count_map, ctx);
+        }
+    }
+}
 
-                    let Some(grand_node) = nodes.parent_node(parent_node.id()) else {
-                        continue;
-                    };
+impl MaxExpects {
+    fn run<'a>(
+        &self,
+        jest_node: &PossibleJestNode<'a, '_>,
+        count_map: &mut HashMap<usize, usize, BuildHasherDefault<FxHasher>>,
+        ctx: &LintContext<'a>,
+    ) {
+        let node = jest_node.node;
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Expression::Identifier(ident) = &call_expr.callee else {
+            return;
+        };
 
-                    if let AstKind::CallExpression(_) = parent_node.kind() {
-                        let position = grand_node.scope_id().index();
-                        if let Some(count) = count_map.get(&position) {
-                            if count > &self.max {
-                                ctx.diagnostic(ExceededMaxAssertion(
-                                    *count,
-                                    self.max,
-                                    reference.span(),
-                                ));
-                            } else {
-                                count_map.insert(position, count + 1);
-                            }
-                        } else {
-                            count_map.insert(position, 2);
-                        }
-                    }
+        if ident.name == "expect" {
+            let position = node.scope_id().index();
+
+            if let Some(count) = count_map.get(&position) {
+                if count > &self.max {
+                    ctx.diagnostic(ExceededMaxAssertion(*count, self.max, ident.span));
+                } else {
+                    count_map.insert(position, count + 1);
                 }
+            } else {
+                count_map.insert(position, 2);
             }
         }
     }
