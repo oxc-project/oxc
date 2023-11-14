@@ -14,8 +14,8 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, get_node_name, parse_expect_jest_fn_call,
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        KnownMemberExpressionParentKindNew, ParsedExpectFnCall, PossibleJestNode,
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind,
+        ParsedExpectFnCall, PossibleJestNode,
     },
     AstNode,
 };
@@ -98,7 +98,7 @@ impl NoStandaloneExpect {
         if members.len() == 1
             && members[0].is_name_unequal("assertions")
             && members[0].is_name_unequal("hasAssertions")
-            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKindNew::Member))
+            && matches!(head.parent_kind, Some(KnownMemberExpressionParentKind::Member))
         {
             return;
         }

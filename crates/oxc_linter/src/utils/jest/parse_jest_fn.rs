@@ -2,27 +2,27 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use oxc_ast::{
     ast::{
-        Argument, CallExpression, Expression, IdentifierName, IdentifierReference,
-        ImportDeclarationSpecifier, MemberExpression, ModuleDeclaration,
+        Argument, CallExpression, Expression, IdentifierName, IdentifierReference, MemberExpression,
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
 
 use crate::context::LintContext;
 
-use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind};
+use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode};
 
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedJestFnCall<'a>> {
+    let original = possible_jest_node.original;
+    let node = possible_jest_node.node;
     let callee = &call_expr.callee;
-
     // If bailed out, we're not jest function
-    let resolved = resolve_to_jest_fn(call_expr, ctx)?;
+    let resolved = resolve_to_jest_fn(call_expr, original)?;
 
     let params = NodeChainParams {
         expr: callee,
@@ -271,59 +271,10 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
 
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
-    ctx: &LintContext<'a>,
+    original: Option<&'a Atom>,
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
-    if ctx.semantic().is_reference_to_global_variable(ident) {
-        // If the identifier is not a jest function, bail out
-        if JestFnKind::from(&ident.name) == JestFnKind::Unknown {
-            return None;
-        }
-
-        return Some(ResolvedJestFn {
-            local: &ident.name,
-            kind: JestFnFrom::Global,
-            original: None,
-        });
-    }
-
-    let node_id = get_import_decl_node_id(ident, ctx)?;
-    let node = ctx.nodes().get_node(node_id);
-    let AstKind::ModuleDeclaration(module_decl) = node.kind() else {
-        return None;
-    };
-    let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else {
-        return None;
-    };
-
-    if import_decl.source.value == "@jest/globals" {
-        let original =
-            import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-                    Some(import_specifier.imported.name())
-                }
-                _ => None,
-            });
-
-        return Some(ResolvedJestFn { local: &ident.name, kind: JestFnFrom::Import, original });
-    }
-    None
-}
-
-fn get_import_decl_node_id(ident: &IdentifierReference, ctx: &LintContext) -> Option<AstNodeId> {
-    let symbol_table = ctx.semantic().symbols();
-    let reference_id = ident.reference_id.get()?;
-    let reference = symbol_table.get_reference(reference_id);
-    // import binding is not a write reference
-    if reference.is_write() {
-        return None;
-    }
-    let symbol_id = reference.symbol_id()?;
-    if symbol_table.get_flag(symbol_id).is_import_binding() {
-        return Some(symbol_table.get_declaration(symbol_id));
-    }
-
-    None
+    Some(ResolvedJestFn { local: &ident.name, original })
 }
 
 fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
@@ -371,16 +322,19 @@ pub struct ParsedExpectFnCall<'a> {
     pub expect_error: Option<ExpectError>,
 }
 
+impl<'a> ParsedExpectFnCall<'a> {
+    pub fn matcher(&self) -> Option<&KnownMemberExpressionProperty<'a>> {
+        let matcher_index = self.matcher_index?;
+        self.members.get(matcher_index)
+    }
+    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
+    }
+}
+
 struct ResolvedJestFn<'a> {
     pub local: &'a Atom,
     pub original: Option<&'a Atom>,
-    #[allow(unused)]
-    kind: JestFnFrom,
-}
-
-pub enum JestFnFrom {
-    Global,
-    Import,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -452,6 +406,12 @@ impl<'a> MemberExpressionElement<'a> {
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
         }
+    }
+    pub fn is_string_literal(&self) -> bool {
+        matches!(
+            self,
+            Self::Expression(Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+        )
     }
 }
 

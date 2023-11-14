@@ -12,7 +12,7 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        MemberExpressionElementNew, ParsedGeneralJestFnCall, PossibleJestNode,
+        MemberExpressionElement, ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -89,7 +89,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
             let span = only_node.span;
             let start = span.start - 1;
-            let end = if matches!(only_node.element, MemberExpressionElementNew::IdentName(_)) {
+            let end = if matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
                 span.end
             } else {
                 span.end + 1
