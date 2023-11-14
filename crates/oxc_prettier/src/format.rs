@@ -387,6 +387,12 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
@@ -396,7 +402,17 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(p.str("function "));
+        if self.r#async {
+            parts.push(string!(p, "async "));
+        }
+        if self.generator {
+            parts.push(string!(p, "function* "));
+        } else {
+            parts.push(p.str("function "));
+        }
+        if let Some(type_params) = &self.type_parameters {
+            parts.push(format!(p, type_params));
+        }
         if let Some(id) = &self.id {
             parts.push(p.str(id.name.as_str()));
         }
