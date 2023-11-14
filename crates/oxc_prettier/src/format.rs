@@ -692,7 +692,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
         let mut if_break_comma = p.vec();
         if_break_comma.push(Doc::Str(","));
 
-        parts_inner.push(Doc::IfBreak(if_break_comma, p.vec()));
+        parts_inner.push(Doc::if_break(if_break_comma, p.vec()));
 
         parts.push(group!(p, Doc::Indent(parts_inner)));
 

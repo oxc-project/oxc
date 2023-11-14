@@ -16,7 +16,7 @@ pub struct PrettierOptions {
     /// Print width (in characters).
     /// Default: 80
     #[allow(unused)]
-    print_width: u16,
+    print_width: usize,
 
     /// Print semicolons at the ends of statements.
     /// Default: true
