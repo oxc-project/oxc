@@ -165,10 +165,6 @@ impl<'a> Format<'a> for ContinueStatement {
             parts.push(format!(p, label));
         }
 
-        if p.options.semi {
-            parts.push(Doc::Str(";"));
-        }
-
         Doc::Array(parts)
     }
 }
