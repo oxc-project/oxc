@@ -1279,7 +1279,11 @@ impl<'a> Format<'a> for ObjectPattern<'a> {
 
 impl<'a> Format<'a> for BindingProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if self.shorthand {
+            self.key.format(p)
+        } else {
+            array![p, format!(p, self.key), string!(p, ": "), format!(p, self.value)]
+        }
     }
 }
 
