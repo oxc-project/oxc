@@ -511,7 +511,12 @@ impl<'a> Format<'a> for NullLiteral {
 
 impl<'a> Format<'a> for NumberLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.str(self.raw)
+        let raw = p.str(self.raw.to_lowercase().as_str());
+        if self.raw.starts_with('.') {
+            array!(p, string!(p, "0"), raw)
+        } else {
+            p.str(self.raw.to_lowercase().as_str())
+        }
     }
 }
 
