@@ -1113,7 +1113,7 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let)
     }
 
-    pub fn to_string(&self) -> &str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
@@ -1124,7 +1124,7 @@ impl VariableDeclarationKind {
 
 impl fmt::Display for VariableDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self.to_string();
+        let s = self.as_str();
         write!(f, "{s}")
     }
 }
