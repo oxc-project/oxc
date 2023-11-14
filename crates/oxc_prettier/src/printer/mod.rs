@@ -56,7 +56,7 @@ impl<'a> Printer<'a> {
                 Doc::Group(docs) => self.handle_group(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
-                Doc::Hardline => self.handle_hardline(),
+                Doc::Hardline => self.handle_hardline(indent),
                 Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
             }
         }
@@ -73,9 +73,9 @@ impl<'a> Printer<'a> {
 
     fn handle_indent(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
         self.cmds.extend(
-            docs.into_iter().rev().map(|doc| {
-                Command::new(Indent { value: " ", length: indent.length + 1 }, mode, doc)
-            }),
+            docs.into_iter()
+                .rev()
+                .map(|doc| Command::new(Indent { length: indent.length + 1 }, mode, doc)),
         );
     }
 
@@ -109,21 +109,20 @@ impl<'a> Printer<'a> {
             self.out.push(b' ');
         } else {
             self.out.push(b'\n');
-            self.out.extend(indent.value.repeat(indent.length).as_bytes());
-            self.pos = indent.length;
+            self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
         if !matches!(mode, Mode::Flat) {
             self.out.push(b'\n');
-            self.out.extend(indent.value.repeat(indent.length).as_bytes());
-            self.pos = indent.length;
+            self.pos = self.indent(indent.length);
         }
     }
 
-    fn handle_hardline(&mut self) {
+    fn handle_hardline(&mut self, indent: Indent) {
         self.out.push(b'\n');
+        self.pos = self.indent(indent.length);
     }
 
     fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
@@ -169,5 +168,16 @@ impl<'a> Printer<'a> {
         }
 
         true
+    }
+
+    fn indent(&mut self, size: usize) -> usize {
+        if self.options.use_tabs {
+            self.out.extend("\t".repeat(size).as_bytes());
+            size
+        } else {
+            let count = self.options.tab_width * size;
+            self.out.extend(" ".repeat(count).as_bytes());
+            count
+        }
     }
 }
