@@ -1245,7 +1245,9 @@ impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self.kind {
             BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
-            _ => Doc::Line,
+            BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
+            BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
+            BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
         }
     }
 }
