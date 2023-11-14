@@ -10,6 +10,7 @@
 [![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/oxc-project/oxc)
 [![Sponsors][sponsors-badge]][sponsors-url]
 
 [![Discord chat][discord-badge]][discord-url]
