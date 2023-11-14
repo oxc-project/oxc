@@ -89,7 +89,7 @@ impl<'a> Printer<'a> {
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
-                let remaining_width = (self.options.print_width - self.pos) as isize;
+                let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
 
                 if Self::fits(&docs, remaining_width) {
                     self.cmds.extend(
