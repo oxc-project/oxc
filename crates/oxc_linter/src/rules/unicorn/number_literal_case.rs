@@ -64,7 +64,7 @@ declare_oxc_lint!(
     /// const foo = 2e+5;
     /// ```
     NumberLiteralCase,
-    correctness
+    style
 );
 
 impl Rule for NumberLiteralCase {
