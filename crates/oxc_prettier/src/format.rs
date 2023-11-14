@@ -601,7 +601,11 @@ impl<'a> Format<'a> for Argument<'a> {
 
 impl<'a> Format<'a> for ArrayExpressionElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::SpreadElement(expr) => expr.format(p),
+            Self::Expression(expr) => expr.format(p),
+            Self::Elision(elision) => Doc::Str(""),
+        }
     }
 }
 
@@ -613,7 +617,35 @@ impl<'a> Format<'a> for SpreadElement<'a> {
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if self.elements.len() == 0 {
+            return p.str("[]");
+        }
+
+        let mut parts = p.vec();
+        parts.push(p.str("["));
+
+        let mut parts_inner = p.vec();
+        parts_inner.push(Doc::Softline);
+
+        for (i, element) in self.elements.iter().enumerate() {
+            if i > 0 {
+                parts_inner.push(string!(p, ","));
+                parts_inner.push(Doc::Softline);
+            }
+            parts_inner.push(format!(p, element));
+        }
+
+        let mut if_break_comma = p.vec();
+        if_break_comma.push(Doc::Str(","));
+
+        parts_inner.push(Doc::IfBreak(if_break_comma, p.vec()));
+
+        parts.push(group!(p, Doc::Indent(parts_inner)));
+
+        parts.push(Doc::Softline);
+        parts.push(p.str("]"));
+
+        Doc::Group(parts)
     }
 }
 
