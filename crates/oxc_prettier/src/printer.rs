@@ -77,6 +77,9 @@ impl<'a> Printer<'a> {
                 Doc::Line | Doc::Softline | Doc::Hardline => {
                     out.push(b'\n');
                 }
+                Doc::IfBreak(docs, _) => {
+                    cmds.extend(docs.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+                }
             }
         }
 

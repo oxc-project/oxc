@@ -8,7 +8,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_syntax::operator::BinaryOperator;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{array, doc::Doc, format, group, indent, softline, string, Prettier};
 
@@ -151,13 +151,37 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
 impl<'a> Format<'a> for ContinueStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "continue"));
+
+        if let Some(label) = &self.label {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, label));
+        }
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for BreakStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "break"));
+
+        if let Some(label) = &self.label {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, label));
+        }
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -187,13 +211,39 @@ impl<'a> Format<'a> for LabeledStatement<'a> {
 
 impl<'a> Format<'a> for TryStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(string!(p, "try "));
+
+        parts.push(format!(p, self.block));
+
+        if let Some(handler) = &self.handler {
+            parts.push(string!(p, " "));
+            parts.push(format!(p, handler));
+        }
+
+        if let Some(finalizer) = &self.finalizer {
+            parts.push(string!(p, " finally "));
+            parts.push(format!(p, finalizer));
+        }
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for CatchClause<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
     }
 }
 
 impl<'a> Format<'a> for ThrowStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, "throw "));
+        parts.push(string!(p, " "));
+        parts.push(format!(p, self.argument));
+
+        Doc::Array(parts)
     }
 }
 
@@ -207,7 +257,11 @@ impl<'a> Format<'a> for DebuggerStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(Doc::Str("debugger"));
-        parts.push(Doc::Str(";"));
+
+        if p.options.semi {
+            parts.push(Doc::Str(";"));
+        }
+
         Doc::Array(parts)
     }
 }
@@ -541,13 +595,20 @@ impl<'a> Format<'a> for CallExpression<'a> {
 
 impl<'a> Format<'a> for Argument<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::Expression(expr) => expr.format(p),
+            Self::SpreadElement(expr) => expr.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for ArrayExpressionElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::SpreadElement(expr) => expr.format(p),
+            Self::Expression(expr) => expr.format(p),
+            Self::Elision(elision) => Doc::Str(""),
+        }
     }
 }
 
@@ -559,7 +620,35 @@ impl<'a> Format<'a> for SpreadElement<'a> {
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if self.elements.len() == 0 {
+            return p.str("[]");
+        }
+
+        let mut parts = p.vec();
+        parts.push(p.str("["));
+
+        let mut parts_inner = p.vec();
+        parts_inner.push(Doc::Softline);
+
+        for (i, element) in self.elements.iter().enumerate() {
+            if i > 0 {
+                parts_inner.push(string!(p, ","));
+                parts_inner.push(Doc::Softline);
+            }
+            parts_inner.push(format!(p, element));
+        }
+
+        let mut if_break_comma = p.vec();
+        if_break_comma.push(Doc::Str(","));
+
+        parts_inner.push(Doc::IfBreak(if_break_comma, p.vec()));
+
+        parts.push(group!(p, Doc::Indent(parts_inner)));
+
+        parts.push(Doc::Softline);
+        parts.push(p.str("]"));
+
+        Doc::Group(parts)
     }
 }
 
@@ -610,13 +699,34 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(p.str(self.operator.as_str()));
+
+        parts.push(format!(p, self.argument));
+
+        if self.prefix {
+            parts.reverse();
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for UnaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(string!(p, self.operator.as_str()));
+
+        if matches!(
+            self.operator,
+            UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete
+        ) {
+            parts.push(string!(p, " "));
+        }
+
+        parts.push(format!(p, self.argument));
+        Doc::Array(parts)
     }
 }
 
