@@ -700,7 +700,13 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
 
 impl<'a> Format<'a> for CallExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(self.callee.format(p));
+        parts.push(p.str("("));
+        parts.extend(self.arguments.iter().map(|arg| arg.format(p)));
+        parts.push(p.str(")"));
+
+        Doc::Array(parts)
     }
 }
 
