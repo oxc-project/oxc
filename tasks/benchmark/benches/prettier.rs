@@ -23,10 +23,14 @@ fn bench_prettier(criterion: &mut Criterion) {
                 b.iter(|| {
                     let allocator1 = Allocator::default();
                     let allocator2 = Allocator::default();
-                    let program = Parser::new(&allocator1, source_text, SourceType::default())
-                        .parse()
-                        .program;
-                    let _ = Prettier::new(&allocator2, PrettierOptions::default()).build(&program);
+                    let ret = Parser::new(&allocator1, source_text, SourceType::default()).parse();
+                    let _ = Prettier::new(
+                        &allocator2,
+                        source_text,
+                        ret.trivias,
+                        PrettierOptions::default(),
+                    )
+                    .build(&ret.program);
                 });
             },
         );

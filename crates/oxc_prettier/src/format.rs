@@ -30,6 +30,9 @@ impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
+        if let Some(doc) = p.print_dangling_comments(self.span) {
+            parts.push(doc);
+        }
         Doc::Array(parts)
     }
 }
