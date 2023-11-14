@@ -69,7 +69,13 @@ impl<'a> Format<'a> for Statement<'a> {
 
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        self.expression.format(p)
+        let mut parts = p.vec();
+        parts.push(self.expression.format(p));
+        if p.options.semi {
+            parts.push(p.str(";"));
+        }
+        parts.push(Doc::Hardline);
+        Doc::Array(parts)
     }
 }
 
@@ -151,19 +157,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
 impl<'a> Format<'a> for ContinueStatement {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(string!(p, "continue"));
-
-        if let Some(label) = &self.label {
-            parts.push(string!(p, " "));
-            parts.push(format!(p, label));
-        }
-
-        if p.options.semi {
-            parts.push(Doc::Str(";"));
-        }
-
-        Doc::Array(parts)
+        Doc::Line
     }
 }
 
