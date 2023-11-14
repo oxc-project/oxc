@@ -644,19 +644,44 @@ impl<'a> Format<'a> for MemberExpression<'a> {
 
 impl<'a> Format<'a> for ComputedMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(format!(p, self.object));
+        if self.optional {
+            parts.push(string!(p, "?."));
+        }
+        parts.push(string!(p, "["));
+        parts.push(format!(p, self.expression));
+        parts.push(string!(p, "["));
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for StaticMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, format!(p, self.object), string!(p, "."), format!(p, self.property)]
+        let mut parts = p.vec();
+        parts.push(format!(p, self.object));
+        if self.optional {
+            parts.push(string!(p, "?"));
+        }
+        parts.push(string!(p, "."));
+        parts.push(format!(p, self.property));
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for PrivateFieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(format!(p, self.object));
+        if self.optional {
+            parts.push(string!(p, "?."));
+        }
+        parts.push(string!(p, "#"));
+        parts.push(format!(p, self.field));
+
+        Doc::Array(parts)
     }
 }
 
