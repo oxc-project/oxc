@@ -367,7 +367,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
 
         parts.push(Doc::Hardline);
 
-        if is_next_line_empty(&p.source_text, self.span) {
+        if is_next_line_empty(p.source_text, self.span) {
             parts.push(Doc::Hardline);
         }
 
