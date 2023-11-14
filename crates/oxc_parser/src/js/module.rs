@@ -105,7 +105,7 @@ impl<'a> Parser<'a> {
             return phase;
         }
 
-        if !self.at(Kind::Ident) && !self.cur_kind().is_contextual_keyword() {
+        if !self.peek_at(Kind::Ident) && !self.peek_kind().is_contextual_keyword() {
             return default_phase;
         }
 
