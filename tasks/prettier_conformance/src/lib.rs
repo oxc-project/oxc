@@ -239,7 +239,7 @@ impl TestRunner {
         snapshot_options: &[(Atom, String)],
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();
-        let output = Self::prettier(path, input);
+        let output = Self::prettier(path, input, prettier_options);
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
@@ -287,11 +287,10 @@ exports[`{filename} format 1`] = `
         )
     }
 
-    fn prettier(path: &Path, source_text: &str) -> String {
+    fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
-            .build(&ret.program)
+        Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }
