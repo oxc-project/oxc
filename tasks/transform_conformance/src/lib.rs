@@ -17,7 +17,7 @@ fn test() {
     TestRunner::new(TestRunnerOptions::default()).run();
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct TestRunnerOptions {
     pub filter: Option<String>,
     pub exec: bool,
