@@ -28,7 +28,7 @@ fn fixture_root() -> PathBuf {
 
 const CASES: &[&str] = &["enums"];
 
-fn filter_ext(p: &PathBuf) -> bool {
+fn filter_ext(p: &Path) -> bool {
     p.to_string_lossy().ends_with(".ts")
 }
 
@@ -44,18 +44,18 @@ impl TypeScriptFixtures {
     pub fn run(self) {
         for case in CASES {
             for path in Self::glob_files(&root().join(case), self.options.filter.as_ref()) {
-                let content = match self.transform(&path) {
+                let content = match Self::transform(&path) {
                     Ok(content) => content,
                     Err(err) => err.iter().map(ToString::to_string).collect(),
                 };
-                self.write_result_file(&content, &path);
+                Self::write_result_file(&content, &path);
             }
         }
     }
 }
 
 impl TypeScriptFixtures {
-    fn transform_options(&self) -> TransformOptions {
+    fn transform_options() -> TransformOptions {
         // TODO: read options from slash directives
         TransformOptions::default()
     }
@@ -64,13 +64,14 @@ impl TypeScriptFixtures {
         WalkDir::new(root)
             .into_iter()
             .filter_map(Result::ok)
-            .map(|d| d.into_path())
-            .filter(filter_ext)
-            .filter(|p| filter.map(|f| p.to_string_lossy().contains(f)).unwrap_or(true))
+            .map(walkdir::DirEntry::into_path)
+            .filter(|p| p.is_file())
+            .filter(|p| filter_ext(p.as_path()))
+            .filter(|p| filter.map_or(true, |f| p.to_string_lossy().contains(f)))
             .collect()
     }
 
-    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
+    fn transform(path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
@@ -82,21 +83,21 @@ impl TypeScriptFixtures {
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
 
-        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
+        let result = Transformer::new(&allocator, source_type, semantic, Self::transform_options())
             .build(transformed_program);
 
-        result.map(|_| {
+        result.map(|()| {
             Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
         })
     }
 
-    fn write_result_file(&self, content: &str, path: &PathBuf) {
+    fn write_result_file(content: &str, path: &Path) {
         let new_file_name = normalize_path(path.strip_prefix(&root()).unwrap())
             .split('/')
             .collect::<Vec<&str>>()
             .join("__");
 
         let target_path = fixture_root().join(new_file_name);
-        fs::write(&target_path, content).unwrap();
+        fs::write(target_path, content).unwrap();
     }
 }
