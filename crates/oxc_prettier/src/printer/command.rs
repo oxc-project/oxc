@@ -12,7 +12,7 @@ impl<'a> Command<'a> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum Mode {
     Break,
     Flat,

@@ -7,10 +7,7 @@ mod command;
 
 use std::collections::VecDeque;
 
-use crate::{
-    doc::{Doc, IfBreak},
-    PrettierOptions,
-};
+use crate::{doc::Doc, PrettierOptions};
 
 use self::command::{Command, Indent, Mode};
 
@@ -125,10 +122,17 @@ impl<'a> Printer<'a> {
         self.pos = self.indent(indent.length);
     }
 
-    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
-        let IfBreak { break_contents, .. } = if_break;
-        self.cmds
-            .extend(break_contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+    fn handle_if_break(
+        &mut self,
+        if_break: oxc_allocator::Vec<'a, Doc<'a>>,
+        indent: Indent,
+        mode: Mode,
+    ) {
+        if mode == Mode::Break {
+            self.cmds.extend(
+                if_break.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
+            );
+        }
     }
 
     #[allow(clippy::cast_possible_wrap)]
