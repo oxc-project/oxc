@@ -8,41 +8,48 @@ expression: no_deprecated_functions
  1 │ jest.resetModuleRegistry
    · ────────────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"jest.resetModules"
+  help: "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
+
+  ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
+   ╭─[no_deprecated_functions.tsx:1:1]
+ 1 │ jest.resetModuleRegistry
+   · ────────────────────────
+   ╰────
+  help: "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.addMatchers
    · ────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"expect.extend"
+  help: "jest.addMatchers" has been deprecated in favor of "expect.extend"
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ require.requireMock
    · ───────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"jest.requireMock"
+  help: "require.requireMock" has been deprecated in favor of "jest.requireMock"
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ require.requireActual
    · ─────────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"jest.requireMock"
+  help: "require.requireActual" has been deprecated in favor of "jest.requireMock"
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.runTimersToTime
    · ────────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"jest.advanceTimersByTime"
+  help: "jest.runTimersToTime" has been deprecated in favor of "jest.advanceTimersByTime"
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]
  1 │ jest.genMockFromModule
    · ──────────────────────
    ╰────
-  help: {0:?}` has been deprecated in favor of `"jest.createMockFromModule"
+  help: "jest.genMockFromModule" has been deprecated in favor of "jest.createMockFromModule"
 
 

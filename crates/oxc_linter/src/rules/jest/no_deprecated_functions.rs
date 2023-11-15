@@ -12,7 +12,7 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::get_node_name_v
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions")]
-#[diagnostic(severity(warning), help("{{0:?}}` has been deprecated in favor of `{1:?}"))]
+#[diagnostic(severity(warning), help("{0:?} has been deprecated in favor of {1:?}"))]
 pub struct DeprecatedFunction(pub String, pub String, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -105,7 +105,8 @@ impl Rule for NoDeprecatedFunctions {
 
         let node_name = chain.join(".");
         let major: Vec<&str> = self.jest.version.split('.').collect();
-        let jest_version_num: usize = major[0].parse().unwrap();
+        // Todo: read from configuration
+        let jest_version_num: usize = major[0].parse().unwrap_or(29);
 
         if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
             if jest_version_num >= *base_version {
@@ -133,6 +134,7 @@ fn tests() {
     ];
 
     let fail = vec![
+        ("jest.resetModuleRegistry", None),
         // replace with `jest.resetModules` in Jest 15
         ("jest.resetModuleRegistry", Some(serde_json::json!([{ "jest": { "version": "16" }}]))),
         // replace with `jest.requireMock` in Jest 17.
