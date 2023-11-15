@@ -216,7 +216,7 @@ impl TestRunner {
                 .iter()
                 .map(|path| {
                     let input = fs::read_to_string(path).unwrap();
-                    self.get_single_snapshot(path, &input, spec.0, spec.1.clone())
+                    self.get_single_snapshot(path, &input, spec.0, &spec.1)
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
@@ -236,7 +236,7 @@ impl TestRunner {
         path: &Path,
         input: &str,
         prettier_options: PrettierOptions,
-        snapshot_options: Vec<(Atom, String)>,
+        snapshot_options: &[(Atom, String)],
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();
         let output = Self::prettier(path, input);
