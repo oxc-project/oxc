@@ -1,8 +1,7 @@
-Compatibility: 3/173 (1.73%)
+Compatibility: 4/173 (2.31%)
 
 # Failed
 
-* array-spread
 * arrays
 * arrow-call
 * arrows
