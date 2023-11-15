@@ -60,6 +60,7 @@ impl<'a> Prettier<'a> {
         Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
     }
 
+    #[allow(unused)]
     pub(crate) fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Doc<'a> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
