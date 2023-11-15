@@ -1,4 +1,4 @@
-Compatibility: 4/173 (2.31%)
+Compatibility: 5/173 (2.89%)
 
 # Failed
 
@@ -157,7 +157,6 @@ Compatibility: 4/173 (2.31%)
 * test-declarations
 * throw_expressions
 * throw_statement
-* top-level-await
 * trailing-comma
 * trailing-whitespace
 * try

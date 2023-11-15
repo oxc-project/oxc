@@ -19,6 +19,7 @@ oxc_parser       = { workspace = true }
 oxc_prettier     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_ast          = { workspace = true }
 
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
