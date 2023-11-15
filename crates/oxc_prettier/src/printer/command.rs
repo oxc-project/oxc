@@ -20,12 +20,11 @@ pub enum Mode {
 
 #[derive(Clone, Copy)]
 pub struct Indent {
-    pub value: &'static str,
     pub length: usize,
 }
 
 impl Indent {
     pub fn root() -> Self {
-        Self { value: "", length: 0 }
+        Self { length: 0 }
     }
 }
