@@ -89,7 +89,9 @@ impl Rule for NoDeprecatedFunctions {
             // such as `package.json` or `eslint.config.js`.
             .unwrap_or("29");
 
-        Self { jest: JestConfig { version: version.to_string() } }
+        let major: Vec<&str> = version.split('.').collect();
+
+        Self { jest: JestConfig { version: major[0].to_string() } }
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
@@ -104,9 +106,8 @@ impl Rule for NoDeprecatedFunctions {
         }
 
         let node_name = chain.join(".");
-        let major: Vec<&str> = self.jest.version.split('.').collect();
         // Todo: read from configuration
-        let jest_version_num: usize = major[0].parse().unwrap_or(29);
+        let jest_version_num: usize = self.jest.version.parse().unwrap_or(29);
 
         if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
             if jest_version_num >= *base_version {
