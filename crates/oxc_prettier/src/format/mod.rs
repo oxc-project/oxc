@@ -322,7 +322,20 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
 
 impl<'a> Format<'a> for WithStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        let body = group![p, hardline!(), format!(p, self.body), hardline!()];
+        let with_stmt = group![
+            p,
+            ss!("with ("),
+            format!(p, self.object),
+            ss!(")"),
+            ss!(" "),
+            ss!("{"),
+            indent!(p, body),
+            hardline!()
+        ];
+        parts.push(with_stmt);
+        Doc::Array(parts)
     }
 }
 
