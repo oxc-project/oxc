@@ -256,7 +256,13 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 
 impl<'a> Format<'a> for ReturnStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        ss!("return")
+        let mut parts = p.vec();
+        parts.push(ss!("return"));
+        if let Some(argument) = &self.argument {
+            parts.push(ss!(" "));
+            parts.push(format!(p, argument));
+        }
+        Doc::Array(parts)
     }
 }
 
@@ -1025,7 +1031,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array![p, ss!("("), format!(p, self.expression), ss!(")")]
     }
 }
 
