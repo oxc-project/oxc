@@ -83,7 +83,11 @@ impl Rule for NoDeprecatedFunctions {
             .and_then(|v| v.get("jest"))
             .and_then(|v| v.get("version"))
             .and_then(|v| serde_json::Value::as_str(v))
-            .unwrap();
+            // Todo: Fixed Me
+            // Currently set the default version to the (maybe) latest, to help to find more problems in
+            // the codebase. In the future, the version should come from the cli option or the config files,
+            // such as `package.json` or `eslint.config.js`.
+            .unwrap_or("29");
 
         Self { jest: JestConfig { version: version.to_string() } }
     }
