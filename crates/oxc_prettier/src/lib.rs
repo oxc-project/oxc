@@ -45,6 +45,6 @@ impl<'a> Prettier<'a> {
 
     pub fn build(mut self, program: &Program<'a>) -> String {
         let doc = program.format(&mut self);
-        Printer::new(doc, self.options).build()
+        Printer::new(doc, self.source_text, self.options).build()
     }
 }

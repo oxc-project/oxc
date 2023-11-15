@@ -24,14 +24,12 @@ pub struct Printer<'a> {
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(doc: Doc<'a>, options: PrettierOptions) -> Self {
-        // TODO(perf): `with_capacity(source_text.len())`
-        Self {
-            options,
-            out: vec![],
-            pos: 0,
-            cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
-        }
+    pub fn new(doc: Doc<'a>, source_text: &str, options: PrettierOptions) -> Self {
+        // Preallocate for performance because the output will very likely
+        // be the same size as the original text.
+        let out = Vec::with_capacity(source_text.len());
+        let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
+        Self { options, out, pos: 0, cmds }
     }
 
     pub fn build(mut self) -> String {
