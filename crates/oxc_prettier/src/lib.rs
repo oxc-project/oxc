@@ -29,6 +29,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// A stack of comments that will be carefully placed in the right places.
+    #[allow(dead_code)]
     trivias: Peekable<Rev<vec::IntoIter<(u32, u32, CommentKind)>>>,
 }
 

@@ -10,6 +10,9 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
+mod block;
+mod statement;
+
 use crate::{
     array, doc::Doc, format, group, hardline, indent, softline, ss, string,
     util::is_next_line_empty, Prettier,
@@ -31,12 +34,7 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
-        if let Some(doc) = p.print_dangling_comments(self.span) {
-            parts.push(doc);
-        }
-        Doc::Array(parts)
+        p.print_block_body(&self.body, Some(&self.directives)).unwrap_or(ss!(""))
     }
 }
 
@@ -115,17 +113,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
 
 impl<'a> Format<'a> for BlockStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("{"));
-        let mut parts_inner = p.vec();
-        for item in &self.body {
-            parts_inner.push(hardline!());
-            parts_inner.push(format!(p, item));
-        }
-        parts.push(indent!(p, group!(p, Doc::Array(parts_inner))));
-        parts.push(hardline!());
-        parts.push(ss!("}"));
-        Doc::Array(parts)
+        p.print_block(&self.body, None, false)
     }
 }
 
@@ -481,13 +469,7 @@ impl<'a> Format<'a> for Function<'a> {
 
 impl<'a> Format<'a> for FunctionBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("{"));
-        parts.push(Doc::Softline);
-        parts.extend(self.statements.iter().map(|stmt| stmt.format(p)));
-        parts.push(Doc::Softline);
-        parts.push(ss!("}"));
-        Doc::Array(parts)
+        p.print_block(&self.statements, Some(&self.directives), false)
     }
 }
 
@@ -1253,13 +1235,7 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("static {"));
-        parts.push(Doc::Softline);
-        parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
-        parts.push(Doc::Softline);
-        parts.push(ss!("}"));
-        Doc::Array(parts)
+        p.print_block(&self.body, None, false)
     }
 }
 
