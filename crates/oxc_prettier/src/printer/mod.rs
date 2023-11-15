@@ -7,10 +7,7 @@ mod command;
 
 use std::collections::VecDeque;
 
-use crate::{
-    doc::{Doc, IfBreak},
-    PrettierOptions,
-};
+use crate::{doc::Doc, PrettierOptions};
 
 use self::command::{Command, Indent, Mode};
 
@@ -27,14 +24,12 @@ pub struct Printer<'a> {
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(doc: Doc<'a>, options: PrettierOptions) -> Self {
-        // TODO(perf): `with_capacity(source_text.len())`
-        Self {
-            options,
-            out: vec![],
-            pos: 0,
-            cmds: vec![Command::new(Indent::root(), Mode::Break, doc)],
-        }
+    pub fn new(doc: Doc<'a>, source_text: &str, options: PrettierOptions) -> Self {
+        // Preallocate for performance because the output will very likely
+        // be the same size as the original text.
+        let out = Vec::with_capacity(source_text.len());
+        let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
+        Self { options, out, pos: 0, cmds }
     }
 
     pub fn build(mut self) -> String {
@@ -56,7 +51,7 @@ impl<'a> Printer<'a> {
                 Doc::Group(docs) => self.handle_group(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
-                Doc::Hardline => self.handle_hardline(),
+                Doc::Hardline => self.handle_hardline(indent),
                 Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
             }
         }
@@ -73,9 +68,9 @@ impl<'a> Printer<'a> {
 
     fn handle_indent(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
         self.cmds.extend(
-            docs.into_iter().rev().map(|doc| {
-                Command::new(Indent { value: " ", length: indent.length + 1 }, mode, doc)
-            }),
+            docs.into_iter()
+                .rev()
+                .map(|doc| Command::new(Indent { length: indent.length + 1 }, mode, doc)),
         );
     }
 
@@ -109,27 +104,33 @@ impl<'a> Printer<'a> {
             self.out.push(b' ');
         } else {
             self.out.push(b'\n');
-            self.out.extend(indent.value.repeat(indent.length).as_bytes());
-            self.pos = indent.length;
+            self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
         if !matches!(mode, Mode::Flat) {
             self.out.push(b'\n');
-            self.out.extend(indent.value.repeat(indent.length).as_bytes());
-            self.pos = indent.length;
+            self.pos = self.indent(indent.length);
         }
     }
 
-    fn handle_hardline(&mut self) {
+    fn handle_hardline(&mut self, indent: Indent) {
         self.out.push(b'\n');
+        self.pos = self.indent(indent.length);
     }
 
-    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
-        let IfBreak { break_contents, .. } = if_break;
-        self.cmds
-            .extend(break_contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+    fn handle_if_break(
+        &mut self,
+        if_break: oxc_allocator::Vec<'a, Doc<'a>>,
+        indent: Indent,
+        mode: Mode,
+    ) {
+        if mode == Mode::Break {
+            self.cmds.extend(
+                if_break.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
+            );
+        }
     }
 
     #[allow(clippy::cast_possible_wrap)]
@@ -169,5 +170,16 @@ impl<'a> Printer<'a> {
         }
 
         true
+    }
+
+    fn indent(&mut self, size: usize) -> usize {
+        if self.options.use_tabs {
+            self.out.extend("\t".repeat(size).as_bytes());
+            size
+        } else {
+            let count = self.options.tab_width * size;
+            self.out.extend(" ".repeat(count).as_bytes());
+            count
+        }
     }
 }

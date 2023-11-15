@@ -7,6 +7,14 @@ macro_rules! format {
     }};
 }
 
+/// Wrap a static string (ss)
+#[macro_export]
+macro_rules! ss {
+    ($s:expr) => {{
+        Doc::Str($s)
+    }};
+}
+
 #[macro_export]
 macro_rules! string {
     ($p:ident, $s:expr) => {{

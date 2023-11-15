@@ -216,8 +216,7 @@ fn check_binding_identifier<'a>(
                     )]
                     #[diagnostic()]
                     struct InvalidLetDeclaration(String, #[label] Span);
-                    return ctx
-                        .error(InvalidLetDeclaration(decl.kind.to_string().into(), ident.span));
+                    return ctx.error(InvalidLetDeclaration(decl.kind.as_str().into(), ident.span));
                 }
                 AstKind::VariableDeclaration(_) | AstKind::Function(_) | AstKind::Program(_) => {
                     break;

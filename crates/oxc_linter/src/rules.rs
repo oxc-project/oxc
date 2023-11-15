@@ -68,6 +68,7 @@ mod eslint {
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
+    pub mod no_regex_spaces;
     pub mod no_return_await;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -167,6 +168,7 @@ mod unicorn {
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_promise_resolve_reject;
+    pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
     pub mod prefer_blob_reading_methods;
@@ -245,6 +247,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
+    eslint::no_regex_spaces,
     eslint::no_return_await,
     eslint::no_self_assign,
     eslint::no_self_compare,
@@ -322,6 +325,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_promise_resolve_reject,
+    unicorn::number_literal_case,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_blob_reading_methods,

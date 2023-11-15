@@ -1,8 +1,7 @@
-Compatibility: 2/173 (1.16%)
+Compatibility: 5/173 (2.89%)
 
 # Failed
 
-* array-spread
 * arrays
 * arrow-call
 * arrows
@@ -92,7 +91,6 @@ Compatibility: 2/173 (1.16%)
 * invalid-code
 * label
 * last-argument-expansion
-* line
 * line-suffix-boundary
 * literal
 * logical-assignment
@@ -159,7 +157,6 @@ Compatibility: 2/173 (1.16%)
 * test-declarations
 * throw_expressions
 * throw_statement
-* top-level-await
 * trailing-comma
 * trailing-whitespace
 * try

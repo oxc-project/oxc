@@ -1788,6 +1788,7 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_parser",
  "oxc_prettier",
  "oxc_span",
