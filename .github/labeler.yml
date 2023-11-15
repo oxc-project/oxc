@@ -4,6 +4,12 @@ A-ast:
 A-cli:
 - any: ['crates/oxc_cli/**/*', 'npm/**/*']
 
+A-prettier:
+- any: ['crates/oxc_prettier/**/*', 'tasks/prettier_conformance/**/*']
+
+A-transformer:
+- any: ['crates/oxc_transformer/**/*', 'tasks/transform_conformance/**/*']
+
 A-linter: 'crates/oxc_linter/**/*'
 
 A-minifier: 'crates/oxc_minifier/**/*'
@@ -13,8 +19,6 @@ A-parser: 'crates/oxc_parser/**/*'
 A-codegen: 'crates/oxc_codegen/**/*'
 
 A-semantic: 'crates/oxc_semantic/**/*'
-
-A-transformer: 'crates/transformer/**/*'
 
 A-resolver: 'crates/oxc_resolver/**/*'
 
