@@ -8,15 +8,21 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
+mod binaryish;
 mod block;
 mod statement;
+mod ternary;
 
 use crate::{
-    array, doc::Doc, format, group, hardline, indent, softline, ss, string,
-    util::is_next_line_empty, Prettier,
+    array,
+    doc::{Doc, Separator},
+    format, group, hardline, indent, softline, ss, string,
+    util::is_next_line_empty,
+    Prettier,
 };
+
+use self::binaryish::{BinaryishLeft, BinaryishOperator};
 
 pub trait Format<'a> {
     #[must_use]
@@ -641,7 +647,7 @@ impl<'a> Format<'a> for NumberLiteral<'a> {
 
 impl<'a> Format<'a> for BigintLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str(self.span.source_text(p.source_text))
     }
 }
 
@@ -861,14 +867,9 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(string!(p, self.operator.as_str()));
-
-        if matches!(
-            self.operator,
-            UnaryOperator::Typeof | UnaryOperator::Void | UnaryOperator::Delete
-        ) {
+        if self.operator.is_keyword() {
             parts.push(ss!(" "));
         }
-
         parts.push(format!(p, self.argument));
         Doc::Array(parts)
     }
@@ -876,53 +877,37 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(format!(p, self.left));
-
-        let mut parts_inner = p.vec();
-
-        parts_inner.push(Doc::Str(" "));
-
-        let mut parts_inner_inner = p.vec();
-
-        parts_inner_inner.push(string!(p, self.operator.as_str()));
-
-        parts_inner_inner.push(Doc::Line);
-
-        parts_inner_inner.push(format!(p, self.right));
-
-        let indent = Doc::Indent(parts_inner_inner);
-
-        parts_inner.push(group!(p, indent));
-
-        parts.push(Doc::Indent(parts_inner));
-
-        Doc::Group(parts)
-    }
-}
-
-impl<'a> Format<'a> for BinaryOperator {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_binaryish_expression(
+            &BinaryishLeft::Expression(&self.left),
+            BinaryishOperator::BinaryOperator(self.operator),
+            &self.right,
+        )
     }
 }
 
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_binaryish_expression(
+            &BinaryishLeft::PrivateIdentifier(&self.left),
+            BinaryishOperator::BinaryOperator(self.operator),
+            &self.right,
+        )
     }
 }
 
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_binaryish_expression(
+            &BinaryishLeft::Expression(&self.left),
+            BinaryishOperator::LogicalOperator(self.operator),
+            &self.right,
+        )
     }
 }
 
 impl<'a> Format<'a> for ConditionalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_ternary(self)
     }
 }
 
@@ -1020,7 +1005,9 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let docs = self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
+        // FIXME: group(join([",", line], path.map(print, "expressions")));
+        group![p, p.join(Separator::Softline, docs)]
     }
 }
 
@@ -1065,7 +1052,16 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
 
 impl<'a> Format<'a> for ChainExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        format!(p, self.expression)
+    }
+}
+
+impl<'a> Format<'a> for ChainElement<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            Self::CallExpression(expr) => expr.format(p),
+            Self::MemberExpression(expr) => expr.format(p),
+        }
     }
 }
 
