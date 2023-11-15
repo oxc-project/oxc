@@ -117,9 +117,13 @@ impl<'a> Format<'a> for BlockStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("{"));
-        parts.push(Doc::Softline);
-        parts.extend(self.body.iter().map(|stmt| stmt.format(p)));
-        parts.push(Doc::Softline);
+        let mut parts_inner = p.vec();
+        for item in &self.body {
+            parts_inner.push(hardline!());
+            parts_inner.push(format!(p, item));
+        }
+        parts.push(indent!(p, group!(p, Doc::Array(parts_inner))));
+        parts.push(hardline!());
         parts.push(ss!("}"));
         Doc::Array(parts)
     }
