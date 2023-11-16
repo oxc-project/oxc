@@ -1848,15 +1848,14 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ImportDeclaration(_))
     }
 
+    #[rustfmt::skip]
     pub fn is_export(&self) -> bool {
-        matches!(
-            self,
-            Self::ExportAllDeclaration(_)
-                | Self::ExportDefaultDeclaration(_)
-                | Self::ExportNamedDeclaration(_)
-                | Self::TSExportAssignment(_)
-                | Self::TSNamespaceExportDeclaration(_)
-        )
+        matches!(self, Self::ExportAllDeclaration(_) | Self::ExportDefaultDeclaration(_) | Self::ExportNamedDeclaration(_)
+                | Self::TSExportAssignment(_) | Self::TSNamespaceExportDeclaration(_))
+    }
+
+    pub fn is_default_export(&self) -> bool {
+        matches!(self, Self::ExportDefaultDeclaration(_))
     }
 }
 
@@ -1977,6 +1976,10 @@ impl<'a> ExportNamedDeclaration<'a> {
     }
 }
 
+/// Export Default Declaration
+/// export default HoistableDeclaration
+/// export default ClassDeclaration
+/// export default AssignmentExpression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
