@@ -14,7 +14,7 @@ use oxc::{
     transformer::{TransformOptions, TransformTarget, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
-use oxc_prettier::{Prettier, PrettierOptions};
+use oxc_prettier::{DocPrinter, Prettier, PrettierOptions};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
@@ -48,6 +48,7 @@ pub struct Oxc {
     codegen_text: String,
     formatted_text: String,
     prettier_formatted_text: String,
+    prettier_ir: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -91,6 +92,11 @@ impl Oxc {
     #[wasm_bindgen(getter)]
     pub fn ir(&self) -> JsValue {
         self.ir.clone()
+    }
+
+    #[wasm_bindgen(getter = prettierIr)]
+    pub fn prettier_ir(&self) -> String {
+        self.prettier_ir.clone()
     }
 
     #[wasm_bindgen(getter = prettierFormattedText)]
@@ -181,7 +187,15 @@ impl Oxc {
 
         self.ast = ret.program.serialize(&self.serializer)?;
         self.ir = format!("{:#?}", ret.program.body).into();
+
         let program = allocator.alloc(ret.program);
+
+        let prettier_doc =
+            Prettier::new(&allocator, source_text, trivias.clone(), PrettierOptions::default())
+                .doc(program);
+
+        let mut doc_printer = DocPrinter::new(&allocator);
+        self.prettier_ir = format!("{}", doc_printer.print(&prettier_doc));
 
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)

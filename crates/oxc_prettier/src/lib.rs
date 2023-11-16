@@ -15,9 +15,11 @@ use std::{
     vec,
 };
 
+use doc::Doc;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, CommentKind, Trivias};
 
+pub use crate::doc::DocPrinter;
 pub use crate::options::{ArrowParens, PrettierOptions, QuoteProps, TrailingComma};
 use crate::{format::Format, printer::Printer};
 
@@ -46,5 +48,9 @@ impl<'a> Prettier<'a> {
     pub fn build(mut self, program: &Program<'a>) -> String {
         let doc = program.format(&mut self);
         Printer::new(doc, self.source_text, self.options).build()
+    }
+
+    pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
+        program.format(&mut self)
     }
 }

@@ -483,6 +483,11 @@ class Playground {
         this.run();
         text = this.oxc.ir;
         break;
+      case "prettier-ir":
+        this.runOptions.prettier_ir = true;
+        this.run();
+        text = this.oxc.prettierIr;
+        break;
       case "prettier":
         this.runOptions.prettier_format = true;
         this.run();
@@ -750,9 +755,13 @@ async function main() {
     playground.updateView("ir");
   };
 
+  document.getElementById("prettier-ir").onclick = () => {
+    playground.updateView("prettier-ir")
+  };
+
   document.getElementById("prettier").onclick = () => {
     playground.updateView("prettier")
-  }
+  };
 
   document.getElementById("ir-copy").onclick = () => {
     navigator.clipboard.writeText(playground.oxc.ir);
