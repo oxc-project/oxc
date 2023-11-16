@@ -81,3 +81,10 @@ macro_rules! group {
         }
     };
 }
+
+#[macro_export]
+macro_rules! if_break {
+    ($s:expr) => {{
+        Doc::IfBreak(std::boxed::Box::new(Doc::Str($s)))
+    }};
+}

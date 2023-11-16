@@ -17,7 +17,7 @@ mod ternary;
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, indent, softline, ss, string,
+    format, group, hardline, if_break, indent, softline, ss, string,
     util::is_next_line_empty,
     Prettier,
 };
@@ -784,10 +784,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
             parts_inner.push(format!(p, element));
         }
 
-        let mut if_break_comma = p.vec();
-        if_break_comma.push(Doc::Str(","));
-
-        parts_inner.push(Doc::if_break(if_break_comma));
+        parts_inner.push(if_break!(","));
 
         parts.push(group!(p, Doc::Indent(parts_inner)));
 
