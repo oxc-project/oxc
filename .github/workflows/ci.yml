@@ -210,5 +210,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/rustup
-      - run: cargo test
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+      - run: cargo test --quiet
