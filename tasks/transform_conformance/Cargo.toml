@@ -15,7 +15,7 @@ name = "oxc_transform_conformance"
 test = false
 
 [lib]
-test = false
+test    = false
 doctest = false
 
 [dependencies]

@@ -13,7 +13,7 @@ rust-version.workspace = true
 categories.workspace   = true
 
 [lib]
-test = false
+test    = false
 doctest = false
 
 [dependencies]

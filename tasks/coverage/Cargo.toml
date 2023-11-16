@@ -15,7 +15,7 @@ name = "oxc_coverage"
 test = false
 
 [lib]
-test = false
+test    = false
 doctest = false
 
 [dependencies]
