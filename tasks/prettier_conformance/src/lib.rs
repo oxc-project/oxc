@@ -1,12 +1,13 @@
 mod spec;
 
 use std::{
+    collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
 
 use spec::SpecParser;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
@@ -59,29 +60,59 @@ impl TestRunner {
                     .as_ref()
                     .map_or(true, |name| e.path().to_string_lossy().contains(name))
             })
-            .filter(|e| e.file_type().is_dir() && e.path().join("__snapshots__").exists())
-            .map(DirEntry::into_path)
+            .map(|e| {
+                let mut path = e.into_path();
+                if path.is_file() {
+                    if let Some(parent_path) = path.parent() {
+                        path = parent_path.into();
+                    }
+                }
+                path
+            })
+            .filter(|path| path.join("__snapshots__").exists())
             .collect::<Vec<_>>();
+
+        let dir_set: HashSet<_> = dirs.iter().cloned().collect();
+        dirs = dir_set.into_iter().collect();
 
         dirs.sort_unstable();
 
         let mut failed = vec![];
-
         for dir in &dirs {
-            // Get jsfmt.spec.js and all the other input files
-            let (specs, mut inputs): (Vec<PathBuf>, Vec<PathBuf>) = WalkDir::new(dir)
+            // Get jsfmt.spec.js
+            let mut spec_path = dir.join("jsfmt.spec.js");
+            while !spec_path.exists() {
+                spec_path = dir.parent().unwrap().join("jsfmt.spec.js");
+            }
+
+            if !spec_path.exists() {
+                continue;
+            }
+
+            // Get all the other input files
+            let mut inputs: Vec<PathBuf> = WalkDir::new(dir)
                 .min_depth(1)
                 .max_depth(1)
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
+                .filter(|e| {
+                    self.options
+                        .filter
+                        .as_ref()
+                        .map_or(true, |name| e.path().to_string_lossy().contains(name))
+                        && !e
+                            .path()
+                            .file_name()
+                            .is_some_and(|name| name.to_string_lossy().contains("jsfmt.spec.js"))
+                })
                 .map(|e| e.path().to_path_buf())
-                .partition(|path| path.file_name().is_some_and(|name| name == "jsfmt.spec.js"));
+                .collect();
 
-            self.spec.parse(&specs[0]);
+            self.spec.parse(&spec_path);
 
             inputs.sort_unstable();
-            if !self.test_snapshot(&specs[0], &inputs) {
+            if !self.test_snapshot(&spec_path, &inputs) {
                 failed.push(format!(
                     "* {}",
                     dir.strip_prefix(&fixture_root).unwrap().to_string_lossy()
@@ -103,24 +134,25 @@ impl TestRunner {
     }
 
     fn test_snapshot(&self, spec_path: &Path, inputs: &[PathBuf]) -> bool {
-        return self.spec.calls.iter().any(|spec| {
-            let inputs = inputs
-                .iter()
-                .map(|path| {
-                    let input = fs::read_to_string(path).unwrap();
-                    self.get_single_snapshot(path, &input, spec.0, &spec.1)
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-
-            let snapshot = format!("// Jest Snapshot v1, https://goo.gl/fbAQLP\n{inputs}\n");
-
+        self.spec.calls.iter().all(|spec| {
             let expected_file =
                 spec_path.parent().unwrap().join("__snapshots__/jsfmt.spec.js.snap");
             let expected = fs::read_to_string(expected_file).unwrap();
 
-            snapshot.contains(&expected)
-        });
+            if inputs.is_empty() {
+                return false;
+            }
+
+            inputs.iter().all(|path| {
+                let input = fs::read_to_string(path).unwrap();
+                let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1);
+                if snapshot.trim().is_empty() {
+                    return false;
+                }
+
+                expected.contains(&snapshot)
+            })
+        })
     }
 
     fn get_single_snapshot(
@@ -131,6 +163,21 @@ impl TestRunner {
         snapshot_options: &[(Atom, String)],
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();
+
+        let snapshot_line = snapshot_options
+            .iter()
+            .filter(|k| k.0 != "printWidth" && k.0 != "parsers")
+            .map(|(k, v)| format!("\"{k}\":{v}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let title_snapshot_options = format!("- {{{snapshot_line}}} ",);
+
+        let title = format!(
+            "exports[`{filename} {}format 1`] = `",
+            if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
+        );
+
         let output = Self::prettier(path, input, prettier_options);
         let snapshot_options = snapshot_options
             .iter()
@@ -139,6 +186,7 @@ impl TestRunner {
             .join("\n");
 
         if self.options.filter.is_some() {
+            println!("Input path: {}", path.to_string_lossy());
             println!("Input:");
             println!("{input}");
             println!("Output:");
@@ -146,35 +194,18 @@ impl TestRunner {
         }
 
         let space_line = " ".repeat(prettier_options.print_width);
-        let full_equal_sign = "=".repeat(prettier_options.print_width);
-
-        let get_text_line = |text: &'static str| {
-            let equal_half_length = (prettier_options.print_width - text.len()) / 2;
-            let sign = "=".repeat(equal_half_length);
-            let string = format!("{sign}{text}{sign}");
-
-            if (prettier_options.print_width - string.len()) == 1 {
-                format!("{string}=")
-            } else {
-                string
-            }
-        };
-
-        let options_line = get_text_line("options");
-        let input_line = get_text_line("input");
-        let output_line = get_text_line("output");
 
         format!(
             r#"
-exports[`{filename} format 1`] = `
-{options_line}
+{title}
+====================================options=====================================
 {snapshot_options}
 {space_line}| printWidth
-{input_line}
+=====================================input======================================
 {input}
-{output_line}
+=====================================output=====================================
 {output}
-{full_equal_sign}
+================================================================================
 `;"#
         )
     }
