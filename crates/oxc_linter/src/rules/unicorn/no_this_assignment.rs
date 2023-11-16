@@ -116,31 +116,31 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"const {property} = this;"#,
-        r#"const property = this.property;"#,
-        r#"const [element] = this;"#,
-        r#"const element = this[0];"#,
-        r#"([element] = this);"#,
-        r#"element = this[0];"#,
-        r#"property = this.property;"#,
-        r#"const [element] = [this];"#,
-        r#"([element] = [this]);"#,
-        r#"const {property} = {property: this};"#,
-        r#"({property} = {property: this});"#,
-        r#"const self = true && this;"#,
-        r#"const self = false || this;"#,
-        r#"const self = false ?? this;"#,
-        r#"foo.bar = this;"#,
-        r#"function foo(a = this) {}"#,
-        r#"function foo({a = this}) {}"#,
-        r#"function foo([a = this]) {}"#,
+        r"const {property} = this;",
+        r"const property = this.property;",
+        r"const [element] = this;",
+        r"const element = this[0];",
+        r"([element] = this);",
+        r"element = this[0];",
+        r"property = this.property;",
+        r"const [element] = [this];",
+        r"([element] = [this]);",
+        r"const {property} = {property: this};",
+        r"({property} = {property: this});",
+        r"const self = true && this;",
+        r"const self = false || this;",
+        r"const self = false ?? this;",
+        r"foo.bar = this;",
+        r"function foo(a = this) {}",
+        r"function foo({a = this}) {}",
+        r"function foo([a = this]) {}",
     ];
 
     let fail = vec![
-        r#"const foo = this;"#,
-        r#"let foo;foo = this;"#,
-        r#"var foo = bar, baz = this;"#,
-        r#"var foo = (bar), baz = (this);"#,
+        r"const foo = this;",
+        r"let foo;foo = this;",
+        r"var foo = bar, baz = this;",
+        r"var foo = (bar), baz = (this);",
     ];
 
     Tester::new_without_config(NoThisAssignment::NAME, pass, fail).test_and_snapshot();

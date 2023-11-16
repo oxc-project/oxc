@@ -71,17 +71,17 @@ fn test() {
     let pass = vec![
         ("var Hello = function() {};", None),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               render: function() {
                 return <div>Hello</div>;
               }
             });              
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 someNonMemberFunction(arg);
@@ -91,11 +91,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 React.someFunc(this);
@@ -104,11 +104,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 SomeModule.findDOMNode(this).scrollIntoView();
@@ -117,14 +117,14 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
     ];
 
     let fail = vec![
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 React.findDOMNode(this).scrollIntoView();
@@ -133,11 +133,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 ReactDOM.findDOMNode(this).scrollIntoView();
@@ -146,11 +146,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             var Hello = createReactClass({
               componentDidMount: function() {
                 ReactDom.findDOMNode(this).scrollIntoView();
@@ -159,11 +159,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             });
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             class Hello extends Component {
               componentDidMount() {
                 findDOMNode(this).scrollIntoView();
@@ -172,11 +172,11 @@ fn test() {
                 return <div>Hello</div>;
               }
             }
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
             class Hello extends Component {
               componentDidMount() {
                 this.node = findDOMNode(this);
@@ -185,7 +185,7 @@ fn test() {
                 return <div>Hello</div>;
               }
             }            
-            "#,
+            ",
             None,
         ),
     ];

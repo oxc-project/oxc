@@ -96,42 +96,42 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"if (a) { if (b) { } } else { }"#,
-        r#"if (a) { if (b) { } foo(); } else {}"#,
-        r#"if (a) { } else { if (y) { } }"#,
-        r#"if (a) { b ? c() : d()}"#,
+        r"if (a) { if (b) { } } else { }",
+        r"if (a) { if (b) { } foo(); } else {}",
+        r"if (a) { } else { if (y) { } }",
+        r"if (a) { b ? c() : d()}",
     ];
 
     let fail = vec![
-        r#"
+        r"
         if (a) {
             if (b) {
             }
         }
-    "#,
+    ",
         // Inner one is `BlockStatement`
-        r#"
+        r"
         if (a) if (b) {
             foo();
         }
-    "#,
+    ",
         // Outer one is `BlockStatement`
-        r#"
+        r"
         if (a) {
             if (b) foo();
         }
-    "#,
+    ",
         // No `BlockStatement`
-        r#"if (a) if (b) foo();"#,
-        r#"
+        r"if (a) if (b) foo();",
+        r"
         if (a) {
             if (b) foo()
         }
-    "#,
+    ",
         // `EmptyStatement`
-        r#"if (a) if (b);"#,
+        r"if (a) if (b);",
         // Nested
-        r#"
+        r"
         if (a) {
             if (b) {
                 // Should not report
@@ -140,9 +140,9 @@ fn test() {
             if (d) {
             }
         }
-    "#,
+    ",
         // Need parenthesis
-        r#"
+        r"
         function * foo() {
             if (a || b)
             if (a ?? b)
@@ -154,20 +154,20 @@ fn test() {
             if (yield a)
             if (a, b);
         }
-    "#,
+    ",
         // Should not add parenthesis
-        r#"
+        r"
         async function foo() {
             if (a)
             if (await a)
             if (a.b)
             if (a && b);
         }
-    "#,
+    ",
         // Don't case parenthesis in outer test
         // 'if (((a || b))) if (((c || d)));',
         // Comments
-        r#"
+        r"
         if // 1
         (
             // 2
@@ -187,25 +187,25 @@ fn test() {
             }
             // 12
         }
-    "#,
+    ",
         // Semicolon
-        r#"
+        r"
         if (a) {
             if (b) foo()
         }
         [].forEach(bar)
-    "#,
-        r#"
+    ",
+        r"
         if (a)
             if (b) foo()
         ;[].forEach(bar)
-    "#,
-        r#"
+    ",
+        r"
         if (a) {
             if (b) foo()
         }
         ;[].forEach(bar)
-    "#,
+    ",
     ];
 
     Tester::new_without_config(NoLonelyIf::NAME, pass, fail).test_and_snapshot();

@@ -115,6 +115,8 @@ impl Oxc {
     }
 
     /// Returns Array of String
+    /// # Errors
+    /// # Panics
     #[wasm_bindgen(js_name = getDiagnostics)]
     pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
         Ok(self

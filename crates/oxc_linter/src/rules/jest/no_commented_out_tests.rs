@@ -160,13 +160,13 @@ fn test() {
         ("// test['someNewMethodThatMightBeAddedInTheFuture']()", None),
         ("// test('has title but no callback')", None),
         (
-            r#"
+            r"
               foo()
               /*
                 describe('has title but no callback', () => {})
               */
               bar()
-            "#,
+            ",
             None,
         ),
     ];

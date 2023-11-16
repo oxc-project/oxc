@@ -140,10 +140,10 @@ fn test() {
 
     #[rustfmt::skip]
     let fail = vec![
-        (r#"<div children />;"#, None),
+        (r"<div children />;", None),
         (r#"<div children="Children" />;"#, None),
-        (r#"<div children={<div />} />;"#, None),
-        (r#"<div children={[<div />, <div />]} />;"#, None),
+        (r"<div children={<div />} />;", None),
+        (r"<div children={[<div />, <div />]} />;", None),
         (r#"<div children="Children">Children</div>;"#, None),
         (r#"React.createElement("div", {children: "Children"});"#, None),
         (r#"React.createElement("div", {children: "Children"}, "Children");"#, None),

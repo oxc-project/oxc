@@ -212,55 +212,55 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
-        (r#"<><Foo /><Bar /></>"#, None),
-        (r#"<>foo<div /></>"#, None),
-        (r#"<> <div /></>"#, None),
+        (r"<><Foo /><Bar /></>", None),
+        (r"<>foo<div /></>", None),
+        (r"<> <div /></>", None),
         (r#"<>{"moo"} </>"#, None),
-        (r#"<NotFragment />"#, None),
-        (r#"<React.NotFragment />"#, None),
-        (r#"<NotReact.Fragment />"#, None),
-        (r#"<Foo><><div /><div /></></Foo>"#, None),
+        (r"<NotFragment />", None),
+        (r"<React.NotFragment />", None),
+        (r"<NotReact.Fragment />", None),
+        (r"<Foo><><div /><div /></></Foo>", None),
         (r#"<div p={<>{"a"}{"b"}</>} />"#, None),
-        (r#"<Fragment key={item.id}>{item.value}</Fragment>"#, None),
-        (r#"<Fooo content={<>eeee ee eeeeeee eeeeeeee</>} />"#, None),
-        (r#"<>{foos.map(foo => foo)}</>"#, None),
-        (r#"<>{moo}</>"#, Some(json!({ "allowExpressions": true }))),
+        (r"<Fragment key={item.id}>{item.value}</Fragment>", None),
+        (r"<Fooo content={<>eeee ee eeeeeee eeeeeeee</>} />", None),
+        (r"<>{foos.map(foo => foo)}</>", None),
+        (r"<>{moo}</>", Some(json!({ "allowExpressions": true }))),
         (
-            r#"
+            r"
         <>
             {moo}
         </>
-        "#,
+        ",
             Some(json!({ "allowExpressions": true })),
         ),
     ];
 
     let fail = vec![
-        (r#"<></>"#, None),
-        (r#"<>{}</>"#, None),
-        (r#"<p>moo<>foo</></p>"#, None),
-        (r#"<>{meow}</>"#, None),
-        (r#"<p><>{meow}</></p>"#, None),
-        (r#"<><div/></>"#, None),
+        (r"<></>", None),
+        (r"<>{}</>", None),
+        (r"<p>moo<>foo</></p>", None),
+        (r"<>{meow}</>", None),
+        (r"<p><>{meow}</></p>", None),
+        (r"<><div/></>", None),
         (
-            r#"
+            r"
             <>
               <div/>
             </>
-        "#,
+        ",
             None,
         ),
-        (r#"<Fragment />"#, None),
+        (r"<Fragment />", None),
         (
-            r#"
+            r"
                 <React.Fragment>
                   <Foo />
                 </React.Fragment>
-            "#,
+            ",
             None,
         ),
-        (r#"<Eeee><>foo</></Eeee>"#, None),
-        (r#"<div><>foo</></div>"#, None),
+        (r"<Eeee><>foo</></Eeee>", None),
+        (r"<div><>foo</></div>", None),
         (r#"<div><>{"a"}{"b"}</></div>"#, None),
         (r#"<div><>{"a"}{"b"}</></div>"#, None),
         (
@@ -274,7 +274,7 @@ fn test() {
         ),
         (r#"<div><Fragment>{"a"}{"b"}</Fragment></div>"#, None),
         (
-            r#"
+            r"
             <section>
               git<>
                 <b>hub</b>.
@@ -282,21 +282,21 @@ fn test() {
 
               git<> <b>hub</b></>
             </section>
-            "#,
+            ",
             None,
         ),
         (r#"<div>a <>{""}{""}</> a</div>"#, None),
         (
-            r#"
+            r"
             const Comp = () => (
               <html>
                 <React.Fragment />
               </html>
             );
-        "#,
+        ",
             None,
         ),
-        (r#"<><Foo>{moo}</Foo></>"#, None),
+        (r"<><Foo>{moo}</Foo></>", None),
     ];
 
     Tester::new(JsxNoUselessFragment::NAME, pass, fail).test_and_snapshot();

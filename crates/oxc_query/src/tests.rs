@@ -47,7 +47,7 @@ fn test_expr_stmt() {
 
     let not_ast = run_query::<Output>(
         "function a() { y = 2; }",
-        r#"
+        r"
         query {
             File {
                 ast_node {
@@ -59,13 +59,13 @@ fn test_expr_stmt() {
                 }
             }
         }
-        "#,
+        ",
     );
     assert_eq!(vec![Output { __typename: "ExpressionStatement".to_owned() },], not_ast);
 
     let ast = run_query::<Output>(
         "function a() { y = 2; }",
-        r#"
+        r"
         query {
             File {
                 ast_node {
@@ -75,7 +75,7 @@ fn test_expr_stmt() {
                 }
             }
         }
-        "#,
+        ",
     );
     assert_eq!(vec![Output { __typename: "ExpressionStatementAST".to_owned() },], ast);
 }
@@ -90,7 +90,7 @@ fn test_path_query() {
     }
     let results = run_query::<Output>(
         "const apple = 1;",
-        r#"
+        r"
         query {
             File {
                 last_path_part {
@@ -100,7 +100,7 @@ fn test_path_query() {
                 }
             }
         }
-        "#,
+        ",
     );
 
     assert_eq!(vec![Output { name: "index".into(), is_first: true, is_last: true },], results);
@@ -119,7 +119,7 @@ fn test_variable_query() {
     }
     let results = run_query::<Output>(
         "const apple = 1;",
-        r#"
+        r"
         query {
             File {
                 variable_declaration {
@@ -140,7 +140,7 @@ fn test_variable_query() {
                 }
             }
         }
-        "#,
+        ",
     );
 
     assert_eq!(
@@ -200,7 +200,7 @@ fn test_parent_query() {
     }
     let results = run_query::<Output>(
         "interface MyGreatInterface { myGreatProperty: number }",
-        r#"
+        r"
         query {
             File {
                 ast_node {
@@ -220,7 +220,7 @@ fn test_parent_query() {
                 }
             }
         }
-        "#,
+        ",
     );
 
     assert_eq!(
