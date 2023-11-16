@@ -23,8 +23,10 @@ ready:
   just lint
   git status
 
-# Update our local branch with the remote branch (this is for you to sync the submodules)
+# Update our local branch with the remote branch (this is for you to sync the git submodules)
 update:
+  git submodule sync
+  git submodule update
   git pull --recurse-submodules
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
