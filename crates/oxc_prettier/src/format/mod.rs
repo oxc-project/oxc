@@ -254,8 +254,16 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
         parts.push(ss!("return"));
         if let Some(argument) = &self.argument {
             parts.push(ss!(" "));
-            parts.push(format!(p, argument));
+            parts.push(group![
+                p,
+                if_break!("("),
+                indent!(p, softline!(), format!(p, argument)),
+                softline!(),
+                if_break!(")")
+            ]);
         }
+        parts.push(p.str(";"));
+        parts.push(hardline!());
         Doc::Array(parts)
     }
 }
