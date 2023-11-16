@@ -168,7 +168,7 @@ impl TestRunner {
             .iter()
             .filter(|k| {
                 if k.0 == "parsers" {
-                    return false;
+                    false
                 } else if k.0 == "printWidth" {
                     return k.1 != "80";
                 } else {
