@@ -1,4 +1,4 @@
-Compatibility: 7/173 (4.05%)
+Compatibility: 8/173 (4.62%)
 
 # Failed
 
@@ -18,7 +18,6 @@ Compatibility: 7/173 (4.05%)
 * binary_math
 * bind-expressions
 * bom
-* bracket-spacing
 * break-calls
 * call/first-argument-expansion
 * call/invalid
