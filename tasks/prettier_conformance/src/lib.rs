@@ -194,35 +194,18 @@ impl TestRunner {
         }
 
         let space_line = " ".repeat(prettier_options.print_width);
-        let full_equal_sign = "=".repeat(prettier_options.print_width);
-
-        let get_text_line = |text: &'static str| {
-            let equal_half_length = (prettier_options.print_width - text.len()) / 2;
-            let sign = "=".repeat(equal_half_length);
-            let string = format!("{sign}{text}{sign}");
-
-            if (prettier_options.print_width - string.len()) == 1 {
-                format!("{string}=")
-            } else {
-                string
-            }
-        };
-
-        let options_line = get_text_line("options");
-        let input_line = get_text_line("input");
-        let output_line = get_text_line("output");
 
         format!(
             r#"
 {title}
-{options_line}
+====================================options=====================================
 {snapshot_options}
 {space_line}| printWidth
-{input_line}
+=====================================input======================================
 {input}
-{output_line}
+=====================================output=====================================
 {output}
-{full_equal_sign}
+================================================================================
 `;"#
         )
     }
