@@ -17,7 +17,7 @@ mod ternary;
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, indent, softline, ss, string,
+    format, group, hardline, if_break, indent, softline, ss, string,
     util::is_next_line_empty,
     Prettier,
 };
