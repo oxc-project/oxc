@@ -10,7 +10,12 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[[bin]]
+name = "oxc_transform_conformance"
+test = false
+
 [lib]
+test = false
 doctest = false
 
 [dependencies]

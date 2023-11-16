@@ -18,10 +18,12 @@ doctest = false
 [[bin]]
 name = "oxlint"
 path = "src/lint/main.rs"
+test = false
 
 [[bin]]
 name = "oxformat"
 path = "src/format/main.rs"
+test = false
 
 [dependencies]
 oxc_allocator      = { workspace = true }
