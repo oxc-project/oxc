@@ -12,6 +12,7 @@ use oxc_ast::ast::*;
 mod binaryish;
 mod block;
 mod call_expression;
+mod object;
 mod statement;
 mod ternary;
 
@@ -800,19 +801,22 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_object_properties(&self.properties)
     }
 }
 
 impl<'a> Format<'a> for ObjectPropertyKind<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            ObjectPropertyKind::ObjectProperty(prop) => prop.format(p),
+            ObjectPropertyKind::SpreadProperty(prop) => prop.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
     }
 }
 
@@ -1277,20 +1281,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("{"));
-        parts.push(Doc::Line);
-        let len = self.properties.len();
-        self.properties.iter().map(|prop| prop.format(p)).enumerate().for_each(|(i, prop)| {
-            parts.push(prop);
-            if i < len - 1 {
-                parts.push(Doc::Str(","));
-                parts.push(Doc::Line);
-            }
-        });
-        parts.push(Doc::Line);
-        parts.push(ss!("}"));
-        Doc::Group(parts)
+        p.print_object_properties(&self.properties)
     }
 }
 
