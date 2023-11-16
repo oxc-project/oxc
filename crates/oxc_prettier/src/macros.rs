@@ -36,6 +36,13 @@ macro_rules! indent {
 }
 
 #[macro_export]
+macro_rules! line {
+    () => {
+        Doc::Line
+    };
+}
+
+#[macro_export]
 macro_rules! softline {
     () => {
         Doc::Softline
