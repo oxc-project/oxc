@@ -9,6 +9,7 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
+mod array;
 mod arrow_function;
 mod binaryish;
 mod block;
@@ -24,12 +25,15 @@ mod ternary;
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, if_break, indent, softline, ss, string,
+    format, group, hardline, indent, softline, ss, string,
     util::is_next_line_empty,
     Prettier,
 };
 
-use self::binaryish::{BinaryishLeft, BinaryishOperator};
+use self::{
+    array::Array,
+    binaryish::{BinaryishLeft, BinaryishOperator},
+};
 
 pub trait Format<'a> {
     #[must_use]
@@ -435,6 +439,12 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSTupleElement<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
@@ -757,32 +767,7 @@ impl<'a> Format<'a> for SpreadElement<'a> {
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        if self.elements.len() == 0 {
-            return ss!("[]");
-        }
-
-        let mut parts = p.vec();
-        parts.push(ss!("["));
-
-        let mut parts_inner = p.vec();
-        parts_inner.push(Doc::Softline);
-
-        for (i, element) in self.elements.iter().enumerate() {
-            if i > 0 && i < self.elements.len() {
-                parts_inner.push(ss!(","));
-                parts_inner.push(Doc::Line);
-            }
-            parts_inner.push(format!(p, element));
-        }
-
-        parts_inner.push(if_break!(p, ","));
-
-        parts.push(group!(p, Doc::Indent(parts_inner)));
-
-        parts.push(Doc::Softline);
-        parts.push(ss!("]"));
-
-        Doc::Group(parts)
+        p.print_array(&Array::ArrayExpression(self))
     }
 }
 
