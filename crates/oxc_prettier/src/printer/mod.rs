@@ -52,7 +52,7 @@ impl<'a> Printer<'a> {
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
-                Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
+                Doc::IfBreak(if_break) => self.handle_if_break(*if_break, indent, mode),
             }
         }
     }
@@ -120,16 +120,9 @@ impl<'a> Printer<'a> {
         self.pos = self.indent(indent.length);
     }
 
-    fn handle_if_break(
-        &mut self,
-        if_break: oxc_allocator::Vec<'a, Doc<'a>>,
-        indent: Indent,
-        mode: Mode,
-    ) {
+    fn handle_if_break(&mut self, doc: Doc<'a>, indent: Indent, mode: Mode) {
         if mode == Mode::Break {
-            self.cmds.extend(
-                if_break.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
-            );
+            self.cmds.push(Command::new(indent, Mode::Break, doc));
         }
     }
 

@@ -784,10 +784,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
             parts_inner.push(format!(p, element));
         }
 
-        let mut if_break_comma = p.vec();
-        if_break_comma.push(Doc::Str(","));
-
-        parts_inner.push(Doc::if_break(if_break_comma));
+        parts_inner.push(if_break!(","));
 
         parts.push(group!(p, Doc::Indent(parts_inner)));
 

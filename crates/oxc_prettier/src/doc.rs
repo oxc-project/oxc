@@ -31,15 +31,10 @@ pub enum Doc<'a> {
     /// no matter if the expression fits on one line or not.
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
-    IfBreak(Vec<'a, Doc<'a>>),
+    IfBreak(Box<Doc<'a>>),
 }
 
-impl<'a> Doc<'a> {
-    #[must_use]
-    pub fn if_break(break_contents: Vec<'a, Doc<'a>>) -> Self {
-        Doc::IfBreak(break_contents)
-    }
-}
+impl<'a> Doc<'a> {}
 
 #[derive(Clone, Copy)]
 #[allow(unused)]
