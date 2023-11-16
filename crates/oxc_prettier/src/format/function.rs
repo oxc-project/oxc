@@ -23,11 +23,19 @@ impl<'a> Prettier<'a> {
         if let Some(id) = &func.id {
             parts.push(self.str(id.name.as_str()));
         }
-        parts.push(func.params.format(self));
+        if should_group_function_parameters(func) {
+            parts.push(group!(self, func.params.format(self)));
+        } else {
+            parts.push(func.params.format(self));
+        }
         if let Some(body) = &func.body {
             parts.push(ss!(" "));
             parts.push(body.format(self));
         }
+        if self.options.semi && (func.is_ts_declare_function() || func.body.is_none()) {
+            parts.push(self.str(";"));
+        }
+
         Doc::Array(parts)
     }
 
@@ -55,4 +63,30 @@ impl<'a> Prettier<'a> {
         parts.push(hardline!());
         Doc::Array(parts)
     }
+}
+
+fn should_group_function_parameters(func: &Function) -> bool {
+    let Some(return_type) = &func.return_type else {
+        return false;
+    };
+    let type_parameters = func.type_parameters.as_ref().map(|x| &x.params);
+
+    if let Some(type_parameter) = type_parameters {
+        if type_parameter.len() > 1 {
+            return false;
+        }
+
+        if let Some(type_parameter) = type_parameter.first() {
+            if type_parameter.constraint.is_some() || type_parameter.default.is_some() {
+                return false;
+            }
+        }
+    }
+
+    // TODO: need union `willBreak`
+    func.params.parameters_count() == 1
+        && (matches!(
+            return_type.type_annotation,
+            TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
+        ))
 }
