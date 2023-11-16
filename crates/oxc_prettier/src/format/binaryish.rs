@@ -2,7 +2,7 @@
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{doc::Doc, group, ss, Format, Prettier};
+use crate::{doc::Doc, ss, Format, Prettier};
 
 pub enum BinaryishLeft<'a, 'b> {
     Expression(&'b Expression<'a>),
@@ -42,15 +42,10 @@ impl<'a> Prettier<'a> {
     ) -> Doc<'a> {
         let mut parts = self.vec();
         parts.push(left.format(self));
-        let mut parts_inner = self.vec();
-        parts_inner.push(ss!(" "));
-        let mut parts_inner_inner = self.vec();
-        parts_inner_inner.push(ss!(operator.as_str()));
-        parts_inner_inner.push(Doc::Line);
-        parts_inner_inner.push(right.format(self));
-        let indent = Doc::Indent(parts_inner_inner);
-        parts_inner.push(group!(self, indent));
-        parts.push(Doc::Indent(parts_inner));
-        Doc::Group(parts)
+        parts.push(ss!(" "));
+        parts.push(ss!(operator.as_str()));
+        parts.push(Doc::Line);
+        parts.push(right.format(self));
+        Doc::Array(parts)
     }
 }

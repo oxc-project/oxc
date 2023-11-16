@@ -1,4 +1,4 @@
-Compatibility: 5/173 (2.89%)
+Compatibility: 6/173 (3.47%)
 
 # Failed
 
@@ -140,7 +140,6 @@ Compatibility: 5/173 (2.89%)
 * reserved-word
 * rest
 * return
-* return-outside-function
 * sequence-break
 * sequence-expression
 * shebang
