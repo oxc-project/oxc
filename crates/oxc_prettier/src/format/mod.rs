@@ -8,6 +8,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 mod arrow_function;
 mod binaryish;
@@ -472,6 +473,59 @@ impl<'a> Format<'a> for FormalParameter<'a> {
 }
 
 impl<'a> Format<'a> for ImportDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(ss!("import"));
+        if self.import_kind.is_type() {
+            parts.push(ss!(" type"));
+        }
+        if let Some(specifiers) = &self.specifiers {
+            parts.push(ss!(" {"));
+            if !specifiers.is_empty() {
+                parts.push(ss!(" "));
+            }
+            for (i, specifier) in specifiers.iter().enumerate() {
+                if i != 0 {
+                    parts.push(ss!(", "));
+                }
+                parts.push(specifier.format(p));
+            }
+            parts.push(ss!(" }"));
+        }
+        parts.push(ss!(" from "));
+        parts.push(self.source.format(p));
+        parts.push(hardline!());
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for ImportDeclarationSpecifier {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            Self::ImportSpecifier(specifier) => specifier.format(p),
+            Self::ImportDefaultSpecifier(specifier) => specifier.format(p),
+            Self::ImportNamespaceSpecifier(specifier) => specifier.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for ImportSpecifier {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        if self.imported.span() == self.local.span {
+            self.local.format(p)
+        } else {
+            array![p, self.imported.format(p), ss!("as"), self.local.format(p)]
+        }
+    }
+}
+
+impl<'a> Format<'a> for ImportDefaultSpecifier {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for ImportNamespaceSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
     }
