@@ -2,9 +2,7 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{
-        Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind, Program,
-    },
+    ast::{Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind},
     VisitMut,
 };
 use oxc_parser::Parser;
@@ -24,15 +22,12 @@ impl SpecParser {
         let source_type = SourceType::from_path(spec).unwrap_or_default();
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
         self.source_text = spec_content.clone();
+        self.calls = vec![];
         self.visit_program(&mut ret.program);
     }
 }
 
 impl VisitMut<'_> for SpecParser {
-    fn visit_program(&mut self, program: &mut Program<'_>) {
-        self.visit_statements(&mut program.body);
-    }
-
     fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
         let Some(ident) = expr.callee.get_identifier_reference() else { return };
         if ident.name != "run_spec" {
@@ -72,8 +67,13 @@ impl VisitMut<'_> for SpecParser {
                             Expression::BooleanLiteral(literal) => {
                                 if name == "semi" {
                                     options.semi = literal.value;
+                                } else if name == "bracketSpacing" {
+                                    options.bracket_spacing = literal.value;
                                 }
-                                snapshot_options.push((name, literal.value.to_string()));
+
+                                if !literal.value {
+                                    snapshot_options.push((name, literal.value.to_string()));
+                                }
                             }
                             Expression::NumberLiteral(literal) => {
                                 if name == "printWidth" {

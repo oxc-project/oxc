@@ -1,4 +1,4 @@
-Compatibility: 6/173 (3.47%)
+Compatibility: 7/173 (4.05%)
 
 # Failed
 
@@ -29,7 +29,6 @@ Compatibility: 6/173 (3.47%)
 * class-static-block
 * classes
 * classes/keyword-property
-* classes/top-level-super
 * classes-private-fields
 * comments
 * comments/flow-types
