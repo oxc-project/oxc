@@ -13,6 +13,7 @@ mod arrow_function;
 mod binaryish;
 mod block;
 mod call_expression;
+mod class;
 mod function;
 mod function_parameters;
 mod module;
@@ -1074,7 +1075,15 @@ impl<'a> Format<'a> for MetaProperty {
 
 impl<'a> Format<'a> for Class<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_class(self)
+    }
+}
+
+impl<'a> Format<'a> for ClassBody<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(ss!("{}"));
+        Doc::Array(parts)
     }
 }
 
