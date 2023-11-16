@@ -778,7 +778,12 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
+        // Perf: Use same print function with BindingProperty
+        if self.shorthand {
+            self.key.format(p)
+        } else {
+            group!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
+        }
     }
 }
 
@@ -1252,7 +1257,7 @@ impl<'a> Format<'a> for BindingProperty<'a> {
         if self.shorthand {
             self.key.format(p)
         } else {
-            array![p, format!(p, self.key), ss!(": "), format!(p, self.value)]
+            group!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
         }
     }
 }
