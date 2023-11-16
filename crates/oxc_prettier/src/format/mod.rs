@@ -254,21 +254,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 
 impl<'a> Format<'a> for ReturnStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("return"));
-        if let Some(argument) = &self.argument {
-            parts.push(ss!(" "));
-            parts.push(group![
-                p,
-                if_break!(p, "("),
-                indent!(p, softline!(), format!(p, argument)),
-                softline!(),
-                if_break!(p, ")")
-            ]);
-        }
-        parts.push(p.str(";"));
-        parts.push(hardline!());
-        Doc::Array(parts)
+        p.print_return_or_throw_argument(self.argument.as_ref(), true)
     }
 }
 
@@ -317,12 +303,7 @@ impl<'a> Format<'a> for CatchClause<'a> {
 
 impl<'a> Format<'a> for ThrowStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("throw "));
-        parts.push(ss!(" "));
-        parts.push(format!(p, self.argument));
-
-        Doc::Array(parts)
+        p.print_return_or_throw_argument(Some(&self.argument), false)
     }
 }
 
