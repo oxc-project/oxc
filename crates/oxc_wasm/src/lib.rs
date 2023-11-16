@@ -44,11 +44,11 @@ pub struct Oxc {
 
     ast: JsValue,
     ir: JsValue,
-    prettier_ir: JsValue,
 
     codegen_text: String,
     formatted_text: String,
     prettier_formatted_text: String,
+    prettier_ir: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -95,7 +95,7 @@ impl Oxc {
     }
 
     #[wasm_bindgen(getter = prettierIr)]
-    pub fn prettier_ir(&self) -> JsValue {
+    pub fn prettier_ir(&self) -> String {
         self.prettier_ir.clone()
     }
 
@@ -190,10 +190,11 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        let prettier_ir =
+        let prettier_doc =
             Prettier::new(&allocator, source_text, trivias.clone(), PrettierOptions::default())
-                .cmds(program);
-        self.prettier_ir = prettier_ir.serialize(&self.serializer)?;
+                .doc(program);
+
+        self.prettier_ir = serde_json::to_string_pretty(&prettier_doc).unwrap();
 
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)

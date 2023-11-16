@@ -3,7 +3,7 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/src/document/printer.js>
 
-pub(crate) mod command;
+mod command;
 
 use std::collections::VecDeque;
 
@@ -36,10 +36,6 @@ impl<'a> Printer<'a> {
         self.print_doc_to_string();
         // SAFETY: We should have constructed valid UTF8 strings
         unsafe { String::from_utf8_unchecked(self.out) }
-    }
-
-    pub fn cmds(mut self) -> Vec<Command<'a>> {
-        self.cmds
     }
 
     /// Turn Doc into a string
