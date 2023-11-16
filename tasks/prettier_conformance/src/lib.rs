@@ -186,7 +186,7 @@ impl TestRunner {
             .join("\n");
 
         if self.options.filter.is_some() {
-            println!("input path: {}", path.to_string_lossy());
+            println!("Input path: {}", path.to_string_lossy());
             println!("Input:");
             println!("{input}");
             println!("Output:");
