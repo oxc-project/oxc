@@ -4,11 +4,10 @@
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use serde::Serialize;
 
 use crate::Prettier;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub enum Doc<'a> {
     Str(&'a str),
     // perf: can we use &[Doc] here?
