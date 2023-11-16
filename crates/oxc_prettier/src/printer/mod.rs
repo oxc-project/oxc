@@ -52,7 +52,7 @@ impl<'a> Printer<'a> {
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
-                Doc::IfBreak(if_break) => self.handle_if_break(*if_break, indent, mode),
+                Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
             }
         }
     }

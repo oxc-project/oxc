@@ -256,10 +256,10 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
             parts.push(ss!(" "));
             parts.push(group![
                 p,
-                if_break!("("),
+                if_break!(p, "("),
                 indent!(p, softline!(), format!(p, argument)),
                 softline!(),
-                if_break!(")")
+                if_break!(p, ")")
             ]);
         }
         parts.push(p.str(";"));
@@ -792,7 +792,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
             parts_inner.push(format!(p, element));
         }
 
-        parts_inner.push(if_break!(","));
+        parts_inner.push(if_break!(p, ","));
 
         parts.push(group!(p, Doc::Indent(parts_inner)));
 
