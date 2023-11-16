@@ -30,6 +30,7 @@ harness = false
 name    = "linter"
 harness = false
 
+# Broken
 [[bench]]
 name    = "prettier"
 harness = false
@@ -38,9 +39,10 @@ harness = false
 name    = "minifier"
 harness = false
 
-[[bench]]
-name    = "resolver"
-harness = false
+# Flaky
+# [[bench]]
+# name    = "resolver"
+# harness = false
 
 [dependencies]
 oxc_allocator    = { workspace = true }
