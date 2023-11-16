@@ -9,11 +9,13 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
+mod arrow_function;
 mod binaryish;
 mod block;
 mod call_expression;
 mod function;
 mod function_parameters;
+mod module;
 mod object;
 mod statement;
 mod ternary;
@@ -341,7 +343,11 @@ impl<'a> Format<'a> for DebuggerStatement {
 
 impl<'a> Format<'a> for ModuleDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if let ModuleDeclaration::ImportDeclaration(decl) = self {
+            decl.format(p)
+        } else {
+            p.print_export_declaration(self)
+        }
     }
 }
 
@@ -488,6 +494,18 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSExportAssignment<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSNamespaceExportDeclaration {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
 impl<'a> Format<'a> for ExportSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
@@ -508,12 +526,18 @@ impl<'a> Format<'a> for ExportAllDeclaration<'a> {
 
 impl<'a> Format<'a> for ExportDefaultDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        self.declaration.format(p)
     }
 }
 impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::Expression(expr) => expr.format(p),
+            Self::FunctionDeclaration(decl) => decl.format(p),
+            Self::ClassDeclaration(decl) => decl.format(p),
+            Self::TSInterfaceDeclaration(decl) => decl.format(p),
+            Self::TSEnumDeclaration(decl) => decl.format(p),
+        }
     }
 }
 
@@ -799,7 +823,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
 impl<'a> Format<'a> for ArrowExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_arrow_function(self)
     }
 }
 
