@@ -2,7 +2,7 @@
 # Do not append `--` or it will break IDEs
 ck = "check --workspace --all-targets --all-features --locked"
 lint = "clippy --workspace --all-targets --all-features"
-codecov = "llvm-cov nextest --profile codecov --workspace --ignore-filename-regex tasks"
+codecov = "llvm-cov --workspace --ignore-filename-regex tasks"
 coverage = "run -p oxc_coverage --release --"
 benchmark = "run -p oxc_benchmark --release --"
 minsize = "run -p oxc_minsize --release --"
