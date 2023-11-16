@@ -613,7 +613,13 @@ impl<'a> Format<'a> for NumberLiteral<'a> {
 
 impl<'a> Format<'a> for BigintLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Str(self.span.source_text(p.source_text))
+        let text = self.span.source_text(p.source_text);
+        // Perf: avoid a memory allocation from `to_ascii_lowercase`.
+        if text.contains(|c: char| c.is_lowercase()) {
+            p.str(&text.to_ascii_lowercase())
+        } else {
+            Doc::Str(text)
+        }
     }
 }
 

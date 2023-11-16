@@ -1,4 +1,4 @@
-Compatibility: 8/173 (4.62%)
+Compatibility: 9/173 (5.20%)
 
 # Failed
 
@@ -13,7 +13,6 @@ Compatibility: 8/173 (4.62%)
 * async
 * async-do-expressions
 * babel-plugins
-* big-int
 * binary-expressions
 * binary_math
 * bind-expressions
