@@ -31,9 +31,9 @@ name    = "linter"
 harness = false
 
 # Broken
-[[bench]]
-name    = "prettier"
-harness = false
+# [[bench]]
+# name    = "prettier"
+# harness = false
 
 [[bench]]
 name    = "minifier"
