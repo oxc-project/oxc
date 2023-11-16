@@ -11,6 +11,7 @@ use oxc_ast::ast::*;
 
 mod binaryish;
 mod block;
+mod call_expression;
 mod statement;
 mod ternary;
 
@@ -737,13 +738,7 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
 
 impl<'a> Format<'a> for CallExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(self.callee.format(p));
-        parts.push(ss!("("));
-        parts.extend(self.arguments.iter().map(|arg| arg.format(p)));
-        parts.push(ss!(")"));
-
-        Doc::Array(parts)
+        p.print_call_expression(&self.callee, &self.arguments, self.optional, &self.type_parameters)
     }
 }
 
@@ -1072,7 +1067,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
 
 impl<'a> Format<'a> for NewExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        p.print_call_expression(&self.callee, &self.arguments, false, &self.type_parameters)
     }
 }
 

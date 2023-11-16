@@ -1,6 +1,6 @@
-#[allow(clippy::wildcard_imports)]
-use crate::{doc::Doc, Prettier};
 use oxc_allocator::Vec;
+
+use crate::{doc::Doc, Prettier};
 
 use super::Format;
 
