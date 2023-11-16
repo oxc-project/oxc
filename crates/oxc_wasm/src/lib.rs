@@ -44,6 +44,7 @@ pub struct Oxc {
 
     ast: JsValue,
     ir: JsValue,
+    prettier_ir: JsValue,
 
     codegen_text: String,
     formatted_text: String,
@@ -91,6 +92,11 @@ impl Oxc {
     #[wasm_bindgen(getter)]
     pub fn ir(&self) -> JsValue {
         self.ir.clone()
+    }
+
+    #[wasm_bindgen(getter = prettierIr)]
+    pub fn prettier_ir(&self) -> JsValue {
+        self.prettier_ir.clone()
     }
 
     #[wasm_bindgen(getter = prettierFormattedText)]
@@ -181,7 +187,13 @@ impl Oxc {
 
         self.ast = ret.program.serialize(&self.serializer)?;
         self.ir = format!("{:#?}", ret.program.body).into();
+
         let program = allocator.alloc(ret.program);
+
+        let prettier_ir =
+            Prettier::new(&allocator, source_text, trivias.clone(), PrettierOptions::default())
+                .cmds(program);
+        self.prettier_ir = prettier_ir.serialize(&self.serializer)?;
 
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)

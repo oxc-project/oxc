@@ -1,5 +1,7 @@
 use crate::doc::Doc;
+use serde::Serialize;
 
+#[derive(Serialize)]
 pub struct Command<'a> {
     pub indent: Indent,
     pub mode: Mode,
@@ -12,13 +14,13 @@ impl<'a> Command<'a> {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Serialize)]
 pub enum Mode {
     Break,
     Flat,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub struct Indent {
     pub length: usize,
 }
