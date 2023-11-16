@@ -1962,6 +1962,7 @@ dependencies = [
  "console_error_panic_hook",
  "oxc",
  "oxc_linter",
+ "oxc_prettier",
  "oxc_query",
  "oxc_type_synthesis",
  "serde",

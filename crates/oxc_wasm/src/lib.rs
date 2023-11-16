@@ -14,6 +14,7 @@ use oxc::{
     transformer::{TransformOptions, TransformTarget, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
+use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
@@ -46,6 +47,7 @@ pub struct Oxc {
 
     codegen_text: String,
     formatted_text: String,
+    prettier_formatted_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -89,6 +91,11 @@ impl Oxc {
     #[wasm_bindgen(getter)]
     pub fn ir(&self) -> JsValue {
         self.ir.clone()
+    }
+
+    #[wasm_bindgen(getter = prettierFormattedText)]
+    pub fn prettier_formatted_text(&self) -> String {
+        self.prettier_formatted_text.clone()
     }
 
     #[wasm_bindgen(getter = formattedText)]
@@ -169,6 +176,7 @@ impl Oxc {
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
             .parse();
+        let trivias = ret.trivias.clone();
         self.save_diagnostics(ret.errors);
 
         self.ast = ret.program.serialize(&self.serializer)?;
@@ -202,6 +210,13 @@ impl Oxc {
             };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.formatted_text = printed;
+        }
+
+        if run_options.prettier_format() {
+            let printed =
+                Prettier::new(&allocator, source_text, trivias, PrettierOptions::default())
+                    .build(program);
+            self.prettier_formatted_text = printed;
         }
 
         if run_options.type_check() {
