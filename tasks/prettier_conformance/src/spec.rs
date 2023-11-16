@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_parser::Parser;
 use oxc_prettier::{PrettierOptions, TrailingComma};
-use oxc_span::{Atom, SourceType};
+use oxc_span::{Atom, GetSpan, SourceType};
 
 #[derive(Default)]
 pub struct SpecParser {
@@ -70,17 +70,12 @@ impl VisitMut<'_> for SpecParser {
                                 } else if name == "bracketSpacing" {
                                     options.bracket_spacing = literal.value;
                                 }
-
-                                if !literal.value {
-                                    snapshot_options.push((name, literal.value.to_string()));
-                                }
                             }
                             Expression::NumberLiteral(literal) => {
                                 if name == "printWidth" {
                                     options.print_width =
                                         str::parse(&literal.value.to_string()).unwrap_or(80);
                                 }
-                                snapshot_options.push((name, literal.value.to_string()));
                             }
                             Expression::StringLiteral(literal) => {
                                 if name == "trailingComma" {
@@ -90,10 +85,15 @@ impl VisitMut<'_> for SpecParser {
                                         _ => TrailingComma::All,
                                     }
                                 }
-                                snapshot_options.push((name, format!("\"{}\"", literal.value)));
                             }
                             _ => {}
                         };
+                        if name != "errors" {
+                            snapshot_options.push((
+                                name,
+                                obj_prop.value.span().source_text(&self.source_text).to_string(),
+                            ));
+                        }
                     };
                 }
             });
@@ -106,6 +106,7 @@ impl VisitMut<'_> for SpecParser {
                 parsers.iter().map(|p| format!("\"{p}\"")).collect::<Vec<_>>().join(", ")
             ),
         ));
+
         if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
             snapshot_options.push(("printWidth".into(), "80".into()));
         }

@@ -166,7 +166,15 @@ impl TestRunner {
 
         let snapshot_line = snapshot_options
             .iter()
-            .filter(|k| k.0 != "printWidth" && k.0 != "parsers")
+            .filter(|k| {
+                if k.0 == "parsers" {
+                    false
+                } else if k.0 == "printWidth" {
+                    return k.1 != "80";
+                } else {
+                    true
+                }
+            })
             .map(|(k, v)| format!("\"{k}\":{v}"))
             .collect::<Vec<_>>()
             .join(", ");
