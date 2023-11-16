@@ -53,8 +53,8 @@ impl<'a> std::fmt::Binary for FormatNumber<'a> {
         let binary_prefix = &self.0.raw[0..2];
         let padding = self.0.raw.replace('_', "").len() - 2;
         let mut binary_string = format!("{:0width$b}", self.0.value as i64, width = padding);
-        dbg!(padding);
-        dbg!(binary_string.to_string());
+        // dbg!(padding);
+        // dbg!(binary_string.to_string());
         add_separators(&mut binary_string, SeparatorDir::Right);
         f.write_str(binary_prefix)?;
         f.write_str(&binary_string)
@@ -138,7 +138,7 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumberLiteral(number) => {
                 let formatted = self.format_number(number);
-                println!("{} {:?}", formatted, number.raw);
+                // println!("{} {:?}", formatted, number.raw);
                 if formatted != number.raw {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
                         Fix::new(formatted, number.span)
@@ -182,7 +182,12 @@ fn test_binary() {
         "const foo = 0B10101010101010",
     ];
 
-    let fix = vec![("const foo = 0b10_10_0001", "const foo = 0b1010_0001", None)];
+    let fix = vec![
+        ("const foo = 0b10_10_0001", "const foo = 0b1010_0001", None),
+        ("const foo = 0b0_00_0", "const foo = 0b0000", None),
+        ("const foo = 0b10101010101010", "const foo = 0b10_1010_1010_1010", None),
+        ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
+    ];
 
     Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
         .expect_fix(fix)

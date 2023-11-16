@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 105
 expression: numeric_separators_style
 ---
   × eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits
