@@ -262,7 +262,7 @@ fn test() {
             });
         ", Some(serde_json::json!([{ "additionalTestBlockFunctions": ['t'] }]))),
         (
-            r#"
+            r"
                 each([
                 [1, 1, 2],
                 [1, 2, 3],
@@ -270,7 +270,7 @@ fn test() {
                 ]).test('returns the result of adding %d to %d', (a, b, expected) => {
                     expect(a + b).toBe(expected);
                 });
-            "#, Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])))
+            ", Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])))
         ];
 
     let fail = vec![

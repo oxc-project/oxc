@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_if_always_true() {
-        let always_true = r#"
+        let always_true = r"
       function foo() {
         if (true) return 1;
         else {
@@ -378,13 +378,13 @@ mod tests {
           console.log(a);
         }
       }
-    "#;
+    ";
         parse_statement_and_test(always_true, StatementReturnStatus::AlwaysExplicit);
     }
 
     #[test]
     fn test_if_always_false() {
-        let always_false = r#"
+        let always_false = r"
         function foo() {
           if (false) {
             var a = 123;
@@ -392,13 +392,13 @@ mod tests {
             return 123;
           }
         }
-      "#;
+      ";
         parse_statement_and_test(always_false, StatementReturnStatus::AlwaysExplicit);
     }
 
     #[test]
     fn test_if_non_static() {
-        let non_static = r#"
+        let non_static = r"
         function foo() {
           if (a) {
             return 123;
@@ -406,14 +406,14 @@ mod tests {
             var c = 0;
           }
         }
-      "#;
+      ";
         parse_statement_and_test(non_static, StatementReturnStatus::SomeExplicit);
     }
 
     #[test]
     fn test_block() {
         // The block statement could: return a, return, or does not return in the end
-        let source = r#"
+        let source = r"
         function foo() {
           {
             if (a) {
@@ -425,7 +425,7 @@ mod tests {
             }
           }
         }
-      "#;
+      ";
 
         parse_statement_and_test(source, StatementReturnStatus::SomeMixed);
     }

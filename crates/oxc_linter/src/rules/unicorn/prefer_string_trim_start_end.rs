@@ -86,29 +86,29 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"foo.trimStart()"#,
-        r#"foo.trimStart?.()"#,
-        r#"foo.trimEnd()"#,
-        r#"new foo.trimLeft();"#,
-        r#"trimLeft();"#,
-        r#"foo['trimLeft']();"#,
-        r#"foo[trimLeft]();"#,
-        r#"foo.bar();"#,
-        r#"foo.trimLeft(extra);"#,
-        r#"foo.trimLeft(...argumentsArray)"#,
-        r#"foo.bar(trimLeft)"#,
-        r#"foo.bar(foo.trimLeft)"#,
-        r#"trimLeft.foo()"#,
-        r#"foo.trimLeft.bar()"#,
+        r"foo.trimStart()",
+        r"foo.trimStart?.()",
+        r"foo.trimEnd()",
+        r"new foo.trimLeft();",
+        r"trimLeft();",
+        r"foo['trimLeft']();",
+        r"foo[trimLeft]();",
+        r"foo.bar();",
+        r"foo.trimLeft(extra);",
+        r"foo.trimLeft(...argumentsArray)",
+        r"foo.bar(trimLeft)",
+        r"foo.bar(foo.trimLeft)",
+        r"trimLeft.foo()",
+        r"foo.trimLeft.bar()",
     ];
 
     let fail = vec![
-        r#"foo.trimLeft()"#,
-        r#"foo.trimRight()"#,
-        r#"trimLeft.trimRight()"#,
-        r#"foo.trimLeft.trimRight()"#,
+        r"foo.trimLeft()",
+        r"foo.trimRight()",
+        r"trimLeft.trimRight()",
+        r"foo.trimLeft.trimRight()",
         r#""foo".trimLeft()"#,
-        r#"foo?.trimLeft()"#,
+        r"foo?.trimLeft()",
     ];
 
     Tester::new_without_config(PreferStringTrimStartEnd::NAME, pass, fail).test_and_snapshot();

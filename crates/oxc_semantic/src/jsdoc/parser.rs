@@ -212,9 +212,9 @@ mod test {
 
     #[test]
     fn parses_multi_line_disjoint_jsdoc() {
-        let source = r#"/** @deprecated
+        let source = r"/** @deprecated
         */
-        "#;
+        ";
 
         let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 1);
@@ -223,11 +223,11 @@ mod test {
 
     #[test]
     fn parses_multiline_jsdoc() {
-        let source = r#"/**
+        let source = r"/**
         * @param a
         * @deprecated
         */
-       "#;
+       ";
 
         let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 2);
@@ -245,11 +245,11 @@ mod test {
 
     #[test]
     fn parses_multiline_jsdoc_with_descriptions() {
-        let source = r#"/**
+        let source = r"/**
         * @param a
         * @deprecated since version 1.0
         */
-       "#;
+       ";
 
         let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 2);
@@ -267,12 +267,12 @@ mod test {
 
     #[test]
     fn parses_param_type_annotation() {
-        let source = r#"/**
+        let source = r"/**
         * @param {string} a
         * @param {string b
         * @param {string} c - description
         */
-       "#;
+       ";
 
         let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 3);

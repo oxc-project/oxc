@@ -89,53 +89,53 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"const x = 0;"#,
-        r#";; const x = 0;"#,
-        r#"{{{;;const x = 0;}}}"#,
-        r#"
+        r"const x = 0;",
+        r";; const x = 0;",
+        r"{{{;;const x = 0;}}}",
+        r"
             'use strict';
             const x = 0;
-        "#,
+        ",
         ";;'use strict';",
         "{'use strict';}",
         r#"("use strict")"#,
-        r#"`use strict`"#,
-        r#"({})"#,
-        r#"#!/usr/bin/env node
+        r"`use strict`",
+        r"({})",
+        r"#!/usr/bin/env node
             console.log('done');
-        "#,
-        r#"false"#,
+        ",
+        r"false",
         r#"("")"#,
-        r#"NaN"#,
-        r#"undefined"#,
-        r#"null"#,
-        r#"[]"#,
-        r#"(() => {})()"#,
+        r"NaN",
+        r"undefined",
+        r"null",
+        r"[]",
+        r"(() => {})()",
         "(() => {})();",
     ];
 
     let fail = vec![
-        r#""#,
-        r#" "#,
+        r"",
+        r" ",
         "\t",
         "\n",
         "\r",
         "\r\n",
-        r#"
+        r"
 
-        "#,
-        r#"// comment"#,
-        r#"/* comment */"#,
-        r#"#!/usr/bin/env node"#,
+        ",
+        r"// comment",
+        r"/* comment */",
+        r"#!/usr/bin/env node",
         "'use asm';",
         "'use strict';",
         r#""use strict""#,
         r#""""#,
-        r#";"#,
-        r#";;"#,
-        r#"{}"#,
-        r#"{;;}"#,
-        r#"{{}}"#,
+        r";",
+        r";;",
+        r"{}",
+        r"{;;}",
+        r"{{}}",
         r#""";"#,
         r#""use strict";"#,
     ];

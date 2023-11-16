@@ -426,7 +426,7 @@ mod tests {
 
     #[test]
     fn incomplete_comment() {
-        let json = r#"/* foo "#;
+        let json = "/* foo ";
         let mut stripped = String::new();
 
         let err = StripComments::new(json.as_bytes()).read_to_string(&mut stripped).unwrap_err();
@@ -435,7 +435,7 @@ mod tests {
 
     #[test]
     fn incomplete_comment2() {
-        let json = r#"/* foo *"#;
+        let json = "/* foo *";
         let mut stripped = String::new();
 
         let err = StripComments::new(json.as_bytes()).read_to_string(&mut stripped).unwrap_err();
