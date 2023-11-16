@@ -12,6 +12,8 @@ use oxc_ast::ast::*;
 mod binaryish;
 mod block;
 mod call_expression;
+mod function;
+mod function_parameters;
 mod object;
 mod statement;
 mod ternary;
@@ -459,30 +461,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        if let Some(comments) = p.print_leading_comments(self.span) {
-            parts.push(comments);
-        }
-        if self.r#async {
-            parts.push(ss!("async "));
-        }
-        if self.generator {
-            parts.push(ss!("function* "));
-        } else {
-            parts.push(ss!("function "));
-        }
-        if let Some(type_params) = &self.type_parameters {
-            parts.push(format!(p, type_params));
-        }
-        if let Some(id) = &self.id {
-            parts.push(p.str(id.name.as_str()));
-        }
-        parts.push(self.params.format(p));
-        if let Some(body) = &self.body {
-            parts.push(ss!(" "));
-            parts.push(body.format(p));
-        }
-        Doc::Array(parts)
+        p.print_function(self)
     }
 }
 
@@ -494,20 +473,13 @@ impl<'a> Format<'a> for FunctionBody<'a> {
 
 impl<'a> Format<'a> for FormalParameters<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("("));
-        parts.extend(self.items.iter().map(|stmt| stmt.format(p)));
-        if let Some(rest) = &self.rest {
-            parts.push(rest.format(p));
-        }
-        parts.push(ss!(")"));
-        Doc::Array(parts)
+        p.print_function_parameters(self)
     }
 }
 
 impl<'a> Format<'a> for FormalParameter<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        self.pattern.format(p)
     }
 }
 
@@ -1300,7 +1272,7 @@ impl<'a> Format<'a> for BindingProperty<'a> {
 
 impl<'a> Format<'a> for RestElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, ss!("..."), format!(p, self.argument))
     }
 }
 
