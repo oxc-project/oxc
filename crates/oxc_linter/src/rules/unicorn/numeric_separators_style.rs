@@ -163,19 +163,14 @@ fn test_binary() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Binary
         "const foo = 0b1010_0001_1000_0101",
         "const foo = 0b0000",
         "const foo = 0b10",
         "const foo = 0b1_0111_0101_0101",
         "const foo = 0B1010",
-        // Binary with BigInt
-        "const foo = 0b1010n",
-        "const foo = 0b1010_1010n",
     ];
 
     let fail = vec![
-        // Binary
         "const foo = 0b10_10_0001",
         "const foo = 0b0_00_0",
         "const foo = 0b10101010101010",
@@ -187,6 +182,37 @@ fn test_binary() {
         ("const foo = 0b0_00_0", "const foo = 0b0000", None),
         ("const foo = 0b10101010101010", "const foo = 0b10_1010_1010_1010", None),
         ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
+    ];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_binary_bigint() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "const foo = 0b1010_0001_1000_0101n",
+        "const foo = 0b0000n",
+        "const foo = 0b10n",
+        "const foo = 0b1_0111_0101_0101n",
+        "const foo = 0B1010n",
+    ];
+
+    let fail = vec![
+        "const foo = 0b10_10_0001n",
+        "const foo = 0b0_00_0n",
+        "const foo = 0b10101010101010n",
+        "const foo = 0B10101010101010n",
+    ];
+
+    let fix = vec![
+        ("const foo = 0b10_10_0001n", "const foo = 0b1010_0001n", None),
+        ("const foo = 0b0_00_0n", "const foo = 0b0000n", None),
+        ("const foo = 0b10101010101010n", "const foo = 0b10_1010_1010_1010n", None),
+        ("const foo = 0B10101010101010n", "const foo = 0B10_1010_1010_1010n", None),
     ];
 
     Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
