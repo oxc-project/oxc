@@ -113,7 +113,6 @@ Compatibility: 9/173 (5.20%)
 * non-strict
 * nullish-coalescing
 * numeric-separators
-* object-colon-bug
 * object-prop-break-in
 * object-property-comment
 * object-property-ignore
