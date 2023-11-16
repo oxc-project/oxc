@@ -1780,7 +1780,6 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "serde",
- "serde_json",
 ]
 
 [[package]]
