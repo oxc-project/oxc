@@ -459,6 +459,9 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
+        if let Some(comments) = p.print_leading_comments(self.span) {
+            parts.push(comments);
+        }
         if self.r#async {
             parts.push(ss!("async "));
         }
@@ -1007,7 +1010,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let docs = self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
         // FIXME: group(join([",", line], path.map(print, "expressions")));
-        group![p, p.join(Separator::Softline, docs)]
+        group![p, Doc::Array(p.join(Separator::Softline, docs))]
     }
 }
 

@@ -59,7 +59,11 @@ impl<'a> Prettier<'a> {
     }
 
     #[allow(unused)]
-    pub(crate) fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Doc<'a> {
+    pub(crate) fn join(
+        &self,
+        separator: Separator,
+        docs: std::vec::Vec<Doc<'a>>,
+    ) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
@@ -70,6 +74,6 @@ impl<'a> Prettier<'a> {
             }
             parts.push(doc);
         }
-        Doc::Array(parts)
+        parts
     }
 }
