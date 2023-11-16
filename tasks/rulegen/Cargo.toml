@@ -5,6 +5,10 @@ publish           = false
 edition.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "rulegen"
+test = false
+
 [dependencies]
 oxc_allocator    = { workspace = true }
 oxc_span         = { workspace = true }

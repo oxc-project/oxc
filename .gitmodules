@@ -17,4 +17,4 @@
 	path = tasks/prettier_conformance/prettier
 	url = git@github.com:prettier/prettier.git
 	shallow = true
-	branch = main
+	branch = e8ac9f8d2a1c7083ac4f8a9b960521b62d60c94f #v3.1.0

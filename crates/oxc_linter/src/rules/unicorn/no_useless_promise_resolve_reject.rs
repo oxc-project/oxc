@@ -158,294 +158,294 @@ fn test() {
 
     let pass = vec![
         // Async functions returning normal values/throwing values
-        r#"async () => bar;"#,
-        r#"
+        r"async () => bar;",
+        r"
             async () => {
                 return bar;
             };
-        "#,
-        r#"
+        ",
+        r"
             async function foo() {
                 return bar;
             }
-        "#,
-        r#"
+        ",
+        r"
             (async function() {
                 return bar;
             });
-        "#,
-        r#"
+        ",
+        r"
             async () => {
                 throw bar;
             };
-        "#,
-        r#"
+        ",
+        r"
             async function foo() {
                 throw bar;
             }
-        "#,
-        r#"
+        ",
+        r"
             (async function() {
                 throw bar;
             });
-        "#,
+        ",
         // Async functions returning normal values/throwing values
         // Sync function returning Promise.resolve/reject
-        r#"() => Promise.resolve(bar);"#,
-        r#"
+        r"() => Promise.resolve(bar);",
+        r"
             () => {
                 return Promise.resolve(bar);
             };
-        "#,
-        r#"
+        ",
+        r"
             function foo() {
                 return Promise.resolve(bar);
             };
-        "#,
-        r#"
+        ",
+        r"
             (function() {
                 return Promise.resolve(bar);
             });
-            "#,
-        r#"() => Promise.reject(bar);"#,
-        r#"
+            ",
+        r"() => Promise.reject(bar);",
+        r"
             () => {
                 return Promise.reject(bar);
             };
-        "#,
-        r#"
+        ",
+        r"
             function foo() {
                 return Promise.reject(bar);
             };
-        "#,
-        r#"
+        ",
+        r"
             (function() {
                 return Promise.reject(bar);
             });
-        "#,
+        ",
         // Sync generator yielding Promise.resolve/reject
-        r#"
+        r"
             function * foo() {
                 yield Promise.$resolve(bar);
             }
-        "#,
-        r#"
+        ",
+        r"
             (function * () {
                 yield Promise.$resolve(bar);
             })
-        "#,
-        r#"
+        ",
+        r"
             function * foo() {
                 yield Promise.reject(bar);
             }
-        "#,
-        r#"
+        ",
+        r"
             (function * () {
                 yield Promise.reject(bar);
             })
-        "#,
+        ",
         // Sync function nested in async function
-        r#"
+        r"
             async function foo() {
                 function bar() {
                     return Promise.resolve(baz);
                 }
             }
-        "#,
+        ",
         // Delegate yield expressions
-        r#"
+        r"
             async function * foo() {
 				yield* Promise.resolve(bar);
 			}
-        "#,
-        r#"
+        ",
+        r"
             async function * foo() {
 				yield* Promise.reject(bar);
 			}
-        "#,
+        ",
         // Promise#then/catch/finally
-        r#"promise.then(() => foo).catch(() => bar).finally(() => baz)"#,
-        r#"promise.then(() => foo, () => bar).finally(() => baz)"#,
-        r#"promise.then(x, y, () => Promise.resolve(foo))"#,
-        r#"promise.catch(x, () => Promise.resolve(foo))"#,
-        r#"promise.finally(x, () => Promise.resolve(foo))"#,
-        r#"promise[then](() => Promise.resolve(foo))"#,
+        r"promise.then(() => foo).catch(() => bar).finally(() => baz)",
+        r"promise.then(() => foo, () => bar).finally(() => baz)",
+        r"promise.then(x, y, () => Promise.resolve(foo))",
+        r"promise.catch(x, () => Promise.resolve(foo))",
+        r"promise.finally(x, () => Promise.resolve(foo))",
+        r"promise[then](() => Promise.resolve(foo))",
     ];
 
     let fail = vec![
-        r#"
+        r"
             const main = async foo => {
                 if (foo > 4) {
                     return Promise.reject(new Error('🤪'));
                 }
                 return Promise.resolve(result);
             };
-        "#,
+        ",
         // Async function returning Promise.resolve
-        r#"async () => Promise.resolve(bar);"#,
-        r#"
+        r"async () => Promise.resolve(bar);",
+        r"
             async () => {
                 return Promise.resolve(bar);
             };
-        "#,
-        r#"
+        ",
+        r"
             async function foo() {
                 return Promise.resolve(bar);
             }
-        "#,
-        r#"
+        ",
+        r"
 			(async function() {
 				return Promise.resolve(bar);
 			});
-		"#,
-        r#"
+		",
+        r"
 			async function * foo() {
 				return Promise.resolve(bar);
 			}
-        "#,
-        r#"
+        ",
+        r"
 		    (async function*() {
 		    	return Promise.resolve(bar);
 		    });
-        "#,
+        ",
         // Async function returning Promise.reject
-        r#"async () => Promise.reject(bar);"#,
-        r#"
+        r"async () => Promise.reject(bar);",
+        r"
 			async () => {
 				return Promise.reject(bar);
 			};
-		"#,
-        r#"
+		",
+        r"
 			async function foo() {
 				return Promise.reject(bar);
 		    }   
-		"#,
-        r#"
+		",
+        r"
 			(async function() {
 				return Promise.reject(bar);
 			});
-		"#,
-        r#"
+		",
+        r"
 			async function * foo() {
 				return Promise.reject(bar);
 			}
-		"#,
-        r#"
+		",
+        r"
 			(async function*() {
 				return Promise.reject(bar);
 			});
-		"#,
+		",
         // Async generator yielding Promise.resolve
-        r#"
+        r"
 				async function * foo() {
 					yield Promise.resolve(bar);
 				}
-			"#,
-        r#"
+			",
+        r"
 				(async function * () {
 					yield Promise.resolve(bar);
 				});
-				"#,
+				",
         // Async generator yielding Promise.reject
-        r#"
+        r"
 				async function * foo() {
 					yield Promise.reject(bar);
 				}
-				"#,
-        r#"
+				",
+        r"
 				(async function * () {
 					yield Promise.reject(bar);
 				});
-				"#,
-        r#"async () => Promise.resolve();"#,
-        r#"
+				",
+        r"async () => Promise.resolve();",
+        r"
 				async function foo() {
 					return Promise.resolve();
 				}
-				"#,
-        r#"async () => Promise.reject();"#,
-        r#"
+				",
+        r"async () => Promise.reject();",
+        r"
 				async function foo() {
 					return Promise.reject();
 				}
-				"#,
-        r#"
+				",
+        r"
 				async function * foo() {
 					yield Promise.resolve();
 				}
-				"#,
+				",
         // Multiple arguments
-        r#"async () => Promise.resolve(bar, baz);"#,
-        r#"async () => Promise.reject(bar, baz);"#,
+        r"async () => Promise.resolve(bar, baz);",
+        r"async () => Promise.reject(bar, baz);",
         // Sequence expressions
-        r#"async
+        r"async
 				async function * foo() {
 					yield Promise.resolve((bar, baz));
 				}
-		"#,
-        r#"async () => Promise.resolve((bar, baz))"#,
+		",
+        r"async () => Promise.resolve((bar, baz))",
         // Arrow function returning an object
-        r#"async () => Promise.resolve({})"#,
+        r"async () => Promise.resolve({})",
         // Try statements
-        r#"
+        r"
 				async function foo() {
 					try {
 						return Promise.resolve(1);
 					} catch {}
 				}
-		"#,
-        r#"
+		",
+        r"
 				async function foo() {
 					try {
 						return Promise.reject(1);
 					} catch {}
 				}
-				"#,
+				",
         // Spread arguments
-        r#"async () => Promise.resolve(...bar);"#,
-        r#"async () => Promise.reject(...bar);"#,
+        r"async () => Promise.resolve(...bar);",
+        r"async () => Promise.reject(...bar);",
         // Yield not in an ExpressionStatement
         r"#
         async function * foo() {
             const baz = yield Promise.resolve(bar);
         }
         #",
-        r#"
+        r"
         async function * foo() {
             const baz = yield Promise.reject(bar);
         }
-        "#,
+        ",
         // Parenthesized Promise.resolve/reject
-        r#"async () => (Promise.resolve(bar));"#,
-        r#"async () => (Promise.reject(bar));"#,
-        r#"async () => ((Promise.reject(bar)));"#,
-        r#"
+        r"async () => (Promise.resolve(bar));",
+        r"async () => (Promise.reject(bar));",
+        r"async () => ((Promise.reject(bar)));",
+        r"
             async function * foo() {
      			(yield Promise.reject(bar));
      		}
-        "#,
-        r#"
+        ",
+        r"
             async function * foo() {
      			((yield Promise.reject(bar)));
      		}
-        "#,
-        r#"promise.then(() => Promise.resolve(bar))"#,
-        r#"promise.then(() => { return Promise.resolve(bar); })"#,
-        r#"promise.then(async () => Promise.reject(bar))"#,
-        r#"promise.then(async () => { return Promise.reject(bar); })"#,
-        r#"promise.catch(() => Promise.resolve(bar))"#,
-        r#"promise.catch(() => { return Promise.resolve(bar); })"#,
-        r#"promise.catch(async () => Promise.reject(bar))"#,
-        r#"promise.catch(async () => { return Promise.reject(bar); })"#,
-        r#"promise.finally(() => Promise.resolve(bar))"#,
-        r#"promise.finally(() => { return Promise.resolve(bar); })"#,
-        r#"promise.finally(async () => Promise.reject(bar))"#,
-        r#"promise.finally(async () => { return Promise.reject(bar); })"#,
-        r#"promise.then(() => {}, () => Promise.resolve(bar))"#,
-        r#"promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))"#,
-        r#"promise.then(() => {}, () => { return Promise.resolve(bar); })"#,
-        r#"promise.then(() => {}, async () => Promise.reject(bar))"#,
-        r#"promise.then(() => {}, async () => { return Promise.reject(bar); })"#,
+        ",
+        r"promise.then(() => Promise.resolve(bar))",
+        r"promise.then(() => { return Promise.resolve(bar); })",
+        r"promise.then(async () => Promise.reject(bar))",
+        r"promise.then(async () => { return Promise.reject(bar); })",
+        r"promise.catch(() => Promise.resolve(bar))",
+        r"promise.catch(() => { return Promise.resolve(bar); })",
+        r"promise.catch(async () => Promise.reject(bar))",
+        r"promise.catch(async () => { return Promise.reject(bar); })",
+        r"promise.finally(() => Promise.resolve(bar))",
+        r"promise.finally(() => { return Promise.resolve(bar); })",
+        r"promise.finally(async () => Promise.reject(bar))",
+        r"promise.finally(async () => { return Promise.reject(bar); })",
+        r"promise.then(() => {}, () => Promise.resolve(bar))",
+        r"promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))",
+        r"promise.then(() => {}, () => { return Promise.resolve(bar); })",
+        r"promise.then(() => {}, async () => Promise.reject(bar))",
+        r"promise.then(() => {}, async () => { return Promise.reject(bar); })",
     ];
 
     Tester::new_without_config(NoUselessPromiseResolveReject::NAME, pass, fail).test_and_snapshot();

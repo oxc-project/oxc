@@ -81,23 +81,23 @@ fn test() {
         // 2-args, not an array
         r#"require("x", "y")"#,
         // random other function
-        r#"setTimeout(foo, 100)"#,
+        r"setTimeout(foo, 100)",
         // non-identifier callee
-        r#"(a || b)(1, 2, 3)"#,
+        r"(a || b)(1, 2, 3)",
         // nested scope is fine
         r#"function x() { define(["a"], function (a) {}) }"#,
         r#"function x() { require(["a"], function (a) {}) }"#,
         // unmatched arg types/number
-        r#"define(0, 1, 2)"#,
+        r"define(0, 1, 2)",
         r#"define("a")"#,
     ];
 
     let fail = vec![
         "require([a, b], function() {})",
         "define([a, b], function() {})",
-        r#"define([], function() {})"#,
+        r"define([], function() {})",
         r#"define(["a"], function(a) { console.log(a); })"#,
-        r#"require([], function() {})"#,
+        r"require([], function() {})",
         r#"require(["a"], function(a) { console.log(a); })"#,
     ];
 

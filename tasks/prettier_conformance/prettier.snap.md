@@ -1,4 +1,4 @@
-Compatibility: 5/173 (2.89%)
+Compatibility: 10/173 (5.78%)
 
 # Failed
 
@@ -13,12 +13,10 @@ Compatibility: 5/173 (2.89%)
 * async
 * async-do-expressions
 * babel-plugins
-* big-int
 * binary-expressions
 * binary_math
 * bind-expressions
 * bom
-* bracket-spacing
 * break-calls
 * call/first-argument-expansion
 * call/invalid
@@ -29,7 +27,6 @@ Compatibility: 5/173 (2.89%)
 * class-static-block
 * classes
 * classes/keyword-property
-* classes/top-level-super
 * classes-private-fields
 * comments
 * comments/flow-types
@@ -116,7 +113,6 @@ Compatibility: 5/173 (2.89%)
 * non-strict
 * nullish-coalescing
 * numeric-separators
-* object-colon-bug
 * object-prop-break-in
 * object-property-comment
 * object-property-ignore
@@ -140,7 +136,6 @@ Compatibility: 5/173 (2.89%)
 * reserved-word
 * rest
 * return
-* return-outside-function
 * sequence-break
 * sequence-expression
 * shebang

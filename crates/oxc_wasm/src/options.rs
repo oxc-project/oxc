@@ -6,6 +6,7 @@ pub struct OxcRunOptions {
     syntax: bool,
     lint: bool,
     format: bool,
+    prettier_format: bool,
     transform: bool,
     type_check: bool,
 }
@@ -45,6 +46,16 @@ impl OxcRunOptions {
     #[wasm_bindgen(setter)]
     pub fn set_format(&mut self, yes: bool) {
         self.format = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn prettier_format(self) -> bool {
+        self.prettier_format
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_prettier_format(&mut self, yes: bool) {
+        self.prettier_format = yes;
     }
 
     #[wasm_bindgen(getter)]

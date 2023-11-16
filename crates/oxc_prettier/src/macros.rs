@@ -81,3 +81,10 @@ macro_rules! group {
         }
     };
 }
+
+#[macro_export]
+macro_rules! if_break {
+    ($p:ident, $s:expr) => {{
+        Doc::IfBreak($p.alloc(Doc::Str($s)))
+    }};
+}

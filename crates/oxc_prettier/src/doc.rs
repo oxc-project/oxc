@@ -3,7 +3,7 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{String, Vec};
+use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::Prettier;
 
@@ -31,13 +31,73 @@ pub enum Doc<'a> {
     /// no matter if the expression fits on one line or not.
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
-    IfBreak(Vec<'a, Doc<'a>>),
+    IfBreak(Box<'a, Doc<'a>>),
 }
 
-impl<'a> Doc<'a> {
-    #[must_use]
-    pub fn if_break(break_contents: Vec<'a, Doc<'a>>) -> Self {
-        Doc::IfBreak(break_contents)
+pub struct DocPrinter<'a> {
+    allocator: &'a Allocator,
+}
+
+impl<'a> DocPrinter<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
+        Self { allocator }
+    }
+
+    pub fn print(&mut self, doc: &Doc<'a>) -> String {
+        let mut str = String::new_in(self.allocator);
+        match doc {
+            Doc::Str(s) => {
+                str.push('"');
+                str.push_str(s);
+                str.push('"');
+            }
+            Doc::Array(docs) => {
+                str.push('[');
+                for (idx, doc) in docs.iter().enumerate() {
+                    str.push_str(&self.print(doc));
+                    if idx != docs.len() - 1 {
+                        str.push_str(", ");
+                    }
+                }
+                str.push(']');
+            }
+            Doc::Indent(contents) => {
+                str.push_str("indent([");
+                for (idx, doc) in contents.iter().enumerate() {
+                    str.push_str(&self.print(doc));
+                    if idx != contents.len() - 1 {
+                        str.push_str(", ");
+                    }
+                }
+                str.push_str("])");
+            }
+            Doc::Group(contents) => {
+                str.push_str("group([");
+                for (idx, doc) in contents.iter().enumerate() {
+                    str.push_str(&self.print(doc));
+                    if idx != contents.len() - 1 {
+                        str.push_str(", ");
+                    }
+                }
+                str.push_str("])");
+            }
+            Doc::Line => {
+                str.push_str("line");
+            }
+            Doc::Softline => {
+                str.push_str("softline");
+            }
+            Doc::Hardline => {
+                str.push_str("hardline");
+            }
+            Doc::IfBreak(break_contents) => {
+                str.push_str("ifBreak(");
+                str.push_str(&self.print(break_contents));
+                str.push(')');
+            }
+        }
+
+        str
     }
 }
 
@@ -60,8 +120,17 @@ impl<'a> Prettier<'a> {
         Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
     }
 
+    #[inline]
+    pub(crate) fn alloc(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
+        Box(self.allocator.alloc(doc))
+    }
+
     #[allow(unused)]
-    pub(crate) fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Doc<'a> {
+    pub(crate) fn join(
+        &self,
+        separator: Separator,
+        docs: std::vec::Vec<Doc<'a>>,
+    ) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
@@ -72,6 +141,6 @@ impl<'a> Prettier<'a> {
             }
             parts.push(doc);
         }
-        Doc::Array(parts)
+        parts
     }
 }

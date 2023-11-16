@@ -96,23 +96,23 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"try {} catch {}"#,
-        r#"try {} catch ({message}) {alert(message)}"#,
-        r#"try {} catch ({cause: {message}}) {alert(message)}"#,
-        r#"try {} catch({nonExistsProperty = thisWillExecute()}) {}"#,
+        r"try {} catch {}",
+        r"try {} catch ({message}) {alert(message)}",
+        r"try {} catch ({cause: {message}}) {alert(message)}",
+        r"try {} catch({nonExistsProperty = thisWillExecute()}) {}",
     ];
 
     let fail = vec![
-        r#"try {} catch (_) {}"#,
-        r#"try {} catch (theRealErrorName) {}"#,
-        r#"try    {    } catch    (e)  
-			  	  {    }"#,
-        r#"try {} catch(e) {}"#,
-        r#"try {} catch (e){}"#,
-        r#"try {} catch ({}) {}"#,
-        r#"try {} catch ({message}) {}"#,
-        r#"try {} catch ({message: notUsedMessage}) {}"#,
-        r#"try {} catch ({cause: {message}}) {}"#,
+        r"try {} catch (_) {}",
+        r"try {} catch (theRealErrorName) {}",
+        r"try    {    } catch    (e)  
+			  	  {    }",
+        r"try {} catch(e) {}",
+        r"try {} catch (e){}",
+        r"try {} catch ({}) {}",
+        r"try {} catch ({message}) {}",
+        r"try {} catch ({message: notUsedMessage}) {}",
+        r"try {} catch ({cause: {message}}) {}",
     ];
 
     Tester::new_without_config(PreferOptionalCatchBinding::NAME, pass, fail).test_and_snapshot();

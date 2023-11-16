@@ -14,6 +14,7 @@ use oxc::{
     transformer::{TransformOptions, TransformTarget, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
+use oxc_prettier::{DocPrinter, Prettier, PrettierOptions};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
@@ -46,6 +47,8 @@ pub struct Oxc {
 
     codegen_text: String,
     formatted_text: String,
+    prettier_formatted_text: String,
+    prettier_ir: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -91,6 +94,16 @@ impl Oxc {
         self.ir.clone()
     }
 
+    #[wasm_bindgen(getter = prettierIr)]
+    pub fn prettier_ir(&self) -> String {
+        self.prettier_ir.clone()
+    }
+
+    #[wasm_bindgen(getter = prettierFormattedText)]
+    pub fn prettier_formatted_text(&self) -> String {
+        self.prettier_formatted_text.clone()
+    }
+
     #[wasm_bindgen(getter = formattedText)]
     pub fn formatted_text(&self) -> String {
         self.formatted_text.clone()
@@ -102,6 +115,8 @@ impl Oxc {
     }
 
     /// Returns Array of String
+    /// # Errors
+    /// # Panics
     #[wasm_bindgen(js_name = getDiagnostics)]
     pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
         Ok(self
@@ -169,11 +184,20 @@ impl Oxc {
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
             .parse();
+        let trivias = ret.trivias.clone();
         self.save_diagnostics(ret.errors);
 
         self.ast = ret.program.serialize(&self.serializer)?;
         self.ir = format!("{:#?}", ret.program.body).into();
+
         let program = allocator.alloc(ret.program);
+
+        let prettier_doc =
+            Prettier::new(&allocator, source_text, trivias.clone(), PrettierOptions::default())
+                .doc(program);
+
+        let mut doc_printer = DocPrinter::new(&allocator);
+        self.prettier_ir = format!("{}", doc_printer.print(&prettier_doc));
 
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)
@@ -202,6 +226,13 @@ impl Oxc {
             };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.formatted_text = printed;
+        }
+
+        if run_options.prettier_format() {
+            let printed =
+                Prettier::new(&allocator, source_text, trivias, PrettierOptions::default())
+                    .build(program);
+            self.prettier_formatted_text = printed;
         }
 
         if run_options.type_check() {

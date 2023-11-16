@@ -12,6 +12,10 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[[bin]]
+name              = "oxc_vscode"
+test = false
+
 [dependencies]
 oxc_allocator     = { workspace = true }
 oxc_diagnostics   = { workspace = true }

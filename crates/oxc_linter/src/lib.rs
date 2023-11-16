@@ -41,8 +41,8 @@ impl Linter {
     pub fn new() -> Self {
         let rules = RULES
             .iter()
+            .filter(|&rule| rule.category() == RuleCategory::Correctness)
             .cloned()
-            .filter(|rule| rule.category() == RuleCategory::Correctness)
             .collect::<Vec<_>>();
         Self { rules, options: LintOptions::default() }
     }

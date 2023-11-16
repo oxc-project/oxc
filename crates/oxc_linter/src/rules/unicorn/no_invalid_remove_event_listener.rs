@@ -111,8 +111,8 @@ fn test() {
         r#"el.notRemoveEventListener("click", () => {})"#,
         r#"el[removeEventListener]("click", () => {})"#,
         r#"el.removeEventListener("click")"#,
-        r#"el.removeEventListener()"#,
-        r#"el.removeEventListener(() => {})"#,
+        r"el.removeEventListener()",
+        r"el.removeEventListener(() => {})",
         r#"el.removeEventListener(...["click", () => {}], () => {})"#,
         r#"el.removeEventListener(() => {}, "click")"#,
         r#"window.removeEventListener("click", bind())"#,
@@ -120,7 +120,7 @@ fn test() {
         r#"window.removeEventListener("click", handler[bind]())"#,
         r#"window.removeEventListener("click", handler.bind?.())"#,
         r#"window.removeEventListener("click", handler?.bind())"#,
-        r#"window.removeEventListener(handler)"#,
+        r"window.removeEventListener(handler)",
         r#"this.removeEventListener("click", getListener())"#,
         r#"el.removeEventListener("scroll", handler)"#,
         r#"el.removeEventListener("keydown", obj.listener)"#,
@@ -138,7 +138,7 @@ fn test() {
         r#"el.removeEventListener("mouseout", function (e) {})"#,
         r#"el.removeEventListener("mouseout", function (e) {}, true)"#,
         r#"el.removeEventListener("click", function (e) {}, ...moreArguments)"#,
-        r#"el.removeEventListener(() => {}, () => {}, () => {})"#,
+        r"el.removeEventListener(() => {}, () => {}, () => {})",
     ];
 
     Tester::new_without_config(NoInvalidRemoveEventListener::NAME, pass, fail).test_and_snapshot();

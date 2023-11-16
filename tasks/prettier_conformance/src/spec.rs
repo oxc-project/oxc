@@ -2,14 +2,12 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{
-        Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind, Program,
-    },
+    ast::{Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind},
     VisitMut,
 };
 use oxc_parser::Parser;
 use oxc_prettier::{PrettierOptions, TrailingComma};
-use oxc_span::{Atom, SourceType};
+use oxc_span::{Atom, GetSpan, SourceType};
 
 #[derive(Default)]
 pub struct SpecParser {
@@ -24,15 +22,12 @@ impl SpecParser {
         let source_type = SourceType::from_path(spec).unwrap_or_default();
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
         self.source_text = spec_content.clone();
+        self.calls = vec![];
         self.visit_program(&mut ret.program);
     }
 }
 
 impl VisitMut<'_> for SpecParser {
-    fn visit_program(&mut self, program: &mut Program<'_>) {
-        self.visit_statements(&mut program.body);
-    }
-
     fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
         let Some(ident) = expr.callee.get_identifier_reference() else { return };
         if ident.name != "run_spec" {
@@ -72,15 +67,15 @@ impl VisitMut<'_> for SpecParser {
                             Expression::BooleanLiteral(literal) => {
                                 if name == "semi" {
                                     options.semi = literal.value;
+                                } else if name == "bracketSpacing" {
+                                    options.bracket_spacing = literal.value;
                                 }
-                                snapshot_options.push((name, literal.value.to_string()));
                             }
                             Expression::NumberLiteral(literal) => {
                                 if name == "printWidth" {
                                     options.print_width =
                                         str::parse(&literal.value.to_string()).unwrap_or(80);
                                 }
-                                snapshot_options.push((name, literal.value.to_string()));
                             }
                             Expression::StringLiteral(literal) => {
                                 if name == "trailingComma" {
@@ -90,10 +85,15 @@ impl VisitMut<'_> for SpecParser {
                                         _ => TrailingComma::All,
                                     }
                                 }
-                                snapshot_options.push((name, format!("\"{}\"", literal.value)));
                             }
                             _ => {}
                         };
+                        if name != "errors" {
+                            snapshot_options.push((
+                                name,
+                                obj_prop.value.span().source_text(&self.source_text).to_string(),
+                            ));
+                        }
                     };
                 }
             });
@@ -106,6 +106,7 @@ impl VisitMut<'_> for SpecParser {
                 parsers.iter().map(|p| format!("\"{p}\"")).collect::<Vec<_>>().join(", ")
             ),
         ));
+
         if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
             snapshot_options.push(("printWidth".into(), "80".into()));
         }

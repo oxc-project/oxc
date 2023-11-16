@@ -5,7 +5,7 @@ use oxc_span::Span;
 
 use crate::{
     doc::{Doc, Separator},
-    Prettier,
+    hardline, Prettier,
 };
 
 #[derive(Clone, Copy)]
@@ -35,9 +35,29 @@ impl<'a> Prettier<'a> {
         false
     }
 
+    pub(crate) fn print_leading_comments(&mut self, range: Span) -> Option<Doc<'a>> {
+        let mut parts = vec![];
+        while let Some((start, end, kind)) = self.trivias.peek().copied() {
+            // Comment before the span
+            if end <= range.start {
+                parts.push(self.print_comment(start, end, kind));
+                self.trivias.next();
+            } else {
+                break;
+            }
+        }
+        if parts.is_empty() {
+            return None;
+        }
+        let mut comments = self.join(Separator::Hardline, parts);
+        comments.push(hardline!());
+        Some(Doc::Array(comments))
+    }
+
     pub(crate) fn print_dangling_comments(&mut self, range: Span) -> Option<Doc<'a>> {
         let mut parts = vec![];
         while let Some((start, end, kind)) = self.trivias.peek().copied() {
+            // Comment within the span
             if end <= range.end {
                 parts.push(self.print_comment(start, end, kind));
                 self.trivias.next();
@@ -45,7 +65,7 @@ impl<'a> Prettier<'a> {
                 break;
             }
         }
-        (!parts.is_empty()).then(|| self.join(Separator::Hardline, parts))
+        (!parts.is_empty()).then(|| Doc::Array(self.join(Separator::Hardline, parts)))
     }
 
     fn print_comment(&self, start: u32, end: u32, kind: CommentKind) -> Doc<'a> {

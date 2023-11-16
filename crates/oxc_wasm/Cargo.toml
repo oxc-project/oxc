@@ -11,6 +11,7 @@ categories.workspace   = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+test       = false
 doctest    = false
 
 [features]
@@ -20,6 +21,7 @@ default = ["console_error_panic_hook"]
 oxc = { workspace = true, features = ["serde", "semantic", "formatter", "transformer", "minifier", "codegen"] }
 
 oxc_linter         = { workspace = true }
+oxc_prettier       = { workspace = true }
 oxc_type_synthesis = { workspace = true }
 oxc_query          = { workspace = true }
 serde_json         = { workspace = true }
