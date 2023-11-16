@@ -11,7 +11,7 @@ alias c := coverage
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo binstall cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
 # When ready, run the same CI commands
 ready:
@@ -50,7 +50,7 @@ check:
 
 # Run all the tests
 test:
-  cargo nextest run
+  cargo test
 
 # Lint the whole project
 lint:

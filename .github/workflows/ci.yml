@@ -7,12 +7,14 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '!.github/workflows/ci.yml'
   push:
     branches:
       - main
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '!.github/workflows/ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -37,22 +39,11 @@ jobs:
         with:
           save-cache: ${{ github.ref_name == 'main' }}
 
-      - name: Install cargo-nextest
-        if: runner.os != 'Windows'
-        uses: taiki-e/install-action@cargo-nextest
-
       - name: Cargo check
         run: cargo ck
 
-      # NAPI crashes nextest on windows
-      # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
-        if: runner.os == 'Windows'
         run: cargo test run --no-run --workspace --all-features
-
-      - name: Build cache by Cargo Check and Cargo Test
-        if: runner.os != 'Windows'
-        run: cargo nextest run --no-run --workspace --all-features
 
   wasm:
     name: Check Wasm
@@ -217,18 +208,5 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-
-      - name: Install cargo-nextest
-        if: runner.os != 'Windows'
-        uses: taiki-e/install-action@cargo-nextest
-
-      # NAPI crashes nextest on windows
-      # https://github.com/napi-rs/napi-rs/issues/1405
-      - if: runner.os == 'Windows'
-        run: cargo test
-
-      - if: runner.os != 'Windows'
-        run: cargo nextest run
+      - uses: ./.github/actions/rustup
+      - run: cargo test
