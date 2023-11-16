@@ -3,7 +3,7 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{String, Vec};
+use oxc_allocator::{Box, String, Vec};
 
 use crate::Prettier;
 
@@ -31,10 +31,8 @@ pub enum Doc<'a> {
     /// no matter if the expression fits on one line or not.
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
-    IfBreak(Box<Doc<'a>>),
+    IfBreak(Box<'a, Doc<'a>>),
 }
-
-impl<'a> Doc<'a> {}
 
 #[derive(Clone, Copy)]
 #[allow(unused)]
@@ -53,6 +51,11 @@ impl<'a> Prettier<'a> {
     #[inline]
     pub(crate) fn str(&self, s: &str) -> Doc<'a> {
         Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
+    }
+
+    #[inline]
+    pub(crate) fn alloc(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
+        Box(self.allocator.alloc(doc))
     }
 
     #[allow(unused)]
