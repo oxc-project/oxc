@@ -35,6 +35,8 @@ pub(super) fn print_function<'a>(p: &mut Prettier<'a>, func: &Function<'a>) -> D
         parts.push(p.str(";"));
     }
 
+    parts.push(hardline!());
+
     Doc::Array(parts)
 }
 
