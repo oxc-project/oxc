@@ -1,4 +1,4 @@
-Compatibility: 51/881 (5.79%)
+Compatibility: 52/881 (5.90%)
 
 # Failed
 
@@ -58,7 +58,6 @@ Compatibility: 51/881 (5.79%)
 ### assignment
 * assignment/binaryish.js
 * assignment/call-with-template.js
-* assignment/chain-two-segments.js
 * assignment/chain.js
 * assignment/destructuring-array.js
 * assignment/destructuring-heuristic.js
@@ -108,6 +107,7 @@ Compatibility: 51/881 (5.79%)
 
 ### babel-plugins
 * babel-plugins/async-do-expressions.js
+* babel-plugins/async-generators.js
 * babel-plugins/bigint.js
 * babel-plugins/class-properties.js
 * babel-plugins/class-static-block.js
@@ -532,7 +532,6 @@ Compatibility: 51/881 (5.79%)
 
 ### expression_statement
 * expression_statement/no_regression.js
-* expression_statement/use_strict.js
 
 ### for
 * for/comment.js
@@ -582,6 +581,7 @@ Compatibility: 51/881 (5.79%)
 ### generator
 * generator/anonymous.js
 * generator/async.js
+* generator/function-name-starts-with-get.js
 
 ### identifier/for-of
 * identifier/for-of/await.js
@@ -996,7 +996,6 @@ Compatibility: 51/881 (5.79%)
 * shebang/shebang.js
 
 ### sloppy-mode
-* sloppy-mode/function-declaration-in-if.js
 * sloppy-mode/function-declaration-in-while.js
 * sloppy-mode/labeled-function-declaration.js
 

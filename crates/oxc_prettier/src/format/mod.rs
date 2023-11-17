@@ -117,6 +117,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
             ss!("if ("),
             group!(p, indent!(p, softline!(), format!(p, self.test), softline!())),
             ss!(")"),
+            ss!(" "),
             format!(p, self.consequent)
         ];
         parts.push(opening);
