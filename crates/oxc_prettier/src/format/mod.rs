@@ -1422,13 +1422,16 @@ impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
 
 impl<'a> Format<'a> for ArrayAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array::print_array(p, &Array::ArrayAssignmentTarget(self))
     }
 }
 
-impl<'a> Format<'a> for Option<AssignmentTargetMaybeDefault<'a>> {
+impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            AssignmentTargetMaybeDefault::AssignmentTarget(v) => v.format(p),
+            AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(v) => v.format(p),
+        }
     }
 }
 
@@ -1438,15 +1441,9 @@ impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     }
 }
 
-impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
-    }
-}
-
 impl<'a> Format<'a> for AssignmentTargetWithDefault<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, format!(p, self.binding), ss!(" = "), format!(p, self.init))
     }
 }
 

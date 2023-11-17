@@ -12,6 +12,7 @@ pub enum Array<'a, 'b> {
     #[allow(unused)]
     TSTupleType(&'b TSTupleType<'a>),
     ArrayPattern(&'b ArrayPattern<'a>),
+    ArrayAssignmentTarget(&'b ArrayAssignmentTarget<'a>),
 }
 
 impl<'a, 'b> Array<'a, 'b> {
@@ -20,6 +21,7 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayExpression(array) => array.elements.len(),
             Self::TSTupleType(tuple) => tuple.element_types.len(),
             Self::ArrayPattern(array) => array.elements.len(),
+            Self::ArrayAssignmentTarget(array) => array.elements.len(),
         }
     }
 }
@@ -68,6 +70,24 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Vec<'a, Do
             }
         }
         Array::ArrayPattern(array_pat) => {
+            for (i, element) in array_pat.elements.iter().enumerate() {
+                if i > 0 && i < array_pat.elements.len() {
+                    parts.push(ss!(","));
+                    parts.push(Doc::Line);
+                }
+
+                if let Some(binding_pat) = element {
+                    parts.push(binding_pat.format(p));
+                }
+            }
+
+            if let Some(rest) = &array_pat.rest {
+                parts.push(ss!(","));
+                parts.push(Doc::Line);
+                parts.push(rest.format(p));
+            }
+        }
+        Array::ArrayAssignmentTarget(array_pat) => {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(ss!(","));
