@@ -1,0 +1,6 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: anchor_has_content
+---
+
