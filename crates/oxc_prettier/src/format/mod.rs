@@ -461,79 +461,79 @@ impl<'a> Format<'a> for TSType<'a> {
 
 impl<'a> Format<'a> for TSAnyKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("any")
     }
 }
 
 impl<'a> Format<'a> for TSBigIntKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("bigint")
     }
 }
 
 impl<'a> Format<'a> for TSBooleanKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("boolean")
     }
 }
 
 impl<'a> Format<'a> for TSNeverKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("never")
     }
 }
 
 impl<'a> Format<'a> for TSNullKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("null")
     }
 }
 
 impl<'a> Format<'a> for TSNumberKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("number")
     }
 }
 
 impl<'a> Format<'a> for TSObjectKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("object")
     }
 }
 
 impl<'a> Format<'a> for TSStringKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("string")
     }
 }
 
 impl<'a> Format<'a> for TSSymbolKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("symbol")
     }
 }
 
 impl<'a> Format<'a> for TSThisKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("this")
     }
 }
 
 impl<'a> Format<'a> for TSUndefinedKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("undefined")
     }
 }
 
 impl<'a> Format<'a> for TSUnknownKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("unknown")
     }
 }
 
 impl<'a> Format<'a> for TSVoidKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        Doc::Str("void")
     }
 }
 
