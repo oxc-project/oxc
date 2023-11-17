@@ -831,13 +831,22 @@ impl<'a> Format<'a> for ExportSpecifier {
 
 impl<'a> Format<'a> for ModuleExportName {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::Identifier(ident) => ident.format(p),
+            Self::StringLiteral(literal) => literal.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for ExportAllDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(ss!(" *"));
+        if let Some(exported) = &self.exported {
+            parts.push(ss!(" as "));
+            parts.push(exported.format(p));
+        }
+        Doc::Array(parts)
     }
 }
 

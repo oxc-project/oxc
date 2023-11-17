@@ -1857,6 +1857,17 @@ impl<'a> ModuleDeclaration<'a> {
     pub fn is_default_export(&self) -> bool {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
+
+    pub fn source(&self) -> Option<&StringLiteral> {
+        match self {
+            Self::ImportDeclaration(decl) => Some(&decl.source),
+            Self::ExportAllDeclaration(decl) => Some(&decl.source),
+            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportDefaultDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => None,
+        }
+    }
 }
 
 #[derive(Debug, Hash)]
