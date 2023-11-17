@@ -1,4 +1,4 @@
-Compatibility: 14/173 (8.09%)
+Compatibility: 15/173 (8.67%)
 
 # Failed
 
@@ -82,7 +82,6 @@ Compatibility: 14/173 (8.09%)
 * import-attributes
 * import-attributes/bracket-spacing
 * import-reflection
-* in
 * label
 * last-argument-expansion
 * line-suffix-boundary
