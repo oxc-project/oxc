@@ -275,7 +275,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
         let mut parts = p.vec();
         parts.push(ss!("try "));
 
-        parts.push(format!(p, self.block));
+        parts.push(block::print_statement_block(p, &self.block.body));
 
         if let Some(handler) = &self.handler {
             parts.push(ss!(" "));
@@ -284,7 +284,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
 
         if let Some(finalizer) = &self.finalizer {
             parts.push(ss!(" finally "));
-            parts.push(format!(p, finalizer));
+            parts.push(block::print_statement_block(p, &finalizer.body));
         }
 
         Doc::Array(parts)
@@ -301,7 +301,7 @@ impl<'a> Format<'a> for CatchClause<'a> {
             parts.push(format!(p, param));
             parts.push(ss!(") "));
         }
-        parts.push(format!(p, self.body));
+        parts.push(block::print_statement_block(p, &self.body.body));
 
         Doc::Array(parts)
     }

@@ -25,6 +25,20 @@ pub(super) fn print_block<'a>(
     Doc::Array(parts)
 }
 
+pub(super) fn print_statement_block<'a>(
+    p: &mut Prettier<'a>,
+    stmts: &Vec<'a, Statement<'a>>,
+) -> Doc<'a> {
+    let mut parts = p.vec();
+    parts.push(ss!("{"));
+    if let Some(doc) = print_block_body(p, stmts, None, true, false) {
+        parts.push(indent![p, hardline!(), doc]);
+    }
+    parts.push(hardline!());
+    parts.push(ss!("}"));
+    Doc::Array(parts)
+}
+
 pub(super) fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &Vec<'a, Statement<'a>>,

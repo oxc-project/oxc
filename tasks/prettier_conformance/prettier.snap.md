@@ -1,4 +1,4 @@
-Compatibility: 15/173 (8.67%)
+Compatibility: 16/173 (9.25%)
 
 # Failed
 
@@ -113,7 +113,6 @@ Compatibility: 15/173 (8.67%)
 * object-property-ignore
 * objects
 * objects/assignment-expression
-* optional-catch-binding
 * optional-chaining
 * optional-chaining-assignment
 * partial-application
