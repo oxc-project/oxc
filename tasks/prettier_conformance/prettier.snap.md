@@ -1,4 +1,4 @@
-Compatibility: 10/173 (5.78%)
+Compatibility: 11/173 (6.36%)
 
 # Failed
 
@@ -110,7 +110,6 @@ Compatibility: 10/173 (5.78%)
 * newline
 * no-semi
 * no-semi-babylon-extensions
-* non-strict
 * nullish-coalescing
 * numeric-separators
 * object-prop-break-in

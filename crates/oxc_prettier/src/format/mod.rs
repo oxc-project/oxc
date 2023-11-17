@@ -52,7 +52,7 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block_body(p, &self.body, Some(&self.directives)).unwrap_or(ss!(""))
+        block::print_block_body(p, &self.body, Some(&self.directives), false).unwrap_or(ss!(""))
     }
 }
 
