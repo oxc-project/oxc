@@ -725,7 +725,8 @@ impl<'a> Format<'a> for RegExpLiteral {
 
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, ss!("\""), p.str(&self.value), ss!("\""))
+        let quote = if p.options.single_quote { "'" } else { "\"" };
+        array!(p, ss!(quote), p.str(&self.value), ss!(quote))
     }
 }
 

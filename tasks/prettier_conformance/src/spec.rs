@@ -69,6 +69,8 @@ impl VisitMut<'_> for SpecParser {
                                     options.semi = literal.value;
                                 } else if name == "bracketSpacing" {
                                     options.bracket_spacing = literal.value;
+                                } else if name == "singleQuote" {
+                                    options.single_quote = literal.value;
                                 }
                             }
                             Expression::NumberLiteral(literal) => {
