@@ -587,7 +587,16 @@ impl<'a> Format<'a> for TSIntersectionType<'a> {
 
 impl<'a> Format<'a> for TSLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match &self.literal {
+            TSLiteral::BooleanLiteral(v) => v.format(p),
+            TSLiteral::NullLiteral(v) => v.format(p),
+            TSLiteral::NumberLiteral(v) => v.format(p),
+            TSLiteral::BigintLiteral(v) => v.format(p),
+            TSLiteral::RegExpLiteral(v) => v.format(p),
+            TSLiteral::StringLiteral(v) => v.format(p),
+            TSLiteral::TemplateLiteral(v) => v.format(p),
+            TSLiteral::UnaryExpression(v) => v.format(p),
+        }
     }
 }
 
