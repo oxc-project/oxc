@@ -26,9 +26,7 @@ mod ternary;
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, indent, softline, ss, string,
-    util::is_next_line_empty,
-    Prettier,
+    format, group, hardline, indent, softline, ss, string, Prettier,
 };
 
 use self::{
@@ -52,7 +50,8 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block_body(p, &self.body, Some(&self.directives), false).unwrap_or(ss!(""))
+        block::print_block_body(p, &self.body, Some(&self.directives), false, true)
+            .unwrap_or(ss!(""))
     }
 }
 
@@ -96,7 +95,6 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
         if p.options.semi {
             parts.push(ss!(";"));
         }
-        parts.push(Doc::Hardline);
         Doc::Array(parts)
     }
 }
@@ -388,12 +386,6 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             parts.push(ss!(";"));
         }
 
-        parts.push(Doc::Hardline);
-
-        if is_next_line_empty(p.source_text, self.span) {
-            parts.push(Doc::Hardline);
-        }
-
         Doc::Group(parts)
     }
 }
@@ -504,7 +496,6 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
-        parts.push(hardline!());
         Doc::Array(parts)
     }
 }
