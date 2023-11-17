@@ -25,6 +25,11 @@ pub(super) fn print_export_declaration<'a>(
         ModuleDeclaration::TSNamespaceExportDeclaration(decl) => decl.format(p),
     });
 
+    if let Some(source) = decl.source() {
+        parts.push(ss!(" from "));
+        parts.push(source.format(p));
+    }
+
     if let Some(doc) = print_semicolon_after_export_declaration(p, decl) {
         parts.push(doc);
     }
