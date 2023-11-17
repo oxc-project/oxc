@@ -1,0 +1,21 @@
+[package]
+name                   = "oxc_js_regex"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_syntax    = { workspace = true }
+oxc_index     = { workspace = true }
