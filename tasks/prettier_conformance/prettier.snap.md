@@ -1,4 +1,4 @@
-Compatibility: 12/173 (6.94%)
+Compatibility: 13/173 (7.51%)
 
 # Failed
 
@@ -55,7 +55,6 @@ Compatibility: 12/173 (6.94%)
 * empty-statement
 * end-of-line
 * eol
-* es6modules
 * explicit-resource-management
 * export
 * export-default
