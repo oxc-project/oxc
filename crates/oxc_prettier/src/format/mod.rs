@@ -1363,33 +1363,33 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
 
 impl<'a> Format<'a> for RegExpFlags {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut str = vec![];
-
+        let mut string = std::vec::Vec::with_capacity(self.iter().count());
         if self.contains(Self::D) {
-            str.push('d');
+            string.push('d');
         }
         if self.contains(Self::G) {
-            str.push('g');
+            string.push('g');
         }
         if self.contains(Self::I) {
-            str.push('i');
+            string.push('i');
         }
         if self.contains(Self::M) {
-            str.push('m');
+            string.push('m');
         }
         if self.contains(Self::S) {
-            str.push('s');
+            string.push('s');
         }
         if self.contains(Self::V) {
-            str.push('v');
+            string.push('v');
         }
         if self.contains(Self::U) {
-            str.push('u');
+            string.push('u');
         }
         if self.contains(Self::Y) {
-            str.push('y');
+            string.push('y');
         }
-        p.str(str.iter().collect::<String>().as_str())
+        string.sort_unstable();
+        p.str(&string.iter().collect::<String>())
     }
 }
 
