@@ -1,4 +1,4 @@
-Compatibility: 52/881 (5.90%)
+Compatibility: 59/881 (6.70%)
 
 # Failed
 
@@ -522,14 +522,6 @@ Compatibility: 52/881 (5.90%)
 ### export-default/export-default-from
 * export-default/export-default-from/export.js
 
-### export-star
-* export-star/export-star-as-default.js
-* export-star/export-star-as-reserved-word.js
-* export-star/export-star-as-string.js
-* export-star/export-star-as-string2.js
-* export-star/export-star-as.js
-* export-star/export-star.js
-
 ### expression_statement
 * expression_statement/no_regression.js
 
@@ -635,7 +627,6 @@ Compatibility: 52/881 (5.90%)
 
 ### import-assertions/bracket-spacing
 * import-assertions/bracket-spacing/dynamic-import.js
-* import-assertions/bracket-spacing/empty.js
 * import-assertions/bracket-spacing/re-export.js
 * import-assertions/bracket-spacing/static-import.js
 

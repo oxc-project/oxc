@@ -752,17 +752,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             parts.push(ss!(" type"));
         }
         if let Some(specifiers) = &self.specifiers {
-            parts.push(ss!(" {"));
-            if !specifiers.is_empty() {
-                parts.push(ss!(" "));
-            }
-            for (i, specifier) in specifiers.iter().enumerate() {
-                if i != 0 {
-                    parts.push(ss!(", "));
-                }
-                parts.push(specifier.format(p));
-            }
-            parts.push(ss!(" }"));
+            parts.push(module::print_module_specifiers(p, specifiers));
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
@@ -816,7 +806,13 @@ impl<'a> Format<'a> for ImportAttribute {
 
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(ss!(" "));
+        parts.push(module::print_module_specifiers(p, &self.specifiers));
+        if let Some(decl) = &self.declaration {
+            parts.push(decl.format(p));
+        }
+        Doc::Array(parts)
     }
 }
 

@@ -1,3 +1,4 @@
+use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
@@ -45,13 +46,37 @@ fn print_semicolon_after_export_declaration<'a>(
         return None;
     }
 
-    let ModuleDeclaration::ExportDefaultDeclaration(decl) = decl else { return None };
-
-    match decl.declaration {
-        ExportDefaultDeclarationKind::Expression(_) => Some(ss!(";")),
-        ExportDefaultDeclarationKind::FunctionDeclaration(_)
-        | ExportDefaultDeclarationKind::ClassDeclaration(_)
-        | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-        | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+    match decl {
+        ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
+            ExportDefaultDeclarationKind::Expression(_) => Some(ss!(";")),
+            ExportDefaultDeclarationKind::FunctionDeclaration(_)
+            | ExportDefaultDeclarationKind::ClassDeclaration(_)
+            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+        },
+        ModuleDeclaration::ExportAllDeclaration(_) => Some(ss!(";")),
+        _ => None,
     }
+}
+
+pub fn print_module_specifiers<'a, T: Format<'a>>(
+    p: &mut Prettier<'a>,
+    specifiers: &Vec<'a, T>,
+) -> Doc<'a> {
+    let mut parts = p.vec();
+    parts.push(ss!("{"));
+
+    if !specifiers.is_empty() {
+        parts.push(ss!(" "));
+
+        for (i, specifier) in specifiers.iter().enumerate() {
+            if i != 0 {
+                parts.push(ss!(", "));
+            }
+            parts.push(specifier.format(p));
+        }
+    }
+
+    parts.push(ss!("}"));
+    Doc::Array(parts)
 }
