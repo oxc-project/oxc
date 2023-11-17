@@ -3,66 +3,64 @@ use oxc_ast::ast::*;
 
 use crate::{doc::Doc, group, hardline, if_break, indent, softline, ss, Format, Prettier};
 
-impl<'a> Prettier<'a> {
-    pub(super) fn print_function(&mut self, func: &Function<'a>) -> Doc<'a> {
-        let mut parts = self.vec();
-        if let Some(comments) = self.print_leading_comments(func.span) {
-            parts.push(comments);
-        }
-        if func.r#async {
-            parts.push(ss!("async "));
-        }
-        if func.generator {
-            parts.push(ss!("function* "));
-        } else {
-            parts.push(ss!("function "));
-        }
-        if let Some(type_params) = &func.type_parameters {
-            parts.push(type_params.format(self));
-        }
-        if let Some(id) = &func.id {
-            parts.push(self.str(id.name.as_str()));
-        }
-        if should_group_function_parameters(func) {
-            parts.push(group!(self, func.params.format(self)));
-        } else {
-            parts.push(func.params.format(self));
-        }
-        if let Some(body) = &func.body {
-            parts.push(ss!(" "));
-            parts.push(body.format(self));
-        }
-        if self.options.semi && (func.is_ts_declare_function() || func.body.is_none()) {
-            parts.push(self.str(";"));
-        }
-
-        Doc::Array(parts)
+pub(super) fn print_function<'a>(p: &mut Prettier<'a>, func: &Function<'a>) -> Doc<'a> {
+    let mut parts = p.vec();
+    if let Some(comments) = p.print_leading_comments(func.span) {
+        parts.push(comments);
+    }
+    if func.r#async {
+        parts.push(ss!("async "));
+    }
+    if func.generator {
+        parts.push(ss!("function* "));
+    } else {
+        parts.push(ss!("function "));
+    }
+    if let Some(type_params) = &func.type_parameters {
+        parts.push(type_params.format(p));
+    }
+    if let Some(id) = &func.id {
+        parts.push(p.str(id.name.as_str()));
+    }
+    if should_group_function_parameters(func) {
+        parts.push(group!(p, func.params.format(p)));
+    } else {
+        parts.push(func.params.format(p));
+    }
+    if let Some(body) = &func.body {
+        parts.push(ss!(" "));
+        parts.push(body.format(p));
+    }
+    if p.options.semi && (func.is_ts_declare_function() || func.body.is_none()) {
+        parts.push(p.str(";"));
     }
 
-    pub(super) fn print_return_or_throw_argument(
-        &mut self,
-        argument: Option<&Expression<'a>>,
-        is_return: bool,
-    ) -> Doc<'a> {
-        let mut parts = self.vec();
+    Doc::Array(parts)
+}
 
-        parts.push(ss!(if is_return { "return" } else { "throw" }));
+pub(super) fn print_return_or_throw_argument<'a>(
+    p: &mut Prettier<'a>,
+    argument: Option<&Expression<'a>>,
+    is_return: bool,
+) -> Doc<'a> {
+    let mut parts = p.vec();
 
-        if let Some(argument) = argument {
-            parts.push(ss!(" "));
-            parts.push(group![
-                self,
-                if_break!(self, "("),
-                indent!(self, softline!(), argument.format(self)),
-                softline!(),
-                if_break!(self, ")")
-            ]);
-        }
+    parts.push(ss!(if is_return { "return" } else { "throw" }));
 
-        parts.push(self.str(";"));
-        parts.push(hardline!());
-        Doc::Array(parts)
+    if let Some(argument) = argument {
+        parts.push(ss!(" "));
+        parts.push(group![
+            p,
+            if_break!(p, "("),
+            indent!(p, softline!(), argument.format(p)),
+            softline!(),
+            if_break!(p, ")")
+        ]);
     }
+
+    parts.push(p.str(";"));
+    parts.push(hardline!());
+    Doc::Array(parts)
 }
 
 fn should_group_function_parameters(func: &Function) -> bool {

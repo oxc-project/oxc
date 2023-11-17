@@ -21,26 +21,24 @@ impl<'a, 'b> Array<'a, 'b> {
     }
 }
 
-impl<'a> Prettier<'a> {
-    pub(super) fn print_array(&mut self, array: &Array<'a, '_>) -> Doc<'a> {
-        if array.len() == 0 {
-            return ss!("[]");
-        }
-
-        let mut parts = self.vec();
-        parts.push(ss!("["));
-
-        let mut parts_inner = self.vec();
-        parts_inner.push(Doc::Softline);
-        parts_inner.extend(print_elements(self, array));
-        parts_inner.push(if_break!(self, ","));
-
-        parts.push(group!(self, Doc::Indent(parts_inner)));
-        parts.push(Doc::Softline);
-        parts.push(ss!("]"));
-
-        Doc::Group(parts)
+pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+    if array.len() == 0 {
+        return ss!("[]");
     }
+
+    let mut parts = p.vec();
+    parts.push(ss!("["));
+
+    let mut parts_inner = p.vec();
+    parts_inner.push(Doc::Softline);
+    parts_inner.extend(print_elements(p, array));
+    parts_inner.push(if_break!(p, ","));
+
+    parts.push(group!(p, Doc::Indent(parts_inner)));
+    parts.push(Doc::Softline);
+    parts.push(ss!("]"));
+
+    Doc::Group(parts)
 }
 
 fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Vec<'a, Doc<'a>> {
