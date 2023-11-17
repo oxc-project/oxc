@@ -911,11 +911,14 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        binaryish::print_binaryish_expression(
+        group!(
             p,
-            &BinaryishLeft::Expression(&self.left),
-            BinaryishOperator::BinaryOperator(self.operator),
-            &self.right,
+            binaryish::print_binaryish_expression(
+                p,
+                &BinaryishLeft::Expression(&self.left),
+                BinaryishOperator::BinaryOperator(self.operator),
+                &self.right,
+            )
         )
     }
 }
