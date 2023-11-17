@@ -754,7 +754,7 @@ impl<'a> Format<'a> for ComputedMemberExpression<'a> {
         }
         parts.push(ss!("["));
         parts.push(format!(p, self.expression));
-        parts.push(ss!("["));
+        parts.push(ss!("]"));
 
         Doc::Array(parts)
     }
