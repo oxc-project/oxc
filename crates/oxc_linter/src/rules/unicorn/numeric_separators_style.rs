@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use itertools::{intersperse, Itertools};
 use oxc_ast::{
     ast::{BigintLiteral, NumberLiteral},
@@ -37,26 +39,32 @@ impl NumericSeparatorsStyle {
 struct FormatNumber<'a>(&'a NumberLiteral<'a>);
 impl<'a> FormatNumber<'a> {
     fn format(&self) -> String {
-        match self.0.base {
-            oxc_syntax::NumberBase::Binary => {
-                format!("{:b}", self)
-            }
-            oxc_syntax::NumberBase::Decimal => {
-                format!("{}", self)
-            }
-            oxc_syntax::NumberBase::Float => {
-                format!("{}", self)
-            }
+        match self.base {
+            oxc_syntax::NumberBase::Binary => format!("{:b}", self),
+            oxc_syntax::NumberBase::Decimal => format!("{}", self),
+            oxc_syntax::NumberBase::Float => format!("{}", self),
             oxc_syntax::NumberBase::Hex => todo!(),
             oxc_syntax::NumberBase::Octal => todo!(),
         }
     }
 }
+impl<'a> Deref for FormatNumber<'a> {
+    type Target = NumberLiteral<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
 impl<'a> std::fmt::Display for FormatNumber<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut string = format!("{}", self.0.value);
+        let exponential_notation = self.raw.contains(&['e', 'E']);
+
+        if (exponential_notation) {}
+
+        let mut string = format!("{}", self.value);
         if let Some((whole, decimal)) = string.split_once('.') {
-            let starts_with_decimal = self.0.raw.starts_with('.');
+            let starts_with_decimal = self.raw.starts_with('.');
 
             if (starts_with_decimal) {
                 let mut decimal = decimal.to_string();
@@ -100,9 +108,9 @@ impl<'a> std::fmt::Display for FormatNumber<'a> {
 }
 impl<'a> std::fmt::Binary for FormatNumber<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let binary_prefix = &self.0.raw[0..2];
-        let padding = self.0.raw.replace('_', "").len() - 2;
-        let mut binary_string = format!("{:0width$b}", self.0.value as i64, width = padding);
+        let binary_prefix = &self.raw[0..2];
+        let padding = self.raw.replace('_', "").len() - 2;
+        let mut binary_string = format!("{:0width$b}", self.value as i64, width = padding);
         // dbg!(padding);
         // dbg!(binary_string.to_string());
         add_separators(
