@@ -21,6 +21,7 @@ mod function_parameters;
 mod module;
 mod object;
 mod statement;
+mod string;
 mod ternary;
 
 use crate::{
@@ -720,8 +721,7 @@ impl<'a> Format<'a> for RegExpLiteral {
 
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let quote = if p.options.single_quote { "'" } else { "\"" };
-        array!(p, ss!(quote), p.str(&self.value), ss!(quote))
+        array!(p, p.str(&string::print_string(self.value.as_str(), p.options.single_quote)))
     }
 }
 
