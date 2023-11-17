@@ -10,10 +10,7 @@ mod options;
 mod printer;
 mod util;
 
-use std::{
-    iter::{Peekable, Rev},
-    vec,
-};
+use std::{iter::Peekable, vec};
 
 use doc::Doc;
 use oxc_allocator::Allocator;
@@ -31,7 +28,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// A stack of comments that will be carefully placed in the right places.
-    trivias: Peekable<Rev<vec::IntoIter<(u32, u32, CommentKind)>>>,
+    trivias: Peekable<vec::IntoIter<(u32, u32, CommentKind)>>,
 }
 
 impl<'a> Prettier<'a> {
@@ -41,7 +38,7 @@ impl<'a> Prettier<'a> {
         trivias: Trivias,
         options: PrettierOptions,
     ) -> Self {
-        let trivias = trivias.into_iter().rev().peekable();
+        let trivias = trivias.into_iter().peekable();
         Self { allocator, source_text, options, trivias }
     }
 

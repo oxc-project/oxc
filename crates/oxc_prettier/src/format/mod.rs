@@ -91,6 +91,9 @@ impl<'a> Format<'a> for Statement<'a> {
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
+        if let Some(doc) = p.print_leading_comments(self.span) {
+            parts.push(doc);
+        }
         parts.push(self.expression.format(p));
         if p.options.semi {
             parts.push(ss!(";"));
