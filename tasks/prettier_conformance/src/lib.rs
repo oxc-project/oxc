@@ -50,7 +50,7 @@ impl TestRunner {
     pub fn run(mut self) {
         let fixture_root = fixtures_root();
         // Read the first level of directories that contain `__snapshots__`
-        let mut dirs = WalkDir::new(&fixture_root)
+        let mut dirs = WalkDir::new(fixture_root)
             .min_depth(1)
             .into_iter()
             .filter_map(Result::ok)
@@ -114,7 +114,7 @@ impl TestRunner {
             self.spec.parse(&spec_path);
             total += inputs.len();
             inputs.sort_unstable();
-            self.test_snapshot(&dir, &spec_path, &inputs, &mut failed);
+            self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
         }
 
         let passed = total - failed.len();
@@ -138,7 +138,7 @@ impl TestRunner {
     ) {
         let fixture_root = fixtures_root();
         let mut write_dir_info = true;
-        inputs.iter().for_each(|path| {
+        for path in inputs {
             let input = fs::read_to_string(path).unwrap();
 
             let result = self.spec.calls.iter().all(|spec| {
@@ -169,7 +169,7 @@ impl TestRunner {
                         )
                         .as_str(),
                     );
-                    write_dir_info = false
+                    write_dir_info = false;
                 }
 
                 failed.push(format!(
@@ -177,7 +177,7 @@ impl TestRunner {
                     path.strip_prefix(&fixture_root).unwrap().to_string_lossy()
                 ));
             }
-        })
+        }
     }
 
     fn get_single_snapshot(
