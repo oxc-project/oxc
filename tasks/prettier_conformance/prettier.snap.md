@@ -1,4 +1,4 @@
-Compatibility: 59/881 (6.70%)
+Compatibility: 62/881 (7.04%)
 
 # Failed
 
@@ -490,9 +490,7 @@ Compatibility: 59/881 (6.70%)
 * explicit-resource-management/valid-for-using-declaration.js
 * explicit-resource-management/valid-module-block-top-level-await-using-binding.js
 * explicit-resource-management/valid-module-block-top-level-using-binding.js
-* explicit-resource-management/valid-using-as-identifier-computed-member.js
 * explicit-resource-management/valid-using-as-identifier-expression-statement.js
-* explicit-resource-management/valid-using-as-identifier-for-await-of.js
 * explicit-resource-management/valid-using-as-identifier-for-in.js
 * explicit-resource-management/valid-using-as-identifier-for-init.js
 * explicit-resource-management/valid-using-as-identifier-for-of.js
@@ -987,7 +985,6 @@ Compatibility: 59/881 (6.70%)
 * shebang/shebang.js
 
 ### sloppy-mode
-* sloppy-mode/function-declaration-in-while.js
 * sloppy-mode/labeled-function-declaration.js
 
 ### source-phase-imports
