@@ -653,13 +653,18 @@ impl<'a> Format<'a> for TSImportType<'a> {
 
 impl<'a> Format<'a> for TSIndexedAccessType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(format!(p, self.object_type));
+        parts.push(ss!("["));
+        parts.push(format!(p, self.index_type));
+        parts.push(ss!("]"));
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for TSInferType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, ss!("infer "), format!(p, self.type_parameter))
     }
 }
 
@@ -775,6 +780,12 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 }
 
 impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypeParameter<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
     }
