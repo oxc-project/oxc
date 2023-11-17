@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, hardline, indent, ss, Prettier};
+use crate::{doc::Doc, format::array, hardline, indent, ss, Prettier};
 
 use super::statement;
 
@@ -56,4 +56,21 @@ pub(super) fn print_block_body<'a>(
     }
 
     Some(Doc::Array(parts))
+}
+
+pub(super) fn adjust_clause<'a>(
+    p: &Prettier<'a>,
+    node: &Statement<'a>,
+    clause: Doc<'a>,
+    force_space: bool,
+) -> Doc<'a> {
+    if matches!(node, Statement::EmptyStatement(_)) {
+        return ss!(";");
+    }
+
+    if matches!(node, Statement::BlockStatement(_)) || force_space {
+        return array![p, ss!(" "), clause];
+    }
+
+    indent![p, Doc::Line, clause]
 }

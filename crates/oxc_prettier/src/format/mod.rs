@@ -33,6 +33,7 @@ use crate::{
 use self::{
     array::Array,
     binaryish::{BinaryishLeft, BinaryishOperator},
+    block::adjust_clause,
 };
 
 pub trait Format<'a> {
@@ -113,13 +114,15 @@ impl<'a> Format<'a> for IfStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
 
+        let consequent = format!(p, self.consequent);
+        let consequent = adjust_clause(p, &self.consequent, consequent, false);
+
         let opening = group![
             p,
             ss!("if ("),
             group!(p, indent!(p, softline!(), format!(p, self.test), softline!())),
             ss!(")"),
-            ss!(" "),
-            format!(p, self.consequent)
+            consequent
         ];
         parts.push(opening);
 
@@ -165,7 +168,9 @@ impl<'a> Format<'a> for ForStatement<'a> {
         parts.push(group!(p, parts_head));
 
         parts.push(ss!(")"));
-        parts.push(format!(p, self.body));
+
+        let body = format!(p, self.body);
+        parts.push(adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
@@ -190,7 +195,9 @@ impl<'a> Format<'a> for ForInStatement<'a> {
         parts.push(ss!(" in "));
         parts.push(format!(p, self.right));
         parts.push(ss!(")"));
-        parts.push(format!(p, self.body));
+
+        let body = format!(p, self.body);
+        parts.push(adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
@@ -210,7 +217,9 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
         parts.push(ss!(" of "));
         parts.push(format!(p, self.right));
         parts.push(ss!(")"));
-        parts.push(format!(p, self.body));
+
+        let body = format!(p, self.body);
+        parts.push(adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
@@ -231,11 +240,11 @@ impl<'a> Format<'a> for WhileStatement<'a> {
         let mut parts = p.vec();
 
         parts.push(ss!("while ("));
-
         parts.push(group!(p, indent!(p, softline!(), format!(p, self.test), softline!())));
-
         parts.push(ss!(")"));
-        parts.push(format!(p, self.body));
+
+        let body = format!(p, self.body);
+        parts.push(adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
