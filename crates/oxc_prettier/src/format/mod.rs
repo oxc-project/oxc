@@ -254,7 +254,28 @@ impl<'a> Format<'a> for WhileStatement<'a> {
 
 impl<'a> Format<'a> for DoWhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        let clause = format!(p, self.body);
+        let clause = adjust_clause(p, &self.body, clause, false);
+        let do_body = group!(p, ss!("do"), clause);
+
+        parts.push(do_body);
+
+        if matches!(self.body, Statement::BlockStatement(_)) {
+            parts.push(ss!(" "));
+        } else {
+            parts.push(hardline!());
+        }
+
+        parts.push(ss!("while ("));
+        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test), softline!())));
+        parts.push(ss!(")"));
+        if p.options.semi {
+            parts.push(ss!(";"));
+        }
+
+        Doc::Array(parts)
     }
 }
 
