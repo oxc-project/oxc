@@ -140,7 +140,44 @@ impl<'a> Format<'a> for BlockStatement<'a> {
 
 impl<'a> Format<'a> for ForStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(ss!("for ("));
+
+        let mut parts_head = p.vec();
+
+        if let Some(init) = &self.init {
+            parts_head.push(format!(p, init));
+        }
+        parts_head.push(ss!(";"));
+        parts_head.push(Doc::Line);
+        if let Some(init) = &self.test {
+            parts_head.push(format!(p, init));
+        }
+        parts_head.push(ss!(";"));
+        parts_head.push(Doc::Line);
+        if let Some(init) = &self.update {
+            parts_head.push(format!(p, init));
+        }
+
+        let parts_head = indent!(p, group!(p, Doc::Array(parts_head)));
+
+        parts.push(group!(p, parts_head));
+
+        parts.push(ss!(")"));
+        parts.push(format!(p, self.body));
+
+        Doc::Group(parts)
+    }
+}
+
+impl<'a> Format<'a> for ForStatementInit<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            ForStatementInit::VariableDeclaration(v) => v.format(p),
+            ForStatementInit::Expression(v) => v.format(p),
+            ForStatementInit::UsingDeclaration(v) => v.format(p),
+        }
     }
 }
 
