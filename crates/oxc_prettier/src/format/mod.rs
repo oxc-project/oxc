@@ -788,6 +788,7 @@ impl<'a> Format<'a> for CallExpression<'a> {
             &self.arguments,
             self.optional,
             &self.type_parameters,
+            /* is_new */ false,
         )
     }
 }
@@ -1109,6 +1110,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
             &self.arguments,
             false,
             &self.type_parameters,
+            /* is_new */ true,
         )
     }
 }

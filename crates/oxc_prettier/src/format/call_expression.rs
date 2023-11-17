@@ -10,8 +10,12 @@ pub(super) fn print_call_expression<'a>(
     arguments: &Vec<'a, Argument<'a>>,
     optional: bool, // for optional chaining
     type_parameters: &Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    is_new: bool,
 ) -> Doc<'a> {
     let mut parts = p.vec();
+    if is_new {
+        parts.push(ss!("new "));
+    }
     parts.push(callee.format(p));
     parts.push(ss!("("));
     parts.extend(arguments.iter().map(|arg| arg.format(p)));
