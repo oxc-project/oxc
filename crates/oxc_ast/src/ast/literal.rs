@@ -170,8 +170,6 @@ impl TryFrom<char> for RegExpFlags {
     }
 }
 
-// TODO: should we implement TryFrom<&str> too?
-
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.contains(Self::G) {

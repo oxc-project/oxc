@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -6,7 +6,7 @@ use oxc_ast::{
     VisitMut,
 };
 use oxc_parser::Parser;
-use oxc_prettier::{PrettierOptions, TrailingComma};
+use oxc_prettier::{EndOfLine, PrettierOptions, TrailingComma};
 use oxc_span::{Atom, GetSpan, SourceType};
 
 #[derive(Default)]
@@ -69,6 +69,8 @@ impl VisitMut<'_> for SpecParser {
                                     options.semi = literal.value;
                                 } else if name == "bracketSpacing" {
                                     options.bracket_spacing = literal.value;
+                                } else if name == "singleQuote" {
+                                    options.single_quote = literal.value;
                                 }
                             }
                             Expression::NumberLiteral(literal) => {
@@ -77,15 +79,17 @@ impl VisitMut<'_> for SpecParser {
                                         str::parse(&literal.value.to_string()).unwrap_or(80);
                                 }
                             }
-                            Expression::StringLiteral(literal) => {
-                                if name == "trailingComma" {
-                                    options.trailing_comma = match literal.value.as_str() {
-                                        "none" => TrailingComma::None,
-                                        "es5" => TrailingComma::ES5,
-                                        _ => TrailingComma::All,
-                                    }
+                            Expression::StringLiteral(literal) => match name.as_str() {
+                                "trailingComma" => {
+                                    options.trailing_comma =
+                                        TrailingComma::from_str(literal.value.as_str()).unwrap();
                                 }
-                            }
+                                "endOfLine" => {
+                                    options.end_of_line =
+                                        EndOfLine::from_str(literal.value.as_str()).unwrap();
+                                }
+                                _ => {}
+                            },
                             _ => {}
                         };
                         if name != "errors" {

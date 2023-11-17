@@ -50,7 +50,7 @@ impl TestRunner {
     pub fn run(mut self) {
         let fixture_root = fixtures_root();
         // Read the first level of directories that contain `__snapshots__`
-        let mut dirs = WalkDir::new(&fixture_root)
+        let mut dirs = WalkDir::new(fixture_root)
             .min_depth(1)
             .into_iter()
             .filter_map(Result::ok)
@@ -77,7 +77,9 @@ impl TestRunner {
 
         dirs.sort_unstable();
 
+        let mut total = 0;
         let mut failed = vec![];
+
         for dir in &dirs {
             // Get jsfmt.spec.js
             let mut spec_path = dir.join("jsfmt.spec.js");
@@ -110,17 +112,11 @@ impl TestRunner {
                 .collect();
 
             self.spec.parse(&spec_path);
-
+            total += inputs.len();
             inputs.sort_unstable();
-            if !self.test_snapshot(&spec_path, &inputs) {
-                failed.push(format!(
-                    "* {}",
-                    dir.strip_prefix(&fixture_root).unwrap().to_string_lossy()
-                ));
-            }
+            self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
         }
 
-        let total = dirs.len();
         let passed = total - failed.len();
         let percentage = (passed as f64 / total as f64) * 100.0;
         let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
@@ -128,31 +124,60 @@ impl TestRunner {
 
         if self.options.filter.is_none() {
             let failed = failed.join("\n");
-            let snapshot = format!("{heading}\n\n# Failed\n\n{failed}");
+            let snapshot = format!("{heading}\n\n# Failed\n{failed}");
             fs::write(root().join("prettier.snap.md"), snapshot).unwrap();
         }
     }
 
-    fn test_snapshot(&self, spec_path: &Path, inputs: &[PathBuf]) -> bool {
-        self.spec.calls.iter().all(|spec| {
-            let expected_file =
-                spec_path.parent().unwrap().join("__snapshots__/jsfmt.spec.js.snap");
-            let expected = fs::read_to_string(expected_file).unwrap();
+    fn test_snapshot(
+        &self,
+        dir: &Path,
+        spec_path: &Path,
+        inputs: &[PathBuf],
+        failed: &mut Vec<String>,
+    ) {
+        let fixture_root = fixtures_root();
+        let mut write_dir_info = true;
+        for path in inputs {
+            let input = fs::read_to_string(path).unwrap();
 
-            if inputs.is_empty() {
-                return false;
-            }
-
-            inputs.iter().all(|path| {
-                let input = fs::read_to_string(path).unwrap();
+            let result = self.spec.calls.iter().all(|spec| {
                 let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1);
                 if snapshot.trim().is_empty() {
                     return false;
                 }
 
+                let expected_file =
+                    spec_path.parent().unwrap().join("__snapshots__/jsfmt.spec.js.snap");
+
+                let expected = fs::read_to_string(expected_file).unwrap();
+
+                if inputs.is_empty() {
+                    return false;
+                }
+
                 expected.contains(&snapshot)
-            })
-        })
+            });
+
+            if !result {
+                let mut dir_info = String::new();
+                if write_dir_info {
+                    dir_info.push_str(
+                        format!(
+                            "\n### {}\n",
+                            dir.strip_prefix(&fixture_root).unwrap().to_string_lossy()
+                        )
+                        .as_str(),
+                    );
+                    write_dir_info = false;
+                }
+
+                failed.push(format!(
+                    "{dir_info}* {}",
+                    path.strip_prefix(&fixture_root).unwrap().to_string_lossy()
+                ));
+            }
+        }
     }
 
     fn get_single_snapshot(

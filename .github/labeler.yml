@@ -1,25 +1,25 @@
 A-ast:
-- any: ['crates/oxc_ast/**/*']
+- any: ['crates/oxc_ast/**']
 
 A-cli:
-- any: ['crates/oxc_cli/**/*', 'npm/**/*']
+- any: ['crates/oxc_cli/**', 'npm/**']
 
 A-prettier:
-- any: ['crates/oxc_prettier/**/*', 'tasks/prettier_conformance/**/*']
+- any: ['crates/oxc_prettier/**', 'tasks/prettier_conformance/**']
 
 A-transformer:
-- any: ['crates/oxc_transformer/**/*', 'tasks/transform_conformance/**/*']
+- any: ['crates/oxc_transformer/**', 'tasks/transform_conformance/**']
 
-A-linter: 'crates/oxc_linter/**/*'
+A-linter: 'crates/oxc_linter/**'
 
-A-minifier: 'crates/oxc_minifier/**/*'
+A-minifier: 'crates/oxc_minifier/**'
 
-A-parser: 'crates/oxc_parser/**/*'
+A-parser: 'crates/oxc_parser/**'
 
-A-codegen: 'crates/oxc_codegen/**/*'
+A-codegen: 'crates/oxc_codegen/**'
 
-A-semantic: 'crates/oxc_semantic/**/*'
+A-semantic: 'crates/oxc_semantic/**'
 
-A-resolver: 'crates/oxc_resolver/**/*'
+A-resolver: 'crates/oxc_resolver/**'
 
-A-type-checking: 'crates/oxc_type_synthesis/**/*'
+A-type-checking: 'crates/oxc_type_synthesis/**'
