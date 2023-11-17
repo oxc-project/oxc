@@ -228,7 +228,16 @@ impl<'a> Format<'a> for ForStatementLeft<'a> {
 
 impl<'a> Format<'a> for WhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(ss!("while ("));
+
+        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test), softline!())));
+
+        parts.push(ss!(")"));
+        parts.push(format!(p, self.body));
+
+        Doc::Group(parts)
     }
 }
 
