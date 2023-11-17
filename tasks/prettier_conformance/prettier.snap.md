@@ -1,4 +1,4 @@
-Compatibility: 62/881 (7.04%)
+Compatibility: 63/881 (7.15%)
 
 # Failed
 
@@ -678,9 +678,6 @@ Compatibility: 62/881 (7.04%)
 
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
-
-### literal
-* literal/number.js
 
 ### logical-assignment
 * logical-assignment/logical-assignment.js

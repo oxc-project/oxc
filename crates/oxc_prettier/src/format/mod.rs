@@ -5,6 +5,8 @@
 
 #![allow(unused_variables)]
 
+use std::borrow::Cow;
+
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -1039,12 +1041,68 @@ impl<'a> Format<'a> for NullLiteral {
 
 impl<'a> Format<'a> for NumberLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let raw = p.str(self.raw.to_lowercase().as_str());
-        if self.raw.starts_with('.') {
-            array!(p, ss!("0"), raw)
-        } else {
-            p.str(self.raw.to_lowercase().as_str())
+        // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
+        // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
+        let raw = self.span.source_text(p.source_text);
+        let mut string = Cow::Borrowed(raw);
+
+        if string.contains(|c: char| c.is_ascii_uppercase()) {
+            string = Cow::Owned(string.to_ascii_lowercase());
         }
+
+        // Remove unnecessary plus and zeroes from scientific notation.
+        if let Some((head, tail)) = string.split_once('e') {
+            let negative = if tail.starts_with('-') { "-" } else { "" };
+            let trimmed = tail.trim_start_matches(|c| c == '+' || c == '-').trim_start_matches('0');
+            if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
+                string = Cow::Owned(std::format!("{head}e{negative}{trimmed}"));
+            }
+        }
+
+        // Remove unnecessary scientific notation (1e0).
+        if let Some((head, tail)) = string.split_once('e') {
+            if tail.trim_start_matches(|c| c == '+' || c == '-').trim_start_matches('0').is_empty()
+            {
+                string = Cow::Owned(head.to_string());
+            }
+        }
+
+        // Make sure numbers always start with a digit.
+        if string.starts_with('.') {
+            string = Cow::Owned(std::format!("0{string}"));
+        }
+
+        // Remove extraneous trailing decimal zeroes.
+        if let Some((head, tail)) = string.split_once('.') {
+            if let Some((head_e, tail_e)) = tail.split_once('e') {
+                if !head_e.is_empty() {
+                    let trimmed = head_e.trim_end_matches('0');
+                    if trimmed.is_empty() {
+                        string = Cow::Owned(std::format!("{head}.0e{tail_e}"));
+                    } else {
+                        string = Cow::Owned(std::format!("{head}.{trimmed}e{tail_e}"));
+                    }
+                }
+            } else if !tail.is_empty() {
+                let trimmed = tail.trim_end_matches('0');
+                if trimmed.is_empty() {
+                    string = Cow::Owned(std::format!("{head}.0"));
+                } else {
+                    string = Cow::Owned(std::format!("{head}.{trimmed}"));
+                }
+            }
+        }
+
+        // Remove trailing dot.
+        if let Some((head, tail)) = string.split_once('.') {
+            if tail.is_empty() {
+                string = Cow::Owned(head.to_string());
+            } else if tail.starts_with('e') {
+                string = Cow::Owned(std::format!("{head}{tail}"));
+            }
+        }
+
+        p.str(&string)
     }
 }
 
