@@ -21,6 +21,9 @@ pub struct Printer<'a> {
     /// while loop which is much faster. The while loop below adds new
     /// cmds to the array instead of recursively calling `print`.
     cmds: Vec<Command<'a>>,
+
+    // states
+    new_line: &'static str,
 }
 
 impl<'a> Printer<'a> {
@@ -29,7 +32,7 @@ impl<'a> Printer<'a> {
         // be the same size as the original text.
         let out = Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-        Self { options, out, pos: 0, cmds }
+        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str() }
     }
 
     pub fn build(mut self) -> String {
@@ -103,20 +106,20 @@ impl<'a> Printer<'a> {
         if matches!(mode, Mode::Flat) {
             self.out.push(b' ');
         } else {
-            self.out.push(b'\n');
+            self.out.extend(self.new_line.as_bytes());
             self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
         if !matches!(mode, Mode::Flat) {
-            self.out.push(b'\n');
+            self.out.extend(self.new_line.as_bytes());
             self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_hardline(&mut self, indent: Indent) {
-        self.out.push(b'\n');
+        self.out.extend(self.new_line.as_bytes());
         self.pos = self.indent(indent.length);
     }
 
