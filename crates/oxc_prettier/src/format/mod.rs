@@ -1632,7 +1632,7 @@ impl<'a> Format<'a> for RestElement<'a> {
 
 impl<'a> Format<'a> for ArrayPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array::print_array(p, &Array::ArrayPattern(self))
     }
 }
 
