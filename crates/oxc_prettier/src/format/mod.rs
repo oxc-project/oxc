@@ -403,6 +403,262 @@ impl<'a> Format<'a> for UsingDeclaration<'a> {
 
 impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+
+        parts.push(ss!("type "));
+        parts.push(format!(p, self.id));
+        parts.push(ss!(" = "));
+        parts.push(format!(p, self.type_annotation));
+
+        if p.options.semi {
+            parts.push(ss!(";"));
+        }
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSType::TSAnyKeyword(v) => v.format(p),
+            TSType::TSBigIntKeyword(v) => v.format(p),
+            TSType::TSBooleanKeyword(v) => v.format(p),
+            TSType::TSNeverKeyword(v) => v.format(p),
+            TSType::TSNullKeyword(v) => v.format(p),
+            TSType::TSNumberKeyword(v) => v.format(p),
+            TSType::TSObjectKeyword(v) => v.format(p),
+            TSType::TSStringKeyword(v) => v.format(p),
+            TSType::TSSymbolKeyword(v) => v.format(p),
+            TSType::TSThisKeyword(v) => v.format(p),
+            TSType::TSUndefinedKeyword(v) => v.format(p),
+            TSType::TSUnknownKeyword(v) => v.format(p),
+            TSType::TSVoidKeyword(v) => v.format(p),
+            TSType::TSArrayType(v) => v.format(p),
+            TSType::TSConditionalType(v) => v.format(p),
+            TSType::TSConstructorType(v) => v.format(p),
+            TSType::TSFunctionType(v) => v.format(p),
+            TSType::TSImportType(v) => v.format(p),
+            TSType::TSIndexedAccessType(v) => v.format(p),
+            TSType::TSInferType(v) => v.format(p),
+            TSType::TSIntersectionType(v) => v.format(p),
+            TSType::TSLiteralType(v) => v.format(p),
+            TSType::TSMappedType(v) => v.format(p),
+            TSType::TSQualifiedName(v) => v.format(p),
+            TSType::TSTemplateLiteralType(v) => v.format(p),
+            TSType::TSTupleType(v) => v.format(p),
+            TSType::TSTypeLiteral(v) => v.format(p),
+            TSType::TSTypeOperatorType(v) => v.format(p),
+            TSType::TSTypePredicate(v) => v.format(p),
+            TSType::TSTypeQuery(v) => v.format(p),
+            TSType::TSTypeReference(v) => v.format(p),
+            TSType::TSUnionType(v) => v.format(p),
+            TSType::JSDocNullableType(v) => v.format(p),
+            TSType::JSDocUnknownType(v) => v.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSAnyKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSBigIntKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSBooleanKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSNeverKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSNullKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSNumberKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSObjectKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSStringKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSSymbolKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSThisKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSUndefinedKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSUnknownKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSVoidKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSArrayType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSConditionalType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSConstructorType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSFunctionType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSImportType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSIndexedAccessType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSInferType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSIntersectionType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSLiteralType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSMappedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSQualifiedName<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTupleType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypeLiteral<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypeOperatorType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypePredicate<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypeQuery<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSTypeReference<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for TSUnionType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for JSDocNullableType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
+impl<'a> Format<'a> for JSDocUnknownType {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
     }
 }
