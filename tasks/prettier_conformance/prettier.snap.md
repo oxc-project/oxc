@@ -1,4 +1,4 @@
-Compatibility: 11/173 (6.36%)
+Compatibility: 12/173 (6.94%)
 
 # Failed
 
@@ -85,7 +85,6 @@ Compatibility: 11/173 (6.36%)
 * import-meta
 * import-reflection
 * in
-* invalid-code
 * label
 * last-argument-expansion
 * line-suffix-boundary

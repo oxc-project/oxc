@@ -76,6 +76,12 @@ impl<'a> GetSpan for Expression<'a> {
     }
 }
 
+impl GetSpan for Directive {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for BindingPatternKind<'a> {
     fn span(&self) -> Span {
         match self {
