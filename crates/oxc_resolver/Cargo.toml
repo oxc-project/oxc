@@ -30,10 +30,6 @@ indexmap = { workspace = true, features = ["serde"] } # serde for Deserialize fr
 dunce = "1.0.4" # Normalize Windows paths to the most compatible format, avoiding UNC where possible
 once_cell = "1.18.0" # Use `std::sync::OnceLock::get_or_try_init` when it is stable.
 thiserror = { workspace = true }
-tracing-subscriber = { workspace = true, optional = true, features = ["env-filter"] }
 
 [dev-dependencies]
 vfs = "0.10.0" # for testing with in memory file system
-
-[features]
-tracing-subscriber = ["dep:tracing-subscriber"]
