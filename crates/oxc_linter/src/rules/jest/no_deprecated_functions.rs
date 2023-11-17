@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use phf::{phf_map, Map};
 use std::borrow::Cow;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::get_node_name_vec};
+use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions")]
@@ -99,7 +99,9 @@ impl Rule for NoDeprecatedFunctions {
             return;
         };
         let mut chain: Vec<Cow<'a, str>> = Vec::new();
-        chain.extend(get_node_name_vec(mem_expr.object()));
+        if let Expression::Identifier(ident) = mem_expr.object() {
+            chain.push(Cow::Borrowed(ident.name.as_str()));
+        }
 
         if let Some(name) = mem_expr.static_property_name() {
             chain.push(Cow::Borrowed(name));
