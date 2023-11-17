@@ -355,7 +355,11 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
 
 impl<'a> Format<'a> for LabeledStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if matches!(self.body, Statement::EmptyStatement(_)) {
+            return array!(p, self.label.format(p), ss!(":;"));
+        }
+
+        array!(p, self.label.format(p), ss!(": "), format!(p, self.body))
     }
 }
 

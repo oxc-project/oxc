@@ -1,4 +1,4 @@
-Compatibility: 63/881 (7.15%)
+Compatibility: 66/881 (7.49%)
 
 # Failed
 
@@ -653,9 +653,7 @@ Compatibility: 63/881 (7.15%)
 * import-reflection/valid-module-as-default-binding.mjs
 
 ### label
-* label/block-statement-and-regexp.js
 * label/comment.js
-* label/empty_label.js
 
 ### last-argument-expansion
 * last-argument-expansion/arrow.js
@@ -980,9 +978,6 @@ Compatibility: 63/881 (7.15%)
 ### shebang
 * shebang/shebang-newline.js
 * shebang/shebang.js
-
-### sloppy-mode
-* sloppy-mode/labeled-function-declaration.js
 
 ### source-phase-imports
 * source-phase-imports/default-binding.js
