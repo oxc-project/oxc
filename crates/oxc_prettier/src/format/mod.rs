@@ -183,7 +183,16 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
 
 impl<'a> Format<'a> for ForInStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(ss!("for ("));
+        parts.push(format!(p, self.left));
+        parts.push(ss!(" in "));
+        parts.push(format!(p, self.right));
+        parts.push(ss!(")"));
+        parts.push(format!(p, self.body));
+
+        Doc::Group(parts)
     }
 }
 
