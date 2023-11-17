@@ -1117,7 +1117,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
 
 impl<'a> Format<'a> for MetaProperty {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, format!(p, self.meta), ss!(","), format!(p, self.property)]
+        array![p, format!(p, self.meta), ss!("."), format!(p, self.property)]
     }
 }
 
