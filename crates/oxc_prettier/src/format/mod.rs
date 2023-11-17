@@ -52,7 +52,7 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_block_body(&self.body, Some(&self.directives)).unwrap_or(ss!(""))
+        block::print_block_body(p, &self.body, Some(&self.directives)).unwrap_or(ss!(""))
     }
 }
 
@@ -131,7 +131,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
 
 impl<'a> Format<'a> for BlockStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_block(&self.body, None, false)
+        block::print_block(p, &self.body, None, false)
     }
 }
 
@@ -262,7 +262,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 
 impl<'a> Format<'a> for ReturnStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_return_or_throw_argument(self.argument.as_ref(), true)
+        function::print_return_or_throw_argument(p, self.argument.as_ref(), true)
     }
 }
 
@@ -311,7 +311,7 @@ impl<'a> Format<'a> for CatchClause<'a> {
 
 impl<'a> Format<'a> for ThrowStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_return_or_throw_argument(Some(&self.argument), false)
+        function::print_return_or_throw_argument(p, Some(&self.argument), false)
     }
 }
 
@@ -352,7 +352,7 @@ impl<'a> Format<'a> for ModuleDeclaration<'a> {
         if let ModuleDeclaration::ImportDeclaration(decl) = self {
             decl.format(p)
         } else {
-            p.print_export_declaration(self)
+            module::print_export_declaration(p, self)
         }
     }
 }
@@ -460,19 +460,19 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_function(self)
+        function::print_function(p, self)
     }
 }
 
 impl<'a> Format<'a> for FunctionBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_block(&self.statements, Some(&self.directives), false)
+        block::print_block(p, &self.statements, Some(&self.directives), false)
     }
 }
 
 impl<'a> Format<'a> for FormalParameters<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_function_parameters(self)
+        function_parameters::print_function_parameters(p, self)
     }
 }
 
@@ -790,7 +790,13 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
 
 impl<'a> Format<'a> for CallExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_call_expression(&self.callee, &self.arguments, self.optional, &self.type_parameters)
+        call_expression::print_call_expression(
+            p,
+            &self.callee,
+            &self.arguments,
+            self.optional,
+            &self.type_parameters,
+        )
     }
 }
 
@@ -821,13 +827,13 @@ impl<'a> Format<'a> for SpreadElement<'a> {
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_array(&Array::ArrayExpression(self))
+        array::print_array(p, &Array::ArrayExpression(self))
     }
 }
 
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_object_properties(&self.properties)
+        object::print_object_properties(p, &self.properties)
     }
 }
 
@@ -863,7 +869,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
 impl<'a> Format<'a> for ArrowExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_arrow_function(self)
+        arrow_function::print_arrow_function(p, self)
     }
 }
 
@@ -912,7 +918,8 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_binaryish_expression(
+        binaryish::print_binaryish_expression(
+            p,
             &BinaryishLeft::Expression(&self.left),
             BinaryishOperator::BinaryOperator(self.operator),
             &self.right,
@@ -922,7 +929,8 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
 
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_binaryish_expression(
+        binaryish::print_binaryish_expression(
+            p,
             &BinaryishLeft::PrivateIdentifier(&self.left),
             BinaryishOperator::BinaryOperator(self.operator),
             &self.right,
@@ -932,7 +940,8 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
 
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_binaryish_expression(
+        binaryish::print_binaryish_expression(
+            p,
             &BinaryishLeft::Expression(&self.left),
             BinaryishOperator::LogicalOperator(self.operator),
             &self.right,
@@ -942,7 +951,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
 
 impl<'a> Format<'a> for ConditionalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_ternary(self)
+        ternary::print_ternary(p, self)
     }
 }
 
@@ -1102,7 +1111,13 @@ impl<'a> Format<'a> for ChainElement<'a> {
 
 impl<'a> Format<'a> for NewExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_call_expression(&self.callee, &self.arguments, false, &self.type_parameters)
+        call_expression::print_call_expression(
+            p,
+            &self.callee,
+            &self.arguments,
+            false,
+            &self.type_parameters,
+        )
     }
 }
 
@@ -1114,7 +1129,7 @@ impl<'a> Format<'a> for MetaProperty {
 
 impl<'a> Format<'a> for Class<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_class(self)
+        class::print_class(p, self)
     }
 }
 
@@ -1274,7 +1289,7 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_block(&self.body, None, false)
+        block::print_block(p, &self.body, None, false)
     }
 }
 
@@ -1320,7 +1335,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.print_object_properties(&self.properties)
+        object::print_object_properties(p, &self.properties)
     }
 }
 
