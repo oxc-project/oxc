@@ -1,4 +1,4 @@
-Compatibility: 13/173 (7.51%)
+Compatibility: 14/173 (8.09%)
 
 # Failed
 
@@ -81,7 +81,6 @@ Compatibility: 13/173 (7.51%)
 * import-assertions/bracket-spacing
 * import-attributes
 * import-attributes/bracket-spacing
-* import-meta
 * import-reflection
 * in
 * label
