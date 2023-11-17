@@ -189,13 +189,31 @@ impl<'a> Format<'a> for ForInStatement<'a> {
 
 impl<'a> Format<'a> for ForOfStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(ss!("for"));
+
+        if self.r#await {
+            parts.push(ss!(" await"));
+        }
+        parts.push(ss!(" ("));
+        parts.push(format!(p, self.left));
+        parts.push(ss!(" of "));
+        parts.push(format!(p, self.right));
+        parts.push(ss!(")"));
+        parts.push(format!(p, self.body));
+
+        Doc::Group(parts)
     }
 }
 
 impl<'a> Format<'a> for ForStatementLeft<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            ForStatementLeft::VariableDeclaration(v) => v.format(p),
+            ForStatementLeft::AssignmentTarget(v) => v.format(p),
+            ForStatementLeft::UsingDeclaration(v) => v.format(p),
+        }
     }
 }
 
