@@ -122,7 +122,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
         let opening = group![
             p,
             ss!("if ("),
-            group!(p, indent!(p, softline!(), format!(p, self.test), softline!())),
+            group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()),
             ss!(")"),
             consequent
         ];
@@ -242,7 +242,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
         let mut parts = p.vec();
 
         parts.push(ss!("while ("));
-        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test), softline!())));
+        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
         parts.push(ss!(")"));
 
         let body = format!(p, self.body);
@@ -269,7 +269,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
         }
 
         parts.push(ss!("while ("));
-        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test), softline!())));
+        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
         parts.push(ss!(")"));
         if p.options.semi {
             parts.push(ss!(";"));
