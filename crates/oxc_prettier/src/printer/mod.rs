@@ -52,6 +52,7 @@ impl<'a> Printer<'a> {
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
                 Doc::Group(docs) => self.handle_group(indent, mode, docs),
+                Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
@@ -102,6 +103,26 @@ impl<'a> Printer<'a> {
         }
     }
 
+    fn handle_indent_if_break(
+        &mut self,
+        indent: Indent,
+        mode: Mode,
+        docs: oxc_allocator::Vec<'a, Doc<'a>>,
+    ) {
+        match mode {
+            Mode::Flat => {
+                self.cmds.extend(
+                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                );
+            }
+            Mode::Break => {
+                self.cmds.extend(docs.into_iter().rev().map(|doc| {
+                    Command::new(Indent { length: indent.length + 1 }, Mode::Flat, doc)
+                }));
+            }
+        }
+    }
+
     fn handle_line(&mut self, indent: Indent, mode: Mode) {
         if matches!(mode, Mode::Flat) {
             self.out.push(b' ');
@@ -146,7 +167,10 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::Array(docs) | Doc::Indent(docs) | Doc::Group(docs) => {
+                Doc::IndentIfBreak(docs)
+                | Doc::Array(docs)
+                | Doc::Indent(docs)
+                | Doc::Group(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
                         queue.push_front(d);
