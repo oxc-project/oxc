@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_hex_escape
+---
+  ⚠ eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.
+   ╭─[no_hex_escape.tsx:1:1]
+ 1 │ const foo = "\xb1"
+   ·             ──────
+   ╰────
+
+
