@@ -1682,9 +1682,7 @@ impl<'a> Format<'a> for Class<'a> {
 
 impl<'a> Format<'a> for ClassBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("{}"));
-        Doc::Array(parts)
+        class::print_class_body(p, self)
     }
 }
 
@@ -1842,7 +1840,7 @@ impl<'a> Format<'a> for StaticBlock<'a> {
 
 impl<'a> Format<'a> for MethodDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        function::print_method(p, self)
     }
 }
 
