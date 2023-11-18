@@ -506,6 +506,9 @@ Compatibility: 109/601 (18.14%)
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
 
+### object-colon-bug
+* object-colon-bug/bug.js
+
 ### object-prop-break-in
 * object-prop-break-in/comment.js
 * object-prop-break-in/short-keys.js
@@ -620,7 +623,6 @@ Compatibility: 109/601 (18.14%)
 * switch/switch.js
 
 ### tab-width
-* tab-width/class.js
 * tab-width/nested-functions.spec.js
 
 ### template

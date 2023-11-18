@@ -43,7 +43,10 @@ macro_rules! indent_if_break {
             $(
                 temp_vec.push($x);
             )*
-            Doc::IndentIfBreak(temp_vec)
+            Doc::IndentIfBreak($crate::doc::IndentIfBreak {
+                contents: temp_vec,
+                group_id: None,
+            })
         }
     };
 }
@@ -73,6 +76,7 @@ macro_rules! hardline {
 macro_rules! array {
     ($p:ident, $( $x:expr ),* $(,)?) => {
         {
+            #[allow(unused_mut)]
             let mut temp_vec = $p.vec();
             $(
                 temp_vec.push($x);
@@ -90,7 +94,7 @@ macro_rules! group {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group(temp_vec)
+            Doc::Group($crate::doc::Group { docs: temp_vec, group_id: None })
         }
     };
 }
@@ -98,7 +102,14 @@ macro_rules! group {
 #[macro_export]
 macro_rules! if_break {
     ($p:ident, $s:expr) => {{
-        Doc::IfBreak($p.boxed(Doc::Str($s)))
+        let mut temp_break_vec = $p.vec();
+        temp_break_vec.push(Doc::Str($s));
+
+        Doc::IfBreak($crate::doc::IfBreak {
+            break_contents: temp_break_vec,
+            flat_contents: $p.vec(),
+            group_id: None,
+        })
     }};
 }
 

@@ -1,6 +1,9 @@
 use oxc_allocator::Vec;
 
-use crate::{doc::Doc, hardline, Prettier};
+use crate::{
+    doc::{Doc, Group},
+    hardline, Prettier,
+};
 use oxc_span::GetSpan;
 
 use super::Format;
@@ -17,7 +20,7 @@ pub(super) fn print_statement_sequence<'a, F: Format<'a> + GetSpan>(
 
         if remove_last_statement_hardline && i == stmts.len() - 1 {
             match docs {
-                Doc::Array(ref mut docs) | Doc::Group(ref mut docs) => {
+                Doc::Array(ref mut docs) | Doc::Group(Group { ref mut docs, .. }) => {
                     if matches!(docs.last(), Some(Doc::Hardline)) {
                         docs.pop();
                     }

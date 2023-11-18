@@ -2,7 +2,8 @@ use oxc_ast::ast::*;
 use oxc_span::Span;
 
 use crate::{
-    array, comment::DanglingCommentsPrintOptions, doc::Doc, group, indent, softline, ss, Prettier,
+    array, comment::DanglingCommentsPrintOptions, doc::Doc, doc::Group, group, indent, softline,
+    ss, Prettier,
 };
 
 use super::Format;
@@ -68,7 +69,8 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
         indent!(p, softline!(), elements)
     };
     parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
-    Doc::Group(parts)
+
+    Doc::Group(Group { docs: parts, group_id: None })
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {

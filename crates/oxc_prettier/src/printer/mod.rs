@@ -5,9 +5,12 @@
 
 mod command;
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, num::NonZeroU32};
 
-use crate::{doc::Doc, PrettierOptions};
+use crate::{
+    doc::{Doc, Group, GroupId, IfBreak, IndentIfBreak},
+    PrettierOptions,
+};
 
 use self::command::{Command, Indent, Mode};
 
@@ -22,17 +25,27 @@ pub struct Printer<'a> {
     /// cmds to the array instead of recursively calling `print`.
     cmds: Vec<Command<'a>>,
 
+    group_mode_map: std::collections::HashMap<NonZeroU32, Mode>,
+
     // states
     new_line: &'static str,
 }
 
 impl<'a> Printer<'a> {
     pub fn new(doc: Doc<'a>, source_text: &str, options: PrettierOptions) -> Self {
+        println!("{}", &doc);
         // Preallocate for performance because the output will very likely
         // be the same size as the original text.
         let out = Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str() }
+        Self {
+            options,
+            out,
+            pos: 0,
+            cmds,
+            new_line: options.end_of_line.as_str(),
+            group_mode_map: std::collections::HashMap::new(),
+        }
     }
 
     pub fn build(mut self) -> String {
@@ -51,12 +64,14 @@ impl<'a> Printer<'a> {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
-                Doc::Group(docs) => self.handle_group(indent, mode, docs),
-                Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
+                Doc::Group(group) => self.handle_group(indent, mode, group),
+                Doc::IndentIfBreak(indent_if_break) => {
+                    self.handle_indent_if_break(indent_if_break, indent, mode);
+                }
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
-                Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
+                Doc::IfBreak(doc) => self.handle_if_break(doc, indent, mode),
             }
         }
     }
@@ -78,47 +93,61 @@ impl<'a> Printer<'a> {
         );
     }
 
-    fn handle_group(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+    fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
         match mode {
             Mode::Flat => {
                 // TODO: consider supporting `group mode` e.g. Break/Flat
                 self.cmds.extend(
-                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                    group.docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
                 );
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
-
-                if self.fits(&docs, indent, remaining_width) {
+                if self.fits(&group.docs, indent, remaining_width) {
                     self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                        group
+                            .docs
+                            .into_iter()
+                            .rev()
+                            .map(|doc| Command::new(indent, Mode::Flat, doc)),
                     );
                 } else {
                     self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
+                        group
+                            .docs
+                            .into_iter()
+                            .rev()
+                            .map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
                 }
             }
+        }
+        if let Some(group_id) = group.group_id {
+            self.group_mode_map.insert(group_id.id, self.cmds.last().unwrap().mode);
         }
     }
 
     fn handle_indent_if_break(
         &mut self,
+        indent_if_break: IndentIfBreak<'a>,
         indent: Indent,
         mode: Mode,
-        docs: oxc_allocator::Vec<'a, Doc<'a>>,
     ) {
-        match mode {
+        let group_mode = indent_if_break
+            .group_id
+            .map_or(mode, |id| self.group_mode_map.get(&id.id).copied().unwrap_or(mode));
+
+        match group_mode {
             Mode::Flat => {
-                self.cmds.extend(
-                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
-                );
+                self.cmds.push(Command::new(indent, mode, indent_if_break.contents.unbox()));
             }
             Mode::Break => {
-                self.cmds.extend(docs.into_iter().rev().map(|doc| {
-                    Command::new(Indent { length: indent.length + 1 }, Mode::Flat, doc)
-                }));
+                self.cmds.push(Command::new(
+                    Indent { length: indent.length + 1 },
+                    mode,
+                    indent_if_break.contents.unbox(),
+                ));
             }
         }
     }
@@ -144,10 +173,18 @@ impl<'a> Printer<'a> {
         self.pos = self.indent(indent.length);
     }
 
-    fn handle_if_break(&mut self, doc: Doc<'a>, indent: Indent, mode: Mode) {
-        if mode == Mode::Break {
-            self.cmds.push(Command::new(indent, Mode::Break, doc));
-        }
+    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
+        let group_mode = if_break
+            .group_id
+            .map_or(mode, |id| self.group_mode_map.get(&id.id).copied().unwrap_or(mode));
+
+        let contents = if group_mode == Mode::Break {
+            if_break.break_contents
+        } else {
+            if_break.flat_contents
+        };
+
+        self.cmds.extend(contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
     }
 
     #[allow(clippy::cast_possible_wrap)]
@@ -167,21 +204,44 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::IndentIfBreak(docs)
-                | Doc::Array(docs)
-                | Doc::Indent(docs)
-                | Doc::Group(docs) => {
-                    // Prepend docs to the queue
+                Doc::Array(docs) | Doc::Indent(docs) => {
                     for d in docs.iter().rev() {
                         queue.push_front(d);
                     }
+                }
+                Doc::IndentIfBreak(docs) => {
+                    queue.push_front(&docs.contents);
+                    // Prepend docs to the queue
+                    // for d in docs.contents.iter().rev() {
+                    //     queue.push_front(d);
+                    // }
 
                     if matches!(next, Doc::Indent(_)) {
                         remaining_width -= (self.options.tab_width * indent.length) as isize;
                     }
                 }
+                Doc::Group(group) => {
+                    for d in group.docs.iter().rev() {
+                        queue.push_front(d);
+                    }
+                }
+                Doc::IfBreak(if_break) => {
+                    let group_mode = if_break.group_id.map_or(Mode::Flat, |id| {
+                        self.group_mode_map.get(&id.id).copied().unwrap_or(Mode::Flat)
+                    });
+
+                    let contents = if group_mode == Mode::Break {
+                        &if_break.break_contents
+                    } else {
+                        &if_break.flat_contents
+                    };
+
+                    for d in contents.iter().rev() {
+                        queue.push_front(d);
+                    }
+                }
                 // trying to fit on a single line, so we don't need to consider line breaks
-                Doc::IfBreak { .. } | Doc::Softline => {}
+                Doc::Softline => {}
                 Doc::Line => remaining_width -= 1,
                 Doc::Hardline => {
                     return false;

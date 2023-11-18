@@ -7,6 +7,7 @@
 
 mod array;
 mod arrow_function;
+mod assignment;
 mod binaryish;
 mod block;
 mod call_expression;
@@ -29,7 +30,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    doc::{Doc, Separator},
+    doc::{Doc, Group, Separator},
     format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
@@ -229,7 +230,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group { docs: parts, group_id: None })
         })
     }
 }
@@ -287,7 +288,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group { docs: parts, group_id: None })
         })
     }
 }
@@ -314,7 +315,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(parts)
+            Doc::Group(Group { docs: parts, group_id: None })
         })
     }
 }
@@ -573,7 +574,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 parts.push(ss!(";"));
             }
 
-            Doc::Group(parts)
+            Doc::Group(Group { docs: parts, group_id: None })
         })
     }
 }
@@ -907,13 +908,7 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
 
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(self.id.format(p));
-        if let Some(init) = &self.init {
-            parts.push(ss!(" = "));
-            parts.push(init.format(p));
-        }
-        Doc::Array(parts)
+        assignment::print_variable_declarator(p, self)
     }
 }
 
@@ -1408,7 +1403,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 parts.push(ss!(": "));
                 parts.push(format!(p, self.value));
             }
-            Doc::Group(parts)
+            Doc::Group(Group { docs: parts, group_id: None })
         }
     }
 }
@@ -1523,14 +1518,7 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![
-            p,
-            format!(p, self.left),
-            ss!(" "),
-            string!(p, self.operator.as_str()),
-            ss!(" "),
-            format!(p, self.right)
-        ]
+        assignment::print_assignment_expression(p, self)
     }
 }
 
@@ -1660,7 +1648,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
         }
         parts.push(ss!(")"));
 
-        Doc::Group(parts)
+        Doc::Group(Group { docs: parts, group_id: None })
     }
 }
 

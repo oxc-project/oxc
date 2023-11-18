@@ -11,8 +11,14 @@ mod macros;
 mod options;
 mod printer;
 
-use std::{iter::Peekable, vec};
+use std::{
+    iter::Peekable,
+    num::NonZeroU32,
+    sync::atomic::{AtomicU32, Ordering},
+    vec,
+};
 
+use doc::GroupId;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
 use oxc_syntax::identifier::is_line_terminator;
@@ -21,6 +27,25 @@ use crate::{doc::Doc, format::Format, printer::Printer};
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 
+pub struct UniqueGroupIdBuilder {
+    next_id: AtomicU32,
+}
+
+impl Default for UniqueGroupIdBuilder {
+    fn default() -> Self {
+        Self { next_id: AtomicU32::new(1) }
+    }
+}
+
+impl UniqueGroupIdBuilder {
+    pub fn group_id(&self) -> GroupId {
+        let id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        dbg!(id);
+        let id = NonZeroU32::new(id).unwrap_or_else(|| panic!("Group ID counter overflowed"));
+
+        GroupId::new(id)
+    }
+}
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
 
@@ -34,6 +59,8 @@ pub struct Prettier<'a> {
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
     nodes: Vec<AstKind<'a>>,
+
+    group_id_counter: UniqueGroupIdBuilder,
 }
 
 impl<'a> Prettier<'a> {
@@ -49,6 +76,7 @@ impl<'a> Prettier<'a> {
             options,
             trivias: trivias.into_iter().peekable(),
             nodes: vec![],
+            group_id_counter: UniqueGroupIdBuilder::default(),
         }
     }
 

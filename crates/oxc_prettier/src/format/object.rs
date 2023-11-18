@@ -1,6 +1,9 @@
 use oxc_allocator::Vec;
 
-use crate::{doc::Doc, group, if_break, line, softline, ss, Prettier};
+use crate::{
+    doc::{Doc, Group},
+    group, if_break, line, softline, ss, Prettier,
+};
 
 use super::Format;
 
@@ -36,7 +39,7 @@ pub(super) fn print_object_properties<'a, F: Format<'a>>(
         }
 
         parts.push(ss!("}"));
-        Doc::Group(parts)
+        Doc::Group(Group { docs: parts, group_id: None })
     };
 
     content
