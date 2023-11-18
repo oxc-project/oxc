@@ -1,4 +1,4 @@
-Compatibility: 101/838 (12.05%)
+Compatibility: 103/838 (12.29%)
 
 # Failed
 
@@ -756,12 +756,10 @@ Compatibility: 101/838 (12.05%)
 * object-property-ignore/issue-5678.js
 
 ### objects
-* objects/bigint-key.js
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
 * objects/getter-setter.js
-* objects/method.js
 * objects/range.js
 * objects/right-break.js
 

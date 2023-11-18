@@ -859,7 +859,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function::print_function(p, self)
+        function::print_function(p, self, None)
     }
 }
 
@@ -1318,7 +1318,34 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
         if self.shorthand {
             self.key.format(p)
         } else {
-            group!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
+            let mut parts = p.vec();
+            let mut method = self.method;
+            match self.kind {
+                PropertyKind::Get => {
+                    parts.push(ss!("get "));
+                    method = true;
+                }
+                PropertyKind::Set => {
+                    parts.push(ss!("set "));
+                    method = true;
+                }
+                PropertyKind::Init => (),
+            }
+            if method {
+                if let Expression::FunctionExpression(func_expr) = &self.value {
+                    parts.push(function::print_function(
+                        p,
+                        func_expr,
+                        Some(self.key.span().source_text(p.source_text)),
+                    ));
+                }
+            } else {
+                parts.push(format!(p, self.key));
+
+                parts.push(ss!(": "));
+                parts.push(format!(p, self.value));
+            }
+            Doc::Group(parts)
         }
     }
 }
