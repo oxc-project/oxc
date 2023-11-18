@@ -2,7 +2,7 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, ss, Format, Prettier};
+use crate::{doc::Doc, if_break, ss, Format, Prettier};
 
 pub(super) fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
@@ -17,8 +17,31 @@ pub(super) fn print_call_expression<'a>(
         parts.push(ss!("new "));
     }
     parts.push(callee.format(p));
-    parts.push(ss!("("));
-    parts.extend(arguments.iter().map(|arg| arg.format(p)));
-    parts.push(ss!(")"));
+
+    parts.push(print_call_expression_arguments(p, arguments));
+
     Doc::Array(parts)
+}
+
+fn print_call_expression_arguments<'a>(
+    p: &mut Prettier<'a>,
+    arguments: &Vec<'a, Argument<'a>>,
+) -> Doc<'a> {
+    let mut parts = p.vec();
+    parts.push(ss!("("));
+
+    let mut parts_inner = p.vec();
+    parts_inner.push(Doc::Softline);
+    for (i, element) in arguments.iter().enumerate() {
+        parts_inner.push(element.format(p));
+        if i < arguments.len() - 1 {
+            parts_inner.push(ss!(","));
+            parts_inner.push(Doc::Line);
+        }
+    }
+    parts.push(Doc::Indent(parts_inner));
+    parts.push(if_break!(p, ","));
+    parts.push(Doc::Softline);
+    parts.push(ss!(")"));
+    Doc::Group(parts)
 }

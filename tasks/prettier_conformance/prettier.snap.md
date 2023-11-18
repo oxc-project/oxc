@@ -1,4 +1,4 @@
-Compatibility: 66/881 (7.49%)
+Compatibility: 78/881 (8.85%)
 
 # Failed
 
@@ -41,7 +41,6 @@ Compatibility: 66/881 (7.49%)
 * arrows/currying.js
 * arrows/issue-1389-curry.js
 * arrows/issue-4166-curry.js
-* arrows/long-call-no-args.js
 * arrows/long-contents.js
 * arrows/parens.js
 * arrows/tuple-and-record.js
@@ -100,7 +99,6 @@ Compatibility: 66/881 (7.49%)
 * async/inline-await.js
 * async/nested.js
 * async/nested2.js
-* async/simple-nested-await.js
 
 ### async-do-expressions
 * async-do-expressions/async-do-expressions.js
@@ -190,7 +188,6 @@ Compatibility: 66/881 (7.49%)
 
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
-* call/first-argument-expansion/issue-12892.js
 * call/first-argument-expansion/issue-13237.js
 * call/first-argument-expansion/issue-14454.js
 * call/first-argument-expansion/issue-2456.js
@@ -338,7 +335,6 @@ Compatibility: 66/881 (7.49%)
 
 ### conditional
 * conditional/comments.js
-* conditional/new-expression.js
 * conditional/new-ternary-examples.js
 * conditional/new-ternary-spec.js
 * conditional/no-confusing-arrow.js
@@ -665,7 +661,6 @@ Compatibility: 66/881 (7.49%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
-* last-argument-expansion/function-expression-issue-2239.js
 * last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
@@ -696,11 +691,9 @@ Compatibility: 66/881 (7.49%)
 * method-chain/break-last-call.js
 * method-chain/break-last-member.js
 * method-chain/comment.js
-* method-chain/complex-args.js
 * method-chain/computed-merge.js
 * method-chain/computed.js
 * method-chain/conditional.js
-* method-chain/cypress.js
 * method-chain/d3.js
 * method-chain/first_long.js
 * method-chain/fluent-configuration.js
@@ -714,15 +707,10 @@ Compatibility: 66/881 (7.49%)
 * method-chain/object-literal.js
 * method-chain/pr-7889.js
 * method-chain/short-names.js
-* method-chain/simple-args.js
 * method-chain/square_0.js
 * method-chain/test.js
 * method-chain/this.js
 * method-chain/tuple-and-record.js
-
-### method-chain/print-width-120
-* method-chain/print-width-120/constructor.js
-* method-chain/print-width-120/issue-7884.js
 
 ### module-blocks
 * module-blocks/comments.js
@@ -954,7 +942,6 @@ Compatibility: 66/881 (7.49%)
 
 ### require-amd
 * require-amd/named-amd-module.js
-* require-amd/non-amd-define.js
 * require-amd/require.js
 
 ### reserved-word
@@ -982,7 +969,6 @@ Compatibility: 66/881 (7.49%)
 ### source-phase-imports
 * source-phase-imports/default-binding.js
 * source-phase-imports/import-source-attributes-declaration.js
-* source-phase-imports/import-source-attributes-expression.js
 * source-phase-imports/import-source-binding-from.js
 * source-phase-imports/import-source-binding-source.js
 * source-phase-imports/import-source.js
