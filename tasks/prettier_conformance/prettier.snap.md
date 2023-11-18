@@ -1,4 +1,4 @@
-Compatibility: 90/881 (10.22%)
+Compatibility: 92/881 (10.44%)
 
 # Failed
 
@@ -180,7 +180,6 @@ Compatibility: 90/881 (10.22%)
 * break-calls/break.js
 * break-calls/parent.js
 * break-calls/react.js
-* break-calls/reduce.js
 
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
@@ -439,9 +438,6 @@ Compatibility: 90/881 (10.22%)
 ### do
 * do/call-arguments.js
 * do/do.js
-
-### dynamic-import
-* dynamic-import/test.js
 
 ### empty-paren-comment
 * empty-paren-comment/class-property.js
