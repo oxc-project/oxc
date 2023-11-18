@@ -1305,7 +1305,21 @@ impl<'a> Format<'a> for PropertyKey<'a> {
         match self {
             PropertyKey::Identifier(ident) => ident.format(p),
             PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-            PropertyKey::Expression(expr) => expr.format(p),
+            PropertyKey::Expression(expr) => match expr {
+                Expression::StringLiteral(literal) => {
+                    let expr = format!(p, literal);
+                    let value = literal.value.as_bytes();
+                    if !&value[0].is_ascii_digit() && !value.contains(&b'_') {
+                        p.str(&literal.value)
+                    } else {
+                        literal.format(p)
+                    }
+                }
+                Expression::Identifier(ident) => {
+                    array!(p, ss!("["), ident.format(p), ss!("]"))
+                }
+                _ => expr.format(p),
+            },
         }
     }
 }
