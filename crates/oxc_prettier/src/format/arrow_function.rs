@@ -9,7 +9,10 @@ pub(super) fn print_arrow_function<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
-    parts.push(ss!("() => "));
+    let parameters = expr.params.format(p);
+    parts.push(parameters);
+    parts.push(ss!(" => "));
+
     if expr.expression {
         let stmt = &expr.body.statements[0];
         match stmt {
