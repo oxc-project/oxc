@@ -1,4 +1,4 @@
-Compatibility: 103/838 (12.29%)
+Compatibility: 105/838 (12.53%)
 
 # Failed
 
@@ -468,7 +468,6 @@ Compatibility: 103/838 (12.29%)
 
 ### expression_statement
 * expression_statement/no_regression.js
-* expression_statement/use_strict.js
 
 ### for
 * for/comment.js
@@ -759,7 +758,6 @@ Compatibility: 103/838 (12.29%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
-* objects/getter-setter.js
 * objects/range.js
 * objects/right-break.js
 

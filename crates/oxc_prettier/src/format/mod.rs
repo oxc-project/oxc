@@ -1425,15 +1425,13 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        group!(
+        let doc = binaryish::print_binaryish_expression(
             p,
-            binaryish::print_binaryish_expression(
-                p,
-                &BinaryishLeft::Expression(&self.left),
-                BinaryishOperator::BinaryOperator(self.operator),
-                &self.right,
-            )
-        )
+            &BinaryishLeft::Expression(&self.left),
+            BinaryishOperator::BinaryOperator(self.operator),
+            &self.right,
+        );
+        group!(p, indent!(p, softline!(), doc), softline!())
     }
 }
 
@@ -1450,12 +1448,13 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
 
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        binaryish::print_binaryish_expression(
+        let doc = binaryish::print_binaryish_expression(
             p,
             &BinaryishLeft::Expression(&self.left),
             BinaryishOperator::LogicalOperator(self.operator),
             &self.right,
-        )
+        );
+        group!(p, indent!(p, softline!(), doc), softline!())
     }
 }
 
@@ -1584,11 +1583,12 @@ impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         // TODO: if shouldHug
         // array![p, ss!("("), format!(p, self.expression), ss!(")")]
-        group![
+        array![
             p,
             ss!("("),
-            indent!(p, array![p, softline!(), format!(p, self.expression)]),
-            softline!(),
+            format!(p, self.expression),
+            // indent!(p, array![p, softline!(), ]),
+            // softline!(),
             ss!(")")
         ]
     }
