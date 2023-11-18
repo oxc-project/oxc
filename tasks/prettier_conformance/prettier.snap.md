@@ -1,4 +1,4 @@
-Compatibility: 81/881 (9.19%)
+Compatibility: 83/881 (9.42%)
 
 # Failed
 
@@ -803,7 +803,6 @@ Compatibility: 81/881 (9.19%)
 
 ### object-prop-break-in
 * object-prop-break-in/comment.js
-* object-prop-break-in/long-value.js
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
 
@@ -1076,7 +1075,6 @@ Compatibility: 81/881 (9.19%)
 
 ### unicode
 * unicode/combining-characters.js
-* unicode/keys.js
 * unicode/nbsp-jsx.js
 
 ### update-expression
