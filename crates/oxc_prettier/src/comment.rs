@@ -5,7 +5,7 @@ use oxc_span::Span;
 
 use crate::{
     doc::{Doc, Separator},
-    hardline, Prettier,
+    hardline, indent, Prettier,
 };
 
 #[derive(Clone, Copy)]
@@ -27,6 +27,18 @@ pub enum CommentFlags {
     First,
     /// Check comment is the last attached comment
     Last,
+}
+
+#[derive(Default)]
+pub struct DanglingCommentsPrintOptions {
+    ident: bool,
+}
+
+impl DanglingCommentsPrintOptions {
+    pub(crate) fn with_ident(mut self, ident: bool) -> Self {
+        self.ident = ident;
+        self
+    }
 }
 
 impl<'a> Prettier<'a> {
@@ -57,7 +69,11 @@ impl<'a> Prettier<'a> {
     }
 
     #[must_use]
-    pub(crate) fn print_dangling_comments(&mut self, range: Span) -> Option<Doc<'a>> {
+    pub(crate) fn print_dangling_comments(
+        &mut self,
+        range: Span,
+        dangling_options: Option<DanglingCommentsPrintOptions>,
+    ) -> Option<Doc<'a>> {
         let mut parts = vec![];
         while let Some((start, end, kind)) = self.trivias.peek().copied() {
             // Comment within the span
@@ -68,7 +84,13 @@ impl<'a> Prettier<'a> {
                 break;
             }
         }
-        (!parts.is_empty()).then(|| Doc::Array(self.join(Separator::Hardline, parts)))
+        (!parts.is_empty()).then(|| Doc::Array(self.join(Separator::Hardline, parts))).map(|doc| {
+            if dangling_options.is_some_and(|options| options.ident) {
+                indent!(self, hardline!(), doc)
+            } else {
+                doc
+            }
+        })
     }
 
     #[must_use]
