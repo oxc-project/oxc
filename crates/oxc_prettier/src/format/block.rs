@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 
 use crate::{doc::Doc, format::array, hardline, indent, ss, Prettier};
 
@@ -15,6 +15,20 @@ pub(super) fn print_block<'a>(
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push(indent![p, hardline!(), doc]);
         parts.push(hardline!());
+    } else {
+        let parent = p.parent_kind();
+        if !(matches!(
+            parent,
+            AstKind::FunctionBody(_)
+                | AstKind::ArrowExpression(_)
+                | AstKind::Function(_)
+                | AstKind::ForStatement(_)
+                | AstKind::WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+        ) || matches!(p.current_kind(), AstKind::StaticBlock(_)))
+        {
+            parts.push(hardline!());
+        }
     }
     parts.push(ss!("}"));
     Doc::Array(parts)

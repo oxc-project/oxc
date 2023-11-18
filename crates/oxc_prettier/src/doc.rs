@@ -56,7 +56,7 @@ impl<'a> Prettier<'a> {
     }
 
     #[inline]
-    pub(crate) fn alloc(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
+    pub(crate) fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
         Box(self.allocator.alloc(doc))
     }
 

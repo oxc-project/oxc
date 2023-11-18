@@ -85,6 +85,16 @@ macro_rules! group {
 #[macro_export]
 macro_rules! if_break {
     ($p:ident, $s:expr) => {{
-        Doc::IfBreak($p.alloc(Doc::Str($s)))
+        Doc::IfBreak($p.boxed(Doc::Str($s)))
+    }};
+}
+
+#[macro_export]
+macro_rules! wrap {
+    ($p:ident, $self:expr, $kind:ident, $block:block) => {{
+        $p.enter_node(AstKind::$kind($p.alloc($self)));
+        let doc = $block;
+        $p.leave_node();
+        doc
     }};
 }

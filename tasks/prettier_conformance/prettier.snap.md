@@ -1,4 +1,4 @@
-Compatibility: 105/838 (12.53%)
+Compatibility: 108/838 (12.89%)
 
 # Failed
 
@@ -616,9 +616,6 @@ Compatibility: 105/838 (12.53%)
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
 
-### logical-assignment
-* logical-assignment/logical-assignment.js
-
 ### logical_expressions
 * logical_expressions/issue-7024.js
 * logical_expressions/logical_expression_operators.js
@@ -658,7 +655,6 @@ Compatibility: 105/838 (12.53%)
 ### module-blocks
 * module-blocks/comments.js
 * module-blocks/module-blocks.js
-* module-blocks/non-module-blocks.js
 * module-blocks/range.js
 * module-blocks/worker.js
 
@@ -764,9 +760,6 @@ Compatibility: 105/838 (12.53%)
 ### objects/assignment-expression
 * objects/assignment-expression/object-property.js
 * objects/assignment-expression/object-value.js
-
-### optional-catch-binding
-* optional-catch-binding/optional_catch_binding.js
 
 ### optional-chaining
 * optional-chaining/chaining.js
