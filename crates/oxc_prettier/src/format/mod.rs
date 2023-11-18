@@ -5,12 +5,6 @@
 
 #![allow(unused_variables)]
 
-use std::borrow::Cow;
-
-use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
-use oxc_span::GetSpan;
-
 mod array;
 mod arrow_function;
 mod binaryish;
@@ -25,10 +19,16 @@ mod statement;
 mod string;
 mod ternary;
 
+use std::borrow::Cow;
+
+use oxc_allocator::{Box, Vec};
+use oxc_ast::{ast::*, AstKind};
+use oxc_span::GetSpan;
+
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, indent, softline, ss, string, Prettier,
+    format, group, hardline, indent, softline, ss, string, wrap, Prettier,
 };
 
 use self::{
@@ -53,6 +53,7 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        p.enter_node(AstKind::Program(p.alloc(self)));
         let mut parts = p.vec();
         if let Some(hashbang) = &self.hashbang {
             parts.push(hashbang.format(p));
@@ -65,6 +66,7 @@ impl<'a> Format<'a> for Program<'a> {
         {
             parts.push(doc);
         }
+        p.leave_node();
         Doc::Array(parts)
     }
 }
@@ -155,42 +157,44 @@ impl<'a> Format<'a> for IfStatement<'a> {
 
 impl<'a> Format<'a> for BlockStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block(p, &self.body, None)
+        wrap!(p, self, BlockStatement, { block::print_block(p, &self.body, None) })
     }
 }
 
 impl<'a> Format<'a> for ForStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, ForStatement, {
+            let mut parts = p.vec();
 
-        parts.push(ss!("for ("));
+            parts.push(ss!("for ("));
 
-        let mut parts_head = p.vec();
+            let mut parts_head = p.vec();
 
-        if let Some(init) = &self.init {
-            parts_head.push(format!(p, init));
-        }
-        parts_head.push(ss!(";"));
-        parts_head.push(Doc::Line);
-        if let Some(init) = &self.test {
-            parts_head.push(format!(p, init));
-        }
-        parts_head.push(ss!(";"));
-        parts_head.push(Doc::Line);
-        if let Some(init) = &self.update {
-            parts_head.push(format!(p, init));
-        }
+            if let Some(init) = &self.init {
+                parts_head.push(format!(p, init));
+            }
+            parts_head.push(ss!(";"));
+            parts_head.push(Doc::Line);
+            if let Some(init) = &self.test {
+                parts_head.push(format!(p, init));
+            }
+            parts_head.push(ss!(";"));
+            parts_head.push(Doc::Line);
+            if let Some(init) = &self.update {
+                parts_head.push(format!(p, init));
+            }
 
-        let parts_head = indent!(p, group!(p, Doc::Array(parts_head)));
+            let parts_head = indent!(p, group!(p, Doc::Array(parts_head)));
 
-        parts.push(group!(p, parts_head));
+            parts.push(group!(p, parts_head));
 
-        parts.push(ss!(")"));
+            parts.push(ss!(")"));
 
-        let body = format!(p, self.body);
-        parts.push(adjust_clause(p, &self.body, body, false));
+            let body = format!(p, self.body);
+            parts.push(adjust_clause(p, &self.body, body, false));
 
-        Doc::Group(parts)
+            Doc::Group(parts)
+        })
     }
 }
 
@@ -255,43 +259,47 @@ impl<'a> Format<'a> for ForStatementLeft<'a> {
 
 impl<'a> Format<'a> for WhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, WhileStatement, {
+            let mut parts = p.vec();
 
-        parts.push(ss!("while ("));
-        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
-        parts.push(ss!(")"));
+            parts.push(ss!("while ("));
+            parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
+            parts.push(ss!(")"));
 
-        let body = format!(p, self.body);
-        parts.push(adjust_clause(p, &self.body, body, false));
+            let body = format!(p, self.body);
+            parts.push(adjust_clause(p, &self.body, body, false));
 
-        Doc::Group(parts)
+            Doc::Group(parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for DoWhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, DoWhileStatement, {
+            let mut parts = p.vec();
 
-        let clause = format!(p, self.body);
-        let clause = adjust_clause(p, &self.body, clause, false);
-        let do_body = group!(p, ss!("do"), clause);
+            let clause = format!(p, self.body);
+            let clause = adjust_clause(p, &self.body, clause, false);
+            let do_body = group!(p, ss!("do"), clause);
 
-        parts.push(do_body);
+            parts.push(do_body);
 
-        if matches!(self.body, Statement::BlockStatement(_)) {
-            parts.push(ss!(" "));
-        } else {
-            parts.push(hardline!());
-        }
+            if matches!(self.body, Statement::BlockStatement(_)) {
+                parts.push(ss!(" "));
+            } else {
+                parts.push(hardline!());
+            }
 
-        parts.push(ss!("while ("));
-        parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
-        parts.push(ss!(")"));
-        if p.options.semi {
-            parts.push(ss!(";"));
-        }
+            parts.push(ss!("while ("));
+            parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
+            parts.push(ss!(")"));
+            if p.options.semi {
+                parts.push(ss!(";"));
+            }
 
-        Doc::Array(parts)
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -402,6 +410,7 @@ impl<'a> Format<'a> for LabeledStatement<'a> {
 
 impl<'a> Format<'a> for TryStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        p.enter_node(AstKind::TryStatement(p.alloc(self)));
         let mut parts = p.vec();
         parts.push(ss!("try "));
         parts.push(format!(p, self.block));
@@ -413,6 +422,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
             parts.push(ss!(" finally "));
             parts.push(format!(p, finalizer));
         }
+        p.leave_node();
         Doc::Array(parts)
     }
 }
@@ -854,13 +864,15 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
 
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function::print_function(p, self, None)
+        wrap!(p, self, Function, { function::print_function(p, self, None) })
     }
 }
 
 impl<'a> Format<'a> for FunctionBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block(p, &self.statements, Some(&self.directives))
+        wrap!(p, self, FunctionBody, {
+            block::print_block(p, &self.statements, Some(&self.directives))
+        })
     }
 }
 
@@ -1325,11 +1337,13 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
             }
             if method {
                 if let Expression::FunctionExpression(func_expr) = &self.value {
-                    parts.push(function::print_function(
-                        p,
-                        func_expr,
-                        Some(self.key.span().source_text(p.source_text)),
-                    ));
+                    wrap!(p, func_expr, Function, {
+                        parts.push(function::print_function(
+                            p,
+                            func_expr,
+                            Some(self.key.span().source_text(p.source_text)),
+                        ));
+                    });
                 }
             } else {
                 parts.push(format!(p, self.key));
@@ -1367,7 +1381,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
 impl<'a> Format<'a> for ArrowExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        arrow_function::print_arrow_function(p, self)
+        wrap!(p, self, ArrowExpression, { arrow_function::print_arrow_function(p, self) })
     }
 }
 
@@ -1815,7 +1829,9 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, ss!("static "), block::print_block(p, &self.body, None)]
+        wrap!(p, self, StaticBlock, {
+            array![p, ss!("static "), block::print_block(p, &self.body, None)]
+        })
     }
 }
 
