@@ -876,6 +876,9 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
+        if p.options.semi {
+            parts.push(ss!(";"));
+        }
         Doc::Array(parts)
     }
 }
@@ -895,7 +898,7 @@ impl<'a> Format<'a> for ImportSpecifier {
         if self.imported.span() == self.local.span {
             self.local.format(p)
         } else {
-            array![p, self.imported.format(p), ss!("as"), self.local.format(p)]
+            array![p, self.imported.format(p), ss!(" as "), self.local.format(p)]
         }
     }
 }
@@ -927,7 +930,6 @@ impl<'a> Format<'a> for ImportAttribute {
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(ss!(" "));
         parts.push(module::print_module_specifiers(p, &self.specifiers));
         if let Some(decl) = &self.declaration {
             parts.push(decl.format(p));
@@ -950,7 +952,11 @@ impl<'a> Format<'a> for TSNamespaceExportDeclaration {
 
 impl<'a> Format<'a> for ExportSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        if self.exported.span() == self.local.span() {
+            self.local.format(p)
+        } else {
+            array![p, self.local.format(p), ss!(" as "), self.exported.format(p)]
+        }
     }
 }
 

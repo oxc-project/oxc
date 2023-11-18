@@ -124,7 +124,7 @@ pub enum QuoteProps {
     Preserve,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum TrailingComma {
     /// Trailing commas wherever possible (including function parameters and calls).
     #[default]
@@ -133,6 +133,20 @@ pub enum TrailingComma {
     ES5,
     /// No trailing commas.
     None,
+}
+
+impl TrailingComma {
+    pub fn is_all(self) -> bool {
+        self == Self::All
+    }
+
+    pub fn is_es5(self) -> bool {
+        self == Self::ES5
+    }
+
+    pub fn is_none(self) -> bool {
+        self == Self::None
+    }
 }
 
 impl FromStr for TrailingComma {
