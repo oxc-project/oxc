@@ -1,3 +1,5 @@
+#![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+
 use std::{fs, path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
@@ -73,12 +75,11 @@ impl VisitMut<'_> for SpecParser {
                                     options.single_quote = literal.value;
                                 }
                             }
-                            Expression::NumberLiteral(literal) => {
-                                if name == "printWidth" {
-                                    options.print_width =
-                                        str::parse(&literal.value.to_string()).unwrap_or(80);
-                                }
-                            }
+                            Expression::NumberLiteral(literal) => match name.as_str() {
+                                "printWidth" => options.print_width = literal.value as usize,
+                                "tabWidth" => options.tab_width = literal.value as usize,
+                                _ => {}
+                            },
                             Expression::StringLiteral(literal) => match name.as_str() {
                                 "trailingComma" => {
                                     options.trailing_comma =

@@ -49,6 +49,17 @@ pub(super) fn print_function<'a>(
     Doc::Array(parts)
 }
 
+pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
+    let mut parts = p.vec();
+    parts.push(method.key.format(p));
+    parts.push(method.value.params.format(p));
+    if let Some(body) = &method.value.body {
+        parts.push(ss!(" "));
+        parts.push(body.format(p));
+    }
+    Doc::Array(parts)
+}
+
 pub(super) fn print_return_or_throw_argument<'a>(
     p: &mut Prettier<'a>,
     argument: Option<&Expression<'a>>,
