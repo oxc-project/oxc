@@ -1437,7 +1437,7 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        object::print_object_properties(p, &self.properties)
     }
 }
 
@@ -1449,19 +1449,38 @@ impl<'a> Format<'a> for AssignmentTargetWithDefault<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        match self {
+            Self::AssignmentTargetPropertyIdentifier(ident) => ident.format(p),
+            Self::AssignmentTargetPropertyProperty(prop) => prop.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(self.binding.format(p));
+
+        if let Some(init) = &self.init {
+            parts.push(ss!(" = "));
+            parts.push(init.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(self.binding.format(p));
+
+        parts.push(ss!(": "));
+        parts.push(self.name.format(p));
+
+        Doc::Array(parts)
     }
 }
 
