@@ -1,4 +1,4 @@
-Compatibility: 98/838 (11.69%)
+Compatibility: 101/838 (12.05%)
 
 # Failed
 
@@ -29,7 +29,6 @@ Compatibility: 98/838 (11.69%)
 * arrows/arrow-chain-with-trailing-comments.js
 * arrows/arrow_function_expression.js
 * arrows/assignment-chain-with-arrow-chain.js
-* arrows/block_like.js
 * arrows/call.js
 * arrows/chain-as-arg.js
 * arrows/chain-in-logical-expression.js
@@ -451,7 +450,6 @@ Compatibility: 98/838 (11.69%)
 
 ### export
 * export/blank-line-between-specifiers.js
-* export/bracket.js
 * export/empty.js
 * export/same-local-and-exported.js
 
@@ -479,7 +477,6 @@ Compatibility: 98/838 (11.69%)
 * for/continue-and-break-comment-without-blocks.js
 * for/for.js
 * for/in.js
-* for/var.js
 
 ### for-await
 * for-await/for-await.js
