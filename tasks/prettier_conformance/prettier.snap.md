@@ -1,4 +1,4 @@
-Compatibility: 78/881 (8.85%)
+Compatibility: 81/881 (9.19%)
 
 # Failed
 
@@ -66,7 +66,6 @@ Compatibility: 78/881 (8.85%)
 * assignment/issue-1419.js
 * assignment/issue-15534.js
 * assignment/issue-1966.js
-* assignment/issue-2184.js
 * assignment/issue-2482-1.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
@@ -167,7 +166,6 @@ Compatibility: 78/881 (8.85%)
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 * binary-expressions/tuple-and-record.js
-* binary-expressions/unary.js
 
 ### binary_math
 * binary_math/parens.js
@@ -518,6 +516,7 @@ Compatibility: 78/881 (8.85%)
 
 ### expression_statement
 * expression_statement/no_regression.js
+* expression_statement/use_strict.js
 
 ### for
 * for/comment.js
@@ -682,7 +681,6 @@ Compatibility: 78/881 (8.85%)
 ### member
 * member/conditional.js
 * member/expand.js
-* member/logical.js
 
 ### method-chain
 * method-chain/13018.js
@@ -958,7 +956,6 @@ Compatibility: 78/881 (8.85%)
 * sequence-break/break.js
 
 ### sequence-expression
-* sequence-expression/export-default.js
 * sequence-expression/ignore.js
 * sequence-expression/parenthesized.js
 

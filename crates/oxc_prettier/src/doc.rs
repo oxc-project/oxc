@@ -5,7 +5,7 @@
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 
-use crate::Prettier;
+use crate::{array, line, ss, Prettier};
 
 #[derive(Debug)]
 pub enum Doc<'a> {
@@ -106,6 +106,7 @@ impl<'a> DocPrinter<'a> {
 pub enum Separator {
     Softline,
     Hardline,
+    CommaLine, // [",", line]
 }
 
 /// Doc Builder
@@ -137,6 +138,7 @@ impl<'a> Prettier<'a> {
                 parts.push(match separator {
                     Separator::Softline => Doc::Softline,
                     Separator::Hardline => Doc::Hardline,
+                    Separator::CommaLine => array![self, ss!(","), line!()],
                 });
             }
             parts.push(doc);

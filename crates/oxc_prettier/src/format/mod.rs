@@ -1512,14 +1512,21 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let docs = self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
-        // FIXME: group(join([",", line], path.map(print, "expressions")));
-        group![p, Doc::Array(p.join(Separator::Softline, docs))]
+        group![p, Doc::Array(p.join(Separator::CommaLine, docs))]
     }
 }
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, ss!("("), format!(p, self.expression), ss!(")")]
+        // TODO: if shouldHug
+        // array![p, ss!("("), format!(p, self.expression), ss!(")")]
+        group![
+            p,
+            ss!("("),
+            indent!(p, array![p, softline!(), format!(p, self.expression)]),
+            softline!(),
+            ss!(")")
+        ]
     }
 }
 
