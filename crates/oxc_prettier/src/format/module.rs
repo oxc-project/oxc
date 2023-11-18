@@ -87,7 +87,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                 ],
                 if_break!(p, if p.should_print_es5_comma() { "," } else { "" }),
                 if p.options.bracket_spacing { line!() } else { softline!() },
-                ss!("}")
+                ss!("}"),
             ]);
         } else {
             parts.push(ss!("{"));
