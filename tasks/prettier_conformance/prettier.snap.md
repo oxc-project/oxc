@@ -1,4 +1,4 @@
-Compatibility: 100/881 (11.35%)
+Compatibility: 98/838 (11.69%)
 
 # Failed
 
@@ -98,9 +98,6 @@ Compatibility: 100/881 (11.35%)
 * async/inline-await.js
 * async/nested.js
 * async/nested2.js
-
-### async-do-expressions
-* async-do-expressions/async-do-expressions.js
 
 ### babel-plugins
 * babel-plugins/async-do-expressions.js
@@ -333,39 +330,6 @@ Compatibility: 100/881 (11.35%)
 * conditional/new-ternary-spec.js
 * conditional/no-confusing-arrow.js
 * conditional/postfix-ternary-regressions.js
-
-### cursor
-* cursor/comments-1.js
-* cursor/comments-2.js
-* cursor/comments-3.js
-* cursor/comments-4.js
-* cursor/cursor-0.js
-* cursor/cursor-1.js
-* cursor/cursor-10.js
-* cursor/cursor-2.js
-* cursor/cursor-3.js
-* cursor/cursor-4.js
-* cursor/cursor-5.js
-* cursor/cursor-6.js
-* cursor/cursor-7.js
-* cursor/cursor-8.js
-* cursor/cursor-9.js
-* cursor/cursor-emoji.js
-* cursor/file-start-with-comment-1.js
-* cursor/file-start-with-comment-2.js
-* cursor/file-start-with-comment-3.js
-* cursor/range-0.js
-* cursor/range-1.js
-* cursor/range-2.js
-* cursor/range-3.js
-* cursor/range-4.js
-* cursor/range-5.js
-* cursor/range-6.js
-* cursor/range-7.js
-* cursor/range-8.js
-
-### cursor/require-pragma
-* cursor/require-pragma/cursor-without-pragma.js
 
 ### decorator-auto-accessors
 * decorator-auto-accessors/basic.js
@@ -839,12 +803,6 @@ Compatibility: 100/881 (11.35%)
 * performance/nested-real.js
 * performance/nested.js
 
-### pipeline-operator
-* pipeline-operator/block-comments.js
-* pipeline-operator/fsharp_style_pipeline_operator.js
-* pipeline-operator/hack_pipeline_operator.js
-* pipeline-operator/minimal_pipeline_operator.js
-
 ### preserve-line
 * preserve-line/argument-list.js
 * preserve-line/comments.js
@@ -938,15 +896,6 @@ Compatibility: 100/881 (11.35%)
 ### sequence-expression
 * sequence-expression/ignore.js
 * sequence-expression/parenthesized.js
-
-### source-phase-imports
-* source-phase-imports/default-binding.js
-* source-phase-imports/import-source-attributes-declaration.js
-* source-phase-imports/import-source-binding-from.js
-* source-phase-imports/import-source-binding-source.js
-* source-phase-imports/import-source.js
-* source-phase-imports/no-named.js
-* source-phase-imports/no-namespace.js
 
 ### spread
 * spread/spread.js

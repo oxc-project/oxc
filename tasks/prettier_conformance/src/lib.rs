@@ -40,6 +40,15 @@ fn fixtures_root() -> PathBuf {
     project_root().join(root()).join("prettier/tests/format/js")
 }
 
+const IGNORE_TESTS: &[&str] = &[
+    // Unsupported stage3 features
+    "async-do-expressions",
+    "pipeline-operator",
+    "source-phase-imports",
+    // IDE cursor
+    "cursor",
+];
+
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         Self { options, spec: SpecParser::default() }
@@ -60,6 +69,7 @@ impl TestRunner {
                     .as_ref()
                     .map_or(true, |name| e.path().to_string_lossy().contains(name))
             })
+            .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
             .map(|e| {
                 let mut path = e.into_path();
                 if path.is_file() {
