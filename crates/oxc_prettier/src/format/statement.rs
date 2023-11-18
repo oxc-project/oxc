@@ -4,7 +4,6 @@ use crate::{doc::Doc, hardline, Prettier};
 use oxc_span::GetSpan;
 
 use super::Format;
-use crate::util::is_next_line_empty;
 
 pub(super) fn print_statement_sequence<'a, F: Format<'a> + GetSpan>(
     p: &mut Prettier<'a>,
@@ -32,7 +31,7 @@ pub(super) fn print_statement_sequence<'a, F: Format<'a> + GetSpan>(
         if i < stmts.len() - 1 {
             parts.push(hardline!());
 
-            if is_next_line_empty(p.source_text, stmt.span()) {
+            if p.is_next_line_empty(stmt.span().end) {
                 parts.push(hardline!());
             }
         }
