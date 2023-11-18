@@ -49,19 +49,28 @@ impl Rule for ForDirection {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ForStatement(for_loop) = node.kind() {
             if let Some(Expression::BinaryExpression(test)) = &for_loop.test {
-                if let Expression::Identifier(counter) = &test.left {
-                    let test_operator = &test.operator;
-                    let wrong_direction = match test_operator {
-                        BinaryOperator::LessEqualThan | BinaryOperator::LessThan => BACKWARD,
-                        BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan => FORWARD,
-                        _ => return,
-                    };
-                    if let Some(update) = &for_loop.update {
-                        let update_direction = get_update_direction(update, counter);
-                        if update_direction == wrong_direction {
-                            let update_span = get_update_span(update);
-                            ctx.diagnostic(ForDirectionDiagnostic(test.span, update_span));
-                        }
+                let (counter, counter_position) = match (&test.left, &test.right) {
+                    (Expression::Identifier(counter), _) => (counter, LEFT),
+                    (_, Expression::Identifier(counter)) => (counter, RIGHT),
+                    _ => return,
+                };
+                let test_operator = &test.operator;
+                let wrong_direction = match (test_operator, counter_position) {
+                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT) => BACKWARD,
+                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT) => FORWARD,
+                    (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => {
+                        FORWARD
+                    }
+                    (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => {
+                        BACKWARD
+                    }
+                    _ => return,
+                };
+                if let Some(update) = &for_loop.update {
+                    let update_direction = get_update_direction(update, counter);
+                    if update_direction == wrong_direction {
+                        let update_span = get_update_span(update);
+                        ctx.diagnostic(ForDirectionDiagnostic(test.span, update_span));
                     }
                 }
             }
@@ -73,6 +82,10 @@ type UpdateDirection = i32;
 const FORWARD: UpdateDirection = 1;
 const BACKWARD: UpdateDirection = -1;
 const UNKNOWN: UpdateDirection = 0;
+
+type CounterPosition<'a> = &'a str;
+const LEFT: CounterPosition = "left";
+const RIGHT: CounterPosition = "right";
 
 fn get_update_direction(update: &Expression, counter: &IdentifierReference) -> UpdateDirection {
     match update {
@@ -148,6 +161,11 @@ fn test() {
         ("for(var i = 0; i <= 10; i++){}", None),
         ("for(var i = 10; i > 0; i--){}", None),
         ("for(var i = 10; i >= 0; i--){}", None),
+        // test if '++', '--' with counter 'i' on the right side of test condition
+        ("for(var i = 0; 10 > i; i++){}", None),
+        ("for(var i = 0; 10 >= i; i++){}", None),
+        ("for(var i = 10; 0 < i; i--){}", None),
+        ("for(var i = 10; 0 <= i; i--){}", None),
         // test if '+=', '-=',
         ("for(var i = 0; i < 10; i+=1){}", None),
         ("for(var i = 0; i <= 10; i+=1){}", None),
@@ -157,6 +175,8 @@ fn test() {
         ("for(var i = 10; i >= 0; i-=1){}", None),
         ("for(var i = 10; i > 0; i+=-1){}", None),
         ("for(var i = 10; i >= 0; i+=-1){}", None),
+        // test if '+=', '-=' with counter 'i' on the right side of test condition
+        ("for(var i = 0; 10 > i; i+=1){}", None),
         // test if no update.
         ("for(var i = 10; i > 0;){}", None),
         ("for(var i = 10; i >= 0;){}", None),
@@ -186,6 +206,11 @@ fn test() {
         ("for (var i = 0; i <= 10; i--){}", None),
         ("for(var i = 10; i > 10; i++){}", None),
         ("for(var i = 10; i >= 0; i++){}", None),
+        // test if '++', '--' with counter 'i' on the right side of test condition
+        ("for(var i = 0; 10 > i; i--){}", None),
+        ("for(var i = 0; 10 >= i; i--){}", None),
+        ("for(var i = 10; 10 < i; i++){}", None),
+        ("for(var i = 10; 0 <= i; i++){}", None),
         // test if '+=', '-='
         ("for(var i = 0; i < 10; i-=1){}", None),
         ("for(var i = 0; i <= 10; i-=1){}", None),
@@ -195,6 +220,8 @@ fn test() {
         ("for(var i = 0; i <= 10; i+=-1){}", None),
         ("for(var i = 10; i > 10; i-=-1){}", None),
         ("for(var i = 10; i >= 0; i-=-1){}", None),
+        // test if '+=', '-=' with counter 'i' on the right side of test condition
+        ("for(var i = 0; 10 > i; i-=1){}", None),
     ];
 
     Tester::new(ForDirection::NAME, pass, fail).test_and_snapshot();
