@@ -168,11 +168,7 @@ fn test() {
         (r"const foo = `foo\x12foo\x34`", r"const foo = `foo\u0012foo\u0034`", None),
         (r"const foo = `42\x1242\x34`", r"const foo = `42\u001242\u0034`", None),
         (r"const foo = `42\\\x1242\\\x34`", r"const foo = `42\\\u001242\\\u0034`", None),
-        (
-            r"const foo = `\xb1${foo}\xb1${foo}`",
-            r"const foo = `\u00b1${foo}\u00b1${foo}`",
-            None,
-        ),
+        (r"const foo = `\xb1${foo}\xb1${foo}`", r"const foo = `\u00b1${foo}\u00b1${foo}`", None),
     ];
 
     Tester::new_without_config(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
