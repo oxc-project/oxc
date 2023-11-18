@@ -1,4 +1,4 @@
-Compatibility: 98/881 (11.12%)
+Compatibility: 100/881 (11.35%)
 
 # Failed
 
@@ -938,10 +938,6 @@ Compatibility: 98/881 (11.12%)
 ### sequence-expression
 * sequence-expression/ignore.js
 * sequence-expression/parenthesized.js
-
-### shebang
-* shebang/shebang-newline.js
-* shebang/shebang.js
 
 ### source-phase-imports
 * source-phase-imports/default-binding.js

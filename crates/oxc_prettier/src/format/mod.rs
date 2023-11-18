@@ -54,8 +54,25 @@ where
 
 impl<'a> Format<'a> for Program<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block_body(p, &self.body, Some(&self.directives), false, true)
-            .unwrap_or(ss!(""))
+        let mut parts = p.vec();
+        if let Some(hashbang) = &self.hashbang {
+            parts.push(hashbang.format(p));
+            if p.is_next_line_empty(hashbang.span.end - 1) {
+                parts.push(hardline!());
+            }
+        }
+        if let Some(doc) =
+            block::print_block_body(p, &self.body, Some(&self.directives), false, true)
+        {
+            parts.push(doc);
+        }
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for Hashbang {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Str(self.span.source_text(p.source_text))
     }
 }
 

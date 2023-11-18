@@ -8,7 +8,6 @@ mod format;
 mod macros;
 mod options;
 mod printer;
-mod util;
 
 use std::{iter::Peekable, vec};
 
@@ -62,5 +61,9 @@ impl<'a> Prettier<'a> {
     pub(crate) fn should_print_comma_impl(&self, level_all: bool) -> bool {
         let trailing_comma = self.options.trailing_comma;
         trailing_comma.is_all() || (trailing_comma.is_es5() && !level_all)
+    }
+
+    pub(crate) fn is_next_line_empty(&self, end: u32) -> bool {
+        self.source_text[end as usize..].chars().nth(1).is_some_and(|c| c == '\n')
     }
 }
