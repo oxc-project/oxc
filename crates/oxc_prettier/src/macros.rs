@@ -24,7 +24,7 @@ macro_rules! string {
 
 #[macro_export]
 macro_rules! indent {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
@@ -58,7 +58,7 @@ macro_rules! hardline {
 
 #[macro_export]
 macro_rules! array {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
@@ -71,7 +71,7 @@ macro_rules! array {
 
 #[macro_export]
 macro_rules! group {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
