@@ -16,7 +16,6 @@ use doc::Doc;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, CommentKind, Trivias};
 
-pub use crate::doc::DocPrinter;
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 use crate::{format::Format, printer::Printer};
 

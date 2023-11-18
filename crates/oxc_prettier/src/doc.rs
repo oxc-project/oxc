@@ -3,7 +3,8 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_allocator::{Box, String, Vec};
+use std::fmt;
 
 use crate::{array, line, ss, Prettier};
 
@@ -32,73 +33,6 @@ pub enum Doc<'a> {
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
     IfBreak(Box<'a, Doc<'a>>),
-}
-
-pub struct DocPrinter<'a> {
-    allocator: &'a Allocator,
-}
-
-impl<'a> DocPrinter<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
-    }
-
-    pub fn print(&mut self, doc: &Doc<'a>) -> String {
-        let mut str = String::new_in(self.allocator);
-        match doc {
-            Doc::Str(s) => {
-                str.push('"');
-                str.push_str(s);
-                str.push('"');
-            }
-            Doc::Array(docs) => {
-                str.push('[');
-                for (idx, doc) in docs.iter().enumerate() {
-                    str.push_str(&self.print(doc));
-                    if idx != docs.len() - 1 {
-                        str.push_str(", ");
-                    }
-                }
-                str.push(']');
-            }
-            Doc::Indent(contents) => {
-                str.push_str("indent([");
-                for (idx, doc) in contents.iter().enumerate() {
-                    str.push_str(&self.print(doc));
-                    if idx != contents.len() - 1 {
-                        str.push_str(", ");
-                    }
-                }
-                str.push_str("])");
-            }
-            Doc::Group(contents) => {
-                str.push_str("group([");
-                for (idx, doc) in contents.iter().enumerate() {
-                    str.push_str(&self.print(doc));
-                    if idx != contents.len() - 1 {
-                        str.push_str(", ");
-                    }
-                }
-                str.push_str("])");
-            }
-            Doc::Line => {
-                str.push_str("line");
-            }
-            Doc::Softline => {
-                str.push_str("softline");
-            }
-            Doc::Hardline => {
-                str.push_str("hardline");
-            }
-            Doc::IfBreak(break_contents) => {
-                str.push_str("ifBreak(");
-                str.push_str(&self.print(break_contents));
-                str.push(')');
-            }
-        }
-
-        str
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -145,4 +79,67 @@ impl<'a> Prettier<'a> {
         }
         parts
     }
+}
+
+impl<'a> fmt::Display for Doc<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{})", print_do_to_debug(self))
+    }
+}
+
+// https://github.com/prettier/prettier/blob/main/src/document/debug.js
+fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
+    use std::string::String;
+    let mut string = String::new();
+    match doc {
+        Doc::Str(s) => {
+            string.push('"');
+            string.push_str(s);
+            string.push('"');
+        }
+        Doc::Array(docs) => {
+            string.push_str("[\n");
+            for (idx, doc) in docs.iter().enumerate() {
+                string.push_str(&print_do_to_debug(doc));
+                if idx != docs.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push_str("]\n");
+        }
+        Doc::Indent(contents) => {
+            for (idx, doc) in contents.iter().enumerate() {
+                string.push_str(&print_do_to_debug(doc));
+                if idx != contents.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+        }
+        Doc::Group(contents) => {
+            string.push_str("group([\n");
+            for (idx, doc) in contents.iter().enumerate() {
+                string.push_str(&print_do_to_debug(doc));
+                if idx != contents.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push_str("])\n");
+        }
+        Doc::Line => {
+            string.push_str("line");
+        }
+        Doc::Softline => {
+            string.push_str("softline");
+        }
+        Doc::Hardline => {
+            string.push_str("hardline");
+        }
+        Doc::IfBreak(break_contents) => {
+            string.push_str("ifBreak(");
+            string.push_str(&print_do_to_debug(break_contents));
+            string.push(')');
+        }
+    }
+
+    string
 }
