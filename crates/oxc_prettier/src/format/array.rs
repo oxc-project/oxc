@@ -12,7 +12,6 @@ use super::Format;
 #[allow(clippy::enum_variant_names)]
 pub enum Array<'a, 'b> {
     ArrayExpression(&'b ArrayExpression<'a>),
-    #[allow(unused)]
     TSTupleType(&'b TSTupleType<'a>),
     ArrayPattern(&'b ArrayPattern<'a>),
     ArrayAssignmentTarget(&'b ArrayAssignmentTarget<'a>),
