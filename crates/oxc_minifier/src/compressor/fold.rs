@@ -678,7 +678,8 @@ impl<'a> Compressor<'a> {
                         use std::ops::Neg;
 
                         let value = big_int_literal.value.clone().neg();
-                        let literal = self.ast.bigint_literal(unary_expr.span, value);
+                        let literal =
+                            self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
                         return Some(self.ast.literal_bigint_expression(literal));
                     }
                     Expression::Identifier(ident) => {
@@ -706,7 +707,8 @@ impl<'a> Compressor<'a> {
                     }
                     Expression::BigintLiteral(big_int_literal) => {
                         let value = big_int_literal.value.clone().not();
-                        let leteral = self.ast.bigint_literal(unary_expr.span, value);
+                        let leteral =
+                            self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
                         return Some(self.ast.literal_bigint_expression(leteral));
                     }
                     Expression::Identifier(ident) => {

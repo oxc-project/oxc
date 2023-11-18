@@ -26,3 +26,17 @@ impl NumberBase {
         matches!(self, Self::Float | Self::Decimal)
     }
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum BigintBase {
+    Decimal,
+    Binary,
+    Octal,
+    Hex,
+}
+
+impl BigintBase {
+    pub fn is_base_10(&self) -> bool {
+        self == &Self::Decimal
+    }
+}

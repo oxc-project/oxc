@@ -4,7 +4,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{operator::BinaryOperator, precedence::Precedence, NumberBase};
+use oxc_syntax::{operator::BinaryOperator, precedence::Precedence, BigintBase, NumberBase};
 
 use super::{
     function::IsParenthesizedArrowFunction,
@@ -294,12 +294,19 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral> {
         let span = self.start_span();
+        let base = match self.cur_kind() {
+            Kind::Decimal => BigintBase::Decimal,
+            Kind::Binary => BigintBase::Binary,
+            Kind::Octal => BigintBase::Octal,
+            Kind::Hex => BigintBase::Hex,
+            _ => return Err(self.unexpected()),
+        };
         let value = match self.cur_kind() {
             kind if kind.is_number() => self.cur_token().value.as_bigint(),
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(BigintLiteral { span: self.end_span(span), value })
+        Ok(BigintLiteral { span: self.end_span(span), value, base })
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral> {
