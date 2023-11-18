@@ -1869,16 +1869,15 @@ impl<'a> Format<'a> for RegExpFlags {
         if self.contains(Self::S) {
             string.push('s');
         }
-        if self.contains(Self::V) {
-            string.push('v');
-        }
         if self.contains(Self::U) {
             string.push('u');
+        }
+        if self.contains(Self::V) {
+            string.push('v');
         }
         if self.contains(Self::Y) {
             string.push('y');
         }
-        string.sort_unstable();
         p.str(&string.iter().collect::<String>())
     }
 }
