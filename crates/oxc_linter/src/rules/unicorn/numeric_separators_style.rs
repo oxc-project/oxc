@@ -147,7 +147,6 @@ enum SeparatorDir {
 
 fn add_separators(s: &mut String, dir: SeparatorDir, minimum_digits: usize, group_length: usize) {
     if s.len() < minimum_digits || s.len() < group_length {
-        println!("bailing");
         return;
     }
 
@@ -229,7 +228,7 @@ impl Rule for NumericSeparatorsStyle {
 }
 
 #[test]
-fn test_binary() {
+fn test_number_binary() {
     use crate::tester::Tester;
 
     let pass = vec![
@@ -260,7 +259,72 @@ fn test_binary() {
 }
 
 #[test]
-fn test_binary_bigint() {
+fn test_number_hexadecimal() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "const foo = 0xAB_CD",
+        "const foo = 0xAB",
+        "const foo = 0xA",
+        "const foo = 0xA_BC_DE_F0",
+        "const foo = 0xab_e8_12",
+        "const foo = 0xe",
+        "const foo = 0Xab_e3_cd",
+    ];
+
+    let fail = vec![
+        // Hexadecimal
+        "const foo = 0xA_B_CDE_F0",
+        "const foo = 0xABCDEF",
+        "const foo = 0xA_B",
+        "const foo = 0XAB_C_D",
+    ];
+
+    let fix = vec![("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None)];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_number_octal() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "const foo = 0o1234_5670",
+        "const foo = 0o7777",
+        "const foo = 0o01",
+        "const foo = 0o12_7000_0000",
+        "const foo = 0O1111_1111",
+        // Legacy
+        "const foo = 0777777",
+        "var foo = 0999999",
+        "let foo = 0111222",
+    ];
+
+    let fail = vec![
+        // Hexadecimal
+        "const foo = 0xA_B_CDE_F0",
+        "const foo = 0xABCDEF",
+        "const foo = 0xA_B",
+        "const foo = 0XAB_C_D",
+        // Octal
+        "const foo = 0o12_34_5670",
+        "const foo = 0o7_7_77",
+        "const foo = 0o010101010101",
+        "const foo = 0O010101010101",
+    ];
+
+    let fix = vec![("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None)];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_bigint_binary() {
     todo!("Bigint binary");
 
     use crate::tester::Tester;
@@ -321,25 +385,10 @@ fn test_bigint() {
 }
 
 #[test]
-fn test_number() {
+fn test_number_exponential() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Numbers
-        "const foo = 123_456",
-        "const foo = 12_345_678",
-        "const foo = 123",
-        "const foo = 1",
-        "const foo = 1234",
-        // Decimal numbers
-        "const foo = 9807.123",
-        "const foo = 3819.123_432",
-        "const foo = 138_789.123_432_42",
-        "const foo = .000_000_1",
-        // Negative numbers
-        "const foo = -3000",
-        "const foo = -10_000_000",
-        // Exponential notation
         "const foo = 1e10_000",
         "const foo = 39_804e1000",
         "const foo = -123_456e-100",
@@ -351,22 +400,6 @@ fn test_number() {
     ];
 
     let fail = vec![
-        // Numbers
-        "const foo = 1_2_345_678",
-        "const foo = 12_3",
-        "const foo = 1234567890",
-        // Decimal numbers
-        "const foo = 9807.1234567",
-        "const foo = 3819.123_4325",
-        "const foo = 138789.12343_2_42",
-        "const foo = .000000_1",
-        "const foo = 12345678..toString()",
-        "const foo = 12345678 .toString()",
-        "const foo = .00000",
-        "const foo = 0.00000",
-        // Negative numbers
-        "const foo = -100000_1",
-        // Exponential notation
         "const foo = 1e10000",
         "const foo = 39804e10000",
         "const foo = -123456e100",
@@ -379,11 +412,6 @@ fn test_number() {
     ];
 
     let fix = vec![
-        ("const foo = 1234567890", "const foo = 1_234_567_890", None),
-        ("const foo = 9807.1234567", "const foo = 9807.123_456_7", None),
-        ("const foo = -100000_1", "const foo = -1_000_001", None),
-        ("const foo = -100000_1", "const foo = -1_000_001", None),
-        // Exponential notation
         ("const foo = 1e10000", "const foo = 1e10_000", None),
         ("const foo = 39804e10000", "const foo = 39_804e10_000", None),
         ("const foo = -123456e100", "const foo = -123_456e100", None),
@@ -401,29 +429,74 @@ fn test_number() {
 }
 
 #[test]
-fn test() {
+fn test_number_decimal_float() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Hexadecimal
-        "const foo = 0xAB_CD",
-        "const foo = 0xAB",
-        "const foo = 0xA",
-        "const foo = 0xA_BC_DE_F0",
-        "const foo = 0xab_e8_12",
-        "const foo = 0xe",
-        "const foo = 0Xab_e3_cd",
-        // Octal
-        "const foo = 0o1234_5670",
-        "const foo = 0o7777",
-        "const foo = 0o01",
-        "const foo = 0o12_7000_0000",
-        "const foo = 0O1111_1111",
-        // Legacy octal
-        "const foo = 0777777",
-        "var foo = 0999999",
-        "let foo = 0111222",
-        // Miscellaneous values
+        "const foo = 9807.123",
+        "const foo = 3819.123_432",
+        "const foo = 138_789.123_432_42",
+        "const foo = .000_000_1",
+    ];
+
+    let fail = vec![
+        "const foo = 9807.1234567",
+        "const foo = 3819.123_4325",
+        "const foo = 138789.12343_2_42",
+        "const foo = .000000_1",
+        "const foo = 12345678..toString()",
+        "const foo = 12345678 .toString()",
+        "const foo = .00000",
+        "const foo = 0.00000",
+    ];
+
+    let fix = vec![("const foo = 9807.1234567", "const foo = 9807.123_456_7", None)];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_number_decimal_integer() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // Numbers
+        "const foo = 123_456",
+        "const foo = 12_345_678",
+        "const foo = 123",
+        "const foo = 1",
+        "const foo = 1234",
+        // Negative numbers
+        "const foo = -3000",
+        "const foo = -10_000_000",
+    ];
+
+    let fail = vec![
+        // Numbers
+        "const foo = 1_2_345_678",
+        "const foo = 12_3",
+        "const foo = 1234567890",
+        // Negative numbers
+        "const foo = -100000_1",
+    ];
+
+    let fix = vec![
+        ("const foo = 1234567890", "const foo = 1_234_567_890", None),
+        ("const foo = -100000_1", "const foo = -1_000_001", None),
+    ];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_misc() {
+    use crate::tester::Tester;
+
+    let pass = vec![
         "const foo = -282_932 - (1938 / 10_000) * .1 + 18.100_000_2",
         "const foo = NaN",
         "const foo = Infinity",
@@ -431,25 +504,7 @@ fn test() {
         "const foo = '1234567n'",
     ];
 
-    let fail = vec![
-        // Hexadecimal
-        "const foo = 0xA_B_CDE_F0",
-        "const foo = 0xABCDEF",
-        "const foo = 0xA_B",
-        "const foo = 0XAB_C_D",
-        // Octal
-        "const foo = 0o12_34_5670",
-        "const foo = 0o7_7_77",
-        "const foo = 0o010101010101",
-        "const foo = 0O010101010101",
-    ];
+    let fail = vec![];
 
-    let fix = vec![
-        ("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None),
-        ("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None),
-    ];
-
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).test_and_snapshot();
 }
