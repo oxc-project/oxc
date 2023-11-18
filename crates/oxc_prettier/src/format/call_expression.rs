@@ -1,5 +1,4 @@
 use oxc_allocator::{Box, Vec};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::{doc::Doc, if_break, ss, Format, Prettier};

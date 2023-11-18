@@ -1,5 +1,4 @@
 use oxc_allocator::Vec;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::{doc::Doc, format::array, hardline, indent, ss, Prettier};
@@ -10,12 +9,8 @@ pub(super) fn print_block<'a>(
     p: &mut Prettier<'a>,
     stmts: &Vec<'a, Statement<'a>>,
     directives: Option<&Vec<'a, Directive>>,
-    is_static_block: bool,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    if is_static_block {
-        parts.push(ss!("static "));
-    }
     parts.push(ss!("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push(indent![p, hardline!(), doc]);

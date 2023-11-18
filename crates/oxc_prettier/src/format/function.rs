@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::{doc::Doc, group, if_break, ss, Format, Prettier};
