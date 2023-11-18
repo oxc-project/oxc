@@ -1,4 +1,4 @@
-Compatibility: 92/881 (10.44%)
+Compatibility: 98/881 (11.12%)
 
 # Failed
 
@@ -128,7 +128,6 @@ Compatibility: 92/881 (10.44%)
 * babel-plugins/jsx.js
 * babel-plugins/logical-assignment-operators.js
 * babel-plugins/module-blocks.js
-* babel-plugins/module-string-names.js
 * babel-plugins/nullish-coalescing-operator.js
 * babel-plugins/numeric-separator.js
 * babel-plugins/object-rest-spread.js
@@ -491,8 +490,6 @@ Compatibility: 92/881 (10.44%)
 * export/bracket.js
 * export/empty.js
 * export/same-local-and-exported.js
-* export/test.js
-* export/undefined.js
 
 ### export-default
 * export-default/binary_and_template.js
@@ -593,7 +590,6 @@ Compatibility: 92/881 (10.44%)
 * ignore/semi/directive.js
 
 ### import
-* import/brackets.js
 * import/comments.js
 * import/empty-import.js
 * import/inline.js
@@ -705,10 +701,6 @@ Compatibility: 92/881 (10.44%)
 * module-blocks/non-module-blocks.js
 * module-blocks/range.js
 * module-blocks/worker.js
-
-### module-string-names
-* module-string-names/module-string-names-export.js
-* module-string-names/module-string-names-import.js
 
 ### multiparser-comments
 * multiparser-comments/comment-inside.js

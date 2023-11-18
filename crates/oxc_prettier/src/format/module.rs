@@ -2,7 +2,10 @@ use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, Separator},
+    group, if_break, indent, line, softline, ss, Format, Prettier,
+};
 
 pub(super) fn print_export_declaration<'a>(
     p: &mut Prettier<'a>,
@@ -54,7 +57,8 @@ fn print_semicolon_after_export_declaration<'a>(
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
         },
-        ModuleDeclaration::ExportAllDeclaration(_) => Some(ss!(";")),
+        ModuleDeclaration::ExportAllDeclaration(_)
+        | ModuleDeclaration::ExportNamedDeclaration(_) => Some(ss!(";")),
         _ => None,
     }
 }
@@ -64,19 +68,39 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
     specifiers: &Vec<'a, T>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(ss!("{"));
-
-    if !specifiers.is_empty() {
+    if specifiers.is_empty() {
+        parts.push(ss!("{}"));
+    } else {
         parts.push(ss!(" "));
 
-        for (i, specifier) in specifiers.iter().enumerate() {
-            if i != 0 {
-                parts.push(ss!(", "));
+        let can_break = specifiers.len() > 1;
+
+        if can_break {
+            let docs = specifiers.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
+            parts.push(group![
+                p,
+                ss!("{"),
+                indent![
+                    p,
+                    if p.options.bracket_spacing { line!() } else { softline!() },
+                    Doc::Array(p.join(Separator::CommaLine, docs))
+                ],
+                if_break!(p, if p.should_print_es5_comma() { "," } else { "" }),
+                if p.options.bracket_spacing { line!() } else { softline!() },
+                ss!("}")
+            ]);
+        } else {
+            parts.push(ss!("{"));
+            if p.options.bracket_spacing {
+                parts.push(ss!(" "));
             }
-            parts.push(specifier.format(p));
+            parts.extend(specifiers.iter().map(|s| s.format(p)));
+            if p.options.bracket_spacing {
+                parts.push(ss!(" "));
+            }
+            parts.push(ss!("}"));
         }
     }
 
-    parts.push(ss!("}"));
     Doc::Array(parts)
 }

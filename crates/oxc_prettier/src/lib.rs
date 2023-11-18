@@ -49,4 +49,18 @@ impl<'a> Prettier<'a> {
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
         program.format(&mut self)
     }
+
+    pub(crate) fn should_print_es5_comma(&self) -> bool {
+        self.should_print_comma_impl(false)
+    }
+
+    #[allow(unused)]
+    pub(crate) fn should_print_all_comma(&self) -> bool {
+        self.should_print_comma_impl(true)
+    }
+
+    pub(crate) fn should_print_comma_impl(&self, level_all: bool) -> bool {
+        let trailing_comma = self.options.trailing_comma;
+        trailing_comma.is_all() || (trailing_comma.is_es5() && !level_all)
+    }
 }
