@@ -40,7 +40,23 @@ pub(super) fn print_binaryish_expression<'a>(
     right: &Expression<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(left.format(p));
+    match &left {
+        BinaryishLeft::Expression(expr) => {
+            if let Expression::LogicalExpression(logical_expr) = expr {
+                parts.push(print_binaryish_expression(
+                    p,
+                    &BinaryishLeft::Expression(&logical_expr.left),
+                    BinaryishOperator::LogicalOperator(logical_expr.operator),
+                    &logical_expr.right,
+                ));
+            } else {
+                parts.push(left.format(p));
+            }
+        }
+        BinaryishLeft::PrivateIdentifier(ident) => {
+            parts.push(left.format(p));
+        }
+    }
     parts.push(ss!(" "));
     parts.push(ss!(operator.as_str()));
     parts.push(Doc::Line);

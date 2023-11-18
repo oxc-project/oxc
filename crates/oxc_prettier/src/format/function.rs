@@ -1,7 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, group, if_break, indent, softline, ss, Format, Prettier};
+use crate::{doc::Doc, group, if_break, ss, Format, Prettier};
 
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,
@@ -60,13 +60,7 @@ pub(super) fn print_return_or_throw_argument<'a>(
 
     if let Some(argument) = argument {
         parts.push(ss!(" "));
-        parts.push(group![
-            p,
-            if_break!(p, "("),
-            indent!(p, softline!(), argument.format(p)),
-            softline!(),
-            if_break!(p, ")")
-        ]);
+        parts.push(group![p, if_break!(p, "("), argument.format(p), if_break!(p, ")")]);
     }
 
     parts.push(p.str(";"));
