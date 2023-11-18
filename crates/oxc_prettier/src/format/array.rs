@@ -1,7 +1,10 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_span::Span;
 
-use crate::{doc::Doc, group, if_break, ss, Prettier};
+use crate::{
+    comment::DanglingCommentsPrintOptions, doc::Doc, group, if_break, softline, ss, Prettier,
+};
 use oxc_allocator::Vec;
 
 use super::Format;
@@ -24,11 +27,19 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayAssignmentTarget(array) => array.elements.len(),
         }
     }
+    fn span(&self) -> Span {
+        match self {
+            Self::ArrayExpression(array) => array.span,
+            Self::TSTupleType(tuple) => tuple.span,
+            Self::ArrayPattern(array) => array.span,
+            Self::ArrayAssignmentTarget(array) => array.span,
+        }
+    }
 }
 
 pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     if array.len() == 0 {
-        return ss!("[]");
+        return print_empty_array_elements(p, array);
     }
 
     let mut parts = p.vec();
@@ -44,6 +55,14 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
     parts.push(ss!("]"));
 
     Doc::Group(parts)
+}
+
+fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+    let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
+    p.print_dangling_comments(array.span(), Some(dangling_options)).map_or_else(
+        || ss!("[]"),
+        |dangling_comments| group![p, ss!("["), dangling_comments, softline!(), ss!("]")],
+    )
 }
 
 fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Vec<'a, Doc<'a>> {
