@@ -34,8 +34,9 @@ pub(super) fn print_object_properties<'a, F: Format<'a>>(
         } else {
             parts.push(Doc::Softline);
         }
+
         parts.push(ss!("}"));
-        Doc::Array(parts)
+        Doc::Group(parts)
     };
 
     content

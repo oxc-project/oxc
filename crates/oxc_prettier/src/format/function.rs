@@ -3,7 +3,11 @@ use oxc_ast::ast::*;
 
 use crate::{doc::Doc, group, if_break, indent, softline, ss, Format, Prettier};
 
-pub(super) fn print_function<'a>(p: &mut Prettier<'a>, func: &Function<'a>) -> Doc<'a> {
+pub(super) fn print_function<'a>(
+    p: &mut Prettier<'a>,
+    func: &Function<'a>,
+    property_name: Option<&str>,
+) -> Doc<'a> {
     let mut parts = p.vec();
     if let Some(comments) = p.print_leading_comments(func.span) {
         parts.push(comments);
@@ -11,11 +15,18 @@ pub(super) fn print_function<'a>(p: &mut Prettier<'a>, func: &Function<'a>) -> D
     if func.r#async {
         parts.push(ss!("async "));
     }
-    if func.generator {
-        parts.push(ss!("function* "));
+
+    if let Some(name) = property_name {
+        parts.push(p.str(name));
     } else {
-        parts.push(ss!("function "));
+        parts.push(ss!("function"));
+        if func.generator {
+            parts.push(ss!("*"));
+        }
+
+        parts.push(p.str(" "));
     }
+
     if let Some(type_params) = &func.type_parameters {
         parts.push(type_params.format(p));
     }
