@@ -2,6 +2,8 @@
 //!
 //! A port of <https://github.com/prettier/prettier>
 
+#![allow(clippy::wildcard_imports)]
+
 mod comment;
 mod doc;
 mod format;

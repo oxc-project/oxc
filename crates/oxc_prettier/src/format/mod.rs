@@ -8,7 +8,6 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Box, Vec};
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -156,7 +155,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
 
 impl<'a> Format<'a> for BlockStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block(p, &self.body, None, false)
+        block::print_block(p, &self.body, None)
     }
 }
 
@@ -405,19 +404,15 @@ impl<'a> Format<'a> for TryStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("try "));
-
         parts.push(format!(p, self.block));
-
         if let Some(handler) = &self.handler {
             parts.push(ss!(" "));
             parts.push(format!(p, handler));
         }
-
         if let Some(finalizer) = &self.finalizer {
             parts.push(ss!(" finally "));
             parts.push(format!(p, finalizer));
         }
-
         Doc::Array(parts)
     }
 }
@@ -865,7 +860,7 @@ impl<'a> Format<'a> for Function<'a> {
 
 impl<'a> Format<'a> for FunctionBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block(p, &self.statements, Some(&self.directives), false)
+        block::print_block(p, &self.statements, Some(&self.directives))
     }
 }
 
@@ -1220,7 +1215,6 @@ impl<'a> Format<'a> for ComputedMemberExpression<'a> {
         parts.push(ss!("["));
         parts.push(format!(p, self.expression));
         parts.push(ss!("]"));
-
         Doc::Array(parts)
     }
 }
@@ -1234,7 +1228,6 @@ impl<'a> Format<'a> for StaticMemberExpression<'a> {
         }
         parts.push(ss!("."));
         parts.push(format!(p, self.property));
-
         Doc::Array(parts)
     }
 }
@@ -1248,7 +1241,6 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
         }
         parts.push(ss!("#"));
         parts.push(format!(p, self.field));
-
         Doc::Array(parts)
     }
 }
@@ -1341,7 +1333,6 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 }
             } else {
                 parts.push(format!(p, self.key));
-
                 parts.push(ss!(": "));
                 parts.push(format!(p, self.value));
             }
@@ -1398,15 +1389,11 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
         parts.push(p.str(self.operator.as_str()));
-
         parts.push(format!(p, self.argument));
-
         if self.prefix {
             parts.reverse();
         }
-
         Doc::Array(parts)
     }
 }
@@ -1547,14 +1534,11 @@ impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
         parts.push(self.binding.format(p));
-
         if let Some(init) = &self.init {
             parts.push(ss!(" = "));
             parts.push(init.format(p));
         }
-
         Doc::Array(parts)
     }
 }
@@ -1562,12 +1546,9 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
         parts.push(self.binding.format(p));
-
         parts.push(ss!(": "));
         parts.push(self.name.format(p));
-
         Doc::Array(parts)
     }
 }
@@ -1834,7 +1815,7 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        block::print_block(p, &self.body, None, false)
+        array![p, ss!("static "), block::print_block(p, &self.body, None)]
     }
 }
 
@@ -1859,10 +1840,8 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
 impl<'a> Format<'a> for PrivateIdentifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
         parts.push(ss!("#"));
         parts.push(p.str(self.name.as_str()));
-
         Doc::Array(parts)
     }
 }
