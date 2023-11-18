@@ -1546,7 +1546,20 @@ impl<'a> Format<'a> for ParenthesizedExpression<'a> {
 
 impl<'a> Format<'a> for ImportExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(ss!("import"));
+        parts.push(ss!("("));
+        parts.push(format!(p, self.source));
+        if !self.arguments.is_empty() {
+            for arg in &self.arguments {
+                parts.push(ss!(","));
+                parts.push(Doc::Line);
+                parts.push(format!(p, arg));
+            }
+        }
+        parts.push(ss!(")"));
+
+        Doc::Group(parts)
     }
 }
 

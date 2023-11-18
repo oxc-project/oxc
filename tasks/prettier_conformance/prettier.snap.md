@@ -1,4 +1,4 @@
-Compatibility: 83/881 (9.42%)
+Compatibility: 90/881 (10.22%)
 
 # Failed
 
@@ -121,9 +121,7 @@ Compatibility: 83/881 (9.42%)
 * babel-plugins/flow.js
 * babel-plugins/function-bind.js
 * babel-plugins/function-sent.js
-* babel-plugins/import-assertions-dynamic.js
 * babel-plugins/import-assertions-static.js
-* babel-plugins/import-attributes-dynamic.js
 * babel-plugins/import-attributes-static.js
 * babel-plugins/import-meta.js
 * babel-plugins/import-reflection.js
@@ -443,7 +441,6 @@ Compatibility: 83/881 (9.42%)
 * do/do.js
 
 ### dynamic-import
-* dynamic-import/assertions.js
 * dynamic-import/test.js
 
 ### empty-paren-comment
@@ -609,7 +606,6 @@ Compatibility: 83/881 (9.42%)
 * import/same-local-and-imported.js
 
 ### import-assertions
-* import-assertions/dynamic-import.js
 * import-assertions/empty.js
 * import-assertions/multi-types.js
 * import-assertions/non-type.js
@@ -619,12 +615,10 @@ Compatibility: 83/881 (9.42%)
 * import-assertions/without-from.js
 
 ### import-assertions/bracket-spacing
-* import-assertions/bracket-spacing/dynamic-import.js
 * import-assertions/bracket-spacing/re-export.js
 * import-assertions/bracket-spacing/static-import.js
 
 ### import-attributes
-* import-attributes/dynamic-import.js
 * import-attributes/empty.js
 * import-attributes/multi-types.js
 * import-attributes/non-type.js
@@ -633,7 +627,6 @@ Compatibility: 83/881 (9.42%)
 * import-attributes/without-from.js
 
 ### import-attributes/bracket-spacing
-* import-attributes/bracket-spacing/dynamic-import.js
 * import-attributes/bracket-spacing/empty.js
 * import-attributes/bracket-spacing/re-export.js
 * import-attributes/bracket-spacing/static-import.js
