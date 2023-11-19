@@ -1,11 +1,10 @@
-Compatibility: 108/838 (12.89%)
+Compatibility: 109/838 (13.01%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
 * arrays/issue-10159.js
-* arrays/last.js
 * arrays/nested.js
 * arrays/numbers-in-args.js
 * arrays/numbers-in-assignment.js
