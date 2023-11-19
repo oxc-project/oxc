@@ -1,0 +1,34 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: numeric_separators_style
+---
+  × eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits
+   ╭─[numeric_separators_style.tsx:1:1]
+ 1 │ const foo = 0b10_10_0001
+   ·             ────────────
+   ╰────
+  help: Use the number separator `_` to break up longer numbers for easier reading.
+
+  × eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits
+   ╭─[numeric_separators_style.tsx:1:1]
+ 1 │ const foo = 0b0_00_0
+   ·             ────────
+   ╰────
+  help: Use the number separator `_` to break up longer numbers for easier reading.
+
+  × eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits
+   ╭─[numeric_separators_style.tsx:1:1]
+ 1 │ const foo = 0b10101010101010
+   ·             ────────────────
+   ╰────
+  help: Use the number separator `_` to break up longer numbers for easier reading.
+
+  × eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits
+   ╭─[numeric_separators_style.tsx:1:1]
+ 1 │ const foo = 0B10101010101010
+   ·             ────────────────
+   ╰────
+  help: Use the number separator `_` to break up longer numbers for easier reading.
+
+

@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use itertools::{intersperse, Itertools};
 use oxc_ast::{
     ast::{BigintLiteral, NumberLiteral},
     AstKind,
@@ -9,10 +8,8 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
-use regex::Regex;
+use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -40,77 +37,21 @@ struct FormatNumber<'a>(&'a NumberLiteral<'a>);
 impl<'a> FormatNumber<'a> {
     fn format(&self) -> String {
         match self.base {
-            oxc_syntax::NumberBase::Binary => format!("{:b}", self),
-            oxc_syntax::NumberBase::Decimal => format!("{}", self),
-            oxc_syntax::NumberBase::Float => format!("{}", self),
-            oxc_syntax::NumberBase::Hex => todo!(),
-            oxc_syntax::NumberBase::Octal => todo!(),
+            oxc_syntax::NumberBase::Binary => self.format_binary(),
+            oxc_syntax::NumberBase::Decimal => self.format_decimal(),
+            oxc_syntax::NumberBase::Float => self.format_float(),
+            oxc_syntax::NumberBase::Hex => self.format_hex(),
+            oxc_syntax::NumberBase::Octal => self.format_octal(),
         }
     }
-}
-impl<'a> Deref for FormatNumber<'a> {
-    type Target = NumberLiteral<'a>;
 
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
+    fn format_binary(&self) -> String {
+        // start with the prefix, `0b` or `0B`
+        let mut s = self.raw[0..2].to_string();
 
-impl<'a> std::fmt::Display for FormatNumber<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let exponential_notation = self.raw.contains(&['e', 'E']);
+        let width = self.raw.replace('_', "").len() - 2;
+        let mut binary_string = format!("{:0width$b}", self.value as i64, width = width);
 
-        if (exponential_notation) {}
-
-        let mut string = format!("{}", self.value);
-        if let Some((whole, decimal)) = string.split_once('.') {
-            let starts_with_decimal = self.raw.starts_with('.');
-
-            if (starts_with_decimal) {
-                let mut decimal = decimal.to_string();
-                add_separators(
-                    &mut decimal,
-                    SeparatorDir::Left,
-                    DECIMAL_MINIMUM_DIGITS,
-                    DECIMAL_GROUP_LENGTH,
-                );
-                f.write_str(".")?;
-                f.write_str(&decimal)
-            } else {
-                let mut whole = whole.to_string();
-                let mut decimal = decimal.to_string();
-                add_separators(
-                    &mut whole,
-                    SeparatorDir::Right,
-                    DECIMAL_MINIMUM_DIGITS,
-                    DECIMAL_GROUP_LENGTH,
-                );
-                add_separators(
-                    &mut decimal,
-                    SeparatorDir::Left,
-                    DECIMAL_MINIMUM_DIGITS,
-                    DECIMAL_GROUP_LENGTH,
-                );
-                f.write_str(&whole)?;
-                f.write_str(".")?;
-                f.write_str(&decimal)
-            }
-        } else {
-            add_separators(
-                &mut string,
-                SeparatorDir::Right,
-                DECIMAL_MINIMUM_DIGITS,
-                DECIMAL_GROUP_LENGTH,
-            );
-            f.write_str(&string)
-        }
-    }
-}
-impl<'a> std::fmt::Binary for FormatNumber<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let binary_prefix = &self.raw[0..2];
-        let padding = self.raw.replace('_', "").len() - 2;
-        let mut binary_string = format!("{:0width$b}", self.value as i64, width = padding);
         // dbg!(padding);
         // dbg!(binary_string.to_string());
         add_separators(
@@ -119,8 +60,122 @@ impl<'a> std::fmt::Binary for FormatNumber<'a> {
             BINARY_MINIMUM_DIGITS,
             BINARY_GROUP_LENGTH,
         );
-        f.write_str(binary_prefix)?;
-        f.write_str(&binary_string)
+        s.push_str(binary_string.as_str());
+        s
+    }
+
+    fn format_hex(&self) -> String {
+        // start with the prefix, `0x` or `0X`
+        let mut s = self.raw[0..2].to_string();
+
+        let width = self.raw.replace('_', "").len() - 2;
+        let mut hex_string = format!("{:0width$x}", self.value as i64, width = width);
+
+        // dbg!(padding);
+        // dbg!(binary_string.to_string());
+        add_separators(
+            &mut hex_string,
+            SeparatorDir::Right,
+            BINARY_MINIMUM_DIGITS,
+            BINARY_GROUP_LENGTH,
+        );
+        s.push_str(hex_string.as_str());
+        s
+    }
+
+    fn format_octal(&self) -> String {
+        // Legacy octal numbers are 0 prefixed. 010 === 8.
+        // The prefix may be 0, 0o, or 0O.
+        let prefix_size =
+            if self.raw.as_bytes()[1] == b'o' || self.raw.as_bytes()[1] == b'O' { 2 } else { 1 };
+
+        // start with the prefix, `0x` or `0X`
+        let mut s = self.raw[0..prefix_size].to_string();
+
+        let width = self.raw.replace('_', "").len() - prefix_size;
+        let mut octal_string = format!("{:0width$o}", self.value as i64, width = width);
+
+        // dbg!(padding);
+        // dbg!(binary_string.to_string());
+        add_separators(
+            &mut octal_string,
+            SeparatorDir::Right,
+            BINARY_MINIMUM_DIGITS,
+            BINARY_GROUP_LENGTH,
+        );
+        s.push_str(octal_string.as_str());
+        s
+    }
+
+    fn format_decimal(&self) -> String {
+        let exponential_notation = self.raw.contains(&['e', 'E']);
+
+        if exponential_notation {
+            todo!();
+        }
+
+        let mut string = format!("{}", self.value);
+        add_separators(
+            &mut string,
+            SeparatorDir::Right,
+            DECIMAL_MINIMUM_DIGITS,
+            DECIMAL_GROUP_LENGTH,
+        );
+        string
+    }
+
+    fn format_float(&self) -> String {
+        let exponential_notation = self.raw.contains(&['e', 'E']);
+
+        if exponential_notation {
+            todo!();
+        }
+
+        let mut result = String::new();
+
+        let string = format!("{}", self.value);
+
+        let (whole, decimal) = string.split_once('.').expect("floats should contain a decimal");
+        let starts_with_decimal = self.raw.starts_with('.');
+
+        if starts_with_decimal {
+            let mut decimal = decimal.to_string();
+            add_separators(
+                &mut decimal,
+                SeparatorDir::Left,
+                DECIMAL_MINIMUM_DIGITS,
+                DECIMAL_GROUP_LENGTH,
+            );
+            result.push('.');
+            result.push_str(&decimal);
+        } else {
+            let mut whole = whole.to_string();
+            let mut decimal = decimal.to_string();
+            add_separators(
+                &mut whole,
+                SeparatorDir::Right,
+                DECIMAL_MINIMUM_DIGITS,
+                DECIMAL_GROUP_LENGTH,
+            );
+            add_separators(
+                &mut decimal,
+                SeparatorDir::Left,
+                DECIMAL_MINIMUM_DIGITS,
+                DECIMAL_GROUP_LENGTH,
+            );
+            result.push_str(&whole);
+            result.push('.');
+            result.push_str(&decimal);
+        }
+        result
+    }
+}
+
+impl<'a> Deref for FormatNumber<'a> {
+    type Target = NumberLiteral<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
     }
 }
 
@@ -253,9 +308,7 @@ fn test_number_binary() {
         ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -282,9 +335,7 @@ fn test_number_hexadecimal() {
 
     let fix = vec![("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -318,9 +369,7 @@ fn test_number_octal() {
 
     let fix = vec![("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -351,9 +400,7 @@ fn test_bigint_binary() {
         ("const foo = 0B10101010101010n", "const foo = 0B10_1010_1010_1010n", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -379,9 +426,7 @@ fn test_bigint() {
 
     let fix = vec![("const foo = 1_9_223n", "const foo = 19_223n", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -423,9 +468,7 @@ fn test_number_exponential() {
         ("const foo = 3.65432E12000", "const foo = 3.654_32E12_000", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -452,9 +495,7 @@ fn test_number_decimal_float() {
 
     let fix = vec![("const foo = 9807.1234567", "const foo = 9807.123_456_7", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -487,9 +528,7 @@ fn test_number_decimal_integer() {
         ("const foo = -100000_1", "const foo = -1_000_001", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -506,5 +545,5 @@ fn test_misc() {
 
     let fail = vec![];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).test();
 }
