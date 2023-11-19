@@ -59,13 +59,13 @@ fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttri
     }
 }
 
-fn is_valid_lang_prop<'a>(item: &'a JSXAttributeItem) -> bool {
+fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
         Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
             expression: JSXExpression::Expression(expr),
             ..
         })) => !expr.is_undefined(),
-        Some(JSXAttributeValue::StringLiteral(str)) => str.value.as_str().len() > 0,
+        Some(JSXAttributeValue::StringLiteral(str)) => !str.value.as_str().is_empty(),
         _ => true,
     }
 }
@@ -84,14 +84,14 @@ impl Rule for HtmlHasLang {
             return;
         }
 
-        match has_jsx_prop_lowercase(jsx_el, "lang") {
-            Some(lang_prop) => {
+        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+            || ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangProp(identifier.span)),
+            |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
-                    ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangValue(jsx_el.span))
+                    ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangValue(jsx_el.span));
                 }
-            }
-            None => ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangProp(identifier.span)),
-        }
+            },
+        );
     }
 }
 
