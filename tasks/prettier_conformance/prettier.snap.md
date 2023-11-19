@@ -1,4 +1,4 @@
-Compatibility: 109/838 (13.01%)
+Compatibility: 114/838 (13.60%)
 
 # Failed
 
@@ -507,7 +507,6 @@ Compatibility: 109/838 (13.01%)
 * functional-composition/pipe-function-calls.js
 * functional-composition/ramda_compose.js
 * functional-composition/ramda_pipe.js
-* functional-composition/redux_compose.js
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
@@ -552,7 +551,6 @@ Compatibility: 109/838 (13.01%)
 * import/comments.js
 * import/empty-import.js
 * import/inline.js
-* import/long-line.js
 * import/multiple_standalones.js
 * import/same-local-and-imported.js
 
@@ -588,7 +586,6 @@ Compatibility: 109/838 (13.01%)
 * import-reflection/valid-default-import.mjs
 * import-reflection/valid-from-as-default-module-binding-escaped.mjs
 * import-reflection/valid-from-as-default-module-binding.mjs
-* import-reflection/valid-module-as-default-binding.mjs
 
 ### label
 * label/comment.js
@@ -1000,9 +997,6 @@ Compatibility: 109/838 (13.01%)
 
 ### while
 * while/indent.js
-
-### with
-* with/indent.js
 
 ### yield
 * yield/arrow.js
