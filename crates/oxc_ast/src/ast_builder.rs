@@ -14,7 +14,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    NumberBase,
+    BigintBase, NumberBase,
 };
 
 #[allow(clippy::wildcard_imports)]
@@ -126,8 +126,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, value: BigInt) -> BigintLiteral {
-        BigintLiteral { span, value }
+    pub fn bigint_literal(&self, span: Span, value: BigInt, base: BigintBase) -> BigintLiteral {
+        BigintLiteral { span, value, base }
     }
 
     pub fn template_literal(
