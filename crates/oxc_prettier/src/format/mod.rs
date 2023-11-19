@@ -30,7 +30,7 @@ use oxc_span::GetSpan;
 use crate::{
     array,
     doc::{Doc, Separator},
-    format, group, hardline, indent, softline, ss, string, wrap, Prettier,
+    format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
 use self::{
@@ -177,36 +177,33 @@ impl<'a> Format<'a> for BlockStatement<'a> {
 impl<'a> Format<'a> for ForStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ForStatement, {
-            let mut parts = p.vec();
-
-            parts.push(ss!("for ("));
-
-            let mut parts_head = p.vec();
-
-            if let Some(init) = &self.init {
-                parts_head.push(format!(p, init));
-            }
-            parts_head.push(ss!(";"));
-            parts_head.push(Doc::Line);
-            if let Some(init) = &self.test {
-                parts_head.push(format!(p, init));
-            }
-            parts_head.push(ss!(";"));
-            parts_head.push(Doc::Line);
-            if let Some(init) = &self.update {
-                parts_head.push(format!(p, init));
-            }
-
-            let parts_head = indent!(p, group!(p, Doc::Array(parts_head)));
-
-            parts.push(group!(p, parts_head));
-
-            parts.push(ss!(")"));
-
             let body = format!(p, self.body);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+            let body = misc::adjust_clause(p, &self.body, body, false);
 
-            Doc::Group(parts)
+            if self.init.is_none() && self.test.is_none() && self.update.is_none() {
+                return group![p, ss!("for (;;)"), body];
+            }
+
+            let parts_head = {
+                let mut parts_head = p.vec();
+                parts_head.push(softline!());
+                if let Some(init) = &self.init {
+                    parts_head.push(format!(p, init));
+                }
+                parts_head.push(ss!(";"));
+                parts_head.push(line!());
+                if let Some(init) = &self.test {
+                    parts_head.push(format!(p, init));
+                }
+                parts_head.push(ss!(";"));
+                parts_head.push(line!());
+                if let Some(init) = &self.update {
+                    parts_head.push(format!(p, init));
+                }
+                Doc::Indent(parts_head)
+            };
+
+            group![p, ss!("for ("), group![p, parts_head, softline!()], ss!(")"), body]
         })
     }
 }
@@ -223,40 +220,37 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
 
 impl<'a> Format<'a> for ForInStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(ss!("for ("));
-        parts.push(format!(p, self.left));
-        parts.push(ss!(" in "));
-        parts.push(format!(p, self.right));
-        parts.push(ss!(")"));
-
-        let body = format!(p, self.body);
-        parts.push(misc::adjust_clause(p, &self.body, body, false));
-
-        Doc::Group(parts)
+        wrap!(p, self, ForInStatement, {
+            let mut parts = p.vec();
+            parts.push(ss!("for ("));
+            parts.push(format!(p, self.left));
+            parts.push(ss!(" in "));
+            parts.push(format!(p, self.right));
+            parts.push(ss!(")"));
+            let body = format!(p, self.body);
+            parts.push(misc::adjust_clause(p, &self.body, body, false));
+            Doc::Group(parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for ForOfStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(ss!("for"));
-
-        if self.r#await {
-            parts.push(ss!(" await"));
-        }
-        parts.push(ss!(" ("));
-        parts.push(format!(p, self.left));
-        parts.push(ss!(" of "));
-        parts.push(format!(p, self.right));
-        parts.push(ss!(")"));
-
-        let body = format!(p, self.body);
-        parts.push(misc::adjust_clause(p, &self.body, body, false));
-
-        Doc::Group(parts)
+        wrap!(p, self, ForOfStatement, {
+            let mut parts = p.vec();
+            parts.push(ss!("for"));
+            if self.r#await {
+                parts.push(ss!(" await"));
+            }
+            parts.push(ss!(" ("));
+            parts.push(format!(p, self.left));
+            parts.push(ss!(" of "));
+            parts.push(format!(p, self.right));
+            parts.push(ss!(")"));
+            let body = format!(p, self.body);
+            parts.push(misc::adjust_clause(p, &self.body, body, false));
+            Doc::Group(parts)
+        })
     }
 }
 
@@ -516,20 +510,31 @@ impl<'a> Format<'a> for Declaration<'a> {
 
 impl<'a> Format<'a> for VariableDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let kind = self.kind.as_str();
-        let mut decls = p.vec();
-        decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
+        wrap!(p, self, VariableDeclaration, {
+            // We generally want to terminate all variable declarations with a
+            // semicolon, except when they in the () part of for loops.
+            let parent_for_loop = match p.parent_kind() {
+                AstKind::ForStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForInStatement(stmt) => Some(stmt.body.span()),
+                AstKind::ForOfStatement(stmt) => Some(stmt.body.span()),
+                _ => None,
+            };
 
-        let mut parts = p.vec();
-        parts.push(ss!(kind));
-        parts.push(ss!(" "));
-        parts.push(Doc::Array(decls));
+            let kind = self.kind.as_str();
+            let mut decls = p.vec();
+            decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
 
-        if p.options.semi {
-            parts.push(ss!(";"));
-        }
+            let mut parts = p.vec();
+            parts.push(ss!(kind));
+            parts.push(ss!(" "));
+            parts.push(Doc::Array(decls));
 
-        Doc::Group(parts)
+            if !parent_for_loop.is_some_and(|span| span != self.span) {
+                parts.push(ss!(";"));
+            }
+
+            Doc::Group(parts)
+        })
     }
 }
 
@@ -1415,13 +1420,11 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(p.str(self.operator.as_str()));
-        parts.push(format!(p, self.argument));
         if self.prefix {
-            parts.reverse();
+            array![p, ss!(self.operator.as_str()), format!(p, self.argument)]
+        } else {
+            array![p, format!(p, self.argument), ss!(self.operator.as_str())]
         }
-        Doc::Array(parts)
     }
 }
 
