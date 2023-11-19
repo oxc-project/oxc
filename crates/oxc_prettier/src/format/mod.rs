@@ -7,6 +7,7 @@
 
 mod array;
 mod arrow_function;
+mod assignment;
 mod binaryish;
 mod block;
 mod call_expression;
@@ -1467,14 +1468,7 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![
-            p,
-            format!(p, self.left),
-            ss!(" "),
-            string!(p, self.operator.as_str()),
-            ss!(" "),
-            format!(p, self.right)
-        ]
+        assignment::print_assignment(p, self)
     }
 }
 
