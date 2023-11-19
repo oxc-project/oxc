@@ -1,4 +1,8 @@
+#![allow(non_upper_case_globals)]
+
 //! Comment helpers
+
+use bitflags::bitflags;
 
 use oxc_ast::CommentKind;
 use oxc_span::Span;
@@ -8,25 +12,18 @@ use crate::{
     hardline, indent, Prettier,
 };
 
-#[derive(Clone, Copy)]
-#[allow(unused)]
-pub enum CommentFlags {
-    /// Check comment is a leading comment
-    Leading,
-    /// Check comment is a trailing comment
-    Trailing,
-    /// Check comment is a dangling comment
-    Dangling,
-    /// Check comment is a block comment
-    Block,
-    /// Check comment is a line comment
-    Line,
-    /// Check comment is a `prettier-ignore` comment
-    PrettierIgnore,
-    /// Check comment is the first attached comment
-    First,
-    /// Check comment is the last attached comment
-    Last,
+bitflags! {
+    #[derive(Debug, Clone, Copy)]
+    pub struct CommentFlags: u8 {
+        const Leading        = 1 << 0; // Check comment is a leading comment
+        const Trailing       = 1 << 1; // Check comment is a trailing comment
+        const Dangling       = 1 << 2; // Check comment is a dangling comment
+        const Block          = 1 << 3; // Check comment is a block comment
+        const Line           = 1 << 4; // Check comment is a line comment
+        const PrettierIgnore = 1 << 5; // Check comment is a `prettier-ignore` comment
+        const First          = 1 << 6; // Check comment is the first attached comment
+        const Last           = 1 << 7; // Check comment is the last attached comment
+    }
 }
 
 #[derive(Default)]
