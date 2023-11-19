@@ -1,4 +1,4 @@
-Compatibility: 114/838 (13.60%)
+Compatibility: 119/838 (14.20%)
 
 # Failed
 
@@ -406,7 +406,6 @@ Compatibility: 114/838 (13.60%)
 * empty-paren-comment/empty_paren_comment.js
 
 ### empty-statement
-* empty-statement/body.js
 * empty-statement/no-newline.js
 
 ### end-of-line
@@ -473,8 +472,6 @@ Compatibility: 114/838 (13.60%)
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
-* for/for.js
-* for/in.js
 
 ### for-await
 * for-await/for-await.js
@@ -620,7 +617,6 @@ Compatibility: 114/838 (13.60%)
 * member/expand.js
 
 ### method-chain
-* method-chain/13018.js
 * method-chain/bracket_0-1.js
 * method-chain/bracket_0.js
 * method-chain/break-last-call.js
@@ -983,9 +979,6 @@ Compatibility: 114/838 (13.60%)
 ### unicode
 * unicode/combining-characters.js
 * unicode/nbsp-jsx.js
-
-### update-expression
-* update-expression/update_expression.js
 
 ### v8_intrinsic
 * v8_intrinsic/avoid-conflicts-to-pipeline.js
