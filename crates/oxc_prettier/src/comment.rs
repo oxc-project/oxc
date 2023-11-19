@@ -68,8 +68,12 @@ impl<'a> Prettier<'a> {
                     parts.push(hardline!());
                 }
 
-                let end = self.get_comment_end(kind, end);
-                if self.skip_newline(self.skip_spaces(end)).is_some_and(|i| self.has_newline(i)) {
+                if self
+                    .get_comment_end(kind, end)
+                    .map(|end| self.skip_spaces(end))
+                    .and_then(|idx| self.skip_newline(idx))
+                    .is_some_and(|i| self.has_newline(i))
+                {
                     parts.push(hardline!());
                 }
             } else {
