@@ -1,7 +1,10 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, if_break, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, Group},
+    if_break, ss, Format, Prettier,
+};
 
 pub(super) fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
@@ -42,5 +45,5 @@ fn print_call_expression_arguments<'a>(
     parts.push(if_break!(p, ","));
     parts.push(Doc::Softline);
     parts.push(ss!(")"));
-    Doc::Group(parts)
+    Doc::Group(Group::new(parts, false))
 }

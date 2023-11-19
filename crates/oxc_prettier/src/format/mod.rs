@@ -29,7 +29,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    doc::{Doc, Separator},
+    doc::{Doc, Group, Separator},
     format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
@@ -229,7 +229,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -287,7 +287,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -314,7 +314,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -573,7 +573,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 parts.push(ss!(";"));
             }
 
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -1408,7 +1408,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 parts.push(ss!(": "));
                 parts.push(format!(p, self.value));
             }
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         }
     }
 }
@@ -1660,7 +1660,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
         }
         parts.push(ss!(")"));
 
-        Doc::Group(parts)
+        Doc::Group(Group::new(parts, false))
     }
 }
 
