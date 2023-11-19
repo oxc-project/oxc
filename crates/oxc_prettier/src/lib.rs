@@ -15,6 +15,7 @@ use std::{iter::Peekable, vec};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
+use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{doc::Doc, format::Format, printer::Printer};
 
@@ -106,5 +107,30 @@ impl<'a> Prettier<'a> {
 
     fn is_next_line_empty(&self, end: u32) -> bool {
         self.source_text[end as usize..].chars().nth(1).is_some_and(|c| c == '\n')
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    fn skip_newline(&self, start_index: Option<u32>) -> Option<u32> {
+        let start_index = start_index?;
+        let c = self.source_text[start_index as usize..].chars().next()?;
+        is_line_terminator(c).then(|| start_index + c.len_utf8() as u32)
+    }
+
+    fn skip_spaces(&self, start_index: Option<u32>) -> Option<u32> {
+        let mut start_index = start_index?;
+        for c in self.source_text[start_index as usize..].chars() {
+            if matches!(c, ' ' | '\t') {
+                start_index += 1;
+            } else {
+                break;
+            }
+        }
+        Some(start_index)
+    }
+
+    fn has_newline(&self, start_index: u32) -> bool {
+        let idx = self.skip_spaces(Some(start_index));
+        let idx2 = self.skip_newline(idx);
+        idx != idx2
     }
 }

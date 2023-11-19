@@ -104,9 +104,8 @@ expression: no_commented_out_tests
    ╭─[no_commented_out_tests.tsx:1:1]
  1 │ 
  2 │               // test(
-   ·                 ───────
+   ·                 ──────
  3 │               //   "foo", function () {}
- 4 │               // )
    ╰────
   help: Remove or uncomment this comment
 
