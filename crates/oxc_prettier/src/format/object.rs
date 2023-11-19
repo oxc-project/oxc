@@ -1,14 +1,34 @@
 use oxc_allocator::Vec;
+use oxc_ast::ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     doc::{Doc, Group},
     group, if_break, line, softline, ss, Prettier,
 };
 
-use super::Format;
+use super::{misc, Format};
 
-pub(super) fn print_object_properties<'a, F: Format<'a>>(
+#[allow(clippy::enum_variant_names)]
+pub enum ObjectLike<'a, 'b> {
+    ObjectExpression(&'b ObjectExpression<'a>),
+    ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
+    ObjectPattern(&'b ObjectPattern<'a>),
+}
+
+impl ObjectLike<'_, '_> {
+    pub fn span(&self) -> Span {
+        match self {
+            ObjectLike::ObjectExpression(object) => object.span,
+            ObjectLike::ObjectAssignmentTarget(object) => object.span,
+            ObjectLike::ObjectPattern(object) => object.span,
+        }
+    }
+}
+
+pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
     p: &mut Prettier<'a>,
+    object: &ObjectLike<'a, '_>,
     properties: &Vec<'a, F>,
 ) -> Doc<'a> {
     let left_brace = ss!("{");
@@ -29,7 +49,18 @@ pub(super) fn print_object_properties<'a, F: Format<'a>>(
                 indent_parts.push(Doc::Line);
             }
         }
-        parts.push(group!(p, Doc::Indent(indent_parts)));
+
+        let should_break = misc::has_new_line_in_range(
+            p.source_text,
+            object.span().start,
+            // SAFETY: we checked above that `properties` is not empty
+            properties[0].span().start,
+        );
+
+        let mut group = p.vec();
+        group.push(Doc::Indent(indent_parts));
+
+        parts.push(Doc::Group(Group::new(group, should_break)));
         parts.push(if_break!(p, ","));
 
         if p.options.bracket_spacing {

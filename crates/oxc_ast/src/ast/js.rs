@@ -1,7 +1,7 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -919,6 +919,15 @@ pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
 }
 
+impl<'a> GetSpan for AssignmentTargetProperty<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::AssignmentTargetPropertyIdentifier(identifier) => identifier.span,
+            Self::AssignmentTargetPropertyProperty(literal) => literal.span,
+        }
+    }
+}
+
 /// Assignment Property - Identifier Reference
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -1445,6 +1454,12 @@ pub struct BindingProperty<'a> {
     pub value: BindingPattern<'a>,
     pub shorthand: bool,
     pub computed: bool,
+}
+
+impl<'a> GetSpan for BindingProperty<'a> {
+    fn span(&self) -> Span {
+        self.span
+    }
 }
 
 #[derive(Debug, Hash)]
