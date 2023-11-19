@@ -110,27 +110,26 @@ impl<'a> Prettier<'a> {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn skip_newline(&self, start_index: Option<u32>) -> Option<u32> {
-        let start_index = start_index?;
+    fn skip_newline(&self, start_index: u32) -> Option<u32> {
         let c = self.source_text[start_index as usize..].chars().next()?;
         is_line_terminator(c).then(|| start_index + c.len_utf8() as u32)
     }
 
-    fn skip_spaces(&self, start_index: Option<u32>) -> Option<u32> {
-        let mut start_index = start_index?;
+    fn skip_spaces(&self, start_index: u32) -> u32 {
+        let mut index = start_index;
         for c in self.source_text[start_index as usize..].chars() {
             if matches!(c, ' ' | '\t') {
-                start_index += 1;
+                index += 1;
             } else {
                 break;
             }
         }
-        Some(start_index)
+        index
     }
 
     fn has_newline(&self, start_index: u32) -> bool {
-        let idx = self.skip_spaces(Some(start_index));
+        let idx = self.skip_spaces(start_index);
         let idx2 = self.skip_newline(idx);
-        idx != idx2
+        Some(idx) != idx2
     }
 }
