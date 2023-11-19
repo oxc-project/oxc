@@ -21,6 +21,8 @@ oxc_ast       = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_span      = { workspace = true }
 
+bitflags      = { workspace = true }
+
 [dev-dependencies]
 oxc_parser = { workspace = true }
 oxc_span   = { workspace = true }
