@@ -13,6 +13,7 @@ mod call_expression;
 mod class;
 mod function;
 mod function_parameters;
+mod misc;
 mod module;
 mod object;
 mod statement;
@@ -34,7 +35,6 @@ use crate::{
 use self::{
     array::Array,
     binaryish::{BinaryishLeft, BinaryishOperator},
-    block::adjust_clause,
 };
 
 pub trait Format<'a> {
@@ -135,7 +135,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
         let mut parts = p.vec();
 
         let consequent = format!(p, self.consequent);
-        let consequent = adjust_clause(p, &self.consequent, consequent, false);
+        let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
 
         let opening = group![
             p,
@@ -147,8 +147,19 @@ impl<'a> Format<'a> for IfStatement<'a> {
         parts.push(opening);
 
         if let Some(alternate) = &self.alternate {
+            let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
+            parts.push(if else_on_same_line { ss!(" ") } else { hardline!() });
             parts.push(ss!("else"));
-            parts.push(group!(p, format!(p, alternate)));
+            let alternate_doc = format!(p, alternate);
+            parts.push(group!(
+                p,
+                misc::adjust_clause(
+                    p,
+                    alternate,
+                    alternate_doc,
+                    matches!(alternate, Statement::IfStatement(_))
+                )
+            ));
         }
 
         Doc::Array(parts)
@@ -191,7 +202,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
             parts.push(ss!(")"));
 
             let body = format!(p, self.body);
-            parts.push(adjust_clause(p, &self.body, body, false));
+            parts.push(misc::adjust_clause(p, &self.body, body, false));
 
             Doc::Group(parts)
         })
@@ -219,7 +230,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
         parts.push(ss!(")"));
 
         let body = format!(p, self.body);
-        parts.push(adjust_clause(p, &self.body, body, false));
+        parts.push(misc::adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
@@ -241,7 +252,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
         parts.push(ss!(")"));
 
         let body = format!(p, self.body);
-        parts.push(adjust_clause(p, &self.body, body, false));
+        parts.push(misc::adjust_clause(p, &self.body, body, false));
 
         Doc::Group(parts)
     }
@@ -267,7 +278,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             parts.push(ss!(")"));
 
             let body = format!(p, self.body);
-            parts.push(adjust_clause(p, &self.body, body, false));
+            parts.push(misc::adjust_clause(p, &self.body, body, false));
 
             Doc::Group(parts)
         })
@@ -280,7 +291,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             let mut parts = p.vec();
 
             let clause = format!(p, self.body);
-            let clause = adjust_clause(p, &self.body, clause, false);
+            let clause = misc::adjust_clause(p, &self.body, clause, false);
             let do_body = group!(p, ss!("do"), clause);
 
             parts.push(do_body);
@@ -451,20 +462,14 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
 
 impl<'a> Format<'a> for WithStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        let body = group![p, hardline!(), format!(p, self.body), hardline!()];
-        let with_stmt = group![
+        let body_doc = self.body.format(p);
+        group![
             p,
             ss!("with ("),
             format!(p, self.object),
             ss!(")"),
-            ss!(" "),
-            ss!("{"),
-            indent!(p, body),
-            hardline!()
-        ];
-        parts.push(with_stmt);
-        Doc::Array(parts)
+            misc::adjust_clause(p, &self.body, body_doc, false)
+        ]
     }
 }
 
