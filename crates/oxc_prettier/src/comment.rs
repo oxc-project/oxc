@@ -1,6 +1,6 @@
-#![allow(non_upper_case_globals)]
-
 //! Comment helpers
+
+#![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;
 
@@ -9,7 +9,7 @@ use oxc_span::Span;
 
 use crate::{
     doc::{Doc, Separator},
-    hardline, indent, Prettier,
+    hardline, indent, line, ss, Prettier,
 };
 
 bitflags! {
@@ -50,11 +50,28 @@ impl<'a> Prettier<'a> {
         while let Some((start, end, kind)) = self.trivias.peek().copied() {
             // Comment before the span
             if end <= range.start {
+                self.trivias.next();
+
                 parts.push(self.print_comment(start, end, kind));
                 if kind.is_multi_line() {
+                    let line_break = if self.has_newline(end) {
+                        if self.has_newline(start) {
+                            hardline!()
+                        } else {
+                            line!()
+                        }
+                    } else {
+                        ss!(" ")
+                    };
+                    parts.push(line_break);
+                } else {
                     parts.push(hardline!());
                 }
-                self.trivias.next();
+
+                let end = self.get_comment_end(kind, end);
+                if self.skip_newline(self.skip_spaces(end)).is_some_and(|i| self.has_newline(i)) {
+                    parts.push(hardline!());
+                }
             } else {
                 break;
             }
@@ -95,5 +112,14 @@ impl<'a> Prettier<'a> {
         let end_offset = if kind.is_multi_line() { 2 } else { 0 };
         let comment = Span::new(start - 2, end + end_offset).source_text(self.source_text);
         Doc::Str(comment)
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    fn get_comment_end(&self, kind: CommentKind, end: u32) -> Option<u32> {
+        if kind.is_single_line() {
+            self.source_text[end as usize..].chars().next().map(|c| end + c.len_utf8() as u32)
+        } else {
+            Some(end)
+        }
     }
 }

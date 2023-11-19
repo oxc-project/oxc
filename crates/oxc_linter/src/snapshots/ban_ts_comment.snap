@@ -45,9 +45,8 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:2:1]
  2 │ if (false) {
  3 │   // @ts-expect-error: Unreachable code error
-   ·     ──────────────────────────────────────────
+   ·     ─────────────────────────────────────────
  4 │   console.log('hello');
- 5 │ }
    ╰────
 
   ⚠ Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.
@@ -123,9 +122,8 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:2:1]
  2 │ if (false) {
  3 │   // @ts-ignore: Unreachable code error
-   ·     ────────────────────────────────────
+   ·     ───────────────────────────────────
  4 │   console.log('hello');
- 5 │ }
    ╰────
 
   ⚠ Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
@@ -201,9 +199,8 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:2:1]
  2 │ if (false) {
  3 │   // @ts-nocheck: Unreachable code error
-   ·     ─────────────────────────────────────
+   ·     ────────────────────────────────────
  4 │   console.log('hello');
- 5 │ }
    ╰────
 
   ⚠ Include a description after the @ts-nocheck directive to explain why the @ts-nocheck is necessary. The description must be 3 characters or longer.
@@ -267,9 +264,8 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:2:1]
  2 │ if (false) {
  3 │   // @ts-check: Unreachable code error
-   ·     ───────────────────────────────────
+   ·     ──────────────────────────────────
  4 │   console.log('hello');
- 5 │ }
    ╰────
 
   ⚠ Include a description after the @ts-check directive to explain why the @ts-check is necessary. The description must be 3 characters or longer.

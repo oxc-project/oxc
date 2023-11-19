@@ -1,4 +1,4 @@
-Compatibility: 115/771 (14.92%)
+Compatibility: 120/771 (15.56%)
 
 # Failed
 
@@ -99,7 +99,6 @@ Compatibility: 115/771 (14.92%)
 
 ### babel-plugins
 * babel-plugins/async-do-expressions.js
-* babel-plugins/async-generators.js
 * babel-plugins/bigint.js
 * babel-plugins/class-properties.js
 * babel-plugins/class-static-block.js
@@ -109,7 +108,6 @@ Compatibility: 115/771 (14.92%)
 * babel-plugins/deferred-import-evaluation.js
 * babel-plugins/destructuring-private.js
 * babel-plugins/do-expressions.js
-* babel-plugins/dynamic-import.js
 * babel-plugins/explicit-resource-management.js
 * babel-plugins/export-default-from.js
 * babel-plugins/export-namespace-from.js
@@ -121,7 +119,6 @@ Compatibility: 115/771 (14.92%)
 * babel-plugins/import-meta.js
 * babel-plugins/import-reflection.js
 * babel-plugins/jsx.js
-* babel-plugins/logical-assignment-operators.js
 * babel-plugins/module-blocks.js
 * babel-plugins/nullish-coalescing-operator.js
 * babel-plugins/numeric-separator.js
@@ -508,7 +505,6 @@ Compatibility: 115/771 (14.92%)
 ### generator
 * generator/anonymous.js
 * generator/async.js
-* generator/function-name-starts-with-get.js
 
 ### identifier/for-of
 * identifier/for-of/let.js
@@ -635,9 +631,6 @@ Compatibility: 115/771 (14.92%)
 
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
-
-### numeric-separators
-* numeric-separators/number.js
 
 ### object-prop-break-in
 * object-prop-break-in/comment.js

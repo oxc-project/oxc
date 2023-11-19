@@ -375,14 +375,19 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Single Line Comment
+    #[allow(clippy::cast_possible_truncation)]
     fn skip_single_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next().as_ref() {
-            if is_line_terminator(*c) {
-                break;
+        let start = self.current.token.start;
+        while let Some(c) = self.current.chars.next() {
+            if is_line_terminator(c) {
+                self.current.token.is_on_new_line = true;
+                self.trivia_builder
+                    .add_single_line_comment(start, self.offset() - c.len_utf8() as u32);
+                return Kind::Comment;
             }
         }
-        self.current.token.is_on_new_line = true;
-        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
+        // EOF
+        self.trivia_builder.add_single_line_comment(start, self.offset());
         Kind::Comment
     }
 

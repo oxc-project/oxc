@@ -113,7 +113,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     // Get the span up to the next new line
                     let stop = self.source_text[span.end as usize..]
                         .lines()
-                        .take(if comment.is_single_line() { 1 } else { 2 })
+                        .take(2)
                         .fold(span.end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
                         self.add_interval(span.end, stop, DisabledRule::All);
