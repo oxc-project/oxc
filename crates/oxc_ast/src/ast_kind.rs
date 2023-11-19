@@ -75,6 +75,8 @@ pub enum AstKind<'a> {
     UnaryExpression(&'a UnaryExpression<'a>),
     UpdateExpression(&'a UpdateExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
+    ImportExpression(&'a ImportExpression<'a>),
+    PrivateInExpression(&'a PrivateInExpression<'a>),
 
     ObjectProperty(&'a ObjectProperty<'a>),
     PropertyKey(&'a PropertyKey<'a>),
@@ -328,6 +330,8 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::UnaryExpression(x) => x.span,
             Self::UpdateExpression(x) => x.span,
             Self::YieldExpression(x) => x.span,
+            Self::ImportExpression(x) => x.span,
+            Self::PrivateInExpression(x) => x.span,
 
             Self::ObjectProperty(x) => x.span,
             Self::PropertyKey(x) => x.span(),
@@ -488,6 +492,8 @@ impl<'a> AstKind<'a> {
             Self::UnaryExpression(expr) => format!("UnaryExpression({:?})", expr.operator).into(),
             Self::UpdateExpression(_) => "UpdateExpression".into(),
             Self::YieldExpression(_) => "YieldExpression".into(),
+            Self::ImportExpression(_) => "ImportExpression".into(),
+            Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
             Self::ObjectProperty(_) => "ObjectProperty".into(),
             Self::PropertyKey(_) => "PropertyKey".into(),
