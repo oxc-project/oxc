@@ -1,4 +1,4 @@
-Compatibility: 121/838 (14.44%)
+Compatibility: 122/838 (14.56%)
 
 # Failed
 
@@ -954,7 +954,6 @@ Compatibility: 121/838 (14.44%)
 
 ### try
 * try/catch.js
-* try/empty.js
 * try/try.js
 
 ### tuple

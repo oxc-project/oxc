@@ -474,17 +474,19 @@ impl<'a> Format<'a> for TryStatement<'a> {
 
 impl<'a> Format<'a> for CatchClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, CatchClause, {
+            let mut parts = p.vec();
 
-        parts.push(ss!("catch "));
-        if let Some(param) = &self.param {
-            parts.push(ss!("("));
-            parts.push(format!(p, param));
-            parts.push(ss!(") "));
-        }
-        parts.push(format!(p, self.body));
+            parts.push(ss!("catch "));
+            if let Some(param) = &self.param {
+                parts.push(ss!("("));
+                parts.push(format!(p, param));
+                parts.push(ss!(") "));
+            }
+            parts.push(format!(p, self.body));
 
-        Doc::Array(parts)
+            Doc::Array(parts)
+        })
     }
 }
 

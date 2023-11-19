@@ -76,6 +76,11 @@ impl<'a> Prettier<'a> {
         self.nodes[self.nodes.len() - 2]
     }
 
+    fn parent_parent_kind(&self) -> Option<AstKind<'a>> {
+        let len = self.nodes.len();
+        (len >= 3).then(|| self.nodes[len - 3])
+    }
+
     /// A hack for erasing the lifetime requirement.
     #[allow(clippy::unused_self)]
     fn alloc<T>(&self, t: &T) -> &'a T {
