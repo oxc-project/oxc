@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
@@ -33,19 +32,33 @@ impl BinaryishOperator {
     }
 }
 
-impl<'a> Prettier<'a> {
-    pub(super) fn print_binaryish_expression<'b>(
-        &mut self,
-        left: &BinaryishLeft<'a, 'b>,
-        operator: BinaryishOperator,
-        right: &Expression<'a>,
-    ) -> Doc<'a> {
-        let mut parts = self.vec();
-        parts.push(left.format(self));
-        parts.push(ss!(" "));
-        parts.push(ss!(operator.as_str()));
-        parts.push(Doc::Line);
-        parts.push(right.format(self));
-        Doc::Array(parts)
+pub(super) fn print_binaryish_expression<'a>(
+    p: &mut Prettier<'a>,
+    left: &BinaryishLeft<'a, '_>,
+    operator: BinaryishOperator,
+    right: &Expression<'a>,
+) -> Doc<'a> {
+    let mut parts = p.vec();
+    match &left {
+        BinaryishLeft::Expression(expr) => {
+            if let Expression::LogicalExpression(logical_expr) = expr {
+                parts.push(print_binaryish_expression(
+                    p,
+                    &BinaryishLeft::Expression(&logical_expr.left),
+                    BinaryishOperator::LogicalOperator(logical_expr.operator),
+                    &logical_expr.right,
+                ));
+            } else {
+                parts.push(left.format(p));
+            }
+        }
+        BinaryishLeft::PrivateIdentifier(ident) => {
+            parts.push(left.format(p));
+        }
     }
+    parts.push(ss!(" "));
+    parts.push(ss!(operator.as_str()));
+    parts.push(Doc::Line);
+    parts.push(right.format(p));
+    Doc::Array(parts)
 }

@@ -189,27 +189,27 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"fn()"#, None),
-        (r#"[1, 2, 3].map(function () {})"#, None),
-        (r#"<App />;"#, None),
-        (r#"[<App key={0} />, <App key={1} />];"#, None),
-        (r#"[1, 2, 3].map(function(x) { return <App key={x} /> });"#, None),
-        (r#"[1, 2, 3].map(x => <App key={x} />);"#, None),
-        (r#"[1, 2 ,3].map(x => x && <App x={x} key={x} />);"#, None),
+        (r"fn()", None),
+        (r"[1, 2, 3].map(function () {})", None),
+        (r"<App />;", None),
+        (r"[<App key={0} />, <App key={1} />];", None),
+        (r"[1, 2, 3].map(function(x) { return <App key={x} /> });", None),
+        (r"[1, 2, 3].map(x => <App key={x} />);", None),
+        (r"[1, 2 ,3].map(x => x && <App x={x} key={x} />);", None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} key="2" />);"#, None),
-        (r#"[1, 2, 3].map(x => { return <App key={x} /> });"#, None),
-        (r#"Array.from([1, 2, 3], function(x) { return <App key={x} /> });"#, None),
-        (r#"Array.from([1, 2, 3], (x => <App key={x} />));"#, None),
-        (r#"Array.from([1, 2, 3], (x => {return <App key={x} />}));"#, None),
-        (r#"Array.from([1, 2, 3], someFn);"#, None),
-        (r#"Array.from([1, 2, 3]);"#, None),
-        (r#"[1, 2, 3].foo(x => <App />);"#, None),
-        (r#"var App = () => <div />;"#, None),
-        (r#"[1, 2, 3].map(function(x) { return; });"#, None),
-        (r#"foo(() => <div />);"#, None),
-        (r#"foo(() => <></>);"#, None),
-        (r#"<></>;"#, None),
-        (r#"<App {...{}} />;"#, None),
+        (r"[1, 2, 3].map(x => { return <App key={x} /> });", None),
+        (r"Array.from([1, 2, 3], function(x) { return <App key={x} /> });", None),
+        (r"Array.from([1, 2, 3], (x => <App key={x} />));", None),
+        (r"Array.from([1, 2, 3], (x => {return <App key={x} />}));", None),
+        (r"Array.from([1, 2, 3], someFn);", None),
+        (r"Array.from([1, 2, 3]);", None),
+        (r"[1, 2, 3].foo(x => <App />);", None),
+        (r"var App = () => <div />;", None),
+        (r"[1, 2, 3].map(function(x) { return; });", None),
+        (r"foo(() => <div />);", None),
+        (r"foo(() => <></>);", None),
+        (r"<></>;", None),
+        (r"<App {...{}} />;", None),
         (r#"<App key="keyBeforeSpread" {...{}} />;"#, None),
         (r#"<div key="keyBeforeSpread" {...{}} />;"#, None),
         (r#"const spans = [<span key="notunique"/>,<span key="notunique"/>];"#, None),
@@ -257,13 +257,13 @@ fn test() {
             None,
         ),
         (
-            r#"
+            r"
             // testrule.jsx
             const trackLink = () => {};
             const getAnalyticsUiElement = () => {};
 
             const onTextButtonClick = (e, item) => trackLink([, getAnalyticsUiElement(item), item.name], e);
-            "#,
+            ",
             None,
         ),
         (
@@ -291,13 +291,13 @@ fn test() {
             None,
         ),
         (
-            r#"
+            r"
             const baz = foo?.bar?.()?.[1] ?? 'qux';
 
             qux()?.map()
 
             const directiveRanges = comments?.map(tryParseTSDirective)
-            "#,
+            ",
             None,
         ),
         (
@@ -357,27 +357,27 @@ fn test() {
     ];
 
     let fail = vec![
-        (r#"[<App />];"#, None),
-        (r#"[<App {...key} />];"#, None),
-        (r#"[<App key={0}/>, <App />];"#, None),
-        (r#"[1, 2 ,3].map(function(x) { return <App /> });"#, None),
-        (r#"[1, 2 ,3].map(x => <App />);"#, None),
-        (r#"[1, 2 ,3].map(x => x && <App x={x} />);"#, None),
+        (r"[<App />];", None),
+        (r"[<App {...key} />];", None),
+        (r"[<App key={0}/>, <App />];", None),
+        (r"[1, 2 ,3].map(function(x) { return <App /> });", None),
+        (r"[1, 2 ,3].map(x => <App />);", None),
+        (r"[1, 2 ,3].map(x => x && <App x={x} />);", None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} key="1" /> : <OtherApp x={x} />);"#, None),
         (r#"[1, 2 ,3].map(x => x ? <App x={x} /> : <OtherApp x={x} key="2" />);"#, None),
-        (r#"[1, 2 ,3].map(x => { return <App /> });"#, None),
-        (r#"Array.from([1, 2 ,3], function(x) { return <App /> });"#, None),
-        (r#"Array.from([1, 2 ,3], (x => { return <App /> }));"#, None),
-        (r#"Array.from([1, 2 ,3], (x => <App />));"#, None),
-        (r#"[1, 2, 3]?.map(x => <BabelEslintApp />)"#, None),
-        (r#"[1, 2, 3]?.map(x => <TypescriptEslintApp />)"#, None),
-        (r#"[1, 2, 3]?.map(x => <><OxcCompilerHello /></>)"#, None),
+        (r"[1, 2 ,3].map(x => { return <App /> });", None),
+        (r"Array.from([1, 2 ,3], function(x) { return <App /> });", None),
+        (r"Array.from([1, 2 ,3], (x => { return <App /> }));", None),
+        (r"Array.from([1, 2 ,3], (x => <App />));", None),
+        (r"[1, 2, 3]?.map(x => <BabelEslintApp />)", None),
+        (r"[1, 2, 3]?.map(x => <TypescriptEslintApp />)", None),
+        (r"[1, 2, 3]?.map(x => <><OxcCompilerHello /></>)", None),
         ("[1, 2, 3].map(x => <>{x}</>);", None),
         ("[<></>];", None),
         (r#"[<App {...obj} key="keyAfterSpread" />];"#, None),
         (r#"[<div {...obj} key="keyAfterSpread" />];"#, None),
         (
-            r#"
+            r"
                 const Test = () => {
                   const list = [1, 2, 3, 4, 5];
 
@@ -393,11 +393,11 @@ fn test() {
                     </div>
                   );
                 };
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
                 const TestO = () => {
                   const list = [1, 2, 3, 4, 5];
 
@@ -417,11 +417,11 @@ fn test() {
                     </div>
                   );
                 };
-            "#,
+            ",
             None,
         ),
         (
-            r#"
+            r"
                 const TestCase = () => {
                   const list = [1, 2, 3, 4, 5];
 
@@ -435,11 +435,11 @@ fn test() {
                     </div>
                   );
                 };
-          "#,
+          ",
             None,
         ),
         (
-            r#"
+            r"
                 const TestCase = () => {
                   const list = [1, 2, 3, 4, 5];
 
@@ -449,11 +449,11 @@ fn test() {
                     </div>
                   );
                 };
-          "#,
+          ",
             None,
         ),
         (
-            r#"
+            r"
                 const TestCase = () => {
                   const list = [1, 2, 3, 4, 5];
 
@@ -467,7 +467,7 @@ fn test() {
                     </div>
                   );
                 };
-          "#,
+          ",
             None,
         ),
     ];

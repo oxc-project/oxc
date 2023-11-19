@@ -89,52 +89,52 @@ fn test() {
         "eval(); // eslint-line-disable",
         "eval(); // some comment",
         "/* eslint-disable no-eval */",
-        r#"
+        r"
         /* eslint-disable no-abusive-eslint-disable */
         eval(); // eslint-disable-line
-        "#,
-        r#"
+        ",
+        r"
         foo();
         // eslint-disable-line no-eval
         eval();
-        "#,
-        r#"
+        ",
+        r"
         foo();
         /* eslint-disable no-eval */
         eval();
-        "#,
-        r#"
+        ",
+        r"
         foo();
         /* eslint-disable-next-line no-eval */
         eval();
-        "#,
+        ",
     ];
 
     let fail = vec![
-        r#"
+        r"
         // eslint-disable-next-line @scopewithoutplugin
         eval();
-        "#,
+        ",
         "eval(); // eslint-disable-line",
-        r#"
+        r"
         foo();
         eval(); // eslint-disable-line
-        "#,
+        ",
         "/* eslint-disable */",
-        r#"
+        r"
         foo();
         /* eslint-disable */
         eval();
-        "#,
-        r#"
+        ",
+        r"
         foo();
         /* eslint-disable-next-line */
         eval();
-        "#,
-        r#"
+        ",
+        r"
         // eslint-disable-next-line
         eval();
-        "#,
+        ",
     ];
 
     Tester::new_without_config(NoAbusiveEslintDisable::NAME, pass, fail).test_and_snapshot();

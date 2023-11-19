@@ -21,6 +21,9 @@ pub struct Printer<'a> {
     /// while loop which is much faster. The while loop below adds new
     /// cmds to the array instead of recursively calling `print`.
     cmds: Vec<Command<'a>>,
+
+    // states
+    new_line: &'static str,
 }
 
 impl<'a> Printer<'a> {
@@ -29,7 +32,7 @@ impl<'a> Printer<'a> {
         // be the same size as the original text.
         let out = Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-        Self { options, out, pos: 0, cmds }
+        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str() }
     }
 
     pub fn build(mut self) -> String {
@@ -49,6 +52,7 @@ impl<'a> Printer<'a> {
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
                 Doc::Group(docs) => self.handle_group(indent, mode, docs),
+                Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
@@ -86,7 +90,7 @@ impl<'a> Printer<'a> {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
 
-                if Self::fits(&docs, remaining_width) {
+                if self.fits(&docs, indent, remaining_width) {
                     self.cmds.extend(
                         docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
                     );
@@ -99,24 +103,44 @@ impl<'a> Printer<'a> {
         }
     }
 
+    fn handle_indent_if_break(
+        &mut self,
+        indent: Indent,
+        mode: Mode,
+        docs: oxc_allocator::Vec<'a, Doc<'a>>,
+    ) {
+        match mode {
+            Mode::Flat => {
+                self.cmds.extend(
+                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                );
+            }
+            Mode::Break => {
+                self.cmds.extend(docs.into_iter().rev().map(|doc| {
+                    Command::new(Indent { length: indent.length + 1 }, Mode::Flat, doc)
+                }));
+            }
+        }
+    }
+
     fn handle_line(&mut self, indent: Indent, mode: Mode) {
         if matches!(mode, Mode::Flat) {
             self.out.push(b' ');
         } else {
-            self.out.push(b'\n');
+            self.out.extend(self.new_line.as_bytes());
             self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
         if !matches!(mode, Mode::Flat) {
-            self.out.push(b'\n');
+            self.out.extend(self.new_line.as_bytes());
             self.pos = self.indent(indent.length);
         }
     }
 
     fn handle_hardline(&mut self, indent: Indent) {
-        self.out.push(b'\n');
+        self.out.extend(self.new_line.as_bytes());
         self.pos = self.indent(indent.length);
     }
 
@@ -127,7 +151,12 @@ impl<'a> Printer<'a> {
     }
 
     #[allow(clippy::cast_possible_wrap)]
-    fn fits(doc: &oxc_allocator::Vec<'a, Doc<'a>>, remaining_width: isize) -> bool {
+    fn fits(
+        &self,
+        doc: &oxc_allocator::Vec<'a, Doc<'a>>,
+        indent: Indent,
+        remaining_width: isize,
+    ) -> bool {
         let mut remaining_width = remaining_width;
 
         // TODO: these should be commands
@@ -138,20 +167,22 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::Array(docs) | Doc::Indent(docs) => {
+                Doc::IndentIfBreak(docs)
+                | Doc::Array(docs)
+                | Doc::Indent(docs)
+                | Doc::Group(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
                         queue.push_front(d);
                     }
-                }
-                Doc::Group(doc) => {
-                    for d in doc.iter().rev() {
-                        queue.push_front(d);
+
+                    if matches!(next, Doc::Indent(_)) {
+                        remaining_width -= (self.options.tab_width * indent.length) as isize;
                     }
                 }
                 // trying to fit on a single line, so we don't need to consider line breaks
                 Doc::IfBreak { .. } | Doc::Softline => {}
-                Doc::Line => remaining_width += 1,
+                Doc::Line => remaining_width -= 1,
                 Doc::Hardline => {
                     return false;
                 }

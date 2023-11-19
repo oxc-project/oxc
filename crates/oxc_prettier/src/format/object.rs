@@ -1,39 +1,43 @@
 use oxc_allocator::Vec;
 
-use crate::{doc::Doc, ss, Prettier};
+use crate::{doc::Doc, group, if_break, line, softline, ss, Prettier};
 
 use super::Format;
 
-impl<'a> Prettier<'a> {
-    pub(super) fn print_object_properties<F: Format<'a>>(
-        &mut self,
-        properties: &Vec<'a, F>,
-    ) -> Doc<'a> {
-        let mut parts = self.vec();
+pub(super) fn print_object_properties<'a, F: Format<'a>>(
+    p: &mut Prettier<'a>,
+    properties: &Vec<'a, F>,
+) -> Doc<'a> {
+    let left_brace = ss!("{");
+    let right_brace = ss!("}");
 
+    let content = if properties.is_empty() {
+        group![p, left_brace, softline!(), right_brace]
+    } else {
+        let mut parts = p.vec();
         parts.push(ss!("{"));
-        if self.options.bracket_spacing {
-            parts.push(Doc::Line);
-        } else {
-            parts.push(Doc::Softline);
-        };
 
-        let len = properties.len();
-        properties.iter().map(|prop| prop.format(self)).enumerate().for_each(|(i, prop)| {
-            parts.push(prop);
-            if i < len - 1 {
-                parts.push(Doc::Str(","));
-                parts.push(Doc::Line);
+        let mut indent_parts = p.vec();
+        indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
+        for (i, prop) in properties.iter().enumerate() {
+            indent_parts.push(prop.format(p));
+            if i < properties.len() - 1 {
+                indent_parts.push(Doc::Str(","));
+                indent_parts.push(Doc::Line);
             }
-        });
+        }
+        parts.push(group!(p, Doc::Indent(indent_parts)));
+        parts.push(if_break!(p, ","));
 
-        if self.options.bracket_spacing {
+        if p.options.bracket_spacing {
             parts.push(Doc::Line);
         } else {
             parts.push(Doc::Softline);
         }
-        parts.push(ss!("}"));
 
+        parts.push(ss!("}"));
         Doc::Group(parts)
-    }
+    };
+
+    content
 }

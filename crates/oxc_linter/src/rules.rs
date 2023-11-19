@@ -113,6 +113,7 @@ mod jest {
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
     pub mod no_confusing_set_timeout;
+    pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
     pub mod no_export;
@@ -153,10 +154,12 @@ mod unicorn {
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
+    pub mod no_hex_escape;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
     pub mod no_lonely_if;
     pub mod no_negated_condition;
+    pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
     pub mod no_object_as_default_parameter;
@@ -286,6 +289,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
     jest::no_confusing_set_timeout,
+    jest::no_deprecated_functions,
     jest::no_disabled_tests,
     jest::no_done_callback,
     jest::no_export,
@@ -310,10 +314,12 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
     unicorn::no_empty_file,
+    unicorn::no_hex_escape,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_lonely_if,
     unicorn::no_negated_condition,
+    unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
     unicorn::no_object_as_default_parameter,

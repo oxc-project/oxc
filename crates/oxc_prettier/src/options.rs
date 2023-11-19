@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 /// Prettier Options
 ///
 /// References
@@ -17,6 +19,9 @@ pub struct PrettierOptions {
 
     /// Indent lines with tabs instead of spaces.
     pub use_tabs: bool,
+
+    /// End of line
+    pub end_of_line: EndOfLine,
 
     /* JavaScript Options */
     /// Print semicolons at the ends of statements.
@@ -62,6 +67,7 @@ impl Default for PrettierOptions {
             print_width: 80,
             tab_width: 2,
             use_tabs: false,
+            end_of_line: EndOfLine::default(),
             semi: true,
             single_quote: false,
             quote_props: QuoteProps::default(),
@@ -71,6 +77,39 @@ impl Default for PrettierOptions {
             bracket_same_line: false,
             arrow_parens: ArrowParens::default(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum EndOfLine {
+    #[default]
+    Lf,
+    Crlf,
+    Cr,
+    Auto,
+}
+
+impl EndOfLine {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Crlf => "\r\n",
+            Self::Cr => "\r",
+            Self::Lf | Self::Auto => "\n",
+        }
+    }
+}
+
+impl FromStr for EndOfLine {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "crlf" => Self::Crlf,
+            "cr" => Self::Cr,
+            "auto" => Self::Auto,
+            "lf" => Self::Lf,
+            _ => Self::default(),
+        })
     }
 }
 
@@ -85,7 +124,7 @@ pub enum QuoteProps {
     Preserve,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum TrailingComma {
     /// Trailing commas wherever possible (including function parameters and calls).
     #[default]
@@ -94,6 +133,33 @@ pub enum TrailingComma {
     ES5,
     /// No trailing commas.
     None,
+}
+
+impl TrailingComma {
+    pub fn is_all(self) -> bool {
+        self == Self::All
+    }
+
+    pub fn is_es5(self) -> bool {
+        self == Self::ES5
+    }
+
+    pub fn is_none(self) -> bool {
+        self == Self::None
+    }
+}
+
+impl FromStr for TrailingComma {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "all" => Self::All,
+            "es5" => Self::ES5,
+            "none" => Self::None,
+            _ => Self::default(),
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default)]

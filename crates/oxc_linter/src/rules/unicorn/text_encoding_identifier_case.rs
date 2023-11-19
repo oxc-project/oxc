@@ -125,14 +125,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"`UTF-8`"#,
+        r"`UTF-8`",
         r#""utf8""#,
         r#""utf+8""#,
         r#""   utf8   ""#,
         "\'utf8\'",
         r#""\\u0055tf8""#,
-        r#"const ASCII = 1"#,
-        r#"const UTF8 = 1"#,
+        r"const ASCII = 1",
+        r"const UTF8 = 1",
         r#"<meta charset="utf-8" />"#,
         r#"<META CHARSET="utf-8" />"#,
     ];
@@ -140,7 +140,7 @@ fn test() {
     let fail = vec![
         r#""UTF-8""#,
         r#""utf-8""#,
-        r#"'utf-8'"#,
+        r"'utf-8'",
         r#""Utf8""#,
         r#""ASCII""#,
         r#"fs.readFile?.(file, "UTF-8")"#,

@@ -1,17 +1,19 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::{array, doc::Doc, ss, Format, Prettier};
+use crate::{doc::Doc, group, indent, ss, Format, Prettier};
 
-impl<'a> Prettier<'a> {
-    pub(super) fn print_ternary(&mut self, expr: &ConditionalExpression<'a>) -> Doc<'a> {
-        array![
-            self,
-            expr.test.format(self),
-            ss!(" ? "),
-            expr.consequent.format(self),
-            ss!(" : "),
-            expr.alternate.format(self)
-        ]
-    }
+pub(super) fn print_ternary<'a>(p: &mut Prettier<'a>, expr: &ConditionalExpression<'a>) -> Doc<'a> {
+    group![
+        p,
+        expr.test.format(p),
+        indent!(
+            p,
+            Doc::Line,
+            ss!("? "),
+            expr.consequent.format(p),
+            Doc::Line,
+            ss!(": "),
+            expr.alternate.format(p)
+        )
+    ]
 }

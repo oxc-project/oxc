@@ -59,29 +59,29 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"const buffer = Buffer"#,
-        r#"const buffer = new NotBuffer(1)"#,
-        r#"const buffer = Buffer.from('buf')"#,
-        r#"const buffer = Buffer.from('7468697320697320612074c3a97374', 'hex')"#,
-        r#"const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])"#,
-        r#"const buffer = Buffer.alloc(10)"#,
+        r"const buffer = Buffer",
+        r"const buffer = new NotBuffer(1)",
+        r"const buffer = Buffer.from('buf')",
+        r"const buffer = Buffer.from('7468697320697320612074c3a97374', 'hex')",
+        r"const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+        r"const buffer = Buffer.alloc(10)",
     ];
 
     let fail = vec![
-        r#"const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])"#,
-        r#"const buffer = new Buffer([0x62, bar])"#,
-        r#"const buffer = new Buffer(10);"#,
-        r#"new Buffer(foo.length)"#,
-        r#"new Buffer(Math.min(foo, bar))"#,
+        r"const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+        r"const buffer = new Buffer([0x62, bar])",
+        r"const buffer = new Buffer(10);",
+        r"new Buffer(foo.length)",
+        r"new Buffer(Math.min(foo, bar))",
         r#"const buffer = new Buffer("string");"#,
         r#"const buffer = new Buffer("7468697320697320612074c3a97374", "hex")"#,
-        r#"const buffer = new Buffer(`${unknown}`)"#,
-        r#"const buffer = new (Buffer)(unknown)"#,
-        r#"const buffer = new Buffer(unknown, 2)"#,
-        r#"const buffer = new Buffer(...unknown)"#,
-        r#"const buffer = new /* comment */ Buffer()"#,
-        r#"const buffer = new /* comment */ Buffer"#,
-        r#"new Buffer(input, encoding);"#,
+        r"const buffer = new Buffer(`${unknown}`)",
+        r"const buffer = new (Buffer)(unknown)",
+        r"const buffer = new Buffer(unknown, 2)",
+        r"const buffer = new Buffer(...unknown)",
+        r"const buffer = new /* comment */ Buffer()",
+        r"const buffer = new /* comment */ Buffer",
+        r"new Buffer(input, encoding);",
     ];
 
     Tester::new_without_config(NoNewBuffer::NAME, pass, fail).test_and_snapshot();

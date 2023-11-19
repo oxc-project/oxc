@@ -21,11 +21,11 @@ fn test_top_level_strict() {
 
     // Module without top-level "use strict"
     SemanticTester::js(
-        r#"
+        r"
     function foo() {
         return 1
     }    
-    "#,
+    ",
     )
     .has_root_symbol("foo")
     .is_in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
@@ -47,11 +47,11 @@ fn test_top_level_strict() {
 
     // Script without top-level "use strict"
     SemanticTester::js(
-        r#"
+        r"
     function foo() {
         return 1
     }    
-    "#,
+    ",
     )
     .with_module(false)
     .has_root_symbol("foo")

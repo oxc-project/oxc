@@ -127,12 +127,12 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"document.cookie"#,
-        r#"const foo = document.cookie"#,
-        r#"foo = document.cookie"#,
-        r#"foo = document?.cookie"#,
+        r"document.cookie",
+        r"const foo = document.cookie",
+        r"foo = document.cookie",
+        r"foo = document?.cookie",
         r#"foo = document.cookie + ";foo=bar""#,
-        r#"delete document.cookie"#,
+        r"delete document.cookie",
         r#"if (document.cookie.includes("foo")){}"#,
         r#"Object.assign(document, {cookie: "foo=bar"})"#,
         r#"document[CONSTANTS_COOKIE] = "foo=bar""#,
@@ -143,7 +143,7 @@ fn test() {
         r#"document.cookie = "foo=bar""#,
         r#"document.cookie += ";foo=bar""#,
         r#"document.cookie = document.cookie + ";foo=bar""#,
-        r#"document.cookie &&= true"#,
+        r"document.cookie &&= true",
         // r#"document["coo" + "kie"] = "foo=bar""#,
         r#"foo = document.cookie = "foo=bar""#,
         r#"var doc = document; doc.cookie = "foo=bar""#,

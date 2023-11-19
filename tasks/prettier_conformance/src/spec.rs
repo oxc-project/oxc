@@ -1,4 +1,6 @@
-use std::{fs, path::Path};
+#![allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+
+use std::{fs, path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -6,8 +8,8 @@ use oxc_ast::{
     VisitMut,
 };
 use oxc_parser::Parser;
-use oxc_prettier::{PrettierOptions, TrailingComma};
-use oxc_span::{Atom, SourceType};
+use oxc_prettier::{EndOfLine, PrettierOptions, TrailingComma};
+use oxc_span::{Atom, GetSpan, SourceType};
 
 #[derive(Default)]
 pub struct SpecParser {
@@ -69,31 +71,34 @@ impl VisitMut<'_> for SpecParser {
                                     options.semi = literal.value;
                                 } else if name == "bracketSpacing" {
                                     options.bracket_spacing = literal.value;
-                                }
-
-                                if !literal.value {
-                                    snapshot_options.push((name, literal.value.to_string()));
+                                } else if name == "singleQuote" {
+                                    options.single_quote = literal.value;
                                 }
                             }
-                            Expression::NumberLiteral(literal) => {
-                                if name == "printWidth" {
-                                    options.print_width =
-                                        str::parse(&literal.value.to_string()).unwrap_or(80);
+                            Expression::NumberLiteral(literal) => match name.as_str() {
+                                "printWidth" => options.print_width = literal.value as usize,
+                                "tabWidth" => options.tab_width = literal.value as usize,
+                                _ => {}
+                            },
+                            Expression::StringLiteral(literal) => match name.as_str() {
+                                "trailingComma" => {
+                                    options.trailing_comma =
+                                        TrailingComma::from_str(literal.value.as_str()).unwrap();
                                 }
-                                snapshot_options.push((name, literal.value.to_string()));
-                            }
-                            Expression::StringLiteral(literal) => {
-                                if name == "trailingComma" {
-                                    options.trailing_comma = match literal.value.as_str() {
-                                        "none" => TrailingComma::None,
-                                        "es5" => TrailingComma::ES5,
-                                        _ => TrailingComma::All,
-                                    }
+                                "endOfLine" => {
+                                    options.end_of_line =
+                                        EndOfLine::from_str(literal.value.as_str()).unwrap();
                                 }
-                                snapshot_options.push((name, format!("\"{}\"", literal.value)));
-                            }
+                                _ => {}
+                            },
                             _ => {}
                         };
+                        if name != "errors" {
+                            snapshot_options.push((
+                                name,
+                                obj_prop.value.span().source_text(&self.source_text).to_string(),
+                            ));
+                        }
                     };
                 }
             });
@@ -106,6 +111,7 @@ impl VisitMut<'_> for SpecParser {
                 parsers.iter().map(|p| format!("\"{p}\"")).collect::<Vec<_>>().join(", ")
             ),
         ));
+
         if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
             snapshot_options.push(("printWidth".into(), "80".into()));
         }
