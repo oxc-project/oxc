@@ -197,6 +197,7 @@ mod unicorn {
 mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_has_content;
+    pub mod html_has_lang;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -369,4 +370,5 @@ oxc_macros::declare_all_lint_rules! {
     import::no_amd,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
+    jsx_a11y::html_has_lang
 }
