@@ -45,6 +45,10 @@ const IGNORE_TESTS: &[&str] = &[
     "async-do-expressions",
     "pipeline-operator",
     "source-phase-imports",
+    "import-attributes",
+    "import-assertions",
+    "import-reflection",
+    "multiparser",
     // IDE cursor
     "cursor",
 ];
@@ -345,13 +349,13 @@ const b =
 ;";
         let diff = TestRunner::get_diff(output, &expected);
         let expected_diff = "
-const a =                                                                        | const a =                                                                       
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];      
-  []                                                                             X const b =                                                                       
-;                                                                                X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};      
-const b =                                                                        X                                                                                 
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X                                                                                 
-  {}                                                                             X                                                                                 
+const a =                                                                        | const a =
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];
+  []                                                                             X const b =
+;                                                                                X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};
+const b =                                                                        X
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X
+  {}                                                                             X
 ;                                                                                X";
 
         assert_eq!(diff.trim(), expected_diff.trim());

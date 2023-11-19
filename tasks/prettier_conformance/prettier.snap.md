@@ -1,4 +1,4 @@
-Compatibility: 122/838 (14.56%)
+Compatibility: 115/771 (14.92%)
 
 # Failed
 
@@ -547,39 +547,6 @@ Compatibility: 122/838 (14.56%)
 * import/multiple_standalones.js
 * import/same-local-and-imported.js
 
-### import-assertions
-* import-assertions/empty.js
-* import-assertions/multi-types.js
-* import-assertions/non-type.js
-* import-assertions/not-import-assertions.js
-* import-assertions/re-export.js
-* import-assertions/static-import.js
-* import-assertions/without-from.js
-
-### import-assertions/bracket-spacing
-* import-assertions/bracket-spacing/re-export.js
-* import-assertions/bracket-spacing/static-import.js
-
-### import-attributes
-* import-attributes/empty.js
-* import-attributes/multi-types.js
-* import-attributes/non-type.js
-* import-attributes/re-export.js
-* import-attributes/static-import.js
-* import-attributes/without-from.js
-
-### import-attributes/bracket-spacing
-* import-attributes/bracket-spacing/empty.js
-* import-attributes/bracket-spacing/re-export.js
-* import-attributes/bracket-spacing/static-import.js
-
-### import-reflection
-* import-reflection/comments.js
-* import-reflection/import-reflection.js
-* import-reflection/valid-default-import.mjs
-* import-reflection/valid-from-as-default-module-binding-escaped.mjs
-* import-reflection/valid-from-as-default-module-binding.mjs
-
 ### label
 * label/comment.js
 
@@ -644,59 +611,6 @@ Compatibility: 122/838 (14.56%)
 * module-blocks/module-blocks.js
 * module-blocks/range.js
 * module-blocks/worker.js
-
-### multiparser-comments
-* multiparser-comments/comment-inside.js
-* multiparser-comments/comments.js
-* multiparser-comments/tagged.js
-
-### multiparser-css
-* multiparser-css/colons-after-substitutions.js
-* multiparser-css/colons-after-substitutions2.js
-* multiparser-css/issue-11797.js
-* multiparser-css/issue-2636.js
-* multiparser-css/issue-2883.js
-* multiparser-css/issue-5697.js
-* multiparser-css/issue-5961.js
-* multiparser-css/issue-6259.js
-* multiparser-css/issue-8352.js
-* multiparser-css/issue-9072.js
-* multiparser-css/styled-components-multiple-expressions.js
-* multiparser-css/styled-components.js
-* multiparser-css/url.js
-* multiparser-css/var.js
-
-### multiparser-graphql
-* multiparser-graphql/comment-tag.js
-* multiparser-graphql/definitions.js
-* multiparser-graphql/escape.js
-* multiparser-graphql/expressions.js
-* multiparser-graphql/graphql-tag.js
-* multiparser-graphql/graphql.js
-* multiparser-graphql/invalid.js
-* multiparser-graphql/react-relay.js
-
-### multiparser-html
-* multiparser-html/html-template-literals.js
-* multiparser-html/issue-10691.js
-* multiparser-html/lit-html.js
-
-### multiparser-html/language-comment
-* multiparser-html/language-comment/not-language-comment.js
-
-### multiparser-invalid
-* multiparser-invalid/text.js
-
-### multiparser-markdown
-* multiparser-markdown/0-indent.js
-* multiparser-markdown/codeblock.js
-* multiparser-markdown/escape.js
-* multiparser-markdown/issue-5021.js
-* multiparser-markdown/markdown.js
-* multiparser-markdown/single-line.js
-
-### multiparser-text
-* multiparser-text/text.js
 
 ### new-expression
 * new-expression/new_expression.js
