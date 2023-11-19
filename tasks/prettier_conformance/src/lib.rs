@@ -42,15 +42,24 @@ fn fixtures_root() -> PathBuf {
 
 const IGNORE_TESTS: &[&str] = &[
     // Unsupported stage3 features
-    "async-do-expressions",
-    "pipeline-operator",
-    "source-phase-imports",
-    "import-attributes",
-    "import-assertions",
-    "import-reflection",
-    "multiparser",
-    // IDE cursor
-    "cursor",
+    "js/async-do-expressions",
+    "js/babel-plugins",
+    "js/decorator",
+    "js/do", // do expression
+    "js/explicit-resource-management",
+    "js/import-assertions",
+    "js/import-attributes",
+    "js/import-reflection",
+    "js/multiparser",
+    "js/partial-application",
+    "js/pipeline-operator",
+    "js/record",
+    "js/source-phase-imports",
+    "js/tuple",
+    "js/v8_intrinsic",
+    "js/ignore", // prettier-ignore
+    "js/range",  // range formatting
+    "js/cursor", // IDE cursor
 ];
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
