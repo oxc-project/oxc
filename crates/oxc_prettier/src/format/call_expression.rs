@@ -20,6 +20,10 @@ pub(super) fn print_call_expression<'a>(
     }
     parts.push(callee.format(p));
 
+    if optional {
+        parts.push(ss!("?."));
+    }
+
     parts.push(print_call_expression_arguments(p, arguments));
 
     Doc::Array(parts)
