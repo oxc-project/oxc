@@ -68,6 +68,7 @@ mod eslint {
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
+    pub mod no_regex_spaces;
     pub mod no_return_await;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -107,10 +108,12 @@ mod typescript {
 
 mod jest {
     pub mod expect_expect;
+    pub mod max_expects;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
     pub mod no_confusing_set_timeout;
+    pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
     pub mod no_export;
@@ -151,10 +154,12 @@ mod unicorn {
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
+    pub mod no_hex_escape;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
     pub mod no_lonely_if;
     pub mod no_negated_condition;
+    pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
     pub mod no_object_as_default_parameter;
@@ -164,6 +169,8 @@ mod unicorn {
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_promise_resolve_reject;
+    pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
     pub mod prefer_blob_reading_methods;
@@ -242,6 +249,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
+    eslint::no_regex_spaces,
     eslint::no_return_await,
     eslint::no_self_assign,
     eslint::no_self_compare,
@@ -275,10 +283,12 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_var_requires,
     typescript::prefer_as_const,
     jest::expect_expect,
+    jest::max_expects,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
     jest::no_confusing_set_timeout,
+    jest::no_deprecated_functions,
     jest::no_disabled_tests,
     jest::no_done_callback,
     jest::no_export,
@@ -303,10 +313,12 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
     unicorn::no_empty_file,
+    unicorn::no_hex_escape,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_lonely_if,
     unicorn::no_negated_condition,
+    unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
     unicorn::no_object_as_default_parameter,
@@ -316,6 +328,8 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
+    unicorn::no_useless_promise_resolve_reject,
+    unicorn::number_literal_case,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_blob_reading_methods,

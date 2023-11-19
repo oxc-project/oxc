@@ -91,14 +91,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"typeof a.b"#, None),
+        (r"typeof a.b", None),
         (r#"typeof a.b > "undefined""#, None),
         (r#"a.b === "undefined""#, None),
         (r#"void a.b === "undefined""#, None),
         (r#"+a.b === "undefined""#, None),
         (r#"++a.b === "undefined""#, None),
         (r#"a.b++ === "undefined""#, None),
-        (r#"foo === undefined"#, None),
+        (r"foo === undefined", None),
         (r#"typeof a.b === "string""#, None),
         (r#"typeof foo === "undefined""#, None),
         (r#"foo = 2; typeof foo === "undefined""#, None),
@@ -106,7 +106,7 @@ fn test() {
         (r#"/* globals globalThis: readonly */ typeof globalThis === "undefined""#, None),
         (r#""undefined" === typeof a.b"#, None),
         (r#"const UNDEFINED = "undefined"; typeof a.b === UNDEFINED"#, None),
-        (r#"typeof a.b === `undefined`"#, None),
+        (r"typeof a.b === `undefined`", None),
     ];
 
     let fail = vec![
@@ -114,7 +114,7 @@ fn test() {
         (r#"typeof a.b !== "undefined""#, None),
         (r#"typeof a.b == "undefined""#, None),
         (r#"typeof a.b != "undefined""#, None),
-        (r#"typeof a.b == 'undefined'"#, None),
+        (r"typeof a.b == 'undefined'", None),
         (r#"let foo; typeof foo === "undefined""#, None),
         (r#"const foo = 1; typeof foo === "undefined""#, None),
         (r#"var foo; typeof foo === "undefined""#, None),

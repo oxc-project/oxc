@@ -1112,15 +1112,19 @@ impl VariableDeclarationKind {
     pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Var => "var",
+            Self::Const => "const",
+            Self::Let => "let",
+        }
+    }
 }
 
 impl fmt::Display for VariableDeclarationKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Self::Var => "var",
-            Self::Const => "const",
-            Self::Let => "let",
-        };
+        let s = self.as_str();
         write!(f, "{s}")
     }
 }
@@ -1844,15 +1848,25 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ImportDeclaration(_))
     }
 
+    #[rustfmt::skip]
     pub fn is_export(&self) -> bool {
-        matches!(
-            self,
-            Self::ExportAllDeclaration(_)
-                | Self::ExportDefaultDeclaration(_)
-                | Self::ExportNamedDeclaration(_)
-                | Self::TSExportAssignment(_)
-                | Self::TSNamespaceExportDeclaration(_)
-        )
+        matches!(self, Self::ExportAllDeclaration(_) | Self::ExportDefaultDeclaration(_) | Self::ExportNamedDeclaration(_)
+                | Self::TSExportAssignment(_) | Self::TSNamespaceExportDeclaration(_))
+    }
+
+    pub fn is_default_export(&self) -> bool {
+        matches!(self, Self::ExportDefaultDeclaration(_))
+    }
+
+    pub fn source(&self) -> Option<&StringLiteral> {
+        match self {
+            Self::ImportDeclaration(decl) => Some(&decl.source),
+            Self::ExportAllDeclaration(decl) => Some(&decl.source),
+            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportDefaultDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => None,
+        }
     }
 }
 
@@ -1973,6 +1987,10 @@ impl<'a> ExportNamedDeclaration<'a> {
     }
 }
 
+/// Export Default Declaration
+/// export default HoistableDeclaration
+/// export default ClassDeclaration
+/// export default AssignmentExpression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {

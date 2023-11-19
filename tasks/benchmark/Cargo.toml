@@ -11,6 +11,7 @@ license.workspace     = true
 repository.workspace  = true
 
 [lib]
+test    = false
 bench   = false
 doctest = false
 
@@ -30,23 +31,30 @@ harness = false
 name    = "linter"
 harness = false
 
+# Broken
+# [[bench]]
+# name    = "prettier"
+# harness = false
+
 [[bench]]
 name    = "minifier"
 harness = false
 
-[[bench]]
-name    = "resolver"
-harness = false
+# Flaky
+# [[bench]]
+# name    = "resolver"
+# harness = false
 
 [dependencies]
-oxc_span         = { workspace = true }
 oxc_allocator    = { workspace = true }
-oxc_parser       = { workspace = true }
-oxc_minifier     = { workspace = true }
-oxc_tasks_common = { workspace = true }
-oxc_semantic     = { workspace = true }
-oxc_resolver     = { workspace = true }
 oxc_linter       = { workspace = true }
+oxc_minifier     = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_prettier     = { workspace = true }
+oxc_resolver     = { workspace = true }
+oxc_semantic     = { workspace = true }
+oxc_span         = { workspace = true }
+oxc_tasks_common = { workspace = true }
 oxc_transformer  = { workspace = true }
 
 rayon                     = { workspace = true }

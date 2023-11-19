@@ -10,10 +10,12 @@
 [![MIT licensed][license-badge]][license-url]
 [![Build Status][ci-badge]][ci-url]
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/oxc-project/oxc)
 [![Sponsors][sponsors-badge]][sponsors-url]
 
 [![Discord chat][discord-badge]][discord-url]
 [![Playground][playground-badge]][playground-url]
+
 </div>
 
 ## ⚓ Oxc
@@ -47,23 +49,23 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
 
 ## ⚡️ Performance
 
-* The parser aim to be the fastest Rust-based ready-for-production parser.
-* The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
+- The parser aim to be the fastest Rust-based ready-for-production parser.
+- The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
 
 <p float="left" align="middle">
   <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-parser-written-in-rust/main/bar-graph.svg" width="49%">
   <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-linter/main/bar-graph.svg" width="49%">
 </p>
 
-## ⌨️  Programming Usage
+## ⌨️ Programming Usage
 
 ### Rust
 
 Individual crates are published, you may use them to build your own JavaScript tools.
 
-* The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
-* The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
-* See `crates/*/examples` for example usage.
+- The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
+- The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
+- See `crates/*/examples` for example usage.
 
 While Rust has gained a reputation for its comparatively slower compilation speed,
 we have dedicated significant effort to fine-tune the Rust compilation speed.
@@ -75,9 +77,9 @@ where warm runs complete in 5 minutes.
 
 ### Node.js
 
-* You may use the parser via napi: [oxc-parser][npm-napi]
+- You may use the parser via napi: [oxc-parser][npm-napi]
 
-----
+---
 
 ## 🎯 Tools
 
@@ -91,7 +93,7 @@ where warm runs complete in 5 minutes.
 
 ### 🔸 AST and Parser
 
-Oxc maintains its own AST and parser, which is by far the fastest and most conformant  JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
+Oxc maintains its own AST and parser, which is by far the fastest and most conformant JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
 
 As the parser often represents a key performance bottleneck in JavaScript tooling,
 any minor improvements can have a cascading effect on our downstream tools.
@@ -200,9 +202,9 @@ You may read the [announcement blog post](https://kaleidawave.github.io/posts/in
 
 The type checker is available via `npx oxidation-compiler@latest check path` and the [playground][playground-url].
 
-----
+---
 
-## ✍️  Contribute
+## ✍️ Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
 
@@ -210,16 +212,16 @@ Check out some of the [good first issues](https://github.com/oxc-project/oxc/con
 
 If you are unable to contribute by code, you can still participate by:
 
-* Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
-* Join us on [Discord][discord-url].
-* [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
+- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
+- Join us on [Discord][discord-url].
+- [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
 ## 📚 Learning Resources
 
-* My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/javascript-parser-in-rust)
-* My small article [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
-* [Crafting Interpreters](https://craftinginterpreters.com)
-* [Andrew Kelley - Practical DOD](https://vimeo.com/649009599)
+- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/javascript-parser-in-rust)
+- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
+- [Crafting Interpreters](https://craftinginterpreters.com)
+- [Andrew Kelley - Practical DOD](https://vimeo.com/649009599)
 
 ## 🧑‍💻 Maintenance
 
@@ -227,32 +229,32 @@ Oxc is being maintained by [Boshen] as the project lead with the help of [contri
 
 Rules of thumb:
 
-* APIs should be simple and well-documented.
-* All performance issues (runtime and compilation speed) are considered as bugs in this project.
-* Third-party dependencies should be minimal.
-* Monitor code coverage for unused code. Aim for 99% code coverage.
-* Embrace data-oriented design.
-* Prefer smaller PRs. Try [graphite.dev](https://graphite.dev).
+- APIs should be simple and well-documented.
+- All performance issues (runtime and compilation speed) are considered as bugs in this project.
+- Third-party dependencies should be minimal.
+- Monitor code coverage for unused code. Aim for 99% code coverage.
+- Embrace data-oriented design.
+- Prefer smaller PRs. Try [graphite.dev](https://graphite.dev).
 
 ## 🤝 Credits
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
 
-* [Biome][biome] - [@ematipico](https://github.com/ematipico)
-* [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
-* [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
-* [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
+- [Biome][biome] - [@ematipico](https://github.com/ematipico)
+- [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
+- [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
+- [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
 Special thanks go to
 
-* [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
-* [@guan-wy](https://github.com/guan-wy) for the [project logo](https://github.com/Boshen/oxc-assets)
+- [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
+- [@guan-wy](https://github.com/guan-wy) for the [project logo](https://github.com/Boshen/oxc-assets)
 
 And also
-* [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](#-ezno-type-checker)
-* [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
-* [@u9g](https://github.com/u9g) for the work in progress [oxc_linter_plugin](./crates/oxc_linter_plugin)
 
+- [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](#-ezno-type-checker)
+- [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
+- [@u9g](https://github.com/u9g) for the work in progress [oxc_linter_plugin](./crates/oxc_linter_plugin)
 
 ## 📖 License
 
@@ -260,25 +262,26 @@ Oxc is free and open-source software licensed under the [MIT License](./LICENSE)
 
 Oxc partially copies code from the following projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
 
-| Project       | License       |
-| ------------- | ------------- |
-| [eslint/eslint](https://github.com/eslint/eslint) | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)  |
-| [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)  |
-| [import-js/eslint-plugin-import](https://github.com/import-js/eslint-plugin-import) | [MIT](https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE)  |
-| [jest-community/eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) | [MIT](https://github.com/jest-community/eslint-plugin-jest/blob/main/LICENSE)  |
-| [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)  |
-| [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
-| [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
-| [acorn](https://github.com/acornjs/acorn) | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE) |
-| [zkat/miette](https://github.com/zkat/miette) | [Apache 2.0](https://github.com/zkat/miette/blob/main/LICENSE) |
-| [sindresorhus/globals](https://github.com/sindresorhus/globals) | [MIT](https://github.com/sindresorhus/globals/blob/main/license) |
-| [terser](https://github.com/terser/terser) | [BSD](https://github.com/terser/terser/blob/master/LICENSE) |
-| [evanw/esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/evanw/esbuild/blob/main/LICENSE.md) |
-| [google/closure-compiler](https://github.com/google/closure-compiler) | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license) |
-| [tdewolff/minify](https://github.com/tdewolff/minify) | [MIT](https://github.com/tdewolff/minify/blob/master/LICENSE) |
-| [parcel-bundler/parcel](https://github.com/parcel-bundler/parcel) | [MIT](https://github.com/parcel-bundler/parcel/blob/v2/LICENSE) |
-| [dividab/tsconfig-paths](https://github.com/dividab/tsconfig-paths) | [MIT](https://github.com/dividab/tsconfig-paths/blob/master/LICENSE) |
-| [tmccombs/json-comments-rs](https://github.com/tmccombs/json-comments-rs) | [Apache 2.0](https://github.com/tmccombs/json-comments-rs/blob/main/LICENSE) |
+| Project                                                                                       | License                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [eslint/eslint](https://github.com/eslint/eslint)                                             | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)                                                                                                                       |
+| [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)                                                                                                 |
+| [import-js/eslint-plugin-import](https://github.com/import-js/eslint-plugin-import)           | [MIT](https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE)                                                                                                      |
+| [jest-community/eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)     | [MIT](https://github.com/jest-community/eslint-plugin-jest/blob/main/LICENSE)                                                                                                   |
+| [microsoft/TypeScript](https://github.com/microsoft/TypeScript)                               | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)                                                                                                     |
+| [biomejs/biome](https://github.com/biomejs/biome)                                             | [MIT](https://github.com/biomejs/biome/blob/main/LICENSE-MIT)                                                                                                                   |
+| [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus)           | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0) |
+| [prettier/prettier](https://github.com/prettier/prettier)                                     | [MIT](https://github.com/prettier/prettier/blob/main/LICENSE)                                                                                                                   |
+| [acorn](https://github.com/acornjs/acorn)                                                     | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE)                                                                                                               |
+| [zkat/miette](https://github.com/zkat/miette)                                                 | [Apache 2.0](https://github.com/zkat/miette/blob/main/LICENSE)                                                                                                                  |
+| [sindresorhus/globals](https://github.com/sindresorhus/globals)                               | [MIT](https://github.com/sindresorhus/globals/blob/main/license)                                                                                                                |
+| [terser](https://github.com/terser/terser)                                                    | [BSD](https://github.com/terser/terser/blob/master/LICENSE)                                                                                                                     |
+| [evanw/esbuild](https://github.com/evanw/esbuild)                                             | [MIT](https://github.com/evanw/esbuild/blob/main/LICENSE.md)                                                                                                                    |
+| [google/closure-compiler](https://github.com/google/closure-compiler)                         | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license)                                                                                               |
+| [tdewolff/minify](https://github.com/tdewolff/minify)                                         | [MIT](https://github.com/tdewolff/minify/blob/master/LICENSE)                                                                                                                   |
+| [parcel-bundler/parcel](https://github.com/parcel-bundler/parcel)                             | [MIT](https://github.com/parcel-bundler/parcel/blob/v2/LICENSE)                                                                                                                 |
+| [dividab/tsconfig-paths](https://github.com/dividab/tsconfig-paths)                           | [MIT](https://github.com/dividab/tsconfig-paths/blob/master/LICENSE)                                                                                                            |
+| [tmccombs/json-comments-rs](https://github.com/tmccombs/json-comments-rs)                     | [Apache 2.0](https://github.com/tmccombs/json-comments-rs/blob/main/LICENSE)                                                                                                    |
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
@@ -296,14 +299,12 @@ Oxc partially copies code from the following projects, their licenses are listed
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://oxc-project.github.io/oxc/playground
-
 [crate-oxc-url]: https://crates.io/crates/oxc
 [crate-ast-url]: https://crates.io/crates/oxc_ast
 [crate-parser-url]: https://crates.io/crates/oxc_parser
 [docs-oxc-url]: https://docs.rs/oxc
 [docs-ast-url]: https://docs.rs/oxc_ast
 [docs-parser-url]: https://docs.rs/oxc_parser
-
 [Boshen]: https://github.com/boshen
 [CompactString]: https://github.com/ParkMyCar/compact_str
 [ESLint]: https://eslint.org/
@@ -324,7 +325,6 @@ Oxc partially copies code from the following projects, their licenses are listed
 [npm-napi]: https://www.npmjs.com/package/oxc-parser
 [npm-oxlint]: https://www.npmjs.com/package/oxlint
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
-[prettier]: https://github.com/prettier/prettier
 [prettier]: https://prettier.io
 [biome]: https://biomejs.dev/
 [ruff]: https://beta.ruff.rs

@@ -224,7 +224,7 @@ pub enum EdgeAssertionKind {
     End,
 }
 
-/// The word bondary assertion.
+/// The word boundary assertion.
 /// E.g. `\b`, `\B`
 #[derive(Debug)]
 pub struct WordBoundaryAssertion {

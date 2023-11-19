@@ -6,8 +6,6 @@
   * support paths alias defined in `tsconfig.compilerOptions.paths`
   * support project references defined `tsconfig.references`
 * contains `tracing` instrumentation
-  * Install `tracing_subscriber` in your app
-  * or opt-in to the subscriber with `--features tracing-subscriber` and use `OXC_RESOLVER=DEBUG` env variable
 
 #### Resolver Options
 

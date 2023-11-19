@@ -1,0 +1,50 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'crates/oxc_cli'
+      - 'crates/oxc_linter'
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/oxc_cli'
+      - 'crates/oxc_linter'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  e2e:
+    name: Test Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone VSCode Repo
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vscode
+          path: ./vscode
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: oxlint
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Build oxlint
+        run: cargo build --release -p oxc_cli --bin oxlint
+
+      - name: Run oxlint on VSCode and throw output to a temp file
+        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./log.tmp
+
+      - name: Using grep to check if oxlint panic
+        run: >
+          if grep --quiet --ignore-case panic ./log.tmp; then
+            exit 1
+          fi

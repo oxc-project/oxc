@@ -83,11 +83,11 @@ fn test() {
         "import foo = require('foo');",
         "require('foo');",
         "require?.('foo');",
-        r#"
+        r"
             import { createRequire } from 'module';
             const require = createRequire('foo');
             const json = require('./some.json');
-        "#,
+        ",
         "
             let require = () => 'foo';
             {
@@ -110,10 +110,10 @@ fn test() {
         // Because of TypeScript disallows angle bracket type assertions in .tsx files, comment out this below case all tests parsing as tsx.
         // "const foo = <Foo>require('./foo.json');",
         "const foo: Foo = require('./foo.json').default;",
-        r#"
+        r"
             const configValidator = new Validator(require('./a.json'));
             configValidator.addSchema(require('./a.json'));
-        "#,
+        ",
     ];
 
     Tester::new_without_config(NoVarRequires::NAME, pass, fail).test_and_snapshot();

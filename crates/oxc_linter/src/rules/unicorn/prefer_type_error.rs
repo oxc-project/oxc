@@ -177,172 +177,172 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"
+        r"
             if (MrFuManchu.name !== 'Fu Manchu' || MrFuManchu.isMale === false) {
                 throw new Error('How cant Fu Manchu be Fu Manchu?');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (wrapper.g.ary.isArray(foo) || wrapper.f.g.ary.isView(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (wrapper.g.ary(foo) || wrapper.f.g.ary.isPiew(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray()) {
                 throw new Error('Woohoo - isArray is broken!');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                 throw new CustomError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo)) {
                 throw new Error.foo();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo)) {
                 throw new Error.foo;
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo)) {
                 throw new foo.Error;
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo)) {
                 throw new foo.Error('My name is Foo Manchu');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                 throw Error('This is for FooBar', foo);
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                 new Error('This is for FooBar', foo);
             }
-        "#,
-        r#"
+        ",
+        r"
             function test(foo) {
                 if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                     return new Error('This is for FooBar', foo);
                 }
                 return foo;
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || ArrayBuffer.isView(foo)) {
                 lastError = new Error('This is for FooBar', foo);
             }
-        "#,
-        r#"
+        ",
+        r"
             if (!isFinite(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isNaN(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isArray(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (foo instanceof boo) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (typeof boo === 'Boo') {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (typeof boo === 'Boo') {
                 some.thing.else.happens.before();
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Number.isNaN(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo) || (Blob.isBlob(foo) || Blip.isBlip(foo))) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (typeof foo === 'object' || (Object.isFrozen(foo) || 'String' === typeof foo)) {
                 throw new TypeError();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isNaN) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isObjectLike) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isNaN.foo()) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (typeof foo !== 'object' || foo.bar() === false) {
                 throw new TypeError('Expected Foo being bar!');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (foo instanceof Foo) {
                 throw new TypeError('Expected Foo being bar!');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (!foo instanceof Foo) {
                 throw new TypeError('Expected Foo being bar!');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (foo instanceof Foo === false) {
                 throw new TypeError('Expected Foo being bar!');
             }
-        "#,
+        ",
         r"throw new Error('💣')",
-        r#"
+        r"
             if (!Number.isNaN(foo) && foo === 10) {
                 throw new Error('foo is not 10!');
             }
-        "#,
-        r#"
+        ",
+        r"
             function foo(foo) {
                 if (!Number.isNaN(foo) && foo === 10) {
                     timesFooWas10 += 1;
@@ -354,8 +354,8 @@ fn test() {
                     throw new Error('foo is 10');
                 }
             }
-        "#,
-        r#"
+        ",
+        r"
             function foo(foo) {
                 if (!Number.isNaN(foo)) {
                     timesFooWas10 += 1;
@@ -367,63 +367,63 @@ fn test() {
                     throw new Error('foo is 10');
                 }
             }
-        "#,
-        r#"
+        ",
+        r"
             if (!x.isFudge()) {
                 throw new Error('x is no fudge!');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (!_.isFudge(x)) {
                 throw new Error('x is no fudge!');
             }
-        "#,
-        r#"
+        ",
+        r"
             switch (something) {
                 case 1:
                     break;
                 default:
                     throw new Error('Unknown');
             }
-        "#,
+        ",
     ];
 
     let fail = vec![
-        r#"
+        r"
             if (!isFinite(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (isNaN(foo) === false) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (Array.isArray(foo)) {
                 throw new Error('foo is an Array');
             }
-        "#,
-        r#"
+        ",
+        r"
             if (foo instanceof bar) {
                 throw new Error(foobar);
             }
-        "#,
-        r#"
+        ",
+        r"
             if (_.isElement(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (_.isElement(foo)) {
                 throw new Error;
             }
-        "#,
-        r#"
+        ",
+        r"
             if (wrapper._.isElement(foo)) {
                 throw new Error;
             }
-        "#,
+        ",
         // disabled for now - not sure how do differentiate between `throw new Error` and `throw new Error()`
         // r#"                if (wrapper._.isElement(foo)) {
         //             throw new TypeError;
@@ -438,21 +438,21 @@ fn test() {
                 throw new Error();
             }
         "#,
-        r#"
+        r"
             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
-        r#"
+        ",
+        r"
             if (_.isElement(foo)) {
                 throw (new Error());
             }
-        "#,
+        ",
     ];
 
     Tester::new_without_config(PreferTypeError::NAME, pass, fail).test_and_snapshot();

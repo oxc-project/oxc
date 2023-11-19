@@ -5,6 +5,10 @@ publish           = false
 edition.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "oxc_minsize"
+test = false
+
 [lib]
 doctest = false
 

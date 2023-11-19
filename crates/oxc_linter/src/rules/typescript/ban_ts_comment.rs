@@ -235,11 +235,11 @@ fn test() {
 
     let pass = vec![
         ("// just a comment containing @ts-expect-error somewhere", None),
-        (r#"
+        (r"
           /*
             @ts-expect-error running with long description in a block
           */
-		    "#, None),
+		    ", None),
         ("// @ts-expect-error", Some(serde_json::json!([{ "ts-expect-error": false }]))),
         ("// @ts-expect-error here is why the error is expected", Some(serde_json::json!([{"ts-expect-error": "allow-with-description"},]))),
         ("// @ts-expect-error exactly 21 characters", Some(serde_json::json!([
@@ -259,11 +259,11 @@ fn test() {
        ("// just a comment containing @ts-ignore somewhere", None),
        ("// @ts-ignore", Some(serde_json::json!([{ "ts-ignore": false}]))),
        ("// @ts-ignore I think that I am exempted from any need to follow the rules!", Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }]))),
-       (r#"
+       (r"
          /*
           @ts-ignore running with long description in a block
          */
-			      "#, Some(serde_json::json!([
+			      ", Some(serde_json::json!([
         {
           "ts-ignore": "allow-with-description",
          "minimumDescriptionLength": 21,
@@ -280,10 +280,10 @@ fn test() {
       ("// just a comment containing @ts-nocheck somewhere", None),
       ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": false}]))),
       ("// @ts-nocheck no doubt, people will put nonsense here from time to time just to get the rule to stop reporting, perhaps even long messages with other nonsense in them like other // @ts-nocheck or // @ts-ignore things", Some(serde_json::json!([{ "ts-nocheck": "allow-with-description" }]))),
-      (r#"
+      (r"
 			  /*
 			    @ts-nocheck running with long description in a block
-			  */"#,
+			  */",
         Some(serde_json::json!([
         {
           "ts-nocheck": "allow-with-description",
@@ -299,11 +299,11 @@ fn test() {
         },
       ]))),
       ("// just a comment containing @ts-check somewhere", None),
-      (r#"
+      (r"
       /*
         @ts-check running with long description in a block
       */
-      "#, None),
+      ", None),
       ("// @ts-check", Some(serde_json::json!([{ "ts-check": false}]))),
       ("// @ts-check with a description and also with a no-op // @ts-ignore", Some(serde_json::json!([
           {"ts-check": "allow-with-description", "minimumDescriptionLength": 3 },
@@ -322,11 +322,11 @@ fn test() {
         ("// @ts-expect-error", Some(serde_json::json!([{ "ts-expect-error": true }]))),
         ("/* @ts-expect-error */", Some(serde_json::json!([{ "ts-expect-error": true}]))),
         (
-            r#"
+            r"
 /*
   @ts-expect-error
 */
-            "#,
+            ",
             Some(serde_json::json!([{ "ts-expect-error": true}])),
         ),
         ("/** @ts-expect-error */", Some(serde_json::json!([{ "ts-expect-error": true}]))),
@@ -339,12 +339,12 @@ fn test() {
             Some(serde_json::json!([{ "ts-expect-error": true}])),
         ),
         (
-            r#"
+            r"
 if (false) {
   // @ts-expect-error: Unreachable code error
   console.log('hello');
 }
-          "#,
+          ",
             Some(serde_json::json!([{ "ts-expect-error": true}])),
         ),
         (
@@ -389,23 +389,23 @@ if (false) {
         ("// @ts-ignore", None),
         ("/* @ts-ignore */", Some(serde_json::json!([{ "ts-ignore": true}]))),
         (
-            r#"
+            r"
 /*
   @ts-ignore
 */
-            "#,
+            ",
             Some(serde_json::json!([{ "ts-ignore": true}])),
         ),
         ("/** @ts-ignore */", Some(serde_json::json!([{ "ts-ignore": true}]))),
         ("// @ts-ignore: Suppress next line", None),
         ("/////@ts-ignore: Suppress next line", None),
         (
-            r#"
+            r"
 if (false) {
   // @ts-ignore: Unreachable code error
   console.log('hello');
 }
-            "#,
+            ",
             None,
         ),
         ("// @ts-ignore", Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }]))),
@@ -438,23 +438,23 @@ if (false) {
         ("// @ts-nocheck", None),
         ("/* @ts-nocheck */", Some(serde_json::json!([{ "ts-nocheck": true}]))),
         (
-            r#"
+            r"
 /*
   @ts-nocheck
 */
-            "#,
+            ",
             Some(serde_json::json!([{ "ts-nocheck": true}])),
         ),
         ("/** @ts-nocheck */", Some(serde_json::json!([{ "ts-nocheck": true}]))),
         ("// @ts-nocheck: Suppress next line", None),
         ("/////@ts-nocheck: Suppress next line", None),
         (
-            r#"
+            r"
 if (false) {
   // @ts-nocheck: Unreachable code error
   console.log('hello');
 }
-            "#,
+            ",
             None,
         ),
         ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": "allow-with-description" }]))),
@@ -482,23 +482,23 @@ if (false) {
         ("// @ts-check", Some(serde_json::json!([{ "ts-check":true}]))),
         ("/* @ts-check */", Some(serde_json::json!([{ "ts-check":true}]))),
         (
-            r#"
+            r"
 /*
   @ts-check
 */
-            "#,
+            ",
             Some(serde_json::json!([{ "ts-check":true}])),
         ),
         ("/** @ts-check */", Some(serde_json::json!([{ "ts-check":true}]))),
         ("// @ts-check: Suppress next line", Some(serde_json::json!([{ "ts-check":true}]))),
         ("/////@ts-check: Suppress next line", Some(serde_json::json!([{ "ts-check":true}]))),
         (
-            r#"
+            r"
 if (false) {
   // @ts-check: Unreachable code error
   console.log('hello');
 }
-            "#,
+            ",
             Some(serde_json::json!([{ "ts-check":true}])),
         ),
         ("// @ts-check", Some(serde_json::json!([{ "ts-check": "allow-with-description" }]))),

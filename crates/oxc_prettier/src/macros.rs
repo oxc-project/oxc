@@ -7,6 +7,14 @@ macro_rules! format {
     }};
 }
 
+/// Wrap a static string (ss)
+#[macro_export]
+macro_rules! ss {
+    ($s:expr) => {{
+        Doc::Str($s)
+    }};
+}
+
 #[macro_export]
 macro_rules! string {
     ($p:ident, $s:expr) => {{
@@ -16,7 +24,7 @@ macro_rules! string {
 
 #[macro_export]
 macro_rules! indent {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
@@ -24,6 +32,26 @@ macro_rules! indent {
             )*
             Doc::Indent(temp_vec)
         }
+    };
+}
+
+#[macro_export]
+macro_rules! indent_if_break {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
+        {
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::IndentIfBreak(temp_vec)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! line {
+    () => {
+        Doc::Line
     };
 }
 
@@ -43,7 +71,7 @@ macro_rules! hardline {
 
 #[macro_export]
 macro_rules! array {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
@@ -56,7 +84,7 @@ macro_rules! array {
 
 #[macro_export]
 macro_rules! group {
-    ($p:ident, $( $x:expr ),* ) => {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
         {
             let mut temp_vec = $p.vec();
             $(
@@ -65,4 +93,21 @@ macro_rules! group {
             Doc::Group(temp_vec)
         }
     };
+}
+
+#[macro_export]
+macro_rules! if_break {
+    ($p:ident, $s:expr) => {{
+        Doc::IfBreak($p.boxed(Doc::Str($s)))
+    }};
+}
+
+#[macro_export]
+macro_rules! wrap {
+    ($p:ident, $self:expr, $kind:ident, $block:block) => {{
+        $p.enter_node(AstKind::$kind($p.alloc($self)));
+        let doc = $block;
+        $p.leave_node();
+        doc
+    }};
 }

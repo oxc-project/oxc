@@ -7,12 +7,14 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '!.github/workflows/ci.yml'
   push:
     branches:
       - main
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '!.github/workflows/ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -37,22 +39,13 @@ jobs:
         with:
           save-cache: ${{ github.ref_name == 'main' }}
 
-      - name: Install cargo-nextest
-        if: runner.os != 'Windows'
-        uses: taiki-e/install-action@cargo-nextest
-
       - name: Cargo check
         run: cargo ck
 
-      # NAPI crashes nextest on windows
-      # https://github.com/napi-rs/napi-rs/issues/1405
+      # Only need to build the test to create a warm cache on the main branch
       - name: Build cache by Cargo Check and Cargo Test
-        if: runner.os == 'Windows'
-        run: cargo test run --no-run --workspace --all-features
-
-      - name: Build cache by Cargo Check and Cargo Test
-        if: runner.os != 'Windows'
-        run: cargo nextest run --no-run --workspace --all-features
+        if: ${{ github.ref_name == 'main' }}
+        run: cargo test run --no-run --workspace
 
   wasm:
     name: Check Wasm
@@ -161,36 +154,6 @@ jobs:
       - name: Run Clippy
         run: cargo lint -- -D warnings
 
-  ecosystem-test:
-    name: Testing Linter with VSCode Repository
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Clone VSCode
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/vscode
-          path: ./vscode
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: oxlint
-          save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Build oxlint
-        run: cargo build --release -p oxc_cli --bin oxlint
-
-      - name: Run oxlint on VSCode and throw output to a temp file
-        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./log.tmp
-
-      - name: Using grep to check if oxlint panic
-        run: >
-          if grep --quiet --ignore-case panic ./log.tmp; then
-            exit 1
-          fi
-
   doc:
     name: Doc
     runs-on: ubuntu-latest
@@ -217,18 +180,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
-
-      - name: Install cargo-nextest
-        if: runner.os != 'Windows'
-        uses: taiki-e/install-action@cargo-nextest
-
-      # NAPI crashes nextest on windows
-      # https://github.com/napi-rs/napi-rs/issues/1405
-      - if: runner.os == 'Windows'
-        run: cargo test
-
-      - if: runner.os != 'Windows'
-        run: cargo nextest run
+      - run: cargo test --quiet

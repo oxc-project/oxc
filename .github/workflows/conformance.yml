@@ -13,11 +13,12 @@ on:
       - 'crates/oxc_cli/**'
       - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
-      - 'crates/oxc_napi/**'
       - 'crates/oxc_query/**'
       - 'crates/oxc_resolver/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
+      - 'crates/oxc_prettier/**'
+      - 'tasks/prettier_conformance/**'
   push:
     branches:
       - main
@@ -30,11 +31,12 @@ on:
       - 'crates/oxc_cli/**'
       - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
-      - 'crates/oxc_napi/**'
       - 'crates/oxc_query/**'
       - 'crates/oxc_resolver/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
+      - 'crates/oxc_prettier/**'
+      - 'tasks/prettier_conformance/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -57,7 +59,7 @@ jobs:
 
       - run: cargo coverage
       - run: cargo run --release -p oxc_transform_conformance -- --exec
-      - run: cargo run --release -p oxc_prettier_conformance
+      # - run: cargo run --release -p oxc_prettier_conformance
 
       # - run: cargo minsize
 

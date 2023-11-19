@@ -37,6 +37,16 @@ pub enum CommentKind {
     MultiLine,
 }
 
+impl CommentKind {
+    pub fn is_single_line(self) -> bool {
+        matches!(self, Self::SingleLine)
+    }
+
+    pub fn is_multi_line(self) -> bool {
+        matches!(self, Self::MultiLine)
+    }
+}
+
 impl Comment {
     pub fn new(end: u32, kind: CommentKind) -> Self {
         Self { kind, end }
@@ -46,12 +56,16 @@ impl Comment {
         self.end
     }
 
+    pub fn kind(&self) -> CommentKind {
+        self.kind
+    }
+
     pub fn is_single_line(self) -> bool {
-        matches!(self.kind, CommentKind::SingleLine)
+        self.kind.is_single_line()
     }
 
     pub fn is_multi_line(self) -> bool {
-        matches!(self.kind, CommentKind::MultiLine)
+        self.kind.is_multi_line()
     }
 }
 

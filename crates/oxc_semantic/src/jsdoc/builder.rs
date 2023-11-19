@@ -39,7 +39,7 @@ impl<'a> JSDocBuilder<'a> {
     fn find_jsdoc_comment(&self, span: Span) -> Option<&'a str> {
         let (start, comment) = self.trivias.comments().range(..span.start).next()?;
 
-        if comment.is_single_line() {
+        if comment.kind().is_single_line() {
             return None;
         }
 

@@ -44,6 +44,7 @@ jobs:
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v1
+        timeout-minutes: 30
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}

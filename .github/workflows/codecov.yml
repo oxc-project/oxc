@@ -31,9 +31,6 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
-
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
 
