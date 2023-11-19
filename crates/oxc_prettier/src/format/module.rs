@@ -65,6 +65,7 @@ fn print_semicolon_after_export_declaration<'a>(
 pub fn print_module_specifiers<'a, T: Format<'a>>(
     p: &mut Prettier<'a>,
     specifiers: &Vec<'a, T>,
+    include_default: bool,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     if specifiers.is_empty() {
@@ -74,8 +75,16 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
 
         let can_break = specifiers.len() > 1;
 
+        let mut specifiers_iter = specifiers.iter();
+        if include_default {
+            parts.push(specifiers_iter.next().unwrap().format(p));
+            if can_break {
+                parts.push(p.str(", "));
+            }
+        }
+
         if can_break {
-            let docs = specifiers.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
+            let docs = specifiers_iter.map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
             parts.push(group![
                 p,
                 ss!("{"),
@@ -88,12 +97,12 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                 if p.options.bracket_spacing { line!() } else { softline!() },
                 ss!("}"),
             ]);
-        } else {
+        } else if !include_default {
             parts.push(ss!("{"));
             if p.options.bracket_spacing {
                 parts.push(ss!(" "));
             }
-            parts.extend(specifiers.iter().map(|s| s.format(p)));
+            parts.extend(specifiers_iter.map(|s| s.format(p)));
             if p.options.bracket_spacing {
                 parts.push(ss!(" "));
             }

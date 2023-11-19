@@ -588,7 +588,6 @@ Compatibility: 109/838 (13.01%)
 * import-reflection/valid-default-import.mjs
 * import-reflection/valid-from-as-default-module-binding-escaped.mjs
 * import-reflection/valid-from-as-default-module-binding.mjs
-* import-reflection/valid-module-as-default-binding-2.mjs
 * import-reflection/valid-module-as-default-binding.mjs
 
 ### label

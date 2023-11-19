@@ -896,7 +896,10 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             parts.push(ss!(" type"));
         }
         if let Some(specifiers) = &self.specifiers {
-            parts.push(module::print_module_specifiers(p, specifiers));
+            let is_default = specifiers.get(0).is_some_and(|x| {
+                matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
+            });
+            parts.push(module::print_module_specifiers(p, specifiers, is_default));
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
@@ -929,7 +932,7 @@ impl<'a> Format<'a> for ImportSpecifier {
 
 impl<'a> Format<'a> for ImportDefaultSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        self.local.format(p)
     }
 }
 
@@ -954,7 +957,7 @@ impl<'a> Format<'a> for ImportAttribute {
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(module::print_module_specifiers(p, &self.specifiers));
+        parts.push(module::print_module_specifiers(p, &self.specifiers, false));
         if let Some(decl) = &self.declaration {
             parts.push(decl.format(p));
         }
