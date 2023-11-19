@@ -49,6 +49,9 @@ const IGNORE_TESTS: &[&str] = &[
     "cursor",
 ];
 
+const SNAP_NAME: &str = "jsfmt.spec.js";
+const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         Self { options, spec: SpecParser::default() }
@@ -92,9 +95,9 @@ impl TestRunner {
 
         for dir in &dirs {
             // Get jsfmt.spec.js
-            let mut spec_path = dir.join("jsfmt.spec.js");
+            let mut spec_path = dir.join(SNAP_NAME);
             while !spec_path.exists() {
-                spec_path = dir.parent().unwrap().join("jsfmt.spec.js");
+                spec_path = dir.parent().unwrap().join(SNAP_NAME);
             }
 
             if !spec_path.exists() {
@@ -116,7 +119,7 @@ impl TestRunner {
                         && !e
                             .path()
                             .file_name()
-                            .is_some_and(|name| name.to_string_lossy().contains("jsfmt.spec.js"))
+                            .is_some_and(|name| name.to_string_lossy().contains(SNAP_NAME))
                 })
                 .map(|e| e.path().to_path_buf())
                 .collect();
@@ -152,15 +155,13 @@ impl TestRunner {
             let input = fs::read_to_string(path).unwrap();
 
             let result = self.spec.calls.iter().all(|spec| {
-                let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1);
+                let expected_file = spec_path.parent().unwrap().join(SNAP_RELATIVE_PATH);
+                let expected = fs::read_to_string(expected_file).unwrap();
+
+                let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1, &expected);
                 if snapshot.trim().is_empty() {
                     return false;
                 }
-
-                let expected_file =
-                    spec_path.parent().unwrap().join("__snapshots__/jsfmt.spec.js.snap");
-
-                let expected = fs::read_to_string(expected_file).unwrap();
 
                 if inputs.is_empty() {
                     return false;
@@ -196,6 +197,7 @@ impl TestRunner {
         input: &str,
         prettier_options: PrettierOptions,
         snapshot_options: &[(Atom, String)],
+        snap_content: &str,
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();
 
@@ -234,6 +236,9 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
+            let expected = Self::get_expect(snap_content, input).unwrap();
+            println!("Diff:");
+            println!("{}", Self::get_diff(&output, &expected));
         }
 
         let space_line = " ".repeat(prettier_options.print_width);
@@ -253,10 +258,102 @@ impl TestRunner {
         )
     }
 
+    fn get_expect(expected: &str, input: &str) -> Option<String> {
+        let input_started = expected.find(input)?;
+        let expected = &expected[input_started..];
+        let output_start_line =
+            "=====================================output=====================================\n";
+        let output_end_line =
+            "================================================================================";
+        let output_started = expected.find(output_start_line)?;
+        let output_ended = expected.find(output_end_line)?;
+        let output = expected[output_started..output_ended]
+            .trim_start_matches(output_start_line)
+            .trim_end_matches(output_end_line);
+        Some(output.to_string())
+    }
+
+    fn get_diff(output: &str, expect: &str) -> String {
+        let output = output.trim().lines().collect::<Vec<_>>();
+        let expect = expect.trim().lines().collect::<Vec<_>>();
+        let length = output.len().max(expect.len());
+        let mut result = String::new();
+
+        for i in 0..length {
+            let left = output.get(i).unwrap_or(&"");
+            let right = expect.get(i).unwrap_or(&"");
+
+            let s = if left == right {
+                format!("{left: <80} | {right: <80}\n")
+            } else {
+                format!("{left: <80} X {right: <80}\n")
+            };
+
+            result.push_str(&s);
+        }
+
+        result
+    }
+
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
+    use std::fs;
+
+    fn get_expect_in_arrays(input_name: &str) -> String {
+        let base = fixtures_root().join("arrays");
+        let expect_file = fs::read_to_string(base.join(SNAP_RELATIVE_PATH)).unwrap();
+        let input = fs::read_to_string(base.join(input_name)).unwrap();
+        TestRunner::get_expect(&expect_file, &input).unwrap()
+    }
+
+    #[ignore]
+    #[test]
+    fn test_get_expect() {
+        let expected = get_expect_in_arrays("empty.js");
+        assert_eq!(
+            expected,
+            "const a =
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];
+const b =
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};
+
+"
+        );
+    }
+
+    #[ignore]
+    #[test]
+    fn test_get_diff() {
+        let expected = get_expect_in_arrays("empty.js");
+        let output = "
+const a =
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||
+  []
+;
+const b =
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||
+  {}
+;";
+        let diff = TestRunner::get_diff(output, &expected);
+        let expected_diff = "
+const a =                                                                        | const a =                                                                       
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];      
+  []                                                                             X const b =                                                                       
+;                                                                                X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};      
+const b =                                                                        X                                                                                 
+  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X                                                                                 
+  {}                                                                             X                                                                                 
+;                                                                                X";
+
+        assert_eq!(diff.trim(), expected_diff.trim());
     }
 }
