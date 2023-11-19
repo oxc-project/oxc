@@ -108,12 +108,14 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("]\n");
         }
         Doc::Indent(contents) => {
+            string.push_str("indent([");
             for (idx, doc) in contents.iter().enumerate() {
                 string.push_str(&print_do_to_debug(doc));
                 if idx != contents.len() - 1 {
                     string.push_str(", ");
                 }
             }
+            string.push_str("])");
         }
         Doc::Group(contents) => {
             string.push_str("group([\n");
