@@ -2,9 +2,8 @@ use oxc_ast::ast::*;
 use oxc_span::Span;
 
 use crate::{
-    comment::DanglingCommentsPrintOptions, doc::Doc, group, if_break, softline, ss, Prettier,
+    array, comment::DanglingCommentsPrintOptions, doc::Doc, group, indent, softline, ss, Prettier,
 };
-use oxc_allocator::Vec;
 
 use super::Format;
 
@@ -40,18 +39,35 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
         return print_empty_array_elements(p, array);
     }
 
+    let (needs_forced_trailing_comma, can_have_trailing_comma) =
+        if let Array::ArrayExpression(array) = array {
+            array.elements.last().map_or((false, false), |last| {
+                (
+                    matches!(last, ArrayExpressionElement::Elision(_)),
+                    !matches!(last, ArrayExpressionElement::SpreadElement(_)),
+                )
+            })
+        } else {
+            (false, false)
+        };
+
+    let trailing_comma = if !can_have_trailing_comma {
+        ss!("")
+    } else if needs_forced_trailing_comma {
+        ss!(",")
+    } else {
+        ss!("")
+    };
+
     let mut parts = p.vec();
-    parts.push(ss!("["));
-
-    let mut parts_inner = p.vec();
-    parts_inner.push(Doc::Softline);
-    parts_inner.extend(print_elements(p, array));
-    parts_inner.push(if_break!(p, ","));
-
-    parts.push(group!(p, Doc::Indent(parts_inner)));
-    parts.push(Doc::Softline);
-    parts.push(ss!("]"));
-
+    let elements = array!(p, print_elements(p, array), trailing_comma);
+    let parts_inner = if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None)
+    {
+        indent!(p, softline!(), elements, dangling_comments)
+    } else {
+        indent!(p, softline!(), elements)
+    };
+    parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
     Doc::Group(parts)
 }
 
@@ -63,7 +79,7 @@ fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -
     )
 }
 
-fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Vec<'a, Doc<'a>> {
+fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let mut parts = p.vec();
     match array {
         Array::ArrayExpression(array) => {
@@ -124,5 +140,5 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Vec<'a, Do
         }
     }
 
-    parts
+    Doc::Array(parts)
 }
