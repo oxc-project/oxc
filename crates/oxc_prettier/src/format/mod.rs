@@ -18,6 +18,7 @@ mod module;
 mod object;
 mod statement;
 mod string;
+mod template_literal;
 mod ternary;
 
 use std::borrow::Cow;
@@ -35,6 +36,7 @@ use crate::{
 use self::{
     array::Array,
     binaryish::{BinaryishLeft, BinaryishOperator},
+    template_literal::TemplateLiteralPrinter,
 };
 
 pub trait Format<'a> {
@@ -755,7 +757,10 @@ impl<'a> Format<'a> for TSQualifiedName<'a> {
 
 impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        template_literal::print_template_literal(
+            p,
+            &TemplateLiteralPrinter::TSTemplateLiteralType(self),
+        )
     }
 }
 
@@ -1618,7 +1623,14 @@ impl<'a> Format<'a> for ImportExpression<'a> {
 
 impl<'a> Format<'a> for TemplateLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        template_literal::print_template_literal(p, &TemplateLiteralPrinter::TemplateLiteral(self))
+    }
+}
+
+impl<'a> Format<'a> for TemplateElement {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        // TODO: `replaceEndOfLine`
+        p.str(self.value.raw.as_str())
     }
 }
 
