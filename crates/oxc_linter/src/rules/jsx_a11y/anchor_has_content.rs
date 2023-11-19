@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXElementName,
-        JSXExpression, JSXIdentifier,
+        JSXExpression,
     },
     AstKind,
 };
@@ -17,7 +17,6 @@ use oxc_allocator::Vec;
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-
 enum AnchorHasContentDiagnostic {
     #[error("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")]
     #[diagnostic(
@@ -77,27 +76,26 @@ fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttri
 }
 
 fn match_valid_prop(attr_items: &Vec<JSXAttributeItem>) -> bool {
-    attr_items.into_iter().any(|attr| match get_prop_value(attr) {
-        Some(JSXAttributeValue::ExpressionContainer(_)) => return true,
-        _ => return false,
-    })
+    attr_items
+        .into_iter()
+        .any(|attr| matches!(get_prop_value(attr), Some(JSXAttributeValue::ExpressionContainer(_))))
 }
 
-fn check_has_accessible_child<'a>(jsx: &JSXElement, ctx: &LintContext<'a>) {
-    let childs = &jsx.children;
-    if childs.len() == 0 {
+fn check_has_accessible_child(jsx: &JSXElement, ctx: &LintContext) {
+    let children = &jsx.children;
+    if children.len() == 0 {
         ctx.diagnostic(AnchorHasContentDiagnostic::MissingContent(jsx.span));
         return;
     }
 
     // If each child is inaccessible, an error is reported
     let mut diagnostic = AnchorHasContentDiagnostic::MissingContent(jsx.span);
-    let all_not_has_content = childs.into_iter().all(|child| match child {
+    let all_not_has_content = children.into_iter().all(|child| match child {
         JSXChild::Text(text) => {
             if text.value.trim() == "" {
                 return true;
             }
-            return false;
+            false
         }
         JSXChild::ExpressionContainer(exp) => {
             if let JSXExpression::Expression(jsexp) = &exp.expression {
@@ -109,7 +107,7 @@ fn check_has_accessible_child<'a>(jsx: &JSXElement, ctx: &LintContext<'a>) {
                     return true;
                 }
             };
-            return false;
+            false
         }
         JSXChild::Element(ele) => {
             let is_hidden = has_jsx_prop_lowercase(&ele.opening_element, "aria-hidden").is_some();
@@ -117,9 +115,9 @@ fn check_has_accessible_child<'a>(jsx: &JSXElement, ctx: &LintContext<'a>) {
                 diagnostic = AnchorHasContentDiagnostic::RemoveAriaHiddent(jsx.span);
                 return true;
             }
-            return false;
+            false
         }
-        _ => return false,
+        _ => false,
     });
 
     if all_not_has_content {
@@ -140,20 +138,19 @@ impl Rule for AnchorHasContent {
                 }
 
                 // check if self attr has title/aria-label
-                if has_jsx_prop_lowercase(&jsx_el.opening_element, "title").is_some()
+                if (has_jsx_prop_lowercase(&jsx_el.opening_element, "title").is_some()
                     || has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-label").is_some()
                     || has_jsx_prop_lowercase(&jsx_el.opening_element, "children").is_some()
                     || has_jsx_prop_lowercase(&jsx_el.opening_element, "dangerouslysetinnerhtml")
-                        .is_some()
+                        .is_some())
+                    && match_valid_prop(&jsx_el.opening_element.attributes)
                 {
-                    if match_valid_prop(&jsx_el.opening_element.attributes) {
-                        // pass
-                        return;
-                    }
+                    // pass
+                    return;
                 }
 
                 // check content accessible
-                check_has_accessible_child(&jsx_el, ctx);
+                check_has_accessible_child(jsx_el, ctx);
             }
         }
 
@@ -167,30 +164,30 @@ fn test() {
 
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-has-content-test.js
     let pass = vec![
-        (r#"<div />;"#, None),
-        (r#"<a>Foo</a>"#, None),
-        (r#"<a><Bar /></a>"#, None),
-        (r#"<a>{foo}</a>"#, None),
-        (r#"<a>{foo.bar}</a>"#, None),
+        (r"<div />;", None),
+        (r"<a>Foo</a>", None),
+        (r"<a><Bar /></a>", None),
+        (r"<a>{foo}</a>", None),
+        (r"<a>{foo.bar}</a>", None),
         (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None),
-        (r#"<a children={children} />"#, None),
+        (r"<a children={children} />", None),
         // TODO:
         // { code: '<Link>foo</Link>', settings: { 'jsx-a11y': { components: { Link: 'a' } } }, },
-        (r#"<a title={title} />"#, None),
-        (r#"<a aria-label={ariaLabel} />"#, None),
-        (r#"<a title={title} aria-label={ariaLabel} />"#, None),
-        (r#"<a><Bar aria-hidden />Foo</a>"#, None),
+        (r"<a title={title} />", None),
+        (r"<a aria-label={ariaLabel} />", None),
+        (r"<a title={title} aria-label={ariaLabel} />", None),
+        (r"<a><Bar aria-hidden />Foo</a>", None),
     ];
 
     let fail = vec![
-        (r#"<a />"#, None),
-        (r#"<a><Bar aria-hidden /></a>"#, None),
-        (r#"<a>{undefined}</a>"#, None),
+        (r"<a />", None),
+        (r"<a><Bar aria-hidden /></a>", None),
+        (r"<a>{undefined}</a>", None),
         // TODO:
         // { code: '<Link />', errors: [expectedError], settings: { 'jsx-a11y': { components: { Link: 'a' } } }, },
-        (r#"<a aria-hidden ></a>"#, None),
-        (r#"<a>{null}</a>"#, None),
-        (r#"<a title />"#, None),
+        (r"<a aria-hidden ></a>", None),
+        (r"<a>{null}</a>", None),
+        (r"<a title />", None),
     ];
 
     Tester::new(AnchorHasContent::NAME, pass, fail).test_and_snapshot();
