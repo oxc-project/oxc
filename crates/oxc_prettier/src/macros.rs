@@ -36,6 +36,19 @@ macro_rules! indent {
 }
 
 #[macro_export]
+macro_rules! indent_if_break {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
+        {
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::IndentIfBreak(temp_vec)
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! line {
     () => {
         Doc::Line

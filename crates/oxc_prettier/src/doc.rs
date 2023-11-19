@@ -15,6 +15,7 @@ pub enum Doc<'a> {
     Array(Vec<'a, Doc<'a>>),
     /// Increase the level of indentation.
     Indent(Vec<'a, Doc<'a>>),
+    IndentIfBreak(Vec<'a, Doc<'a>>),
     /// Mark a group of items which the printer should try to fit on one line.
     /// This is the basic command to tell the printer when to break.
     /// Groups are usually nested, and the printer will try to fit everything on one line,
@@ -116,6 +117,17 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
                 }
             }
             string.push_str("])");
+        }
+        Doc::IndentIfBreak(contents) => {
+            string.push_str("indentIfBreak(");
+            string.push_str("[\n");
+            for (idx, doc) in contents.iter().enumerate() {
+                string.push_str(&print_do_to_debug(doc));
+                if idx != contents.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push_str("]) \n");
         }
         Doc::Group(contents) => {
             string.push_str("group([\n");
