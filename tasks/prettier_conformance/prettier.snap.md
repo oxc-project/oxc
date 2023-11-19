@@ -1,4 +1,4 @@
-Compatibility: 119/838 (14.20%)
+Compatibility: 121/838 (14.44%)
 
 # Failed
 
@@ -476,9 +476,6 @@ Compatibility: 119/838 (14.20%)
 ### for-await
 * for-await/for-await.js
 
-### for-of
-* for-of/async-identifier.js
-
 ### function
 * function/function_expression.js
 * function/issue-10277.js
@@ -514,7 +511,6 @@ Compatibility: 119/838 (14.20%)
 * generator/function-name-starts-with-get.js
 
 ### identifier/for-of
-* identifier/for-of/await.js
 * identifier/for-of/let.js
 
 ### identifier/parentheses
