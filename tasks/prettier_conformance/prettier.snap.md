@@ -1,4 +1,4 @@
-Compatibility: 120/771 (15.56%)
+Compatibility: 109/601 (18.14%)
 
 # Failed
 
@@ -96,48 +96,6 @@ Compatibility: 120/771 (15.56%)
 * async/inline-await.js
 * async/nested.js
 * async/nested2.js
-
-### babel-plugins
-* babel-plugins/async-do-expressions.js
-* babel-plugins/bigint.js
-* babel-plugins/class-properties.js
-* babel-plugins/class-static-block.js
-* babel-plugins/decimal.js
-* babel-plugins/decorator-auto-accessors.js
-* babel-plugins/decorators.js
-* babel-plugins/deferred-import-evaluation.js
-* babel-plugins/destructuring-private.js
-* babel-plugins/do-expressions.js
-* babel-plugins/explicit-resource-management.js
-* babel-plugins/export-default-from.js
-* babel-plugins/export-namespace-from.js
-* babel-plugins/flow.js
-* babel-plugins/function-bind.js
-* babel-plugins/function-sent.js
-* babel-plugins/import-assertions-static.js
-* babel-plugins/import-attributes-static.js
-* babel-plugins/import-meta.js
-* babel-plugins/import-reflection.js
-* babel-plugins/jsx.js
-* babel-plugins/module-blocks.js
-* babel-plugins/nullish-coalescing-operator.js
-* babel-plugins/numeric-separator.js
-* babel-plugins/object-rest-spread.js
-* babel-plugins/optional-catch-binding.js
-* babel-plugins/optional-chaining-assignment.js
-* babel-plugins/optional-chaining.js
-* babel-plugins/partial-application.js
-* babel-plugins/pipeline-operator-fsharp.js
-* babel-plugins/pipeline-operator-hack.js
-* babel-plugins/pipeline-operator-minimal.js
-* babel-plugins/private-fields-in-in.js
-* babel-plugins/private-methods.js
-* babel-plugins/record-tuple-record.js
-* babel-plugins/record-tuple-tuple.js
-* babel-plugins/source-phase-imports.js
-* babel-plugins/throw-expressions.js
-* babel-plugins/typescript.js
-* babel-plugins/v8intrinsic.js
 
 ### binary-expressions
 * binary-expressions/arrow.js
@@ -326,41 +284,6 @@ Compatibility: 120/771 (15.56%)
 * conditional/no-confusing-arrow.js
 * conditional/postfix-ternary-regressions.js
 
-### decorator-auto-accessors
-* decorator-auto-accessors/basic.js
-* decorator-auto-accessors/comments.js
-* decorator-auto-accessors/computed.js
-* decorator-auto-accessors/not-accessor-method.js
-* decorator-auto-accessors/not-accessor-property.js
-* decorator-auto-accessors/private.js
-* decorator-auto-accessors/static-computed.js
-* decorator-auto-accessors/static-private.js
-* decorator-auto-accessors/static.js
-* decorator-auto-accessors/with-semicolon-1.js
-* decorator-auto-accessors/with-semicolon-2.js
-
-### decorators
-* decorators/classes.js
-* decorators/comments.js
-* decorators/member-expression.js
-* decorators/methods.js
-* decorators/mixed.js
-* decorators/mobx.js
-* decorators/multiline.js
-* decorators/multiple.js
-* decorators/parens.js
-* decorators/redux.js
-
-### decorators/class-expression
-* decorators/class-expression/arguments.js
-* decorators/class-expression/class-expression.js
-* decorators/class-expression/member-expression.js
-* decorators/class-expression/super-class.js
-
-### decorators-export
-* decorators-export/after_export.js
-* decorators-export/before_export.js
-
 ### deferred-import-evaluation
 * deferred-import-evaluation/import-defer-attributes-declaration.js
 * deferred-import-evaluation/import-defer.js
@@ -393,10 +316,6 @@ Compatibility: 120/771 (15.56%)
 * directives/no-newline.js
 * directives/test.js
 
-### do
-* do/call-arguments.js
-* do/do.js
-
 ### empty-paren-comment
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
@@ -413,35 +332,6 @@ Compatibility: 120/771 (15.56%)
 * eol/cursor-and-range.js
 * eol/range-1.js
 * eol/range-and-cursor-1.js
-
-### explicit-resource-management
-* explicit-resource-management/for-await-using-of-comments.js
-* explicit-resource-management/invalid-duplicate-using-bindings.js
-* explicit-resource-management/invalid-script-top-level-using-binding.js
-* explicit-resource-management/using-declarations.js
-* explicit-resource-management/valid-await-expr-using-in.js
-* explicit-resource-management/valid-await-expr-using-instanceof.js
-* explicit-resource-management/valid-await-expr-using.js
-* explicit-resource-management/valid-await-using-asi-assignment.js
-* explicit-resource-management/valid-await-using-binding-basic.js
-* explicit-resource-management/valid-await-using-binding-escaped.js
-* explicit-resource-management/valid-await-using-binding-non-bmp.js
-* explicit-resource-management/valid-await-using-binding-using.js
-* explicit-resource-management/valid-await-using-comments.js
-* explicit-resource-management/valid-for-await-using-binding-escaped-of-of.js
-* explicit-resource-management/valid-for-using-binding-escaped-of-of.js
-* explicit-resource-management/valid-for-using-binding-of-of.js
-* explicit-resource-management/valid-for-using-declaration.js
-* explicit-resource-management/valid-module-block-top-level-await-using-binding.js
-* explicit-resource-management/valid-module-block-top-level-using-binding.js
-* explicit-resource-management/valid-using-as-identifier-expression-statement.js
-* explicit-resource-management/valid-using-as-identifier-for-in.js
-* explicit-resource-management/valid-using-as-identifier-for-init.js
-* explicit-resource-management/valid-using-as-identifier-for-of.js
-* explicit-resource-management/valid-using-binding-basic.js
-* explicit-resource-management/valid-using-binding-escaped.js
-* explicit-resource-management/valid-using-binding-non-bmp.js
-* explicit-resource-management/valid-using-binding-using.js
 
 ### export
 * export/blank-line-between-specifiers.js
@@ -519,22 +409,6 @@ Compatibility: 120/771 (15.56%)
 * if/expr_and_same_line_comments.js
 * if/if_comments.js
 * if/trailing_comment.js
-
-### ignore
-* ignore/class-expression-decorator.js
-* ignore/decorator.js
-* ignore/ignore-2.js
-* ignore/ignore.js
-* ignore/issue-10661.js
-* ignore/issue-11077.js
-* ignore/issue-13737.js
-* ignore/issue-14404.js
-* ignore/issue-9335.js
-* ignore/issue-9877.js
-
-### ignore/semi
-* ignore/semi/asi.js
-* ignore/semi/directive.js
 
 ### import
 * import/comments.js
@@ -676,9 +550,6 @@ Compatibility: 120/771 (15.56%)
 * optional-chaining-assignment/valid-lhs-plus-eq.js
 * optional-chaining-assignment/valid-parenthesized.js
 
-### partial-application
-* partial-application/test.js
-
 ### performance
 * performance/nested-real.js
 * performance/nested.js
@@ -702,53 +573,6 @@ Compatibility: 120/771 (15.56%)
 ### quotes
 * quotes/objects.js
 * quotes/strings.js
-
-### range
-* range/array.js
-* range/boundary-2.js
-* range/boundary-3.js
-* range/boundary.js
-* range/class-declaration.js
-* range/different-levels.js
-* range/directive.js
-* range/function-body.js
-* range/function-declaration.js
-* range/ignore-indentation.js
-* range/issue-3789-1.js
-* range/issue-3789-2.js
-* range/issue-4206-1.js
-* range/issue-4206-2.js
-* range/issue-4206-3.js
-* range/issue-4206-4.js
-* range/issue-7082.js
-* range/large-dict.js
-* range/module-export1.js
-* range/module-export2.js
-* range/module-export3.js
-* range/module-import.js
-* range/multiple-statements.js
-* range/multiple-statements2.js
-* range/nested-print-width.js
-* range/nested.js
-* range/nested2.js
-* range/nested3.js
-* range/object-expression.js
-* range/object-expression2.js
-* range/range-end.js
-* range/range-start.js
-* range/range.js
-* range/reversed-range.js
-* range/start-equals-end.js
-* range/try-catch.js
-* range/whitespace.js
-
-### record
-* record/computed.js
-* record/destructuring.js
-* record/record.js
-* record/shorthand.js
-* record/spread.js
-* record/syntax.js
 
 ### regex
 * regex/test.js
@@ -863,13 +687,6 @@ Compatibility: 120/771 (15.56%)
 * try/catch.js
 * try/try.js
 
-### tuple
-* tuple/destructuring.js
-* tuple/invalid-tuple-holes.js
-* tuple/syntax.js
-* tuple/tuple-trailing-comma.js
-* tuple/tuple.js
-
 ### unary
 * unary/object.js
 * unary/series.js
@@ -881,10 +698,6 @@ Compatibility: 120/771 (15.56%)
 ### unicode
 * unicode/combining-characters.js
 * unicode/nbsp-jsx.js
-
-### v8_intrinsic
-* v8_intrinsic/avoid-conflicts-to-pipeline.js
-* v8_intrinsic/intrinsic_call.js
 
 ### variable_declarator
 * variable_declarator/multiple.js
