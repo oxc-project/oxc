@@ -27,7 +27,7 @@ enum AnchorHasContentDiagnostic {
 
     #[error("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")]
     #[diagnostic(severity(warning), help("Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies."))]
-    RemoveAriaHiddent(#[label] Span),
+    RemoveAriaHidden(#[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -84,8 +84,10 @@ fn match_valid_prop(attr_items: &Vec<JSXAttributeItem>) -> bool {
 fn check_has_accessible_child(jsx: &JSXElement, ctx: &LintContext) {
     let children = &jsx.children;
     if children.len() == 0 {
-        ctx.diagnostic(AnchorHasContentDiagnostic::MissingContent(jsx.span));
-        return;
+        if let JSXElementName::Identifier(ident) = &jsx.opening_element.name {
+            ctx.diagnostic(AnchorHasContentDiagnostic::MissingContent(ident.span));
+            return;
+        }
     }
 
     // If each child is inaccessible, an error is reported
@@ -112,7 +114,7 @@ fn check_has_accessible_child(jsx: &JSXElement, ctx: &LintContext) {
         JSXChild::Element(ele) => {
             let is_hidden = has_jsx_prop_lowercase(&ele.opening_element, "aria-hidden").is_some();
             if is_hidden {
-                diagnostic = AnchorHasContentDiagnostic::RemoveAriaHiddent(jsx.span);
+                diagnostic = AnchorHasContentDiagnostic::RemoveAriaHidden(jsx.span);
                 return true;
             }
             false
@@ -133,7 +135,7 @@ impl Rule for AnchorHasContent {
             if name == "a" {
                 // check self attr
                 if has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-hidden").is_some() {
-                    ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHiddent(jsx_el.span));
+                    ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHidden(jsx_el.span));
                     return;
                 }
 
