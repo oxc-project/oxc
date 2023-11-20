@@ -8,6 +8,10 @@ pub(super) fn print_arrow_function<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
+    if expr.r#async {
+        parts.push(ss!("async "));
+    }
+
     let parameters = expr.params.format(p);
     parts.push(parameters);
     parts.push(ss!(" => "));

@@ -1,4 +1,4 @@
-Compatibility: 127/601 (21.13%)
+Compatibility: 129/601 (21.46%)
 
 # Failed
 
@@ -90,7 +90,6 @@ Compatibility: 127/601 (21.13%)
 ### async
 * async/await-parse.js
 * async/conditional-expression.js
-* async/exponentiation.js
 * async/inline-await.js
 * async/nested.js
 * async/nested2.js
@@ -344,9 +343,6 @@ Compatibility: 127/601 (21.13%)
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
-
-### for-await
-* for-await/for-await.js
 
 ### function
 * function/function_expression.js
