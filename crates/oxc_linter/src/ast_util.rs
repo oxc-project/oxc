@@ -316,6 +316,7 @@ pub fn extract_regex_flags<'a>(
 
 pub fn is_method_call<'a>(
     call_expr: &CallExpression<'a>,
+    objects: Option<&[&'a str]>,
     methods: Option<&[&'a str]>,
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
@@ -336,6 +337,15 @@ pub fn is_method_call<'a>(
     else {
         return false;
     };
+
+    if let Some(objects) = objects {
+        let Expression::Identifier(ident) = member_expr.object().without_parenthesized() else {
+            return false;
+        };
+        if !objects.contains(&ident.name.as_str()) {
+            return false;
+        }
+    }
 
     if let Some(methods) = methods {
         let Some(static_property_name) = member_expr.static_property_name() else { return false };
