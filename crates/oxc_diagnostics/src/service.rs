@@ -16,9 +16,6 @@ pub struct DiagnosticService {
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
 
-    /// Report warnings as errors
-    deny_warnings: bool,
-
     /// Specify a warning threshold,
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     max_warnings: Option<usize>,
@@ -38,7 +35,6 @@ impl Default for DiagnosticService {
         let (sender, receiver) = mpsc::channel();
         Self {
             quiet: false,
-            deny_warnings: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
             errors_count: Cell::new(0),
@@ -52,12 +48,6 @@ impl DiagnosticService {
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
-        self
-    }
-
-    #[must_use]
-    pub fn with_deny_warnings(mut self, yes: bool) -> Self {
-        self.deny_warnings = yes;
         self
     }
 
@@ -81,10 +71,6 @@ impl DiagnosticService {
 
     pub fn max_warnings_exceeded(&self) -> bool {
         self.max_warnings.map_or(false, |max_warnings| self.warnings_count.get() > max_warnings)
-    }
-
-    pub fn violated_deny_warnings(&self) -> bool {
-        self.deny_warnings && self.warnings_count.get() > 0
     }
 
     pub fn wrap_diagnostics(

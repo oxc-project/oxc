@@ -72,7 +72,6 @@ impl Runner for LintRunner {
 
         let diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
-            .with_deny_warnings(warning_options.deny_warnings)
             .with_max_warnings(warning_options.max_warnings);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
@@ -94,7 +93,7 @@ impl Runner for LintRunner {
             number_of_warnings: diagnostic_service.warnings_count(),
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
-            violated_deny_warnings: diagnostic_service.violated_deny_warnings(),
+            deny_warnings: warning_options.deny_warnings,
         })
     }
 }

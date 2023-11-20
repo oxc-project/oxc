@@ -22,7 +22,7 @@ pub struct LintResult {
     pub number_of_warnings: usize,
     pub number_of_errors: usize,
     pub max_warnings_exceeded: bool,
-    pub violated_deny_warnings: bool,
+    pub deny_warnings: bool,
 }
 
 #[derive(Debug)]
@@ -50,7 +50,7 @@ impl Termination for CliRunResult {
                 number_of_warnings,
                 number_of_errors,
                 max_warnings_exceeded,
-                violated_deny_warnings,
+                deny_warnings,
             }) => {
                 let threads = rayon::current_num_threads();
                 let number_of_diagnostics = number_of_warnings + number_of_errors;
@@ -76,7 +76,8 @@ impl Termination for CliRunResult {
                     if number_of_errors == 1 { "" } else { "s" }
                 );
 
-                let exit_code = u8::from(violated_deny_warnings || number_of_errors > 0);
+                let exit_code =
+                    u8::from((number_of_warnings > 0 && deny_warnings) || number_of_errors > 0);
                 ExitCode::from(exit_code)
             }
             Self::FormatResult(FormatResult { duration, number_of_files }) => {
