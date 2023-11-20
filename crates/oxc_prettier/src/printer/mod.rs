@@ -9,7 +9,7 @@ use oxc_allocator::Allocator;
 use std::collections::VecDeque;
 
 use crate::{
-    doc::{Doc, DocBuilder, Group},
+    doc::{Doc, DocBuilder, Fill},
     PrettierOptions,
 };
 
@@ -92,12 +92,13 @@ impl<'a> Printer<'a> {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
-                Doc::Group(group) => self.handle_group(indent, mode, group),
+                Doc::Group(_) => self.handle_group(indent, mode, doc),
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
                 Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
+                Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
             }
         }
     }
@@ -119,25 +120,30 @@ impl<'a> Printer<'a> {
         );
     }
 
-    fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
+    fn handle_group(&mut self, indent: Indent, mode: Mode, doc: Doc<'a>) {
         match mode {
             Mode::Flat => {
-                // TODO: consider supporting `group mode` e.g. Break/Flat
+                let Doc::Group(group) = doc else {
+                    return;
+                };
                 self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
-                    Command::new(
-                        indent,
-                        if group.should_break { Mode::Break } else { Mode::Flat },
-                        doc,
-                    )
+                    Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
                 }));
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
-                let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
-
-                if !group.should_break && self.fits(&group.contents, remaining_width) {
-                    self.cmds.push(Command::new(indent, Mode::Flat, Doc::Group(group)));
+                let remaining_width = self.remaining_width();
+                let Doc::Group(group) = &doc else {
+                    return;
+                };
+                let should_break = group.should_break;
+                let cmd = Command::new(indent, Mode::Flat, doc);
+                if !should_break && self.fits(&cmd, remaining_width) {
+                    self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
                 } else {
+                    let Doc::Group(group) = cmd.doc else {
+                        return;
+                    };
                     self.cmds.extend(
                         group
                             .contents
@@ -175,6 +181,7 @@ impl<'a> Printer<'a> {
             self.handle_hardline(indent);
         } else {
             self.out.push(b' ');
+            self.pos += 1;
         }
     }
 
@@ -196,12 +203,93 @@ impl<'a> Printer<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_wrap)]
-    fn fits(&self, docs: &oxc_allocator::Vec<'a, Doc<'a>>, remaining_width: isize) -> bool {
-        let mut remaining_width = remaining_width;
+    fn handle_fill(&mut self, indent: Indent, mode: Mode, fill: Fill<'a>) {
+        let mut fill = fill;
+        let remaining_width = self.remaining_width();
+        let original_parts_len = fill.parts().len();
+        let (content, whitespace) = fill.drain_out_pair();
 
-        // TODO: these should be commands
-        let mut queue: VecDeque<(Mode, &Doc)> = docs.iter().map(|doc| (Mode::Flat, doc)).collect();
+        let Some(content) = content else {
+            return;
+        };
+        let content_flat_cmd = Command::new(indent, Mode::Flat, content);
+        let content_fits = self.fits(&content_flat_cmd, remaining_width);
+
+        if original_parts_len == 1 {
+            if content_fits {
+                self.cmds.push(content_flat_cmd);
+            } else {
+                let content_break_cmd = content_flat_cmd.with_mode(Mode::Break);
+                self.cmds.push(content_break_cmd);
+            }
+            return;
+        }
+
+        let Some(whitespace) = whitespace else {
+            return;
+        };
+        let whitespace_flat_cmd = Command::new(indent, Mode::Flat, whitespace);
+
+        if original_parts_len == 2 {
+            if content_fits {
+                self.cmds.push(whitespace_flat_cmd);
+                self.cmds.push(content_flat_cmd);
+            } else {
+                let content_break_cmd = content_flat_cmd.with_mode(Mode::Break);
+                let whitespace_break_cmd = whitespace_flat_cmd.with_mode(Mode::Break);
+                self.cmds.push(whitespace_break_cmd);
+                self.cmds.push(content_break_cmd);
+            }
+            return;
+        }
+
+        let Some(second_content) = fill.dequeue() else {
+            return;
+        };
+        let mut docs = self.vec();
+        let content = content_flat_cmd.doc;
+        docs.push(content);
+        docs.push(whitespace_flat_cmd.doc);
+        docs.push(second_content);
+
+        let first_and_second_content_fit_cmd = Command::new(indent, Mode::Flat, Doc::Array(docs));
+        let first_and_second_content_fits =
+            self.fits(&first_and_second_content_fit_cmd, remaining_width);
+        let Doc::Array(mut doc) = first_and_second_content_fit_cmd.doc else {
+            return;
+        };
+        if let Some(second_content) = doc.pop() {
+            fill.enqueue(second_content);
+        }
+
+        let Some(whitespace) = doc.pop() else {
+            return;
+        };
+        let Some(content) = doc.pop() else {
+            return;
+        };
+
+        let remaining_cmd = Command::new(indent, mode, Doc::Fill(fill));
+        let whitespace_flat_cmd = Command::new(indent, Mode::Flat, whitespace);
+        let content_flat_cmd = Command::new(indent, Mode::Flat, content);
+
+        if first_and_second_content_fits {
+            self.cmds.extend(vec![remaining_cmd, whitespace_flat_cmd, content_flat_cmd]);
+        } else if content_fits {
+            let whitespace_break_cmd = whitespace_flat_cmd.with_mode(Mode::Break);
+            self.cmds.extend(vec![remaining_cmd, whitespace_break_cmd, content_flat_cmd]);
+        } else {
+            let content_break_cmd = content_flat_cmd.with_mode(Mode::Break);
+            let whitespace_break_cmd = whitespace_flat_cmd.with_mode(Mode::Break);
+            self.cmds.extend(vec![remaining_cmd, whitespace_break_cmd, content_break_cmd]);
+        };
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn fits(&self, next: &Command<'a>, width: isize) -> bool {
+        let mut remaining_width = width;
+        let mut queue: VecDeque<(Mode, &Doc)> = VecDeque::new();
+        queue.push_front((next.mode, &next.doc));
         let mut cmds = self.cmds.iter().rev();
 
         while let Some((mode, doc)) = queue.pop_front() {
@@ -241,6 +329,11 @@ impl<'a> Printer<'a> {
                 Doc::Hardline => {
                     return true;
                 }
+                Doc::Fill(fill) => {
+                    for part in fill.parts().iter().rev() {
+                        queue.push_front((mode, part));
+                    }
+                }
             }
 
             if remaining_width < 0 {
@@ -276,5 +369,10 @@ impl<'a> Printer<'a> {
                 break;
             }
         }
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn remaining_width(&self) -> isize {
+        (self.options.print_width as isize) - (self.pos as isize)
     }
 }

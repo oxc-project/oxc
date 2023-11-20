@@ -34,6 +34,10 @@ pub enum Doc<'a> {
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
     IfBreak(Box<'a, Doc<'a>>),
+    /// This is an alternative type of group which behaves like text layout:
+    /// it's going to add a break whenever the next element doesn't fit in the line anymore.
+    /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
+    Fill(Fill<'a>),
 }
 
 #[derive(Debug)]
@@ -45,6 +49,38 @@ pub struct Group<'a> {
 impl<'a> Group<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
         Self { contents, should_break }
+    }
+}
+
+#[derive(Debug)]
+pub struct Fill<'a> {
+    pub parts: Vec<'a, Doc<'a>>,
+}
+
+impl<'a> Fill<'a> {
+    pub fn new(docs: Vec<'a, Doc<'a>>) -> Self {
+        Self { parts: docs }
+    }
+    pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
+        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        (content, whitespace)
+    }
+    pub fn dequeue(&mut self) -> Option<Doc<'a>> {
+        if self.parts.len() > 0 {
+            Some(self.parts.remove(0))
+        } else {
+            None
+        }
+    }
+    pub fn enqueue(&mut self, doc: Doc<'a>) {
+        self.parts.insert(0, doc);
+    }
+    pub fn parts(&self) -> &[Doc<'a>] {
+        &self.parts
+    }
+    pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
+        self.parts
     }
 }
 
@@ -163,6 +199,17 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("ifBreak(");
             string.push_str(&print_doc_to_debug(break_contents));
             string.push(')');
+        }
+        Doc::Fill(fill) => {
+            string.push_str("fill([\n");
+            let parts = fill.parts();
+            for (idx, doc) in parts.iter().enumerate() {
+                string.push_str(&print_doc_to_debug(doc));
+                if idx != parts.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push_str("])");
         }
     }
 
