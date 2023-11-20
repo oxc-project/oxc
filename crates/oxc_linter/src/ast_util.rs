@@ -316,7 +316,7 @@ pub fn extract_regex_flags<'a>(
 
 pub fn is_method_call<'a>(
     call_expr: &CallExpression<'a>,
-    methods: &[&'a str],
+    methods: Option<&[&'a str]>,
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
@@ -337,10 +337,11 @@ pub fn is_method_call<'a>(
         return false;
     };
 
-    let Some(static_property_name) = member_expr.static_property_name() else { return false };
-
-    if !methods.contains(&static_property_name) {
-        return false;
+    if let Some(methods) = methods {
+        let Some(static_property_name) = member_expr.static_property_name() else { return false };
+        if !methods.contains(&static_property_name) {
+            return false;
+        }
     }
 
     true
