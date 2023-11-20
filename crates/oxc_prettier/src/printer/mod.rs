@@ -97,14 +97,8 @@ impl<'a> Printer<'a> {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
 
-                if !group.should_break && self.fits(&group.contents, indent, remaining_width) {
-                    self.cmds.extend(
-                        group
-                            .contents
-                            .into_iter()
-                            .rev()
-                            .map(|doc| Command::new(indent, Mode::Flat, doc)),
-                    );
+                if !group.should_break && self.fits(&group.contents, remaining_width) {
+                    self.cmds.push(Command::new(indent, Mode::Flat, Doc::Group(group)));
                 } else {
                     self.cmds.extend(
                         group
@@ -166,48 +160,49 @@ impl<'a> Printer<'a> {
     }
 
     #[allow(clippy::cast_possible_wrap)]
-    fn fits(
-        &self,
-        doc: &oxc_allocator::Vec<'a, Doc<'a>>,
-        indent: Indent,
-        remaining_width: isize,
-    ) -> bool {
+    fn fits(&self, docs: &oxc_allocator::Vec<'a, Doc<'a>>, remaining_width: isize) -> bool {
         let mut remaining_width = remaining_width;
 
         // TODO: these should be commands
-        let mut queue: VecDeque<&Doc<'a>> = doc.iter().collect();
+        let mut queue: VecDeque<(Mode, &Doc)> = docs.iter().map(|doc| (Mode::Flat, doc)).collect();
         let mut cmds = self.cmds.iter().rev();
-        let mut check_cmds = true;
 
-        while let Some(next) = queue.pop_front() {
-            match next {
+        while let Some((mode, doc)) = queue.pop_front() {
+            let is_break = matches!(mode, Mode::Break);
+            match doc {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
-                    // println!("{}, {}", string, remaining_width);
                 }
-                Doc::IndentIfBreak(docs) | Doc::Array(docs) | Doc::Indent(docs) => {
+                Doc::IndentIfBreak(docs) | Doc::Indent(docs) | Doc::Array(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
-                        queue.push_front(d);
-                    }
-
-                    if matches!(next, Doc::Indent(_)) {
-                        remaining_width -= (self.options.tab_width * indent.length) as isize;
+                        queue.push_front((mode, d));
                     }
                 }
                 Doc::Group(group) => {
-                    if group.should_break {
-                        return false;
-                    }
+                    let mode = if group.should_break { Mode::Break } else { mode };
                     for d in group.contents.iter().rev() {
-                        queue.push_front(d);
+                        queue.push_front((mode, d));
                     }
                 }
-                // trying to fit on a single line, so we don't need to consider line breaks
-                Doc::IfBreak { .. } | Doc::Softline => {}
-                Doc::Line => remaining_width -= 1,
+                Doc::IfBreak(doc) => {
+                    if is_break {
+                        queue.push_front((mode, doc));
+                    }
+                }
+                Doc::Line => {
+                    if is_break {
+                        return true;
+                    }
+                    remaining_width -= 1_isize;
+                }
+                Doc::Softline => {
+                    if is_break {
+                        return true;
+                    }
+                }
                 Doc::Hardline => {
-                    return false;
+                    return true;
                 }
             }
 
@@ -215,34 +210,9 @@ impl<'a> Printer<'a> {
                 return false;
             }
 
-            if check_cmds && queue.is_empty() {
-                // We need to check the docs before the "Hardline" and the "Softline".
-                // These should be used to calculate the remaining width, since they all end up on the same line.
+            if queue.is_empty() {
                 if let Some(cmd) = cmds.next() {
-                    let mut docs: VecDeque<&Doc<'a>> = VecDeque::new();
-                    docs.push_front(&cmd.doc);
-                    while let Some(doc) = docs.pop_front() {
-                        match doc {
-                            Doc::Str(_) | Doc::Line => queue.push_front(doc),
-                            Doc::IndentIfBreak(next_docs)
-                            | Doc::Indent(next_docs)
-                            | Doc::Array(next_docs) => {
-                                for doc in next_docs.iter().rev() {
-                                    docs.push_front(doc);
-                                }
-                            }
-                            Doc::Group(group) => {
-                                for doc in group.contents.iter().rev() {
-                                    docs.push_front(doc);
-                                }
-                            }
-                            Doc::Hardline | Doc::Softline => {
-                                check_cmds = false;
-                                break;
-                            }
-                            Doc::IfBreak(_) => {}
-                        }
-                    }
+                    queue.push_back((cmd.mode, &cmd.doc));
                 }
             }
         }
