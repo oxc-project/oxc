@@ -1,4 +1,4 @@
-Compatibility: 113/601 (18.80%)
+Compatibility: 114/601 (18.97%)
 
 # Failed
 
@@ -408,7 +408,6 @@ Compatibility: 113/601 (18.80%)
 ### import
 * import/comments.js
 * import/inline.js
-* import/multiple_standalones.js
 * import/same-local-and-imported.js
 
 ### label

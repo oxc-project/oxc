@@ -955,7 +955,15 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             let is_default = specifiers.get(0).is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
             });
-            parts.push(module::print_module_specifiers(p, specifiers, is_default));
+
+            let validate_namespace = |x: &ImportDeclarationSpecifier| {
+                matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
+            };
+
+            let is_namespace = specifiers.get(0).is_some_and(validate_namespace)
+                || specifiers.get(1).is_some_and(validate_namespace);
+
+            parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
@@ -994,7 +1002,7 @@ impl<'a> Format<'a> for ImportDefaultSpecifier {
 
 impl<'a> Format<'a> for ImportNamespaceSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, ss!("* as "), self.local.format(p))
     }
 }
 
@@ -1013,7 +1021,12 @@ impl<'a> Format<'a> for ImportAttribute {
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(module::print_module_specifiers(p, &self.specifiers, false));
+        parts.push(module::print_module_specifiers(
+            p,
+            &self.specifiers,
+            /* include_default */ false,
+            /* include_namespace */ false,
+        ));
         if let Some(decl) = &self.declaration {
             parts.push(decl.format(p));
         }
