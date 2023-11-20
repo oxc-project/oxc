@@ -1,4 +1,4 @@
-Compatibility: 113/601 (18.80%)
+Compatibility: 118/601 (19.63%)
 
 # Failed
 
@@ -89,7 +89,6 @@ Compatibility: 113/601 (18.80%)
 
 ### async
 * async/async-iteration.js
-* async/async-shorthand-method.js
 * async/await-parse.js
 * async/conditional-expression.js
 * async/exponentiation.js
@@ -132,7 +131,6 @@ Compatibility: 113/601 (18.80%)
 
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
-* call/first-argument-expansion/issue-12892.js
 * call/first-argument-expansion/issue-13237.js
 * call/first-argument-expansion/issue-2456.js
 * call/first-argument-expansion/issue-4401.js
@@ -423,7 +421,6 @@ Compatibility: 113/601 (18.80%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
-* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
@@ -499,12 +496,8 @@ Compatibility: 113/601 (18.80%)
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
 
-### object-colon-bug
-* object-colon-bug/bug.js
-
 ### object-prop-break-in
 * object-prop-break-in/comment.js
-* object-prop-break-in/long-value.js
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
 

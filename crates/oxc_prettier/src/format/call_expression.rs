@@ -1,10 +1,13 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     doc::{Doc, Group},
     if_break, ss, Format, Prettier,
 };
+
+use super::misc;
 
 pub(super) fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
@@ -49,5 +52,8 @@ fn print_call_expression_arguments<'a>(
     parts.push(if_break!(p, ","));
     parts.push(Doc::Softline);
     parts.push(ss!(")"));
-    Doc::Group(Group::new(parts, false))
+    let should_break = arguments
+        .iter()
+        .any(|arg| misc::has_new_line_in_range(p.source_text, arg.span().start, arg.span().end));
+    Doc::Group(Group::new(parts, should_break))
 }
