@@ -90,7 +90,7 @@ macro_rules! group {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group(temp_vec)
+            Doc::Group($crate::doc::Group::new(temp_vec, false))
         }
     };
 }

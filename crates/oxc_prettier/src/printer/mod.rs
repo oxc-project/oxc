@@ -7,7 +7,10 @@ mod command;
 
 use std::collections::VecDeque;
 
-use crate::{doc::Doc, PrettierOptions};
+use crate::{
+    doc::{Doc, Group},
+    PrettierOptions,
+};
 
 use self::command::{Command, Indent, Mode};
 
@@ -51,7 +54,7 @@ impl<'a> Printer<'a> {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
-                Doc::Group(docs) => self.handle_group(indent, mode, docs),
+                Doc::Group(group) => self.handle_group(indent, mode, group),
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
@@ -78,25 +81,37 @@ impl<'a> Printer<'a> {
         );
     }
 
-    fn handle_group(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+    fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
         match mode {
             Mode::Flat => {
                 // TODO: consider supporting `group mode` e.g. Break/Flat
-                self.cmds.extend(
-                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
-                );
+                self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
+                    Command::new(
+                        indent,
+                        if group.should_break { Mode::Break } else { Mode::Flat },
+                        doc,
+                    )
+                }));
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
 
-                if self.fits(&docs, indent, remaining_width) {
+                if !group.should_break && self.fits(&group.contents, indent, remaining_width) {
                     self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
+                        group
+                            .contents
+                            .into_iter()
+                            .rev()
+                            .map(|doc| Command::new(indent, Mode::Flat, doc)),
                     );
                 } else {
                     self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
+                        group
+                            .contents
+                            .into_iter()
+                            .rev()
+                            .map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
                 }
             }
@@ -167,10 +182,7 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::IndentIfBreak(docs)
-                | Doc::Array(docs)
-                | Doc::Indent(docs)
-                | Doc::Group(docs) => {
+                Doc::IndentIfBreak(docs) | Doc::Array(docs) | Doc::Indent(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
                         queue.push_front(d);
@@ -178,6 +190,14 @@ impl<'a> Printer<'a> {
 
                     if matches!(next, Doc::Indent(_)) {
                         remaining_width -= (self.options.tab_width * indent.length) as isize;
+                    }
+                }
+                Doc::Group(group) => {
+                    if group.should_break {
+                        return false;
+                    }
+                    for d in group.contents.iter().rev() {
+                        queue.push_front(d);
                     }
                 }
                 // trying to fit on a single line, so we don't need to consider line breaks
