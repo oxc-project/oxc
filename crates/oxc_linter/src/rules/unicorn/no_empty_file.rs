@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Statement, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")]
@@ -50,20 +50,6 @@ impl Rule for NoEmptyFile {
         }
 
         ctx.diagnostic(NoEmptyFileDiagnostic(Span::new(0, 0)));
-    }
-}
-
-fn is_empty_stmt(stmt: &Statement) -> bool {
-    match stmt {
-        Statement::BlockStatement(block_stmt) => {
-            if block_stmt.body.is_empty() || block_stmt.body.iter().all(|node| is_empty_stmt(node))
-            {
-                return true;
-            }
-            false
-        }
-        Statement::EmptyStatement(_) => true,
-        _ => false,
     }
 }
 
