@@ -1,4 +1,4 @@
-Compatibility: 124/601 (20.63%)
+Compatibility: 127/601 (21.13%)
 
 # Failed
 
@@ -149,7 +149,6 @@ Compatibility: 124/601 (20.63%)
 * class-comment/superclass.js
 
 ### class-extends
-* class-extends/complex.js
 * class-extends/extends.js
 * class-extends/tuple-and-record.js
 
@@ -160,13 +159,11 @@ Compatibility: 124/601 (20.63%)
 ### classes
 * classes/asi.js
 * classes/assignment.js
-* classes/binary.js
 * classes/class-fields-features.js
 * classes/empty.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
-* classes/super.js
 
 ### classes/keyword-property
 * classes/keyword-property/async.js
