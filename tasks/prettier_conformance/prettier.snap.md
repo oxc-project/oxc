@@ -1,4 +1,4 @@
-Compatibility: 119/601 (19.80%)
+Compatibility: 124/601 (20.63%)
 
 # Failed
 
@@ -161,15 +161,12 @@ Compatibility: 119/601 (19.80%)
 * classes/asi.js
 * classes/assignment.js
 * classes/binary.js
-* classes/call.js
 * classes/class-fields-features.js
 * classes/empty.js
-* classes/member.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
 * classes/super.js
-* classes/ternary.js
 
 ### classes/keyword-property
 * classes/keyword-property/async.js
@@ -333,8 +330,6 @@ Compatibility: 119/601 (19.80%)
 
 ### export-default
 * export-default/binary_and_template.js
-* export-default/body.js
-* export-default/class_instance.js
 * export-default/function_in_template.js
 * export-default/function_tostring.js
 
