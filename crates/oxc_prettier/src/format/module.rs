@@ -69,7 +69,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
     if specifiers.is_empty() {
-        parts.push(ss!("{}"));
+        parts.push(ss!(" {}"));
     } else {
         parts.push(ss!(" "));
 

@@ -1,4 +1,4 @@
-Compatibility: 111/601 (18.47%)
+Compatibility: 113/601 (18.80%)
 
 # Failed
 
@@ -331,7 +331,6 @@ Compatibility: 111/601 (18.47%)
 
 ### export
 * export/blank-line-between-specifiers.js
-* export/empty.js
 * export/same-local-and-exported.js
 
 ### export-default
@@ -408,7 +407,6 @@ Compatibility: 111/601 (18.47%)
 
 ### import
 * import/comments.js
-* import/empty-import.js
 * import/inline.js
 * import/multiple_standalones.js
 * import/same-local-and-imported.js
