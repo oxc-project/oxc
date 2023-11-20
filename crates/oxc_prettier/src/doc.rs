@@ -96,12 +96,12 @@ impl<'a> Prettier<'a> {
 
 impl<'a> fmt::Display for Doc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{})", print_do_to_debug(self))
+        write!(f, "{})", print_doc_to_debug(self))
     }
 }
 
 // https://github.com/prettier/prettier/blob/main/src/document/debug.js
-fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
+fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
     use std::string::String;
     let mut string = String::new();
     match doc {
@@ -113,7 +113,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Array(docs) => {
             string.push_str("[\n");
             for (idx, doc) in docs.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != docs.len() - 1 {
                     string.push_str(", ");
                 }
@@ -123,7 +123,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Indent(contents) => {
             string.push_str("indent([");
             for (idx, doc) in contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != contents.len() - 1 {
                     string.push_str(", ");
                 }
@@ -134,7 +134,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("indentIfBreak(");
             string.push_str("[\n");
             for (idx, doc) in contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != contents.len() - 1 {
                     string.push_str(", ");
                 }
@@ -144,7 +144,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Group(group) => {
             string.push_str("group([\n");
             for (idx, doc) in group.contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != group.contents.len() - 1 {
                     string.push_str(", ");
                 }
@@ -164,7 +164,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         }
         Doc::IfBreak(break_contents) => {
             string.push_str("ifBreak(");
-            string.push_str(&print_do_to_debug(break_contents));
+            string.push_str(&print_doc_to_debug(break_contents));
             string.push(')');
         }
     }
