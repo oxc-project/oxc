@@ -1,4 +1,4 @@
-Compatibility: 114/601 (18.97%)
+Compatibility: 113/601 (18.80%)
 
 # Failed
 
@@ -89,6 +89,7 @@ Compatibility: 114/601 (18.97%)
 
 ### async
 * async/async-iteration.js
+* async/async-shorthand-method.js
 * async/await-parse.js
 * async/conditional-expression.js
 * async/exponentiation.js
@@ -131,8 +132,8 @@ Compatibility: 114/601 (18.97%)
 
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
+* call/first-argument-expansion/issue-12892.js
 * call/first-argument-expansion/issue-13237.js
-* call/first-argument-expansion/issue-14454.js
 * call/first-argument-expansion/issue-2456.js
 * call/first-argument-expansion/issue-4401.js
 * call/first-argument-expansion/issue-5172.js
@@ -407,7 +408,6 @@ Compatibility: 114/601 (18.97%)
 
 ### import
 * import/comments.js
-* import/inline.js
 * import/same-local-and-imported.js
 
 ### label
@@ -499,8 +499,12 @@ Compatibility: 114/601 (18.97%)
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
 
+### object-colon-bug
+* object-colon-bug/bug.js
+
 ### object-prop-break-in
 * object-prop-break-in/comment.js
+* object-prop-break-in/long-value.js
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
 
@@ -515,6 +519,7 @@ Compatibility: 114/601 (18.97%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
+* objects/getter-setter.js
 * objects/range.js
 * objects/right-break.js
 
@@ -611,10 +616,6 @@ Compatibility: 114/601 (18.97%)
 * switch/empty_statement.js
 * switch/empty_switch.js
 * switch/switch.js
-
-### tab-width
-* tab-width/class.js
-* tab-width/nested-functions.spec.js
 
 ### template
 * template/arrow.js
