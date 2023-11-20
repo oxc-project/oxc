@@ -70,7 +70,9 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
         }
 
         parts.push(ss!("}"));
-        Doc::Group(Group::new(parts, false))
+        let should_break =
+            misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
+        Doc::Group(Group::new(parts, should_break))
     };
 
     content
