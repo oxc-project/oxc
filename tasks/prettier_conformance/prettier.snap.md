@@ -1,4 +1,4 @@
-Compatibility: 110/601 (18.30%)
+Compatibility: 111/601 (18.47%)
 
 # Failed
 
@@ -144,9 +144,6 @@ Compatibility: 110/601 (18.30%)
 
 ### call/no-argument
 * call/no-argument/special-cases.js
-
-### chain-expression
-* chain-expression/test.js
 
 ### class-comment
 * class-comment/class-property.js
