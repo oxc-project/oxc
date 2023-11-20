@@ -1322,10 +1322,7 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(format!(p, self.object));
-        if self.optional {
-            parts.push(ss!("?."));
-        }
-        parts.push(ss!("#"));
+        parts.push(if self.optional { ss!("?.") } else { ss!(".") });
         parts.push(format!(p, self.field));
         Doc::Array(parts)
     }
