@@ -1,4 +1,4 @@
-Compatibility: 118/601 (19.63%)
+Compatibility: 119/601 (19.80%)
 
 # Failed
 
@@ -88,7 +88,6 @@ Compatibility: 118/601 (19.63%)
 * assignment-comments/string.js
 
 ### async
-* async/async-iteration.js
 * async/await-parse.js
 * async/conditional-expression.js
 * async/exponentiation.js
