@@ -171,6 +171,7 @@ mod unicorn {
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_switch_case;
+    pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
@@ -333,6 +334,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_promise_resolve_reject,
     unicorn::no_useless_switch_case,
+    unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
