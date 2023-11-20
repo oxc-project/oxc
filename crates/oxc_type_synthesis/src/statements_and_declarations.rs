@@ -1,8 +1,8 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use ezno_checker::{
-    self, context::VariableId, structures::variables::VariableMutability, CheckingData,
-    Environment, FSResolver, RegisterOnExisting, TypeId,
+    self, behavior::variables::VariableMutability, context::VariableRegisterBehavior, CheckingData,
+    Environment, ReadFromFS, TypeId, VariableId,
 };
 use oxc_ast::{
     self,
@@ -10,17 +10,18 @@ use oxc_ast::{
 };
 use oxc_span::GetSpan;
 
-use super::{oxc_span_to_source_map_span, types::synthesize_type_annotation};
+use super::{oxc_span_to_source_map_span, types::synthesise_type_annotation};
 use crate::{
-    expressions::{self, synthesize_expression},
+    expressions::{self, synthesise_expression},
     functions::OxcFunction,
+    OxcAST,
 };
 
 /// See `checking.md`s Hoisting section in docs for details
-pub(crate) fn hoist_statements<T: FSResolver>(
+pub(crate) fn hoist_statements<T: ReadFromFS>(
     statements: &[ast::Statement],
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) {
     // TODO temp?
     let mut idx_to_types = HashMap::new();
@@ -42,17 +43,25 @@ pub(crate) fn hoist_statements<T: FSResolver>(
                     }
 
                     // TODO eager and so won't work with hoisting
-                    let to = synthesize_type_annotation(
+                    let to = synthesise_type_annotation(
                         &alias.type_annotation,
                         environment,
                         checking_data,
                     );
 
-                    environment.new_alias(&alias.id.name.as_str(), to, &mut checking_data.types);
+                    environment.new_alias(
+                        &alias.id.name.as_str(),
+                        alias.type_parameters.as_deref(),
+                        &alias.type_annotation,
+                        checking_data,
+                    );
                 }
                 ast::Declaration::TSInterfaceDeclaration(interface) => {
                     let ty = environment.new_interface(
                         &interface.id.name.as_str(),
+                        false,
+                        interface.type_parameters,
+                        interface.extends,
                         oxc_span_to_source_map_span(interface.span),
                         &mut checking_data.types,
                     );
@@ -77,20 +86,17 @@ pub(crate) fn hoist_statements<T: FSResolver>(
 
                     for declaration in declaration.declarations.iter() {
                         let ty = declaration.id.type_annotation.as_ref().map(|ta| {
-                            synthesize_type_annotation(
+                            synthesise_type_annotation(
                                 &ta.type_annotation,
                                 environment,
                                 checking_data,
                             )
                         });
 
-                        // TODO save ty
                         let behavior = if is_declare {
-                            ezno_checker::context::VariableRegisterBehavior::Declare {
-                                base: ty.unwrap(),
-                            }
+                            VariableRegisterBehavior::Declare { context: None, base: ty.unwrap() }
                         } else {
-                            ezno_checker::context::VariableRegisterBehavior::Register {
+                            VariableRegisterBehavior::Register {
                                 mutability: if is_const {
                                     VariableMutability::Constant
                                 } else {
@@ -108,25 +114,25 @@ pub(crate) fn hoist_statements<T: FSResolver>(
                     }
                 }
                 ast::Declaration::FunctionDeclaration(func) => {
-                    // TODO unsynthesized function? ...
-                    let behavior = ezno_checker::context::VariableRegisterBehavior::Register {
+                    // TODO un-synthesised function? ...
+                    let behavior = VariableRegisterBehavior::Register {
                         // TODO
-                        mutability:
-                            ezno_checker::structures::variables::VariableMutability::Constant,
+                        mutability: VariableMutability::Constant,
                     };
-                    // TODO catch reassignment
-                    let _result = environment.register_variable(
+
+                    let _result = environment.register_variable_handle_error(
                         func.id.as_ref().unwrap().name.as_str(),
-                        VariableId(oxc_span_to_source_map_span(func.span)),
+                        oxc_span_to_source_map_span(func.span)
+                            .with_source(environment.get_environment_id()),
                         behavior,
-                        &mut checking_data.types,
+                        checking_data,
                     );
                 }
                 ast::Declaration::ClassDeclaration(_) => {}
                 ast::Declaration::TSTypeAliasDeclaration(_) => {}
                 ast::Declaration::TSInterfaceDeclaration(interface) => {
                     let ty = idx_to_types.remove(&idx).unwrap();
-                    crate::interfaces::synthesize_interface(
+                    crate::interfaces::synthesise_interface(
                         interface,
                         ty,
                         environment,
@@ -145,11 +151,14 @@ pub(crate) fn hoist_statements<T: FSResolver>(
     for statement in statements {
         if let Statement::Declaration(declaration) = statement {
             match declaration {
-                ast::Declaration::FunctionDeclaration(func) => environment.new_function(
-                    checking_data,
-                    &OxcFunction(&func, None),
-                    RegisterOnExisting(func.id.as_ref().unwrap().name.as_str().to_owned()),
-                ),
+                ast::Declaration::FunctionDeclaration(func) => {
+                    // TODO
+                    // environment.new_function(
+                    // checking_data,
+                    // &OxcFunction(&func, None),
+                    // RegisterOnExisting(func.id.as_ref().unwrap().name.as_str().to_owned()),
+                    // )
+                }
                 _ => {}
             }
         }
@@ -159,18 +168,21 @@ pub(crate) fn hoist_statements<T: FSResolver>(
 /// TODO different modes for parameters
 ///
 /// Returns the type for reasons
-pub(crate) fn register_variable<T: FSResolver>(
+pub(crate) fn register_variable<T: ReadFromFS>(
     pattern: &ast::BindingPatternKind,
     span: &oxc_span::Span,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
     behaviour: ezno_checker::context::VariableRegisterBehavior,
 ) -> TypeId {
     match &pattern {
         ast::BindingPatternKind::BindingIdentifier(ident) => environment
             .register_variable(
                 ident.name.as_str(),
-                VariableId(oxc_span_to_source_map_span(span.clone())),
+                VariableId(
+                    environment.get_environment_id(),
+                    oxc_span_to_source_map_span(span.clone()),
+                ),
                 behaviour,
                 &mut checking_data.types,
             )
@@ -199,14 +211,14 @@ pub(crate) fn register_variable<T: FSResolver>(
     }
 }
 
-pub(crate) fn synthesize_statement<T: FSResolver>(
+pub(crate) fn synthesise_statement<T: ReadFromFS>(
     statement: &ast::Statement,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) {
     match statement {
         ast::Statement::BlockStatement(block) => {
-            synthesize_statements(&block.body, environment, checking_data);
+            synthesise_statements(&block.body, environment, checking_data);
         }
         ast::Statement::BreakStatement(item) => checking_data
             .raise_unimplemented_error("break statement", oxc_span_to_source_map_span(item.span)),
@@ -221,7 +233,12 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
             oxc_span_to_source_map_span(item.span),
         ),
         ast::Statement::ExpressionStatement(expr) => {
-            expressions::synthesize_expression(&expr.expression, environment, checking_data);
+            expressions::synthesise_expression(
+                &expr.expression,
+                TypeId::ANY_TYPE,
+                environment,
+                checking_data,
+            );
         }
         ast::Statement::ForInStatement(_)
         | ast::Statement::ForOfStatement(_)
@@ -232,18 +249,22 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
             );
         }
         ast::Statement::IfStatement(if_stmt) => {
-            synthesize_if_statement(if_stmt, environment, checking_data)
+            synthesise_if_statement(if_stmt, environment, checking_data)
         }
         ast::Statement::LabeledStatement(item) => checking_data
             .raise_unimplemented_error("labeled statement", oxc_span_to_source_map_span(item.span)),
         ast::Statement::ReturnStatement(ret_stmt) => {
-            if let Some(ref value) = ret_stmt.argument {
-                let returned =
-                    expressions::synthesize_expression(value, environment, checking_data);
-                environment.return_value(returned)
+            let returned = if let Some(ref value) = ret_stmt.argument {
+                let expected = TypeId::ANY_TYPE;
+                expressions::synthesise_expression(value, expected, environment, checking_data)
             } else {
-                environment.return_value(TypeId::UNDEFINED_TYPE)
-            }
+                TypeId::UNDEFINED_TYPE
+            };
+            environment.return_value(
+                returned,
+                oxc_span_to_source_map_span(ret_stmt.span)
+                    .with_source(environment.get_environment_id()),
+            )
         }
         ast::Statement::SwitchStatement(_) => {
             checking_data.raise_unimplemented_error(
@@ -252,15 +273,20 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
             );
         }
         ast::Statement::ThrowStatement(throw_stmt) => {
-            let thrown = expressions::synthesize_expression(
+            let thrown = expressions::synthesise_expression(
                 &throw_stmt.argument,
+                TypeId::ANY_TYPE,
                 environment,
                 checking_data,
             );
-            environment.throw_value(thrown)
+            environment.throw_value(
+                thrown,
+                oxc_span_to_source_map_span(throw_stmt.span)
+                    .with_source(environment.get_environment_id()),
+            )
         }
         ast::Statement::TryStatement(stmt) => {
-            synthesize_try_statement(stmt, environment, checking_data)
+            synthesise_try_statement(stmt, environment, checking_data)
         }
         ast::Statement::WhileStatement(_) => {
             checking_data.raise_unimplemented_error(
@@ -276,61 +302,62 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
         ),
         ast::Statement::Declaration(declaration) => {
             if !matches!(declaration, ast::Declaration::FunctionDeclaration(..)) {
-                synthesize_declaration(declaration, environment, checking_data)
+                synthesise_declaration(declaration, environment, checking_data)
             }
         }
     }
 }
 
-// TODO full type narrowing behavior
-fn synthesize_if_statement<T: FSResolver>(
+// TODO use internal API
+fn synthesise_if_statement<T: ReadFromFS>(
     if_stmt: &ast::IfStatement,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) {
-    let condition = synthesize_expression(&if_stmt.test, environment, checking_data);
+    todo!("use internal API")
+    // let condition = synthesise_expression(&if_stmt.test, TypeId::BOOLEAN_TYPE, environment, checking_data);
 
-    if let ezno_checker::TruthyFalsy::Decidable(value) =
-        environment.is_type_truthy_falsy(condition, &checking_data.types)
-    {
-        checking_data
-            .raise_decidable_result_error(oxc_span_to_source_map_span(if_stmt.span), value);
+    // if let ezno_checker::TruthyFalsy::Decidable(value) =
+    //     environment.is_type_truthy_falsy(condition, &checking_data.types)
+    // {
+    //     checking_data
+    //         .raise_decidable_result_error(oxc_span_to_source_map_span(if_stmt.span), value);
 
-        if value {
-            synthesize_statement(&if_stmt.consequent, environment, checking_data);
-            return;
-        }
-    } else {
-        synthesize_statement(&if_stmt.consequent, environment, checking_data);
-    }
+    //     if value {
+    //         synthesise_statement(&if_stmt.consequent, environment, checking_data);
+    //         return;
+    //     }
+    // } else {
+    //     synthesise_statement(&if_stmt.consequent, environment, checking_data);
+    // }
 
-    if let Some(ref alternative) = if_stmt.alternate {
-        synthesize_statement(alternative, environment, checking_data)
-    }
+    // if let Some(ref alternative) = if_stmt.alternate {
+    //     synthesise_statement(alternative, environment, checking_data)
+    // }
 }
 
-pub(crate) fn synthesize_statements<T: ezno_checker::FSResolver>(
+pub(crate) fn synthesise_statements<T: ezno_checker::ReadFromFS>(
     statements: &[oxc_ast::ast::Statement],
     environment: &mut Environment,
-    checking_data: &mut ezno_checker::CheckingData<T>,
+    checking_data: &mut ezno_checker::CheckingData<T, OxcAST>,
 ) {
     // TODO union this into one function
     hoist_statements(statements, environment, checking_data);
 
     for statement in statements.iter() {
-        synthesize_statement(statement, environment, checking_data);
+        synthesise_statement(statement, environment, checking_data);
     }
 }
 
 // TODO some of this logic should be moved to the checker crate
-fn synthesize_try_statement<T: FSResolver>(
+fn synthesise_try_statement<T: ReadFromFS>(
     stmt: &ast::TryStatement,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) {
     let throw_type: TypeId =
         environment.new_try_context(checking_data, |environment, checking_data| {
-            synthesize_statements(&stmt.block.body, environment, checking_data);
+            synthesise_statements(&stmt.block.body, environment, checking_data);
         });
 
     if let Some(ref handler) = stmt.handler {
@@ -352,17 +379,17 @@ fn synthesize_try_statement<T: FSResolver>(
                         },
                     );
                 }
-                synthesize_statements(&handler.body.body, environment, checking_data);
+                synthesise_statements(&handler.body.body, environment, checking_data);
             },
         );
     }
     // TODO finally
 }
 
-pub(crate) fn synthesize_declaration<T: FSResolver>(
+pub(crate) fn synthesise_declaration<T: ReadFromFS>(
     declaration: &ast::Declaration,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) {
     match declaration {
         ast::Declaration::UsingDeclaration(_) => todo!(),
@@ -376,14 +403,18 @@ pub(crate) fn synthesize_declaration<T: FSResolver>(
                 // TODO get from existing!!!!
                 let var_ty_and_pos = declaration.id.type_annotation.as_ref().map(|ta| {
                     (
-                        synthesize_type_annotation(&ta.type_annotation, environment, checking_data),
+                        synthesise_type_annotation(&ta.type_annotation, environment, checking_data),
                         ta.span,
                     )
                 });
 
                 let value_ty = if let Some(value) = declaration.init.as_ref() {
-                    let value_ty =
-                        expressions::synthesize_expression(value, environment, checking_data);
+                    let value_ty = expressions::synthesise_expression(
+                        value,
+                        TypeId::ANY_TYPE,
+                        environment,
+                        checking_data,
+                    );
 
                     if let Some((var_ty, ta_pos)) = var_ty_and_pos {
                         // TODO temp
@@ -391,7 +422,7 @@ pub(crate) fn synthesize_declaration<T: FSResolver>(
                         let value_span =
                             oxc_span_to_source_map_span(oxc_span::GetSpan::span(value));
 
-                        ezno_checker::check_variable_initialization(
+                        ezno_checker::behavior::variables::check_variable_initialization(
                             (var_ty, Cow::Owned(ta_span)),
                             (value_ty, Cow::Owned(value_span)),
                             environment,
@@ -404,7 +435,7 @@ pub(crate) fn synthesize_declaration<T: FSResolver>(
                     TypeId::UNDEFINED_TYPE
                 };
 
-                let id = VariableId(oxc_span_to_source_map_span(declaration.span));
+                let id = VariableId(environment.get_environment_id(), declaration.span.start);
                 environment.register_initial_variable_declaration_value(id, value_ty)
             }
         }

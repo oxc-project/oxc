@@ -1,12 +1,12 @@
-use ezno_checker::{CheckingData, Environment, FSResolver, TypeId};
+use ezno_checker::{CheckingData, Environment, ReadFromFS, TypeId};
 use oxc_ast::ast;
 
-use crate::oxc_span_to_source_map_span;
+use crate::{oxc_span_to_source_map_span, OxcAST};
 
-pub(crate) fn synthesize_type_annotation<T: FSResolver>(
+pub(crate) fn synthesise_type_annotation<T: ReadFromFS>(
     ta: &ast::TSType,
     environment: &mut Environment,
-    checking_data: &mut CheckingData<T>,
+    checking_data: &mut CheckingData<T, OxcAST>,
 ) -> TypeId {
     match ta {
         ast::TSType::TSAnyKeyword(_) => TypeId::ANY_TYPE,
@@ -51,11 +51,11 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
         }
         ast::TSType::TSConditionalType(condition) => {
             let check_type =
-                synthesize_type_annotation(&condition.check_type, environment, checking_data);
+                synthesise_type_annotation(&condition.check_type, environment, checking_data);
             let extends =
-                synthesize_type_annotation(&condition.extends_type, environment, checking_data);
-            let lhs = synthesize_type_annotation(&condition.true_type, environment, checking_data);
-            let rhs = synthesize_type_annotation(&condition.false_type, environment, checking_data);
+                synthesise_type_annotation(&condition.extends_type, environment, checking_data);
+            let lhs = synthesise_type_annotation(&condition.true_type, environment, checking_data);
+            let rhs = synthesise_type_annotation(&condition.false_type, environment, checking_data);
 
             checking_data.types.new_conditional_extends_type(check_type, extends, lhs, rhs)
         }
@@ -93,14 +93,14 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
             // r#union
             // 	.types
             // 	.iter()
-            // 	.map(|ta| synthesize_type_annotation(ta, environment, checking_data))
+            // 	.map(|ta| synthesise_type_annotation(ta, environment, checking_data))
             // 	.reduce(|lhs, rhs| checking_data.types.new_or_type(lhs, rhs))
             // 	.unwrap(),
             let mut iter = r#union.types.iter();
             let mut acc =
-                synthesize_type_annotation(iter.next().unwrap(), environment, checking_data);
+                synthesise_type_annotation(iter.next().unwrap(), environment, checking_data);
             for next in iter {
-                let rhs = synthesize_type_annotation(next, environment, checking_data);
+                let rhs = synthesise_type_annotation(next, environment, checking_data);
                 acc = checking_data.types.new_or_type(acc, rhs);
             }
             acc
@@ -108,9 +108,9 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
         ast::TSType::TSIntersectionType(intersection) => {
             let mut iter = intersection.types.iter();
             let mut acc =
-                synthesize_type_annotation(iter.next().unwrap(), environment, checking_data);
+                synthesise_type_annotation(iter.next().unwrap(), environment, checking_data);
             for next in iter {
-                let rhs = synthesize_type_annotation(next, environment, checking_data);
+                let rhs = synthesise_type_annotation(next, environment, checking_data);
                 acc = checking_data.types.new_and_type(acc, rhs);
             }
             acc
@@ -187,7 +187,7 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
         }
         ast::TSType::TSTypeLiteral(anom_interface) => {
             let ty = checking_data.types.new_anonymous_interface_ty();
-            crate::interfaces::synthesize_signatures(
+            crate::interfaces::synthesise_signatures(
                 &anom_interface.members,
                 environment,
                 checking_data,

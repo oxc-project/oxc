@@ -3,7 +3,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_type_synthesis::synthesize_program;
+use oxc_type_synthesis::synthesise_program;
 
 const PRELUDE: &str = "
 type StringOrNumber = string | number;
@@ -46,7 +46,7 @@ fn main() {
         // println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
         let (diagnostics, events, types, ..) =
-            synthesize_program(&ret.program, |_: &std::path::Path| None);
+            synthesise_program(&ret.program, |_: &std::path::Path| None);
 
         let args: Vec<_> = env::args().collect();
 

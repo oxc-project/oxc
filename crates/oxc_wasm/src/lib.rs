@@ -15,7 +15,7 @@ use oxc::{
 };
 use oxc_linter::{LintContext, Linter};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
-use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
+use oxc_type_synthesis::{synthesise_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
 use trustfall::{execute_query, TransparentValue};
 use wasm_bindgen::prelude::*;
@@ -205,7 +205,7 @@ impl Oxc {
         }
 
         if run_options.type_check() {
-            let (diagnostics, ..) = synthesize_program(program, |_: &std::path::Path| None);
+            let (diagnostics, ..) = synthesise_program(program, |_: &std::path::Path| None);
             *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }
 

@@ -21,4 +21,4 @@ oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_allocator = { workspace = true }
 
-ezno-checker = { version = "=0.0.4" }
+ezno-checker = { version = "=0.0.12" }

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_type_synthesis::synthesize_program;
+use oxc_type_synthesis::synthesise_program;
 
 use crate::{command::CheckOptions, runner::Runner, CliRunResult};
 
@@ -75,7 +75,7 @@ impl Runner for TypeCheckRunner {
 
         if ret.errors.is_empty() {
             let (diagnostics, _events, types, mappings, root_env) =
-                synthesize_program(&ret.program, |_: &std::path::Path| None);
+                synthesise_program(&ret.program, |_: &std::path::Path| None);
 
             let duration = now.elapsed();
 

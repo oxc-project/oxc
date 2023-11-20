@@ -694,9 +694,9 @@ dependencies = [
 
 [[package]]
 name = "ezno-checker"
-version = "0.0.4"
+version = "0.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce89c36282d2e7e84de91cca6c2c32ba11f4839ae8c73fb7cc0024411ab28521"
+checksum = "8f248ba818d385204ff072d04f3c9c70b2f617550da17d0fb5772a569f34abef"
 dependencies = [
  "bimap",
  "binary-serialize-derive",
@@ -2558,9 +2558,9 @@ dependencies = [
 
 [[package]]
 name = "source-map"
-version = "0.12.0"
+version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fedd4de16a29859eebdc14368c1fc2f5227ba58e1fdaba748072bf80ed9c5a35"
+checksum = "bb0b3ebf1fb4d2927644205814029f7a831ac62a26f1244d0981111b6129cc41"
 dependencies = [
  "serde",
 ]
