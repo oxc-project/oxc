@@ -5,7 +5,7 @@
 
 mod command;
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, vec};
 
 use crate::{
     doc::{Doc, Group},
@@ -176,11 +176,14 @@ impl<'a> Printer<'a> {
 
         // TODO: these should be commands
         let mut queue: VecDeque<&Doc<'a>> = doc.iter().collect();
+        let mut cmds = self.cmds.iter().rev();
+        let mut check_cmds = true;
 
         while let Some(next) = queue.pop_front() {
             match next {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
+                    // println!("{}, {}", string, remaining_width);
                 }
                 Doc::IndentIfBreak(docs) | Doc::Array(docs) | Doc::Indent(docs) => {
                     // Prepend docs to the queue
@@ -210,6 +213,37 @@ impl<'a> Printer<'a> {
 
             if remaining_width < 0 {
                 return false;
+            }
+
+            if check_cmds && queue.is_empty() {
+                // We need to check the docs before the "Hardline" and the "Softline".
+                // These should be used to calculate the remaining width, since they all end up on the same line.
+                if let Some(cmd) = cmds.next() {
+                    let mut docs: VecDeque<&Doc<'a>> = VecDeque::new();
+                    docs.push_front(&cmd.doc);
+                    while let Some(doc) = docs.pop_front() {
+                        match doc {
+                            Doc::Str(_) | Doc::Line => queue.push_front(doc),
+                            Doc::IndentIfBreak(next_docs)
+                            | Doc::Indent(next_docs)
+                            | Doc::Array(next_docs) => {
+                                for doc in next_docs.iter().rev() {
+                                    docs.push_front(doc);
+                                }
+                            }
+                            Doc::Group(group) => {
+                                for doc in group.contents.iter().rev() {
+                                    docs.push_front(doc);
+                                }
+                            }
+                            Doc::Hardline | Doc::Softline => {
+                                check_cmds = false;
+                                break;
+                            }
+                            Doc::IfBreak(_) => {}
+                        }
+                    }
+                }
             }
         }
 

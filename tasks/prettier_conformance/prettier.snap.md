@@ -1,4 +1,4 @@
-Compatibility: 114/601 (18.97%)
+Compatibility: 117/601 (19.47%)
 
 # Failed
 
@@ -68,7 +68,6 @@ Compatibility: 114/601 (18.97%)
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
-* assignment/issue-4094.js
 * assignment/issue-5610.js
 * assignment/issue-6922.js
 * assignment/issue-7091.js
@@ -132,7 +131,6 @@ Compatibility: 114/601 (18.97%)
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
 * call/first-argument-expansion/issue-13237.js
-* call/first-argument-expansion/issue-14454.js
 * call/first-argument-expansion/issue-2456.js
 * call/first-argument-expansion/issue-4401.js
 * call/first-argument-expansion/issue-5172.js
@@ -407,7 +405,6 @@ Compatibility: 114/601 (18.97%)
 
 ### import
 * import/comments.js
-* import/inline.js
 * import/same-local-and-imported.js
 
 ### label
