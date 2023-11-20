@@ -57,7 +57,7 @@ doc_markdown = "allow"
 # nursery
 # `const` functions do not make sense for our project because this is not a `const` library.
 # This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
-missing_const_for_fn = "allow"
+# missing_const_for_fn = "allow"
 
 [workspace.dependencies]
 # publish = true
