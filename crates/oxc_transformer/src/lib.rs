@@ -14,6 +14,7 @@ mod es2019;
 mod es2020;
 mod es2021;
 mod es2022;
+mod es3;
 mod options;
 mod react_jsx;
 mod regexp;
@@ -34,8 +35,8 @@ use oxc_span::SourceType;
 use crate::{
     context::TransformerCtx, es2015::ShorthandProperties, es2016::ExponentiationOperator,
     es2019::OptionalCatchBinding, es2020::NullishCoalescingOperator,
-    es2021::LogicalAssignmentOperators, es2022::ClassStaticBlock, react_jsx::ReactJsx,
-    regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
+    es2021::LogicalAssignmentOperators, es2022::ClassStaticBlock, es3::PropertyLiteral,
+    react_jsx::ReactJsx, regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
 };
 
 pub use crate::{
@@ -63,6 +64,7 @@ pub struct Transformer<'a> {
     // es2015
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
+    es3_property_literal: Option<PropertyLiteral<'a>>,
 }
 
 impl<'a> Transformer<'a> {
@@ -91,6 +93,7 @@ impl<'a> Transformer<'a> {
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
+            es3_property_literal: PropertyLiteral::new(Rc::clone(&ast ), &options),
             react_jsx: options.react_jsx.map(|options| ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)),
         }
     }
@@ -160,6 +163,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
+        self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
 
         self.visit_property_key(&mut prop.key);
         self.visit_expression(&mut prop.value);

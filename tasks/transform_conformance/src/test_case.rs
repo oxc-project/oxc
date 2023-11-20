@@ -108,6 +108,7 @@ pub trait TestCase {
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
             template_literals: options.get_plugin("transform-template-literals").is_some(),
+            property_literals: options.get_plugin("transform-property-literals").is_some(),
         }
     }
 
@@ -255,7 +256,7 @@ impl TestCase for ConformanceTestCase {
             println!("Input:\n");
             println!("{input}\n");
             println!("Options:");
-            println!("{transform_options:?}\n");
+            println!("{transform_options:#?}\n");
             if babel_options.throws.is_some() {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
