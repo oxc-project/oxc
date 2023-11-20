@@ -9,6 +9,13 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         parts.push(id.format(p));
         parts.push(ss!(" "));
     }
+
+    if let Some(super_class) = &class.super_class {
+        parts.push(ss!("extends "));
+        parts.push(super_class.format(p));
+        parts.push(ss!(" "));
+    }
+
     parts.push(class.body.format(p));
     Doc::Array(parts)
 }
