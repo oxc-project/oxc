@@ -36,6 +36,7 @@ use crate::{
 use self::{
     array::Array,
     binaryish::{BinaryishLeft, BinaryishOperator},
+    object::ObjectLike,
     template_literal::TemplateLiteralPrinter,
 };
 
@@ -1361,7 +1362,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        object::print_object_properties(p, &ObjectLike::ObjectExpression(self), &self.properties)
     }
 }
 
@@ -1582,7 +1583,11 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        object::print_object_properties(
+            p,
+            &ObjectLike::ObjectAssignmentTarget(self),
+            &self.properties,
+        )
     }
 }
 
@@ -1938,7 +1943,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        object::print_object_properties(p, &ObjectLike::ObjectPattern(self), &self.properties)
     }
 }
 

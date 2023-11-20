@@ -1,4 +1,4 @@
-Compatibility: 109/601 (18.14%)
+Compatibility: 110/601 (18.30%)
 
 # Failed
 
@@ -89,7 +89,6 @@ Compatibility: 109/601 (18.14%)
 
 ### async
 * async/async-iteration.js
-* async/async-shorthand-method.js
 * async/await-parse.js
 * async/conditional-expression.js
 * async/exponentiation.js
