@@ -1,4 +1,4 @@
-Compatibility: 138/601 (22.96%)
+Compatibility: 131/601 (21.80%)
 
 # Failed
 
@@ -85,7 +85,6 @@ Compatibility: 138/601 (22.96%)
 * assignment-comments/string.js
 
 ### async
-* async/await-parse.js
 * async/conditional-expression.js
 * async/inline-await.js
 * async/nested.js
@@ -135,6 +134,9 @@ Compatibility: 138/601 (22.96%)
 
 ### call/invalid
 * call/invalid/null-arguments-item.js
+
+### chain-expression
+* chain-expression/test.js
 
 ### class-comment
 * class-comment/class-property.js
@@ -313,14 +315,21 @@ Compatibility: 138/601 (22.96%)
 * eol/range-1.js
 * eol/range-and-cursor-1.js
 
+### es6modules
+* es6modules/export_default_function_expression.js
+* es6modules/export_default_function_expression_named.js
+
 ### export
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
 
 ### export-default
 * export-default/binary_and_template.js
+* export-default/body.js
+* export-default/class_instance.js
 * export-default/function_in_template.js
 * export-default/function_tostring.js
+* export-default/iife.js
 
 ### export-default/escaped
 * export-default/escaped/default-escaped.js
@@ -330,12 +339,14 @@ Compatibility: 138/601 (22.96%)
 
 ### expression_statement
 * expression_statement/no_regression.js
+* expression_statement/use_strict.js
 
 ### for
 * for/comment.js
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
+* for/in.js
 
 ### function
 * function/function_expression.js
@@ -371,6 +382,7 @@ Compatibility: 138/601 (22.96%)
 * generator/async.js
 
 ### identifier/for-of
+* identifier/for-of/await.js
 * identifier/for-of/let.js
 
 ### identifier/parentheses
@@ -411,6 +423,12 @@ Compatibility: 138/601 (22.96%)
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
 
+### literal
+* literal/number.js
+
+### logical-assignment
+* logical-assignment/logical-assignment.js
+
 ### logical_expressions
 * logical_expressions/issue-7024.js
 * logical_expressions/logical_expression_operators.js
@@ -445,6 +463,9 @@ Compatibility: 138/601 (22.96%)
 * method-chain/test.js
 * method-chain/this.js
 * method-chain/tuple-and-record.js
+
+### method-chain/print-width-120
+* method-chain/print-width-120/constructor.js
 
 ### module-blocks
 * module-blocks/comments.js
@@ -649,11 +670,9 @@ Compatibility: 138/601 (22.96%)
 
 ### unary
 * unary/object.js
-* unary/series.js
 
 ### unary-expression
 * unary-expression/comments.js
-* unary-expression/urnary_expression.js
 
 ### unicode
 * unicode/combining-characters.js
@@ -666,7 +685,5 @@ Compatibility: 138/601 (22.96%)
 * while/indent.js
 
 ### yield
-* yield/arrow.js
-* yield/conditional.js
 * yield/jsx-without-parenthesis.js
 * yield/jsx.js

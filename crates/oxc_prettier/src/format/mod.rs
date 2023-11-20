@@ -115,15 +115,17 @@ impl<'a> Format<'a> for Statement<'a> {
 
 impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        if let Some(doc) = p.print_leading_comments(self.span) {
-            parts.push(doc);
-        }
-        parts.push(self.expression.format(p));
-        if p.options.semi {
-            parts.push(ss!(";"));
-        }
-        Doc::Array(parts)
+        wrap!(p, self, ExpressionStatement, {
+            let mut parts = p.vec();
+            if let Some(doc) = p.print_leading_comments(self.span) {
+                parts.push(doc);
+            }
+            parts.push(self.expression.format(p));
+            if p.options.semi {
+                parts.push(ss!(";"));
+            }
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -1291,7 +1293,9 @@ impl<'a> Format<'a> for RegExpLiteral {
 
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.str(&string::print_string(self.value.as_str(), p.options.single_quote))
+        wrap!(p, self, StringLiteral, {
+            p.str(&string::print_string(self.value.as_str(), p.options.single_quote))
+        })
     }
 }
 
@@ -1303,11 +1307,13 @@ impl<'a> Format<'a> for ThisExpression {
 
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            Self::ComputedMemberExpression(expr) => expr.format(p),
-            Self::StaticMemberExpression(expr) => expr.format(p),
-            Self::PrivateFieldExpression(expr) => expr.format(p),
-        }
+        wrap!(p, self, MemberExpression, {
+            match self {
+                Self::ComputedMemberExpression(expr) => expr.format(p),
+                Self::StaticMemberExpression(expr) => expr.format(p),
+                Self::PrivateFieldExpression(expr) => expr.format(p),
+            }
+        })
     }
 }
 
@@ -1380,7 +1386,7 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> Format<'a> for SpreadElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, ss!("..."), format!(p, self.argument)]
+        wrap!(p, self, SpreadElement, { array![p, ss!("..."), format!(p, self.argument)] })
     }
 }
 
@@ -1488,16 +1494,18 @@ impl<'a> Format<'a> for ArrowExpression<'a> {
 
 impl<'a> Format<'a> for YieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("yield"));
-        if self.delegate {
-            parts.push(ss!("*"));
-        }
-        if let Some(argument) = &self.argument {
-            parts.push(ss!(" "));
-            parts.push(format!(p, argument));
-        }
-        Doc::Array(parts)
+        wrap!(p, self, YieldExpression, {
+            let mut parts = p.vec();
+            parts.push(ss!("yield"));
+            if self.delegate {
+                parts.push(ss!("*"));
+            }
+            if let Some(argument) = &self.argument {
+                parts.push(ss!(" "));
+                parts.push(format!(p, argument));
+            }
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -1693,8 +1701,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // TODO: This wrap need to be removed and all logic should go into `need_parens`.
-        wrap!(p, self, ParenthesizedExpression, { self.expression.format(p) })
+        unreachable!("Parser preserve_parens option need to be set to false.");
     }
 }
 
@@ -1738,19 +1745,21 @@ impl<'a> Format<'a> for TemplateElement {
 
 impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, TaggedTemplateExpression, {
+            let mut parts = p.vec();
 
-        parts.push(format!(p, self.tag));
+            parts.push(format!(p, self.tag));
 
-        if let Some(type_parameters) = &self.type_parameters {
-            parts.push(string!(p, "<"));
-            parts.push(format!(p, type_parameters));
-            parts.push(string!(p, ">"));
-        }
+            if let Some(type_parameters) = &self.type_parameters {
+                parts.push(string!(p, "<"));
+                parts.push(format!(p, type_parameters));
+                parts.push(string!(p, ">"));
+            }
 
-        parts.push(format!(p, self.quasi));
+            parts.push(format!(p, self.quasi));
 
-        Doc::Array(parts)
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -1805,7 +1814,7 @@ impl<'a> Format<'a> for MetaProperty {
 
 impl<'a> Format<'a> for Class<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        class::print_class(p, self)
+        wrap!(p, self, Class, { class::print_class(p, self) })
     }
 }
 
