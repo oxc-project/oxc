@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
@@ -66,6 +68,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
     p: &mut Prettier<'a>,
     specifiers: &Vec<'a, T>,
     include_default: bool,
+    include_namespace: bool,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     if specifiers.is_empty() {
@@ -73,40 +76,50 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
     } else {
         parts.push(ss!(" "));
 
-        let can_break = specifiers.len() > 1;
-
-        let mut specifiers_iter = specifiers.iter();
+        let mut specifiers_iter: VecDeque<_> = specifiers.iter().collect();
         if include_default {
-            parts.push(specifiers_iter.next().unwrap().format(p));
-            if can_break {
+            parts.push(specifiers_iter.pop_front().unwrap().format(p));
+            if !specifiers_iter.is_empty() {
                 parts.push(p.str(", "));
             }
         }
 
-        if can_break {
-            let docs = specifiers_iter.map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
-            parts.push(group![
-                p,
-                ss!("{"),
-                indent![
+        if include_namespace {
+            parts.push(specifiers_iter.pop_front().unwrap().format(p));
+            if !specifiers_iter.is_empty() {
+                parts.push(p.str(", "));
+            }
+        }
+
+        if !specifiers_iter.is_empty() {
+            let can_break = specifiers.len() > 1;
+
+            if can_break {
+                let docs =
+                    specifiers_iter.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
+                parts.push(group![
                     p,
+                    ss!("{"),
+                    indent![
+                        p,
+                        if p.options.bracket_spacing { line!() } else { softline!() },
+                        Doc::Array(p.join(Separator::CommaLine, docs))
+                    ],
+                    if_break!(p, if p.should_print_es5_comma() { "," } else { "" }),
                     if p.options.bracket_spacing { line!() } else { softline!() },
-                    Doc::Array(p.join(Separator::CommaLine, docs))
-                ],
-                if_break!(p, if p.should_print_es5_comma() { "," } else { "" }),
-                if p.options.bracket_spacing { line!() } else { softline!() },
-                ss!("}"),
-            ]);
-        } else if !include_default {
-            parts.push(ss!("{"));
-            if p.options.bracket_spacing {
-                parts.push(ss!(" "));
+                    ss!("}"),
+                ]);
+            } else {
+                parts.push(ss!("{"));
+                if p.options.bracket_spacing {
+                    parts.push(ss!(" "));
+                }
+                parts.extend(specifiers_iter.iter().map(|s| s.format(p)));
+                if p.options.bracket_spacing {
+                    parts.push(ss!(" "));
+                }
+                parts.push(ss!("}"));
             }
-            parts.extend(specifiers_iter.map(|s| s.format(p)));
-            if p.options.bracket_spacing {
-                parts.push(ss!(" "));
-            }
-            parts.push(ss!("}"));
         }
     }
 
