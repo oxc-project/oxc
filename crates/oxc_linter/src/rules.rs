@@ -181,6 +181,7 @@ mod unicorn {
     pub mod prefer_date_now;
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
+    pub mod prefer_dom_node_remove;
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
@@ -348,6 +349,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_date_now,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
+    unicorn::prefer_dom_node_remove,
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
