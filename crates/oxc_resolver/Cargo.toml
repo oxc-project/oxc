@@ -12,6 +12,9 @@ description            = "ESM / CJS module resolution"
 keywords               = ["node", "resolve", "cjs", "esm", "enhanced-resolve"]
 categories             = ["development-tools"]
 
+[lints]
+workspace = true
+
 [lib]
 doctest = false
 

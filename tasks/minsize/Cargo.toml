@@ -5,12 +5,15 @@ publish           = false
 edition.workspace = true
 license.workspace = true
 
-[[bin]]
-name = "oxc_minsize"
-test = false
+[lints]
+workspace = true
 
 [lib]
 doctest = false
+
+[[bin]]
+name = "oxc_minsize"
+test = false
 
 [dependencies]
 oxc_span      = { workspace = true }
