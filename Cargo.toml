@@ -13,6 +13,52 @@ license      = "MIT"
 repository   = "https://github.com/oxc-project/oxc"
 rust-version = "1.60"
 
+[workspace.lints.rust]
+
+[workspace.lints.clippy]
+all = { level = "warn" }
+# restriction
+dbg_macro     = "warn"
+todo          = "warn"
+unimplemented = "warn"
+# I like the explicitness of this rule as it removes confusion around `clone`.
+# This increases readability, avoids `clone` mindlessly and heap allocating on accident.
+clone_on_ref_ptr = "warn"
+# These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
+self_named_module_files         = "warn" # "-Wclippy::mod_module_files"
+empty_drop                      = "warn"
+empty_structs_with_brackets     = "warn"
+exit                            = "warn"
+filetype_is_file                = "warn"
+get_unwrap                      = "warn"
+impl_trait_in_params            = "warn"
+rc_buffer                       = "warn"
+rc_mutex                        = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+unnecessary_safety_comment      = "warn"
+undocumented_unsafe_blocks      = "warn"
+# I want to write the best Rust code so both pedantic and nursery is enabled.
+# We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
+nursery  = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Allowed rules
+# pedantic
+# This rule is too pedantic, I don't want to force this because naming things are hard.
+module_name_repetitions = "allow"
+# All triggers are mostly ignored in our codebase, so this is ignored globally.
+struct_excessive_bools = "allow"
+too_many_lines         = "allow"
+# #[must_use] is creating too much noise for this codebase, it does not add much value except nagging
+# the programmer to add a #[must_use] after clippy has been run.
+# Having #[must_use] every where also hinders readability.
+must_use_candidate = "allow"
+# used_underscore_binding= "allow"
+doc_markdown = "allow"
+# nursery
+# `const` functions do not make sense for our project because this is not a `const` library.
+# This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
+missing_const_for_fn = "allow"
+
 [workspace.dependencies]
 # publish = true
 oxc             = { version = "0.3.0", path = "crates/oxc" }

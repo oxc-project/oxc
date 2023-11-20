@@ -15,6 +15,12 @@ pub struct ResolverFactory {
     resolver: Resolver,
 }
 
+impl Default for ResolverFactory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[napi]
 impl ResolverFactory {
     #[napi(constructor)]
