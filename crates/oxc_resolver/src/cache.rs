@@ -247,6 +247,13 @@ impl CachedPathImpl {
             if let Some(cv) = &cache_value.parent {
                 cache_value = cv.as_ref();
             }
+        } else {
+            // Go up a directory when the querying path is neither a file nor a directory
+            if !cache_value.is_dir(fs) {
+                if let Some(cv) = &cache_value.parent {
+                    cache_value = cv.as_ref();
+                }
+            }
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
