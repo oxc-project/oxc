@@ -1920,6 +1920,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "phf",
  "serde",
 ]
 
