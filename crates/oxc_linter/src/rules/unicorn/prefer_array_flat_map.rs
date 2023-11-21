@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.")]
@@ -46,14 +46,16 @@ impl Rule for PreferArrayFlatMap {
             return;
         }
 
-        let callee = &flat_call_expr.callee.without_parenthesized();
-
-        if let Expression::MemberExpression(v) = callee {
-            if let Some(static_property_name) = v.static_property_name() {
-                if static_property_name != "flat" {
-                    return;
-                }
-            }
+        if !is_method_call(flat_call_expr, Some(&["flat"]), None, None) {
+            return;
+        }
+        let Expression::MemberExpression(member_expr) = &flat_call_expr.callee else { return };
+        let Expression::CallExpression(call_expr) = &member_expr.object().without_parenthesized()
+        else {
+            return;
+        };
+        if !is_method_call(call_expr, Some(&["map"]), None, None) {
+            return;
         }
 
         if let Some(first_arg) = flat_call_expr.arguments.first() {
@@ -65,24 +67,6 @@ impl Rule for PreferArrayFlatMap {
                 return;
             }
         }
-
-        let Expression::MemberExpression(member_expr) = callee else { return };
-
-        let Expression::CallExpression(map_call_expr) =
-            member_expr.object().without_parenthesized()
-        else {
-            return;
-        };
-
-        if let Expression::MemberExpression(map_member_expr) =
-            &map_call_expr.callee.without_parenthesized()
-        {
-            if let Some(property_name) = map_member_expr.static_property_name() {
-                if property_name != "map" {
-                    return;
-                }
-            }
-        };
 
         ctx.diagnostic(PreferArrayFlatMapDiagnostic(flat_call_expr.span));
     }

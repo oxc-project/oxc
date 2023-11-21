@@ -55,7 +55,7 @@ impl Rule for PreferArraySome {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if !is_method_call(call_expr, &["find", "findLast"], Some(1), Some(2)) {
+                if !is_method_call(call_expr, Some(&["find", "findLast"]), Some(1), Some(2)) {
                     return;
                 }
 
@@ -103,7 +103,7 @@ impl Rule for PreferArraySome {
                     return;
                 };
 
-                if !is_method_call(left_call_expr, &["filter"], None, None) {
+                if !is_method_call(left_call_expr, Some(&["filter"]), None, None) {
                     return;
                 }
 
