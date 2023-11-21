@@ -58,6 +58,7 @@ impl<'a> Prettier<'a> {
                 break;
             }
         }
+
         parts
     }
 
