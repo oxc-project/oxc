@@ -110,16 +110,9 @@ fn check_value_is_empty(value: &JSXAttributeValue) -> bool {
     match value {
         JSXAttributeValue::Element(_) => false,
         JSXAttributeValue::StringLiteral(str_lit) => {
-            if str_lit.value.is_empty() {
-                return true;
-            }
-            if str_lit.value == "#" {
-                return true;
-            }
-            if str_lit.value == "javascript:void(0)" {
-                return true;
-            }
-            false
+            str_lit.value.is_empty()
+                || str_lit.value == "#"
+                || str_lit.value == "javascript:void(0)"
         }
         JSXAttributeValue::ExpressionContainer(exp) => {
             if let JSXExpression::Expression(jsexp) = &exp.expression {
@@ -130,16 +123,9 @@ fn check_value_is_empty(value: &JSXAttributeValue) -> bool {
                 } else if let Expression::NullLiteral(_) = jsexp {
                     return true;
                 } else if let Expression::StringLiteral(str_lit) = jsexp {
-                    if str_lit.value.is_empty() {
-                        return true;
-                    }
-                    if str_lit.value == "#" {
-                        return true;
-                    }
-                    if str_lit.value == "javascript:void(0)" {
-                        return true;
-                    }
-                    return false;
+                    return str_lit.value.is_empty()
+                        || str_lit.value == "#"
+                        || str_lit.value == "javascript:void(0)";
                 }
             };
             false
