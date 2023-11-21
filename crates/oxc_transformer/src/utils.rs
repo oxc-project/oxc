@@ -3,7 +3,7 @@ use std::mem;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, Span};
-use oxc_syntax::unicode_id_start::{is_id_continue, is_id_start, is_id_start_unicode};
+use oxc_syntax::unicode_id_start::{is_id_continue, is_id_start};
 
 use crate::context::TransformerCtx;
 
@@ -52,7 +52,7 @@ pub trait CreateVars<'a> {
     }
 }
 
-pub const RESERVED_WORDS_ES3_ONLY: [&'static str; 24] = [
+pub const RESERVED_WORDS_ES3_ONLY: [&str; 24] = [
     "abstract",
     "boolean",
     "byte",
@@ -79,7 +79,7 @@ pub const RESERVED_WORDS_ES3_ONLY: [&'static str; 24] = [
     "volatile",
 ];
 
-const RESERVED_WORD_STRICT: [&'static str; 9] = [
+const RESERVED_WORD_STRICT: [&str; 9] = [
     "implements",
     "interface",
     "let",
@@ -91,7 +91,7 @@ const RESERVED_WORD_STRICT: [&'static str; 9] = [
     "yield",
 ];
 
-pub const KEYWORKDS: [&'static str; 35] = [
+pub const KEYWORDS: [&str; 35] = [
     "break",
     "case",
     "catch",
@@ -142,20 +142,16 @@ pub fn is_identifier_name(name: &Atom) -> bool {
             if !is_id_start(ch) {
                 return false;
             }
-        } else {
-            if !is_id_continue(ch) {
-                return false;
-            }
+        } else if !is_id_continue(ch) {
+            return false;
         }
     }
     true
 }
 
 pub fn is_valid_identifier(name: &Atom, reserved: bool) -> bool {
-    if reserved {
-        if KEYWORKDS.contains(&name.as_str()) || is_strict_reserved_word(name, true) {
-            return false;
-        }
+    if reserved && (KEYWORDS.contains(&name.as_str()) || is_strict_reserved_word(name, true)) {
+        return false;
     }
     is_identifier_name(name)
 }
@@ -168,6 +164,7 @@ pub fn is_reserved_word(name: &Atom, in_module: bool) -> bool {
     (in_module && name.as_str() == "await") || name.as_str() == "enum"
 }
 
+/// https://github.com/babel/babel/blob/main/packages/babel-types/src/validators/isValidES3Identifier.ts#L35
 pub fn is_valid_es3_identifier(name: &Atom) -> bool {
     is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(&name.as_str())
 }

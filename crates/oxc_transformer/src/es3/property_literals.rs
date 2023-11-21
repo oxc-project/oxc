@@ -1,16 +1,14 @@
-use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, Span, SPAN};
-use std::{mem, rc::Rc};
+use oxc_span::SPAN;
+use std::rc::Rc;
 
-use crate::utils::{is_valid_es3_identifier, is_valid_identifier};
+use crate::utils::is_valid_es3_identifier;
 use crate::{TransformOptions, TransformTarget};
 
 /// ES2015: Template Literals
 ///
 /// References:
-/// * <https://babel.dev/docs/babel-plugin-transform-template-literals>
-/// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-template-literals>
+/// * <https://github.com/babel/babel/blob/master/packages/babel-plugin-transform-property-literals/src/index.js>
 pub struct PropertyLiteral<'a> {
     ast: Rc<AstBuilder<'a>>,
 }
@@ -26,10 +24,9 @@ impl<'a> PropertyLiteral<'a> {
         }
         if let PropertyKey::Identifier(ident) = &expr.key {
             if !is_valid_es3_identifier(&ident.name) {
-                let string_lit = self.ast.literal_string_expression(StringLiteral::new(
-                    SPAN,
-                    Atom::from(ident.name.clone()),
-                ));
+                let string_lit = self
+                    .ast
+                    .literal_string_expression(StringLiteral::new(SPAN, ident.name.clone()));
                 expr.key = PropertyKey::Expression(string_lit);
             }
         }
