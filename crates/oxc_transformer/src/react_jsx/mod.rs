@@ -108,9 +108,16 @@ impl<'a> ReactJsx<'a> {
     ) -> Option<Self> {
         let imports = ast.new_vec();
         let jsx_options = options.react_jsx?.with_comments(&ctx.semantic());
-        if options.babel_8_breaking == Some(true) && jsx_options.use_built_ins.is_some() {
-            ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since \"useBuiltIns\" is removed in Babel 8, you can remove it from the config."));
-            return None;
+        if options.babel_8_breaking == Some(true) {
+            if jsx_options.use_built_ins.is_some() {
+                ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since \"useBuiltIns\" is removed in Babel 8, you can remove it from the config."));
+                return None;
+            }
+
+            if jsx_options.use_spread.is_some() {
+                ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since Babel 8, an inline object with spread elements is always used, and the \"useSpread\" option is no longer available. Please remove it from your config."));
+                return None;
+            }
         }
 
         let jsx_runtime_importer =

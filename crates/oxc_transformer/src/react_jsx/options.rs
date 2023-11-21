@@ -27,8 +27,14 @@ pub struct ReactJsxOptions {
     #[serde(default = "default_pragma_frag")]
     pub pragma_frag: Cow<'static, str>,
 
-    /// When spreading props, use inline object with spread elements directly instead of Babel's extend helper or Object.assign.
+    /// When spreading props, use Object.assign directly instead of Babel's extend helper.
+    /// Use `Some<T>` instead of `bool` because we want to know if user set this field explicitly,
+    /// which used for creating warning, https://github.com/oxc-project/oxc/blob/c3e2098c04d8916cb812bdd16d2026bb430ac25f/crates/oxc_transformer/src/react_jsx/mod.rs#L111-L114
     pub use_built_ins: Option<bool>,
+    /// When spreading props, use inline object with spread elements directly instead of Babel's extend helper or Object.assign.
+    /// Use `Some<T>` instead of `bool` because we want to know if user set this field explicitly,
+    /// which used for creating warning, https://github.com/oxc-project/oxc/blob/c3e2098c04d8916cb812bdd16d2026bb430ac25f/crates/oxc_transformer/src/react_jsx/mod.rs#L111-L114
+    pub use_spread: Option<bool>,
 }
 
 fn default_throw_if_namespace() -> bool {
@@ -56,6 +62,7 @@ impl Default for ReactJsxOptions {
             pragma: default_pragma(),
             pragma_frag: default_pragma_frag(),
             use_built_ins: None,
+            use_spread: None,
         }
     }
 }
