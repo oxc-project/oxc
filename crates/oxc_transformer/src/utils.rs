@@ -91,7 +91,7 @@ const RESERVED_WORD_STRICT: phf::Set<&str> = phf::phf_set![
     "yield",
 ];
 
-pub const KEYWORKDS: phf::Set<&str> = phf::phf_set![
+pub const KEYWORDS: phf::Set<&str> = phf::phf_set![
     "break",
     "case",
     "catch",
@@ -150,7 +150,7 @@ pub fn is_identifier_name(name: &Atom) -> bool {
 }
 
 pub fn is_valid_identifier(name: &Atom, reserved: bool) -> bool {
-    if reserved && (KEYWORKDS.contains(name.as_str()) || is_strict_reserved_word(name, true)) {
+    if reserved && (KEYWORDS.contains(name.as_str()) || is_strict_reserved_word(name, true)) {
         return false;
     }
     is_identifier_name(name)
