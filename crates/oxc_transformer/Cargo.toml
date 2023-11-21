@@ -28,7 +28,7 @@ oxc_diagnostics = { workspace = true }
 
 
 serde = { workspace = true, features = ["derive"] }
-phf          = { workspace = true, features = ["macros"] }
+phf   = { workspace = true, features = ["macros"] }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
