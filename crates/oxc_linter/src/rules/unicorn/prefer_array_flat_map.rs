@@ -46,7 +46,7 @@ impl Rule for PreferArrayFlatMap {
             return;
         }
 
-        if !is_method_call(flat_call_expr, Some(&["flat"]), None, None) {
+        if !is_method_call(flat_call_expr, None, Some(&["flat"]), None, None) {
             return;
         }
         let Expression::MemberExpression(member_expr) = &flat_call_expr.callee else { return };
@@ -54,7 +54,7 @@ impl Rule for PreferArrayFlatMap {
         else {
             return;
         };
-        if !is_method_call(call_expr, Some(&["map"]), None, None) {
+        if !is_method_call(call_expr, None, Some(&["map"]), None, None) {
             return;
         }
 
