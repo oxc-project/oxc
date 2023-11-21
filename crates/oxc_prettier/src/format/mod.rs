@@ -30,7 +30,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     array,
     doc::{Doc, Group, Separator},
-    format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
+    format, group, hardline, indent, indent_if_break, line, softline, ss, string, wrap, Prettier,
 };
 
 use self::{
@@ -1557,13 +1557,12 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AssignmentExpression, {
-            array![
+            group![
                 p,
                 format!(p, self.left),
                 ss!(" "),
                 string!(p, self.operator.as_str()),
-                ss!(" "),
-                format!(p, self.right)
+                indent_if_break!(p, line!(), format!(p, self.right))
             ]
         })
     }

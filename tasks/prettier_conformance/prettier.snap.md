@@ -1,4 +1,4 @@
-Compatibility: 134/601 (22.30%)
+Compatibility: 138/601 (22.96%)
 
 # Failed
 
@@ -61,10 +61,8 @@ Compatibility: 134/601 (22.30%)
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-1419.js
 * assignment/issue-15534.js
 * assignment/issue-1966.js
-* assignment/issue-2482-1.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
@@ -73,7 +71,6 @@ Compatibility: 134/601 (22.30%)
 * assignment/issue-6922.js
 * assignment/issue-7091.js
 * assignment/issue-7572.js
-* assignment/issue-7961.js
 * assignment/issue-8218.js
 * assignment/lone-arg.js
 * assignment/sequence.js
@@ -664,7 +661,6 @@ Compatibility: 134/601 (22.30%)
 
 ### variable_declarator
 * variable_declarator/multiple.js
-* variable_declarator/string.js
 
 ### while
 * while/indent.js
