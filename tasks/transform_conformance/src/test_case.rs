@@ -9,7 +9,7 @@ use oxc_diagnostics::Error;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, BabelOptions};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
     NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions, TransformTarget,
     Transformer,
@@ -261,11 +261,19 @@ impl TestCase for ConformanceTestCase {
                 println!("{output}\n");
                 println!("Actual Errors:\n");
                 println!("{actual_errors}\n");
+                if !passed {
+                    println!("Diff:\n");
+                    print_diff_in_terminal(&output, &actual_errors);
+                }
             } else {
                 println!("Expected:\n");
                 println!("{output}\n");
                 println!("Transformed:\n");
                 println!("{transformed_code}");
+                if !passed {
+                    println!("Diff:\n");
+                    print_diff_in_terminal(&output, &transformed_code);
+                }
             }
             println!("Passed: {passed}");
         }
