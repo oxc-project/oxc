@@ -175,6 +175,7 @@ mod unicorn {
     pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
+    pub mod prefer_array_some;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
@@ -312,6 +313,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_title,
     unicorn::catch_error_name,
     unicorn::empty_brace_spaces,
+    unicorn::prefer_array_some,
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::new_for_builtins,
