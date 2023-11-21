@@ -50,17 +50,7 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
             }
         }
 
-        let should_break = misc::has_new_line_in_range(
-            p.source_text,
-            object.span().start,
-            // SAFETY: we checked above that `properties` is not empty
-            properties[0].span().start,
-        );
-
-        let mut group = p.vec();
-        group.push(Doc::Indent(indent_parts));
-
-        parts.push(Doc::Group(Group::new(group, should_break)));
+        parts.push(Doc::Indent(indent_parts));
         parts.push(if_break!(p, ","));
 
         if p.options.bracket_spacing {

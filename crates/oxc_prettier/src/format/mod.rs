@@ -570,7 +570,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             let mut parts = p.vec();
             parts.push(ss!(kind));
             parts.push(ss!(" "));
-            parts.push(Doc::Array(decls));
+            parts.extend(decls);
 
             if !parent_for_loop.is_some_and(|span| span != self.span) {
                 parts.push(ss!(";"));
@@ -1271,7 +1271,7 @@ impl<'a> Format<'a> for RegExpLiteral {
 
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, p.str(&string::print_string(self.value.as_str(), p.options.single_quote)))
+        p.str(&string::print_string(self.value.as_str(), p.options.single_quote))
     }
 }
 
