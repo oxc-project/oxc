@@ -916,6 +916,12 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Line
+    }
+}
+
 impl<'a> Format<'a> for TSTupleElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Line
@@ -1732,7 +1738,19 @@ impl<'a> Format<'a> for TemplateElement {
 
 impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(format!(p, self.tag));
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(string!(p, "<"));
+            parts.push(format!(p, type_parameters));
+            parts.push(string!(p, ">"));
+        }
+
+        parts.push(format!(p, self.quasi));
+
+        Doc::Array(parts)
     }
 }
 
