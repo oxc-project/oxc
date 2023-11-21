@@ -855,8 +855,6 @@ Passed: 265/1081
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
-* removed-options/invalid-use-builtins-false/input.js
-* removed-options/invalid-use-builtins-true/input.js
 * removed-options/invalid-use-spread-false/input.js
 * removed-options/invalid-use-spread-true/input.js
 * runtime/invalid-runtime/input.js

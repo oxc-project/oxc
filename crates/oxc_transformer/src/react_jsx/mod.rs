@@ -103,11 +103,15 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 impl<'a> ReactJsx<'a> {
     pub fn new(
         ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
+        mut ctx: TransformerCtx<'a>,
         options: TransformOptions,
     ) -> Option<Self> {
         let imports = ast.new_vec();
         let jsx_options = options.react_jsx?.with_comments(&ctx.semantic());
+        if options.babel_8_breaking == Some(true) && jsx_options.use_built_ins.is_some() {
+            ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since \"useBuiltIns\" is removed in Babel 8, you can remove it from the config."));
+            return None;
+        }
 
         let jsx_runtime_importer =
             if jsx_options.import_source == "react" || jsx_options.runtime.is_classic() {
@@ -115,7 +119,6 @@ impl<'a> ReactJsx<'a> {
             } else {
                 Atom::from(format!("{}/jsx-runtime", jsx_options.import_source))
             };
-
         Some(Self {
             ast,
             ctx,
