@@ -52,7 +52,7 @@ pub trait CreateVars<'a> {
     }
 }
 
-pub const RESERVED_WORDS_ES3_ONLY: [&str; 24] = [
+pub const RESERVED_WORDS_ES3_ONLY: phf::Set<&str> = phf::phf_set![
     "abstract",
     "boolean",
     "byte",
@@ -79,7 +79,7 @@ pub const RESERVED_WORDS_ES3_ONLY: [&str; 24] = [
     "volatile",
 ];
 
-const RESERVED_WORD_STRICT: [&str; 9] = [
+const RESERVED_WORD_STRICT: phf::Set<&str> = phf::phf_set![
     "implements",
     "interface",
     "let",
@@ -91,7 +91,7 @@ const RESERVED_WORD_STRICT: [&str; 9] = [
     "yield",
 ];
 
-pub const KEYWORDS: [&str; 35] = [
+pub const KEYWORKDS: phf::Set<&str> = phf::phf_set![
     "break",
     "case",
     "catch",
@@ -150,14 +150,14 @@ pub fn is_identifier_name(name: &Atom) -> bool {
 }
 
 pub fn is_valid_identifier(name: &Atom, reserved: bool) -> bool {
-    if reserved && (KEYWORDS.contains(&name.as_str()) || is_strict_reserved_word(name, true)) {
+    if reserved && (KEYWORKDS.contains(name.as_str()) || is_strict_reserved_word(name, true)) {
         return false;
     }
     is_identifier_name(name)
 }
 
 pub fn is_strict_reserved_word(name: &Atom, in_module: bool) -> bool {
-    is_reserved_word(name, in_module) || RESERVED_WORD_STRICT.contains(&name.as_str())
+    is_reserved_word(name, in_module) || RESERVED_WORD_STRICT.contains(name.as_str())
 }
 
 pub fn is_reserved_word(name: &Atom, in_module: bool) -> bool {
@@ -166,5 +166,5 @@ pub fn is_reserved_word(name: &Atom, in_module: bool) -> bool {
 
 /// https://github.com/babel/babel/blob/main/packages/babel-types/src/validators/isValidES3Identifier.ts#L35
 pub fn is_valid_es3_identifier(name: &Atom) -> bool {
-    is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(&name.as_str())
+    is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(name.as_str())
 }
