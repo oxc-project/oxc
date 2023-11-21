@@ -170,15 +170,22 @@ mod unicorn {
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_promise_resolve_reject;
+    pub mod no_useless_switch_case;
+    pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
+    pub mod prefer_array_some;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
+    pub mod prefer_dom_node_remove;
+    pub mod prefer_event_target;
+    pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
+    pub mod prefer_math_trunc;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
@@ -198,6 +205,7 @@ mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_has_content;
     pub mod anchor_is_valid;
+    pub mod html_has_lang;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -308,6 +316,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_title,
     unicorn::catch_error_name,
     unicorn::empty_brace_spaces,
+    unicorn::prefer_array_some,
     unicorn::error_message,
     unicorn::filename_case,
     unicorn::new_for_builtins,
@@ -331,6 +340,8 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_promise_resolve_reject,
+    unicorn::no_useless_switch_case,
+    unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
@@ -339,7 +350,11 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_date_now,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
+    unicorn::prefer_dom_node_remove,
+    unicorn::prefer_event_target,
+    unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
+    unicorn::prefer_math_trunc,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
@@ -371,4 +386,5 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
+    jsx_a11y::html_has_lang
 }

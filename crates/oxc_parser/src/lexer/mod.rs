@@ -180,7 +180,7 @@ impl<'a> Lexer<'a> {
     /// See Section 12:
     ///   The `InputElementRegExp` goal symbol is used in all syntactic grammar contexts
     ///   where a `RegularExpressionLiteral` is permitted
-    /// Which meams the parser needs to re-tokenize on `PrimaryExpression`,
+    /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
     pub fn next_regex(&mut self, kind: Kind) -> Token<'a> {
         self.current.token.start = self.offset()

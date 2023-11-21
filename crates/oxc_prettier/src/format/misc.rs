@@ -18,3 +18,7 @@ pub(super) fn adjust_clause<'a>(
 
     indent![p, Doc::Line, clause]
 }
+
+pub(super) fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {
+    text[(start as usize)..(end as usize)].contains('\n')
+}

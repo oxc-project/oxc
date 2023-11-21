@@ -21,7 +21,7 @@ pub enum Doc<'a> {
     /// Groups are usually nested, and the printer will try to fit everything on one line,
     /// but if it doesn't fit it will break the outermost group first and try again.
     /// It will continue breaking groups until everything fits (or there are no more groups to break).
-    Group(Vec<'a, Doc<'a>>),
+    Group(Group<'a>),
     /// Specify a line break.
     /// If an expression fits on one line, the line break will be replaced with a space.
     /// Line breaks always indent the next line with the current level of indentation.
@@ -34,6 +34,18 @@ pub enum Doc<'a> {
     Hardline,
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
     IfBreak(Box<'a, Doc<'a>>),
+}
+
+#[derive(Debug)]
+pub struct Group<'a> {
+    pub contents: Vec<'a, Doc<'a>>,
+    pub should_break: bool,
+}
+
+impl<'a> Group<'a> {
+    pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
+        Self { contents, should_break }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -84,12 +96,12 @@ impl<'a> Prettier<'a> {
 
 impl<'a> fmt::Display for Doc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{})", print_do_to_debug(self))
+        write!(f, "{})", print_doc_to_debug(self))
     }
 }
 
 // https://github.com/prettier/prettier/blob/main/src/document/debug.js
-fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
+fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
     use std::string::String;
     let mut string = String::new();
     match doc {
@@ -101,7 +113,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Array(docs) => {
             string.push_str("[\n");
             for (idx, doc) in docs.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != docs.len() - 1 {
                     string.push_str(", ");
                 }
@@ -111,7 +123,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Indent(contents) => {
             string.push_str("indent([");
             for (idx, doc) in contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != contents.len() - 1 {
                     string.push_str(", ");
                 }
@@ -122,22 +134,24 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("indentIfBreak(");
             string.push_str("[\n");
             for (idx, doc) in contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
+                string.push_str(&print_doc_to_debug(doc));
                 if idx != contents.len() - 1 {
                     string.push_str(", ");
                 }
             }
             string.push_str("]) \n");
         }
-        Doc::Group(contents) => {
+        Doc::Group(group) => {
             string.push_str("group([\n");
-            for (idx, doc) in contents.iter().enumerate() {
-                string.push_str(&print_do_to_debug(doc));
-                if idx != contents.len() - 1 {
+            for (idx, doc) in group.contents.iter().enumerate() {
+                string.push_str(&print_doc_to_debug(doc));
+                if idx != group.contents.len() - 1 {
                     string.push_str(", ");
                 }
             }
-            string.push_str("])\n");
+            string.push_str("], { shouldBreak: ");
+            string.push_str(&group.should_break.to_string());
+            string.push_str(" })");
         }
         Doc::Line => {
             string.push_str("line");
@@ -150,7 +164,7 @@ fn print_do_to_debug(doc: &Doc<'_>) -> std::string::String {
         }
         Doc::IfBreak(break_contents) => {
             string.push_str("ifBreak(");
-            string.push_str(&print_do_to_debug(break_contents));
+            string.push_str(&print_doc_to_debug(break_contents));
             string.push(')');
         }
     }

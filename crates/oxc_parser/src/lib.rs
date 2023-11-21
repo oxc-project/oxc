@@ -126,6 +126,10 @@ pub struct Parser<'a> {
 
     /// Ast builder for creating AST spans
     ast: AstBuilder<'a>,
+
+    /// Emit `ParenthesizedExpression` in AST.
+    /// Default: `true`
+    preserve_parens: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -141,6 +145,7 @@ impl<'a> Parser<'a> {
             state: ParserState::new(allocator),
             ctx: Self::default_context(source_type),
             ast: AstBuilder::new(allocator),
+            preserve_parens: true,
         }
     }
 
@@ -151,6 +156,16 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
         self.ctx = self.ctx.and_return(allow);
+        self
+    }
+
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by (non-standard)
+    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
+    #[must_use]
+    pub fn preserve_parens(mut self, allow: bool) -> Self {
+        self.preserve_parens = allow;
         self
     }
 

@@ -394,9 +394,9 @@ impl<'a> Parser<'a> {
         is_export: bool,
     ) -> Result<Declaration<'a>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
-            ImportOrExportKind::Value
-        } else {
             ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
         };
 
         let id = self.parse_binding_identifier()?;

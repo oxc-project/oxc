@@ -29,13 +29,14 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    doc::{Doc, Separator},
+    doc::{Doc, Group, Separator},
     format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
 use self::{
     array::Array,
     binaryish::{BinaryishLeft, BinaryishOperator},
+    object::ObjectLike,
     template_literal::TemplateLiteralPrinter,
 };
 
@@ -229,7 +230,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -287,7 +288,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -314,7 +315,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -524,11 +525,13 @@ impl<'a> Format<'a> for DebuggerStatement {
 
 impl<'a> Format<'a> for ModuleDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        if let ModuleDeclaration::ImportDeclaration(decl) = self {
-            decl.format(p)
-        } else {
-            module::print_export_declaration(p, self)
-        }
+        wrap!(p, self, ModuleDeclaration, {
+            if let ModuleDeclaration::ImportDeclaration(decl) = self {
+                decl.format(p)
+            } else {
+                module::print_export_declaration(p, self)
+            }
+        })
     }
 }
 
@@ -567,13 +570,13 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             let mut parts = p.vec();
             parts.push(ss!(kind));
             parts.push(ss!(" "));
-            parts.push(Doc::Array(decls));
+            parts.extend(decls);
 
             if !parent_for_loop.is_some_and(|span| span != self.span) {
                 parts.push(ss!(";"));
             }
 
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         })
     }
 }
@@ -954,7 +957,15 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             let is_default = specifiers.get(0).is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
             });
-            parts.push(module::print_module_specifiers(p, specifiers, is_default));
+
+            let validate_namespace = |x: &ImportDeclarationSpecifier| {
+                matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
+            };
+
+            let is_namespace = specifiers.get(0).is_some_and(validate_namespace)
+                || specifiers.get(1).is_some_and(validate_namespace);
+
+            parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
@@ -993,7 +1004,7 @@ impl<'a> Format<'a> for ImportDefaultSpecifier {
 
 impl<'a> Format<'a> for ImportNamespaceSpecifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        array!(p, ss!("* as "), self.local.format(p))
     }
 }
 
@@ -1012,7 +1023,12 @@ impl<'a> Format<'a> for ImportAttribute {
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(module::print_module_specifiers(p, &self.specifiers, false));
+        parts.push(module::print_module_specifiers(
+            p,
+            &self.specifiers,
+            /* include_default */ false,
+            /* include_namespace */ false,
+        ));
         if let Some(decl) = &self.declaration {
             parts.push(decl.format(p));
         }
@@ -1255,7 +1271,7 @@ impl<'a> Format<'a> for RegExpLiteral {
 
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, p.str(&string::print_string(self.value.as_str(), p.options.single_quote)))
+        p.str(&string::print_string(self.value.as_str(), p.options.single_quote))
     }
 }
 
@@ -1306,10 +1322,7 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(format!(p, self.object));
-        if self.optional {
-            parts.push(ss!("?."));
-        }
-        parts.push(ss!("#"));
+        parts.push(if self.optional { ss!("?.") } else { ss!(".") });
         parts.push(format!(p, self.field));
         Doc::Array(parts)
     }
@@ -1317,14 +1330,12 @@ impl<'a> Format<'a> for PrivateFieldExpression<'a> {
 
 impl<'a> Format<'a> for CallExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        call_expression::print_call_expression(
-            p,
-            &self.callee,
-            &self.arguments,
-            self.optional,
-            &self.type_parameters,
-            /* is_new */ false,
-        )
+        wrap!(p, self, CallExpression, {
+            call_expression::print_call_expression(
+                p,
+                &call_expression::CallExpressionLike::CallExpression(self),
+            )
+        })
     }
 }
 
@@ -1355,13 +1366,19 @@ impl<'a> Format<'a> for SpreadElement<'a> {
 
 impl<'a> Format<'a> for ArrayExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array::print_array(p, &Array::ArrayExpression(self))
+        wrap!(p, self, ArrayExpression, { array::print_array(p, &Array::ArrayExpression(self)) })
     }
 }
 
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        wrap!(p, self, ObjectExpression, {
+            object::print_object_properties(
+                p,
+                &ObjectLike::ObjectExpression(self),
+                &self.properties,
+            )
+        })
     }
 }
 
@@ -1395,20 +1412,20 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
             }
             if method {
                 if let Expression::FunctionExpression(func_expr) = &self.value {
-                    wrap!(p, func_expr, Function, {
-                        parts.push(function::print_function(
+                    parts.push(wrap!(p, func_expr, Function, {
+                        function::print_function(
                             p,
                             func_expr,
                             Some(self.key.span().source_text(p.source_text)),
-                        ));
-                    });
+                        )
+                    }));
                 }
             } else {
                 parts.push(format!(p, self.key));
                 parts.push(ss!(": "));
                 parts.push(format!(p, self.value));
             }
-            Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
         }
     }
 }
@@ -1460,77 +1477,89 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        if self.prefix {
-            array![p, ss!(self.operator.as_str()), format!(p, self.argument)]
-        } else {
-            array![p, format!(p, self.argument), ss!(self.operator.as_str())]
-        }
+        wrap!(p, self, UpdateExpression, {
+            if self.prefix {
+                array![p, ss!(self.operator.as_str()), format!(p, self.argument)]
+            } else {
+                array![p, format!(p, self.argument), ss!(self.operator.as_str())]
+            }
+        })
     }
 }
 
 impl<'a> Format<'a> for UnaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(string!(p, self.operator.as_str()));
-        if self.operator.is_keyword() {
-            parts.push(ss!(" "));
-        }
-        parts.push(format!(p, self.argument));
-        Doc::Array(parts)
+        wrap!(p, self, UnaryExpression, {
+            let mut parts = p.vec();
+            parts.push(string!(p, self.operator.as_str()));
+            if self.operator.is_keyword() {
+                parts.push(ss!(" "));
+            }
+            parts.push(format!(p, self.argument));
+            Doc::Array(parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let doc = binaryish::print_binaryish_expression(
-            p,
-            &BinaryishLeft::Expression(&self.left),
-            BinaryishOperator::BinaryOperator(self.operator),
-            &self.right,
-        );
-        group!(p, indent!(p, softline!(), doc), softline!())
+        wrap!(p, self, BinaryExpression, {
+            let doc = binaryish::print_binaryish_expression(
+                p,
+                &BinaryishLeft::Expression(&self.left),
+                BinaryishOperator::BinaryOperator(self.operator),
+                &self.right,
+            );
+            group!(p, indent!(p, softline!(), doc), softline!())
+        })
     }
 }
 
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        binaryish::print_binaryish_expression(
-            p,
-            &BinaryishLeft::PrivateIdentifier(&self.left),
-            BinaryishOperator::BinaryOperator(self.operator),
-            &self.right,
-        )
+        wrap!(p, self, PrivateInExpression, {
+            binaryish::print_binaryish_expression(
+                p,
+                &BinaryishLeft::PrivateIdentifier(&self.left),
+                BinaryishOperator::BinaryOperator(self.operator),
+                &self.right,
+            )
+        })
     }
 }
 
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let doc = binaryish::print_binaryish_expression(
-            p,
-            &BinaryishLeft::Expression(&self.left),
-            BinaryishOperator::LogicalOperator(self.operator),
-            &self.right,
-        );
-        group!(p, indent!(p, softline!(), doc), softline!())
+        wrap!(p, self, LogicalExpression, {
+            let doc = binaryish::print_binaryish_expression(
+                p,
+                &BinaryishLeft::Expression(&self.left),
+                BinaryishOperator::LogicalOperator(self.operator),
+                &self.right,
+            );
+            group!(p, indent!(p, softline!(), doc), softline!())
+        })
     }
 }
 
 impl<'a> Format<'a> for ConditionalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        ternary::print_ternary(p, self)
+        wrap!(p, self, ConditionalExpression, { ternary::print_ternary(p, self) })
     }
 }
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![
-            p,
-            format!(p, self.left),
-            ss!(" "),
-            string!(p, self.operator.as_str()),
-            ss!(" "),
-            format!(p, self.right)
-        ]
+        wrap!(p, self, AssignmentExpression, {
+            array![
+                p,
+                format!(p, self.left),
+                ss!(" "),
+                string!(p, self.operator.as_str()),
+                ss!(" "),
+                format!(p, self.right)
+            ]
+        })
     }
 }
 
@@ -1582,7 +1611,11 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        object::print_object_properties(
+            p,
+            &ObjectLike::ObjectAssignmentTarget(self),
+            &self.properties,
+        )
     }
 }
 
@@ -1625,42 +1658,39 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let docs = self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
-        group![p, Doc::Array(p.join(Separator::CommaLine, docs))]
+        wrap!(p, self, SequenceExpression, {
+            let docs =
+                self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
+            group![p, Doc::Array(p.join(Separator::CommaLine, docs))]
+        })
     }
 }
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // TODO: if shouldHug
-        // array![p, ss!("("), format!(p, self.expression), ss!(")")]
-        array![
-            p,
-            ss!("("),
-            format!(p, self.expression),
-            // indent!(p, array![p, softline!(), ]),
-            // softline!(),
-            ss!(")")
-        ]
+        // TODO: This wrap need to be removed and all logic should go into `need_parens`.
+        wrap!(p, self, ParenthesizedExpression, { self.expression.format(p) })
     }
 }
 
 impl<'a> Format<'a> for ImportExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("import"));
-        parts.push(ss!("("));
-        parts.push(format!(p, self.source));
-        if !self.arguments.is_empty() {
-            for arg in &self.arguments {
-                parts.push(ss!(","));
-                parts.push(Doc::Line);
-                parts.push(format!(p, arg));
+        wrap!(p, self, ImportExpression, {
+            let mut parts = p.vec();
+            parts.push(ss!("import"));
+            parts.push(ss!("("));
+            parts.push(format!(p, self.source));
+            if !self.arguments.is_empty() {
+                for arg in &self.arguments {
+                    parts.push(ss!(","));
+                    parts.push(Doc::Line);
+                    parts.push(format!(p, arg));
+                }
             }
-        }
-        parts.push(ss!(")"));
+            parts.push(ss!(")"));
 
-        Doc::Group(parts)
+            Doc::Group(Group::new(parts, false))
+        })
     }
 }
 
@@ -1691,16 +1721,18 @@ impl<'a> Format<'a> for Super {
 
 impl<'a> Format<'a> for AwaitExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(ss!("await "));
-        parts.push(format!(p, self.argument));
-        Doc::Array(parts)
+        wrap!(p, self, AwaitExpression, {
+            let mut parts = p.vec();
+            parts.push(ss!("await "));
+            parts.push(format!(p, self.argument));
+            Doc::Array(parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for ChainExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        format!(p, self.expression)
+        wrap!(p, self, ChainExpression, { format!(p, self.expression) })
     }
 }
 
@@ -1715,14 +1747,12 @@ impl<'a> Format<'a> for ChainElement<'a> {
 
 impl<'a> Format<'a> for NewExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        call_expression::print_call_expression(
-            p,
-            &self.callee,
-            &self.arguments,
-            false,
-            &self.type_parameters,
-            /* is_new */ true,
-        )
+        wrap!(p, self, NewExpression, {
+            call_expression::print_call_expression(
+                p,
+                &call_expression::CallExpressionLike::NewExpression(self),
+            )
+        })
     }
 }
 
@@ -1938,7 +1968,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &self.properties)
+        object::print_object_properties(p, &ObjectLike::ObjectPattern(self), &self.properties)
     }
 }
 

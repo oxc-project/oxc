@@ -12,6 +12,8 @@ use crate::{
     hardline, indent, line, ss, Prettier,
 };
 
+use oxc_allocator::Vec;
+
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     pub struct CommentFlags: u8 {
@@ -45,6 +47,21 @@ impl<'a> Prettier<'a> {
     }
 
     #[must_use]
+    pub(crate) fn print_inner_comment(&mut self, range: Span) -> Vec<'a, Doc<'a>> {
+        let mut parts = self.vec();
+        while let Some((start, end, kind)) = self.trivias.peek().copied() {
+            // Comment within the span
+            if start >= range.start && end <= range.end {
+                self.trivias.next();
+                parts.push(self.print_comment(start, end, kind));
+            } else {
+                break;
+            }
+        }
+        parts
+    }
+
+    #[must_use]
     pub(crate) fn print_leading_comments(&mut self, range: Span) -> Option<Doc<'a>> {
         let mut parts = self.vec();
         while let Some((start, end, kind)) = self.trivias.peek().copied() {
@@ -68,8 +85,12 @@ impl<'a> Prettier<'a> {
                     parts.push(hardline!());
                 }
 
-                let end = self.get_comment_end(kind, end);
-                if self.skip_newline(self.skip_spaces(end)).is_some_and(|i| self.has_newline(i)) {
+                if self
+                    .get_comment_end(kind, end)
+                    .map(|end| self.skip_spaces(end))
+                    .and_then(|idx| self.skip_newline(idx))
+                    .is_some_and(|i| self.has_newline(i))
+                {
                     parts.push(hardline!());
                 }
             } else {
