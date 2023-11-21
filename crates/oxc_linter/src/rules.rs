@@ -182,6 +182,7 @@ mod unicorn {
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
     pub mod prefer_event_target;
+    pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_trunc;
     pub mod prefer_optional_catch_binding;
@@ -348,6 +349,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_event_target,
+    unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_optional_catch_binding,
