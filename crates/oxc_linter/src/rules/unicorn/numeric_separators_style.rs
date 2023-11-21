@@ -95,10 +95,7 @@ impl<'a> FormatNumber<'a> {
     }
 
     fn format_decimal(&self) -> String {
-        let re = regex::Regex::new(
-            r"^(?<number>[\d._]*?)(?:(?<mark>[Ee])(?<sign>[+-])?(?<power>[\d_]+))?$",
-        )
-        .unwrap();
+        let re = regex::Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
 
         let caps = re.captures(self.raw).unwrap();
 
