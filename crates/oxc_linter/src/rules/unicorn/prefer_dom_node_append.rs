@@ -42,18 +42,6 @@ declare_oxc_lint!(
 
 impl Rule for PreferDomNodeAppend {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // if (
-        // 	!isMethodCall(node, {
-        // 		method: 'appendChild',
-        // 		argumentsLength: 1,
-        // 		optionalCall: false,
-        // 	})
-        // 	|| isNodeValueNotDomNode(node.callee.object)
-        // 	|| isNodeValueNotDomNode(node.arguments[0])
-        // ) {
-        // 	return;
-        // }
-
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
