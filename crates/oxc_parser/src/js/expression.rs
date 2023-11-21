@@ -215,7 +215,11 @@ impl<'a> Parser<'a> {
             )
         };
 
-        Ok(self.ast.parenthesized_expression(paren_span, expression))
+        Ok(if self.preserve_parens {
+            self.ast.parenthesized_expression(paren_span, expression)
+        } else {
+            expression
+        })
     }
 
     /// Section 13.2.2 This Expression
