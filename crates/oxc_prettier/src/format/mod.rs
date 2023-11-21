@@ -1333,11 +1333,7 @@ impl<'a> Format<'a> for CallExpression<'a> {
         wrap!(p, self, CallExpression, {
             call_expression::print_call_expression(
                 p,
-                &self.callee,
-                &self.arguments,
-                self.optional,
-                &self.type_parameters,
-                /* is_new */ false,
+                &call_expression::CallExpressionLike::CallExpression(self),
             )
         })
     }
@@ -1754,11 +1750,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
         wrap!(p, self, NewExpression, {
             call_expression::print_call_expression(
                 p,
-                &self.callee,
-                &self.arguments,
-                false,
-                &self.type_parameters,
-                /* is_new */ true,
+                &call_expression::CallExpressionLike::NewExpression(self),
             )
         })
     }
