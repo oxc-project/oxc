@@ -38,8 +38,9 @@ impl<'a> FormatNumber<'a> {
     fn format(&self) -> String {
         match self.base {
             oxc_syntax::NumberBase::Binary => self.format_binary(),
-            oxc_syntax::NumberBase::Decimal => self.format_decimal(),
-            oxc_syntax::NumberBase::Float => self.format_float(),
+            oxc_syntax::NumberBase::Decimal | oxc_syntax::NumberBase::Float => {
+                self.format_decimal()
+            }
             oxc_syntax::NumberBase::Hex => self.format_hex(),
             oxc_syntax::NumberBase::Octal => self.format_octal(),
         }
@@ -94,46 +95,77 @@ impl<'a> FormatNumber<'a> {
     }
 
     fn format_decimal(&self) -> String {
-        let mut out = self.raw.replace('_', "").to_string();
-        add_separators(&mut out, SeparatorDir::Right, DECIMAL_MINIMUM_DIGITS, DECIMAL_GROUP_LENGTH);
-        out
-    }
+        let re = regex::Regex::new(
+            r"^(?<number>[\d._]*?)(?:(?<mark>[Ee])(?<sign>[+-])?(?<power>[\d_]+))?$",
+        )
+        .unwrap();
 
-    fn format_float(&self) -> String {
-        let exponential_notation = self.raw.contains(&['e', 'E']);
+        let caps = re.captures(self.raw).unwrap();
 
-        if exponential_notation {
-            todo!();
+        dbg!(&caps);
+
+        let mut out = String::new();
+
+        {
+            let number = caps.get(1).unwrap().as_str().replace('_', "");
+            let number = number.as_str();
+
+            if let Some((whole, decimal)) = number.split_once('.') {
+                if whole.len() > 0 {
+                    let mut s = whole.to_string();
+                    add_separators(
+                        &mut s,
+                        SeparatorDir::Right,
+                        DECIMAL_MINIMUM_DIGITS,
+                        DECIMAL_GROUP_LENGTH,
+                    );
+                    out.push_str(&s);
+                };
+
+                out.push('.');
+
+                if decimal.len() > 0 {
+                    let mut s = decimal.to_string();
+                    add_separators(
+                        &mut s,
+                        SeparatorDir::Left,
+                        DECIMAL_MINIMUM_DIGITS,
+                        DECIMAL_GROUP_LENGTH,
+                    );
+                    out.push_str(&s);
+                }
+            } else {
+                out.push_str(number);
+                add_separators(
+                    &mut out,
+                    SeparatorDir::Right,
+                    DECIMAL_MINIMUM_DIGITS,
+                    DECIMAL_GROUP_LENGTH,
+                );
+            }
         }
 
-        let raw = self.raw.replace('_', "");
-        let (whole, decimal) = raw.split_once('.').expect("floats should contain a decimal");
-
-        let mut result = whole.to_string();
-
-        if result.len() > 0 {
+        if let Some(mark) = caps.get(2) {
+            out.push_str(mark.as_str());
+            dbg!(mark.as_str(), &out);
+        }
+        if let Some(sign) = caps.get(3) {
+            out.push_str(sign.as_str());
+            dbg!(sign.as_str(), &out);
+        }
+        if let Some(power) = caps.get(4) {
+            let mut s = power.as_str().replace('_', "");
             add_separators(
-                &mut result,
+                &mut s,
                 SeparatorDir::Right,
                 DECIMAL_MINIMUM_DIGITS,
                 DECIMAL_GROUP_LENGTH,
             );
-        };
-
-        result.push('.');
-
-        if decimal.len() > 0 {
-            let mut decimal = decimal.to_string();
-            add_separators(
-                &mut decimal,
-                SeparatorDir::Left,
-                DECIMAL_MINIMUM_DIGITS,
-                DECIMAL_GROUP_LENGTH,
-            );
-            result.push_str(&decimal);
+            out.push_str(&s);
+            dbg!(power.as_str(), &out);
         }
 
-        result
+        out
     }
 }
 
