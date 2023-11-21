@@ -564,13 +564,27 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             };
 
             let kind = self.kind.as_str();
-            let mut decls = p.vec();
-            decls.extend(self.declarations.iter().map(|decl| decl.format(p)));
 
             let mut parts = p.vec();
             parts.push(ss!(kind));
             parts.push(ss!(" "));
-            parts.extend(decls);
+
+            let is_hardline = !p.parent_kind().is_iteration_statement()
+                && self.declarations.iter().all(|decl| decl.init.is_some());
+            let decls_len = self.declarations.len();
+            parts.extend(self.declarations.iter().enumerate().map(|(i, decl)| {
+                if decls_len > 1 {
+                    let mut d_parts = p.vec();
+                    if i != 0 {
+                        d_parts.push(p.str(","));
+                        d_parts.push(if is_hardline { hardline!() } else { line!() });
+                    }
+                    d_parts.push(decl.format(p));
+                    Doc::Indent(d_parts)
+                } else {
+                    decl.format(p)
+                }
+            }));
 
             if !parent_for_loop.is_some_and(|span| span != self.span) {
                 parts.push(ss!(";"));
