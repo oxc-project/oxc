@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::utils::is_valid_es3_identifier;
 use crate::{TransformOptions, TransformTarget};
 
-/// ES2015: Template Literals
+/// ES3: PropertyLiteral
 ///
 /// References:
 /// * <https://github.com/babel/babel/blob/master/packages/babel-plugin-transform-property-literals/src/index.js>
