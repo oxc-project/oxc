@@ -1,4 +1,4 @@
-Compatibility: 133/601 (22.13%)
+Compatibility: 134/601 (22.30%)
 
 # Failed
 
@@ -483,9 +483,6 @@ Compatibility: 133/601 (22.13%)
 * object-prop-break-in/comment.js
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
-
-### object-property-comment
-* object-property-comment/after-key.js
 
 ### object-property-ignore
 * object-property-ignore/ignore.js

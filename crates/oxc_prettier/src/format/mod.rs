@@ -25,7 +25,7 @@ use std::borrow::Cow;
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     array,
@@ -1422,6 +1422,12 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 }
             } else {
                 parts.push(format!(p, self.key));
+                let comments =
+                    p.print_inner_comment(Span::new(self.key.span().end, self.value.span().start));
+                if !comments.is_empty() {
+                    parts.push(ss!(" "));
+                    parts.extend(comments);
+                }
                 parts.push(ss!(": "));
                 parts.push(format!(p, self.value));
             }
