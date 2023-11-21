@@ -1,52 +1,93 @@
-use oxc_allocator::{Box, Vec};
+use super::misc;
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     doc::{Doc, Group},
     if_break, ss, Format, Prettier,
 };
 
-use super::misc;
+pub(super) enum CallExpressionLike<'a, 'b> {
+    CallExpression(&'b CallExpression<'a>),
+    NewExpression(&'b NewExpression<'a>),
+}
+
+impl<'a, 'b> CallExpressionLike<'a, 'b> {
+    fn is_new(&self) -> bool {
+        matches!(self, CallExpressionLike::NewExpression(_))
+    }
+    fn callee(&self) -> &Expression<'a> {
+        match self {
+            CallExpressionLike::CallExpression(call) => &call.callee,
+            CallExpressionLike::NewExpression(new) => &new.callee,
+        }
+    }
+    fn optional(&self) -> bool {
+        match self {
+            CallExpressionLike::CallExpression(call) => call.optional,
+            CallExpressionLike::NewExpression(new) => false,
+        }
+    }
+    fn arguments(&self) -> &Vec<'a, Argument<'a>> {
+        match self {
+            CallExpressionLike::CallExpression(call) => &call.arguments,
+            CallExpressionLike::NewExpression(new) => &new.arguments,
+        }
+    }
+}
+
+impl GetSpan for CallExpressionLike<'_, '_> {
+    fn span(&self) -> Span {
+        match self {
+            CallExpressionLike::CallExpression(call) => call.span,
+            CallExpressionLike::NewExpression(new) => new.span,
+        }
+    }
+}
 
 pub(super) fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
-    callee: &Expression<'a>,
-    arguments: &Vec<'a, Argument<'a>>,
-    optional: bool, // for optional chaining
-    type_parameters: &Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    is_new: bool,
+    expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    if is_new {
-        parts.push(ss!("new "));
-    }
-    parts.push(callee.format(p));
 
-    if optional {
+    if expression.is_new() {
+        parts.push(ss!("new "));
+    };
+
+    parts.push(expression.callee().format(p));
+
+    if expression.optional() {
         parts.push(ss!("?."));
     }
 
-    parts.push(print_call_expression_arguments(p, callee, arguments));
+    parts.push(print_call_expression_arguments(p, expression));
 
     Doc::Array(parts)
 }
 
 fn print_call_expression_arguments<'a>(
     p: &mut Prettier<'a>,
-    callee: &Expression<'a>,
-    arguments: &Vec<'a, Argument<'a>>,
+    expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("("));
 
     let mut parts_inner = p.vec();
 
-    let should_break = !is_commons_js_or_amd_call(callee, arguments);
+    let callee = expression.callee();
+    let arguments = expression.arguments();
+    let should_break = !is_commons_js_or_amd_call(expression.callee(), arguments);
+
+    if arguments.len() == 0 {
+        parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
+    }
 
     for (i, element) in arguments.iter().enumerate() {
         let doc = element.format(p);
         parts_inner.push(doc);
+
         if i < arguments.len() - 1 {
             parts_inner.push(ss!(","));
             parts_inner.push(Doc::Line);

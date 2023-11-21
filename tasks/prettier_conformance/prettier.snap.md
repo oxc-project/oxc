@@ -1,4 +1,4 @@
-Compatibility: 131/601 (21.80%)
+Compatibility: 132/601 (21.96%)
 
 # Failed
 
@@ -138,9 +138,6 @@ Compatibility: 131/601 (21.80%)
 
 ### call/invalid
 * call/invalid/null-arguments-item.js
-
-### call/no-argument
-* call/no-argument/special-cases.js
 
 ### class-comment
 * class-comment/class-property.js

@@ -249,7 +249,7 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected = Self::get_expect(snap_content, input).unwrap();
+            let expected = Self::get_expect(snap_content, input).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
