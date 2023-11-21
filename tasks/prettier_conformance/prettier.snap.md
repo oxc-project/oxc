@@ -1,4 +1,4 @@
-Compatibility: 129/601 (21.46%)
+Compatibility: 131/601 (21.80%)
 
 # Failed
 
@@ -177,7 +177,6 @@ Compatibility: 129/601 (21.46%)
 * classes/keyword-property/static.js
 
 ### classes-private-fields
-* classes-private-fields/optional-chaining.js
 * classes-private-fields/private_fields.js
 * classes-private-fields/with_comments.js
 
@@ -554,9 +553,6 @@ Compatibility: 129/601 (21.46%)
 
 ### regex
 * regex/test.js
-
-### require
-* require/require.js
 
 ### require-amd
 * require-amd/named-amd-module.js

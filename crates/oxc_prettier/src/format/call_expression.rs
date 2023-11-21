@@ -27,33 +27,74 @@ pub(super) fn print_call_expression<'a>(
         parts.push(ss!("?."));
     }
 
-    parts.push(print_call_expression_arguments(p, arguments));
+    parts.push(print_call_expression_arguments(p, callee, arguments));
 
     Doc::Array(parts)
 }
 
 fn print_call_expression_arguments<'a>(
     p: &mut Prettier<'a>,
+    callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("("));
 
     let mut parts_inner = p.vec();
-    parts_inner.push(Doc::Softline);
+
+    let should_break = !is_commons_js_or_amd_call(callee, arguments);
+
     for (i, element) in arguments.iter().enumerate() {
-        parts_inner.push(element.format(p));
+        let doc = element.format(p);
+        parts_inner.push(doc);
         if i < arguments.len() - 1 {
             parts_inner.push(ss!(","));
             parts_inner.push(Doc::Line);
         }
     }
-    parts.push(Doc::Indent(parts_inner));
-    parts.push(if_break!(p, ","));
-    parts.push(Doc::Softline);
+    if should_break {
+        parts_inner.insert(0, Doc::Softline);
+        parts.push(Doc::Indent(parts_inner));
+        parts.push(if_break!(p, ","));
+        parts.push(Doc::Softline);
+    } else {
+        parts.extend(parts_inner);
+    }
     parts.push(ss!(")"));
-    let should_break = arguments
-        .iter()
-        .any(|arg| misc::has_new_line_in_range(p.source_text, arg.span().start, arg.span().end));
+
+    let should_break = should_break
+        && arguments.iter().any(|arg| {
+            misc::has_new_line_in_range(p.source_text, arg.span().start, arg.span().end)
+        });
     Doc::Group(Group::new(parts, should_break))
+}
+
+/// https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116
+fn is_commons_js_or_amd_call<'a>(
+    callee: &Expression<'a>,
+    arguments: &Vec<'a, Argument<'a>>,
+) -> bool {
+    if let Expression::Identifier(callee) = callee {
+        if callee.name == "require" {
+            return arguments.len() == 1
+                && matches!(arguments[0], Argument::Expression(Expression::StringLiteral(_)))
+                || arguments.len() > 1;
+        }
+        if callee.name == "define" {
+            // TODO: the parent node is ExpressionStatement
+            return arguments.len() == 1
+                || (arguments.len() == 2
+                    && matches!(
+                        arguments[1],
+                        Argument::Expression(Expression::ArrayExpression(_))
+                    ))
+                || (arguments.len() == 3
+                    && matches!(arguments[0], Argument::Expression(Expression::StringLiteral(_)))
+                    && matches!(
+                        arguments[1],
+                        Argument::Expression(Expression::ArrayExpression(_))
+                    ));
+        }
+    }
+    false
 }
