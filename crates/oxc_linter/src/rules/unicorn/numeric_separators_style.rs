@@ -556,8 +556,11 @@ fn test_number_decimal_integer() {
         "const foo = 1",
         "const foo = 1234",
         // Negative numbers
-        "const foo = -3000",
-        "const foo = -10_000_000",
+        "const foo = -4000",
+        "const foo = -50_000",
+        "const foo = -600_000",
+        "const foo = -7_000_000",
+        "const foo = -80_000_000",
     ];
 
     let fail = vec![
