@@ -25,6 +25,9 @@ pub struct ReactJsxOptions {
     /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name. default to `React.Fragment`
     #[serde(default = "default_pragma_frag")]
     pub pragma_frag: Cow<'static, str>,
+
+    /// When spreading props, use inline object with spread elements directly instead of Babel's extend helper or Object.assign.
+    pub use_built_ins: Option<bool>,
 }
 
 fn default_throw_if_namespace() -> bool {
@@ -51,6 +54,7 @@ impl Default for ReactJsxOptions {
             import_source: default_import_source(),
             pragma: default_pragma(),
             pragma_frag: default_pragma_frag(),
+            use_built_ins: None,
         }
     }
 }

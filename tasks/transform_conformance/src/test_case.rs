@@ -88,6 +88,7 @@ pub trait TestCase {
         let options = self.options();
         TransformOptions {
             target: TransformTarget::ESNext,
+            babel_8_breaking: options.babel_8_breaking,
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),
