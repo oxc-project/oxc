@@ -180,6 +180,7 @@ mod unicorn {
     pub mod prefer_date_now;
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
+    pub mod prefer_event_target;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
@@ -343,6 +344,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_date_now,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
+    unicorn::prefer_event_target,
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
