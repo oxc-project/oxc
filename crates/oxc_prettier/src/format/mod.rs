@@ -1679,14 +1679,18 @@ impl<'a> Format<'a> for ImportExpression<'a> {
             let mut parts = p.vec();
             parts.push(ss!("import"));
             parts.push(ss!("("));
-            parts.push(format!(p, self.source));
+            let mut indent_parts = p.vec();
+            indent_parts.push(softline!());
+            indent_parts.push(format!(p, self.source));
             if !self.arguments.is_empty() {
                 for arg in &self.arguments {
-                    parts.push(ss!(","));
-                    parts.push(Doc::Line);
-                    parts.push(format!(p, arg));
+                    indent_parts.push(ss!(","));
+                    indent_parts.push(Doc::Line);
+                    indent_parts.push(format!(p, arg));
                 }
             }
+            parts.push(group!(p, Doc::Indent(indent_parts)));
+            parts.push(softline!());
             parts.push(ss!(")"));
 
             Doc::Group(Group::new(parts, false))

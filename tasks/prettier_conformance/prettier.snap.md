@@ -1,4 +1,4 @@
-Compatibility: 132/601 (21.96%)
+Compatibility: 133/601 (22.13%)
 
 # Failed
 
@@ -643,7 +643,6 @@ Compatibility: 132/601 (21.96%)
 * throw_statement/jsx.js
 
 ### trailing-comma
-* trailing-comma/dynamic-import.js
 * trailing-comma/es5.js
 * trailing-comma/function-calls.js
 * trailing-comma/jsx.js
