@@ -36,7 +36,6 @@ impl NumericSeparatorsStyle {
 struct FormatNumber<'a>(&'a NumberLiteral<'a>);
 impl<'a> FormatNumber<'a> {
     fn format(&self) -> String {
-        dbg!(self.base);
         match self.base {
             oxc_syntax::NumberBase::Binary => self.format_binary(),
             oxc_syntax::NumberBase::Decimal => self.format_decimal(),
@@ -95,20 +94,9 @@ impl<'a> FormatNumber<'a> {
     }
 
     fn format_decimal(&self) -> String {
-        let exponential_notation = self.raw.contains(&['e', 'E']);
-
-        if exponential_notation {
-            todo!();
-        }
-
-        let mut string = format!("{}", self.value);
-        add_separators(
-            &mut string,
-            SeparatorDir::Right,
-            DECIMAL_MINIMUM_DIGITS,
-            DECIMAL_GROUP_LENGTH,
-        );
-        string
+        let mut out = self.raw.replace('_', "").to_string();
+        add_separators(&mut out, SeparatorDir::Right, DECIMAL_MINIMUM_DIGITS, DECIMAL_GROUP_LENGTH);
+        out
     }
 
     fn format_float(&self) -> String {
@@ -118,42 +106,33 @@ impl<'a> FormatNumber<'a> {
             todo!();
         }
 
-        let mut result = String::new();
+        let raw = self.raw.replace('_', "");
+        let (whole, decimal) = raw.split_once('.').expect("floats should contain a decimal");
 
-        let string = format!("{}", self.value);
+        let mut result = whole.to_string();
 
-        let (whole, decimal) = string.split_once('.').expect("floats should contain a decimal");
-        let starts_with_decimal = self.raw.starts_with('.');
-
-        if starts_with_decimal {
-            let mut decimal = decimal.to_string();
+        if result.len() > 0 {
             add_separators(
-                &mut decimal,
-                SeparatorDir::Left,
-                DECIMAL_MINIMUM_DIGITS,
-                DECIMAL_GROUP_LENGTH,
-            );
-            result.push('.');
-            result.push_str(&decimal);
-        } else {
-            let mut whole = whole.to_string();
-            let mut decimal = decimal.to_string();
-            add_separators(
-                &mut whole,
+                &mut result,
                 SeparatorDir::Right,
                 DECIMAL_MINIMUM_DIGITS,
                 DECIMAL_GROUP_LENGTH,
             );
+        };
+
+        result.push('.');
+
+        if decimal.len() > 0 {
+            let mut decimal = decimal.to_string();
             add_separators(
                 &mut decimal,
                 SeparatorDir::Left,
                 DECIMAL_MINIMUM_DIGITS,
                 DECIMAL_GROUP_LENGTH,
             );
-            result.push_str(&whole);
-            result.push('.');
             result.push_str(&decimal);
         }
+
         result
     }
 }
@@ -170,7 +149,6 @@ struct FormatBigint<'a>(&'a BigintLiteral, &'a str);
 
 impl<'a> FormatBigint<'a> {
     fn format(&self) -> String {
-        dbg!(self.base);
         match self.base {
             oxc_syntax::BigintBase::Binary => self.format_binary(),
             oxc_syntax::BigintBase::Decimal => self.format_decimal(),
@@ -274,7 +252,7 @@ enum SeparatorDir {
 }
 
 fn add_separators(s: &mut String, dir: SeparatorDir, minimum_digits: usize, group_length: usize) {
-    if s.len() < minimum_digits || s.len() < group_length {
+    if s.len() < minimum_digits || s.len() < group_length + 1 {
         return;
     }
 
@@ -282,7 +260,6 @@ fn add_separators(s: &mut String, dir: SeparatorDir, minimum_digits: usize, grou
         SeparatorDir::Right => {
             let mut pos = s.len();
             while pos > group_length {
-                dbg!(group_length, minimum_digits, pos,);
                 pos -= group_length;
                 s.insert(pos, '_');
             }
@@ -290,7 +267,6 @@ fn add_separators(s: &mut String, dir: SeparatorDir, minimum_digits: usize, grou
         SeparatorDir::Left => {
             let mut pos = group_length;
             while pos < s.len() {
-                dbg!(group_length, minimum_digits, pos);
                 s.insert(pos, '_');
                 pos += group_length + 1;
             }
@@ -334,7 +310,7 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumberLiteral(number) => {
                 let formatted = self.format_number(number);
-                println!("Formatted {:?} Raw: {:?}", formatted, number.raw);
+                println!("Base {:?} Formatted {:?} Raw: {:?}", number.base, formatted, number.raw);
                 if formatted != number.raw {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
                         Fix::new(formatted, number.span)
@@ -344,8 +320,6 @@ impl Rule for NumericSeparatorsStyle {
             AstKind::BigintLiteral(number) => {
                 let raw = number.span.source_text(ctx.source_text());
                 let formatted = self.format_bigint(number, raw);
-
-                println!("Formatted {:?} Raw: {:?}", formatted, raw);
 
                 if formatted.len() as u32 != number.span.size() {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
@@ -503,7 +477,6 @@ fn test_bigint() {
 
 #[test]
 fn test_number_decimal_exponential() {
-    todo!();
     use crate::tester::Tester;
 
     let pass = vec![
@@ -546,7 +519,6 @@ fn test_number_decimal_exponential() {
 
 #[test]
 fn test_number_decimal_float() {
-    todo!();
     use crate::tester::Tester;
 
     let pass = vec![
