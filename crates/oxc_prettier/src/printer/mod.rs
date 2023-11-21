@@ -126,7 +126,7 @@ impl<'a> Printer<'a> {
             }
             Mode::Break => {
                 self.cmds.extend(docs.into_iter().rev().map(|doc| {
-                    Command::new(Indent { length: indent.length + 1 }, Mode::Flat, doc)
+                    Command::new(Indent { length: indent.length + 1 }, Mode::Break, doc)
                 }));
             }
         }
