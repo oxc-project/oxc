@@ -1719,7 +1719,12 @@ impl<'a> Format<'a> for TemplateElement {
 
 impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+
+        parts.push(format!(p, self.tag));
+        parts.push(format!(p, self.quasi));
+
+        Doc::Array(parts)
     }
 }
 
