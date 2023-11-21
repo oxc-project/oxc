@@ -1,0 +1,293 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_math_trunc
+---
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.1 | 0;
+   ·             ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 111 | 0;
+   ·             ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = (1 + 2 / 3.4) | 0;
+   ·             ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar((1.4 | 0) + 2);
+   ·                  ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = (0, 1.4) | 0;
+   ·             ────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ function foo() {return.1 | 0;}
+   ·                       ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | 0.;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | .0;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | 0.0000_0000_0000;
+   ·             ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | 0b0;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | 0x0000_0000_0000;
+   ·             ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.4 | 0o0;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = 1.23 | 0 | 4;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~3.9;
+   ·             ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~111;
+   ·             ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~(1 + 2 / 3.4);
+   ·             ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~1 + 2 / 3.4;
+   ·             ───
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~(0, 1.4);
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~10.01;
+   ·              ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~(~10.01);
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~(~~10.01);
+   ·               ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~-10.01;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~10.01;
+   ·               ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ function foo() {return~~3.9;}
+   ·                       ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `>> 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar >> 0;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `<< 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar << 0;
+   ·             ────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar ^ 0;
+   ·             ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ function foo() {return.1 ^0;}
+   ·                       ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^= 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ function foo() {return[foo][0] ^= 0;};
+   ·                       ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = /* first comment */ 3.4 | 0; // A B C
+   ·                                 ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = /* first comment */ ~~3.4; // A B C
+   ·                                 ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = /* will keep */ 3.4 /* will remove 1 */ | /* will remove 2 */ 0;
+   ·                             ───────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = /* will keep */ ~ /* will remove 1 */ ~ /* will remove 2 */ 3.4;
+   ·                             ───────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~bar | 0;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~bar | 0;
+   ·             ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~(bar| 0);
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~(bar| 0);
+   ·                ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar | 0 | 0;
+   ·             ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = bar | 0 | 0;
+   ·             ───────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `~ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·               ────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^ 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ─────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `<< 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `<< 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `>> 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `>> 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                  ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                   ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
+   ╭─[prefer_math_trunc.tsx:1:1]
+ 1 │ const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);
+   ·                   ───────
+   ╰────
+
+
