@@ -202,11 +202,16 @@ impl<Fs: FileSystem + Default> ResolverGeneric<Fs> {
         let path = self.load_realpath(&cached_path)?;
         // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
+        let package_json = cached_path.find_package_json(&self.cache.fs, &self.options)?;
+        if let Some(package_json) = &package_json {
+            // path must be inside the package.
+            debug_assert!(path.starts_with(package_json.directory()));
+        }
         Ok(Resolution {
             path,
             query: ctx.query.take(),
             fragment: ctx.fragment.take(),
-            package_json: cached_path.find_package_json(&self.cache.fs, &self.options)?,
+            package_json,
         })
     }
 

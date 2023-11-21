@@ -282,6 +282,11 @@ impl CachedPathImpl {
                 let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
                     return Ok(None);
                 };
+                let package_json_path = if options.symlinks {
+                    self.realpath(fs)?.join("package.json")
+                } else {
+                    package_json_path
+                };
                 PackageJson::parse(package_json_path.clone(), &package_json_string, options)
                     .map(Arc::new)
                     .map(Some)
