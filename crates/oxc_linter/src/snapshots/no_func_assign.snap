@@ -51,4 +51,11 @@ expression: no_func_assign
    ·                     ╰── foo is re-assigned here
    ╰────
 
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ var a = function foo() { foo = 123; };
+   ·                          ─┬─
+   ·                           ╰── foo is re-assigned here
+   ╰────
+
 
