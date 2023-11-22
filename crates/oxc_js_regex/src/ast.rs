@@ -359,7 +359,7 @@ pub struct Character {
 
 #[derive(Debug)]
 pub enum BackreferenceRef {
-    Number(i32), // FIXME:
+    Number(i32),
     Atom(Atom),
 }
 
