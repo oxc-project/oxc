@@ -1,4 +1,4 @@
-Compatibility: 142/597 (23.79%)
+Compatibility: 143/597 (23.95%)
 
 # Failed
 
@@ -441,9 +441,6 @@ Compatibility: 142/597 (23.79%)
 * method-chain/test.js
 * method-chain/this.js
 * method-chain/tuple-and-record.js
-
-### method-chain/print-width-120
-* method-chain/print-width-120/constructor.js
 
 ### module-blocks
 * module-blocks/comments.js

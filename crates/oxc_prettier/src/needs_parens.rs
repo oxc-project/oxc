@@ -266,7 +266,24 @@ impl<'a> Prettier<'a> {
 
     fn check_member_call_tagged_template_ts_non_null(&self, span: Span) -> bool {
         match self.parent_kind() {
-            AstKind::NewExpression(new_expr) if new_expr.callee.span() == span => true,
+            AstKind::NewExpression(new_expr) if new_expr.callee.span() == span => {
+                let mut object = &new_expr.callee;
+                loop {
+                    match object {
+                        Expression::CallExpression(_) => return true,
+                        Expression::MemberExpression(e) => {
+                            object = e.object();
+                        }
+                        Expression::TaggedTemplateExpression(e) => {
+                            object = &e.tag;
+                        }
+                        Expression::TSNonNullExpression(e) => {
+                            object = &e.expression;
+                        }
+                        _ => return false,
+                    }
+                }
+            }
             _ => false,
         }
     }
