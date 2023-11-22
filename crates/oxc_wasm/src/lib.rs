@@ -184,7 +184,6 @@ impl Oxc {
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
             .parse();
-        let trivias = ret.trivias.clone();
         self.save_diagnostics(ret.errors);
 
         self.ast = ret.program.serialize(&self.serializer)?;
@@ -198,7 +197,7 @@ impl Oxc {
                 .preserve_parens(false)
                 .parse();
             Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
-                .doc(program)
+                .doc(&ret.program)
         };
 
         self.prettier_ir = prettier_doc.to_string();
@@ -233,9 +232,13 @@ impl Oxc {
         }
 
         if run_options.prettier_format() {
+            let ret = Parser::new(&allocator, source_text, source_type)
+                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .preserve_parens(false)
+                .parse();
             let printed =
-                Prettier::new(&allocator, source_text, trivias, PrettierOptions::default())
-                    .build(program);
+                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+                    .build(&ret.program);
             self.prettier_formatted_text = printed;
         }
 
