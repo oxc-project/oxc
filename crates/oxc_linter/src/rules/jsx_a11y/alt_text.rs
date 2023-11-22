@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::utils::{has_jsx_prop_lowercase, get_prop_value, get_literal_prop_value};
+use crate::utils::{get_literal_prop_value, get_prop_value, has_jsx_prop_lowercase};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
