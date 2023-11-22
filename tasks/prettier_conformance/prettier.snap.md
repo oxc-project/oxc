@@ -1,4 +1,4 @@
-Compatibility: 131/597 (21.94%)
+Compatibility: 133/597 (22.28%)
 
 # Failed
 
@@ -318,7 +318,6 @@ Compatibility: 131/597 (21.94%)
 * export/same-local-and-exported.js
 
 ### export-default
-* export-default/binary_and_template.js
 * export-default/body.js
 * export-default/class_instance.js
 * export-default/function_in_template.js
@@ -600,7 +599,6 @@ Compatibility: 131/597 (21.94%)
 * switch/switch.js
 
 ### template
-* template/arrow.js
 * template/call.js
 * template/comment.js
 * template/faulty-locations.js

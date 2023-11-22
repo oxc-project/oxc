@@ -238,7 +238,8 @@ impl TestRunner {
             if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
         );
 
-        let output = Self::prettier(path, input, prettier_options);
+        let output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
+        let input = input.replace('`', "\\`");
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
@@ -251,7 +252,7 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected = Self::get_expect(snap_content, input).unwrap_or_default();
+            let expected = Self::get_expect(snap_content, input.as_str()).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
