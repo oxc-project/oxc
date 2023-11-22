@@ -76,7 +76,7 @@ impl<'a> Prettier<'a> {
                         AssignmentTargetPattern::ObjectAssignmentTarget(_)
                     )
                 ),
-                _ => false,
+                _ => true,
             },
             AstKind::UpdateExpression(update_expr) => match parent_kind {
                 AstKind::UnaryExpression(unary_expr) => {
