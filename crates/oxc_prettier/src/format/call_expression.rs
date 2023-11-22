@@ -78,7 +78,11 @@ fn print_call_expression_arguments<'a>(
 
     let callee = expression.callee();
     let arguments = expression.arguments();
-    let should_break = !is_commons_js_or_amd_call(expression.callee(), arguments);
+    let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
+        !is_commons_js_or_amd_call(expression.callee(), arguments)
+    } else {
+        true
+    };
 
     if arguments.is_empty() {
         parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
