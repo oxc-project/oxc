@@ -1,4 +1,4 @@
-Compatibility: 139/597 (23.28%)
+Compatibility: 140/597 (23.45%)
 
 # Failed
 
@@ -289,7 +289,6 @@ Compatibility: 139/597 (23.28%)
 * directives/last-line-1.js
 * directives/last-line-2.js
 * directives/newline.js
-* directives/no-newline.js
 * directives/test.js
 
 ### empty-paren-comment
