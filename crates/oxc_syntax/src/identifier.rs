@@ -90,7 +90,7 @@ pub fn is_identifier_start_ascii(c: char) -> bool {
     ASCII_START.0[c as usize]
 }
 
-/// Section 12.6 Detect `IdentifierStartChar`
+/// Section 12.7 Detect `IdentifierStartChar`
 #[inline]
 pub fn is_identifier_start_all(c: char) -> bool {
     if c.is_ascii() {
@@ -99,7 +99,7 @@ pub fn is_identifier_start_all(c: char) -> bool {
     is_id_start_unicode(c)
 }
 
-/// Section 12.6 Detect `IdentifierPartChar`
+/// Section 12.7 Detect `IdentifierPartChar`
 /// NOTE 2: The nonterminal `IdentifierPart` derives _ via `UnicodeIDContinue`.
 #[inline]
 pub fn is_identifier_part(c: char) -> bool {

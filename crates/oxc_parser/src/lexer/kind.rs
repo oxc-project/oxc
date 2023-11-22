@@ -14,9 +14,9 @@ pub enum Kind {
     MultiLineComment,
     // 12.5 Hashbang Comments
     HashbangComment,
-    // 12.6 identifier
+    // 12.7.1 identifier
     Ident,
-    // 12.6.2 keyword
+    // 12.7.2 keyword
     Await,
     Break,
     Case,
@@ -102,7 +102,7 @@ pub enum Kind {
     Public,
     Static,
     Yield,
-    // 12.7 punctuators
+    // 12.8 punctuators
     Amp, // &
     Amp2,
     Amp2Eq,
@@ -161,12 +161,12 @@ pub enum Kind {
     Tilde,
     // arrow function
     Arrow,
-    // 12.8.1 Null Literals
+    // 12.9.1 Null Literals
     Null,
-    // 12.8.2 Boolean Literals
+    // 12.9.2 Boolean Literals
     True,
     False,
-    // 12.8.3 Numeric Literals
+    // 12.9.3 Numeric Literals
     Decimal,
     Float,
     Binary,
@@ -176,12 +176,12 @@ pub enum Kind {
     PositiveExponential,
     // for `1e-10`
     NegativeExponential,
-    // 12.8.4 String Literals
+    // 12.9.4 String Literals
     /// String Type
     Str,
-    // 12.8.5 Regular Expression Literals
+    // 12.9.5 Regular Expression Literals
     RegExp,
-    // 12.8.6 Template Literal
+    // 12.9.6 Template Literal
     NoSubstitutionTemplate,
     TemplateHead,
     TemplateMiddle,
