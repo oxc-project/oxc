@@ -125,6 +125,7 @@ impl<'a> ReactJsx<'a> {
             Some(runtime) if runtime == "classic" => ReactJsxRuntime::Classic,
             Some(runtime) if runtime == "automatic" => ReactJsxRuntime::Automatic,
             None => {
+                // TODO: development mode https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-plugin-transform-react-jsx/src/create-plugin.ts#L77-L81
                 if options.babel_8_breaking == Some(true) {
                     ReactJsxRuntime::Automatic
                 } else {
