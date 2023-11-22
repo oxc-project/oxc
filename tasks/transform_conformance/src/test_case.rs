@@ -9,7 +9,7 @@ use oxc_diagnostics::Error;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, BabelOptions};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
     NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions, TransformTarget,
     Transformer,
@@ -88,6 +88,7 @@ pub trait TestCase {
         let options = self.options();
         TransformOptions {
             target: TransformTarget::ESNext,
+            babel_8_breaking: options.babel_8_breaking,
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),
@@ -108,6 +109,7 @@ pub trait TestCase {
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
             template_literals: options.get_plugin("transform-template-literals").is_some(),
+            property_literals: options.get_plugin("transform-property-literals").is_some(),
         }
     }
 
@@ -255,17 +257,25 @@ impl TestCase for ConformanceTestCase {
             println!("Input:\n");
             println!("{input}\n");
             println!("Options:");
-            println!("{transform_options:?}\n");
+            println!("{transform_options:#?}\n");
             if babel_options.throws.is_some() {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
                 println!("Actual Errors:\n");
                 println!("{actual_errors}\n");
+                if !passed {
+                    println!("Diff:\n");
+                    print_diff_in_terminal(&output, &actual_errors);
+                }
             } else {
                 println!("Expected:\n");
                 println!("{output}\n");
                 println!("Transformed:\n");
                 println!("{transformed_code}");
+                if !passed {
+                    println!("Diff:\n");
+                    print_diff_in_terminal(&output, &transformed_code);
+                }
             }
             println!("Passed: {passed}");
         }

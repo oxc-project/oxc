@@ -5,16 +5,21 @@ publish           = false
 edition.workspace = true
 license.workspace = true
 
+[lints]
+workspace = true
+
 [lib]
 test    = false
 doctest = false
 
 [dependencies]
+console = "0.15.7"
 oxc_syntax = { workspace = true, features = ["serde"] }
 
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }
+similar = "2.3.0"
 
 ureq = { workspace = true }
 url  = { workspace = true }

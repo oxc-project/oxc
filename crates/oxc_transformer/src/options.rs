@@ -23,11 +23,14 @@ pub struct TransformOptions {
     pub shorthand_properties: bool,
     pub sticky_regex: bool,
     pub template_literals: bool,
+    pub property_literals: bool,
+    pub babel_8_breaking: Option<bool>,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TransformTarget {
+    ES3,
     ES5,
     ES2015,
     ES2016,

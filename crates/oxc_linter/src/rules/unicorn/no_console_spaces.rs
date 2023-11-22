@@ -9,7 +9,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{
+    ast_util::{call_expr_method_callee_info, is_method_call},
+    context::LintContext,
+    rule::Rule,
+    AstNode, Fix,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -51,63 +56,61 @@ impl Rule for NoConsoleSpaces {
             _ => return,
         };
 
-        let member_expr = match &call_expr.callee {
-            Expression::MemberExpression(member_expr) => member_expr,
-            _ => return,
-        };
+        if !is_method_call(
+            call_expr,
+            Some(&["console"]),
+            Some(&["log", "debug", "info", "warn", "error"]),
+            None,
+            None,
+        ) {
+            return;
+        }
 
-        match member_expr.object() {
-            Expression::Identifier(ident) if ident.name == "console" => ident,
-            _ => return,
-        };
+        let call_expr_arg_len = call_expr.arguments.len();
 
-        if let Some(ident) = member_expr.static_property_name() {
-            if matches!(ident, "log" | "debug" | "info" | "warn" | "error") {
-                let call_expr_arg_len = call_expr.arguments.len();
+        for (i, arg) in call_expr.arguments.iter().enumerate() {
+            if let Argument::Expression(expression_arg) = &arg {
+                let (literal_raw, is_template_lit) = match expression_arg {
+                    Expression::StringLiteral(string_lit) => {
+                        let literal_raw = string_lit.value.as_str();
 
-                for (i, arg) in call_expr.arguments.iter().enumerate() {
-                    if let Argument::Expression(expression_arg) = &arg {
-                        let (literal_raw, is_template_lit) = match expression_arg {
-                            Expression::StringLiteral(string_lit) => {
-                                let literal_raw = string_lit.value.as_str();
-
-                                (literal_raw, false)
-                            }
-                            Expression::TemplateLiteral(string_lit) => {
-                                let literal_raw = string_lit
-                                    .span
-                                    .source_text(ctx.source_text().as_ref())
-                                    .trim_start_matches('`')
-                                    .trim_end_matches('`');
-
-                                (literal_raw, true)
-                            }
-
-                            _ => continue,
-                        };
-
-                        if check_literal_leading(i, literal_raw) {
-                            report_diagnostic(
-                                "leading",
-                                ident,
-                                expression_arg.span(),
-                                literal_raw,
-                                is_template_lit,
-                                ctx,
-                            );
-                        }
-
-                        if check_literal_trailing(i, literal_raw, call_expr_arg_len) {
-                            report_diagnostic(
-                                "trailing",
-                                ident,
-                                expression_arg.span(),
-                                literal_raw,
-                                is_template_lit,
-                                ctx,
-                            );
-                        }
+                        (literal_raw, false)
                     }
+                    Expression::TemplateLiteral(string_lit) => {
+                        let literal_raw = string_lit
+                            .span
+                            .source_text(ctx.source_text().as_ref())
+                            .trim_start_matches('`')
+                            .trim_end_matches('`');
+
+                        (literal_raw, true)
+                    }
+
+                    _ => continue,
+                };
+
+                if check_literal_leading(i, literal_raw) {
+                    report_diagnostic(
+                        "leading",
+                        // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
+                        call_expr_method_callee_info(call_expr).unwrap().1,
+                        expression_arg.span(),
+                        literal_raw,
+                        is_template_lit,
+                        ctx,
+                    );
+                }
+
+                if check_literal_trailing(i, literal_raw, call_expr_arg_len) {
+                    report_diagnostic(
+                        "trailing",
+                        // SAFETY: `is_method_call` ensures that `call_expr`'s `callee` is a `MemberExpression` with a `MemberExpression` as its `object`.
+                        call_expr_method_callee_info(call_expr).unwrap().1,
+                        expression_arg.span(),
+                        literal_raw,
+                        is_template_lit,
+                        ctx,
+                    );
                 }
             }
         }

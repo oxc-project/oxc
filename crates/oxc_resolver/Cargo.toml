@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_resolver"
-version                = "0.5.3"
+version                = "0.5.4"
 readme                 = "README.md"
 authors.workspace      = true
 edition.workspace      = true
@@ -11,6 +11,9 @@ rust-version.workspace = true
 description            = "ESM / CJS module resolution"
 keywords               = ["node", "resolve", "cjs", "esm", "enhanced-resolve"]
 categories             = ["development-tools"]
+
+[lints]
+workspace = true
 
 [lib]
 doctest = false

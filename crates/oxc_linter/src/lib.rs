@@ -37,6 +37,12 @@ pub struct Linter {
     options: LintOptions,
 }
 
+impl Default for Linter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Linter {
     pub fn new() -> Self {
         let rules = RULES

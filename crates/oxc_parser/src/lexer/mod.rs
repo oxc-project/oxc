@@ -180,7 +180,7 @@ impl<'a> Lexer<'a> {
     /// See Section 12:
     ///   The `InputElementRegExp` goal symbol is used in all syntactic grammar contexts
     ///   where a `RegularExpressionLiteral` is permitted
-    /// Which meams the parser needs to re-tokenize on `PrimaryExpression`,
+    /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
     pub fn next_regex(&mut self, kind: Kind) -> Token<'a> {
         self.current.token.start = self.offset()
@@ -375,14 +375,19 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Single Line Comment
+    #[allow(clippy::cast_possible_truncation)]
     fn skip_single_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next().as_ref() {
-            if is_line_terminator(*c) {
-                break;
+        let start = self.current.token.start;
+        while let Some(c) = self.current.chars.next() {
+            if is_line_terminator(c) {
+                self.current.token.is_on_new_line = true;
+                self.trivia_builder
+                    .add_single_line_comment(start, self.offset() - c.len_utf8() as u32);
+                return Kind::Comment;
             }
         }
-        self.current.token.is_on_new_line = true;
-        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
+        // EOF
+        self.trivia_builder.add_single_line_comment(start, self.offset());
         Kind::Comment
     }
 
@@ -412,7 +417,7 @@ impl<'a> Lexer<'a> {
         Kind::HashbangComment
     }
 
-    /// Section 12.6.1 Identifier Names
+    /// Section 12.7.1 Identifier Names
     fn identifier_tail(&mut self, mut builder: AutoCow<'a>) -> (bool, &'a str) {
         // ident tail
         while let Some(c) = self.peek() {
@@ -445,7 +450,7 @@ impl<'a> Lexer<'a> {
         self.identifier_name(builder)
     }
 
-    /// Section 12.7 Punctuators
+    /// Section 12.8 Punctuators
     fn read_dot(&mut self, builder: &mut AutoCow<'a>) -> Kind {
         if self.peek() == Some('.') && self.peek2() == Some('.') {
             self.current.chars.next();
@@ -548,7 +553,7 @@ impl<'a> Lexer<'a> {
         Kind::PrivateIdentifier
     }
 
-    /// 12.8.3 Numeric Literals with `0` prefix
+    /// 12.9.3 Numeric Literals with `0` prefix
     fn read_zero(&mut self, builder: &mut AutoCow<'a>) -> Kind {
         match self.peek() {
             Some('b' | 'B') => self.read_non_decimal(Kind::Binary, builder),
@@ -765,7 +770,7 @@ impl<'a> Lexer<'a> {
         Kind::Undetermined
     }
 
-    /// 12.8.4 String Literals
+    /// 12.9.4 String Literals
     fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         loop {
@@ -799,7 +804,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// 12.8.5 Regular Expression Literals
+    /// 12.9.5 Regular Expression Literals
     fn read_regex(&mut self) -> Kind {
         let start = self.current.token.start + 1; // +1 to exclude `/`
         let mut in_escape = false;
@@ -1233,7 +1238,7 @@ impl<'a> Lexer<'a> {
                 }
                 // 0 [lookahead ∉ DecimalDigit]
                 '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => text.push('\0'),
-                // Section 12.8.4 String Literals
+                // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
                 a @ '0'..='7' if !in_template => {

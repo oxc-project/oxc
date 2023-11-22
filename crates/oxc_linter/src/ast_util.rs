@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use oxc_ast::AstKind;
 use oxc_semantic::AstNode;
-use oxc_span::{Atom, GetSpan};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
 
@@ -312,4 +312,58 @@ pub fn extract_regex_flags<'a>(
         flags |= flag;
     }
     Some(flags)
+}
+
+pub fn is_method_call<'a>(
+    call_expr: &CallExpression<'a>,
+    objects: Option<&[&'a str]>,
+    methods: Option<&[&'a str]>,
+    min_arg_count: Option<usize>,
+    max_arg_count: Option<usize>,
+) -> bool {
+    if let Some(min_arg_count) = min_arg_count {
+        if call_expr.arguments.len() < min_arg_count {
+            return false;
+        }
+    }
+
+    if let Some(max_arg_count) = max_arg_count {
+        if call_expr.arguments.len() > max_arg_count {
+            return false;
+        }
+    }
+
+    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
+    else {
+        return false;
+    };
+
+    if let Some(objects) = objects {
+        let Expression::Identifier(ident) = member_expr.object().without_parenthesized() else {
+            return false;
+        };
+        if !objects.contains(&ident.name.as_str()) {
+            return false;
+        }
+    }
+
+    if let Some(methods) = methods {
+        let Some(static_property_name) = member_expr.static_property_name() else { return false };
+        if !methods.contains(&static_property_name) {
+            return false;
+        }
+    }
+
+    true
+}
+
+pub fn call_expr_method_callee_info<'a>(
+    call_expr: &'a CallExpression<'a>,
+) -> Option<(Span, &'a str)> {
+    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
+    else {
+        return None;
+    };
+
+    member_expr.static_property_info()
 }

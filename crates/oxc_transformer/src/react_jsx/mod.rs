@@ -15,7 +15,7 @@ use oxc_syntax::{
 };
 
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
-use crate::context::TransformerCtx;
+use crate::{context::TransformerCtx, TransformOptions};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
@@ -59,6 +59,7 @@ pub struct ReactJsx<'a> {
     import_create_element: bool,
     require_jsx_runtime: bool,
     jsx_runtime_importer: Atom,
+    pub babel_8_breaking: Option<bool>,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -100,21 +101,35 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, ctx: TransformerCtx<'a>, options: ReactJsxOptions) -> Self {
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        mut ctx: TransformerCtx<'a>,
+        options: TransformOptions,
+    ) -> Option<Self> {
         let imports = ast.new_vec();
-        let options = options.with_comments(&ctx.semantic());
+        let jsx_options = options.react_jsx?.with_comments(&ctx.semantic());
+        if options.babel_8_breaking == Some(true) {
+            if jsx_options.use_built_ins.is_some() {
+                ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since \"useBuiltIns\" is removed in Babel 8, you can remove it from the config."));
+                return None;
+            }
+
+            if jsx_options.use_spread.is_some() {
+                ctx.error(miette::Error::msg("@babel/plugin-transform-react-jsx: Since Babel 8, an inline object with spread elements is always used, and the \"useSpread\" option is no longer available. Please remove it from your config."));
+                return None;
+            }
+        }
 
         let jsx_runtime_importer =
-            if options.import_source == "react" || options.runtime.is_classic() {
+            if jsx_options.import_source == "react" || jsx_options.runtime.is_classic() {
                 Atom::new_inline("react/jsx-runtime")
             } else {
-                Atom::from(format!("{}/jsx-runtime", options.import_source))
+                Atom::from(format!("{}/jsx-runtime", jsx_options.import_source))
             };
-
-        Self {
+        Some(Self {
             ast,
             ctx,
-            options,
+            options: jsx_options,
             imports,
             jsx_runtime_importer,
             require_jsx_runtime: false,
@@ -122,7 +137,8 @@ impl<'a> ReactJsx<'a> {
             import_jsxs: false,
             import_fragment: false,
             import_create_element: false,
-        }
+            babel_8_breaking: options.babel_8_breaking,
+        })
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {

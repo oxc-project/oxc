@@ -104,6 +104,12 @@ impl<'a> GetSpan for BindingPattern<'a> {
     }
 }
 
+impl<'a> GetSpan for BindingProperty<'a> {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for ClassElement<'a> {
     fn span(&self) -> Span {
         match self {
@@ -213,6 +219,15 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
             Self::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(pat)) => {
                 pat.span
             }
+        }
+    }
+}
+
+impl<'a> GetSpan for AssignmentTargetProperty<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::AssignmentTargetPropertyIdentifier(identifier) => identifier.span,
+            Self::AssignmentTargetPropertyProperty(literal) => literal.span,
         }
     }
 }

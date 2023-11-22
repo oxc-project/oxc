@@ -5,9 +5,12 @@
 
 mod command;
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, vec};
 
-use crate::{doc::Doc, PrettierOptions};
+use crate::{
+    doc::{Doc, Group},
+    PrettierOptions,
+};
 
 use self::command::{Command, Indent, Mode};
 
@@ -51,7 +54,7 @@ impl<'a> Printer<'a> {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
-                Doc::Group(docs) => self.handle_group(indent, mode, docs),
+                Doc::Group(group) => self.handle_group(indent, mode, group),
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
@@ -78,25 +81,31 @@ impl<'a> Printer<'a> {
         );
     }
 
-    fn handle_group(&mut self, indent: Indent, mode: Mode, docs: oxc_allocator::Vec<'a, Doc<'a>>) {
+    fn handle_group(&mut self, indent: Indent, mode: Mode, group: Group<'a>) {
         match mode {
             Mode::Flat => {
                 // TODO: consider supporting `group mode` e.g. Break/Flat
-                self.cmds.extend(
-                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
-                );
+                self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
+                    Command::new(
+                        indent,
+                        if group.should_break { Mode::Break } else { Mode::Flat },
+                        doc,
+                    )
+                }));
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = (self.options.print_width as isize) - (self.pos as isize);
 
-                if self.fits(&docs, indent, remaining_width) {
-                    self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
-                    );
+                if !group.should_break && self.fits(&group.contents, remaining_width) {
+                    self.cmds.push(Command::new(indent, Mode::Flat, Doc::Group(group)));
                 } else {
                     self.cmds.extend(
-                        docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Break, doc)),
+                        group
+                            .contents
+                            .into_iter()
+                            .rev()
+                            .map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
                 }
             }
@@ -117,7 +126,7 @@ impl<'a> Printer<'a> {
             }
             Mode::Break => {
                 self.cmds.extend(docs.into_iter().rev().map(|doc| {
-                    Command::new(Indent { length: indent.length + 1 }, Mode::Flat, doc)
+                    Command::new(Indent { length: indent.length + 1 }, Mode::Break, doc)
                 }));
             }
         }
@@ -151,45 +160,60 @@ impl<'a> Printer<'a> {
     }
 
     #[allow(clippy::cast_possible_wrap)]
-    fn fits(
-        &self,
-        doc: &oxc_allocator::Vec<'a, Doc<'a>>,
-        indent: Indent,
-        remaining_width: isize,
-    ) -> bool {
+    fn fits(&self, docs: &oxc_allocator::Vec<'a, Doc<'a>>, remaining_width: isize) -> bool {
         let mut remaining_width = remaining_width;
 
         // TODO: these should be commands
-        let mut queue: VecDeque<&Doc<'a>> = doc.iter().collect();
+        let mut queue: VecDeque<(Mode, &Doc)> = docs.iter().map(|doc| (Mode::Flat, doc)).collect();
+        let mut cmds = self.cmds.iter().rev();
 
-        while let Some(next) = queue.pop_front() {
-            match next {
+        while let Some((mode, doc)) = queue.pop_front() {
+            let is_break = matches!(mode, Mode::Break);
+            match doc {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::IndentIfBreak(docs)
-                | Doc::Array(docs)
-                | Doc::Indent(docs)
-                | Doc::Group(docs) => {
+                Doc::IndentIfBreak(docs) | Doc::Indent(docs) | Doc::Array(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
-                        queue.push_front(d);
-                    }
-
-                    if matches!(next, Doc::Indent(_)) {
-                        remaining_width -= (self.options.tab_width * indent.length) as isize;
+                        queue.push_front((mode, d));
                     }
                 }
-                // trying to fit on a single line, so we don't need to consider line breaks
-                Doc::IfBreak { .. } | Doc::Softline => {}
-                Doc::Line => remaining_width -= 1,
+                Doc::Group(group) => {
+                    let mode = if group.should_break { Mode::Break } else { mode };
+                    for d in group.contents.iter().rev() {
+                        queue.push_front((mode, d));
+                    }
+                }
+                Doc::IfBreak(doc) => {
+                    if is_break {
+                        queue.push_front((mode, doc));
+                    }
+                }
+                Doc::Line => {
+                    if is_break {
+                        return true;
+                    }
+                    remaining_width -= 1_isize;
+                }
+                Doc::Softline => {
+                    if is_break {
+                        return true;
+                    }
+                }
                 Doc::Hardline => {
-                    return false;
+                    return true;
                 }
             }
 
             if remaining_width < 0 {
                 return false;
+            }
+
+            if queue.is_empty() {
+                if let Some(cmd) = cmds.next() {
+                    queue.push_back((cmd.mode, &cmd.doc));
+                }
             }
         }
 

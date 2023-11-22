@@ -235,6 +235,10 @@ pub struct WarningOptions {
     #[bpaf(switch, hide_usage)]
     pub quiet: bool,
 
+    /// Ensure warnings produce a non-zero exit code
+    #[bpaf(switch, hide_usage)]
+    pub deny_warnings: bool,
+
     /// Specify a warning threshold,
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     #[bpaf(argument("INT"), hide_usage)]

@@ -50,7 +50,42 @@ pub(super) fn print_function<'a>(
 
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(method.key.format(p));
+
+    if method.r#static {
+        parts.push(ss!("static "));
+    }
+
+    match method.kind {
+        MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
+        MethodDefinitionKind::Get => {
+            parts.push(ss!("get "));
+        }
+        MethodDefinitionKind::Set => {
+            parts.push(ss!("set "));
+        }
+    }
+
+    if method.value.r#async {
+        parts.push(ss!("async "));
+    }
+
+    if method.value.generator {
+        parts.push(ss!("*"));
+    }
+
+    if method.computed {
+        parts.push(ss!("["));
+        let key = match &method.key {
+            PropertyKey::Identifier(ident) => ident.format(p),
+            PropertyKey::PrivateIdentifier(ident) => ident.format(p),
+            PropertyKey::Expression(expr) => expr.format(p),
+        };
+        parts.push(key);
+        parts.push(ss!("]"));
+    } else {
+        parts.push(method.key.format(p));
+    }
+
     parts.push(method.value.params.format(p));
     if let Some(body) = &method.value.body {
         parts.push(ss!(" "));

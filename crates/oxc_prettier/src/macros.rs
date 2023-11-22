@@ -90,7 +90,7 @@ macro_rules! group {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group(temp_vec)
+            Doc::Group($crate::doc::Group::new(temp_vec, false))
         }
     };
 }
@@ -105,8 +105,10 @@ macro_rules! if_break {
 #[macro_export]
 macro_rules! wrap {
     ($p:ident, $self:expr, $kind:ident, $block:block) => {{
-        $p.enter_node(AstKind::$kind($p.alloc($self)));
+        let kind = AstKind::$kind($p.alloc($self));
+        $p.enter_node(kind);
         let doc = $block;
+        let doc = $p.wrap_parens(doc, kind);
         $p.leave_node();
         doc
     }};
