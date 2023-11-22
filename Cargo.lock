@@ -1924,6 +1924,7 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
