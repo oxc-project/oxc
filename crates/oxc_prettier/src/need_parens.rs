@@ -10,8 +10,8 @@
 )]
 use oxc_ast::{
     ast::{
-        AssignmentTarget, ChainElement, ExportDefaultDeclarationKind, Expression,
-        ModuleDeclaration, SimpleAssignmentTarget,
+        AssignmentTarget, AssignmentTargetPattern, ChainElement, ExportDefaultDeclarationKind,
+        Expression, ModuleDeclaration, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -62,9 +62,22 @@ impl<'a> Prettier<'a> {
                 }
             }
             AstKind::Class(c) if c.is_expression() => self.check_object_function_class(c.span),
-            AstKind::AssignmentExpression(_) => {
-                matches!(parent_kind, AstKind::ArrowExpression(arrow_expr) if arrow_expr.expression)
-            }
+            AstKind::AssignmentExpression(assign_expr) => match parent_kind {
+                AstKind::ArrowExpression(arrow_expr)
+                    if arrow_expr.expression
+                        && arrow_expr.body.statements[0].span() == assign_expr.span =>
+                {
+                    true
+                }
+                AstKind::AssignmentExpression(_) => false,
+                AstKind::ExpressionStatement(_) => matches!(
+                    assign_expr.left,
+                    AssignmentTarget::AssignmentTargetPattern(
+                        AssignmentTargetPattern::ObjectAssignmentTarget(_)
+                    )
+                ),
+                _ => false,
+            },
             AstKind::UpdateExpression(update_expr) => match parent_kind {
                 AstKind::UnaryExpression(unary_expr) => {
                     update_expr.prefix
