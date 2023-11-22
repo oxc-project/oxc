@@ -45,6 +45,9 @@ impl<'a> Prettier<'a> {
         }
 
         match kind {
+            AstKind::NumberLiteral(literal) => {
+                matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
+            }
             AstKind::SequenceExpression(_) => !matches!(parent_kind, AstKind::Program(_)),
             AstKind::ObjectExpression(e) => self.check_object_function_class(e.span),
             AstKind::Function(f) if f.is_expression() => {
