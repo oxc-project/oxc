@@ -12,6 +12,9 @@ repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
 
+[lints]
+workspace = true
+
 [[bin]]
 name              = "oxc_vscode"
 test = false

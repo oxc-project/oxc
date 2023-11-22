@@ -71,7 +71,8 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
         indent!(p, softline!(), elements)
     };
     parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
-    Doc::Group(Group::new(parts, false))
+    let should_break = should_break(array);
+    Doc::Group(Group::new(parts, should_break))
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -144,4 +145,62 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     }
 
     Doc::Array(parts)
+}
+
+fn should_break(array: &Array) -> bool {
+    if array.len() <= 1 {
+        return false;
+    }
+
+    match array {
+        Array::ArrayExpression(array) => {
+            array.elements.iter().enumerate().all(|(index, element)| {
+                let ArrayExpressionElement::Expression(element) = element else {
+                    return false;
+                };
+                if let Some(ArrayExpressionElement::Expression(next_element)) =
+                    array.elements.get(index + 1)
+                {
+                    let all_array_or_object = matches!(
+                        (element, next_element),
+                        (Expression::ArrayExpression(_), Expression::ArrayExpression(_))
+                            | (Expression::ObjectExpression(_), Expression::ObjectExpression(_))
+                    );
+                    if !all_array_or_object {
+                        return false;
+                    }
+                }
+
+                let Expression::ArrayExpression(array) = element else {
+                    return false;
+                };
+
+                array.elements.len() > 1
+            })
+        }
+        Array::TSTupleType(tuple) => {
+            tuple.element_types.iter().enumerate().all(|(index, element)| {
+                let TSTupleElement::TSType(element) = element else { return false };
+
+                if let Some(TSTupleElement::TSType(next_element)) =
+                    tuple.element_types.get(index + 1)
+                {
+                    if !matches!(
+                        (element, next_element),
+                        (TSType::TSTupleType(_), TSType::TSTupleType(_))
+                    ) {
+                        return false;
+                    }
+                }
+
+                let TSType::TSTupleType(array) = element else {
+                    return false;
+                };
+
+                array.element_types.len() > 1
+            })
+        }
+        Array::ArrayPattern(array) => false,
+        Array::ArrayAssignmentTarget(array) => false,
+    }
 }

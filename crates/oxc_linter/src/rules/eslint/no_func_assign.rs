@@ -73,8 +73,7 @@ fn test() {
         ("({x: foo = 0} = bar); function foo() { };", None),
         ("function foo() { [foo] = bar; }", None),
         ("(function() { ({x: foo = 0} = bar); function foo() { }; })();", None),
-        // TODO
-        // ("var a = function foo() { foo = 123; };", None),
+        ("var a = function foo() { foo = 123; };", None),
     ];
 
     Tester::new(NoFuncAssign::NAME, pass, fail).test_and_snapshot();

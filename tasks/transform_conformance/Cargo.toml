@@ -10,13 +10,16 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
-[[bin]]
-name = "oxc_transform_conformance"
-test = false
+[lints]
+workspace = true
 
 [lib]
 test    = false
 doctest = false
+
+[[bin]]
+name = "oxc_transform_conformance"
+test = false
 
 [dependencies]
 oxc_span         = { workspace = true }

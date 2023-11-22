@@ -41,6 +41,8 @@ fn fixtures_root() -> PathBuf {
 }
 
 const IGNORE_TESTS: &[&str] = &[
+    // non-standard syntax
+    "js/deferred-import-evaluation",
     // Unsupported stage3 features
     "js/async-do-expressions",
     "js/babel-plugins",
@@ -236,7 +238,8 @@ impl TestRunner {
             if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
         );
 
-        let output = Self::prettier(path, input, prettier_options);
+        let output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
+        let input = input.replace('`', "\\`");
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
@@ -249,7 +252,7 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected = Self::get_expect(snap_content, input).unwrap();
+            let expected = Self::get_expect(snap_content, input.as_str()).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
@@ -311,7 +314,7 @@ impl TestRunner {
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
         Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }

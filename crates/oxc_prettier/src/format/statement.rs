@@ -10,7 +10,7 @@ use super::Format;
 
 pub(super) fn print_statement_sequence<'a, F: Format<'a> + GetSpan>(
     p: &mut Prettier<'a>,
-    stmts: &Vec<'a, F>,
+    stmts: &[F],
     remove_last_statement_hardline: bool,
 ) -> Vec<'a, Doc<'a>> {
     let mut parts = p.vec();

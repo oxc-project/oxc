@@ -62,15 +62,18 @@ impl<'a> Parser<'a> {
                     if expecting_diretives {
                         if let Statement::ExpressionStatement(expr) = &stmt {
                             if let Expression::StringLiteral(string) = &expr.expression {
-                                let src = &self.source_text
-                                    [string.span.start as usize + 1..string.span.end as usize - 1];
-                                let directive = self.ast.directive(
-                                    expr.span,
-                                    (*string).clone(),
-                                    Atom::from(src),
-                                );
-                                directives.push(directive);
-                                continue;
+                                // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                                if expr.span.start == string.span.start {
+                                    let src = &self.source_text[string.span.start as usize + 1
+                                        ..string.span.end as usize - 1];
+                                    let directive = self.ast.directive(
+                                        expr.span,
+                                        (*string).clone(),
+                                        Atom::from(src),
+                                    );
+                                    directives.push(directive);
+                                    continue;
+                                }
                             }
                         }
                         expecting_diretives = false;

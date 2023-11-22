@@ -242,10 +242,12 @@ impl CachedPathImpl {
         options: &ResolveOptions,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = self;
-        // Go up a directory when querying a file, this avoids a file read from example.js/package.json
-        if cache_value.is_file(fs) {
+        // Go up directories when the querying path is not a directory
+        while !cache_value.is_dir(fs) {
             if let Some(cv) = &cache_value.parent {
                 cache_value = cv.as_ref();
+            } else {
+                break;
             }
         }
         let mut cache_value = Some(cache_value);
@@ -274,6 +276,11 @@ impl CachedPathImpl {
                 let package_json_path = self.path.join("package.json");
                 let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
                     return Ok(None);
+                };
+                let package_json_path = if options.symlinks {
+                    self.realpath(fs)?.join("package.json")
+                } else {
+                    package_json_path
                 };
                 PackageJson::parse(package_json_path.clone(), &package_json_string, options)
                     .map(Arc::new)

@@ -1,10 +1,12 @@
 use std::path::{Path, PathBuf};
 
 mod babel;
+mod diff;
 mod request;
 mod test_file;
 
 pub use crate::{babel::BabelOptions, request::agent, test_file::*};
+pub use diff::print_diff_in_terminal;
 
 /// # Panics
 /// Invalid Project Root

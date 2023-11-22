@@ -7,6 +7,7 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct ReactJsxOptions {
     /// Decides which runtime to use.
+    #[serde(default)]
     pub runtime: ReactJsxRuntime,
     /// Toggles whether or not to throw an error if an XML namespaced tag name is used. e.g. `<f:image />`
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
@@ -25,6 +26,15 @@ pub struct ReactJsxOptions {
     /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name. default to `React.Fragment`
     #[serde(default = "default_pragma_frag")]
     pub pragma_frag: Cow<'static, str>,
+
+    /// When spreading props, use Object.assign directly instead of Babel's extend helper.
+    /// Use `Some<T>` instead of `bool` because we want to know if user set this field explicitly,
+    /// which used for creating warning, https://github.com/oxc-project/oxc/blob/c3e2098c04d8916cb812bdd16d2026bb430ac25f/crates/oxc_transformer/src/react_jsx/mod.rs#L111-L114
+    pub use_built_ins: Option<bool>,
+    /// When spreading props, use inline object with spread elements directly instead of Babel's extend helper or Object.assign.
+    /// Use `Some<T>` instead of `bool` because we want to know if user set this field explicitly,
+    /// which used for creating warning, https://github.com/oxc-project/oxc/blob/c3e2098c04d8916cb812bdd16d2026bb430ac25f/crates/oxc_transformer/src/react_jsx/mod.rs#L111-L114
+    pub use_spread: Option<bool>,
 }
 
 fn default_throw_if_namespace() -> bool {
@@ -51,6 +61,8 @@ impl Default for ReactJsxOptions {
             import_source: default_import_source(),
             pragma: default_pragma(),
             pragma_frag: default_pragma_frag(),
+            use_built_ins: None,
+            use_spread: None,
         }
     }
 }

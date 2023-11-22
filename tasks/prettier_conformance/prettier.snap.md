@@ -1,4 +1,4 @@
-Compatibility: 111/601 (18.47%)
+Compatibility: 141/597 (23.62%)
 
 # Failed
 
@@ -61,10 +61,8 @@ Compatibility: 111/601 (18.47%)
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-1419.js
 * assignment/issue-15534.js
 * assignment/issue-1966.js
-* assignment/issue-2482-1.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
@@ -73,7 +71,6 @@ Compatibility: 111/601 (18.47%)
 * assignment/issue-6922.js
 * assignment/issue-7091.js
 * assignment/issue-7572.js
-* assignment/issue-7961.js
 * assignment/issue-8218.js
 * assignment/lone-arg.js
 * assignment/sequence.js
@@ -88,10 +85,7 @@ Compatibility: 111/601 (18.47%)
 * assignment-comments/string.js
 
 ### async
-* async/async-iteration.js
-* async/await-parse.js
 * async/conditional-expression.js
-* async/exponentiation.js
 * async/inline-await.js
 * async/nested.js
 * async/nested2.js
@@ -132,7 +126,6 @@ Compatibility: 111/601 (18.47%)
 ### call/first-argument-expansion
 * call/first-argument-expansion/expression-2nd-arg.js
 * call/first-argument-expansion/issue-13237.js
-* call/first-argument-expansion/issue-14454.js
 * call/first-argument-expansion/issue-2456.js
 * call/first-argument-expansion/issue-4401.js
 * call/first-argument-expansion/issue-5172.js
@@ -142,8 +135,8 @@ Compatibility: 111/601 (18.47%)
 ### call/invalid
 * call/invalid/null-arguments-item.js
 
-### call/no-argument
-* call/no-argument/special-cases.js
+### chain-expression
+* chain-expression/test.js
 
 ### class-comment
 * class-comment/class-property.js
@@ -151,7 +144,6 @@ Compatibility: 111/601 (18.47%)
 * class-comment/superclass.js
 
 ### class-extends
-* class-extends/complex.js
 * class-extends/extends.js
 * class-extends/tuple-and-record.js
 
@@ -162,16 +154,11 @@ Compatibility: 111/601 (18.47%)
 ### classes
 * classes/asi.js
 * classes/assignment.js
-* classes/binary.js
-* classes/call.js
 * classes/class-fields-features.js
 * classes/empty.js
-* classes/member.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
-* classes/super.js
-* classes/ternary.js
 
 ### classes/keyword-property
 * classes/keyword-property/async.js
@@ -186,7 +173,6 @@ Compatibility: 111/601 (18.47%)
 * classes/keyword-property/static.js
 
 ### classes-private-fields
-* classes-private-fields/optional-chaining.js
 * classes-private-fields/private_fields.js
 * classes-private-fields/with_comments.js
 
@@ -280,12 +266,6 @@ Compatibility: 111/601 (18.47%)
 * conditional/no-confusing-arrow.js
 * conditional/postfix-ternary-regressions.js
 
-### deferred-import-evaluation
-* deferred-import-evaluation/import-defer-attributes-declaration.js
-* deferred-import-evaluation/import-defer.js
-* deferred-import-evaluation/no-default.js
-* deferred-import-evaluation/no-named.js
-
 ### destructuring
 * destructuring/destructuring.js
 * destructuring/issue-5988.js
@@ -309,7 +289,6 @@ Compatibility: 111/601 (18.47%)
 * directives/last-line-1.js
 * directives/last-line-2.js
 * directives/newline.js
-* directives/no-newline.js
 * directives/test.js
 
 ### empty-paren-comment
@@ -331,15 +310,10 @@ Compatibility: 111/601 (18.47%)
 
 ### export
 * export/blank-line-between-specifiers.js
-* export/empty.js
 * export/same-local-and-exported.js
 
 ### export-default
-* export-default/binary_and_template.js
-* export-default/body.js
-* export-default/class_instance.js
-* export-default/function_in_template.js
-* export-default/function_tostring.js
+* export-default/iife.js
 
 ### export-default/escaped
 * export-default/escaped/default-escaped.js
@@ -349,15 +323,14 @@ Compatibility: 111/601 (18.47%)
 
 ### expression_statement
 * expression_statement/no_regression.js
+* expression_statement/use_strict.js
 
 ### for
 * for/comment.js
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
-
-### for-await
-* for-await/for-await.js
+* for/in.js
 
 ### function
 * function/function_expression.js
@@ -393,6 +366,7 @@ Compatibility: 111/601 (18.47%)
 * generator/async.js
 
 ### identifier/for-of
+* identifier/for-of/await.js
 * identifier/for-of/let.js
 
 ### identifier/parentheses
@@ -408,9 +382,6 @@ Compatibility: 111/601 (18.47%)
 
 ### import
 * import/comments.js
-* import/empty-import.js
-* import/inline.js
-* import/multiple_standalones.js
 * import/same-local-and-imported.js
 
 ### label
@@ -426,7 +397,6 @@ Compatibility: 111/601 (18.47%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
-* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
@@ -436,6 +406,9 @@ Compatibility: 111/601 (18.47%)
 
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
+
+### logical-assignment
+* logical-assignment/logical-assignment.js
 
 ### logical_expressions
 * logical_expressions/issue-7024.js
@@ -472,6 +445,9 @@ Compatibility: 111/601 (18.47%)
 * method-chain/this.js
 * method-chain/tuple-and-record.js
 
+### method-chain/print-width-120
+* method-chain/print-width-120/constructor.js
+
 ### module-blocks
 * module-blocks/comments.js
 * module-blocks/module-blocks.js
@@ -507,9 +483,6 @@ Compatibility: 111/601 (18.47%)
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
 
-### object-property-comment
-* object-property-comment/after-key.js
-
 ### object-property-ignore
 * object-property-ignore/ignore.js
 * object-property-ignore/issue-5678.js
@@ -518,6 +491,7 @@ Compatibility: 111/601 (18.47%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
+* objects/getter-setter.js
 * objects/range.js
 * objects/right-break.js
 
@@ -573,9 +547,6 @@ Compatibility: 111/601 (18.47%)
 ### regex
 * regex/test.js
 
-### require
-* require/require.js
-
 ### require-amd
 * require-amd/named-amd-module.js
 * require-amd/require.js
@@ -615,12 +586,7 @@ Compatibility: 111/601 (18.47%)
 * switch/empty_switch.js
 * switch/switch.js
 
-### tab-width
-* tab-width/class.js
-* tab-width/nested-functions.spec.js
-
 ### template
-* template/arrow.js
 * template/call.js
 * template/comment.js
 * template/faulty-locations.js
@@ -672,7 +638,6 @@ Compatibility: 111/601 (18.47%)
 * throw_statement/jsx.js
 
 ### trailing-comma
-* trailing-comma/dynamic-import.js
 * trailing-comma/es5.js
 * trailing-comma/function-calls.js
 * trailing-comma/jsx.js
@@ -685,11 +650,9 @@ Compatibility: 111/601 (18.47%)
 
 ### unary
 * unary/object.js
-* unary/series.js
 
 ### unary-expression
 * unary-expression/comments.js
-* unary-expression/urnary_expression.js
 
 ### unicode
 * unicode/combining-characters.js
@@ -697,13 +660,10 @@ Compatibility: 111/601 (18.47%)
 
 ### variable_declarator
 * variable_declarator/multiple.js
-* variable_declarator/string.js
 
 ### while
 * while/indent.js
 
 ### yield
-* yield/arrow.js
-* yield/conditional.js
 * yield/jsx-without-parenthesis.js
 * yield/jsx.js

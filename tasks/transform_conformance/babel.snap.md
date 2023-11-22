@@ -1,4 +1,4 @@
-Passed: 262/1080
+Passed: 269/1081
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -6,6 +6,7 @@ Passed: 262/1080
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
 * babel-plugin-transform-sticky-regex
+* babel-plugin-transform-property-literals
 
 
 # babel-plugin-transform-unicode-sets-regex (0/4)
@@ -843,23 +844,17 @@ Passed: 262/1080
 * regression/11061/input.mjs
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (137/156)
+# babel-plugin-transform-react-jsx (143/156)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/complicated-scope-module/input.js
 * react/arrow-functions/input.js
 * react/optimisation.react.constant-elements/input.js
-* react/should-add-quotes-es3/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
-* removed-options/invalid-use-builtins-false/input.js
-* removed-options/invalid-use-builtins-true/input.js
-* removed-options/invalid-use-spread-false/input.js
-* removed-options/invalid-use-spread-true/input.js
 * runtime/invalid-runtime/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js

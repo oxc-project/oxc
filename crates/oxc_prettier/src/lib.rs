@@ -8,6 +8,7 @@ mod comment;
 mod doc;
 mod format;
 mod macros;
+mod need_parens;
 mod options;
 mod printer;
 

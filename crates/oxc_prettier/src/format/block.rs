@@ -1,4 +1,3 @@
-use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstKind};
 
 use crate::{doc::Doc, hardline, indent, ss, Prettier};
@@ -7,8 +6,8 @@ use super::statement;
 
 pub(super) fn print_block<'a>(
     p: &mut Prettier<'a>,
-    stmts: &Vec<'a, Statement<'a>>,
-    directives: Option<&Vec<'a, Directive>>,
+    stmts: &[Statement<'a>],
+    directives: Option<&[Directive]>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("{"));
@@ -38,10 +37,10 @@ pub(super) fn print_block<'a>(
 
 pub(super) fn print_block_body<'a>(
     p: &mut Prettier<'a>,
-    stmts: &Vec<'a, Statement<'a>>,
-    directives: Option<&Vec<'a, Directive>>,
+    stmts: &[Statement<'a>],
+    directives: Option<&[Directive]>,
     remove_last_statement_hardline: bool,
-    is_program: bool,
+    is_root: bool,
 ) -> Option<Doc<'a>> {
     let has_directives = directives.is_some_and(|directives| !directives.is_empty());
     let has_body = stmts.iter().any(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
@@ -62,7 +61,7 @@ pub(super) fn print_block_body<'a>(
         parts.extend(statement::print_statement_sequence(p, stmts, remove_last_statement_hardline));
     }
 
-    if is_program {
+    if is_root {
         parts.push(hardline!());
     }
 

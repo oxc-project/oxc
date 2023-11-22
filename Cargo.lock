@@ -1816,7 +1816,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "dashmap",
  "dunce",
@@ -1877,10 +1877,12 @@ dependencies = [
 name = "oxc_tasks_common"
 version = "0.0.0"
 dependencies = [
+ "console",
  "oxc_syntax",
  "project-root",
  "serde",
  "serde_json",
+ "similar",
  "ureq",
  "url",
 ]
@@ -1918,6 +1920,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "phf",
  "serde",
 ]
 
