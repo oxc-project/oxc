@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::utils::has_jsx_prop_lowercase;
+use crate::utils::{has_jsx_prop_lowercase, get_prop_value, get_literal_prop_value};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
@@ -191,24 +191,6 @@ impl Rule for AltText {
             }
         }
     }
-}
-
-fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
-    if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
-    } else {
-        None
-    }
-}
-
-fn get_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(|v| {
-        if let JSXAttributeValue::StringLiteral(s) = v {
-            Some(s.value.as_str())
-        } else {
-            None
-        }
-    })
 }
 
 fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
