@@ -15,7 +15,7 @@ use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct EscapeCaseDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -187,7 +187,12 @@ fn test() {
         r#"const foo = new RegExp("/\ca/")"#,
         r#"const foo = new RegExp("/\cA/")"#,
     ];
-    let fail = vec![];
+    let fail = vec![
+        r#"const foo = "\xAab\xaab\xAAb\uAaAab\uaaaab\uAAAAb\u{AaAa}b\u{aaaa}b\u{AAAA}";"#,
+        r"const foo = `\xAab\xaab\xAA${foo}\uAaAab\uaaaab\uAAAAb\u{AaAa}${foo}\u{aaaa}b\u{AAAA}`;",
+        r"const foo = `\ud834${foo}\ud834${foo}\ud834`;",
+        r#"const foo = new RegExp("/\u{1d306}/", "u")"#,
+    ];
     let fix = vec![
         (r#"const foo = "\xa9";"#, r#"const foo = "\xA9";"#, None),
         (r#"const foo = "\xAa";"#, r#"const foo = "\xAA";"#, None),

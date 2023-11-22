@@ -2,4 +2,52 @@
 source: crates/oxc_linter/src/tester.rs
 expression: escape_case
 ---
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = "\xAab\xaab\xAAb\uAaAab\uaaaab\uAAAAb\u{AaAa}b\u{aaaa}b\u{AAAA}";
+   ·             ────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\xAab\xaab\xAA${foo}\uAaAab\uaaaab\uAAAAb\u{AaAa}${foo}\u{aaaa}b\u{AAAA}`;
+   ·              ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\xAab\xaab\xAA${foo}\uAaAab\uaaaab\uAAAAb\u{AaAa}${foo}\u{aaaa}b\u{AAAA}`;
+   ·                                  ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\xAab\xaab\xAA${foo}\uAaAab\uaaaab\uAAAAb\u{AaAa}${foo}\u{aaaa}b\u{AAAA}`;
+   ·                                                                     ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\ud834${foo}\ud834${foo}\ud834`;
+   ·              ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\ud834${foo}\ud834${foo}\ud834`;
+   ·                          ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = `\ud834${foo}\ud834${foo}\ud834`;
+   ·                                      ──────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
+   ╭─[escape_case.tsx:1:1]
+ 1 │ const foo = new RegExp("/\u{1d306}/", "u")
+   ·                        ─────────────
+   ╰────
+
 
