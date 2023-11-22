@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.")]
+#[error("eslint(heading-has-content): Headings must have content and the content must be accessible by a screen reader.")]
 #[diagnostic(
     severity(warning),
     help("Provide screen reader accessible content when using heading elements.")
