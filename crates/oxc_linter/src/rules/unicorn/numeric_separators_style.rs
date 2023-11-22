@@ -21,8 +21,42 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 )]
 struct NumericSeparatorsStyleDiagnostic(#[label] pub Span);
 
-#[derive(Debug, Default, Clone)]
-pub struct NumericSeparatorsStyle;
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NumericSeparatorsStyle {
+    only_if_contains_separator: bool,
+    hexadecimal: NumericBaseConfig,
+    binary: NumericBaseConfig,
+    octal: NumericBaseConfig,
+    number: NumericBaseConfig,
+}
+impl Default for NumericSeparatorsStyle {
+    fn default() -> Self {
+        Self {
+            only_if_contains_separator: false,
+            binary: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
+            hexadecimal: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
+            number: NumericBaseConfig { group_length: 3, minimum_digits: 5 },
+            octal: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct NumericBaseConfig {
+    group_length: usize,
+    minimum_digits: usize,
+}
+impl NumericBaseConfig {
+    pub(self) fn set_numeric_base_from_config(self: &mut Self, val: &serde_json::Value) -> () {
+        if let Some(group_length) = val.get("groupLength").and_then(|val| val.as_u64()) {
+            self.group_length = group_length as usize;
+        }
+        if let Some(minimum_digits) = val.get("minimumDigits").and_then(|val| val.as_u64()) {
+            self.minimum_digits = minimum_digits as usize;
+        }
+    }
+}
+
 impl NumericSeparatorsStyle {
     fn format_number(&self, number: &NumberLiteral) -> String {
         FormatNumber(number).format()
@@ -360,45 +394,90 @@ impl Rule for NumericSeparatorsStyle {
         };
     }
 
-    // fn from_configuration(value: serde_json::Value) -> Self {
-    //     Self::try_from_configuration(&value).unwrap_or_default()
-    // }
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self::new_from_configuration(&value)
+    }
 }
 
-// impl NumericSeparatorsStyle {
-//     pub fn try_from_configuration(value: &serde_json::Value) -> Option<Self> {
-//         let config = value.get(0)?;
+impl NumericSeparatorsStyle {
+    pub fn new_from_configuration(value: &serde_json::Value) -> Self {
+        let mut cfg = Self::default();
 
-//         let mut groups = vec![];
-//         if let Some(groups_config) = config.get("groups") {
-//             if let Some(groups_config) = groups_config.as_array() {
-//                 'outer: for group_config in groups_config {
-//                     // Parse current group configuration. On failure fall through to next group.
-//                     if let Some(group_config) = group_config.as_array() {
-//                         let mut group = vec![];
-//                         for val in group_config {
-//                             let Some(val) = val.as_str() else { continue 'outer };
-//                             let Some((operator, _)) = operator_and_precedence(val) else {
-//                                 continue 'outer;
-//                             };
-//                             group.push(operator);
-//                         }
-//                         groups.push(group);
-//                     }
-//                 }
-//             }
-//         }
+        if let Some(config) = value.get(0) {
+            if let Some(config) = config.get("binary") {
+                cfg.binary.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("hexadecimal") {
+                cfg.hexadecimal.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("number") {
+                cfg.number.set_numeric_base_from_config(config);
+            }
+            if let Some(config) = config.get("octal") {
+                cfg.octal.set_numeric_base_from_config(config);
+            }
 
-//         if groups.is_empty() {
-//             groups = default_groups();
-//         }
+            config
+                .get("onlyIfContainsSeparator")
+                .and_then(|val| val.as_bool())
+                .map(|val| cfg.only_if_contains_separator = val);
+        }
 
-//         let allow_same_precedence =
-//             config.get("allowSamePrecedence").map_or(true, |val| val.as_bool().unwrap_or_default());
+        cfg
+    }
+}
 
-//         Some(Self { groups, allow_same_precedence })
-//     }
-// }
+#[test]
+fn test_with_snapshot() {
+    use crate::tester::Tester;
+
+    let fail = vec![
+        "const foo = 0b10_10_0001",
+        "const foo = 0b0_00_0",
+        "const foo = 0b10101010101010",
+        "const foo = 0B10101010101010",
+        "const foo = 0xA_B_CDE_F0",
+        "const foo = 0xABCDEF",
+        "const foo = 0xA_B",
+        "const foo = 0XAB_C_D",
+        "const foo = 0o12_34_5670",
+        "const foo = 0o7_7_77",
+        "const foo = 0o010101010101",
+        "const foo = 0O010101010101",
+        "const foo = 0b10_10_0001n",
+        "const foo = 0b0_00_0n",
+        "const foo = 0b10101010101010n",
+        "const foo = 0B10101010101010n",
+        "const foo = 1_9_223n",
+        "const foo = 80_7n",
+        "const foo = 123456789_100n",
+        "const foo = 1e10000",
+        "const foo = 39804e10000",
+        "const foo = -123456e100",
+        "const foo = -100000e-10000",
+        "const foo = -1000e+10000",
+        "const foo = -1000e+00010000",
+        "const foo = 3.6e12000",
+        "const foo = -1200000e5",
+        "const foo = 3.65432E12000",
+        "const foo = 9807.1234567",
+        "const foo = 3819.123_4325",
+        "const foo = 138789.12343_2_42",
+        "const foo = .000000_1",
+        "const foo = 12345678..toString()",
+        "const foo = 12345678 .toString()",
+        "const foo = .00000",
+        "const foo = 0.00000",
+        // Numbers
+        "const foo = 1_2_345_678",
+        "const foo = 12_3",
+        "const foo = 1234567890",
+        // Negative numbers
+        "const foo = -100000_1",
+    ];
+
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, vec![], fail).test_and_snapshot();
+}
 
 #[test]
 fn test_number_binary() {
@@ -426,9 +505,7 @@ fn test_number_binary() {
         ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -446,7 +523,6 @@ fn test_number_hexadecimal() {
     ];
 
     let fail = vec![
-        // Hexadecimal
         "const foo = 0xA_B_CDE_F0",
         "const foo = 0xABCDEF",
         "const foo = 0xA_B",
@@ -455,9 +531,7 @@ fn test_number_hexadecimal() {
 
     let fix = vec![("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -476,12 +550,6 @@ fn test_number_octal() {
     ];
 
     let fail = vec![
-        // Hexadecimal
-        "const foo = 0xA_B_CDE_F0",
-        "const foo = 0xABCDEF",
-        "const foo = 0xA_B",
-        "const foo = 0XAB_C_D",
-        // Octal
         "const foo = 0o12_34_5670",
         "const foo = 0o7_7_77",
         "const foo = 0o010101010101",
@@ -490,9 +558,7 @@ fn test_number_octal() {
 
     let fix = vec![("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -521,9 +587,7 @@ fn test_bigint_binary() {
         ("const foo = 0B10101010101010n", "const foo = 0B10_1010_1010_1010n", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -548,9 +612,7 @@ fn test_bigint() {
 
     let fix = vec![("const foo = 1_9_223n", "const foo = 19_223n", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -592,9 +654,7 @@ fn test_number_decimal_exponential() {
         ("const foo = 3.65432E12000", "const foo = 3.654_32E12_000", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -621,9 +681,7 @@ fn test_number_decimal_float() {
 
     let fix = vec![("const foo = 9807.1234567", "const foo = 9807.123_456_7", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -659,9 +717,7 @@ fn test_number_decimal_integer() {
         ("const foo = -100000_1", "const foo = -1_000_001", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -679,4 +735,39 @@ fn test_misc() {
     let fail = vec![];
 
     Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).test();
+}
+
+#[cfg(test)]
+mod internal_tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn test_from_configuration() {
+        let config = json!([{
+                "binary": {"groupLength": 2, "minimumDigits": 4},
+                "hexadecimal": {"groupLength": 8, "minimumDigits": 16},
+                "number": {"groupLength": 32, "minimumDigits": 64},
+                "octal": {"groupLength": 128, "minimumDigits": 256},
+                "onlyIfContainsSeparator": true
+        }]);
+        let rule = NumericSeparatorsStyle::from_configuration(config);
+
+        assert_eq!(rule.binary.group_length, 2);
+        assert_eq!(rule.binary.minimum_digits, 4);
+        assert_eq!(rule.hexadecimal.group_length, 8);
+        assert_eq!(rule.hexadecimal.minimum_digits, 16);
+        assert_eq!(rule.number.group_length, 32);
+        assert_eq!(rule.number.minimum_digits, 64);
+        assert_eq!(rule.octal.group_length, 128);
+        assert_eq!(rule.octal.minimum_digits, 256);
+        assert_eq!(rule.only_if_contains_separator, true);
+    }
+
+    #[test]
+    fn test_from_empty_configuration() {
+        let rule = NumericSeparatorsStyle::from_configuration(json!([]));
+        assert_eq!(rule, NumericSeparatorsStyle::default());
+    }
 }
