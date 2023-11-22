@@ -17,5 +17,3 @@ rust-version.workspace = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
-oxc_syntax    = { workspace = true }
-oxc_index     = { workspace = true }
