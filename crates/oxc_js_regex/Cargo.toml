@@ -1,0 +1,23 @@
+[package]
+name                   = "oxc_js_regex"
+version                = "0.0.0"
+publish                = false
+authors                = ["Ubugeeei <ubuge1122@gmail.com>"]
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_span      = { workspace = true }
