@@ -64,9 +64,13 @@ impl<'a> Format<'a> for Program<'a> {
                 parts.push(hardline!());
             }
         }
-        if let Some(doc) =
-            block::print_block_body(p, &self.body, Some(&self.directives), false, true)
-        {
+        if let Some(doc) = block::print_block_body(
+            p,
+            &self.body,
+            Some(&self.directives),
+            false,
+            /* is_root */ true,
+        ) {
             parts.push(doc);
         }
         p.leave_node();
@@ -82,7 +86,15 @@ impl<'a> Format<'a> for Hashbang {
 
 impl<'a> Format<'a> for Directive {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Line
+        let mut parts = p.vec();
+        parts.push(
+            p.str(&string::print_string(self.expression.value.as_str(), p.options.single_quote)),
+        );
+        if p.options.semi {
+            parts.push(ss!(";"));
+        }
+        parts.push(hardline!());
+        Doc::Array(parts)
     }
 }
 
