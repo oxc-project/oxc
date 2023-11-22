@@ -12,7 +12,11 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lints]
+workspace = true
+
+[lib]
+doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
