@@ -148,6 +148,7 @@ mod unicorn {
     pub mod catch_error_name;
     pub mod empty_brace_spaces;
     pub mod error_message;
+    pub mod escape_case;
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
@@ -318,6 +319,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::empty_brace_spaces,
     unicorn::prefer_array_some,
     unicorn::error_message,
+    unicorn::escape_case,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
