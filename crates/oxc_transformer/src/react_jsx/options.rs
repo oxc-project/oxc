@@ -7,8 +7,7 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct ReactJsxOptions {
     /// Decides which runtime to use.
-    #[serde(default)]
-    pub runtime: ReactJsxRuntime,
+    pub runtime: Option<String>,
     /// Toggles whether or not to throw an error if an XML namespaced tag name is used. e.g. `<f:image />`
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
     #[serde(default = "default_throw_if_namespace")]
@@ -56,7 +55,7 @@ fn default_pragma_frag() -> Cow<'static, str> {
 impl Default for ReactJsxOptions {
     fn default() -> Self {
         Self {
-            runtime: ReactJsxRuntime::Automatic,
+            runtime: None,
             throw_if_namespace: default_throw_if_namespace(),
             import_source: default_import_source(),
             pragma: default_pragma(),
@@ -109,11 +108,11 @@ impl ReactJsxOptions {
             // read jsxRuntime
             match comment.strip_prefix("jsxRuntime").map(str::trim) {
                 Some("classic") => {
-                    self.runtime = ReactJsxRuntime::Classic;
+                    self.runtime = Some("classic".to_string());
                     continue;
                 }
                 Some("automatic") => {
-                    self.runtime = ReactJsxRuntime::Automatic;
+                    self.runtime = Some("automatic".to_string());
                     continue;
                 }
                 _ => {}

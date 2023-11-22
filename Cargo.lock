@@ -1930,6 +1930,7 @@ dependencies = [
  "oxc_syntax",
  "phf",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

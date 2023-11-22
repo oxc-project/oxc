@@ -60,6 +60,7 @@ pub struct ReactJsx<'a> {
     require_jsx_runtime: bool,
     jsx_runtime_importer: Atom,
     pub babel_8_breaking: Option<bool>,
+    default_runtime: ReactJsxRuntime,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -120,8 +121,26 @@ impl<'a> ReactJsx<'a> {
             }
         }
 
+        let default_runtime = match jsx_options.runtime.as_ref() {
+            Some(runtime) if runtime == "classic" => ReactJsxRuntime::Classic,
+            Some(runtime) if runtime == "automatic" => ReactJsxRuntime::Automatic,
+            None => {
+                if options.babel_8_breaking == Some(true) {
+                    ReactJsxRuntime::Automatic
+                } else {
+                    ReactJsxRuntime::Classic
+                }
+            }
+            Some(_) => {
+                ctx.error(miette::Error::msg(
+                    "Runtime must be either \"classic\" or \"automatic\".",
+                ));
+                return None;
+            }
+        };
+
         let jsx_runtime_importer =
-            if jsx_options.import_source == "react" || jsx_options.runtime.is_classic() {
+            if jsx_options.import_source == "react" || default_runtime.is_classic() {
                 Atom::new_inline("react/jsx-runtime")
             } else {
                 Atom::from(format!("{}/jsx-runtime", jsx_options.import_source))
@@ -138,6 +157,7 @@ impl<'a> ReactJsx<'a> {
             import_fragment: false,
             import_create_element: false,
             babel_8_breaking: options.babel_8_breaking,
+            default_runtime,
         })
     }
 
@@ -154,7 +174,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
-        if self.options.runtime.is_classic() {
+        if self.default_runtime.is_classic() {
             if self.options.import_source != "react" {
                 self.ctx.error(ImportSourceCannotBeSet);
             }
@@ -187,7 +207,7 @@ impl<'a> ReactJsx<'a> {
         has_key_after_props_spread: bool,
         need_jsxs: bool,
     ) {
-        if self.options.runtime.is_classic() {
+        if self.default_runtime.is_classic() {
             return;
         }
         match e {
@@ -324,8 +344,8 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Expression<'a> {
-        let is_classic = self.options.runtime.is_classic();
-        let is_automatic = self.options.runtime.is_automatic();
+        let is_classic = self.default_runtime.is_classic();
+        let is_automatic = self.default_runtime.is_automatic();
         let has_key_after_props_spread = e.has_key_after_props_spread();
 
         // TODO: compute the correct capacity for both runtimes
@@ -479,7 +499,7 @@ impl<'a> ReactJsx<'a> {
         has_key_after_props_spread: bool,
         jsxs: bool,
     ) -> Expression<'a> {
-        match self.options.runtime {
+        match self.default_runtime {
             ReactJsxRuntime::Classic => {
                 if self.options.pragma == "React.createElement" {
                     let object = self.get_react_references();
@@ -520,7 +540,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn get_fragment(&mut self) -> Expression<'a> {
-        match self.options.runtime {
+        match self.default_runtime {
             ReactJsxRuntime::Classic => {
                 if self.options.pragma_frag == "React.Fragment" {
                     let object = self.get_react_references();
