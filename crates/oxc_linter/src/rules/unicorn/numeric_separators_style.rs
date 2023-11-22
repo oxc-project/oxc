@@ -133,8 +133,6 @@ impl<'a> FormatNumber<'a> {
 
         let caps = re.captures(self.raw).unwrap();
 
-        dbg!(&caps);
-
         let mut out = String::new();
 
         {
@@ -178,11 +176,9 @@ impl<'a> FormatNumber<'a> {
 
         if let Some(mark) = caps.get(2) {
             out.push_str(mark.as_str());
-            dbg!(mark.as_str(), &out);
         }
         if let Some(sign) = caps.get(3) {
             out.push_str(sign.as_str());
-            dbg!(sign.as_str(), &out);
         }
         if let Some(power) = caps.get(4) {
             let mut s = power.as_str().replace('_', "");
@@ -193,7 +189,6 @@ impl<'a> FormatNumber<'a> {
                 DECIMAL_GROUP_LENGTH,
             );
             out.push_str(&s);
-            dbg!(power.as_str(), &out);
         }
 
         out
