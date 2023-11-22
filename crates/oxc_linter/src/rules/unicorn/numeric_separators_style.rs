@@ -359,7 +359,46 @@ impl Rule for NumericSeparatorsStyle {
             _ => {}
         };
     }
+
+    // fn from_configuration(value: serde_json::Value) -> Self {
+    //     Self::try_from_configuration(&value).unwrap_or_default()
+    // }
 }
+
+// impl NumericSeparatorsStyle {
+//     pub fn try_from_configuration(value: &serde_json::Value) -> Option<Self> {
+//         let config = value.get(0)?;
+
+//         let mut groups = vec![];
+//         if let Some(groups_config) = config.get("groups") {
+//             if let Some(groups_config) = groups_config.as_array() {
+//                 'outer: for group_config in groups_config {
+//                     // Parse current group configuration. On failure fall through to next group.
+//                     if let Some(group_config) = group_config.as_array() {
+//                         let mut group = vec![];
+//                         for val in group_config {
+//                             let Some(val) = val.as_str() else { continue 'outer };
+//                             let Some((operator, _)) = operator_and_precedence(val) else {
+//                                 continue 'outer;
+//                             };
+//                             group.push(operator);
+//                         }
+//                         groups.push(group);
+//                     }
+//                 }
+//             }
+//         }
+
+//         if groups.is_empty() {
+//             groups = default_groups();
+//         }
+
+//         let allow_same_precedence =
+//             config.get("allowSamePrecedence").map_or(true, |val| val.as_bool().unwrap_or_default());
+
+//         Some(Self { groups, allow_same_precedence })
+//     }
+// }
 
 #[test]
 fn test_number_binary() {
@@ -387,7 +426,9 @@ fn test_number_binary() {
         ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -414,7 +455,9 @@ fn test_number_hexadecimal() {
 
     let fix = vec![("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -447,7 +490,9 @@ fn test_number_octal() {
 
     let fix = vec![("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -476,7 +521,9 @@ fn test_bigint_binary() {
         ("const foo = 0B10101010101010n", "const foo = 0B10_1010_1010_1010n", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -501,7 +548,9 @@ fn test_bigint() {
 
     let fix = vec![("const foo = 1_9_223n", "const foo = 19_223n", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -543,7 +592,9 @@ fn test_number_decimal_exponential() {
         ("const foo = 3.65432E12000", "const foo = 3.654_32E12_000", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -570,7 +621,9 @@ fn test_number_decimal_float() {
 
     let fix = vec![("const foo = 9807.1234567", "const foo = 9807.123_456_7", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
@@ -606,7 +659,9 @@ fn test_number_decimal_integer() {
         ("const foo = -100000_1", "const foo = -1_000_001", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]
