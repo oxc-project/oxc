@@ -2,14 +2,13 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
-    identifier::is_identifier_start_all,
-    operator::{AssignmentOperator, BinaryOperator},
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
     NumberBase,
 };
 
 use std::{mem, rc::Rc};
 
-use crate::{context::TransformerCtx, utils::CreateVars};
+use crate::{context::TransformerCtx, utils::is_valid_identifier};
 
 /// Transform TypeScript
 ///
@@ -21,8 +20,6 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
-
-    vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -31,9 +28,7 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        let vars = ast.new_vec();
-
-        Self { ast, ctx, verbatim_module_syntax, vars }
+        Self { ast, ctx, verbatim_module_syntax }
     }
 
     #[allow(clippy::unused_self)]
@@ -49,14 +44,13 @@ impl<'a> TypeScript<'a> {
     /// }
     /// ```
     /// ```JavaScript
-    /// var Foo;
-    /// ((Foo) => {
-    ///   Foo[Foo["X"] = 0] = "X";
-    /// })(Foo ||= {});
+    /// var Foo = ((Foo) => {
+    ///   const X = 0; Foo[Foo["X"] = X] = "X";
+    ///   return Foo;
+    /// })(Foo || {});
     /// ```
-    pub fn transform_ts_enum_declaration(&mut self, stmt: &mut Statement<'a>) {
-        let Statement::Declaration(Declaration::TSEnumDeclaration(ts_enum_declaration)) = stmt
-        else {
+    pub fn transform_ts_enum_declaration(&mut self, decl: &mut Declaration<'a>) {
+        let Declaration::TSEnumDeclaration(ts_enum_declaration) = decl else {
             return;
         };
 
@@ -90,22 +84,35 @@ impl<'a> TypeScript<'a> {
 
         let callee = self.ast.arrow_expression(SPAN, false, false, false, params, body, None, None);
 
-        // })(Foo ||= {});
+        // })(Foo || {});
         let mut arguments = self.ast.new_vec();
-        let op = AssignmentOperator::LogicalOr;
-        let ident_ref = self.create_new_var_with_name(ident.name);
-        let left = self.ast.simple_assignment_target_identifier(ident_ref);
-        let left = AssignmentTarget::SimpleAssignmentTarget(left);
-        let assignment = self.ast.assignment_expression(
-            SPAN,
-            op,
-            left,
-            self.ast.object_expression(SPAN, self.ast.new_vec(), None),
-        );
-        arguments.push(Argument::Expression(assignment));
+        let op = LogicalOperator::Or;
+        let left = self
+            .ast
+            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
+        let expression = self.ast.logical_expression(SPAN, left, op, right);
+        arguments.push(Argument::Expression(expression));
 
         let call_expression = self.ast.call_expression(SPAN, callee, arguments, false, None);
-        *stmt = self.ast.expression_statement(span, call_expression);
+
+        let kind = VariableDeclarationKind::Var;
+        let decls = {
+            let mut decls = self.ast.new_vec();
+
+            let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
+            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
+            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+            let decl =
+                self.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+
+            decls.push(decl);
+            decls
+        };
+        let variable_declaration =
+            self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+
+        *decl = Declaration::VariableDeclaration(variable_declaration);
     }
 
     /// * Remove the top level import / export statements that are types
@@ -256,7 +263,7 @@ impl<'a> TypeScript<'a> {
                 self.ast.computed_member_expression(SPAN, obj, expr, false)
             };
 
-            if is_valid_identifier(member_name) {
+            if is_valid_identifier(member_name, true) {
                 let ident = IdentifierReference::new(member_span, member_name.clone());
 
                 self_ref = self.ast.identifier_reference_expression(ident.clone());
@@ -264,20 +271,18 @@ impl<'a> TypeScript<'a> {
 
                 let kind = VariableDeclarationKind::Const;
                 let decls = {
-                    let mut decls = self.ctx().ast.new_vec();
+                    let mut decls = self.ast.new_vec();
 
                     let binding_identifier = BindingIdentifier::new(SPAN, member_name.clone());
                     let binding_pattern_kind =
-                        self.ctx().ast.binding_pattern_identifier(binding_identifier);
-                    let binding = self.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
-                    let decl =
-                        self.ctx().ast.variable_declarator(SPAN, kind, binding, Some(init), false);
+                        self.ast.binding_pattern_identifier(binding_identifier);
+                    let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+                    let decl = self.ast.variable_declarator(SPAN, kind, binding, Some(init), false);
 
                     decls.push(decl);
                     decls
                 };
-                let decl =
-                    self.ctx().ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+                let decl = self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
                 let stmt: Statement<'_> =
                     Statement::Declaration(Declaration::VariableDeclaration(decl));
 
@@ -336,22 +341,13 @@ impl<'a> TypeScript<'a> {
             };
         }
 
+        let enum_ref = self
+            .ast
+            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        // return Foo;
+        let return_stmt = self.ast.return_statement(SPAN, Some(enum_ref));
+        statements.push(return_stmt);
+
         statements
     }
-}
-
-impl<'a> CreateVars<'a> for TypeScript<'a> {
-    fn ctx(&self) -> &TransformerCtx<'a> {
-        &self.ctx
-    }
-
-    fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
-        &mut self.vars
-    }
-}
-
-fn is_valid_identifier(name: &Atom) -> bool {
-    let mut chars = name.chars();
-
-    chars.next().map_or(false, is_identifier_start_all) && chars.all(is_identifier_start_all)
 }

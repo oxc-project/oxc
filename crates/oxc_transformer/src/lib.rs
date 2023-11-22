@@ -134,16 +134,14 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
             self.visit_statement(stmt);
         }
         // TODO: we need scope id to insert the vars into the correct statements
-        self.typescript.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
     }
 
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.visit_statement_match(stmt);
-
-        self.typescript.as_mut().map(|t| t.transform_ts_enum_declaration(stmt));
+    fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
+        self.visit_declaration_match(decl);
+        self.typescript.as_mut().map(|t| t.transform_ts_enum_declaration(decl));
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
