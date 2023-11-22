@@ -1,4 +1,4 @@
-Compatibility: 131/601 (21.80%)
+Compatibility: 131/597 (21.94%)
 
 # Failed
 
@@ -265,12 +265,6 @@ Compatibility: 131/601 (21.80%)
 * conditional/new-ternary-spec.js
 * conditional/no-confusing-arrow.js
 * conditional/postfix-ternary-regressions.js
-
-### deferred-import-evaluation
-* deferred-import-evaluation/import-defer-attributes-declaration.js
-* deferred-import-evaluation/import-defer.js
-* deferred-import-evaluation/no-default.js
-* deferred-import-evaluation/no-named.js
 
 ### destructuring
 * destructuring/destructuring.js
