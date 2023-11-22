@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// const foo = `\u001B${bar}`;
     /// ```
     NoHexEscape,
-    correctness
+    pedantic
 );
 
 // \x -> \u00

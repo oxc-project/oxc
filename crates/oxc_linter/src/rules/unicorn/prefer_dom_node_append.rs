@@ -37,7 +37,7 @@ declare_oxc_lint!(
     //
     /// ```
     PreferDomNodeAppend,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferDomNodeAppend {
