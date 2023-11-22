@@ -1,0 +1,61 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: heading_has_content
+---
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1 />
+   · ──────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1><Bar aria-hidden /></h1>
+   · ────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1>{undefined}</h1>
+   · ────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1><></></h1>
+   · ────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <h1><input type="hidden" /></h1>
+   · ────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <Heading />
+   · ───────────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <Heading><Bar aria-hidden /></Heading>
+   · ─────────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+  ⚠ eslint(heading-has-content):Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <Heading>{undefined}</Heading>
+   · ─────────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+
+

@@ -1,5 +1,9 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXOpeningElement},
+    ast::{
+        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
+        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXExpressionContainer,
+        JSXOpeningElement,
+    },
     AstKind,
 };
 use oxc_semantic::AstNode;
@@ -37,9 +41,62 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
         JSXAttributeItem::Attribute(attr) => {
             let JSXAttributeName::Identifier(name) = &attr.name else { return false };
 
-            name.name.as_str().to_lowercase() == target_prop
+            name.name.as_str().to_lowercase() == target_prop.to_lowercase()
         }
     })
+}
+
+pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
+    if let JSXAttributeItem::Attribute(attr) = item {
+        attr.0.value.as_ref()
+    } else {
+        None
+    }
+}
+
+pub fn get_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
+    get_prop_value(item).and_then(|v| {
+        if let JSXAttributeValue::StringLiteral(s) = v {
+            Some(s.value.as_str())
+        } else {
+            None
+        }
+    })
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
+pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
+    if let JSXElementName::Identifier(iden) = &node.name {
+        if iden.name.as_str().to_uppercase() == "INPUT" {
+            if let Some(item) = has_jsx_prop_lowercase(node, "type") {
+                let hidden = get_literal_prop_value(item);
+
+                if hidden.is_some_and(|val| val.to_uppercase() == "HIDDEN") {
+                    return true;
+                }
+            }
+        }
+    }
+
+    has_jsx_prop_lowercase(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
+        None => true,
+        Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
+        _ => false,
+    })
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
+pub fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
+    node.children.iter().any(|child| match child {
+        JSXChild::Text(text) => !text.value.is_empty(),
+        JSXChild::Element(el) => !is_hidden_from_screen_reader(&el.opening_element),
+        JSXChild::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        }) => !expr.is_undefined(),
+        _ => false,
+    }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
+        || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
 }
 
 const PRAGMA: &str = "React";
