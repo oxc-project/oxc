@@ -2,7 +2,7 @@
 name                   = "oxc_js_regex"
 version                = "0.0.0"
 publish                = false
-authors.workspace      = true
+authors                = ["Ubugeeei <ubuge1122@gmail.com>"]
 categories.workspace   = true
 description.workspace  = true
 edition.workspace      = true
