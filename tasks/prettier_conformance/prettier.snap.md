@@ -1,4 +1,4 @@
-Compatibility: 133/597 (22.28%)
+Compatibility: 139/597 (23.28%)
 
 # Failed
 
@@ -309,19 +309,11 @@ Compatibility: 133/597 (22.28%)
 * eol/range-1.js
 * eol/range-and-cursor-1.js
 
-### es6modules
-* es6modules/export_default_function_expression.js
-* es6modules/export_default_function_expression_named.js
-
 ### export
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
 
 ### export-default
-* export-default/body.js
-* export-default/class_instance.js
-* export-default/function_in_template.js
-* export-default/function_tostring.js
 * export-default/iife.js
 
 ### export-default/escaped
