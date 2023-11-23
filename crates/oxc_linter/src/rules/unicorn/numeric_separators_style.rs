@@ -48,10 +48,10 @@ struct NumericBaseConfig {
 }
 impl NumericBaseConfig {
     pub(self) fn set_numeric_base_from_config(self: &mut Self, val: &serde_json::Value) -> () {
-        if let Some(group_length) = val.get("groupLength").and_then(|val| val.as_u64()) {
+        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
             self.group_length = group_length as usize;
         }
-        if let Some(minimum_digits) = val.get("minimumDigits").and_then(|val| val.as_u64()) {
+        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
             self.minimum_digits = minimum_digits as usize;
         }
     }
@@ -87,7 +87,7 @@ impl<'a> FormatNumber<'a> {
         // Remove any existing _
         let mut raw = self.raw[2..].replace('_', "");
 
-        add_separators(&mut raw, SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
+        add_separators(&mut raw, &SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
         out.push_str(raw.as_str());
         out
     }
@@ -101,7 +101,7 @@ impl<'a> FormatNumber<'a> {
 
         add_separators(
             &mut raw,
-            SeparatorDir::Right,
+            &SeparatorDir::Right,
             HEXADECIMAL_MINIMUM_DIGITS,
             HEXADECIMAL_GROUP_LENGTH,
         );
@@ -123,7 +123,7 @@ impl<'a> FormatNumber<'a> {
         // Remove any existing _
         let mut raw = self.raw[2..].replace('_', "");
 
-        add_separators(&mut raw, SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
+        add_separators(&mut raw, &SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
         out.push_str(raw.as_str());
         out
     }
@@ -140,11 +140,11 @@ impl<'a> FormatNumber<'a> {
             let number = number.as_str();
 
             if let Some((whole, decimal)) = number.split_once('.') {
-                if whole.len() > 0 {
+                if !whole.is_empty() {
                     let mut s = whole.to_string();
                     add_separators(
                         &mut s,
-                        SeparatorDir::Right,
+                        &SeparatorDir::Right,
                         DECIMAL_MINIMUM_DIGITS,
                         DECIMAL_GROUP_LENGTH,
                     );
@@ -153,11 +153,11 @@ impl<'a> FormatNumber<'a> {
 
                 out.push('.');
 
-                if decimal.len() > 0 {
+                if !decimal.is_empty() {
                     let mut s = decimal.to_string();
                     add_separators(
                         &mut s,
-                        SeparatorDir::Left,
+                        &SeparatorDir::Left,
                         DECIMAL_MINIMUM_DIGITS,
                         DECIMAL_GROUP_LENGTH,
                     );
@@ -167,7 +167,7 @@ impl<'a> FormatNumber<'a> {
                 out.push_str(number);
                 add_separators(
                     &mut out,
-                    SeparatorDir::Right,
+                    &SeparatorDir::Right,
                     DECIMAL_MINIMUM_DIGITS,
                     DECIMAL_GROUP_LENGTH,
                 );
@@ -184,7 +184,7 @@ impl<'a> FormatNumber<'a> {
             let mut s = power.as_str().replace('_', "");
             add_separators(
                 &mut s,
-                SeparatorDir::Right,
+                &SeparatorDir::Right,
                 DECIMAL_MINIMUM_DIGITS,
                 DECIMAL_GROUP_LENGTH,
             );
@@ -224,7 +224,7 @@ impl<'a> FormatBigint<'a> {
         // Remove any existing _ and strip trailing `n`
         let mut raw = raw[2..raw.len() - 1].replace('_', "");
 
-        add_separators(&mut raw, SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
+        add_separators(&mut raw, &SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
         out.push_str(raw.as_str());
         out.push('n');
         out
@@ -241,7 +241,7 @@ impl<'a> FormatBigint<'a> {
 
         add_separators(
             &mut raw,
-            SeparatorDir::Right,
+            &SeparatorDir::Right,
             HEXADECIMAL_MINIMUM_DIGITS,
             HEXADECIMAL_GROUP_LENGTH,
         );
@@ -266,7 +266,7 @@ impl<'a> FormatBigint<'a> {
         // Remove any existing _ and strip trailing `n`
         let mut raw = raw[2..raw.len() - 1].replace('_', "");
 
-        add_separators(&mut raw, SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
+        add_separators(&mut raw, &SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
         out.push_str(raw.as_str());
         out.push('n');
         out
@@ -278,7 +278,12 @@ impl<'a> FormatBigint<'a> {
         // Remove any existing _ and strip trailing `n`
         let mut out = raw[..raw.len() - 1].replace('_', "");
 
-        add_separators(&mut out, SeparatorDir::Right, DECIMAL_MINIMUM_DIGITS, DECIMAL_GROUP_LENGTH);
+        add_separators(
+            &mut out,
+            &SeparatorDir::Right,
+            DECIMAL_MINIMUM_DIGITS,
+            DECIMAL_GROUP_LENGTH,
+        );
         out.push('n');
         out
     }
@@ -309,7 +314,7 @@ enum SeparatorDir {
     Right,
 }
 
-fn add_separators(s: &mut String, dir: SeparatorDir, minimum_digits: usize, group_length: usize) {
+fn add_separators(s: &mut String, dir: &SeparatorDir, minimum_digits: usize, group_length: usize) {
     if s.len() < minimum_digits || s.len() < group_length + 1 {
         return;
     }
@@ -368,7 +373,7 @@ impl Rule for NumericSeparatorsStyle {
         match node.kind() {
             AstKind::NumberLiteral(number) => {
                 let formatted = self.format_number(number);
-                println!("Base {:?} Formatted {:?} Raw: {:?}", number.base, formatted, number.raw);
+
                 if formatted != number.raw {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
                         Fix::new(formatted, number.span)
@@ -379,7 +384,7 @@ impl Rule for NumericSeparatorsStyle {
                 let raw = number.span.source_text(ctx.source_text());
                 let formatted = self.format_bigint(number, raw);
 
-                if formatted.len() as u32 != number.span.size() {
+                if formatted.len() != number.span.size() as usize {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
                         Fix::new(formatted, number.span)
                     });
@@ -412,10 +417,11 @@ impl NumericSeparatorsStyle {
                 cfg.octal.set_numeric_base_from_config(config);
             }
 
-            config
-                .get("onlyIfContainsSeparator")
-                .and_then(|val| val.as_bool())
-                .map(|val| cfg.only_if_contains_separator = val);
+            if let Some(val) =
+                config.get("onlyIfContainsSeparator").and_then(serde_json::Value::as_bool)
+            {
+                cfg.only_if_contains_separator = val;
+            }
         }
 
         cfg
