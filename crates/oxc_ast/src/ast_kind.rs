@@ -183,7 +183,7 @@ impl<'a> AstKind<'a> {
         || matches!(self, Self::Class(class) if class.is_declaration())
         || matches!(self, Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
-            | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
         )
     }
 
