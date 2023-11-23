@@ -21,7 +21,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
 use crate::{array, doc::Doc, ss, Prettier};
 
 impl<'a> Prettier<'a> {
-    pub(crate) fn wrap_parens(&self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
+    pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
         if self.need_parens(kind) {
             array![self, ss!("("), doc, ss!(")")]
         } else {
@@ -29,7 +29,7 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    fn need_parens(&self, kind: AstKind<'a>) -> bool {
+    fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) {
             return false;
         }
@@ -165,7 +165,7 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    fn check_parent_kind(&self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
+    fn check_parent_kind(&mut self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
         match parent_kind {
             AstKind::Class(class) => {
                 if let Some(h) = &class.super_class {
@@ -198,7 +198,7 @@ impl<'a> Prettier<'a> {
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(decl)) => {
                 if let ExportDefaultDeclarationKind::Expression(e) = &decl.declaration {
                     return matches!(e, Expression::SequenceExpression(_))
-                        || Self::should_wrap_function_for_export_default(e);
+                        || self.should_wrap_function_for_export_default();
                 }
             }
             _ => {}
@@ -307,38 +307,51 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    // This differs from the prettier implementation, which may be wrong.
-    fn should_wrap_function_for_export_default(e: &Expression<'a>) -> bool {
-        match e {
-            Expression::FunctionExpression(_) | Expression::ClassExpression(_) => true,
-            Expression::CallExpression(e) => {
-                Self::should_wrap_function_for_export_default(&e.callee)
-            }
-            Expression::MemberExpression(e) => {
-                Self::should_wrap_function_for_export_default(e.object())
-            }
-            Expression::AssignmentExpression(e) => match &e.left {
-                AssignmentTarget::SimpleAssignmentTarget(t) => match t {
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                    SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                        Self::should_wrap_function_for_export_default(e.object())
-                    }
-                    SimpleAssignmentTarget::TSAsExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSSatisfiesExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSNonNullExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSTypeAssertion(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                },
-                AssignmentTarget::AssignmentTargetPattern(_) => false,
-            },
-            _ => false,
+    fn should_wrap_function_for_export_default(&mut self) -> bool {
+        let kind = self.current_kind();
+        let b = matches!(
+            self.parent_kind(),
+            AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+        );
+        if matches!(kind, AstKind::Function(f) if f.is_expression())
+            || matches!(kind, AstKind::Class(c) if c.is_expression())
+        {
+            return b || !self.need_parens(self.current_kind());
+        }
+
+        if !Self::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
+            return false;
+        }
+
+        let lhs = Self::get_left_side_path_name(kind);
+        self.nodes.push(lhs);
+        self.should_wrap_function_for_export_default()
+    }
+
+    fn has_naked_left_side(kind: AstKind<'a>) -> bool {
+        matches!(
+            kind,
+            AstKind::AssignmentExpression(_)
+                | AstKind::BinaryExpression(_)
+                | AstKind::LogicalExpression(_)
+                | AstKind::ConditionalExpression(_)
+                | AstKind::CallExpression(_)
+                | AstKind::MemberExpression(_)
+                | AstKind::SequenceExpression(_)
+                | AstKind::TaggedTemplateExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::ChainExpression(_)
+        ) || matches!(kind, AstKind::UpdateExpression(e) if !e.prefix)
+    }
+
+    fn get_left_side_path_name(kind: AstKind<'a>) -> AstKind<'a> {
+        match kind {
+            AstKind::CallExpression(e) => AstKind::from_expression(&e.callee),
+            AstKind::ConditionalExpression(e) => AstKind::from_expression(&e.test),
+            AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
+            AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
+            AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
+            _ => panic!("need to handle {}", kind.debug_name()),
         }
     }
 
