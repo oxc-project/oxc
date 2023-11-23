@@ -78,8 +78,9 @@ mod test {
         allocator: &'a Allocator,
         source_text: &'a str,
         symbol: &'a str,
+        source_type: Option<SourceType>,
     ) -> Option<JSDocComment<'a>> {
-        let source_type = SourceType::default();
+        let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
@@ -92,10 +93,10 @@ mod test {
         jsdoc.get_by_span(span)
     }
 
-    fn test_jsdoc(source_text: &str, symbol: &str) {
+    fn test_jsdoc(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol).is_some(),
+            get_jsdoc(&allocator, source_text, symbol, source_type).is_some(),
             "{symbol} not found in {source_text}"
         );
     }
@@ -103,7 +104,7 @@ mod test {
     fn test_jsdoc_not_found(source_text: &str, symbol: &str) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol).is_none(),
+            get_jsdoc(&allocator, source_text, symbol, None).is_none(),
             "{symbol} found in {source_text}"
         );
     }
@@ -139,7 +140,17 @@ mod test {
             function foo() {}",
         ];
         for source_text in source_texts {
-            test_jsdoc(source_text, "function foo() {}");
+            test_jsdoc(source_text, "function foo() {}", None);
         }
+    }
+
+    #[test]
+    fn found_on_property_definition() {
+        let source = "class Foo {
+            /** jsdoc */
+            bar: string;
+        }";
+        let source_type = SourceType::default().with_typescript(true);
+        test_jsdoc(source, "bar: string;", Some(source_type));
     }
 }
