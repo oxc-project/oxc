@@ -1,4 +1,4 @@
-Compatibility: 144/597 (24.12%)
+Compatibility: 145/597 (24.29%)
 
 # Failed
 
@@ -330,7 +330,6 @@ Compatibility: 144/597 (24.12%)
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
-* for/in.js
 
 ### function
 * function/function_expression.js

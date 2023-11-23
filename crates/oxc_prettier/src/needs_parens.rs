@@ -44,6 +44,14 @@ impl<'a> Prettier<'a> {
             return true;
         }
 
+        if self.check_kind(kind, parent_kind) {
+            return true;
+        }
+
+        false
+    }
+
+    fn check_kind(&self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
         match kind {
             AstKind::NumberLiteral(literal) => {
                 matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
@@ -70,6 +78,12 @@ impl<'a> Prettier<'a> {
                     true
                 }
                 AstKind::AssignmentExpression(_) => false,
+                AstKind::ForStatement(stmt)
+                    if stmt.init.as_ref().is_some_and(|e| e.span() == assign_expr.span)
+                        || stmt.update.as_ref().is_some_and(|e| e.span() == assign_expr.span) =>
+                {
+                    false
+                }
                 AstKind::ExpressionStatement(_) => matches!(
                     assign_expr.left,
                     AssignmentTarget::AssignmentTargetPattern(
@@ -107,6 +121,11 @@ impl<'a> Prettier<'a> {
             AstKind::LogicalExpression(e) => self.check_binarish(e.span),
             AstKind::BinaryExpression(e) => match parent_kind {
                 AstKind::UpdateExpression(_) => true,
+                _ if e.operator == BinaryOperator::In
+                    && self.is_path_in_for_statement_initializer(e.span) =>
+                {
+                    true
+                }
                 _ => self.check_binarish(e.span),
             },
             AstKind::MemberExpression(e) => self.check_member_call(e.span()),
@@ -324,6 +343,21 @@ impl<'a> Prettier<'a> {
     }
 
     fn is_binary_cast_expression(&self, _span: Span) -> bool {
+        false
+    }
+
+    fn is_path_in_for_statement_initializer(&self, span: Span) -> bool {
+        let mut node = Some(span);
+        let mut parents = self.nodes.iter().rev();
+        while let Some(n) = node {
+            let parent = parents.next();
+            if let Some(AstKind::ForStatement(stmt)) = parent {
+                if stmt.init.as_ref().is_some_and(|init| init.span() == n) {
+                    return true;
+                }
+            }
+            node = parent.map(GetSpan::span);
+        }
         false
     }
 
