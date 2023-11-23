@@ -1,6 +1,7 @@
 use std::convert::Into;
 
 use oxc_ast::ast::{BindingPatternKind, Expression};
+use oxc_semantic::ScopeFlags;
 use trustfall::{
     provider::{
         field_property, resolve_property_with, ContextIterator, ContextOutcomeIterator, ResolveInfo,
@@ -73,12 +74,22 @@ pub(super) fn resolve_arrow_function_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
         "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
         "as_constant_string" => resolve_property_with(contexts, |v| {
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "is_getter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::GetAccessor).into()
+        }),
+        "is_setter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::SetAccessor).into()
+        }),
+        "is_constructor" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::Constructor).into()
         }),
         _ => {
             unreachable!(
@@ -264,6 +275,7 @@ pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "name" => resolve_property_with(contexts, |v| {
@@ -280,6 +292,15 @@ pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
         "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
         "as_constant_string" => resolve_property_with(contexts, |v| {
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "is_getter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::GetAccessor).into()
+        }),
+        "is_setter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::SetAccessor).into()
+        }),
+        "is_constructor" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::Constructor).into()
         }),
         _ => {
             unreachable!(
@@ -308,12 +329,22 @@ pub(super) fn resolve_function_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "is_async" => resolve_property_with(contexts, |v| v.function_is_async().into()),
         "is_generator" => resolve_property_with(contexts, |v| v.function_is_generator().into()),
         "as_constant_string" => resolve_property_with(contexts, |v| {
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "is_getter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::GetAccessor).into()
+        }),
+        "is_setter" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::SetAccessor).into()
+        }),
+        "is_constructor" => resolve_property_with(contexts, |v| {
+            v.function_scope_flag(adapter).contains(ScopeFlags::Constructor).into()
         }),
         _ => {
             unreachable!(

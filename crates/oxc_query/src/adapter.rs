@@ -86,6 +86,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     contexts,
                     property_name.as_ref(),
                     resolve_info,
+                    self,
                 )
             }
             "AssignmentType" => super::properties::resolve_assignment_type_property(
@@ -128,6 +129,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     contexts,
                     property_name.as_ref(),
                     resolve_info,
+                    self,
                 )
             }
             "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
@@ -139,6 +141,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
+                self,
             ),
             "ImportAST" | "Import" => super::properties::resolve_import_property(
                 contexts,
