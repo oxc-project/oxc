@@ -1437,46 +1437,50 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // Perf: Use same print function with BindingProperty
-        if self.shorthand {
-            self.key.format(p)
-        } else {
-            let mut parts = p.vec();
-            let mut method = self.method;
-            match self.kind {
-                PropertyKind::Get => {
-                    parts.push(ss!("get "));
-                    method = true;
-                }
-                PropertyKind::Set => {
-                    parts.push(ss!("set "));
-                    method = true;
-                }
-                PropertyKind::Init => (),
-            }
-            if method {
-                if let Expression::FunctionExpression(func_expr) = &self.value {
-                    parts.push(wrap!(p, func_expr, Function, {
-                        function::print_function(
-                            p,
-                            func_expr,
-                            Some(self.key.span().source_text(p.source_text)),
-                        )
-                    }));
-                }
+        wrap!(p, self, ObjectProperty, {
+            // Perf: Use same print function with BindingProperty
+            if self.shorthand {
+                self.key.format(p)
             } else {
-                parts.push(format!(p, self.key));
-                let comments =
-                    p.print_inner_comment(Span::new(self.key.span().end, self.value.span().start));
-                if !comments.is_empty() {
-                    parts.push(ss!(" "));
-                    parts.extend(comments);
+                let mut parts = p.vec();
+                let mut method = self.method;
+                match self.kind {
+                    PropertyKind::Get => {
+                        parts.push(ss!("get "));
+                        method = true;
+                    }
+                    PropertyKind::Set => {
+                        parts.push(ss!("set "));
+                        method = true;
+                    }
+                    PropertyKind::Init => (),
                 }
-                parts.push(ss!(": "));
-                parts.push(format!(p, self.value));
+                if method {
+                    if let Expression::FunctionExpression(func_expr) = &self.value {
+                        parts.push(wrap!(p, func_expr, Function, {
+                            function::print_function(
+                                p,
+                                func_expr,
+                                Some(self.key.span().source_text(p.source_text)),
+                            )
+                        }));
+                    }
+                } else {
+                    parts.push(format!(p, self.key));
+                    let comments = p.print_inner_comment(Span::new(
+                        self.key.span().end,
+                        self.value.span().start,
+                    ));
+                    if !comments.is_empty() {
+                        parts.push(ss!(" "));
+                        parts.extend(comments);
+                    }
+                    parts.push(ss!(": "));
+                    parts.push(format!(p, self.value));
+                }
+                Doc::Group(Group::new(parts, false))
             }
-            Doc::Group(Group::new(parts, false))
-        }
+        })
     }
 }
 

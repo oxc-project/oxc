@@ -1,4 +1,4 @@
-Compatibility: 143/597 (23.95%)
+Compatibility: 144/597 (24.12%)
 
 # Failed
 
@@ -55,6 +55,7 @@ Compatibility: 143/597 (23.95%)
 ### assignment
 * assignment/binaryish.js
 * assignment/call-with-template.js
+* assignment/chain-two-segments.js
 * assignment/chain.js
 * assignment/destructuring-array.js
 * assignment/destructuring-heuristic.js
@@ -66,7 +67,6 @@ Compatibility: 143/597 (23.95%)
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
-* assignment/issue-4094.js
 * assignment/issue-5610.js
 * assignment/issue-6922.js
 * assignment/issue-7091.js
@@ -375,7 +375,6 @@ Compatibility: 143/597 (23.95%)
 
 ### if
 * if/comment_before_else.js
-* if/else.js
 * if/expr_and_same_line_comments.js
 * if/if_comments.js
 * if/trailing_comment.js
@@ -485,7 +484,6 @@ Compatibility: 143/597 (23.95%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
-* objects/getter-setter.js
 * objects/range.js
 * objects/right-break.js
 
@@ -554,6 +552,9 @@ Compatibility: 143/597 (23.95%)
 ### return
 * return/binaryish.js
 * return/comment.js
+
+### return-outside-function
+* return-outside-function/return-outside-function.js
 
 ### sequence-break
 * sequence-break/break.js

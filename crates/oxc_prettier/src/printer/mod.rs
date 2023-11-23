@@ -5,7 +5,7 @@
 
 mod command;
 
-use std::{collections::VecDeque, vec};
+use std::collections::VecDeque;
 
 use crate::{
     doc::{Doc, Group},
@@ -44,12 +44,35 @@ impl<'a> Printer<'a> {
         unsafe { String::from_utf8_unchecked(self.out) }
     }
 
+    /// Reference:
+    /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
+    pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
+        match doc {
+            Doc::Hardline => true,
+            Doc::Group(group) => {
+                let should_break =
+                    group.contents.iter_mut().rev().any(|doc| Self::propagate_breaks(doc));
+                if should_break {
+                    group.should_break = should_break;
+                }
+                group.should_break
+            }
+            Doc::IfBreak(d) => Self::propagate_breaks(d),
+            Doc::Array(arr) | Doc::Indent(arr) | Doc::IndentIfBreak(arr) => {
+                arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
+            }
+            _ => false,
+        }
+    }
+
     /// Turn Doc into a string
     ///
     /// Reference:
     /// * <https://github.com/prettier/prettier/blob/0176a33db442e498fdb577784deaa77d7c9ae723/src/document/printer.js#L302>
     pub fn print_doc_to_string(&mut self) {
-        while let Some(Command { indent, doc, mode }) = self.cmds.pop() {
+        while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
+            Self::propagate_breaks(&mut doc);
+
             match doc {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),

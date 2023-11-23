@@ -16,17 +16,22 @@ pub(super) fn print_block<'a>(
         parts.push(hardline!());
     } else {
         let parent = p.parent_kind();
-        if !(matches!(
-            parent,
-            AstKind::FunctionBody(_)
-                | AstKind::ArrowExpression(_)
-                | AstKind::Function(_)
-                | AstKind::ForStatement(_)
-                | AstKind::WhileStatement(_)
-                | AstKind::DoWhileStatement(_)
-        ) || (matches!(parent, AstKind::CatchClause(_))
-            && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
-            || matches!(p.current_kind(), AstKind::StaticBlock(_)))
+        let parent_parent = p.parent_parent_kind();
+
+        if (parent_parent.is_none()
+            || parent_parent.is_some_and(|p| !matches!(p, AstKind::ObjectProperty(_))))
+            && !(matches!(
+                parent,
+                AstKind::FunctionBody(_)
+                    | AstKind::ArrowExpression(_)
+                    | AstKind::ObjectExpression(_)
+                    | AstKind::Function(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::DoWhileStatement(_)
+            ) || (matches!(parent, AstKind::CatchClause(_))
+                && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
+                || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
             parts.push(hardline!());
         }
