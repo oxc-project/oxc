@@ -33,7 +33,7 @@ use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{
-    context::TransformerCtx, es2015::ShorthandProperties, es2016::ExponentiationOperator,
+    context::TransformerCtx, es2015::*, es2016::ExponentiationOperator,
     es2019::OptionalCatchBinding, es2020::NullishCoalescingOperator,
     es2021::LogicalAssignmentOperators, es2022::ClassStaticBlock, es3::PropertyLiteral,
     react_jsx::ReactJsx, regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
@@ -62,6 +62,7 @@ pub struct Transformer<'a> {
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
+    es2015_function_name: Option<FunctionName<'a>>,
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
@@ -86,13 +87,21 @@ impl<'a> Transformer<'a> {
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
+            // es2022
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
+            // es2021
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2020
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2019
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2015
+            es2015_function_name: FunctionName::new(Rc::clone(&ast), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
+            // other
             es3_property_literal: PropertyLiteral::new(Rc::clone(&ast ), &options),
             react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
         }
@@ -198,5 +207,9 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         if let Some(rest) = &mut params.rest {
             self.visit_rest_element(rest);
         }
+    }
+
+    fn visit_function(&mut self, func: &mut Function<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_function(func));
     }
 }
