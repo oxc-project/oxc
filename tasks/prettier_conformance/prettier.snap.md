@@ -1,4 +1,4 @@
-Compatibility: 147/597 (24.62%)
+Compatibility: 150/597 (25.13%)
 
 # Failed
 
@@ -64,7 +64,6 @@ Compatibility: 147/597 (24.62%)
 * assignment/issue-10218.js
 * assignment/issue-15534.js
 * assignment/issue-1966.js
-* assignment/issue-2184.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
@@ -106,7 +105,6 @@ Compatibility: 147/597 (24.62%)
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 * binary-expressions/tuple-and-record.js
-* binary-expressions/unary.js
 
 ### binary_math
 * binary_math/parens.js
@@ -413,7 +411,6 @@ Compatibility: 147/597 (24.62%)
 ### member
 * member/conditional.js
 * member/expand.js
-* member/logical.js
 
 ### method-chain
 * method-chain/bracket_0-1.js
