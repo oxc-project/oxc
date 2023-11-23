@@ -453,7 +453,6 @@ impl<'a> Format<'a> for SwitchCase<'a> {
         if !consequent_parts.is_empty() {
             parts.push(indent!(
                 p,
-                hardline!(),
                 Doc::Group(Group { contents: consequent_parts, should_break: false })
             ));
         }
@@ -1570,13 +1569,12 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, BinaryExpression, {
-            let doc = binaryish::print_binaryish_expression(
+            binaryish::print_binaryish_expression(
                 p,
                 &BinaryishLeft::Expression(&self.left),
                 BinaryishOperator::BinaryOperator(self.operator),
                 &self.right,
-            );
-            group!(p, indent!(p, softline!(), doc), softline!())
+            )
         })
     }
 }
@@ -1597,13 +1595,12 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, LogicalExpression, {
-            let doc = binaryish::print_binaryish_expression(
+            binaryish::print_binaryish_expression(
                 p,
                 &BinaryishLeft::Expression(&self.left),
                 BinaryishOperator::LogicalOperator(self.operator),
                 &self.right,
-            );
-            group!(p, indent!(p, softline!(), doc), softline!())
+            )
         })
     }
 }

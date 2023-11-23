@@ -1,4 +1,4 @@
-Compatibility: 146/597 (24.46%)
+Compatibility: 147/597 (24.62%)
 
 # Failed
 
@@ -64,6 +64,7 @@ Compatibility: 146/597 (24.46%)
 * assignment/issue-10218.js
 * assignment/issue-15534.js
 * assignment/issue-1966.js
+* assignment/issue-2184.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
@@ -96,7 +97,6 @@ Compatibility: 146/597 (24.46%)
 * binary-expressions/comment.js
 * binary-expressions/equality.js
 * binary-expressions/exp.js
-* binary-expressions/if.js
 * binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
@@ -106,6 +106,7 @@ Compatibility: 146/597 (24.46%)
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 * binary-expressions/tuple-and-record.js
+* binary-expressions/unary.js
 
 ### binary_math
 * binary_math/parens.js
@@ -412,6 +413,7 @@ Compatibility: 146/597 (24.46%)
 ### member
 * member/conditional.js
 * member/expand.js
+* member/logical.js
 
 ### method-chain
 * method-chain/bracket_0-1.js
@@ -521,9 +523,6 @@ Compatibility: 146/597 (24.46%)
 * preserve-line/member-chain.js
 * preserve-line/parameter-list.js
 
-### private-in
-* private-in/private-in.js
-
 ### quote-props
 * quote-props/classes.js
 * quote-props/numeric-separator.js
@@ -577,7 +576,6 @@ Compatibility: 146/597 (24.46%)
 * switch/comments2.js
 * switch/empty_lines.js
 * switch/empty_statement.js
-* switch/switch.js
 
 ### template
 * template/call.js
@@ -653,9 +651,6 @@ Compatibility: 146/597 (24.46%)
 
 ### variable_declarator
 * variable_declarator/multiple.js
-
-### while
-* while/indent.js
 
 ### yield
 * yield/jsx-without-parenthesis.js

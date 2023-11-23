@@ -1,7 +1,10 @@
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{doc::Doc, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, Group},
+    group, ss, Format, Prettier,
+};
 
 pub enum BinaryishLeft<'a, 'b> {
     Expression(&'b Expression<'a>),
@@ -24,6 +27,12 @@ pub enum BinaryishOperator {
 }
 
 impl BinaryishOperator {
+    fn is_binary(self) -> bool {
+        matches!(self, Self::BinaryOperator(_))
+    }
+}
+
+impl BinaryishOperator {
     fn as_str(self) -> &'static str {
         match self {
             Self::BinaryOperator(op) => op.as_str(),
@@ -40,25 +49,40 @@ pub(super) fn print_binaryish_expression<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
     match &left {
-        BinaryishLeft::Expression(expr) => {
-            if let Expression::LogicalExpression(logical_expr) = expr {
+        BinaryishLeft::Expression(expr) => match expr {
+            Expression::LogicalExpression(logical) => {
                 parts.push(print_binaryish_expression(
                     p,
-                    &BinaryishLeft::Expression(&logical_expr.left),
-                    BinaryishOperator::LogicalOperator(logical_expr.operator),
-                    &logical_expr.right,
+                    &BinaryishLeft::Expression(&logical.left),
+                    BinaryishOperator::LogicalOperator(logical.operator),
+                    &logical.right,
                 ));
-            } else {
+            }
+            Expression::BinaryExpression(binary) => {
+                parts.push(print_binaryish_expression(
+                    p,
+                    &BinaryishLeft::Expression(&binary.left),
+                    BinaryishOperator::BinaryOperator(binary.operator),
+                    &binary.right,
+                ));
+            }
+            _ => {
                 parts.push(left.format(p));
             }
-        }
+        },
         BinaryishLeft::PrivateIdentifier(ident) => {
             parts.push(left.format(p));
         }
     }
     parts.push(ss!(" "));
-    parts.push(ss!(operator.as_str()));
-    parts.push(Doc::Line);
-    parts.push(right.format(p));
-    Doc::Array(parts)
+
+    if operator.is_binary() {
+        parts.push(group!(p, ss!(operator.as_str()), Doc::Line, right.format(p)));
+        Doc::Group(Group { contents: parts, should_break: false })
+    } else {
+        parts.push(ss!(operator.as_str()));
+        parts.push(Doc::Line);
+        parts.push(right.format(p));
+        Doc::Array(parts)
+    }
 }
