@@ -488,7 +488,7 @@ impl<'a> Prettier<'a> {
             AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
             AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
             AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
-            _ => panic!("need to handle {}", kind.debug_name()),
+            _ => panic!("need to handle {kind:?}",),
         }
     }
 
