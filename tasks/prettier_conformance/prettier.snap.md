@@ -1,4 +1,4 @@
-Compatibility: 150/597 (25.13%)
+Compatibility: 152/597 (25.46%)
 
 # Failed
 
@@ -311,9 +311,6 @@ Compatibility: 150/597 (25.13%)
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
 
-### export-default
-* export-default/iife.js
-
 ### export-default/escaped
 * export-default/escaped/default-escaped.js
 
@@ -331,7 +328,6 @@ Compatibility: 150/597 (25.13%)
 * for/continue-and-break-comment-without-blocks.js
 
 ### function
-* function/function_expression.js
 * function/issue-10277.js
 
 ### function-comments
