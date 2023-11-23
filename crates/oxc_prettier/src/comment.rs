@@ -8,7 +8,7 @@ use oxc_ast::CommentKind;
 use oxc_span::Span;
 
 use crate::{
-    doc::{Doc, Separator},
+    doc::{Doc, DocBuilder, Separator},
     hardline, indent, line, ss, Prettier,
 };
 

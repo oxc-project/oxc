@@ -14,6 +14,7 @@ mod printer;
 
 use std::{iter::Peekable, vec};
 
+use doc::DocBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
 use oxc_syntax::identifier::is_line_terminator;
@@ -37,6 +38,13 @@ pub struct Prettier<'a> {
     nodes: Vec<AstKind<'a>>,
 }
 
+impl<'a> DocBuilder<'a> for Prettier<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
+}
+
 impl<'a> Prettier<'a> {
     pub fn new(
         allocator: &'a Allocator,
@@ -55,7 +63,7 @@ impl<'a> Prettier<'a> {
 
     pub fn build(mut self, program: &Program<'a>) -> String {
         let doc = program.format(&mut self);
-        Printer::new(doc, self.source_text, self.options).build()
+        Printer::new(doc, self.source_text, self.options, self.allocator).build()
     }
 
     pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {

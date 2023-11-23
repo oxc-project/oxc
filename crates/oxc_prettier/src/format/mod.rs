@@ -29,7 +29,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     array,
-    doc::{Doc, Group, Separator},
+    doc::{Doc, DocBuilder, Group, Separator},
     format, group, hardline, indent, indent_if_break, line, softline, ss, string, wrap, Prettier,
 };
 

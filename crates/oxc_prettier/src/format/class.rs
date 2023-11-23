@@ -1,6 +1,10 @@
 use oxc_ast::ast::*;
 
-use crate::{array, doc::Doc, hardline, indent, ss, Format, Prettier};
+use crate::{
+    array,
+    doc::{Doc, DocBuilder},
+    hardline, indent, ss, Format, Prettier,
+};
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();

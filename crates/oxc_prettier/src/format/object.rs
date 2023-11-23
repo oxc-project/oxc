@@ -3,7 +3,7 @@ use oxc_ast::ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     group, if_break, line, softline, ss, Prettier,
 };
 

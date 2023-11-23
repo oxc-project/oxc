@@ -26,6 +26,7 @@ macro_rules! string {
 macro_rules! indent {
     ($p:ident, $( $x:expr ),* $(,)?) => {
         {
+            use $crate::doc::DocBuilder;
             let mut temp_vec = $p.vec();
             $(
                 temp_vec.push($x);
@@ -73,6 +74,7 @@ macro_rules! hardline {
 macro_rules! array {
     ($p:ident, $( $x:expr ),* $(,)?) => {
         {
+            use $crate::doc::DocBuilder;
             let mut temp_vec = $p.vec();
             $(
                 temp_vec.push($x);
@@ -86,6 +88,7 @@ macro_rules! array {
 macro_rules! group {
     ($p:ident, $( $x:expr ),* $(,)?) => {
         {
+            use $crate::doc::DocBuilder;
             let mut temp_vec = $p.vec();
             $(
                 temp_vec.push($x);
@@ -98,6 +101,7 @@ macro_rules! group {
 #[macro_export]
 macro_rules! if_break {
     ($p:ident, $s:expr) => {{
+        use $crate::doc::DocBuilder;
         Doc::IfBreak($p.boxed(Doc::Str($s)))
     }};
 }

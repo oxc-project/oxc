@@ -3,10 +3,10 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{Box, String, Vec};
+use oxc_allocator::{Allocator, Box, String, Vec};
 use std::fmt;
 
-use crate::{array, line, ss, Prettier};
+use crate::{array, line, ss};
 
 #[derive(Debug)]
 pub enum Doc<'a> {
@@ -57,28 +57,25 @@ pub enum Separator {
 }
 
 /// Doc Builder
-impl<'a> Prettier<'a> {
+pub trait DocBuilder<'a> {
+    fn allocator(&self) -> &'a Allocator;
     #[inline]
-    pub(crate) fn vec<T>(&self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator)
+    fn vec<T>(&self) -> Vec<'a, T> {
+        Vec::new_in(self.allocator())
     }
 
     #[inline]
-    pub(crate) fn str(&self, s: &str) -> Doc<'a> {
-        Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
+    fn str(&self, s: &str) -> Doc<'a> {
+        Doc::Str(String::from_str_in(s, self.allocator()).into_bump_str())
     }
 
     #[inline]
-    pub(crate) fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
-        Box(self.allocator.alloc(doc))
+    fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
+        Box(self.allocator().alloc(doc))
     }
 
     #[allow(unused)]
-    pub(crate) fn join(
-        &self,
-        separator: Separator,
-        docs: std::vec::Vec<Doc<'a>>,
-    ) -> Vec<'a, Doc<'a>> {
+    fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {

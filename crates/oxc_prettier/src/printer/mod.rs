@@ -5,10 +5,11 @@
 
 mod command;
 
+use oxc_allocator::Allocator;
 use std::collections::VecDeque;
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     PrettierOptions,
 };
 
@@ -27,15 +28,29 @@ pub struct Printer<'a> {
 
     // states
     new_line: &'static str,
+
+    allocator: &'a Allocator,
+}
+
+impl<'a> DocBuilder<'a> for Printer<'a> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
+    }
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(doc: Doc<'a>, source_text: &str, options: PrettierOptions) -> Self {
+    pub fn new(
+        doc: Doc<'a>,
+        source_text: &str,
+        options: PrettierOptions,
+        allocator: &'a Allocator,
+    ) -> Self {
         // Preallocate for performance because the output will very likely
         // be the same size as the original text.
         let out = Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str() }
+        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str(), allocator }
     }
 
     pub fn build(mut self) -> String {

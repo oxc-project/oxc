@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::{
     array,
     comment::DanglingCommentsPrintOptions,
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     group, indent, softline, ss, Prettier,
 };
 
