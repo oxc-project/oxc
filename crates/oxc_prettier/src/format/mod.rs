@@ -149,37 +149,39 @@ impl<'a> Format<'a> for EmptyStatement {
 
 impl<'a> Format<'a> for IfStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, IfStatement, {
+            let mut parts = p.vec();
 
-        let consequent = format!(p, self.consequent);
-        let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
+            let consequent = format!(p, self.consequent);
+            let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
 
-        let opening = group![
-            p,
-            ss!("if ("),
-            group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()),
-            ss!(")"),
-            consequent
-        ];
-        parts.push(opening);
-
-        if let Some(alternate) = &self.alternate {
-            let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
-            parts.push(if else_on_same_line { ss!(" ") } else { hardline!() });
-            parts.push(ss!("else"));
-            let alternate_doc = format!(p, alternate);
-            parts.push(group!(
+            let opening = group![
                 p,
-                misc::adjust_clause(
-                    p,
-                    alternate,
-                    alternate_doc,
-                    matches!(alternate, Statement::IfStatement(_))
-                )
-            ));
-        }
+                ss!("if ("),
+                group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()),
+                ss!(")"),
+                consequent
+            ];
+            parts.push(opening);
 
-        Doc::Array(parts)
+            if let Some(alternate) = &self.alternate {
+                let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
+                parts.push(if else_on_same_line { ss!(" ") } else { hardline!() });
+                parts.push(ss!("else"));
+                let alternate_doc = format!(p, alternate);
+                parts.push(group!(
+                    p,
+                    misc::adjust_clause(
+                        p,
+                        alternate,
+                        alternate_doc,
+                        matches!(alternate, Statement::IfStatement(_))
+                    )
+                ));
+            }
+
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -397,33 +399,35 @@ impl<'a> Format<'a> for BreakStatement {
 
 impl<'a> Format<'a> for SwitchStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
+        wrap!(p, self, SwitchStatement, {
+            let mut parts = p.vec();
 
-        let mut header_parts = p.vec();
+            let mut header_parts = p.vec();
 
-        header_parts.push(ss!("switch ("));
+            header_parts.push(ss!("switch ("));
 
-        header_parts.push(indent!(p, softline!(), format!(p, self.discriminant)));
+            header_parts.push(indent!(p, softline!(), format!(p, self.discriminant)));
 
-        header_parts.push(softline!());
-        header_parts.push(ss!(")"));
+            header_parts.push(softline!());
+            header_parts.push(ss!(")"));
 
-        parts.push(Doc::Group(Group::new(header_parts, false)));
+            parts.push(Doc::Group(Group::new(header_parts, false)));
 
-        parts.push(ss!(" {"));
+            parts.push(ss!(" {"));
 
-        let mut cases_parts = p.vec();
+            let mut cases_parts = p.vec();
 
-        for case in &self.cases {
-            cases_parts.push(indent!(p, hardline!(), format!(p, case)));
-        }
+            for case in &self.cases {
+                cases_parts.push(indent!(p, hardline!(), format!(p, case)));
+            }
 
-        parts.extend(cases_parts);
+            parts.extend(cases_parts);
 
-        parts.push(hardline!());
-        parts.push(ss!("}"));
+            parts.push(hardline!());
+            parts.push(ss!("}"));
 
-        Doc::Array(parts)
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -1569,12 +1573,17 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
 impl<'a> Format<'a> for BinaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, BinaryExpression, {
-            binaryish::print_binaryish_expression(
+            let doc = binaryish::print_binaryish_expression(
                 p,
                 &BinaryishLeft::Expression(&self.left),
                 BinaryishOperator::BinaryOperator(self.operator),
                 &self.right,
-            )
+            );
+            if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
+                group!(p, indent!(p, softline!(), doc), softline!())
+            } else {
+                doc
+            }
         })
     }
 }
@@ -1595,12 +1604,18 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
 impl<'a> Format<'a> for LogicalExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, LogicalExpression, {
-            binaryish::print_binaryish_expression(
+            let doc = binaryish::print_binaryish_expression(
                 p,
                 &BinaryishLeft::Expression(&self.left),
                 BinaryishOperator::LogicalOperator(self.operator),
                 &self.right,
-            )
+            );
+
+            if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
+                group!(p, indent!(p, softline!(), doc), softline!())
+            } else {
+                doc
+            }
         })
     }
 }
