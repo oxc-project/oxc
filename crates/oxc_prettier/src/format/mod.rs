@@ -408,18 +408,17 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
         header_parts.push(softline!());
         header_parts.push(ss!(")"));
 
-        parts.push(group!(p, Doc::Array(header_parts)));
+        parts.push(Doc::Group(Group::new(header_parts, false)));
 
         parts.push(ss!(" {"));
 
         let mut cases_parts = p.vec();
 
         for case in &self.cases {
-            cases_parts.push(hardline!());
-            cases_parts.push(format!(p, case));
+            cases_parts.push(indent!(p, hardline!(), format!(p, case)));
         }
 
-        parts.push(indent!(p, hardline!(), group!(p, Doc::Array(cases_parts))));
+        parts.extend(cases_parts);
 
         parts.push(hardline!());
         parts.push(ss!("}"));
@@ -441,12 +440,23 @@ impl<'a> Format<'a> for SwitchCase<'a> {
         }
 
         let mut consequent_parts = p.vec();
-        for stmt in &self.consequent {
-            consequent_parts.push(hardline!());
-            consequent_parts.push(format!(p, stmt));
+
+        if !(self.consequent.len() == 1
+            && matches!(self.consequent[0], Statement::EmptyStatement(_)))
+        {
+            for stmt in &self.consequent {
+                consequent_parts.push(hardline!());
+                consequent_parts.push(format!(p, stmt));
+            }
         }
 
-        parts.push(indent!(p, hardline!(), group!(p, Doc::Array(consequent_parts))));
+        if !consequent_parts.is_empty() {
+            parts.push(indent!(
+                p,
+                hardline!(),
+                Doc::Group(Group { contents: consequent_parts, should_break: false })
+            ));
+        }
 
         Doc::Array(parts)
     }
