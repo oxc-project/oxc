@@ -471,6 +471,8 @@ pub enum PropertyKind {
 }
 
 /// Template Literal
+///
+/// This is interpreted by interleaving the expression elements in between the quasi elements.
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateLiteral<'a> {
