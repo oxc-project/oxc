@@ -279,15 +279,21 @@ impl<'a> Vertex<'a> {
     }
 
     pub fn function_scope_flag(&self, adapter: &Adapter<'_>) -> ScopeFlags {
-        let wanted_node_hash = match &self {
-            Vertex::ArrowFunction(data) => calculate_hash(data.arrow_expression),
-            Vertex::FnDeclaration(data) => calculate_hash(data.function),
+        let (wanted_node_hash, wanted_node_span) = match &self {
+            Vertex::ArrowFunction(data) => (calculate_hash(data.arrow_expression), data.arrow_expression.span),
+            Vertex::FnDeclaration(data) => (calculate_hash(data.function), data.function.span),
             _ => unreachable!(
                 "'function_scope_flag' function should only ever be called with an ArrowFunction or FnDeclaration"
             ),
         };
 
         let found = adapter.semantic.nodes().iter().find(|x| {
+            let span = x.kind().span();
+
+            if span.start != wanted_node_span.start || span.end != wanted_node_span.end {
+                return false;
+            }
+
             let hash_of_node = match x.kind() {
                 AstKind::ArrowExpression(ae) => calculate_hash(ae),
                 AstKind::Function(fn_) => calculate_hash(fn_),
