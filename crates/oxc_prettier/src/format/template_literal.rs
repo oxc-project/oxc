@@ -1,6 +1,10 @@
 use oxc_ast::ast::{TemplateLiteral, *};
 
-use crate::{doc::Doc, format::Format, ss, Prettier};
+use crate::{
+    doc::{Doc, DocBuilder},
+    format::Format,
+    ss, Prettier,
+};
 
 #[allow(clippy::enum_variant_names)]
 pub enum TemplateLiteralPrinter<'a, 'b> {

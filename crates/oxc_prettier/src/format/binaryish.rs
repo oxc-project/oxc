@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     group, ss, Format, Prettier,
 };
 

@@ -1,6 +1,9 @@
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, group, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, DocBuilder},
+    group, ss, Format, Prettier,
+};
 
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,

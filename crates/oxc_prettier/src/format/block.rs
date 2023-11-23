@@ -1,6 +1,9 @@
 use oxc_ast::{ast::*, AstKind};
 
-use crate::{doc::Doc, hardline, indent, ss, Prettier};
+use crate::{
+    doc::{Doc, DocBuilder},
+    hardline, indent, ss, Prettier,
+};
 
 use super::statement;
 
