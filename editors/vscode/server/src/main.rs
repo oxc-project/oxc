@@ -7,6 +7,7 @@ use crate::linter::{DiagnosticReport, ServerLinter};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
+use log::debug;
 
 use dashmap::DashMap;
 use futures::future::join_all;
@@ -56,7 +57,7 @@ impl LanguageServer for Backend {
     }
 
     async fn initialized(&self, _: InitializedParams) {
-        self.client.log_message(MessageType::INFO, "oxc initialized.").await;
+        debug!("oxc initialized.");
 
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
@@ -77,6 +78,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        debug!("oxc server did save");
         self.handle_file_update(params.text_document.uri).await;
     }
 

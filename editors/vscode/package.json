@@ -56,6 +56,7 @@
     "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
     "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
+    "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_lsp.vsix",
     "publish": "vsce publish --no-dependencies",
     "install-extension": "code --install-extension oxc_lsp.vsix --force",

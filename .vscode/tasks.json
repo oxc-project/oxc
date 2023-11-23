@@ -30,10 +30,7 @@
 			"presentation": {
 				"panel": "dedicated",
 				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc-watch"
-			]
+			}
 		}
 	]
 }
