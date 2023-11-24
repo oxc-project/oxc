@@ -1,4 +1,4 @@
-Compatibility: 156/597 (26.13%)
+Compatibility: 157/597 (26.30%)
 
 # Failed
 
@@ -560,7 +560,6 @@ Compatibility: 156/597 (26.13%)
 ### switch
 * switch/comments.js
 * switch/comments2.js
-* switch/empty_lines.js
 * switch/empty_statement.js
 
 ### template

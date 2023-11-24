@@ -416,11 +416,13 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             parts.push(ss!(" {"));
 
             let mut cases_parts = p.vec();
-
-            for case in &self.cases {
+            let len = self.cases.len();
+            for (i, case) in self.cases.iter().enumerate() {
                 cases_parts.push(indent!(p, hardline!(), format!(p, case)));
+                if i != len - 1 && p.is_next_line_empty(case.span.end) {
+                    cases_parts.push(hardline!());
+                }
             }
-
             parts.extend(cases_parts);
 
             parts.push(hardline!());
@@ -445,13 +447,22 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 
         let mut consequent_parts = p.vec();
 
-        if !(self.consequent.len() == 1
-            && matches!(self.consequent[0], Statement::EmptyStatement(_)))
-        {
-            for stmt in &self.consequent {
-                consequent_parts.push(hardline!());
-                consequent_parts.push(format!(p, stmt));
+        for i in 0..self.consequent.len() {
+            let stmt = &self.consequent[i];
+
+            if matches!(stmt, Statement::EmptyStatement(_)) {
+                continue;
             }
+
+            if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
+                let last_stmt = &self.consequent[i - 1];
+                if p.is_next_line_empty(last_stmt.span().end) {
+                    consequent_parts.push(hardline!());
+                }
+            }
+
+            consequent_parts.push(hardline!());
+            consequent_parts.push(format!(p, stmt));
         }
 
         if !consequent_parts.is_empty() {
