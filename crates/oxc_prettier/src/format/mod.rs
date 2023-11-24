@@ -149,13 +149,14 @@ impl<'a> Format<'a> for IfStatement<'a> {
         wrap!(p, self, IfStatement, {
             let mut parts = p.vec();
 
+            let test_doc = format!(p, self.test);
             let consequent = format!(p, self.consequent);
             let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
 
             let opening = group![
                 p,
                 ss!("if ("),
-                group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()),
+                group!(p, indent!(p, softline!(), test_doc), softline!()),
                 ss!(")"),
                 consequent
             ];

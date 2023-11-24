@@ -109,6 +109,7 @@ impl<'a> Printer<'a> {
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
                 Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
+                Doc::BreakParent => {}
             }
 
             if self.cmds.is_empty() && !self.line_suffix.is_empty() {
@@ -360,6 +361,7 @@ impl<'a> Printer<'a> {
                 Doc::LineSuffix(_) => {
                     break;
                 }
+                Doc::BreakParent => {}
             }
 
             if remaining_width < 0 {

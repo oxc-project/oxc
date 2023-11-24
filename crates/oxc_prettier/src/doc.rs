@@ -42,6 +42,8 @@ pub enum Doc<'a> {
     /// it's going to add a break whenever the next element doesn't fit in the line anymore.
     /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
     Fill(Fill<'a>),
+    /// Include this anywhere to force all parent groups to break.
+    BreakParent,
 }
 
 #[derive(Debug)]
@@ -224,6 +226,9 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                 }
             }
             string.push(')');
+        }
+        Doc::BreakParent => {
+            string.push_str("BreakParent");
         }
     }
 
