@@ -15803,28 +15803,23 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ import * as f from "./first" assert {
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `{` but found `EOF`
    ╭─[conformance/importAttributes/importAttributes4.ts:1:1]
  1 │ import * as f from "./first" with
-   ·                             ─
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Expected `}` but found `EOF`
    ╭─[conformance/importAttributes/importAttributes5.ts:1:1]
  1 │ import * as f from "./first" with {
-   ·                             ─
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Unexpected token
    ╭─[conformance/importAttributes/importAttributes6.ts:2:1]
  2 │ // @filename: mod.mts
  3 │ import * as thing1 from "./mod.mjs" with { field: 0 };
-   ·                                    ─
+   ·                                                   ─
  4 │ import * as thing2 from "./mod.mjs" with { field: `a` };
    ╰────
-  help: Try insert a semicolon here
 
   × The keyword 'interface' is reserved
    ╭─[conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:2:1]
