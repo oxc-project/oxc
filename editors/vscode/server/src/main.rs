@@ -8,7 +8,6 @@ use log::debug;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
-use log::debug;
 
 use dashmap::DashMap;
 use futures::future::join_all;
