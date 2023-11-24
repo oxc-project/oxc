@@ -1,14 +1,13 @@
 # typescript/tests/cases/conformance/enums/awaitAndYield.ts
-```typescript
-async function* test(x) {
-	var E = (E => {
-		const foo = await x;
-		E[E['foo'] = foo] = 'foo';
-		const baz = yield 1;
-		E[E['baz'] = baz] = 'baz';
-		return E;
-	})(E || {});
-}
+```error
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/enums/awaitAndYield.ts:4:1]
+ 4 │     enum E {
+ 5 │         foo = await x,
+   ·               ─────
+ 6 │         baz = yield 1,
+   ╰────
+
 
 ```
 
@@ -478,7 +477,16 @@ var E = (E => {
 
 # typescript/tests/cases/conformance/enums/enumErrors.ts
 ```error
-Expected `,` but found `;`
+  × Expected `,` but found `;`
+    ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:47:1]
+ 47 │ 
+ 48 │     postSemicolon;
+    ·                  ┬
+    ·                  ╰── `,` expected
+ 49 │     postColonValueComma: 2,
+    ╰────
+
+
 ```
 
 # typescript/tests/cases/conformance/enums/enumExportMergingES6.ts

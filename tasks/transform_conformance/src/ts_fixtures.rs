@@ -6,7 +6,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -54,7 +54,7 @@ impl TypeScriptFixtures {
 
                 let (content, lang) = match Self::transform(&path) {
                     Ok(content) => (content, "typescript"),
-                    Err(err) => (err.iter().map(ToString::to_string).collect(), "error"),
+                    Err(err) => (err, "error"),
                 };
                 snapshot.push_str(lang);
                 snapshot.push('\n');
@@ -88,27 +88,43 @@ impl TypeScriptFixtures {
         list
     }
 
-    fn transform(path: &Path) -> Result<String, Vec<Error>> {
+    fn transform(path: &Path) -> Result<String, String> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
+        let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-        if ret.program.is_empty() && !ret.errors.is_empty() {
-            return Err(ret.errors);
+        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
+            .with_trivias(parser_ret.trivias)
+            .with_check_syntax_error(true)
+            .build(&parser_ret.program);
+
+        let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
+
+        if !errors.is_empty() {
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+            let mut output = String::new();
+            for error in errors {
+                let error = error.with_source_code(NamedSource::new(
+                    &normalize_path(path.strip_prefix(&root()).unwrap()),
+                    source_text.to_string(),
+                ));
+                handler.render_report(&mut output, error.as_ref()).unwrap();
+                output.push('\n');
+            }
+            return Err(output);
         }
 
-        let semantic = SemanticBuilder::new(&source_text, source_type)
-            .with_trivias(ret.trivias)
-            .build(&ret.program)
-            .semantic;
-        let transformed_program = allocator.alloc(ret.program);
+        let semantic = semantic_ret.semantic;
+        let transformed_program = allocator.alloc(parser_ret.program);
 
         let result = Transformer::new(&allocator, source_type, semantic, Self::transform_options())
             .build(transformed_program);
 
-        result.map(|()| {
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
-        })
+        result
+            .map(|()| {
+                Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+            })
+            .map_err(|e| e.iter().map(ToString::to_string).collect())
     }
 }
