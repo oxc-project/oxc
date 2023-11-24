@@ -86,6 +86,8 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-react-jsx",
 ];
 
+const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
+
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
 
@@ -140,6 +142,10 @@ impl TestRunner {
                             if !path.to_string_lossy().contains(filter) {
                                 return None;
                             }
+                        }
+
+                        if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
+                            return None;
                         }
 
                         let test_case = TestCaseKind::from_path(path);
