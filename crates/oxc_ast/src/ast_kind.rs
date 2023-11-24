@@ -458,7 +458,6 @@ impl<'a> GetSpan for AstKind<'a> {
     }
 }
 
-#[cfg(debug_assertions)]
 impl<'a> AstKind<'a> {
     #[allow(clippy::match_same_arms)]
     /// Get the AST kind name with minimal details. Particularly useful for
