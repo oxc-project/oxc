@@ -111,8 +111,11 @@ macro_rules! wrap {
     ($p:ident, $self:expr, $kind:ident, $block:block) => {{
         let kind = AstKind::$kind($p.alloc($self));
         $p.enter_node(kind);
+        let leading = $p.print_leading_comments(kind.span());
         let doc = $block;
         let doc = $p.wrap_parens(doc, kind);
+        let trailing = $p.print_trailing_comments(kind.span());
+        let doc = $p.print_comments(leading, doc, trailing);
         $p.leave_node();
         doc
     }};

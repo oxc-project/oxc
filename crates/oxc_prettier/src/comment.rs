@@ -41,25 +41,30 @@ impl DanglingCommentsPrintOptions {
 }
 
 impl<'a> Prettier<'a> {
+    #[must_use]
+    pub(crate) fn print_comments(
+        &mut self,
+        before: Option<Doc<'a>>,
+        doc: Doc<'a>,
+        after: Option<Doc<'a>>,
+    ) -> Doc<'a> {
+        if before.is_some() || after.is_some() {
+            let mut parts = self.vec();
+            if let Some(doc) = before {
+                parts.push(doc);
+            }
+            parts.push(doc);
+            if let Some(doc) = after {
+                parts.push(doc);
+            }
+            return Doc::Array(parts);
+        }
+        doc
+    }
+
     #[allow(unused)]
     pub(crate) fn has_comment(_span: Span, _flags: CommentFlags) -> bool {
         false
-    }
-
-    #[must_use]
-    pub(crate) fn print_inner_comment(&mut self, range: Span) -> Vec<'a, Doc<'a>> {
-        let mut parts = self.vec();
-        while let Some((start, end, kind)) = self.trivias.peek().copied() {
-            // Comment within the span
-            if start >= range.start && end <= range.end {
-                self.trivias.next();
-                parts.push(self.print_comment(start, end, kind));
-            } else {
-                break;
-            }
-        }
-
-        parts
     }
 
     #[must_use]
@@ -102,6 +107,28 @@ impl<'a> Prettier<'a> {
             return None;
         }
         Some(Doc::Array(parts))
+    }
+
+    #[must_use]
+    #[allow(clippy::unused_self)]
+    pub(crate) fn print_trailing_comments(&mut self, _range: Span) -> Option<Doc<'a>> {
+        None
+    }
+
+    #[must_use]
+    pub(crate) fn print_inner_comment(&mut self, range: Span) -> Vec<'a, Doc<'a>> {
+        let mut parts = self.vec();
+        while let Some((start, end, kind)) = self.trivias.peek().copied() {
+            // Comment within the span
+            if start >= range.start && end <= range.end {
+                self.trivias.next();
+                parts.push(self.print_comment(start, end, kind));
+            } else {
+                break;
+            }
+        }
+
+        parts
     }
 
     #[must_use]
