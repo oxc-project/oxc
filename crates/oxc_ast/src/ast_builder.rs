@@ -90,6 +90,17 @@ impl<'a> AstBuilder<'a> {
         mem::replace(target, dummy)
     }
 
+    pub fn move_declaration(&self, decl: &mut Declaration<'a>) -> Declaration<'a> {
+        let empty_decl = self.variable_declaration(
+            Span::default(),
+            VariableDeclarationKind::Var,
+            self.new_vec(),
+            Modifiers::empty(),
+        );
+        let empty_decl = Declaration::VariableDeclaration(empty_decl);
+        mem::replace(decl, empty_decl)
+    }
+
     pub fn program(
         &self,
         span: Span,

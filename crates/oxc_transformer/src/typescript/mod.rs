@@ -6,7 +6,7 @@ use oxc_syntax::{
     NumberBase,
 };
 
-use std::{mem, rc::Rc};
+use std::{collections::HashSet, mem, rc::Rc};
 
 use crate::{context::TransformerCtx, utils::is_valid_identifier};
 
@@ -20,6 +20,8 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
+
+    export_name_set: HashSet<Atom>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -28,7 +30,7 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax }
+        Self { ast, ctx, verbatim_module_syntax, export_name_set: Default::default() }
     }
 
     #[allow(clippy::unused_self)]
@@ -49,7 +51,7 @@ impl<'a> TypeScript<'a> {
     ///   return Foo;
     /// })(Foo || {});
     /// ```
-    pub fn transform_ts_enum_declaration(&mut self, decl: &mut Declaration<'a>) {
+    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         let Declaration::TSEnumDeclaration(ts_enum_declaration) = decl else {
             return;
         };
@@ -113,6 +115,55 @@ impl<'a> TypeScript<'a> {
             self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
 
         *decl = Declaration::VariableDeclaration(variable_declaration);
+    }
+
+    /// Remove `export` from merged declaration.
+    /// We only preserve the first one.
+    /// for example:
+    /// ```TypeScript
+    /// export enum Foo {}
+    /// export enum Foo {}
+    /// ```
+    /// ```JavaScript
+    /// export enum Foo {}
+    /// enum Foo {}
+    /// ```
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+        let Statement::ModuleDeclaration(module_decl) = stmt else {
+            return;
+        };
+
+        let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &mut **module_decl else {
+            return;
+        };
+
+        let ExportNamedDeclaration {
+            declaration: Some(declaration),
+            source: None,
+            export_kind: ImportOrExportKind::Value,
+            ..
+        } = &mut **export_decl
+        else {
+            return;
+        };
+
+        let id = match &declaration {
+            Declaration::TSEnumDeclaration(decl) => decl.id.name.clone(),
+            Declaration::TSModuleDeclaration(decl) => {
+                let TSModuleDeclarationName::Identifier(id) = &decl.id else {
+                    return;
+                };
+
+                id.name.clone()
+            }
+            _ => return,
+        };
+
+        if self.export_name_set.insert(id) {
+            return;
+        }
+
+        *stmt = Statement::Declaration(self.ast.move_declaration(declaration));
     }
 
     /// * Remove the top level import / export statements that are types
