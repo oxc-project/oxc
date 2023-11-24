@@ -981,7 +981,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
             parts.push(ss!(" = "));
             parts.push(init.format(p));
         }
-        Doc::Array(parts)
+        Doc::Group(Group { contents: parts, should_break: false })
     }
 }
 

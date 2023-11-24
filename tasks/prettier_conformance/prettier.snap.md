@@ -1,4 +1,4 @@
-Compatibility: 158/597 (26.47%)
+Compatibility: 159/597 (26.63%)
 
 # Failed
 
@@ -58,7 +58,6 @@ Compatibility: 158/597 (26.47%)
 * assignment/chain-two-segments.js
 * assignment/chain.js
 * assignment/destructuring-array.js
-* assignment/destructuring-heuristic.js
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
@@ -267,7 +266,6 @@ Compatibility: 158/597 (26.47%)
 
 ### destructuring
 * destructuring/destructuring.js
-* destructuring/issue-5988.js
 
 ### destructuring-ignore
 * destructuring-ignore/ignore.js
@@ -387,6 +385,7 @@ Compatibility: 158/597 (26.47%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
+* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
