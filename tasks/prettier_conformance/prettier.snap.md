@@ -1,4 +1,4 @@
-Compatibility: 155/591 (26.23%)
+Compatibility: 161/591 (27.24%)
 
 # Failed
 
@@ -58,7 +58,6 @@ Compatibility: 155/591 (26.23%)
 * assignment/chain-two-segments.js
 * assignment/chain.js
 * assignment/destructuring-array.js
-* assignment/destructuring-heuristic.js
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
@@ -259,7 +258,6 @@ Compatibility: 155/591 (26.23%)
 
 ### destructuring
 * destructuring/destructuring.js
-* destructuring/issue-5988.js
 
 ### destructuring-ignore
 * destructuring-ignore/ignore.js
@@ -325,9 +323,6 @@ Compatibility: 155/591 (26.23%)
 ### function-comments
 * function-comments/params-trail-comments.js
 
-### function-first-param
-* function-first-param/function_expression.js
-
 ### function-single-destructuring
 * function-single-destructuring/array.js
 * function-single-destructuring/object.js
@@ -349,7 +344,6 @@ Compatibility: 155/591 (26.23%)
 
 ### generator
 * generator/anonymous.js
-* generator/async.js
 
 ### identifier/for-of
 * identifier/for-of/await.js
@@ -382,6 +376,7 @@ Compatibility: 155/591 (26.23%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
+* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
@@ -457,7 +452,6 @@ Compatibility: 155/591 (26.23%)
 * nullish-coalescing/nullish_coalesing_operator.js
 
 ### object-prop-break-in
-* object-prop-break-in/comment.js
 * object-prop-break-in/short-keys.js
 * object-prop-break-in/test.js
 
@@ -555,8 +549,6 @@ Compatibility: 155/591 (26.23%)
 ### switch
 * switch/comments.js
 * switch/comments2.js
-* switch/empty_lines.js
-* switch/empty_statement.js
 
 ### template
 * template/call.js
