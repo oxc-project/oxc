@@ -728,10 +728,24 @@ fn test_with_config() {
     use serde_json::json;
 
     let pass = vec![
-        ("const foo = 1234567890", Some(json!([{ "onlyIfContainsSeparator": true }]))),
-        ("const foo = 12_34_56", Some(json!([{ "number": { "groupLength": 2 } }]))),
-        ("const foo = 12345", Some(json!([{ "number": { "minimumDigits": 10 } }]))),
-        ("const foo = 0b1_0_1_1_1", Some(json!([{ "binary": { "groupLength": 1 } }]))),
+        ("1234567890", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0b11111111", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0o77777777", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0xffffffff", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("1234567890n", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0b11111111n", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0o77777777n", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("0xffffffffn", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("12_34_56", Some(json!([{ "number": { "groupLength": 2 } }]))),
+        ("12345", Some(json!([{ "number": { "minimumDigits": 10 } }]))),
+        ("0b1_1_1_1_1", Some(json!([{ "binary": { "groupLength": 1 } }]))),
+        ("0o7_7_7_7_7", Some(json!([{ "octal": { "groupLength": 1 } }]))),
+        ("0xf_f_f_f_f", Some(json!([{ "hexadecimal": { "groupLength": 1 } }]))),
+        ("12_34_56n", Some(json!([{ "number": { "groupLength": 2 } }]))),
+        ("12345n", Some(json!([{ "number": { "minimumDigits": 10 } }]))),
+        ("0b1_1_1_1_1n", Some(json!([{ "binary": { "groupLength": 1 } }]))),
+        ("0o7_7_7_7_7n", Some(json!([{ "octal": { "groupLength": 1 } }]))),
+        ("0xf_f_f_f_fn", Some(json!([{ "hexadecimal": { "groupLength": 1 } }]))),
     ];
 
     let fail = vec![];
