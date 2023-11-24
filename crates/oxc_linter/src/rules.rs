@@ -169,6 +169,7 @@ mod unicorn {
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_switch_case;
     pub mod no_zero_fractions;
@@ -342,6 +343,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
     unicorn::no_useless_fallback_in_spread,
+    unicorn::no_useless_length_check,
     unicorn::no_useless_promise_resolve_reject,
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
