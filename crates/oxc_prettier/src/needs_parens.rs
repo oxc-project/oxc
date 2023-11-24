@@ -235,17 +235,17 @@ impl<'a> Prettier<'a> {
         let mut arrow_expr = None;
         for kind in self.nodes.iter().rev() {
             if let AstKind::ArrowExpression(e) = kind {
-                if e.get_expression().is_some_and(|e| e.span() == obj_expr.span) {
-                    arrow_expr = Some(e);
-                    break;
-                }
+                e.get_expression();
+                arrow_expr = Some(e);
+                break;
             }
         }
         if let Some(arrow_expr) = arrow_expr {
             if let Some(e) = arrow_expr.get_expression() {
-                if !matches!(e, Expression::SequenceExpression(_))
-                    && !matches!(e, Expression::AssignmentExpression(_))
-                    && Self::starts_with_no_lookahead_token(e, obj_expr.span)
+                if !matches!(
+                    e,
+                    Expression::SequenceExpression(_) | Expression::AssignmentExpression(_)
+                ) && Self::starts_with_no_lookahead_token(e, obj_expr.span)
                 {
                     return true;
                 }
