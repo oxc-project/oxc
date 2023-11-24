@@ -445,31 +445,38 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             parts.push(ss!("default:"));
         }
 
+        let consequent: Vec<_> = Vec::from_iter_in(
+            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))),
+            p.allocator,
+        );
+        let len = consequent.len();
+        let is_only_one_block_statement =
+            len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_));
+
         let mut consequent_parts = p.vec();
-
-        for i in 0..self.consequent.len() {
-            let stmt = &self.consequent[i];
-
-            if matches!(stmt, Statement::EmptyStatement(_)) {
-                continue;
-            }
+        for i in 0..len {
+            let stmt = &consequent[i];
 
             if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
-                let last_stmt = &self.consequent[i - 1];
+                let last_stmt = &consequent[i - 1];
                 if p.is_next_line_empty(last_stmt.span().end) {
                     consequent_parts.push(hardline!());
                 }
             }
 
-            consequent_parts.push(hardline!());
+            consequent_parts.push(if is_only_one_block_statement { ss!(" ") } else { hardline!() });
             consequent_parts.push(format!(p, stmt));
         }
 
         if !consequent_parts.is_empty() {
-            parts.push(indent!(
-                p,
-                Doc::Group(Group { contents: consequent_parts, should_break: false })
-            ));
+            if is_only_one_block_statement {
+                parts.extend(consequent_parts);
+            } else {
+                parts.push(indent!(
+                    p,
+                    Doc::Group(Group { contents: consequent_parts, should_break: false })
+                ));
+            }
         }
 
         Doc::Array(parts)
