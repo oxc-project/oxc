@@ -1,7 +1,106 @@
 parser_test262 Summary:
-AST Parsed     : 44161/44161 (100.00%)
-Positive Passed: 44161/44161 (100.00%)
-Negative Passed: 3918/3918 (100.00%)
+AST Parsed     : 45065/45075 (99.98%)
+Positive Passed: 45065/45075 (99.98%)
+Negative Passed: 3925/3925 (100.00%)
+Expect to Parse: "language/module-code/import-attributes/allow-nlt-before-with.js"
+  × Expected `(` but found `{`
+    ╭─[language/module-code/import-attributes/allow-nlt-before-with.js:32:1]
+ 32 │ with
+ 33 │ { type: 'foo' };
+    · ┬
+    · ╰── `(` expected
+    ╰────
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-empty.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-empty.js:24:1]
+ 24 │ 
+ 25 │ import x from './import-attribute-1_FIXTURE.js' with {};
+    ·                                                ─
+ 26 │ import './import-attribute-2_FIXTURE.js' with {};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-key-identifiername.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-key-identifiername.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {if:''};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {if:''};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-key-string-double.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-key-string-double.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {"test262\u0078":''};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {"test262\u0078":''};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-key-string-single.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-key-string-single.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {'test262\u0078':''};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {'test262\u0078':''};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-many.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-many.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {test262_1:'',test262_2:'',test262_3:'',test262_4:''};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {test262_1:'',test262_2:'',test262_3:'',test262_4:''};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-newlines.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-newlines.js:35:1]
+ 35 │ 
+ 36 │ import x from './import-attribute-1_FIXTURE.js' with
+    ·                                                ─
+ 37 │ 
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-trlng-comma.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-trlng-comma.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {test262:'',};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {test262:'',};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-value-string-double.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-value-string-double.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {test262:"\u0078"};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {test262:"\u0078"};
+    ╰────
+  help: Try insert a semicolon here
+
+Expect to Parse: "language/module-code/import-attributes/import-attribute-value-string-single.js"
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/import-attribute-value-string-single.js:32:1]
+ 32 │ 
+ 33 │ import x from './import-attribute-1_FIXTURE.js' with {test262:'\u0078'};
+    ·                                                ─
+ 34 │ import './import-attribute-2_FIXTURE.js' with {test262:'\u0078'};
+    ╰────
+  help: Try insert a semicolon here
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
  17 │ 
@@ -12971,18 +13070,25 @@ Negative Passed: 3918/3918 (100.00%)
     ·        ─────────────────
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/dynamic-import/2nd-param-yield-ident-invalid.js:18:1]
- 18 │ 
- 19 │ import('./empty_FIXTURE.js', yield);
-    ·                              ─────
-    ╰────
-
   × Keywords cannot contain escape characters
     ╭─[language/expressions/dynamic-import/escape-sequence-import.js:34:1]
  34 │ 
  35 │ im\u0070ort('./empty_FIXTURE.js');
     · ───────────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/dynamic-import/import-assertions/2nd-param-yield-ident-invalid.js:18:1]
+ 18 │ 
+ 19 │ import('./empty_FIXTURE.js', yield);
+    ·                              ─────
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/dynamic-import/import-attributes/2nd-param-yield-ident-invalid.js:18:1]
+ 18 │ 
+ 19 │ import('./empty_FIXTURE.js', yield);
+    ·                              ─────
     ╰────
 
   × Cannot assign to this expression
@@ -18593,6 +18699,27 @@ Negative Passed: 3918/3918 (100.00%)
     ·   ▲
     ╰────
 
+  × Keywords cannot contain escape characters
+    ╭─[language/literals/boolean/false-with-unicode.js:19:1]
+ 19 │ 
+ 20 │ f\u{61}lse;
+    · ──────────
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/literals/boolean/true-with-unicode.js:19:1]
+ 19 │ 
+ 20 │ tru\u{65};
+    · ─────────
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/literals/null/null-with-unicode.js:19:1]
+ 19 │ 
+ 20 │ n\u{75}ll;
+    · ─────────
+    ╰────
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[language/literals/numeric/7.8.3-1gs.js:14:1]
  14 │ 
@@ -19320,45 +19447,6 @@ Negative Passed: 3918/3918 (100.00%)
     · ─
     ╰────
 
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-export.js:20:1]
- 20 │ export * from './import-assertion-3_FIXTURE.js' assert {
- 21 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 22 │   test262_b: '',
- 23 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 24 │ };
-    ╰────
-
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-import-nobinding.js:21:1]
- 21 │ import './import-assertion-2_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
-    ╰────
-
-  × Identifier `test262_a` has already been declared
-    ╭─[language/module-code/early-dup-assert-key-import-withbinding.js:21:1]
- 21 │ import x from './import-assertion-1_FIXTURE.js' assert {
- 22 │   test262_a: '',
-    ·   ────┬────
-    ·       ╰── `test262_a` has already been declared here
- 23 │   test262_b: '',
- 24 │   'test262_\u0061': ''
-    ·   ────────┬───────
-    ·           ╰── It can not be redeclared here
- 25 │ };
-    ╰────
-
   × Duplicated export 'z'
     ╭─[language/module-code/early-dup-export-as-star-as.js:17:1]
  17 │ var x;
@@ -19738,6 +19826,69 @@ Negative Passed: 3918/3918 (100.00%)
     ·                 ────────
  22 │ 
     ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-export.js:20:1]
+ 20 │ export * from './import-assertion-3_FIXTURE.js' assert {
+ 21 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 22 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 23 │ };
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-nobinding.js:21:1]
+ 21 │ import './import-assertion-2_FIXTURE.js' assert {
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 24 │ };
+    ╰────
+
+  × Identifier `type` has already been declared
+    ╭─[language/module-code/import-assertions/early-dup-assert-key-import-withbinding.js:21:1]
+ 21 │ import x from './import-assertion-1_FIXTURE.js' assert {
+ 22 │   type: 'json',
+    ·   ──┬─
+    ·     ╰── `type` has already been declared here
+ 23 │   'typ\u0065': ''
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 24 │ };
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/early-dup-attribute-key-export.js:19:1]
+ 19 │ 
+ 20 │ export * from './import-attribute-3_FIXTURE.js' with {
+    ·                                                ─
+ 21 │   type: 'json',
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/early-dup-attribute-key-import-nobinding.js:20:1]
+ 20 │ 
+ 21 │ import './import-attribute-2_FIXTURE.js' with {
+    ·                                         ─
+ 22 │   type: 'json',
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/module-code/import-attributes/early-dup-attribute-key-import-withbinding.js:20:1]
+ 20 │ 
+ 21 │ import x from './import-attribute-1_FIXTURE.js' with {
+    ·                                                ─
+ 22 │   type: 'json',
+    ╰────
+  help: Try insert a semicolon here
 
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[language/module-code/invalid-private-names-call-expression-bad-reference.js:39:1]
