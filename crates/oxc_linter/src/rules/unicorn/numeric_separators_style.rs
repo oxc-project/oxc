@@ -47,10 +47,10 @@ struct NumericBaseConfig {
 impl NumericBaseConfig {
     pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
         if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = group_length as usize;
+            self.group_length = usize::try_from(group_length).unwrap();
         }
         if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = minimum_digits as usize;
+            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
         }
     }
 }
