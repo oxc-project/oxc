@@ -50,7 +50,29 @@
         "title": "Show Trace Output Channel",
         "category": "Oxc"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "oxc",
+      "properties": {
+        "oxc-client.trace.server": {
+          "type": "string",
+          "scope": "window",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "enumDescriptions": [
+            "No traces",
+            "Error only",
+            "Full log"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the language server."
+        }
+      }
+    }
   },
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square.png --output icon.png",
