@@ -33,10 +33,10 @@ impl Default for NumericSeparatorsStyle {
     fn default() -> Self {
         Self {
             only_if_contains_separator: false,
-            binary: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
+            binary: NumericBaseConfig { group_length: 4, minimum_digits: 0 },
             hexadecimal: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
             number: NumericBaseConfig { group_length: 3, minimum_digits: 5 },
-            octal: NumericBaseConfig { group_length: 2, minimum_digits: 0 },
+            octal: NumericBaseConfig { group_length: 4, minimum_digits: 0 },
         }
     }
 }
@@ -57,143 +57,8 @@ impl NumericBaseConfig {
     }
 }
 
-impl NumericSeparatorsStyle {
-    fn format_number(&self, number: &NumberLiteral) -> String {
-        FormatNumber(number).format()
-    }
-
-    fn format_bigint(&self, number: &BigintLiteral, raw: &str) -> String {
-        FormatBigint(number, raw).format()
-    }
-}
-
 struct FormatNumber<'a>(&'a NumberLiteral<'a>);
-impl<'a> FormatNumber<'a> {
-    fn format(&self) -> String {
-        match self.base {
-            oxc_syntax::NumberBase::Binary => self.format_binary(),
-            oxc_syntax::NumberBase::Decimal | oxc_syntax::NumberBase::Float => {
-                self.format_decimal()
-            }
-            oxc_syntax::NumberBase::Hex => self.format_hex(),
-            oxc_syntax::NumberBase::Octal => self.format_octal(),
-        }
-    }
-
-    fn format_binary(&self) -> String {
-        // start with the prefix
-        let mut out = self.raw[0..2].to_string();
-
-        // Remove any existing _
-        let mut raw = self.raw[2..].replace('_', "");
-
-        add_separators(&mut raw, &SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
-        out.push_str(raw.as_str());
-        out
-    }
-
-    fn format_hex(&self) -> String {
-        // start with the prefix
-        let mut out = self.raw[0..2].to_string();
-
-        // Remove any existing _
-        let mut raw = self.raw[2..].replace('_', "");
-
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            HEXADECIMAL_MINIMUM_DIGITS,
-            HEXADECIMAL_GROUP_LENGTH,
-        );
-        out.push_str(raw.as_str());
-        out
-    }
-
-    fn format_octal(&self) -> String {
-        // Legacy octal numbers are 0-prefixed, e.g. `010 === 8`.
-        // Legacy octal notation does not support `_` prefixes.
-        let is_legacy = self.raw.as_bytes()[1] != b'o' && self.raw.as_bytes()[1] != b'O';
-        if is_legacy {
-            return self.raw.to_string();
-        }
-
-        // start with the prefix
-        let mut out = self.raw[0..2].to_string();
-
-        // Remove any existing _
-        let mut raw = self.raw[2..].replace('_', "");
-
-        add_separators(&mut raw, &SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
-        out.push_str(raw.as_str());
-        out
-    }
-
-    fn format_decimal(&self) -> String {
-        let re = regex::Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
-
-        let caps = re.captures(self.raw).unwrap();
-
-        let mut out = String::new();
-
-        {
-            let number = caps.get(1).unwrap().as_str().replace('_', "");
-            let number = number.as_str();
-
-            if let Some((whole, decimal)) = number.split_once('.') {
-                if !whole.is_empty() {
-                    let mut s = whole.to_string();
-                    add_separators(
-                        &mut s,
-                        &SeparatorDir::Right,
-                        DECIMAL_MINIMUM_DIGITS,
-                        DECIMAL_GROUP_LENGTH,
-                    );
-                    out.push_str(&s);
-                };
-
-                out.push('.');
-
-                if !decimal.is_empty() {
-                    let mut s = decimal.to_string();
-                    add_separators(
-                        &mut s,
-                        &SeparatorDir::Left,
-                        DECIMAL_MINIMUM_DIGITS,
-                        DECIMAL_GROUP_LENGTH,
-                    );
-                    out.push_str(&s);
-                }
-            } else {
-                out.push_str(number);
-                add_separators(
-                    &mut out,
-                    &SeparatorDir::Right,
-                    DECIMAL_MINIMUM_DIGITS,
-                    DECIMAL_GROUP_LENGTH,
-                );
-            }
-        }
-
-        if let Some(mark) = caps.get(2) {
-            out.push_str(mark.as_str());
-        }
-        if let Some(sign) = caps.get(3) {
-            out.push_str(sign.as_str());
-        }
-        if let Some(power) = caps.get(4) {
-            let mut s = power.as_str().replace('_', "");
-            add_separators(
-                &mut s,
-                &SeparatorDir::Right,
-                DECIMAL_MINIMUM_DIGITS,
-                DECIMAL_GROUP_LENGTH,
-            );
-            out.push_str(&s);
-        }
-
-        out
-    }
-}
+impl<'a> FormatNumber<'a> {}
 
 impl<'a> Deref for FormatNumber<'a> {
     type Target = NumberLiteral<'a>;
@@ -205,89 +70,7 @@ impl<'a> Deref for FormatNumber<'a> {
 
 struct FormatBigint<'a>(&'a BigintLiteral, &'a str);
 
-impl<'a> FormatBigint<'a> {
-    fn format(&self) -> String {
-        match self.base {
-            oxc_syntax::BigintBase::Binary => self.format_binary(),
-            oxc_syntax::BigintBase::Decimal => self.format_decimal(),
-            oxc_syntax::BigintBase::Hex => self.format_hex(),
-            oxc_syntax::BigintBase::Octal => self.format_octal(),
-        }
-    }
-
-    fn format_binary(&self) -> String {
-        let raw = self.1;
-
-        // start with the prefix
-        let mut out = raw[0..2].to_string();
-
-        // Remove any existing _ and strip trailing `n`
-        let mut raw = raw[2..raw.len() - 1].replace('_', "");
-
-        add_separators(&mut raw, &SeparatorDir::Right, BINARY_MINIMUM_DIGITS, BINARY_GROUP_LENGTH);
-        out.push_str(raw.as_str());
-        out.push('n');
-        out
-    }
-
-    fn format_hex(&self) -> String {
-        let raw = self.1;
-
-        // start with the prefix
-        let mut out = raw[0..2].to_string();
-
-        // Remove any existing _ and strip trailing `n`
-        let mut raw = raw[2..raw.len() - 1].replace('_', "");
-
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            HEXADECIMAL_MINIMUM_DIGITS,
-            HEXADECIMAL_GROUP_LENGTH,
-        );
-        out.push_str(raw.as_str());
-        out.push('n');
-        out
-    }
-
-    fn format_octal(&self) -> String {
-        let raw = self.1;
-
-        // Legacy octal numbers are 0-prefixed, e.g. `010 === 8`.
-        // Legacy octal notation does not support `_` prefixes.
-        let is_legacy = raw.as_bytes()[1] != b'o' && raw.as_bytes()[1] != b'O';
-        if is_legacy {
-            return raw.to_string();
-        }
-
-        // start with the prefix
-        let mut out = raw[0..2].to_string();
-
-        // Remove any existing _ and strip trailing `n`
-        let mut raw = raw[2..raw.len() - 1].replace('_', "");
-
-        add_separators(&mut raw, &SeparatorDir::Right, OCTAL_MINIMUM_DIGITS, OCTAL_GROUP_LENGTH);
-        out.push_str(raw.as_str());
-        out.push('n');
-        out
-    }
-
-    fn format_decimal(&self) -> String {
-        let raw = self.1;
-
-        // Remove any existing _ and strip trailing `n`
-        let mut out = raw[..raw.len() - 1].replace('_', "");
-
-        add_separators(
-            &mut out,
-            &SeparatorDir::Right,
-            DECIMAL_MINIMUM_DIGITS,
-            DECIMAL_GROUP_LENGTH,
-        );
-        out.push('n');
-        out
-    }
-}
+impl<'a> FormatBigint<'a> {}
 
 impl<'a> Deref for FormatBigint<'a> {
     type Target = BigintLiteral;
@@ -296,18 +79,6 @@ impl<'a> Deref for FormatBigint<'a> {
         self.0
     }
 }
-
-const BINARY_GROUP_LENGTH: usize = 4;
-const BINARY_MINIMUM_DIGITS: usize = 0;
-
-const DECIMAL_GROUP_LENGTH: usize = 3;
-const DECIMAL_MINIMUM_DIGITS: usize = 5;
-
-const HEXADECIMAL_GROUP_LENGTH: usize = 2;
-const HEXADECIMAL_MINIMUM_DIGITS: usize = 0;
-
-const OCTAL_GROUP_LENGTH: usize = 4;
-const OCTAL_MINIMUM_DIGITS: usize = 0;
 
 enum SeparatorDir {
     Left,
@@ -395,12 +166,6 @@ impl Rule for NumericSeparatorsStyle {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self::new_from_configuration(&value)
-    }
-}
-
-impl NumericSeparatorsStyle {
-    pub fn new_from_configuration(value: &serde_json::Value) -> Self {
         let mut cfg = Self::default();
 
         if let Some(config) = value.get(0) {
@@ -425,6 +190,233 @@ impl NumericSeparatorsStyle {
         }
 
         cfg
+    }
+}
+
+impl NumericSeparatorsStyle {
+    //
+    // Numbers
+    //
+    fn format_number(&self, number: &NumberLiteral) -> String {
+        match number.base {
+            oxc_syntax::NumberBase::Binary => self.format_binary(number),
+            oxc_syntax::NumberBase::Decimal | oxc_syntax::NumberBase::Float => {
+                self.format_decimal(number)
+            }
+            oxc_syntax::NumberBase::Hex => self.format_hex(number),
+            oxc_syntax::NumberBase::Octal => self.format_octal(number),
+        }
+    }
+
+    fn format_binary(&self, number: &NumberLiteral) -> String {
+        // start with the prefix
+        let mut out = number.raw[0..2].to_string();
+
+        // Remove any existing _
+        let mut raw = number.raw[2..].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.binary.minimum_digits,
+            self.binary.group_length,
+        );
+        out.push_str(raw.as_str());
+        out
+    }
+
+    fn format_hex(&self, number: &NumberLiteral) -> String {
+        // start with the prefix
+        let mut out = number.raw[0..2].to_string();
+
+        // Remove any existing _
+        let mut raw = number.raw[2..].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.hexadecimal.minimum_digits,
+            self.hexadecimal.group_length,
+        );
+        out.push_str(raw.as_str());
+        out
+    }
+
+    fn format_octal(&self, number: &NumberLiteral) -> String {
+        // Legacy octal numbers are 0-prefixed, e.g. `010 === 8`.
+        // Legacy octal notation does not support `_` prefixes.
+        let is_legacy = number.raw.as_bytes()[1] != b'o' && number.raw.as_bytes()[1] != b'O';
+        if is_legacy {
+            return number.raw.to_string();
+        }
+
+        // start with the prefix
+        let mut out = number.raw[0..2].to_string();
+
+        // Remove any existing _
+        let mut raw = number.raw[2..].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.octal.minimum_digits,
+            self.octal.group_length,
+        );
+        out.push_str(raw.as_str());
+        out
+    }
+
+    fn format_decimal(&self, number: &NumberLiteral) -> String {
+        let re = regex::Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
+
+        let caps = re.captures(number.raw).unwrap();
+
+        let mut out = String::new();
+
+        {
+            let number = caps.get(1).unwrap().as_str().replace('_', "");
+            let number = number.as_str();
+
+            if let Some((whole, decimal)) = number.split_once('.') {
+                if !whole.is_empty() {
+                    let mut s = whole.to_string();
+                    add_separators(
+                        &mut s,
+                        &SeparatorDir::Right,
+                        self.number.minimum_digits,
+                        self.number.group_length,
+                    );
+                    out.push_str(&s);
+                };
+
+                out.push('.');
+
+                if !decimal.is_empty() {
+                    let mut s = decimal.to_string();
+                    add_separators(
+                        &mut s,
+                        &SeparatorDir::Left,
+                        self.number.minimum_digits,
+                        self.number.group_length,
+                    );
+                    out.push_str(&s);
+                }
+            } else {
+                out.push_str(number);
+                add_separators(
+                    &mut out,
+                    &SeparatorDir::Right,
+                    self.number.minimum_digits,
+                    self.number.group_length,
+                );
+            }
+        }
+
+        if let Some(mark) = caps.get(2) {
+            out.push_str(mark.as_str());
+        }
+        if let Some(sign) = caps.get(3) {
+            out.push_str(sign.as_str());
+        }
+        if let Some(power) = caps.get(4) {
+            let mut s = power.as_str().replace('_', "");
+            add_separators(
+                &mut s,
+                &SeparatorDir::Right,
+                self.number.minimum_digits,
+                self.number.group_length,
+            );
+            out.push_str(&s);
+        }
+
+        out
+    }
+
+    //
+    // Bigints
+    //
+    fn format_bigint(&self, number: &BigintLiteral, raw: &str) -> String {
+        match number.base {
+            oxc_syntax::BigintBase::Binary => self.format_bigint_binary(raw),
+            oxc_syntax::BigintBase::Decimal => self.format_bigint_decimal(raw),
+            oxc_syntax::BigintBase::Hex => self.format_bigint_hex(raw),
+            oxc_syntax::BigintBase::Octal => self.format_bigint_octal(raw),
+        }
+    }
+
+    fn format_bigint_binary(&self, raw: &str) -> String {
+        // start with the prefix
+        let mut out = raw[0..2].to_string();
+
+        // Remove any existing _ and strip trailing `n`
+        let mut raw = raw[2..raw.len() - 1].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.binary.minimum_digits,
+            self.binary.group_length,
+        );
+        out.push_str(raw.as_str());
+        out.push('n');
+        out
+    }
+
+    fn format_bigint_hex(&self, raw: &str) -> String {
+        // start with the prefix
+        let mut out = raw[0..2].to_string();
+
+        // Remove any existing _ and strip trailing `n`
+        let mut raw = raw[2..raw.len() - 1].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.hexadecimal.minimum_digits,
+            self.hexadecimal.group_length,
+        );
+        out.push_str(raw.as_str());
+        out.push('n');
+        out
+    }
+
+    fn format_bigint_octal(&self, raw: &str) -> String {
+        // Legacy octal numbers are 0-prefixed, e.g. `010 === 8`.
+        // Legacy octal notation does not support `_` prefixes.
+        let is_legacy = raw.as_bytes()[1] != b'o' && raw.as_bytes()[1] != b'O';
+        if is_legacy {
+            return raw.to_string();
+        }
+
+        // start with the prefix
+        let mut out = raw[0..2].to_string();
+
+        // Remove any existing _ and strip trailing `n`
+        let mut raw = raw[2..raw.len() - 1].replace('_', "");
+
+        add_separators(
+            &mut raw,
+            &SeparatorDir::Right,
+            self.octal.minimum_digits,
+            self.octal.group_length,
+        );
+        out.push_str(raw.as_str());
+        out.push('n');
+        out
+    }
+
+    fn format_bigint_decimal(&self, raw: &str) -> String {
+        // Remove any existing _ and strip trailing `n`
+        let mut out = raw[..raw.len() - 1].replace('_', "");
+
+        add_separators(
+            &mut out,
+            &SeparatorDir::Right,
+            self.number.minimum_digits,
+            self.number.group_length,
+        );
+        out.push('n');
+        out
     }
 }
 
