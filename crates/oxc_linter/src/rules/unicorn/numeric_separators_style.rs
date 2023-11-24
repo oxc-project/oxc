@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use oxc_ast::{
     ast::{BigintLiteral, NumberLiteral},
     AstKind,
@@ -57,52 +55,29 @@ impl NumericBaseConfig {
     }
 }
 
-struct FormatNumber<'a>(&'a NumberLiteral<'a>);
-impl<'a> FormatNumber<'a> {}
-
-impl<'a> Deref for FormatNumber<'a> {
-    type Target = NumberLiteral<'a>;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
-
-struct FormatBigint<'a>(&'a BigintLiteral, &'a str);
-
-impl<'a> FormatBigint<'a> {}
-
-impl<'a> Deref for FormatBigint<'a> {
-    type Target = BigintLiteral;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
-
 enum SeparatorDir {
     Left,
     Right,
 }
 
-fn add_separators(s: &mut String, dir: &SeparatorDir, minimum_digits: usize, group_length: usize) {
-    if s.len() < minimum_digits || s.len() < group_length + 1 {
+fn add_separators(s: &mut String, dir: &SeparatorDir, config: &NumericBaseConfig) {
+    if s.len() < config.minimum_digits || s.len() < config.group_length + 1 {
         return;
     }
 
     match dir {
         SeparatorDir::Right => {
             let mut pos = s.len();
-            while pos > group_length {
-                pos -= group_length;
+            while pos > config.group_length {
+                pos -= config.group_length;
                 s.insert(pos, '_');
             }
         }
         SeparatorDir::Left => {
-            let mut pos = group_length;
+            let mut pos = config.group_length;
             while pos < s.len() {
                 s.insert(pos, '_');
-                pos += group_length + 1;
+                pos += config.group_length + 1;
             }
         }
     }
@@ -224,12 +199,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _
         let mut raw = number.raw[2..].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.binary.minimum_digits,
-            self.binary.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.binary);
         out.push_str(raw.as_str());
         out
     }
@@ -241,12 +211,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _
         let mut raw = number.raw[2..].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.hexadecimal.minimum_digits,
-            self.hexadecimal.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.hexadecimal);
         out.push_str(raw.as_str());
         out
     }
@@ -265,12 +230,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _
         let mut raw = number.raw[2..].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.octal.minimum_digits,
-            self.octal.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.octal);
         out.push_str(raw.as_str());
         out
     }
@@ -289,12 +249,7 @@ impl NumericSeparatorsStyle {
             if let Some((whole, decimal)) = number.split_once('.') {
                 if !whole.is_empty() {
                     let mut s = whole.to_string();
-                    add_separators(
-                        &mut s,
-                        &SeparatorDir::Right,
-                        self.number.minimum_digits,
-                        self.number.group_length,
-                    );
+                    add_separators(&mut s, &SeparatorDir::Right, &self.number);
                     out.push_str(&s);
                 };
 
@@ -302,22 +257,12 @@ impl NumericSeparatorsStyle {
 
                 if !decimal.is_empty() {
                     let mut s = decimal.to_string();
-                    add_separators(
-                        &mut s,
-                        &SeparatorDir::Left,
-                        self.number.minimum_digits,
-                        self.number.group_length,
-                    );
+                    add_separators(&mut s, &SeparatorDir::Left, &self.number);
                     out.push_str(&s);
                 }
             } else {
                 out.push_str(number);
-                add_separators(
-                    &mut out,
-                    &SeparatorDir::Right,
-                    self.number.minimum_digits,
-                    self.number.group_length,
-                );
+                add_separators(&mut out, &SeparatorDir::Right, &self.number);
             }
         }
 
@@ -329,12 +274,7 @@ impl NumericSeparatorsStyle {
         }
         if let Some(power) = caps.get(4) {
             let mut s = power.as_str().replace('_', "");
-            add_separators(
-                &mut s,
-                &SeparatorDir::Right,
-                self.number.minimum_digits,
-                self.number.group_length,
-            );
+            add_separators(&mut s, &SeparatorDir::Right, &self.number);
             out.push_str(&s);
         }
 
@@ -360,12 +300,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _ and strip trailing `n`
         let mut raw = raw[2..raw.len() - 1].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.binary.minimum_digits,
-            self.binary.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.binary);
         out.push_str(raw.as_str());
         out.push('n');
         out
@@ -378,12 +313,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _ and strip trailing `n`
         let mut raw = raw[2..raw.len() - 1].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.hexadecimal.minimum_digits,
-            self.hexadecimal.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.hexadecimal);
         out.push_str(raw.as_str());
         out.push('n');
         out
@@ -403,12 +333,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _ and strip trailing `n`
         let mut raw = raw[2..raw.len() - 1].replace('_', "");
 
-        add_separators(
-            &mut raw,
-            &SeparatorDir::Right,
-            self.octal.minimum_digits,
-            self.octal.group_length,
-        );
+        add_separators(&mut raw, &SeparatorDir::Right, &self.octal);
         out.push_str(raw.as_str());
         out.push('n');
         out
@@ -418,12 +343,7 @@ impl NumericSeparatorsStyle {
         // Remove any existing _ and strip trailing `n`
         let mut out = raw[..raw.len() - 1].replace('_', "");
 
-        add_separators(
-            &mut out,
-            &SeparatorDir::Right,
-            self.number.minimum_digits,
-            self.number.group_length,
-        );
+        add_separators(&mut out, &SeparatorDir::Right, &self.number);
         out.push('n');
         out
     }
