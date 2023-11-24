@@ -1,4 +1,4 @@
-Compatibility: 159/597 (26.63%)
+Compatibility: 155/591 (26.23%)
 
 # Failed
 
@@ -58,6 +58,7 @@ Compatibility: 159/597 (26.63%)
 * assignment/chain-two-segments.js
 * assignment/chain.js
 * assignment/destructuring-array.js
+* assignment/destructuring-heuristic.js
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
@@ -107,14 +108,6 @@ Compatibility: 159/597 (26.63%)
 
 ### binary_math
 * binary_math/parens.js
-
-### bind-expressions
-* bind-expressions/await.js
-* bind-expressions/bind_parens.js
-* bind-expressions/long_name_method.js
-* bind-expressions/method_chain.js
-* bind-expressions/short_name_method.js
-* bind-expressions/unary.js
 
 ### break-calls
 * break-calls/break.js
@@ -266,6 +259,7 @@ Compatibility: 159/597 (26.63%)
 
 ### destructuring
 * destructuring/destructuring.js
+* destructuring/issue-5988.js
 
 ### destructuring-ignore
 * destructuring-ignore/ignore.js
@@ -331,6 +325,9 @@ Compatibility: 159/597 (26.63%)
 ### function-comments
 * function-comments/params-trail-comments.js
 
+### function-first-param
+* function-first-param/function_expression.js
+
 ### function-single-destructuring
 * function-single-destructuring/array.js
 * function-single-destructuring/object.js
@@ -385,7 +382,6 @@ Compatibility: 159/597 (26.63%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
-* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
@@ -559,6 +555,8 @@ Compatibility: 159/597 (26.63%)
 ### switch
 * switch/comments.js
 * switch/comments2.js
+* switch/empty_lines.js
+* switch/empty_statement.js
 
 ### template
 * template/call.js
