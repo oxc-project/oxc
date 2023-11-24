@@ -325,7 +325,9 @@ impl<'a> Prettier<'a> {
 
         let lhs = Self::get_left_side_path_name(kind);
         self.nodes.push(lhs);
-        self.should_wrap_function_for_export_default()
+        let result = self.should_wrap_function_for_export_default();
+        self.nodes.pop();
+        result
     }
 
     fn has_naked_left_side(kind: AstKind<'a>) -> bool {
