@@ -651,7 +651,7 @@ mod internal_tests {
         assert_eq!(rule.number.minimum_digits, 64);
         assert_eq!(rule.octal.group_length, 128);
         assert_eq!(rule.octal.minimum_digits, 256);
-        assert_eq!(rule.only_if_contains_separator, true);
+        assert!(rule.only_if_contains_separator);
     }
 
     #[test]
