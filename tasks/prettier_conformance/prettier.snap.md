@@ -1,4 +1,4 @@
-Compatibility: 155/597 (25.96%)
+Compatibility: 156/597 (26.13%)
 
 # Failed
 
@@ -332,9 +332,6 @@ Compatibility: 155/597 (25.96%)
 
 ### function-comments
 * function-comments/params-trail-comments.js
-
-### function-first-param
-* function-first-param/function_expression.js
 
 ### function-single-destructuring
 * function-single-destructuring/array.js

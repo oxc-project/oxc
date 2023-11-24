@@ -18,6 +18,12 @@ pub enum Mode {
     Flat,
 }
 
+impl Mode {
+    pub fn is_break(self) -> bool {
+        matches!(self, Self::Break)
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Indent {
     pub length: usize,
