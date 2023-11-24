@@ -143,6 +143,10 @@ impl Rule for NumericSeparatorsStyle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumberLiteral(number) => {
+                if self.only_if_contains_separator && !number.raw.contains('_') {
+                    return;
+                }
+
                 let formatted = self.format_number(number);
 
                 if formatted != number.raw {
@@ -153,6 +157,11 @@ impl Rule for NumericSeparatorsStyle {
             }
             AstKind::BigintLiteral(number) => {
                 let raw = number.span.source_text(ctx.source_text());
+
+                if self.only_if_contains_separator && !raw.contains('_') {
+                    return;
+                }
+
                 let formatted = self.format_bigint(number, raw);
 
                 if formatted.len() != number.span.size() as usize {
