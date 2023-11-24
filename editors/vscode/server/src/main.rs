@@ -172,7 +172,7 @@ impl Backend {
                     )
                     .await;
 
-                self.diagnostics_report_map.insert(uri.to_string(), diagnostics.into_iter().filter(|d| d.fixed_content.is_some()).collect());
+                self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
             }
         }
     }
