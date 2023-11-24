@@ -30,7 +30,7 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax, export_name_set: Default::default() }
+        Self { ast, ctx, verbatim_module_syntax, export_name_set: HashSet::default() }
     }
 
     #[allow(clippy::unused_self)]
@@ -62,7 +62,7 @@ impl<'a> TypeScript<'a> {
 
         let span = ts_enum_declaration.span;
         let ident = ts_enum_declaration.id.clone();
-        let kind = self.ast.binding_pattern_identifier(ident.clone());
+        let kind = self.ast.binding_pattern_identifier(ident);
         let id = self.ast.binding_pattern(kind, None, false);
 
         let mut params = self.ast.new_vec();
