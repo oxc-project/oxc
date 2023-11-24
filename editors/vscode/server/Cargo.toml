@@ -36,3 +36,4 @@ rayon             = { workspace = true }
 ropey             = { workspace = true }
 tokio             = { workspace = true, features = ["full"] }
 tower-lsp         = { workspace = true, features = ["proposed"] }
+log = "0.4.20"

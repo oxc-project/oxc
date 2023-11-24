@@ -1952,6 +1952,7 @@ dependencies = [
  "env_logger",
  "futures",
  "ignore",
+ "log",
  "miette",
  "oxc_allocator",
  "oxc_diagnostics",

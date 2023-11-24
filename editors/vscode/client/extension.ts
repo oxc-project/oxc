@@ -27,7 +27,6 @@ const enum OxcCommands {
   ShowTraceOutputChannel = "oxc.showTraceOutputChannel"
 };
 
-
 let client: LanguageClient;
 
 
@@ -70,7 +69,8 @@ export async function activate(context: ExtensionContext) {
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
   const ext = process.platform === "win32" ? ".exe" : "";
-  const command = join(context.extensionPath, `./target/release/oxc_vscode${ext}`);
+  let serverPath = process.env.SERVER_PATH_DEV ?? `oxc_vscode${ext}`;
+  const command = join(serverPath);
 
   // window.showInformationMessage(`oxc server path: ${command}`);
 
