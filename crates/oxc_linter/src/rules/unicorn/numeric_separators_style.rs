@@ -47,7 +47,7 @@ struct NumericBaseConfig {
     minimum_digits: usize,
 }
 impl NumericBaseConfig {
-    pub(self) fn set_numeric_base_from_config(self: &mut Self, val: &serde_json::Value) -> () {
+    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
         if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
             self.group_length = group_length as usize;
         }
