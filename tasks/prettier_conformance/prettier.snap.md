@@ -1,4 +1,4 @@
-Compatibility: 152/597 (25.46%)
+Compatibility: 155/597 (25.96%)
 
 # Failed
 
@@ -442,7 +442,6 @@ Compatibility: 152/597 (25.46%)
 * module-blocks/worker.js
 
 ### new-expression
-* new-expression/new_expression.js
 * new-expression/with-member-expression.js
 
 ### new-target
@@ -554,9 +553,6 @@ Compatibility: 152/597 (25.46%)
 * sequence-expression/ignore.js
 * sequence-expression/parenthesized.js
 
-### spread
-* spread/spread.js
-
 ### strings
 * strings/escaped.js
 * strings/multiline-literal.js
@@ -577,7 +573,6 @@ Compatibility: 152/597 (25.46%)
 * template/graphql.js
 * template/indent.js
 * template/inline.js
-* template/parenthesis.js
 
 ### template-align
 * template-align/indent.js
