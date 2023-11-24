@@ -26,7 +26,7 @@ use std::borrow::Cow;
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use crate::{
     array,
@@ -150,13 +150,14 @@ impl<'a> Format<'a> for IfStatement<'a> {
         wrap!(p, self, IfStatement, {
             let mut parts = p.vec();
 
+            let test_doc = format!(p, self.test);
             let consequent = format!(p, self.consequent);
             let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
 
             let opening = group![
                 p,
                 ss!("if ("),
-                group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()),
+                group!(p, indent!(p, softline!(), test_doc), softline!()),
                 ss!(")"),
                 consequent
             ];
@@ -1490,14 +1491,6 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     }
                 } else {
                     parts.push(format!(p, self.key));
-                    let comments = p.print_inner_comment(Span::new(
-                        self.key.span().end,
-                        self.value.span().start,
-                    ));
-                    if !comments.is_empty() {
-                        parts.push(ss!(" "));
-                        parts.extend(comments);
-                    }
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
@@ -1509,25 +1502,26 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 
 impl<'a> Format<'a> for PropertyKey<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            PropertyKey::Identifier(ident) => ident.format(p),
-            PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-            PropertyKey::Expression(expr) => match expr {
-                Expression::StringLiteral(literal) => {
-                    let expr = format!(p, literal);
-                    let value = literal.value.as_bytes();
-                    if !&value[0].is_ascii_digit() && !value.contains(&b'_') {
-                        p.str(&literal.value)
-                    } else {
-                        literal.format(p)
+        wrap!(p, self, PropertyKey, {
+            match self {
+                PropertyKey::Identifier(ident) => ident.format(p),
+                PropertyKey::PrivateIdentifier(ident) => ident.format(p),
+                PropertyKey::Expression(expr) => match expr {
+                    Expression::StringLiteral(literal) => {
+                        let value = literal.value.as_bytes();
+                        if !&value[0].is_ascii_digit() && !value.contains(&b'_') {
+                            p.str(&literal.value)
+                        } else {
+                            literal.format(p)
+                        }
                     }
-                }
-                Expression::Identifier(ident) => {
-                    array!(p, ss!("["), ident.format(p), ss!("]"))
-                }
-                _ => expr.format(p),
-            },
-        }
+                    Expression::Identifier(ident) => {
+                        array!(p, ss!("["), ident.format(p), ss!("]"))
+                    }
+                    _ => expr.format(p),
+                },
+            }
+        })
     }
 }
 

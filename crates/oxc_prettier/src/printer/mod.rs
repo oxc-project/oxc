@@ -105,10 +105,11 @@ impl<'a> Printer<'a> {
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
-                Doc::Hardline => self.handle_hardline(indent),
+                Doc::Hardline => self.handle_line(indent, Mode::Break),
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
                 Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
+                Doc::BreakParent => {} // No op
             }
 
             if self.cmds.is_empty() && !self.line_suffix.is_empty() {
@@ -192,6 +193,11 @@ impl<'a> Printer<'a> {
 
     fn handle_line(&mut self, indent: Indent, mode: Mode) {
         if mode.is_break() {
+            if !self.line_suffix.is_empty() {
+                self.cmds.extend(self.line_suffix.drain(..).rev());
+                return;
+            }
+
             self.handle_hardline(indent);
         } else {
             self.out.push(b' ');
@@ -201,7 +207,7 @@ impl<'a> Printer<'a> {
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
         if mode.is_break() {
-            self.handle_hardline(indent);
+            self.handle_line(indent, Mode::Break);
         }
     }
 
@@ -360,6 +366,7 @@ impl<'a> Printer<'a> {
                 Doc::LineSuffix(_) => {
                     break;
                 }
+                Doc::BreakParent => {}
             }
 
             if remaining_width < 0 {
