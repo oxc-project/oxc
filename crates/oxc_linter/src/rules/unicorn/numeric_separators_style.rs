@@ -714,6 +714,23 @@ fn test_number_decimal_integer() {
 }
 
 #[test]
+fn test_with_config() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        ("const foo = 1234567890", Some(json!([{ "onlyIfContainsSeparator": true }]))),
+        ("const foo = 12_34_56", Some(json!([{ "number": { "groupLength": 2 } }]))),
+        ("const foo = 12345", Some(json!([{ "number": { "minimumDigits": 10 } }]))),
+        ("const foo = 0b1_0_1_1_1", Some(json!([{ "binary": { "groupLength": 1 } }]))),
+    ];
+
+    let fail = vec![];
+
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).test();
+}
+
+#[test]
 fn test_misc() {
     use crate::tester::Tester;
 
