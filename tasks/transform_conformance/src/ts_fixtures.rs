@@ -15,18 +15,19 @@ use oxc_transform_conformance::TestRunnerOptions;
 use oxc_transformer::{TransformOptions, Transformer};
 
 fn root() -> PathBuf {
-    project_root().join("tasks/coverage/typescript/tests/cases/conformance")
+    project_root().join("tasks/coverage")
 }
 
 fn snap_root() -> PathBuf {
     project_root().join("tasks/transform_conformance")
 }
 
-fn fixture_root() -> PathBuf {
-    snap_root().join("ts_fixutures")
-}
+const CASES: &[&str] = &[
+    "typescript/tests/cases/conformance/enums",
+    "babel/packages/babel-plugin-transform-typescript/test/fixtures/enum",
+];
 
-const CASES: &[&str] = &["enums"];
+const CONFORMANCE_SNAPSHOT: &str = "typescript.snap.md";
 
 fn filter_ext(p: &Path) -> bool {
     p.to_string_lossy().ends_with(".ts")
@@ -42,15 +43,27 @@ impl TypeScriptFixtures {
     }
 
     pub fn run(self) {
+        let mut snapshot = String::new();
+
         for case in CASES {
             for path in Self::glob_files(&root().join(case), self.options.filter.as_ref()) {
-                let content = match Self::transform(&path) {
-                    Ok(content) => content,
-                    Err(err) => err.iter().map(ToString::to_string).collect(),
+                snapshot.push_str("# ");
+                snapshot.push_str(&normalize_path(path.strip_prefix(&root()).unwrap()));
+                snapshot.push('\n');
+                snapshot.push_str("```");
+
+                let (content, lang) = match Self::transform(&path) {
+                    Ok(content) => (content, "typescript"),
+                    Err(err) => (err.iter().map(ToString::to_string).collect(), "error"),
                 };
-                Self::write_result_file(&content, &path);
+                snapshot.push_str(lang);
+                snapshot.push('\n');
+                snapshot.push_str(&content);
+                snapshot.push_str("\n```\n\n");
             }
         }
+
+        fs::write(snap_root().join(CONFORMANCE_SNAPSHOT), snapshot).unwrap();
     }
 }
 
@@ -77,6 +90,10 @@ impl TypeScriptFixtures {
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
+        if ret.program.is_empty() && !ret.errors.is_empty() {
+            return Err(ret.errors);
+        }
+
         let semantic = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(ret.trivias)
             .build(&ret.program)
@@ -89,15 +106,5 @@ impl TypeScriptFixtures {
         result.map(|()| {
             Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
         })
-    }
-
-    fn write_result_file(content: &str, path: &Path) {
-        let new_file_name = normalize_path(path.strip_prefix(&root()).unwrap())
-            .split('/')
-            .collect::<Vec<&str>>()
-            .join("__");
-
-        let target_path = fixture_root().join(new_file_name);
-        fs::write(target_path, content).unwrap();
     }
 }
