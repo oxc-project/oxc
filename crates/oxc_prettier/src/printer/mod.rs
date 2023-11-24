@@ -171,22 +171,21 @@ impl<'a> Printer<'a> {
     }
 
     fn handle_line(&mut self, indent: Indent, mode: Mode) {
-        if matches!(mode, Mode::Flat) {
-            self.out.push(b' ');
+        if mode.is_break() {
+            self.handle_hardline(indent);
         } else {
-            self.out.extend(self.new_line.as_bytes());
-            self.pos = self.indent(indent.length);
+            self.out.push(b' ');
         }
     }
 
     fn handle_softline(&mut self, indent: Indent, mode: Mode) {
-        if !matches!(mode, Mode::Flat) {
-            self.out.extend(self.new_line.as_bytes());
-            self.pos = self.indent(indent.length);
+        if mode.is_break() {
+            self.handle_hardline(indent);
         }
     }
 
     fn handle_hardline(&mut self, indent: Indent) {
+        self.trim();
         self.out.extend(self.new_line.as_bytes());
         self.pos = self.indent(indent.length);
     }
@@ -266,6 +265,16 @@ impl<'a> Printer<'a> {
             let count = self.options.tab_width * size;
             self.out.extend(" ".repeat(count).as_bytes());
             count
+        }
+    }
+
+    fn trim(&mut self) {
+        while let Some(&last) = self.out.last() {
+            if last == b' ' || last == b'\t' {
+                self.out.pop();
+            } else {
+                break;
+            }
         }
     }
 }
