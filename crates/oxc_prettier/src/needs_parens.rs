@@ -11,7 +11,7 @@
 use oxc_ast::{
     ast::{
         AssignmentTarget, AssignmentTargetPattern, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ModuleDeclaration, SimpleAssignmentTarget,
+        Expression, ModuleDeclaration, ObjectExpression, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -39,6 +39,12 @@ impl<'a> Prettier<'a> {
         }
 
         let parent_kind = self.parent_kind();
+
+        if let AstKind::ObjectExpression(e) = kind {
+            if self.check_object_expression(e) {
+                return true;
+            }
+        }
 
         if self.check_parent_kind(kind, parent_kind) {
             return true;
@@ -72,8 +78,9 @@ impl<'a> Prettier<'a> {
             AstKind::Class(c) if c.is_expression() => self.check_object_function_class(c.span),
             AstKind::AssignmentExpression(assign_expr) => match parent_kind {
                 AstKind::ArrowExpression(arrow_expr)
-                    if arrow_expr.expression
-                        && arrow_expr.body.statements[0].span() == assign_expr.span =>
+                    if arrow_expr
+                        .get_expression()
+                        .is_some_and(|e| e.span() == assign_expr.span) =>
                 {
                     true
                 }
@@ -136,6 +143,24 @@ impl<'a> Prettier<'a> {
             AstKind::TSNonNullExpression(e) => {
                 self.check_member_call_tagged_template_ts_non_null(e.span)
             }
+            AstKind::ConditionalExpression(e) => match parent_kind {
+                AstKind::TaggedTemplateExpression(_)
+                | AstKind::UnaryExpression(_)
+                | AstKind::SpreadElement(_)
+                | AstKind::BinaryExpression(_)
+                | AstKind::LogicalExpression(_)
+                | AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+                | AstKind::AwaitExpression(_)
+                | AstKind::JSXSpreadAttribute(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSNonNullExpression(_) => true,
+                AstKind::CallExpression(call_expr) => call_expr.callee.span() == e.span,
+                AstKind::NewExpression(new_expr) => new_expr.callee.span() == e.span,
+                AstKind::ConditionalExpression(cond_expr) => cond_expr.test.span() == e.span,
+                AstKind::MemberExpression(member_expr) => member_expr.object().span() == e.span,
+                _ => false,
+            },
             AstKind::Function(e) if e.is_expression() => match parent_kind {
                 AstKind::CallExpression(call_expr) => call_expr.callee.span() == e.span,
                 AstKind::NewExpression(new_expr) => new_expr.callee.span() == e.span,
@@ -202,6 +227,29 @@ impl<'a> Prettier<'a> {
                 }
             }
             _ => {}
+        }
+        false
+    }
+
+    fn check_object_expression(&self, obj_expr: &ObjectExpression<'a>) -> bool {
+        let mut arrow_expr = None;
+        for kind in self.nodes.iter().rev() {
+            if let AstKind::ArrowExpression(e) = kind {
+                if e.get_expression().is_some_and(|e| e.span() == obj_expr.span) {
+                    arrow_expr = Some(e);
+                    break;
+                }
+            }
+        }
+        if let Some(arrow_expr) = arrow_expr {
+            if let Some(e) = arrow_expr.get_expression() {
+                if !matches!(e, Expression::SequenceExpression(_))
+                    && !matches!(e, Expression::AssignmentExpression(_))
+                    && Self::starts_with_no_lookahead_token(e, obj_expr.span)
+                {
+                    return true;
+                }
+            }
         }
         false
     }

@@ -1611,6 +1611,18 @@ pub struct ArrowExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
+impl<'a> ArrowExpression<'a> {
+    /// Get expression part of `ArrowExpression`: `() => expression_part`.
+    pub fn get_expression(&self) -> Option<&Expression<'a>> {
+        if self.expression {
+            if let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0] {
+                return Some(&expr_stmt.expression);
+            }
+        }
+        None
+    }
+}
+
 /// Generator Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
