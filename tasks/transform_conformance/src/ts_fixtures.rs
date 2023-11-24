@@ -74,14 +74,18 @@ impl TypeScriptFixtures {
     }
 
     fn glob_files(root: &Path, filter: Option<&String>) -> Vec<PathBuf> {
-        WalkDir::new(root)
+        let mut list: Vec<PathBuf> = WalkDir::new(root)
             .into_iter()
             .filter_map(Result::ok)
             .map(walkdir::DirEntry::into_path)
             .filter(|p| p.is_file())
             .filter(|p| filter_ext(p.as_path()))
             .filter(|p| filter.map_or(true, |f| p.to_string_lossy().contains(f)))
-            .collect()
+            .collect();
+
+        list.sort_unstable();
+
+        list
     }
 
     fn transform(path: &Path) -> Result<String, Vec<Error>> {

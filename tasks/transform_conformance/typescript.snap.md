@@ -12,249 +12,88 @@ async function* test(x) {
 
 ```
 
-# typescript/tests/cases/conformance/enums/enumConstantMembers.ts
+# typescript/tests/cases/conformance/enums/enumBasics.ts
 ```typescript
 var E1 = (E1 => {
-	const a = 1;
-	E1[E1['a'] = a] = 'a';
-	const b = 1 + a;
-	E1[E1['b'] = b] = 'b';
+	const A = 0;
+	E1[E1['A'] = A] = 'A';
+	const B = 1 + A;
+	E1[E1['B'] = B] = 'B';
+	const C = 1 + B;
+	E1[E1['C'] = C] = 'C';
 	return E1;
 })(E1 || {});
+var x = E1.A;
+var e = E1;
+var e;
+var e;
+var s = E1[e.A];
+var s;
 var E2 = (E2 => {
-	const a =  -1;
-	E2[E2['a'] = a] = 'a';
-	const b = 1 + a;
-	E2[E2['b'] = b] = 'b';
+	const A = 1;
+	E2[E2['A'] = A] = 'A';
+	const B = 2;
+	E2[E2['B'] = B] = 'B';
+	const C = 3;
+	E2[E2['C'] = C] = 'C';
 	return E2;
 })(E2 || {});
 var E3 = (E3 => {
-	const a = 0.1;
-	E3[E3['a'] = a] = 'a';
-	const b = 1 + a;
-	E3[E3['b'] = b] = 'b';
+	const X = 'foo'.length;
+	E3[E3['X'] = X] = 'X';
+	const Y = 4 + 3;
+	E3[E3['Y'] = Y] = 'Y';
+	const Z =  +'foo';
+	E3[E3['Z'] = Z] = 'Z';
 	return E3;
 })(E3 || {});
+var E4 = (E4 => {
+	const X = 0;
+	E4[E4['X'] = X] = 'X';
+	const Y = 1 + X;
+	E4[E4['Y'] = Y] = 'Y';
+	const Z = 'foo'.length;
+	E4[E4['Z'] = Z] = 'Z';
+	return E4;
+})(E4 || {});
 var E5 = (E5 => {
-	const a = 1 / 0;
-	E5[E5['a'] = a] = 'a';
-	const b = 2 / 0.0;
-	E5[E5['b'] = b] = 'b';
-	const c = 1.0 / 0.0;
-	E5[E5['c'] = c] = 'c';
-	const d = 0.0 / 0.0;
-	E5[E5['d'] = d] = 'd';
-	const e = NaN;
-	E5[E5['e'] = e] = 'e';
-	const f = Infinity;
-	E5[E5['f'] = f] = 'f';
-	const g =  -Infinity;
-	E5[E5['g'] = g] = 'g';
+	const A = 0;
+	E5[E5['A'] = A] = 'A';
+	const B = 3;
+	E5[E5['B'] = B] = 'B';
+	const C = 1 + B;
+	E5[E5['C'] = C] = 'C';
 	return E5;
 })(E5 || {});
 var E6 = (E6 => {
-	const a = 1 / 0;
-	E6[E6['a'] = a] = 'a';
-	const b = 2 / 0.0;
-	E6[E6['b'] = b] = 'b';
-	const c = 1.0 / 0.0;
-	E6[E6['c'] = c] = 'c';
-	const d = 0.0 / 0.0;
-	E6[E6['d'] = d] = 'd';
-	const e = NaN;
-	E6[E6['e'] = e] = 'e';
-	const f = Infinity;
-	E6[E6['f'] = f] = 'f';
-	const g =  -Infinity;
-	E6[E6['g'] = g] = 'g';
+	const A = 0;
+	E6[E6['A'] = A] = 'A';
+	const B = 0;
+	E6[E6['B'] = B] = 'B';
+	const C = 1 + B;
+	E6[E6['C'] = C] = 'C';
 	return E6;
 })(E6 || {});
+var E7 = (E7 => {
+	const A = 'foo'['foo'];
+	E7[E7['A'] = A] = 'A';
+	return E7;
+})(E7 || {});
+var E8 = (E8 => {
+	const B = 'foo'['foo'];
+	E8[E8['B'] = B] = 'B';
+	return E8;
+})(E8 || {});
+var E9 = (E9 => {
+	const A = 0;
+	E9[E9['A'] = A] = 'A';
+	const B = A;
+	E9[E9['B'] = B] = 'B';
+	return E9;
+})(E9 || {});
+var doNotPropagate = [E8.B, E7.A, E4.Z, E3.X, E3.Y, E3.Z];
+var doPropagate = [E9.A, E9.B, E6.B, E6.C, E6.A, E5.A, E5.B, E5.C];
 
-```
-
-# typescript/tests/cases/conformance/enums/enumShadowedInfinityNaN.ts
-```typescript
-{
-	let Infinity = {};
-	var En = (En => {
-		const X = Infinity;
-		En[En['X'] = X] = 'X';
-		return En;
-	})(En || {});
-}
-{
-	let NaN = {};
-	var En = (En => {
-		const X = NaN;
-		En[En['X'] = X] = 'X';
-		return En;
-	})(En || {});
-}
-
-```
-
-# typescript/tests/cases/conformance/enums/enumExportMergingES6.ts
-```typescript
-export var Animals = (Animals => {
-	const Cat = 1;
-	Animals[Animals['Cat'] = Cat] = 'Cat';
-	return Animals;
-})(Animals || {});
-var Animals = (Animals => {
-	const Dog = 2;
-	Animals[Animals['Dog'] = Dog] = 'Dog';
-	return Animals;
-})(Animals || {});
-var Animals = (Animals => {
-	const CatDog = Cat | Dog;
-	Animals[Animals['CatDog'] = CatDog] = 'CatDog';
-	return Animals;
-})(Animals || {});
-
-```
-
-# typescript/tests/cases/conformance/enums/enumConstantMemberWithTemplateLiteralsEmitDeclaration.ts
-```typescript
-var T1 = (T1 => {
-	const a = `1`;
-	T1['a'] = a;
-	return T1;
-})(T1 || {});
-var T2 = (T2 => {
-	const a = `1`;
-	T2['a'] = a;
-	const b = '2';
-	T2['b'] = b;
-	const c = 3;
-	T2[T2['c'] = c] = 'c';
-	return T2;
-})(T2 || {});
-var T3 = (T3 => {
-	const a = `1` + `1`;
-	T3[T3['a'] = a] = 'a';
-	return T3;
-})(T3 || {});
-var T4 = (T4 => {
-	const a = `1`;
-	T4['a'] = a;
-	const b = `1` + `1`;
-	T4[T4['b'] = b] = 'b';
-	const c = `1` + '2';
-	T4[T4['c'] = c] = 'c';
-	const d = '2' + `1`;
-	T4[T4['d'] = d] = 'd';
-	const e = '2' + `1` + `1`;
-	T4[T4['e'] = e] = 'e';
-	return T4;
-})(T4 || {});
-var T5 = (T5 => {
-	const a = `1`;
-	T5['a'] = a;
-	const b = `1` + `2`;
-	T5[T5['b'] = b] = 'b';
-	const c = `1` + `2` + `3`;
-	T5[T5['c'] = c] = 'c';
-	const d = 1;
-	T5[T5['d'] = d] = 'd';
-	return T5;
-})(T5 || {});
-var T6 = (T6 => {
-	const a = 1;
-	T6[T6['a'] = a] = 'a';
-	const b = `12`.length;
-	T6[T6['b'] = b] = 'b';
-	return T6;
-})(T6 || {});
-
-```
-
-# typescript/tests/cases/conformance/enums/enumConstantMemberWithString.ts
-```typescript
-var T1 = (T1 => {
-	const a = '1';
-	T1['a'] = a;
-	const b = '1' + '2';
-	T1[T1['b'] = b] = 'b';
-	const c = '1' + '2' + '3';
-	T1[T1['c'] = c] = 'c';
-	const d = 'a' - 'a';
-	T1[T1['d'] = d] = 'd';
-	const e = 'a' + 1;
-	T1[T1['e'] = e] = 'e';
-	return T1;
-})(T1 || {});
-var T2 = (T2 => {
-	const a = '1';
-	T2['a'] = a;
-	const b = '1' + '2';
-	T2[T2['b'] = b] = 'b';
-	return T2;
-})(T2 || {});
-var T3 = (T3 => {
-	const a = '1';
-	T3['a'] = a;
-	const b = '1' + '2';
-	T3[T3['b'] = b] = 'b';
-	const c = 1;
-	T3[T3['c'] = c] = 'c';
-	const d = 1 + 2;
-	T3[T3['d'] = d] = 'd';
-	return T3;
-})(T3 || {});
-var T4 = (T4 => {
-	const a = '1';
-	T4['a'] = a;
-	return T4;
-})(T4 || {});
-var T5 = (T5 => {
-	const a = '1' + '2';
-	T5[T5['a'] = a] = 'a';
-	return T5;
-})(T5 || {});
-
-```
-
-# typescript/tests/cases/conformance/enums/enumConstantMemberWithStringEmitDeclaration.ts
-```typescript
-var T1 = (T1 => {
-	const a = '1';
-	T1['a'] = a;
-	const b = '1' + '2';
-	T1[T1['b'] = b] = 'b';
-	const c = '1' + '2' + '3';
-	T1[T1['c'] = c] = 'c';
-	return T1;
-})(T1 || {});
-var T2 = (T2 => {
-	const a = '1';
-	T2['a'] = a;
-	const b = '1' + '2';
-	T2[T2['b'] = b] = 'b';
-	return T2;
-})(T2 || {});
-var T3 = (T3 => {
-	const a = '1';
-	T3['a'] = a;
-	const b = '1' + '2';
-	T3[T3['b'] = b] = 'b';
-	return T3;
-})(T3 || {});
-var T4 = (T4 => {
-	const a = '1';
-	T4['a'] = a;
-	return T4;
-})(T4 || {});
-var T5 = (T5 => {
-	const a = '1' + '2';
-	T5[T5['a'] = a] = 'a';
-	return T5;
-})(T5 || {});
-
-```
-
-# typescript/tests/cases/conformance/enums/enumErrors.ts
-```error
-Expected `,` but found `;`
 ```
 
 # typescript/tests/cases/conformance/enums/enumClassification.ts
@@ -364,6 +203,90 @@ var E20 = (E20 => {
 
 ```
 
+# typescript/tests/cases/conformance/enums/enumConstantMemberWithString.ts
+```typescript
+var T1 = (T1 => {
+	const a = '1';
+	T1['a'] = a;
+	const b = '1' + '2';
+	T1[T1['b'] = b] = 'b';
+	const c = '1' + '2' + '3';
+	T1[T1['c'] = c] = 'c';
+	const d = 'a' - 'a';
+	T1[T1['d'] = d] = 'd';
+	const e = 'a' + 1;
+	T1[T1['e'] = e] = 'e';
+	return T1;
+})(T1 || {});
+var T2 = (T2 => {
+	const a = '1';
+	T2['a'] = a;
+	const b = '1' + '2';
+	T2[T2['b'] = b] = 'b';
+	return T2;
+})(T2 || {});
+var T3 = (T3 => {
+	const a = '1';
+	T3['a'] = a;
+	const b = '1' + '2';
+	T3[T3['b'] = b] = 'b';
+	const c = 1;
+	T3[T3['c'] = c] = 'c';
+	const d = 1 + 2;
+	T3[T3['d'] = d] = 'd';
+	return T3;
+})(T3 || {});
+var T4 = (T4 => {
+	const a = '1';
+	T4['a'] = a;
+	return T4;
+})(T4 || {});
+var T5 = (T5 => {
+	const a = '1' + '2';
+	T5[T5['a'] = a] = 'a';
+	return T5;
+})(T5 || {});
+
+```
+
+# typescript/tests/cases/conformance/enums/enumConstantMemberWithStringEmitDeclaration.ts
+```typescript
+var T1 = (T1 => {
+	const a = '1';
+	T1['a'] = a;
+	const b = '1' + '2';
+	T1[T1['b'] = b] = 'b';
+	const c = '1' + '2' + '3';
+	T1[T1['c'] = c] = 'c';
+	return T1;
+})(T1 || {});
+var T2 = (T2 => {
+	const a = '1';
+	T2['a'] = a;
+	const b = '1' + '2';
+	T2[T2['b'] = b] = 'b';
+	return T2;
+})(T2 || {});
+var T3 = (T3 => {
+	const a = '1';
+	T3['a'] = a;
+	const b = '1' + '2';
+	T3[T3['b'] = b] = 'b';
+	return T3;
+})(T3 || {});
+var T4 = (T4 => {
+	const a = '1';
+	T4['a'] = a;
+	return T4;
+})(T4 || {});
+var T5 = (T5 => {
+	const a = '1' + '2';
+	T5[T5['a'] = a] = 'a';
+	return T5;
+})(T5 || {});
+
+```
+
 # typescript/tests/cases/conformance/enums/enumConstantMemberWithTemplateLiterals.ts
 ```typescript
 var T1 = (T1 => {
@@ -427,13 +350,118 @@ var T6 = (T6 => {
 
 ```
 
-# typescript/tests/cases/conformance/enums/enumMergingErrors.ts
+# typescript/tests/cases/conformance/enums/enumConstantMemberWithTemplateLiteralsEmitDeclaration.ts
 ```typescript
+var T1 = (T1 => {
+	const a = `1`;
+	T1['a'] = a;
+	return T1;
+})(T1 || {});
+var T2 = (T2 => {
+	const a = `1`;
+	T2['a'] = a;
+	const b = '2';
+	T2['b'] = b;
+	const c = 3;
+	T2[T2['c'] = c] = 'c';
+	return T2;
+})(T2 || {});
+var T3 = (T3 => {
+	const a = `1` + `1`;
+	T3[T3['a'] = a] = 'a';
+	return T3;
+})(T3 || {});
+var T4 = (T4 => {
+	const a = `1`;
+	T4['a'] = a;
+	const b = `1` + `1`;
+	T4[T4['b'] = b] = 'b';
+	const c = `1` + '2';
+	T4[T4['c'] = c] = 'c';
+	const d = '2' + `1`;
+	T4[T4['d'] = d] = 'd';
+	const e = '2' + `1` + `1`;
+	T4[T4['e'] = e] = 'e';
+	return T4;
+})(T4 || {});
+var T5 = (T5 => {
+	const a = `1`;
+	T5['a'] = a;
+	const b = `1` + `2`;
+	T5[T5['b'] = b] = 'b';
+	const c = `1` + `2` + `3`;
+	T5[T5['c'] = c] = 'c';
+	const d = 1;
+	T5[T5['d'] = d] = 'd';
+	return T5;
+})(T5 || {});
+var T6 = (T6 => {
+	const a = 1;
+	T6[T6['a'] = a] = 'a';
+	const b = `12`.length;
+	T6[T6['b'] = b] = 'b';
+	return T6;
+})(T6 || {});
 
 ```
 
-# typescript/tests/cases/conformance/enums/enumMerging.ts
+# typescript/tests/cases/conformance/enums/enumConstantMembers.ts
 ```typescript
+var E1 = (E1 => {
+	const a = 1;
+	E1[E1['a'] = a] = 'a';
+	const b = 1 + a;
+	E1[E1['b'] = b] = 'b';
+	return E1;
+})(E1 || {});
+var E2 = (E2 => {
+	const a =  -1;
+	E2[E2['a'] = a] = 'a';
+	const b = 1 + a;
+	E2[E2['b'] = b] = 'b';
+	return E2;
+})(E2 || {});
+var E3 = (E3 => {
+	const a = 0.1;
+	E3[E3['a'] = a] = 'a';
+	const b = 1 + a;
+	E3[E3['b'] = b] = 'b';
+	return E3;
+})(E3 || {});
+var E5 = (E5 => {
+	const a = 1 / 0;
+	E5[E5['a'] = a] = 'a';
+	const b = 2 / 0.0;
+	E5[E5['b'] = b] = 'b';
+	const c = 1.0 / 0.0;
+	E5[E5['c'] = c] = 'c';
+	const d = 0.0 / 0.0;
+	E5[E5['d'] = d] = 'd';
+	const e = NaN;
+	E5[E5['e'] = e] = 'e';
+	const f = Infinity;
+	E5[E5['f'] = f] = 'f';
+	const g =  -Infinity;
+	E5[E5['g'] = g] = 'g';
+	return E5;
+})(E5 || {});
+var E6 = (E6 => {
+	const a = 1 / 0;
+	E6[E6['a'] = a] = 'a';
+	const b = 2 / 0.0;
+	E6[E6['b'] = b] = 'b';
+	const c = 1.0 / 0.0;
+	E6[E6['c'] = c] = 'c';
+	const d = 0.0 / 0.0;
+	E6[E6['d'] = d] = 'd';
+	const e = NaN;
+	E6[E6['e'] = e] = 'e';
+	const f = Infinity;
+	E6[E6['f'] = f] = 'f';
+	const g =  -Infinity;
+	E6[E6['g'] = g] = 'g';
+	return E6;
+})(E6 || {});
 
 ```
 
@@ -448,87 +476,160 @@ var E = (E => {
 
 ```
 
-# typescript/tests/cases/conformance/enums/enumBasics.ts
+# typescript/tests/cases/conformance/enums/enumErrors.ts
+```error
+Expected `,` but found `;`
+```
+
+# typescript/tests/cases/conformance/enums/enumExportMergingES6.ts
 ```typescript
-var E1 = (E1 => {
-	const A = 0;
-	E1[E1['A'] = A] = 'A';
-	const B = 1 + A;
-	E1[E1['B'] = B] = 'B';
-	const C = 1 + B;
-	E1[E1['C'] = C] = 'C';
-	return E1;
-})(E1 || {});
-var x = E1.A;
-var e = E1;
-var e;
-var e;
-var s = E1[e.A];
-var s;
-var E2 = (E2 => {
+export var Animals = (Animals => {
+	const Cat = 1;
+	Animals[Animals['Cat'] = Cat] = 'Cat';
+	return Animals;
+})(Animals || {});
+var Animals = (Animals => {
+	const Dog = 2;
+	Animals[Animals['Dog'] = Dog] = 'Dog';
+	return Animals;
+})(Animals || {});
+var Animals = (Animals => {
+	const CatDog = Cat | Dog;
+	Animals[Animals['CatDog'] = CatDog] = 'CatDog';
+	return Animals;
+})(Animals || {});
+
+```
+
+# typescript/tests/cases/conformance/enums/enumMerging.ts
+```typescript
+
+```
+
+# typescript/tests/cases/conformance/enums/enumMergingErrors.ts
+```typescript
+
+```
+
+# typescript/tests/cases/conformance/enums/enumShadowedInfinityNaN.ts
+```typescript
+{
+	let Infinity = {};
+	var En = (En => {
+		const X = Infinity;
+		En[En['X'] = X] = 'X';
+		return En;
+	})(En || {});
+}
+{
+	let NaN = {};
+	var En = (En => {
+		const X = NaN;
+		En[En['X'] = X] = 'X';
+		return En;
+	})(En || {});
+}
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/boolean-value/input.ts
+```typescript
+var E = (E => {
+	const A = true;
+	E[E['A'] = A] = 'A';
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/const/input.ts
+```typescript
+var E = (E => {
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/constant-folding/input.ts
+```typescript
+var E = (E => {
+	const a = 0;
+	E[E['a'] = a] = 'a';
+	const b = 1 | 2;
+	E[E['b'] = b] = 'b';
+	const c = 1 & 3;
+	E[E['c'] = c] = 'c';
+	const d = 4 >> 1;
+	E[E['d'] = d] = 'd';
+	const e = 8 >>> 1;
+	E[E['e'] = e] = 'e';
+	const f = 1 << 3;
+	E[E['f'] = f] = 'f';
+	const g = 2 ^ 7;
+	E[E['g'] = g] = 'g';
+	const h = 2 * 3;
+	E[E['h'] = h] = 'h';
+	const i = 2 / 3;
+	E[E['i'] = i] = 'i';
+	const j = 2 + 5;
+	E[E['j'] = j] = 'j';
+	const k = 2 - 4;
+	E[E['k'] = k] = 'k';
+	const l = 2.5 % 2;
+	E[E['l'] = l] = 'l';
+	const m = 2 ** 33;
+	E[E['m'] = m] = 'm';
+	const n =  +9;
+	E[E['n'] = n] = 'n';
+	const o =  -1;
+	E[E['o'] = o] = 'o';
+	const p =  ~2;
+	E[E['p'] = p] = 'p';
+	const q = 1 + 2 - 3 * 4 /  -5;
+	E[E['q'] = q] = 'q';
+	const r = 1 + q;
+	E[E['r'] = r] = 'r';
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/export/input.ts
+```typescript
+export var E = (E => {
 	const A = 1;
-	E2[E2['A'] = A] = 'A';
+	E[E['A'] = A] = 'A';
+	return E;
+})(E || {});
+var E = (E => {
 	const B = 2;
-	E2[E2['B'] = B] = 'B';
-	const C = 3;
-	E2[E2['C'] = C] = 'C';
-	return E2;
-})(E2 || {});
-var E3 = (E3 => {
-	const X = 'foo'.length;
-	E3[E3['X'] = X] = 'X';
-	const Y = 4 + 3;
-	E3[E3['Y'] = Y] = 'Y';
-	const Z =  +'foo';
-	E3[E3['Z'] = Z] = 'Z';
-	return E3;
-})(E3 || {});
-var E4 = (E4 => {
-	const X = 0;
-	E4[E4['X'] = X] = 'X';
-	const Y = 1 + X;
-	E4[E4['Y'] = Y] = 'Y';
-	const Z = 'foo'.length;
-	E4[E4['Z'] = Z] = 'Z';
-	return E4;
-})(E4 || {});
-var E5 = (E5 => {
-	const A = 0;
-	E5[E5['A'] = A] = 'A';
-	const B = 3;
-	E5[E5['B'] = B] = 'B';
-	const C = 1 + B;
-	E5[E5['C'] = C] = 'C';
-	return E5;
-})(E5 || {});
-var E6 = (E6 => {
-	const A = 0;
-	E6[E6['A'] = A] = 'A';
-	const B = 0;
-	E6[E6['B'] = B] = 'B';
-	const C = 1 + B;
-	E6[E6['C'] = C] = 'C';
-	return E6;
-})(E6 || {});
-var E7 = (E7 => {
-	const A = 'foo'['foo'];
-	E7[E7['A'] = A] = 'A';
-	return E7;
-})(E7 || {});
-var E8 = (E8 => {
-	const B = 'foo'['foo'];
-	E8[E8['B'] = B] = 'B';
-	return E8;
-})(E8 || {});
-var E9 = (E9 => {
-	const A = 0;
-	E9[E9['A'] = A] = 'A';
-	const B = A;
-	E9[E9['B'] = B] = 'B';
-	return E9;
-})(E9 || {});
-var doNotPropagate = [E8.B, E7.A, E4.Z, E3.X, E3.Y, E3.Z];
-var doPropagate = [E9.A, E9.B, E6.B, E6.C, E6.A, E5.A, E5.B, E5.C];
+	E[E['B'] = B] = 'B';
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/inferred/input.ts
+```typescript
+var E = (E => {
+	const x = 0;
+	E[E['x'] = x] = 'x';
+	const y = 1 + x;
+	E[E['y'] = y] = 'y';
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/inner-references/input.ts
+```typescript
+var E = (E => {
+	const a = 10;
+	E[E['a'] = a] = 'a';
+	const b = a;
+	E[E['b'] = b] = 'b';
+	return E;
+})(E || {});
 
 ```
 
@@ -581,18 +682,6 @@ var A = (A => {
 
 ```
 
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/inner-references/input.ts
-```typescript
-var E = (E => {
-	const a = 10;
-	E[E['a'] = a] = 'a';
-	const b = a;
-	E[E['b'] = b] = 'b';
-	return E;
-})(E || {});
-
-```
-
 # babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/non-foldable-constant/input.ts
 ```typescript
 var E = (E => {
@@ -617,46 +706,6 @@ var E = (E => {
 var E = (E => {
 	const z = 3;
 	E[E['z'] = z] = 'z';
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/inferred/input.ts
-```typescript
-var E = (E => {
-	const x = 0;
-	E[E['x'] = x] = 'x';
-	const y = 1 + x;
-	E[E['y'] = y] = 'y';
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/scoped/input.ts
-```typescript
-{
-	var E = (E => {
-		return E;
-	})(E || {});
-}
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/const/input.ts
-```typescript
-var E = (E => {
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-values-computed/input.ts
-```typescript
-var E = (E => {
-	const A = 'HALLO' + 'WERLD';
-	E[E['A'] = A] = 'A';
 	return E;
 })(E || {});
 
@@ -689,6 +738,52 @@ var constants = (constants => {
 
 ```
 
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/scoped/input.ts
+```typescript
+{
+	var E = (E => {
+		return E;
+	})(E || {});
+}
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-value/input.ts
+```typescript
+var E = (E => {
+	const A = 0;
+	E[E['A'] = A] = 'A';
+	const B = '';
+	E['B'] = B;
+	const A2 = A;
+	E[E['A2'] = A2] = 'A2';
+	const B2 = B;
+	E[E['B2'] = B2] = 'B2';
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-value-template/input.ts
+```typescript
+var E = (E => {
+	const A = `Hey`;
+	E['A'] = A;
+	return E;
+})(E || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-values-computed/input.ts
+```typescript
+var E = (E => {
+	const A = 'HALLO' + 'WERLD';
+	E[E['A'] = A] = 'A';
+	return E;
+})(E || {});
+
+```
+
 # babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/ts5.0-const-foldable/input.ts
 ```typescript
 const BaseValue = 10;
@@ -715,101 +810,6 @@ var Routes = (Routes => {
 	Routes['y'] = y;
 	return Routes;
 })(Routes || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-value/input.ts
-```typescript
-var E = (E => {
-	const A = 0;
-	E[E['A'] = A] = 'A';
-	const B = '';
-	E['B'] = B;
-	const A2 = A;
-	E[E['A2'] = A2] = 'A2';
-	const B2 = B;
-	E[E['B2'] = B2] = 'B2';
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/constant-folding/input.ts
-```typescript
-var E = (E => {
-	const a = 0;
-	E[E['a'] = a] = 'a';
-	const b = 1 | 2;
-	E[E['b'] = b] = 'b';
-	const c = 1 & 3;
-	E[E['c'] = c] = 'c';
-	const d = 4 >> 1;
-	E[E['d'] = d] = 'd';
-	const e = 8 >>> 1;
-	E[E['e'] = e] = 'e';
-	const f = 1 << 3;
-	E[E['f'] = f] = 'f';
-	const g = 2 ^ 7;
-	E[E['g'] = g] = 'g';
-	const h = 2 * 3;
-	E[E['h'] = h] = 'h';
-	const i = 2 / 3;
-	E[E['i'] = i] = 'i';
-	const j = 2 + 5;
-	E[E['j'] = j] = 'j';
-	const k = 2 - 4;
-	E[E['k'] = k] = 'k';
-	const l = 2.5 % 2;
-	E[E['l'] = l] = 'l';
-	const m = 2 ** 33;
-	E[E['m'] = m] = 'm';
-	const n =  +9;
-	E[E['n'] = n] = 'n';
-	const o =  -1;
-	E[E['o'] = o] = 'o';
-	const p =  ~2;
-	E[E['p'] = p] = 'p';
-	const q = 1 + 2 - 3 * 4 /  -5;
-	E[E['q'] = q] = 'q';
-	const r = 1 + q;
-	E[E['r'] = r] = 'r';
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/string-value-template/input.ts
-```typescript
-var E = (E => {
-	const A = `Hey`;
-	E['A'] = A;
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/export/input.ts
-```typescript
-export var E = (E => {
-	const A = 1;
-	E[E['A'] = A] = 'A';
-	return E;
-})(E || {});
-var E = (E => {
-	const B = 2;
-	E[E['B'] = B] = 'B';
-	return E;
-})(E || {});
-
-```
-
-# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/boolean-value/input.ts
-```typescript
-var E = (E => {
-	const A = true;
-	E[E['A'] = A] = 'A';
-	return E;
-})(E || {});
 
 ```
 
