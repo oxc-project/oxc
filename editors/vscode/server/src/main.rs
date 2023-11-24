@@ -8,7 +8,6 @@ use log::debug;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
-use log::debug;
 
 use dashmap::DashMap;
 use futures::future::join_all;
@@ -83,10 +82,10 @@ impl LanguageServer for Backend {
         self.handle_file_update(params.text_document.uri, None).await;
     }
 
-    /// When the document changed, it may not be written to disk, so we should 
+    /// When the document changed, it may not be written to disk, so we should
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let content =  params.content_changes.first().map(|c| c.text.clone());
+        let content = params.content_changes.first().map(|c| c.text.clone());
         self.handle_file_update(params.text_document.uri, content).await;
     }
 
