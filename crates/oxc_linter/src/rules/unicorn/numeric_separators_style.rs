@@ -13,10 +13,7 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits")]
-#[diagnostic(
-    severity(error),
-    help("Use the number separator `_` to break up longer numbers for easier reading.")
-)]
+#[diagnostic(severity(error), help("Invalid group length in numeric value."))]
 struct NumericSeparatorsStyleDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
