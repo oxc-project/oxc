@@ -1912,8 +1912,8 @@ pub struct ImportDeclaration<'a> {
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
     pub source: StringLiteral,
-    pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
+    pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
+    pub import_kind: ImportOrExportKind,     // `import type { foo } from 'bar'`
 }
 
 #[derive(Debug, Hash)]
@@ -1956,6 +1956,15 @@ pub struct ImportNamespaceSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub local: BindingIdentifier,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct WithClause<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub attributes_keyword: IdentifierName, // `with` or `assert`
+    pub with_entries: Vec<'a, ImportAttribute>,
 }
 
 #[derive(Debug, Hash)]
@@ -2027,8 +2036,8 @@ pub struct ExportAllDeclaration<'a> {
     pub span: Span,
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
-    pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub export_kind: ImportOrExportKind,              // `export type *`
+    pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
+    pub export_kind: ImportOrExportKind,     // `export type *`
 }
 
 impl<'a> ExportAllDeclaration<'a> {
