@@ -1,4 +1,4 @@
-Compatibility: 161/591 (27.24%)
+Compatibility: 167/591 (28.26%)
 
 # Failed
 
@@ -57,23 +57,18 @@ Compatibility: 161/591 (27.24%)
 * assignment/call-with-template.js
 * assignment/chain-two-segments.js
 * assignment/chain.js
-* assignment/destructuring-array.js
 * assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
+* assignment/issue-1419.js
 * assignment/issue-15534.js
-* assignment/issue-1966.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
-* assignment/issue-5610.js
 * assignment/issue-6922.js
-* assignment/issue-7091.js
 * assignment/issue-7572.js
-* assignment/issue-8218.js
 * assignment/lone-arg.js
 * assignment/sequence.js
-* assignment/unary.js
 
 ### assignment-comments
 * assignment-comments/call.js
@@ -610,9 +605,6 @@ Compatibility: 161/591 (27.24%)
 ### try
 * try/catch.js
 * try/try.js
-
-### unary
-* unary/object.js
 
 ### unary-expression
 * unary-expression/comments.js
