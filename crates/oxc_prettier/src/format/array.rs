@@ -1,11 +1,12 @@
 use oxc_ast::ast::*;
 use oxc_span::Span;
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array,
     comment::DanglingCommentsPrintOptions,
-    doc::{Doc, DocBuilder, Group},
-    group, indent, softline, ss, Prettier,
+    doc::{Doc, DocBuilder, Fill, Group},
+    group, if_break, indent, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -35,6 +36,33 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayAssignmentTarget(array) => array.span,
         }
     }
+    fn is_concisely_printed(&self) -> bool {
+        match self {
+            Self::ArrayExpression(array) => {
+                if array.elements.len() <= 1 {
+                    return false;
+                }
+
+                return array.elements.iter().all(|element| {
+                    let ArrayExpressionElement::Expression(expr) = element else {
+                        return false;
+                    };
+
+                    match expr {
+                        Expression::NumberLiteral(_) => true,
+                        Expression::UnaryExpression(unary_expr) => {
+                            matches!(
+                                unary_expr.operator,
+                                UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+                            ) && matches!(unary_expr.argument, Expression::NumberLiteral(_))
+                        }
+                        _ => false,
+                    }
+                });
+            }
+            Self::ArrayPattern(_) | Self::ArrayAssignmentTarget(_) | Self::TSTupleType(_) => false,
+        }
+    }
 }
 
 pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -54,16 +82,26 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
             (false, false)
         };
 
-    let trailing_comma = if !can_have_trailing_comma {
-        ss!("")
-    } else if needs_forced_trailing_comma {
-        ss!(",")
-    } else {
-        ss!("")
+    let should_use_concise_formatting = array.is_concisely_printed();
+    let trailing_comma_fn = |p: &Prettier<'a>| {
+        if !can_have_trailing_comma {
+            ss!("")
+        } else if needs_forced_trailing_comma {
+            ss!(",")
+        } else if should_use_concise_formatting {
+            if_break!(p, ",")
+        } else {
+            ss!("")
+        }
     };
 
     let mut parts = p.vec();
-    let elements = array!(p, print_elements(p, array), trailing_comma);
+    let elements = if should_use_concise_formatting {
+        print_array_elements_concisely(p, array, trailing_comma_fn)
+    } else {
+        let trailing_comma = trailing_comma_fn(p);
+        array!(p, print_elements(p, array), trailing_comma)
+    };
     let parts_inner = if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None)
     {
         indent!(p, softline!(), elements, dangling_comments)
@@ -145,6 +183,40 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     }
 
     Doc::Array(parts)
+}
+
+fn print_array_elements_concisely<'a, F>(
+    p: &mut Prettier<'a>,
+    array: &Array<'a, '_>,
+    trailing_comma_fn: F,
+) -> Doc<'a>
+where
+    F: Fn(&Prettier<'a>) -> Doc<'a>,
+{
+    let mut parts = p.vec();
+    match array {
+        Array::ArrayExpression(array) => {
+            for (i, element) in array.elements.iter().enumerate() {
+                let is_last = i == array.elements.len() - 1;
+                let part = if is_last {
+                    array!(p, element.format(p), trailing_comma_fn(p))
+                } else {
+                    array!(p, element.format(p), ss!(","))
+                };
+                parts.push(part);
+
+                if !is_last {
+                    parts.push(Doc::Line);
+                }
+            }
+        }
+        _ => {
+            // TODO: implement
+            array!(p, print_elements(p, array), trailing_comma_fn(p));
+        }
+    }
+
+    Doc::Fill(Fill::new(parts))
 }
 
 fn should_break(array: &Array) -> bool {
