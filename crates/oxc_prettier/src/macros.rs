@@ -107,6 +107,20 @@ macro_rules! if_break {
 }
 
 #[macro_export]
+macro_rules! line_suffix {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
+        {
+            use $crate::doc::DocBuilder;
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::LineSuffix(temp_vec)
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! wrap {
     ($p:ident, $self:expr, $kind:ident, $block:block) => {{
         let kind = AstKind::$kind($p.alloc($self));

@@ -32,6 +32,10 @@ pub enum Doc<'a> {
     /// Specify a line break that is **always** included in the output,
     /// no matter if the expression fits on one line or not.
     Hardline,
+    /// This is used to implement trailing comments.
+    /// It's not practical to constantly check where the line ends to avoid accidentally printing some code at the end of a comment.
+    /// `lineSuffix` buffers docs passed to it and flushes them before any new line.
+    LineSuffix(Vec<'a, Doc<'a>>),
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
     IfBreak(Box<'a, Doc<'a>>),
     /// This is an alternative type of group which behaves like text layout:
@@ -210,6 +214,16 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                 }
             }
             string.push_str("])");
+        }
+        Doc::LineSuffix(docs) => {
+            string.push_str("lineSuffix(");
+            for (idx, doc) in docs.iter().enumerate() {
+                string.push_str(&print_doc_to_debug(doc));
+                if idx != docs.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push(')');
         }
     }
 
