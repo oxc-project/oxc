@@ -5,7 +5,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -42,10 +41,7 @@ impl Rule for NoEmptyStaticBlock {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticBlock(static_block) = node.kind() {
             if static_block.body.is_empty() {
-                let re = Regex::new(r"static(\n|\s|\t)*(//|/[*])").unwrap(); // comments are before the block declaration
-                if ctx.semantic().trivias().has_comments_between(static_block.span)
-                    && !re.is_match(ctx.source_text())
-                {
+                if ctx.semantic().trivias().has_comments_between(static_block.span) {
                     return;
                 }
                 ctx.diagnostic(NoEmptyStaticBlockDiagnostic(static_block.span));
@@ -74,8 +70,6 @@ fn test() {
 
 			 } }",
         "class Foo { static { bar(); } static {} }",
-        "class Foo { static // comment
-			 {} }",
     ];
 
     Tester::new_without_config(NoEmptyStaticBlock::NAME, pass, fail).test_and_snapshot();

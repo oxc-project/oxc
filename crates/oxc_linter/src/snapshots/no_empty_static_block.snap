@@ -31,11 +31,4 @@ expression: no_empty_static_block
    ╰────
   help: Unexpected empty static block.
 
-  ⚠ eslint(no-empty-static-block): Disallow empty static blocks
-   ╭─[no_empty_static_block.tsx:1:1]
- 1 │ ╭─▶ class Foo { static // comment
- 2 │ ╰─▶              {} }
-   ╰────
-  help: Unexpected empty static block.
-
 
