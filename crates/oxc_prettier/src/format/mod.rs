@@ -1728,9 +1728,9 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(self.binding.format(p));
-        parts.push(ss!(": "));
         parts.push(self.name.format(p));
+        parts.push(ss!(": "));
+        parts.push(self.binding.format(p));
         Doc::Array(parts)
     }
 }

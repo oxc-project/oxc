@@ -1,4 +1,4 @@
-Compatibility: 167/591 (28.26%)
+Compatibility: 168/591 (28.43%)
 
 # Failed
 
@@ -57,7 +57,6 @@ Compatibility: 167/591 (28.26%)
 * assignment/call-with-template.js
 * assignment/chain-two-segments.js
 * assignment/chain.js
-* assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
 * assignment/issue-1419.js
