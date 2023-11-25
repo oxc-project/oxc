@@ -58,14 +58,14 @@ impl<'a> Parser<'a> {
         };
 
         let source = self.parse_literal_string()?;
-        let assertions = self.parse_import_attributes()?;
+        let with_clause = self.parse_import_attributes()?;
         self.asi()?;
         let span = self.end_span(span);
         let decl = ModuleDeclaration::ImportDeclaration(self.ast.import_declaration(
             span,
             specifiers,
             source,
-            assertions,
+            with_clause,
             import_kind,
         ));
         Ok(self.ast.module_declaration(decl))
@@ -135,19 +135,23 @@ impl<'a> Parser<'a> {
         Ok(specifiers)
     }
 
-    /// [Import assertion](https://tc39.es/proposal-import-assertions)
-    fn parse_import_attributes(&mut self) -> Result<Option<Vec<'a, ImportAttribute>>> {
-        if !self.at(Kind::Assert) || self.cur_token().is_on_new_line {
-            return Ok(None);
-        }
-        self.bump_any();
+    /// [Import Attributes](https://tc39.es/proposal-import-attributes)
+    fn parse_import_attributes(&mut self) -> Result<Option<WithClause<'a>>> {
+        let span = self.start_span();
+        let attributes_keyword = match self.cur_kind() {
+            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
+            Kind::With => self.parse_identifier_name()?,
+            _ => {
+                return Ok(None);
+            }
+        };
 
         let ctx = self.ctx;
         self.ctx = Context::default();
-        let entries = AssertEntries::parse(self)?.elements;
+        let with_entries = AssertEntries::parse(self)?.elements;
         self.ctx = ctx;
 
-        Ok(Some(entries))
+        Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
     }
 
     pub(crate) fn parse_ts_export_assignment_declaration(
@@ -365,10 +369,10 @@ impl<'a> Parser<'a> {
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name()).transpose()?;
         self.expect(Kind::From)?;
         let source = self.parse_literal_string()?;
-        let assertions = self.parse_import_attributes()?;
+        let with_clause = self.parse_import_attributes()?;
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self.ast.export_all_declaration(span, exported, source, assertions, export_kind))
+        Ok(self.ast.export_all_declaration(span, exported, source, with_clause, export_kind))
     }
 
     // ImportSpecifier :
