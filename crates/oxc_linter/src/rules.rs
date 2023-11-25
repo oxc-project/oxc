@@ -54,6 +54,7 @@ mod eslint {
     pub mod no_empty;
     pub mod no_empty_character_class;
     pub mod no_empty_pattern;
+    pub mod no_empty_static_block;
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extra_boolean_cast;
@@ -249,6 +250,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty,
     eslint::no_empty_character_class,
     eslint::no_empty_pattern,
+    eslint::no_empty_static_block,
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
