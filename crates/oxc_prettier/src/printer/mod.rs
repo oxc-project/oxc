@@ -26,6 +26,8 @@ pub struct Printer<'a> {
     /// cmds to the array instead of recursively calling `print`.
     cmds: Vec<Command<'a>>,
 
+    line_suffix: Vec<Command<'a>>,
+
     // states
     new_line: &'static str,
 
@@ -50,7 +52,15 @@ impl<'a> Printer<'a> {
         // be the same size as the original text.
         let out = Vec::with_capacity(source_text.len());
         let cmds = vec![Command::new(Indent::root(), Mode::Break, doc)];
-        Self { options, out, pos: 0, cmds, new_line: options.end_of_line.as_str(), allocator }
+        Self {
+            options,
+            out,
+            pos: 0,
+            cmds,
+            line_suffix: vec![],
+            new_line: options.end_of_line.as_str(),
+            allocator,
+        }
     }
 
     pub fn build(mut self) -> String {
@@ -87,7 +97,6 @@ impl<'a> Printer<'a> {
     pub fn print_doc_to_string(&mut self) {
         while let Some(Command { indent, mut doc, mode }) = self.cmds.pop() {
             Self::propagate_breaks(&mut doc);
-
             match doc {
                 Doc::Str(s) => self.handle_str(s),
                 Doc::Array(docs) => self.handle_array(indent, mode, docs),
@@ -97,8 +106,13 @@ impl<'a> Printer<'a> {
                 Doc::Line => self.handle_line(indent, mode),
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_hardline(indent),
+                Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
                 Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
+            }
+
+            if self.cmds.is_empty() && !self.line_suffix.is_empty() {
+                self.cmds.extend(self.line_suffix.drain(..).rev());
             }
         }
     }
@@ -195,6 +209,15 @@ impl<'a> Printer<'a> {
         self.trim();
         self.out.extend(self.new_line.as_bytes());
         self.pos = self.indent(indent.length);
+    }
+
+    fn handle_line_suffix(
+        &mut self,
+        indent: Indent,
+        mode: Mode,
+        docs: oxc_allocator::Vec<'a, Doc<'a>>,
+    ) {
+        self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
     }
 
     fn handle_if_break(&mut self, doc: Doc<'a>, indent: Indent, mode: Mode) {
@@ -333,6 +356,9 @@ impl<'a> Printer<'a> {
                     for part in fill.parts().iter().rev() {
                         queue.push_front((mode, part));
                     }
+                }
+                Doc::LineSuffix(_) => {
+                    break;
                 }
             }
 
