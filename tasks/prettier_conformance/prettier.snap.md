@@ -1,4 +1,4 @@
-Compatibility: 171/591 (28.93%)
+Compatibility: 173/591 (29.27%)
 
 # Failed
 
@@ -132,7 +132,6 @@ Compatibility: 171/591 (28.93%)
 
 ### class-static-block
 * class-static-block/class-static-block.js
-* class-static-block/with-line-breaks.js
 
 ### classes
 * classes/asi.js
@@ -276,9 +275,6 @@ Compatibility: 171/591 (28.93%)
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
 * empty-paren-comment/empty_paren_comment.js
-
-### empty-statement
-* empty-statement/no-newline.js
 
 ### end-of-line
 * end-of-line/example.js
