@@ -7,6 +7,7 @@
 
 mod array;
 mod arrow_function;
+mod assignment;
 mod binaryish;
 mod block;
 mod call_expression;
@@ -30,7 +31,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, Separator},
-    format, group, hardline, indent, indent_if_break, line, softline, ss, string, wrap, Prettier,
+    format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
 use self::{
@@ -972,13 +973,7 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
 
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-        parts.push(self.id.format(p));
-        if let Some(init) = &self.init {
-            parts.push(ss!(" = "));
-            parts.push(init.format(p));
-        }
-        Doc::Group(Group { contents: parts, should_break: false })
+        assignment::print_variable_declarator(p, self)
     }
 }
 
@@ -1643,15 +1638,7 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, AssignmentExpression, {
-            group![
-                p,
-                format!(p, self.left),
-                ss!(" "),
-                string!(p, self.operator.as_str()),
-                indent_if_break!(p, line!(), format!(p, self.right))
-            ]
-        })
+        wrap!(p, self, AssignmentExpression, { assignment::print_assignment_expression(p, self) })
     }
 }
 
