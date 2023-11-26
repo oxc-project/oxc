@@ -1,4 +1,4 @@
-Compatibility: 160/591 (27.07%)
+Compatibility: 155/591 (26.23%)
 
 # Failed
 
@@ -163,6 +163,7 @@ Compatibility: 160/591 (27.07%)
 * classes/keyword-property/static.js
 
 ### classes-private-fields
+* classes-private-fields/optional-chaining.js
 * classes-private-fields/private_fields.js
 * classes-private-fields/with_comments.js
 
@@ -228,7 +229,6 @@ Compatibility: 160/591 (27.07%)
 * comments-closure-typecast/comment-in-the-middle.js
 * comments-closure-typecast/comment-placement.js
 * comments-closure-typecast/extra-spaces-and-asterisks.js
-* comments-closure-typecast/iife-issue-5850-isolated.js
 * comments-closure-typecast/iife.js
 * comments-closure-typecast/issue-4124.js
 * comments-closure-typecast/issue-8045.js
@@ -344,6 +344,8 @@ Compatibility: 160/591 (27.07%)
 
 ### generator
 * generator/anonymous.js
+* generator/async.js
+* generator/function-name-starts-with-get.js
 
 ### identifier/for-of
 * identifier/for-of/await.js
@@ -355,6 +357,7 @@ Compatibility: 160/591 (27.07%)
 
 ### if
 * if/comment_before_else.js
+* if/else.js
 * if/expr_and_same_line_comments.js
 * if/if_comments.js
 * if/trailing_comment.js
@@ -448,8 +451,14 @@ Compatibility: 160/591 (27.07%)
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
 
+### non-strict
+* non-strict/keywords.js
+
 ### nullish-coalescing
 * nullish-coalescing/nullish_coalesing_operator.js
+
+### numeric-separators
+* numeric-separators/number.js
 
 ### object-prop-break-in
 * object-prop-break-in/short-keys.js

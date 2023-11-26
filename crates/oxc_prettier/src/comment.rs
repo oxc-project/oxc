@@ -238,7 +238,7 @@ impl<'a> Prettier<'a> {
     fn print_comment(&self, comment: Comment) -> Doc<'a> {
         let end_offset = if comment.is_block { 2 } else { 0 };
         let comment =
-            Span::new(comment.start - 2, comment.end + end_offset).source_text(self.source_text);
+            Span::new(comment.start, comment.end + end_offset).source_text(self.source_text);
         Doc::Str(comment)
     }
 
