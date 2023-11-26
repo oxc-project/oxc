@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/alias.test.js>
 
-use crate::{AliasValue, ResolveError, ResolveOptions, Resolver};
+use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver};
 
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
@@ -125,6 +125,31 @@ fn absolute_path() {
     });
     let resolution = resolver.resolve(&f, "foo/index");
     assert_eq!(resolution, Err(ResolveError::Ignored(f.join("foo"))));
+}
+
+#[test]
+fn system_path() {
+    let f = super::fixture();
+    let resolver = Resolver::new(ResolveOptions {
+        alias: vec![(
+            "@app".into(),
+            vec![AliasValue::Path(f.join("alias").to_str().unwrap().to_string())],
+        )],
+        ..ResolveOptions::default()
+    });
+    let resolution = resolver.resolve(&f, "@app/files/a").map(Resolution::into_path_buf);
+    assert_eq!(resolution, Ok(f.join("alias/files/a.js")));
+    let string = resolution.unwrap().to_string_lossy().to_string();
+    #[cfg(target_os = "windows")]
+    {
+        assert!(!string.contains('/'));
+        assert!(string.contains('\\'));
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        assert!(string.contains('/'));
+        assert!(!string.contains('\\'));
+    }
 }
 
 // Not part of enhanced-resolve
