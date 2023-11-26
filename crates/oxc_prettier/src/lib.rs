@@ -23,6 +23,19 @@ use crate::{doc::Doc, format::Format, printer::Printer};
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 
+type GroupId = u32;
+#[derive(Default)]
+struct GroupIdBuilder {
+    id: GroupId,
+}
+
+impl GroupIdBuilder {
+    pub fn next_id(&mut self) -> GroupId {
+        self.id += 1;
+        self.id
+    }
+}
+
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
 
@@ -36,6 +49,8 @@ pub struct Prettier<'a> {
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
     nodes: Vec<AstKind<'a>>,
+
+    group_id_builder: GroupIdBuilder,
 }
 
 impl<'a> DocBuilder<'a> for Prettier<'a> {
@@ -58,6 +73,7 @@ impl<'a> Prettier<'a> {
             options,
             trivias: trivias.into_iter().peekable(),
             nodes: vec![],
+            group_id_builder: GroupIdBuilder::default(),
         }
     }
 
@@ -177,5 +193,9 @@ impl<'a> Prettier<'a> {
         let idx = self.skip_spaces(idx, true);
         let idx2 = self.skip_newline(idx, true);
         idx != idx2
+    }
+
+    fn next_id(&mut self) -> GroupId {
+        self.group_id_builder.next_id()
     }
 }

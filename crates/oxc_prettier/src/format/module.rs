@@ -105,7 +105,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                         if p.options.bracket_spacing { line!() } else { softline!() },
                         Doc::Array(p.join(Separator::CommaLine, docs))
                     ],
-                    if_break!(p, if p.should_print_es5_comma() { "," } else { "" }),
+                    if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
                     if p.options.bracket_spacing { line!() } else { softline!() },
                     ss!("}"),
                 ]);

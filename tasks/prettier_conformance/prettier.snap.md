@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 Compatibility: 173/591 (29.27%)
+=======
+Compatibility: 171/591 (28.93%)
+>>>>>>> 169f7a38 (feat(prettier): add id on `IfBreak` and `Group`)
 
 # Failed
 
@@ -7,14 +11,11 @@ Compatibility: 173/591 (29.27%)
 * arrays/issue-10159.js
 * arrays/nested.js
 * arrays/numbers-in-args.js
-* arrays/numbers-in-assignment.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
-* arrays/numbers-trailing-comma.js
 * arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
-* arrays/numbers1.js
 * arrays/numbers2.js
 * arrays/numbers3.js
 * arrays/preserve_empty_lines.js

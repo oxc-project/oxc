@@ -471,10 +471,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(indent!(
-                    p,
-                    Doc::Group(Group { contents: consequent_parts, should_break: false })
-                ));
+                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts, false))));
             }
         }
 

@@ -6,11 +6,11 @@
 mod command;
 
 use oxc_allocator::Allocator;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    doc::{Doc, DocBuilder, Fill},
-    PrettierOptions,
+    doc::{Doc, DocBuilder, Fill, IfBreak},
+    GroupId, PrettierOptions,
 };
 
 use self::command::{Command, Indent, Mode};
@@ -27,6 +27,7 @@ pub struct Printer<'a> {
     cmds: Vec<Command<'a>>,
 
     line_suffix: Vec<Command<'a>>,
+    group_mode_map: HashMap<GroupId, Mode>,
 
     // states
     new_line: &'static str,
@@ -58,6 +59,7 @@ impl<'a> Printer<'a> {
             pos: 0,
             cmds,
             line_suffix: vec![],
+            group_mode_map: HashMap::new(),
             new_line: options.end_of_line.as_str(),
             allocator,
         }
@@ -82,7 +84,7 @@ impl<'a> Printer<'a> {
                 }
                 group.should_break
             }
-            Doc::IfBreak(d) => Self::propagate_breaks(d),
+            Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
             Doc::Array(arr) | Doc::Indent(arr) | Doc::IndentIfBreak(arr) => {
                 arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
             }
@@ -107,7 +109,7 @@ impl<'a> Printer<'a> {
                 Doc::Softline => self.handle_softline(indent, mode),
                 Doc::Hardline => self.handle_line(indent, Mode::Break),
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
-                Doc::IfBreak(doc) => self.handle_if_break(doc.unbox(), indent, mode),
+                Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
                 Doc::BreakParent => {} // No op
             }
@@ -152,6 +154,7 @@ impl<'a> Printer<'a> {
                     return;
                 };
                 let should_break = group.should_break;
+                let id = group.id;
                 let cmd = Command::new(indent, Mode::Flat, doc);
                 if !should_break && self.fits(&cmd, remaining_width) {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
@@ -166,6 +169,11 @@ impl<'a> Printer<'a> {
                             .rev()
                             .map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
+                }
+
+                if let Some(id) = id {
+                    let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else { return };
+                    self.group_mode_map.insert(id, mode);
                 }
             }
         }
@@ -226,9 +234,18 @@ impl<'a> Printer<'a> {
         self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
     }
 
-    fn handle_if_break(&mut self, doc: Doc<'a>, indent: Indent, mode: Mode) {
-        if mode == Mode::Break {
-            self.cmds.push(Command::new(indent, Mode::Break, doc));
+    fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
+        let IfBreak { break_contents, flat_content, group_id } = if_break;
+        let group_mode = group_id.map_or(Some(mode), |id| self.group_mode_map.get(&id).copied());
+
+        match group_mode {
+            Some(Mode::Flat) => {
+                self.cmds.push(Command::new(indent, Mode::Flat, flat_content.unbox()));
+            }
+            Some(Mode::Break) => {
+                self.cmds.push(Command::new(indent, Mode::Break, break_contents.unbox()));
+            }
+            None => {}
         }
     }
 
@@ -339,10 +356,18 @@ impl<'a> Printer<'a> {
                         queue.push_front((mode, d));
                     }
                 }
-                Doc::IfBreak(doc) => {
-                    if is_break {
-                        queue.push_front((mode, doc));
-                    }
+                Doc::IfBreak(if_break_doc) => {
+                    let group_mode = if_break_doc
+                        .group_id
+                        .map_or(mode, |id| *self.group_mode_map.get(&id).unwrap_or(&Mode::Flat));
+
+                    let contents = if group_mode.is_break() {
+                        &if_break_doc.break_contents
+                    } else {
+                        &if_break_doc.flat_content
+                    };
+
+                    queue.push_front((mode, contents));
                 }
                 Doc::Line => {
                     if is_break {

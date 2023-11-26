@@ -100,9 +100,13 @@ macro_rules! group {
 
 #[macro_export]
 macro_rules! if_break {
-    ($p:ident, $s:expr) => {{
-        use $crate::doc::DocBuilder;
-        Doc::IfBreak($p.boxed(Doc::Str($s)))
+    ($p:ident, $s:expr, $flat:expr, $group_id:expr) => {{
+        use $crate::doc::{DocBuilder, IfBreak};
+        Doc::IfBreak(IfBreak {
+            break_contents: $p.boxed(Doc::Str($s)),
+            flat_content: $p.boxed(Doc::Str($flat)),
+            group_id: $group_id,
+        })
     }};
 }
 
