@@ -14,6 +14,7 @@ use oxc_syntax::{
     xml_entities::XML_ENTITIES,
 };
 
+use self::options::ReactJsxRuntimeOption;
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
 use crate::{context::TransformerCtx, TransformOptions};
 
@@ -122,8 +123,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         let default_runtime = match jsx_options.runtime.as_ref() {
-            Some(runtime) if runtime == "classic" => ReactJsxRuntime::Classic,
-            Some(runtime) if runtime == "automatic" => ReactJsxRuntime::Automatic,
+            Some(ReactJsxRuntimeOption::Valid(runtime)) => *runtime,
             None => {
                 // TODO: development mode https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-plugin-transform-react-jsx/src/create-plugin.ts#L77-L81
                 if options.babel_8_breaking == Some(true) {
