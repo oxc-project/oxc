@@ -1,6 +1,6 @@
 mod options;
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -60,6 +60,17 @@ pub struct ReactJsx<'a> {
     require_jsx_runtime: bool,
     jsx_runtime_importer: Atom,
     pub babel_8_breaking: Option<bool>,
+    import_binding_register: HashMap<String, Atom>,
+}
+
+impl<'a> CreateVars<'a> for ReactJsx<'a> {
+    fn ctx(&self) -> &TransformerCtx<'a> {
+        &self.ctx
+    }
+
+    fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
+        unreachable!("This method would not be used")
+    }
     default_runtime: ReactJsxRuntime,
 }
 
@@ -145,6 +156,7 @@ impl<'a> ReactJsx<'a> {
             import_fragment: false,
             import_create_element: false,
             babel_8_breaking: options.babel_8_breaking,
+            import_binding_register: HashMap::new(),
             default_runtime,
         })
     }
@@ -185,6 +197,25 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
+    fn register_unique_identifier(&mut self, name: &str, id: &str) {
+        let identifier =
+            self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, id.into()));
+        let root_scope_id = self.ctx.scopes().root_scope_id();
+
+        let uid = self.ctx().scopes().generate_uid_based_on_node(&identifier);
+
+        self.ctx().add_binding_with_scope(uid.clone(), root_scope_id);
+        self.import_binding_register.insert(name.to_string(), uid);
+    }
+
+    pub fn register_unique_import_binding(&mut self) {
+        if self.options.runtime.is_automatic() {
+            self.register_unique_identifier("jsx", "jsx");
+            self.register_unique_identifier("jsxs", "jsxs");
+            self.register_unique_identifier("createElement", "createElement");
+            self.register_unique_identifier("fragment", "Fragment");
+        }
+    }
     pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.default_runtime.is_classic() {
             if self.options.import_source != "react" {
@@ -252,12 +283,19 @@ impl<'a> ReactJsx<'a> {
         if self.ctx.source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
-            self.import_jsx = true;
+            // SAFETY: see [ReactJsx::register_unique_import_binding]
+            // using `to_string` because here we violated borrow rules
+            let local_binding = self
+                .import_binding_register
+                .get("jsx")
+                .expect("We have been register the unique local binding before")
+                .to_string();
             self.add_import_statement(
                 "jsx",
-                "_jsx",
+                local_binding.as_str(),
                 Self::new_string_literal(self.jsx_runtime_importer.as_str()),
             );
+            self.import_jsx = true;
         }
     }
 
@@ -523,28 +561,24 @@ impl<'a> ReactJsx<'a> {
             }
             ReactJsxRuntime::Automatic => {
                 let is_script = self.ctx.source_type().is_script();
-                let name = if is_script {
-                    if has_key_after_props_spread {
-                        "createElement"
-                    } else if jsxs {
-                        "jsxs"
-                    } else {
-                        "jsx"
-                    }
-                } else if has_key_after_props_spread {
-                    "_createElement"
+                let name = if has_key_after_props_spread {
+                    "createElement"
                 } else if jsxs {
-                    "_jsxs"
+                    "jsxs"
                 } else {
-                    "_jsx"
+                    "jsx"
                 };
+
+                // SAFETY: we have been register related unique identifier https://github.com/oxc-project/oxc/blob/023e6eabcd5121ff1a231b5e1fcf8e9b2cf607d4/crates/oxc_transformer/src/react_jsx/mod.rs#L186-L191
+                let unique_name =
+                    self.import_binding_register.get(name).expect("We already registered before");
 
                 if is_script {
                     let object_ident_name =
                         if has_key_after_props_spread { "_react" } else { "_reactJsxRuntime" };
                     self.get_static_member_expression(object_ident_name, name)
                 } else {
-                    let ident = IdentifierReference::new(SPAN, name.into());
+                    let ident = IdentifierReference::new(SPAN, unique_name.clone());
                     self.ast.identifier_reference_expression(ident)
                 }
             }

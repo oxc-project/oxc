@@ -38,6 +38,7 @@ fn main() {
 
     let semantic = SemanticBuilder::new(&source_text, source_type)
         .with_trivias(ret.trivias)
+        .with_global_deconflict(true)
         .build(&ret.program)
         .semantic;
 

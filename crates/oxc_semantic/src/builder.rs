@@ -127,6 +127,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
+    pub fn with_global_deconflict(mut self, global_deconflicting: bool) -> Self {
+        self.scope.global_deconflicting = global_deconflicting;
+        self
+    }
+
+    #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
         self

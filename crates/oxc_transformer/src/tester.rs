@@ -31,7 +31,10 @@ impl Tester {
 
     fn transform(&self, source_text: &str) -> Result<std::string::String, std::vec::Vec<Error>> {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
-        let semantic = SemanticBuilder::new(source_text, self.source_type).build(&program).semantic;
+        let semantic = SemanticBuilder::new(source_text, self.source_type)
+            .with_global_deconflict(true)
+            .build(&program)
+            .semantic;
         let program = self.allocator.alloc(program);
         Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
             .build(program)

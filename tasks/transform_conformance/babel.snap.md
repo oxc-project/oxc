@@ -868,7 +868,6 @@ Passed: 270/1103
 
 # babel-plugin-transform-react-jsx (144/156)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
-* autoImport/complicated-scope-module/input.js
 * react/arrow-functions/input.js
 * react/optimisation.react.constant-elements/input.js
 * react-automatic/arrow-functions/input.js
