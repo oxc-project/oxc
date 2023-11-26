@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity, json_reporter::{JSONReportHandler, MessageWithPath}};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -26,6 +26,9 @@ pub struct DiagnosticService {
     /// Total number of errors received
     errors_count: Cell<usize>,
 
+    /// Format output
+    output: Cell<String>,
+
     sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
 }
@@ -40,6 +43,7 @@ impl Default for DiagnosticService {
             errors_count: Cell::new(0),
             sender,
             receiver,
+            output: Cell::new("".to_owned()),
         }
     }
 }
@@ -69,6 +73,10 @@ impl DiagnosticService {
         self.errors_count.get()
     }
 
+    pub fn output(self) -> String {
+        self.output.into_inner()
+    }
+
     pub fn max_warnings_exceeded(&self) -> bool {
         self.max_warnings.map_or(false, |max_warnings| self.warnings_count.get() > max_warnings)
     }
@@ -84,6 +92,57 @@ impl DiagnosticService {
             .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
             .collect();
         (path.to_path_buf(), diagnostics)
+    }
+
+    /// # Panics
+    ///
+    /// * When the writer fails to write
+    pub fn json_output(&self) {
+        let mut buf_writer = BufWriter::new(std::io::stdout());
+        let handler = JSONReportHandler;
+
+        let mut messages_with_path = vec![];
+        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+            let mut messages = vec![];
+            for diagnostic in diagnostics {
+                let severity = diagnostic.severity();
+                let is_error = severity.is_none() || severity == Some(Severity::Error);
+                let is_warning = severity == Some(Severity::Warning);
+                if is_warning || is_error {
+                    if is_warning {
+                        let warnings_count = self.warnings_count() + 1;
+                        self.warnings_count.set(warnings_count);
+                    }
+                    if is_error {
+                        let errors_count = self.errors_count() + 1;
+                        self.errors_count.set(errors_count);
+                    }
+                    // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
+                    // Note that it does not disable ALL diagnostics, only Warning diagnostics
+                    // else if self.quiet {
+                    //     continue;
+                    // }
+
+                    if let Some(max_warnings) = self.max_warnings {
+                        if self.warnings_count() > max_warnings {
+                            continue;
+                        }
+                    }
+                }
+
+                let message = handler.render_report( diagnostic.as_ref());
+                messages.push(message)
+            }
+            messages_with_path.push(MessageWithPath {
+                file_path: path.to_str().unwrap().to_owned(),
+                messages,
+            })
+        }
+
+        let json_str = serde_json::to_string(&messages_with_path).unwrap();
+        self.output.set(json_str.clone());
+        buf_writer.write_all(json_str.as_bytes()).unwrap();
+
     }
 
     /// # Panics

@@ -1,6 +1,6 @@
 use bpaf::{doc::Style, Bpaf};
 use oxc_linter::AllowWarnDeny;
-use std::{ffi::OsString, path::PathBuf};
+use std::{ffi::OsString, path::PathBuf, str::FromStr};
 
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options)]
@@ -123,6 +123,9 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub codeowner_options: CodeownerOptions,
 
+    #[bpaf(external)]
+    pub formatter_options: FormatterOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many)]
     pub paths: Vec<PathBuf>,
@@ -191,6 +194,30 @@ pub struct CodeownerOptions {
     /// Code owner names, e.g. @Boshen
     #[bpaf(argument("NAME"), hide_usage)]
     pub codeowners: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub enum FormatForFormatter {
+    Default,
+    Json,
+}
+
+impl FromStr for FormatForFormatter {
+    type Err = &'static str;
+    fn from_str(str: &str) -> Result<Self, <Self as FromStr>::Err> {
+        if str == "json" {
+            return Ok(Self::Json)
+        }
+        Ok(Self::Default)
+    }
+}
+
+/// Formatters
+#[derive(Debug, Clone, Bpaf)]
+pub struct FormatterOptions {
+    /// Format for the Formatter, e.g. json
+    #[bpaf(argument("Format"), fallback(FormatForFormatter::Default), hide_usage)]
+    pub format: FormatForFormatter
 }
 
 /// Fix Problems

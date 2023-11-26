@@ -20,6 +20,8 @@ doctest = false
 [dependencies]
 thiserror = { workspace = true }
 miette    = { workspace = true }
+serde   = { workspace = true }
+serde_json   = { workspace = true }
 
 unicode-width = "0.1.11"
 owo-colors    = { version = "3.5.0" }

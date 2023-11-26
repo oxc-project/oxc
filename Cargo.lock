@@ -1602,6 +1602,8 @@ dependencies = [
  "is-terminal",
  "miette",
  "owo-colors",
+ "serde",
+ "serde_json",
  "textwrap",
  "thiserror",
  "unicode-width",

@@ -23,6 +23,7 @@ pub struct LintResult {
     pub number_of_errors: usize,
     pub max_warnings_exceeded: bool,
     pub deny_warnings: bool,
+    pub output_of_format: String,
 }
 
 #[derive(Debug)]
@@ -51,6 +52,7 @@ impl Termination for CliRunResult {
                 number_of_errors,
                 max_warnings_exceeded,
                 deny_warnings,
+                output_of_format,
             }) => {
                 let threads = rayon::current_num_threads();
                 let number_of_diagnostics = number_of_warnings + number_of_errors;

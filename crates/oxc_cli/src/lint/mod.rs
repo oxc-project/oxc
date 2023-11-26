@@ -5,7 +5,7 @@ use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{
     codeowners, command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, CodeownerOptions,
-    LintResult, Runner,
+    LintResult, Runner, FormatForFormatter,
 };
 
 pub struct LintRunner {
@@ -35,6 +35,7 @@ impl Runner for LintRunner {
             misc_options,
             codeowner_options,
             enable_plugins,
+            formatter_options,
         } = self.options;
 
         let mut paths = paths;
@@ -82,7 +83,15 @@ impl Runner for LintRunner {
                 lint_service.run(&tx_error);
             }
         });
-        diagnostic_service.run();
+
+        match formatter_options.format {
+            FormatForFormatter::Default => {
+                diagnostic_service.run();
+            }
+            FormatForFormatter::Json => {
+                diagnostic_service.json_output();
+            }
+        }
 
         lint_service.linter().print_execution_times_if_enable();
 
@@ -94,6 +103,7 @@ impl Runner for LintRunner {
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
+            output_of_format: diagnostic_service.output(),
         })
     }
 }
@@ -151,13 +161,20 @@ mod test {
     use crate::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
-        let mut new_args = vec!["--quiet"];
+        let mut new_args = vec![""];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
         let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
             unreachable!()
         };
         lint_result
+    }
+
+    #[test]
+    fn json_output() {
+        let args = &[ "--format", "json", "fixtures/nan.js"];
+        let result = test(args);
+        assert_eq!(result.output_of_format, "[{\"file_path\":\"fixtures/nan.js\",\"messages\":[{\"severity\":1,\"message\":\"eslint(use-isnan): Requires calls to isNaN() when checking for NaN\",\"labels\":[{\"label\":\"\",\"span\":{\"offset\":7,\"len\":3}}]}]}]")
     }
 
     #[test]
