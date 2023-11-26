@@ -29,7 +29,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     array,
-    doc::{Doc, Group, Separator},
+    doc::{Doc, DocBuilder, Group, Separator},
     format, group, hardline, indent, indent_if_break, line, softline, ss, string, wrap, Prettier,
 };
 
@@ -129,9 +129,6 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ExpressionStatement, {
             let mut parts = p.vec();
-            if let Some(doc) = p.print_leading_comments(self.span) {
-                parts.push(doc);
-            }
             parts.push(self.expression.format(p));
             if p.options.semi {
                 parts.push(ss!(";"));
@@ -416,11 +413,13 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             parts.push(ss!(" {"));
 
             let mut cases_parts = p.vec();
-
-            for case in &self.cases {
+            let len = self.cases.len();
+            for (i, case) in self.cases.iter().enumerate() {
                 cases_parts.push(indent!(p, hardline!(), format!(p, case)));
+                if i != len - 1 && p.is_next_line_empty(case.span.end) {
+                    cases_parts.push(hardline!());
+                }
             }
-
             parts.extend(cases_parts);
 
             parts.push(hardline!());
@@ -443,22 +442,38 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             parts.push(ss!("default:"));
         }
 
-        let mut consequent_parts = p.vec();
+        let consequent: Vec<_> = Vec::from_iter_in(
+            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))),
+            p.allocator,
+        );
+        let len = consequent.len();
+        let is_only_one_block_statement =
+            len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_));
 
-        if !(self.consequent.len() == 1
-            && matches!(self.consequent[0], Statement::EmptyStatement(_)))
-        {
-            for stmt in &self.consequent {
-                consequent_parts.push(hardline!());
-                consequent_parts.push(format!(p, stmt));
+        let mut consequent_parts = p.vec();
+        for i in 0..len {
+            let stmt = &consequent[i];
+
+            if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
+                let last_stmt = &consequent[i - 1];
+                if p.is_next_line_empty(last_stmt.span().end) {
+                    consequent_parts.push(hardline!());
+                }
             }
+
+            consequent_parts.push(if is_only_one_block_statement { ss!(" ") } else { hardline!() });
+            consequent_parts.push(format!(p, stmt));
         }
 
         if !consequent_parts.is_empty() {
-            parts.push(indent!(
-                p,
-                Doc::Group(Group { contents: consequent_parts, should_break: false })
-            ));
+            if is_only_one_block_statement {
+                parts.extend(consequent_parts);
+            } else {
+                parts.push(indent!(
+                    p,
+                    Doc::Group(Group { contents: consequent_parts, should_break: false })
+                ));
+            }
         }
 
         Doc::Array(parts)
@@ -963,7 +978,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
             parts.push(ss!(" = "));
             parts.push(init.format(p));
         }
-        Doc::Array(parts)
+        Doc::Group(Group { contents: parts, should_break: false })
     }
 }
 

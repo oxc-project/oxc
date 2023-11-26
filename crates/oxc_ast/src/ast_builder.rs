@@ -985,10 +985,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
         source: StringLiteral,
-        assertions: Option<Vec<'a, ImportAttribute>>,
+        with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind })
+        self.alloc(ImportDeclaration { span, specifiers, source, with_clause, import_kind })
     }
 
     pub fn export_all_declaration(
@@ -996,10 +996,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         exported: Option<ModuleExportName>,
         source: StringLiteral,
-        assertions: Option<Vec<'a, ImportAttribute>>,
+        with_clause: Option<WithClause<'a>>,
         export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
-        self.alloc(ExportAllDeclaration { span, exported, source, assertions, export_kind })
+        self.alloc(ExportAllDeclaration { span, exported, source, with_clause, export_kind })
     }
 
     pub fn export_default_declaration(

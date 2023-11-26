@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     hardline, Prettier,
 };
 use oxc_span::GetSpan;

@@ -18,3 +18,5 @@ npm/cli-*
 /*.ts
 /*.tsx
 /tasks/transform_conformance/fixtures/*
+
+.oxc/plugins/**.*

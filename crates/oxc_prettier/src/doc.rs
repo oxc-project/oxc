@@ -3,10 +3,10 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{Box, String, Vec};
+use oxc_allocator::{Allocator, Box, String, Vec};
 use std::fmt;
 
-use crate::{array, line, ss, Prettier};
+use crate::{array, line, ss};
 
 #[derive(Debug)]
 pub enum Doc<'a> {
@@ -32,8 +32,16 @@ pub enum Doc<'a> {
     /// Specify a line break that is **always** included in the output,
     /// no matter if the expression fits on one line or not.
     Hardline,
+    /// This is used to implement trailing comments.
+    /// It's not practical to constantly check where the line ends to avoid accidentally printing some code at the end of a comment.
+    /// `lineSuffix` buffers docs passed to it and flushes them before any new line.
+    LineSuffix(Vec<'a, Doc<'a>>),
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
     IfBreak(Box<'a, Doc<'a>>),
+    /// This is an alternative type of group which behaves like text layout:
+    /// it's going to add a break whenever the next element doesn't fit in the line anymore.
+    /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
+    Fill(Fill<'a>),
 }
 
 #[derive(Debug)]
@@ -48,6 +56,38 @@ impl<'a> Group<'a> {
     }
 }
 
+#[derive(Debug)]
+pub struct Fill<'a> {
+    pub parts: Vec<'a, Doc<'a>>,
+}
+
+impl<'a> Fill<'a> {
+    pub fn new(docs: Vec<'a, Doc<'a>>) -> Self {
+        Self { parts: docs }
+    }
+    pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
+        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        (content, whitespace)
+    }
+    pub fn dequeue(&mut self) -> Option<Doc<'a>> {
+        if self.parts.len() > 0 {
+            Some(self.parts.remove(0))
+        } else {
+            None
+        }
+    }
+    pub fn enqueue(&mut self, doc: Doc<'a>) {
+        self.parts.insert(0, doc);
+    }
+    pub fn parts(&self) -> &[Doc<'a>] {
+        &self.parts
+    }
+    pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
+        self.parts
+    }
+}
+
 #[derive(Clone, Copy)]
 #[allow(unused)]
 pub enum Separator {
@@ -57,28 +97,25 @@ pub enum Separator {
 }
 
 /// Doc Builder
-impl<'a> Prettier<'a> {
+pub trait DocBuilder<'a> {
+    fn allocator(&self) -> &'a Allocator;
     #[inline]
-    pub(crate) fn vec<T>(&self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator)
+    fn vec<T>(&self) -> Vec<'a, T> {
+        Vec::new_in(self.allocator())
     }
 
     #[inline]
-    pub(crate) fn str(&self, s: &str) -> Doc<'a> {
-        Doc::Str(String::from_str_in(s, self.allocator).into_bump_str())
+    fn str(&self, s: &str) -> Doc<'a> {
+        Doc::Str(String::from_str_in(s, self.allocator()).into_bump_str())
     }
 
     #[inline]
-    pub(crate) fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
-        Box(self.allocator.alloc(doc))
+    fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
+        Box(self.allocator().alloc(doc))
     }
 
     #[allow(unused)]
-    pub(crate) fn join(
-        &self,
-        separator: Separator,
-        docs: std::vec::Vec<Doc<'a>>,
-    ) -> Vec<'a, Doc<'a>> {
+    fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
@@ -165,6 +202,27 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::IfBreak(break_contents) => {
             string.push_str("ifBreak(");
             string.push_str(&print_doc_to_debug(break_contents));
+            string.push(')');
+        }
+        Doc::Fill(fill) => {
+            string.push_str("fill([\n");
+            let parts = fill.parts();
+            for (idx, doc) in parts.iter().enumerate() {
+                string.push_str(&print_doc_to_debug(doc));
+                if idx != parts.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
+            string.push_str("])");
+        }
+        Doc::LineSuffix(docs) => {
+            string.push_str("lineSuffix(");
+            for (idx, doc) in docs.iter().enumerate() {
+                string.push_str(&print_doc_to_debug(doc));
+                if idx != docs.len() - 1 {
+                    string.push_str(", ");
+                }
+            }
             string.push(')');
         }
     }

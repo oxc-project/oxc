@@ -139,6 +139,7 @@ pub enum AstKind<'a> {
     TSAsExpression(&'a TSAsExpression<'a>),
     TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
     TSNonNullExpression(&'a TSNonNullExpression<'a>),
+    TSInstantiationExpression(&'a TSInstantiationExpression<'a>),
 
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
     TSEnumMember(&'a TSEnumMember<'a>),
@@ -254,6 +255,51 @@ impl<'a> AstKind<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
             _ => false,
+        }
+    }
+
+    pub fn from_expression(e: &'a Expression<'a>) -> Self {
+        match e {
+            Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
+            Expression::NullLiteral(e) => Self::NullLiteral(e),
+            Expression::NumberLiteral(e) => Self::NumberLiteral(e),
+            Expression::BigintLiteral(e) => Self::BigintLiteral(e),
+            Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
+            Expression::StringLiteral(e) => Self::StringLiteral(e),
+            Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
+            Expression::Identifier(e) => Self::IdentifierReference(e),
+            Expression::MetaProperty(e) => Self::MetaProperty(e),
+            Expression::Super(e) => Self::Super(e),
+            Expression::ArrayExpression(e) => Self::ArrayExpression(e),
+            Expression::ArrowExpression(e) => Self::ArrowExpression(e),
+            Expression::AssignmentExpression(e) => Self::AssignmentExpression(e),
+            Expression::AwaitExpression(e) => Self::AwaitExpression(e),
+            Expression::BinaryExpression(e) => Self::BinaryExpression(e),
+            Expression::CallExpression(e) => Self::CallExpression(e),
+            Expression::ChainExpression(e) => Self::ChainExpression(e),
+            Expression::ClassExpression(e) => Self::Class(e),
+            Expression::ConditionalExpression(e) => Self::ConditionalExpression(e),
+            Expression::FunctionExpression(e) => Self::Function(e),
+            Expression::ImportExpression(e) => Self::ImportExpression(e),
+            Expression::LogicalExpression(e) => Self::LogicalExpression(e),
+            Expression::MemberExpression(e) => Self::MemberExpression(e),
+            Expression::NewExpression(e) => Self::NewExpression(e),
+            Expression::ObjectExpression(e) => Self::ObjectExpression(e),
+            Expression::ParenthesizedExpression(e) => Self::ParenthesizedExpression(e),
+            Expression::SequenceExpression(e) => Self::SequenceExpression(e),
+            Expression::TaggedTemplateExpression(e) => Self::TaggedTemplateExpression(e),
+            Expression::ThisExpression(e) => Self::ThisExpression(e),
+            Expression::UnaryExpression(e) => Self::UnaryExpression(e),
+            Expression::UpdateExpression(e) => Self::UpdateExpression(e),
+            Expression::YieldExpression(e) => Self::YieldExpression(e),
+            Expression::PrivateInExpression(e) => Self::PrivateInExpression(e),
+            Expression::JSXElement(e) => Self::JSXElement(e),
+            Expression::JSXFragment(e) => Self::JSXFragment(e),
+            Expression::TSAsExpression(e) => Self::TSAsExpression(e),
+            Expression::TSSatisfiesExpression(e) => Self::TSSatisfiesExpression(e),
+            Expression::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
+            Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
+            Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
         }
     }
 }
@@ -391,6 +437,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSAsExpression(x) => x.span,
             Self::TSSatisfiesExpression(x) => x.span,
             Self::TSNonNullExpression(x) => x.span,
+            Self::TSInstantiationExpression(x) => x.span,
 
             Self::TSEnumDeclaration(x) => x.span,
             Self::TSEnumMember(x) => x.span,
@@ -411,7 +458,6 @@ impl<'a> GetSpan for AstKind<'a> {
     }
 }
 
-#[cfg(debug_assertions)]
 impl<'a> AstKind<'a> {
     #[allow(clippy::match_same_arms)]
     /// Get the AST kind name with minimal details. Particularly useful for
@@ -561,6 +607,7 @@ impl<'a> AstKind<'a> {
             Self::TSAsExpression(_) => "TSAsExpression".into(),
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression".into(),
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
+            Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
             Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
             Self::TSEnumBody(_) => "TSEnumBody".into(),

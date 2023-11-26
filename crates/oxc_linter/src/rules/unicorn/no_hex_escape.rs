@@ -44,7 +44,7 @@ declare_oxc_lint!(
 fn check_escape(value: &str) -> Option<String> {
     let mut in_escape = false;
     let mut matched = Vec::new();
-    for (index, c) in value.chars().enumerate() {
+    for (index, c) in value.char_indices() {
         if c == '\\' && !in_escape {
             in_escape = true;
         } else if c == 'x' && in_escape {
@@ -68,6 +68,7 @@ fn check_escape(value: &str) -> Option<String> {
         Some(fixed)
     }
 }
+
 impl Rule for NoHexEscape {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -137,7 +138,12 @@ fn test() {
         r"const foo = `\\\\xd8\\\\x3d\\\\xdc\\\\xa9`",
         r"const foo = `foo\\\\x12foo\\\\x34`",
     ];
-    let fail = vec![r#"const foo = "\xb1""#];
+
+    let fail = vec![
+        r#"const foo = "\xb1""#,
+        r"wrapId(/(^|[<nonId>])(?:алг|арг(?:\x20*рез)?|ввод|ВКЛЮЧИТЬ|вс[её]|выбор|вывод|выход|дано|для|до|дс|если|иначе|исп|использовать|кон(?:(?:\x20+|_)исп)?|кц(?:(?:\x20+|_)при)?|надо|нач|нс|нц|от|пауза|пока|при|раза?|рез|стоп|таб|то|утв|шаг)(?=[<nonId>]|$)/.source)",
+    ];
+
     let fix = vec![
         (r"const foo = '\xb1'", r"const foo = '\u00b1'", None),
         (r"const foo = '\\\xb1'", r"const foo = '\\\u00b1'", None),

@@ -4,7 +4,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    doc::{Doc, Separator},
+    doc::{Doc, DocBuilder, Separator},
     group, if_break, indent, line, softline, ss, Format, Prettier,
 };
 

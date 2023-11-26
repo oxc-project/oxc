@@ -43,6 +43,7 @@ fn fixtures_root() -> PathBuf {
 const IGNORE_TESTS: &[&str] = &[
     // non-standard syntax
     "js/deferred-import-evaluation",
+    "js/bind-expressions",
     // Unsupported stage3 features
     "js/async-do-expressions",
     "js/babel-plugins",

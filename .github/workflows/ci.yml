@@ -45,7 +45,7 @@ jobs:
       # Only need to build the test to create a warm cache on the main branch
       - name: Build cache by Cargo Check and Cargo Test
         if: ${{ github.ref_name == 'main' }}
-        run: cargo test run --no-run --workspace
+        run: cargo test --quiet --no-run
 
   wasm:
     name: Check Wasm

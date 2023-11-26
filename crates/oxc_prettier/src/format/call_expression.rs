@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     if_break, ss, Format, Prettier,
 };
 
@@ -64,7 +64,7 @@ pub(super) fn print_call_expression<'a>(
 
     parts.push(print_call_expression_arguments(p, expression));
 
-    Doc::Array(parts)
+    Doc::Group(Group { contents: parts, should_break: false })
 }
 
 fn print_call_expression_arguments<'a>(

@@ -3,7 +3,7 @@ use oxc_ast::ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    doc::{Doc, Group},
+    doc::{Doc, DocBuilder, Group},
     group, if_break, line, softline, ss, Prettier,
 };
 
@@ -14,6 +14,12 @@ pub enum ObjectLike<'a, 'b> {
     ObjectExpression(&'b ObjectExpression<'a>),
     ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     ObjectPattern(&'b ObjectPattern<'a>),
+}
+
+impl ObjectLike<'_, '_> {
+    fn is_object_pattern(&self) -> bool {
+        matches!(self, ObjectLike::ObjectPattern(_))
+    }
 }
 
 impl ObjectLike<'_, '_> {
@@ -60,9 +66,14 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
         }
 
         parts.push(ss!("}"));
-        let should_break =
-            misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-        Doc::Group(Group::new(parts, should_break))
+
+        if object.is_object_pattern() {
+            Doc::Array(parts)
+        } else {
+            let should_break =
+                misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
+            Doc::Group(Group::new(parts, should_break))
+        }
     };
 
     content

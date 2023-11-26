@@ -11,7 +11,7 @@
 use oxc_ast::{
     ast::{
         AssignmentTarget, AssignmentTargetPattern, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ModuleDeclaration, SimpleAssignmentTarget,
+        Expression, ModuleDeclaration, ObjectExpression, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -21,7 +21,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
 use crate::{array, doc::Doc, ss, Prettier};
 
 impl<'a> Prettier<'a> {
-    pub(crate) fn wrap_parens(&self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
+    pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
         if self.need_parens(kind) {
             array![self, ss!("("), doc, ss!(")")]
         } else {
@@ -29,7 +29,7 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    fn need_parens(&self, kind: AstKind<'a>) -> bool {
+    fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) {
             return false;
         }
@@ -39,6 +39,12 @@ impl<'a> Prettier<'a> {
         }
 
         let parent_kind = self.parent_kind();
+
+        if let AstKind::ObjectExpression(e) = kind {
+            if self.check_object_expression(e) {
+                return true;
+            }
+        }
 
         if self.check_parent_kind(kind, parent_kind) {
             return true;
@@ -72,8 +78,9 @@ impl<'a> Prettier<'a> {
             AstKind::Class(c) if c.is_expression() => self.check_object_function_class(c.span),
             AstKind::AssignmentExpression(assign_expr) => match parent_kind {
                 AstKind::ArrowExpression(arrow_expr)
-                    if arrow_expr.expression
-                        && arrow_expr.body.statements[0].span() == assign_expr.span =>
+                    if arrow_expr
+                        .get_expression()
+                        .is_some_and(|e| e.span() == assign_expr.span) =>
                 {
                     true
                 }
@@ -136,6 +143,24 @@ impl<'a> Prettier<'a> {
             AstKind::TSNonNullExpression(e) => {
                 self.check_member_call_tagged_template_ts_non_null(e.span)
             }
+            AstKind::ConditionalExpression(e) => match parent_kind {
+                AstKind::TaggedTemplateExpression(_)
+                | AstKind::UnaryExpression(_)
+                | AstKind::SpreadElement(_)
+                | AstKind::BinaryExpression(_)
+                | AstKind::LogicalExpression(_)
+                | AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+                | AstKind::AwaitExpression(_)
+                | AstKind::JSXSpreadAttribute(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSNonNullExpression(_) => true,
+                AstKind::CallExpression(call_expr) => call_expr.callee.span() == e.span,
+                AstKind::NewExpression(new_expr) => new_expr.callee.span() == e.span,
+                AstKind::ConditionalExpression(cond_expr) => cond_expr.test.span() == e.span,
+                AstKind::MemberExpression(member_expr) => member_expr.object().span() == e.span,
+                _ => false,
+            },
             AstKind::Function(e) if e.is_expression() => match parent_kind {
                 AstKind::CallExpression(call_expr) => call_expr.callee.span() == e.span,
                 AstKind::NewExpression(new_expr) => new_expr.callee.span() == e.span,
@@ -165,7 +190,7 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    fn check_parent_kind(&self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
+    fn check_parent_kind(&mut self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
         match parent_kind {
             AstKind::Class(class) => {
                 if let Some(h) = &class.super_class {
@@ -198,10 +223,33 @@ impl<'a> Prettier<'a> {
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(decl)) => {
                 if let ExportDefaultDeclarationKind::Expression(e) = &decl.declaration {
                     return matches!(e, Expression::SequenceExpression(_))
-                        || Self::should_wrap_function_for_export_default(e);
+                        || self.should_wrap_function_for_export_default();
                 }
             }
             _ => {}
+        }
+        false
+    }
+
+    fn check_object_expression(&self, obj_expr: &ObjectExpression<'a>) -> bool {
+        let mut arrow_expr = None;
+        for kind in self.nodes.iter().rev() {
+            if let AstKind::ArrowExpression(e) = kind {
+                e.get_expression();
+                arrow_expr = Some(e);
+                break;
+            }
+        }
+        if let Some(arrow_expr) = arrow_expr {
+            if let Some(e) = arrow_expr.get_expression() {
+                if !matches!(
+                    e,
+                    Expression::SequenceExpression(_) | Expression::AssignmentExpression(_)
+                ) && Self::starts_with_no_lookahead_token(e, obj_expr.span)
+                {
+                    return true;
+                }
+            }
         }
         false
     }
@@ -307,38 +355,53 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    // This differs from the prettier implementation, which may be wrong.
-    fn should_wrap_function_for_export_default(e: &Expression<'a>) -> bool {
-        match e {
-            Expression::FunctionExpression(_) | Expression::ClassExpression(_) => true,
-            Expression::CallExpression(e) => {
-                Self::should_wrap_function_for_export_default(&e.callee)
-            }
-            Expression::MemberExpression(e) => {
-                Self::should_wrap_function_for_export_default(e.object())
-            }
-            Expression::AssignmentExpression(e) => match &e.left {
-                AssignmentTarget::SimpleAssignmentTarget(t) => match t {
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                    SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                        Self::should_wrap_function_for_export_default(e.object())
-                    }
-                    SimpleAssignmentTarget::TSAsExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSSatisfiesExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSNonNullExpression(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                    SimpleAssignmentTarget::TSTypeAssertion(e) => {
-                        Self::should_wrap_function_for_export_default(&e.expression)
-                    }
-                },
-                AssignmentTarget::AssignmentTargetPattern(_) => false,
-            },
-            _ => false,
+    fn should_wrap_function_for_export_default(&mut self) -> bool {
+        let kind = self.current_kind();
+        let b = matches!(
+            self.parent_kind(),
+            AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+        );
+        if matches!(kind, AstKind::Function(f) if f.is_expression())
+            || matches!(kind, AstKind::Class(c) if c.is_expression())
+        {
+            return b || !self.need_parens(self.current_kind());
+        }
+
+        if !Self::has_naked_left_side(kind) || (!b && self.need_parens(self.current_kind())) {
+            return false;
+        }
+
+        let lhs = Self::get_left_side_path_name(kind);
+        self.nodes.push(lhs);
+        let result = self.should_wrap_function_for_export_default();
+        self.nodes.pop();
+        result
+    }
+
+    fn has_naked_left_side(kind: AstKind<'a>) -> bool {
+        matches!(
+            kind,
+            AstKind::AssignmentExpression(_)
+                | AstKind::BinaryExpression(_)
+                | AstKind::LogicalExpression(_)
+                | AstKind::ConditionalExpression(_)
+                | AstKind::CallExpression(_)
+                | AstKind::MemberExpression(_)
+                | AstKind::SequenceExpression(_)
+                | AstKind::TaggedTemplateExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::ChainExpression(_)
+        ) || matches!(kind, AstKind::UpdateExpression(e) if !e.prefix)
+    }
+
+    fn get_left_side_path_name(kind: AstKind<'a>) -> AstKind<'a> {
+        match kind {
+            AstKind::CallExpression(e) => AstKind::from_expression(&e.callee),
+            AstKind::ConditionalExpression(e) => AstKind::from_expression(&e.test),
+            AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
+            AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
+            AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
+            _ => panic!("need to handle {}", kind.debug_name()),
         }
     }
 

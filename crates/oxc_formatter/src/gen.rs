@@ -571,7 +571,7 @@ impl<'a> Gen for ImportDeclaration<'a> {
                 p.print(b'\'');
                 p.print_str(self.source.value.as_bytes());
                 p.print(b'\'');
-                self.assertions.gen(p);
+                self.with_clause.gen(p);
                 p.print_semicolon_after_statement();
                 return;
             }
@@ -644,19 +644,25 @@ impl<'a> Gen for ImportDeclaration<'a> {
             p.print_str(b" from ");
         }
         self.source.gen(p);
-        self.assertions.gen(p);
+        self.with_clause.gen(p);
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a> Gen for Option<Vec<'a, ImportAttribute>> {
+impl<'a> Gen for Option<WithClause<'a>> {
     fn gen(&self, p: &mut Formatter) {
-        if let Some(assertions) = &self {
+        if let Some(with_clause) = self {
             p.print_space();
-            p.print_str(b"assert");
+            with_clause.attributes_keyword.gen(p);
             p.print_space();
-            p.print_block(assertions, Separator::Comma);
-        };
+            with_clause.with_entries.gen(p);
+        }
+    }
+}
+
+impl<'a> Gen for Vec<'a, ImportAttribute> {
+    fn gen(&self, p: &mut Formatter) {
+        p.print_block(self, Separator::Comma);
     }
 }
 
@@ -735,7 +741,7 @@ impl<'a> Gen for ExportAllDeclaration<'a> {
         p.print_str(b" from");
         p.print_space();
         self.source.gen(p);
-        self.assertions.gen(p);
+        self.with_clause.gen(p);
 
         p.print_semicolon_after_statement();
     }

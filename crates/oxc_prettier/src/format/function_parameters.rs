@@ -1,6 +1,9 @@
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, DocBuilder},
+    ss, Format, Prettier,
+};
 
 pub(super) fn print_function_parameters<'a>(
     p: &mut Prettier<'a>,

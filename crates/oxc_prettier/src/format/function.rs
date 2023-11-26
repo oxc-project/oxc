@@ -1,6 +1,9 @@
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, group, ss, Format, Prettier};
+use crate::{
+    doc::{Doc, DocBuilder},
+    group, ss, Format, Prettier,
+};
 
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,
@@ -8,9 +11,6 @@ pub(super) fn print_function<'a>(
     property_name: Option<&str>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    if let Some(comments) = p.print_leading_comments(func.span) {
-        parts.push(comments);
-    }
     if func.r#async {
         parts.push(ss!("async "));
     }
