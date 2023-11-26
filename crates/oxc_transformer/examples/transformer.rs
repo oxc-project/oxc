@@ -6,7 +6,8 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{
-    ReactJsxOptions, ReactJsxRuntime, TransformOptions, TransformTarget, Transformer,
+    ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption, TransformOptions, TransformTarget,
+    Transformer,
 };
 
 // Instruction:
@@ -44,7 +45,7 @@ fn main() {
     let transform_options = TransformOptions {
         target: TransformTarget::ES2015,
         react_jsx: Some(ReactJsxOptions {
-            runtime: ReactJsxRuntime::Classic,
+            runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic)),
             ..ReactJsxOptions::default()
         }),
         ..TransformOptions::default()

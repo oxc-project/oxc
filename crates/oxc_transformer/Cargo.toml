@@ -29,7 +29,6 @@ rustc-hash      = { workspace = true }
 
 
 serde = { workspace = true, features = ["derive"] }
-serde_json = {workspace = true}
 phf   = { workspace = true, features = ["macros"] }
 
 [dev-dependencies]
