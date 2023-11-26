@@ -1,4 +1,7 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{CallExpression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -28,6 +31,16 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// class Hello extends React.Component {
+    ///     someMethod() {
+    ///         if (!this.isMounted()) {
+    ///             return;
+    ///         }
+    ///     }
+    ///     render() {
+    ///         return <div onClick={this.someMethod.bind(this)}>Hello</div>;
+    ///     }
+    /// };
     /// ```
     NoIsMounted,
     correctness
@@ -35,11 +48,12 @@ declare_oxc_lint!(
 
 impl Rule for NoIsMounted {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+        let AstKind::CallExpression(CallExpression {
+            callee: Expression::MemberExpression(member_expr),
+            span,
+            ..
+        }) = node.kind()
+        else {
             return;
         };
 
@@ -54,7 +68,7 @@ impl Rule for NoIsMounted {
                 ctx.nodes().kind(ancestor),
                 AstKind::ObjectProperty(_) | AstKind::MethodDefinition(_)
             ) {
-                ctx.diagnostic(NoIsMountedDiagnostic(call_expr.span));
+                ctx.diagnostic(NoIsMountedDiagnostic(*span));
             }
         }
     }
