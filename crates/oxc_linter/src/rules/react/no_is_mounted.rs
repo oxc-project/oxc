@@ -69,6 +69,7 @@ impl Rule for NoIsMounted {
                 AstKind::ObjectProperty(_) | AstKind::MethodDefinition(_)
             ) {
                 ctx.diagnostic(NoIsMountedDiagnostic(*span));
+                break;
             }
         }
     }
