@@ -151,6 +151,7 @@ pub trait TestCase {
 
         let semantic = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(ret.trivias)
+            .with_global_deconflict(true)
             .build(&ret.program)
             .semantic;
         let transformed_program = allocator.alloc(ret.program);
@@ -216,6 +217,7 @@ impl TestCase for ConformanceTestCase {
         let ret = Parser::new(&allocator, &input, source_type).parse();
         let semantic = SemanticBuilder::new(&input, source_type)
             .with_trivias(ret.trivias)
+            .with_global_deconflict(true)
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);

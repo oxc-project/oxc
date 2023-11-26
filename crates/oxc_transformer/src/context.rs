@@ -1,5 +1,6 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
+    collections::HashSet,
     mem,
     rc::Rc,
 };
@@ -33,6 +34,10 @@ impl<'a> TransformerCtx<'a> {
         Ref::map(self.semantic.borrow(), |semantic| semantic.scopes())
     }
 
+    pub fn reference(&self) -> Ref<'_, HashSet<Atom>> {
+        Ref::map(self.semantic.borrow(), |semantic| semantic.scopes().references())
+    }
+
     pub fn scopes_mut(&self) -> RefMut<'_, ScopeTree> {
         RefMut::map(self.semantic.borrow_mut(), |semantic| semantic.scopes_mut())
     }
@@ -40,6 +45,10 @@ impl<'a> TransformerCtx<'a> {
     pub fn add_binding(&self, name: Atom) {
         // TODO: use the correct scope and symbol id
         self.scopes_mut().add_binding(ScopeId::new(0), name, SymbolId::new(0));
+    }
+
+    pub fn add_binding_with_scope(&self, name: Atom, scope_id: ScopeId) {
+        self.scopes_mut().add_binding(scope_id, name, SymbolId::new(0));
     }
 
     pub fn source_type(&self) -> Ref<'_, SourceType> {

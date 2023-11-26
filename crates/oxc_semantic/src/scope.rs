@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
@@ -23,6 +24,10 @@ pub struct ScopeTree {
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
+    /// used for global de conflicting, used for generate a global unique identifier
+    references: HashSet<Atom>,
+    /// only enable in transformer, could remove overhead in oxc-linter
+    pub(crate) global_deconflicting: bool,
 }
 
 impl ScopeTree {
@@ -102,6 +107,9 @@ impl ScopeTree {
     }
 
     pub fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
+        if self.global_deconflicting {
+            self.references.insert(name.clone());
+        }
         self.bindings[scope_id].insert(name, symbol_id);
     }
 
@@ -139,7 +147,7 @@ impl ScopeTree {
         let name = name.trim_start_matches('_');
         for i in 0.. {
             let name = Self::generate_uid(name, i);
-            if !self.has_binding(ScopeId::new(0), &name) {
+            if !self.has_binding(ScopeId::new(0), &name) && !self.references.contains(&name) {
                 return name;
             }
         }
@@ -148,5 +156,9 @@ impl ScopeTree {
 
     fn generate_uid(name: &str, i: i32) -> Atom {
         Atom::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
+    }
+
+    pub fn references(&self) -> &HashSet<Atom> {
+        &self.references
     }
 }
