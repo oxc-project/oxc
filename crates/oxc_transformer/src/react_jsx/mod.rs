@@ -14,8 +14,7 @@ use oxc_syntax::{
     xml_entities::XML_ENTITIES,
 };
 
-use self::options::ReactJsxRuntimeOption;
-pub use self::options::{ReactJsxOptions, ReactJsxRuntime};
+pub use self::options::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption};
 use crate::{context::TransformerCtx, TransformOptions};
 
 #[derive(Debug, Error, Diagnostic)]

@@ -42,7 +42,7 @@ use crate::{
 pub use crate::{
     es2020::NullishCoalescingOperatorOptions,
     options::{TransformOptions, TransformTarget},
-    react_jsx::{ReactJsxOptions, ReactJsxRuntime},
+    react_jsx::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption},
 };
 
 pub struct Transformer<'a> {
