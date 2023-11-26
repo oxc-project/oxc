@@ -159,7 +159,7 @@ impl IsolatedLintHandler {
         &self,
         path: &Path,
         content: Option<String>,
-    , content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    ) -> Option<Vec<DiagnosticReport>> {
         if Self::is_wanted_ext(path) {
             Some(
                 Self::lint_path(&self.linter, path, Arc::clone(&self.plugin), content).map_or(
