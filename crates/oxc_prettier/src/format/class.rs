@@ -1,16 +1,16 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     array,
     doc::{Doc, DocBuilder},
-    hardline, indent, ss, Format, Prettier,
+    enter, hardline, indent, ss, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
-        parts.push(id.format(p));
+        parts.push(enter!(p, BindingIdentifier, id));
         parts.push(ss!(" "));
     }
 

@@ -1,9 +1,9 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
     doc::{Doc, DocBuilder, Group},
-    group, ss, Format, Prettier,
+    enter, group, ss, Format, Prettier,
 };
 
 pub enum BinaryishLeft<'a, 'b> {
@@ -15,7 +15,7 @@ impl<'a, 'b> Format<'a> for BinaryishLeft<'a, 'b> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::Expression(expr) => expr.format(p),
-            Self::PrivateIdentifier(ident) => ident.format(p),
+            Self::PrivateIdentifier(ident) => enter!(p, PrivateIdentifier, ident),
         }
     }
 }

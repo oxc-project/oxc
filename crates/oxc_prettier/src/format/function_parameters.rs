@@ -1,8 +1,9 @@
+use crate::AstKind;
 use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder},
-    ss, Format, Prettier,
+    enter, ss, Format, Prettier,
 };
 
 pub(super) fn print_function_parameters<'a>(
@@ -13,7 +14,7 @@ pub(super) fn print_function_parameters<'a>(
     parts.push(ss!("("));
 
     for (i, param) in params.items.iter().enumerate() {
-        parts.push(param.format(p));
+        parts.push(enter!(p, FormalParameter, param));
         if i < params.items.len() - 1 {
             parts.push(ss!(", "));
         }

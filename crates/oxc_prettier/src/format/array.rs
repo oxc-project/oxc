@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -6,7 +6,7 @@ use crate::{
     array,
     comment::DanglingCommentsPrintOptions,
     doc::{Doc, DocBuilder, Fill, Group},
-    group, if_break, indent, softline, ss, Prettier,
+    enter, group, if_break, indent, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -159,7 +159,8 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
                 parts.push(Doc::Line);
-                parts.push(rest.format(p));
+
+                parts.push(enter!(p, RestElement, rest));
             }
         }
         Array::ArrayAssignmentTarget(array_pat) => {

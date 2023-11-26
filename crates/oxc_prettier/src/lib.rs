@@ -4,6 +4,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
+mod ast_kind;
 mod comment;
 mod doc;
 mod format;
@@ -62,12 +63,11 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {
-        let doc = program.format(&mut self);
-        Printer::new(doc, self.source_text, self.options, self.allocator).build()
+        Printer::new(self.doc(program), self.source_text, self.options, self.allocator).build()
     }
 
-    pub fn doc(mut self, program: &Program<'a>) -> Doc<'a> {
-        program.format(&mut self)
+    pub fn doc(&mut self, program: &Program<'a>) -> Doc<'a> {
+        enter!(self, Program, program)
     }
 
     fn enter_node(&mut self, kind: AstKind<'a>) {

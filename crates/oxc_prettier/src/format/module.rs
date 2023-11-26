@@ -1,11 +1,11 @@
 use std::collections::VecDeque;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     doc::{Doc, DocBuilder, Separator},
-    group, if_break, indent, line, softline, ss, Format, Prettier,
+    enter, group, if_break, indent, line, softline, ss, Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -32,7 +32,7 @@ pub(super) fn print_export_declaration<'a>(
 
     if let Some(source) = decl.source() {
         parts.push(ss!(" from "));
-        parts.push(source.format(p));
+        parts.push(enter!(p, StringLiteral, source));
     }
 
     if let Some(doc) = print_semicolon_after_export_declaration(p, decl) {

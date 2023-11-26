@@ -1,9 +1,9 @@
-use oxc_ast::ast::*;
-
 use crate::{
     doc::{Doc, DocBuilder},
     group, ss, Format, Prettier,
 };
+use crate::{enter, AstKind};
+use oxc_ast::ast::*;
 
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,
@@ -33,13 +33,13 @@ pub(super) fn print_function<'a>(
         parts.push(p.str(id.name.as_str()));
     }
     if should_group_function_parameters(func) {
-        parts.push(group!(p, func.params.format(p)));
+        parts.push(group!(p, enter!(p, FormalParameters, &func.params)));
     } else {
-        parts.push(func.params.format(p));
+        parts.push(enter!(p, FormalParameters, &func.params));
     }
     if let Some(body) = &func.body {
         parts.push(ss!(" "));
-        parts.push(body.format(p));
+        parts.push(enter!(p, FunctionBody, body));
     }
     if p.options.semi && (func.is_ts_declare_function() || func.body.is_none()) {
         parts.push(p.str(";"));
@@ -76,8 +76,8 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
     if method.computed {
         parts.push(ss!("["));
         let key = match &method.key {
-            PropertyKey::Identifier(ident) => ident.format(p),
-            PropertyKey::PrivateIdentifier(ident) => ident.format(p),
+            PropertyKey::Identifier(ident) => enter!(p, IdentifierName, ident),
+            PropertyKey::PrivateIdentifier(ident) => enter!(p, PrivateIdentifier, ident),
             PropertyKey::Expression(expr) => expr.format(p),
         };
         parts.push(key);
@@ -86,10 +86,10 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
         parts.push(method.key.format(p));
     }
 
-    parts.push(method.value.params.format(p));
+    parts.push(enter!(p, FormalParameters, &method.value.params));
     if let Some(body) = &method.value.body {
         parts.push(ss!(" "));
-        parts.push(body.format(p));
+        parts.push(enter!(p, FunctionBody, body));
     }
     Doc::Array(parts)
 }

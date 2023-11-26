@@ -1,8 +1,8 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     doc::{Doc, DocBuilder},
-    ss, Format, Prettier,
+    enter, ss, Format, Prettier,
 };
 
 pub(super) fn print_arrow_function<'a>(
@@ -15,7 +15,7 @@ pub(super) fn print_arrow_function<'a>(
         parts.push(ss!("async "));
     }
 
-    let parameters = expr.params.format(p);
+    let parameters = enter!(p, FormalParameters, &expr.params);
     parts.push(parameters);
     parts.push(ss!(" => "));
 
@@ -28,7 +28,7 @@ pub(super) fn print_arrow_function<'a>(
             _ => parts.push(stmt.format(p)),
         }
     } else {
-        parts.push(expr.body.format(p));
+        parts.push(enter!(p, FunctionBody, &expr.body));
     }
 
     Doc::Array(parts)
