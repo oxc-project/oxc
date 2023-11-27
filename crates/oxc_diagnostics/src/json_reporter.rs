@@ -1,13 +1,13 @@
 use miette::{Diagnostic, Severity};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct MessageWithPath {
     pub file_path: String,
     pub messages: Vec<MessageDetail>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct MessageDetail {
     pub severity: i32,
     pub message: String,
@@ -15,13 +15,13 @@ pub struct MessageDetail {
     // rule_id: String,
     labels: Vec<MessageLabel>,
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct MessageLabel {
     label: String,
     span: MessageSpan,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize)]
 struct MessageSpan {
     offset: usize,
     len: usize,
@@ -37,11 +37,11 @@ impl JSONReportHandler {
 
         let mut labels_output = vec![];
         for label in labels {
-            let label_ouput = MessageLabel {
+            let message_label = MessageLabel {
                 label: label.label().map_or_else(String::new, ToOwned::to_owned),
                 span: MessageSpan { offset: label.offset(), len: label.len() },
             };
-            labels_output.push(label_ouput);
+            labels_output.push(message_label);
         }
 
         MessageDetail {
