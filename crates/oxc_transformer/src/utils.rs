@@ -26,7 +26,7 @@ pub trait CreateVars<'a> {
     }
 
     fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference {
-        let name = self.ctx().scopes().generate_uid_based_on_node(expr);
+        let name = self.ctx().scopes_mut().generate_uid_based_on_node(expr);
         self.ctx().add_binding(name.clone());
 
         // Add `var name` to scope
