@@ -52,21 +52,21 @@ macro_rules! indent_if_break {
 #[macro_export]
 macro_rules! line {
     () => {
-        Doc::Line
+        Doc::Line($crate::doc::Line::default())
     };
 }
 
 #[macro_export]
 macro_rules! softline {
     () => {
-        Doc::Softline
+        Doc::Line($crate::doc::Line::softline())
     };
 }
 
 #[macro_export]
 macro_rules! hardline {
     () => {
-        Doc::Hardline
+        [Doc::Line($crate::doc::Line::hardline()), Doc::BreakParent]
     };
 }
 

@@ -9,7 +9,7 @@ use oxc_ast::{
 use crate::{
     array,
     doc::{Doc, DocBuilder},
-    group, indent, ss, Format, Prettier,
+    group, indent, line, ss, Format, Prettier,
 };
 
 pub(super) fn print_assignment_expression<'a>(
@@ -60,7 +60,7 @@ fn print_assignment<'a>(
 
     match layout {
         Layout::BreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, group!(p, indent!(p, Doc::Line, right_doc)))
+            group!(p, group!(p, left_doc), op, group!(p, indent!(p, line!(), right_doc)))
         }
         Layout::NeverBreakAfterOperator => {
             group!(p, group!(p, left_doc), op, ss!(" "), group!(p, right_doc))
@@ -71,7 +71,7 @@ fn print_assignment<'a>(
                 p,
                 group!(p, left_doc),
                 op,
-                group!(p, indent!(p, Doc::Line)),
+                group!(p, indent!(p, line!())),
                 // TODO: wrap `right_doc` in indent_if_break!() when we have support for group IDs.
                 right_doc
             )
@@ -82,10 +82,10 @@ fn print_assignment<'a>(
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
         Layout::Chain => {
-            array!(p, group!(p, left_doc), op, Doc::Line, right_doc)
+            array!(p, group!(p, left_doc), op, line!(), right_doc)
         }
         Layout::ChainTail => {
-            array!(p, group!(p, left_doc), op, indent!(p, Doc::Line, right_doc))
+            array!(p, group!(p, left_doc), op, indent!(p, line!(), right_doc))
         }
         Layout::ChainTailArrowChain => {
             array!(p, group!(p, left_doc), op, right_doc)

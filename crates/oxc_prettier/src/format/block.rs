@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use super::{statement, Format};
 use crate::{
     doc::{Doc, DocBuilder},
-    hardline, indent, ss, Prettier,
+    hardline, ss, Prettier,
 };
 
 pub(super) fn print_block<'a>(
@@ -14,8 +14,13 @@ pub(super) fn print_block<'a>(
     let mut parts = p.vec();
     parts.push(ss!("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
-        parts.push(indent![p, hardline!(), doc]);
-        parts.push(hardline!());
+        parts.push({
+            let mut parts = p.vec();
+            parts.extend(hardline!());
+            parts.push(doc);
+            Doc::Indent(parts)
+        });
+        parts.extend(hardline!());
     } else {
         let parent = p.parent_kind();
         let parent_parent = p.parent_parent_kind();
@@ -35,7 +40,7 @@ pub(super) fn print_block<'a>(
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
-            parts.push(hardline!());
+            parts.extend(hardline!());
         }
     }
     parts.push(ss!("}"));
@@ -69,7 +74,7 @@ pub(super) fn print_block_body<'a>(
     }
 
     if is_root {
-        parts.push(hardline!());
+        parts.extend(hardline!());
     }
 
     Some(Doc::Array(parts))

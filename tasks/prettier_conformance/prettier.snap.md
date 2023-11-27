@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-Compatibility: 173/591 (29.27%)
-=======
-Compatibility: 171/591 (28.93%)
->>>>>>> 169f7a38 (feat(prettier): add id on `IfBreak` and `Group`)
+Compatibility: 177/591 (29.95%)
 
 # Failed
 
@@ -179,7 +175,6 @@ Compatibility: 171/591 (28.93%)
 * comments/empty-statements.js
 * comments/export-and-import.js
 * comments/export.js
-* comments/first-line.js
 * comments/function-declaration.js
 * comments/if.js
 * comments/issue-3532.js

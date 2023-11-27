@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::Statement;
 
 use crate::{
-    doc::{Doc, DocBuilder, Group},
+    doc::{Doc, DocBuilder, Group, Line},
     hardline, Prettier,
 };
 use oxc_span::GetSpan;
@@ -31,7 +31,9 @@ pub(super) fn print_statement_sequence<'a>(
         if remove_last_statement_hardline && i == len - 1 {
             match docs {
                 Doc::Array(ref mut docs) | Doc::Group(Group { contents: ref mut docs, .. }) => {
-                    if matches!(docs.last(), Some(Doc::Hardline)) {
+                    if docs.last().is_some_and(
+                        |doc| matches!(doc, Doc::Line(line) if *line == Line::hardline()),
+                    ) {
                         docs.pop();
                     }
                 }
@@ -42,10 +44,10 @@ pub(super) fn print_statement_sequence<'a>(
         parts.push(docs);
 
         if i < len - 1 {
-            parts.push(hardline!());
+            parts.extend(hardline!());
 
             if p.is_next_line_empty(stmt.span().end) {
-                parts.push(hardline!());
+                parts.extend(hardline!());
             }
         }
     }
