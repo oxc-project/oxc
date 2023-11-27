@@ -9,7 +9,7 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use std::fmt::Debug;
 
 use oxc_ast::{
-    ast::{Expression, LogicalExpression, MemberExpression},
+    ast::{Expression, LogicalExpression},
     AstKind,
 };
 
@@ -62,13 +62,6 @@ struct ConditionDTO<T: ToString> {
     binary_operators: Vec<BinaryOperator>,
 }
 
-fn get_static_member_property_name<'a>(expr: Option<&'a MemberExpression<'a>>) -> Option<&'a str> {
-    match expr {
-        Some(MemberExpression::StaticMemberExpression(expr)) => Some(expr.property.name.as_str()),
-        _ => None,
-    }
-}
-
 fn is_useless_check<'a>(
     left: &'a Expression<'a>,
     right: &'a Expression<'a>,
@@ -104,12 +97,12 @@ fn is_useless_check<'a>(
 
             active_condition.binary_operators.contains(&expr.operator)
                 && left_expr.is_specific_member_access(array_name, "length")
-                && expr.right.is_raw("0")
+                && expr.right.is_specific_raw_number_literal("0")
         }
         Expression::CallExpression(expr) => {
             array_name =
                 expr.callee.get_member_expr()?.object().get_identifier_reference()?.name.as_str();
-            let property_name = get_static_member_property_name(expr.callee.get_member_expr())?;
+            let property_name = expr.callee.get_member_expr()?.static_property_name()?;
             call_expression_span = Some(expr.span);
 
             let is_same_method = property_name == active_condition.property_name;
@@ -133,7 +126,7 @@ fn is_useless_check<'a>(
 
             active_condition.binary_operators.contains(&expr.operator)
                 && left_expr.is_specific_member_access(array_name, "length")
-                && expr.right.is_raw("0")
+                && expr.right.is_specific_raw_number_literal("0")
                 && ident_name == array_name
         }
         Expression::CallExpression(expr) => {
@@ -144,7 +137,7 @@ fn is_useless_check<'a>(
             if call_expression_span.is_some() {
                 return None;
             }
-            let property_name = get_static_member_property_name(expr.callee.get_member_expr())?;
+            let property_name = expr.callee.get_member_expr()?.static_property_name()?;
             let is_same_method = property_name == active_condition.property_name;
             let is_optional = expr.optional;
 
