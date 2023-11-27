@@ -26,6 +26,8 @@ oxc_syntax      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
 rustc-hash      = { workspace = true }
+lazy_static     = { workspace = true }
+regex           = { workspace = true }
 
 
 serde = { workspace = true, features = ["derive"] }

@@ -1,6 +1,10 @@
 use std::rc::Rc;
 
+use lazy_static::lazy_static;
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_span::{Atom, Span};
+use oxc_syntax::operator::AssignmentOperator;
+use regex::Regex;
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -11,22 +15,30 @@ use crate::options::{TransformOptions, TransformTarget};
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-function-name>
 pub struct FunctionName<'a> {
     ast: Rc<AstBuilder<'a>>,
+    unicode_escapes: bool,
 }
 
 impl<'a> FunctionName<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self { ast })
+        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
+            ast,
+            // TODO hook up the the plugin
+            unicode_escapes: true,
+        })
     }
 
     pub fn transform_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
-        if let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(target),
-        ) = &expr.left
-        {
-            if expr.right.is_function() {
-                let id = BindingIdentifier::new(target.span, target.name.clone());
+        if expr.right.is_function() && matches!(expr.operator, AssignmentOperator::Assign) {
+            if let AssignmentTarget::SimpleAssignmentTarget(
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(target),
+            ) = &expr.left
+            {
+                let id =
+                    create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes);
 
-                self.transform_expression(&mut expr.right, &id);
+                if let Some(id) = &id {
+                    self.transform_expression(&mut expr.right, id);
+                }
             }
         }
     }
@@ -39,16 +51,22 @@ impl<'a> FunctionName<'a> {
                 }
 
                 let id = match &property.key {
-                    PropertyKey::Identifier(ident) => {
-                        BindingIdentifier::new(ident.span, ident.name.clone())
-                    }
-                    PropertyKey::PrivateIdentifier(ident) => {
-                        BindingIdentifier::new(ident.span, ident.name.clone())
-                    }
+                    PropertyKey::Identifier(ident) => create_valid_identifier(
+                        ident.span,
+                        ident.name.clone(),
+                        self.unicode_escapes,
+                    ),
+                    PropertyKey::PrivateIdentifier(ident) => create_valid_identifier(
+                        ident.span,
+                        ident.name.clone(),
+                        self.unicode_escapes,
+                    ),
                     PropertyKey::Expression(_) => continue,
                 };
 
-                self.transform_expression(&mut property.value, &id);
+                if let Some(id) = &id {
+                    self.transform_expression(&mut property.value, id);
+                }
             }
         }
     }
@@ -92,4 +110,27 @@ impl<'a> FunctionName<'a> {
             }
         }
     }
+}
+
+// https://github.com/babel/babel/blob/main/packages/babel-helper-function-name/src/index.ts
+// https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toBindingIdentifierName.ts#L3
+fn create_valid_identifier(
+    span: Span,
+    atom: Atom,
+    unicode_escapes: bool,
+) -> Option<BindingIdentifier> {
+    lazy_static! {
+        static ref UNICODE_NAME: Regex = Regex::new(r"[\uD800-\uDFFF]").unwrap();
+    }
+
+    if !unicode_escapes && UNICODE_NAME.is_match(atom.as_str()) {
+        return None;
+    }
+
+    // TODO: Better way?
+    Some(if atom == "eval" || atom == "arguments" || atom == "null" {
+        BindingIdentifier::new(span, Atom::from(format!("_{}", atom.as_str())))
+    } else {
+        BindingIdentifier::new(span, atom)
+    })
 }

@@ -1914,6 +1914,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.3.0"
 dependencies = [
+ "lazy_static",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -1923,6 +1924,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "regex",
  "rustc-hash",
  "serde",
 ]
