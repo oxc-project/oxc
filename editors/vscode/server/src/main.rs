@@ -79,15 +79,18 @@ impl LanguageServer for Backend {
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
-        self.handle_file_update(params.text_document.uri).await;
+        self.handle_file_update(params.text_document.uri, None).await;
     }
 
+    /// When the document changed, it may not be written to disk, so we should
+    /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        self.handle_file_update(params.text_document.uri).await;
+        let content = params.content_changes.first().map(|c| c.text.clone());
+        self.handle_file_update(params.text_document.uri, content).await;
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        self.handle_file_update(params.text_document.uri).await;
+        self.handle_file_update(params.text_document.uri, None).await;
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -156,10 +159,10 @@ impl Backend {
         .await;
     }
 
-    async fn handle_file_update(&self, uri: Url) {
+    async fn handle_file_update(&self, uri: Url, content: Option<String>) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
-            if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri) {
+            if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri, content) {
                 self.client
                     .publish_diagnostics(
                         uri.clone(),
