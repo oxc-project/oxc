@@ -4,7 +4,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array,
-    comment::DanglingCommentsPrintOptions,
+    comments::DanglingCommentsPrintOptions,
     doc::{Doc, DocBuilder, Fill, Group},
     group, if_break, indent, softline, ss, Prettier,
 };
