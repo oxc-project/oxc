@@ -124,26 +124,58 @@ impl<'a> Prettier<'a> {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn skip_newline(&self, start_index: u32) -> Option<u32> {
-        let c = self.source_text[start_index as usize..].chars().next()?;
-        is_line_terminator(c).then(|| start_index + c.len_utf8() as u32)
+    fn skip_newline(&self, start_index: Option<u32>, backwards: bool) -> Option<u32> {
+        let start_index = start_index?;
+        let c = if backwards {
+            self.source_text[..=start_index as usize].chars().next_back()
+        } else {
+            self.source_text[start_index as usize..].chars().next()
+        }?;
+        if is_line_terminator(c) {
+            let len = c.len_utf8() as u32;
+            return Some(if backwards { start_index - len } else { start_index + len });
+        }
+        Some(start_index)
     }
 
-    fn skip_spaces(&self, start_index: u32) -> u32 {
+    fn skip_spaces(&self, start_index: u32, backwards: bool) -> Option<u32> {
         let mut index = start_index;
-        for c in self.source_text[start_index as usize..].chars() {
-            if matches!(c, ' ' | '\t') {
-                index += 1;
-            } else {
-                break;
+        if backwards {
+            for c in self.source_text[..=start_index as usize].chars().rev() {
+                if !matches!(c, ' ' | '\t') {
+                    return Some(index);
+                }
+                index -= 1_u32;
+            }
+        } else {
+            for c in self.source_text[start_index as usize..].chars() {
+                if !matches!(c, ' ' | '\t') {
+                    return Some(index);
+                }
+                index += 1_u32;
             }
         }
-        index
+        None
     }
 
-    fn has_newline(&self, start_index: u32) -> bool {
-        let idx = self.skip_spaces(start_index);
-        let idx2 = self.skip_newline(idx);
-        Some(idx) != idx2
+    fn has_newline(&self, start_index: u32, backwards: bool) -> bool {
+        if (backwards && start_index == 0)
+            || (!backwards && start_index as usize == self.source_text.len())
+        {
+            return false;
+        }
+        let start_index = if backwards { start_index - 1 } else { start_index };
+        let idx = self.skip_spaces(start_index, backwards);
+        let idx2 = self.skip_newline(idx, backwards);
+        idx != idx2
+    }
+
+    fn is_previous_line_empty(&self, start_index: u32) -> bool {
+        let idx = start_index - 1;
+        let idx = self.skip_spaces(idx, true);
+        let Some(idx) = self.skip_newline(idx, true) else { return false };
+        let idx = self.skip_spaces(idx, true);
+        let idx2 = self.skip_newline(idx, true);
+        idx != idx2
     }
 }
