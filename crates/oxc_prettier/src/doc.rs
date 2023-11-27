@@ -269,12 +269,12 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
         }
         Doc::IfBreak(if_break) => {
             string.push_str(&format!(
-                "ifBreak({}, {})",
+                "ifBreak({}, {}",
                 print_doc_to_debug(&if_break.break_contents),
                 print_doc_to_debug(&if_break.flat_content)
             ));
             if let Some(group_id) = if_break.group_id {
-                string.push_str(&format!("{{ groupId: {group_id} }}"));
+                string.push_str(&format!(", {{ groupId: {group_id} }}"));
             }
             string.push(')');
         }
