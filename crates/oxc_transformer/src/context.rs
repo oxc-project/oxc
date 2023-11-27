@@ -1,6 +1,5 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
-    collections::HashSet,
     mem,
     rc::Rc,
 };
@@ -32,10 +31,6 @@ impl<'a> TransformerCtx<'a> {
 
     pub fn scopes(&self) -> Ref<'_, ScopeTree> {
         Ref::map(self.semantic.borrow(), |semantic| semantic.scopes())
-    }
-
-    pub fn reference(&self) -> Ref<'_, HashSet<Atom>> {
-        Ref::map(self.semantic.borrow(), |semantic| semantic.scopes().references())
     }
 
     pub fn scopes_mut(&self) -> RefMut<'_, ScopeTree> {

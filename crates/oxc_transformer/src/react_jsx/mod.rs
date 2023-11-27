@@ -283,7 +283,6 @@ impl<'a> ReactJsx<'a> {
         if self.ctx.source_type().is_script() {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
-            // SAFETY: see [ReactJsx::register_unique_import_binding]
             // using `to_string` because here we violated borrow rules
             let local_binding = self
                 .import_binding_register
@@ -569,7 +568,6 @@ impl<'a> ReactJsx<'a> {
                     "jsx"
                 };
 
-                // SAFETY: we have been register related unique identifier https://github.com/oxc-project/oxc/blob/023e6eabcd5121ff1a231b5e1fcf8e9b2cf607d4/crates/oxc_transformer/src/react_jsx/mod.rs#L186-L191
                 let unique_name =
                     self.import_binding_register.get(name).expect("We already registered before");
 
