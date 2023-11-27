@@ -5,8 +5,8 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
     NumberBase,
 };
-
-use std::{collections::HashSet, mem, rc::Rc};
+use rustc_hash::FxHashSet;
+use std::{mem, rc::Rc};
 
 use crate::{context::TransformerCtx, utils::is_valid_identifier};
 
@@ -21,7 +21,7 @@ pub struct TypeScript<'a> {
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
 
-    export_name_set: HashSet<Atom>,
+    export_name_set: FxHashSet<Atom>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -30,7 +30,7 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax, export_name_set: HashSet::default() }
+        Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
     }
 
     #[allow(clippy::unused_self)]
