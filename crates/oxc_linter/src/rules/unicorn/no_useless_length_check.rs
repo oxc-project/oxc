@@ -1,7 +1,7 @@
 use itertools::concat;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -48,6 +48,10 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// if(array.length === 0 || array.every(Boolean)){
+    ///    do something!
+    /// }
+    ///
     /// ```
     NoUselessLengthCheck,
     correctness
@@ -58,9 +62,9 @@ struct ConditionDTO<T: ToString> {
     binary_operators: Vec<BinaryOperator>,
 }
 
-fn get_static_member_property_name<'a>(expr: &'a MemberExpression<'a>) -> Option<&'a str> {
+fn get_static_member_property_name<'a>(expr: Option<&'a MemberExpression<'a>>) -> Option<&'a str> {
     match expr {
-        MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+        Some(MemberExpression::StaticMemberExpression(expr)) => Some(expr.property.name.as_str()),
         _ => None,
     }
 }
@@ -70,51 +74,44 @@ fn is_useless_check<'a>(
     right: &'a Expression<'a>,
     operator: LogicalOperator,
 ) -> Option<NoUselessLengthCheckDiagnostic> {
-    let left_condition = ConditionDTO {
+    let every_condition = ConditionDTO {
         property_name: "every",
         binary_operators: vec![BinaryOperator::StrictEquality],
     };
-    let right_condition = ConditionDTO {
+    let some_condition = ConditionDTO {
         property_name: "some",
         binary_operators: vec![BinaryOperator::StrictInequality, BinaryOperator::GreaterThan],
     };
 
-    let mut name: &str = "";
+    let mut array_name: &str = "";
     let active_condition = {
         if operator == LogicalOperator::Or {
-            left_condition
+            every_condition
         } else {
-            right_condition
+            some_condition
         }
     };
-    let mut binary_expression_span: Span = Span::default();
+    let mut binary_expression_span: Option<Span> = None;
+    let mut call_expression_span: Option<Span> = None;
 
     let l = match left.without_parenthesized() {
         Expression::BinaryExpression(expr) => {
             let Expression::MemberExpression(left_expr) = expr.left.get_inner_expression() else {
                 return None;
             };
-            let id = left_expr.object().get_identifier_reference()?;
-            name = id.name.as_str();
-
-            binary_expression_span = expr.span;
+            array_name = left_expr.object().get_identifier_reference()?.name.as_str();
+            binary_expression_span = Some(expr.span);
 
             active_condition.binary_operators.contains(&expr.operator)
-                && left_expr.is_specific_member_access(name, "length")
+                && left_expr.is_specific_member_access(array_name, "length")
                 && expr.right.is_raw("0")
         }
         Expression::CallExpression(expr) => {
-            name = expr
-                .callee
-                .get_member_expr()
-                .unwrap()
-                .object()
-                .get_identifier_reference()
-                .unwrap()
-                .name
-                .as_str();
-            let property_name =
-                get_static_member_property_name(expr.callee.get_member_expr().unwrap())?;
+            array_name =
+                expr.callee.get_member_expr()?.object().get_identifier_reference()?.name.as_str();
+            let property_name = get_static_member_property_name(expr.callee.get_member_expr())?;
+            call_expression_span = Some(expr.span);
+
             let is_same_method = property_name == active_condition.property_name;
             let is_optional = expr.optional;
 
@@ -128,27 +125,26 @@ fn is_useless_check<'a>(
             let Expression::MemberExpression(left_expr) = expr.left.get_inner_expression() else {
                 return None;
             };
-            let id = left_expr.object().get_identifier_reference()?;
-            binary_expression_span = expr.span;
+            let ident_name = left_expr.object().get_identifier_reference()?.name.as_str();
+            if binary_expression_span.is_some() {
+                return None;
+            }
+            binary_expression_span = Some(expr.span);
 
             active_condition.binary_operators.contains(&expr.operator)
-                && left_expr.is_specific_member_access(name, "length")
+                && left_expr.is_specific_member_access(array_name, "length")
                 && expr.right.is_raw("0")
-                && id.name.as_str() == name
+                && ident_name == array_name
         }
         Expression::CallExpression(expr) => {
-            let is_same_name = expr
-                .callee
-                .get_member_expr()
-                .unwrap()
-                .object()
-                .get_identifier_reference()
-                .unwrap()
-                .name
-                .as_str()
-                == name;
-            let property_name =
-                get_static_member_property_name(expr.callee.get_member_expr().unwrap())?;
+            let is_same_name =
+                expr.callee.get_member_expr()?.object().get_identifier_reference()?.name.as_str()
+                    == array_name;
+
+            if call_expression_span.is_some() {
+                return None;
+            }
+            let property_name = get_static_member_property_name(expr.callee.get_member_expr())?;
             let is_same_method = property_name == active_condition.property_name;
             let is_optional = expr.optional;
 
@@ -159,9 +155,9 @@ fn is_useless_check<'a>(
 
     if l && r {
         Some(if active_condition.property_name == "every" {
-            NoUselessLengthCheckDiagnostic::Every(binary_expression_span)
+            NoUselessLengthCheckDiagnostic::Every(binary_expression_span?)
         } else {
-            NoUselessLengthCheckDiagnostic::Some(binary_expression_span)
+            NoUselessLengthCheckDiagnostic::Some(binary_expression_span?)
         })
     } else {
         None
@@ -170,22 +166,19 @@ fn is_useless_check<'a>(
 
 impl Rule for NoUselessLengthCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let log_expr = match node.kind() {
-            AstKind::LogicalExpression(log) => Some(log),
-            _ => None,
-        };
-        if let Some(expr) = log_expr {
-            if ![LogicalOperator::And, LogicalOperator::Or].contains(&expr.operator) {
+        if let AstKind::LogicalExpression(log_expr) = node.kind() {
+            if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
                 return;
             }
-            let flat_expr = flat_logical_expression(expr);
+            let flat_expr = flat_logical_expression(log_expr);
             for i in 0..flat_expr.len() - 1 {
-                if let Some(diag) = is_useless_check(flat_expr[i], flat_expr[i + 1], expr.operator)
+                if let Some(diag) =
+                    is_useless_check(flat_expr[i], flat_expr[i + 1], log_expr.operator)
                 {
                     ctx.diagnostic(diag);
                 }
             }
-        }
+        };
     }
 }
 
@@ -280,6 +273,8 @@ fn test() {
         "array.length === 0 || (array.every(Boolean) && foo)",
         "(foo || array.length > 0) && array.some(Boolean)",
         "array.length > 0 && (array.some(Boolean) || foo)",
+        "array.length === 0 || array.length === 0",
+        "array.some(Boolean) && array.some(Boolean)",
     ];
 
     let fail = vec![
