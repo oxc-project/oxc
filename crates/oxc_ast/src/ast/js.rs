@@ -148,6 +148,11 @@ impl<'a> Expression<'a> {
         matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
     }
 
+    /// Determines whether the given numeral literal's raw value is exactly val
+    pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
+        matches!(self, Self::NumberLiteral(lit) if lit.raw == val)
+    }
+
     /// Determines whether the given expr evaluate to `undefined`
     pub fn evaluate_to_undefined(&self) -> bool {
         self.is_undefined() || self.is_void()
