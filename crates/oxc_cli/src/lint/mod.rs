@@ -5,7 +5,7 @@ use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{
     codeowners, command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, CodeownerOptions,
-    LintResult, Runner, FormatForFormatter,
+    FormatForFormatter, LintResult, Runner,
 };
 
 pub struct LintRunner {
@@ -161,6 +161,16 @@ mod test {
     use crate::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
+        let mut new_args = vec!["--quiet"];
+        new_args.extend(args);
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
+        let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
+            unreachable!()
+        };
+        lint_result
+    }
+
+    fn test_output(args: &[&str]) -> LintResult {
         let mut new_args = vec![""];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
@@ -172,9 +182,9 @@ mod test {
 
     #[test]
     fn json_output() {
-        let args = &[ "--format", "json", "fixtures/nan.js"];
-        let result = test(args);
-        assert_eq!(result.output_of_format, "[{\"file_path\":\"fixtures/nan.js\",\"messages\":[{\"severity\":1,\"message\":\"eslint(use-isnan): Requires calls to isNaN() when checking for NaN\",\"labels\":[{\"label\":\"\",\"span\":{\"offset\":7,\"len\":3}}]}]}]")
+        let args = &["--format", "json", "fixtures/nan.js"];
+        let result = test_output(args);
+        assert_eq!(result.output_of_format, "[{\"file_path\":\"fixtures/nan.js\",\"messages\":[{\"severity\":1,\"message\":\"eslint(use-isnan): Requires calls to isNaN() when checking for NaN\",\"labels\":[{\"label\":\"\",\"span\":{\"offset\":7,\"len\":3}}]}]}]");
     }
 
     #[test]

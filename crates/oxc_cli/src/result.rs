@@ -52,7 +52,7 @@ impl Termination for CliRunResult {
                 number_of_errors,
                 max_warnings_exceeded,
                 deny_warnings,
-                output_of_format,
+                output_of_format: _,
             }) => {
                 let threads = rayon::current_num_threads();
                 let number_of_diagnostics = number_of_warnings + number_of_errors;

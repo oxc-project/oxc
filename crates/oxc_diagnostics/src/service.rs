@@ -6,7 +6,11 @@ use std::{
     sync::Arc,
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity, json_reporter::{JSONReportHandler, MessageWithPath}};
+use crate::{
+    json_reporter::{JSONReportHandler, MessageWithPath},
+    miette::NamedSource,
+    Error, GraphicalReportHandler, MinifiedFileError, Severity,
+};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -43,7 +47,7 @@ impl Default for DiagnosticService {
             errors_count: Cell::new(0),
             sender,
             receiver,
-            output: Cell::new("".to_owned()),
+            output: Cell::new(String::new()),
         }
     }
 }
@@ -99,7 +103,6 @@ impl DiagnosticService {
     /// * When the writer fails to write
     pub fn json_output(&self) {
         let mut buf_writer = BufWriter::new(std::io::stdout());
-        let handler = JSONReportHandler;
 
         let mut messages_with_path = vec![];
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
@@ -119,9 +122,9 @@ impl DiagnosticService {
                     }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    // else if self.quiet {
-                    //     continue;
-                    // }
+                    else if self.quiet {
+                        continue;
+                    }
 
                     if let Some(max_warnings) = self.max_warnings {
                         if self.warnings_count() > max_warnings {
@@ -130,19 +133,16 @@ impl DiagnosticService {
                     }
                 }
 
-                let message = handler.render_report( diagnostic.as_ref());
-                messages.push(message)
+                let message = JSONReportHandler::render_report(diagnostic.as_ref());
+                messages.push(message);
             }
-            messages_with_path.push(MessageWithPath {
-                file_path: path.to_str().unwrap().to_owned(),
-                messages,
-            })
+            messages_with_path
+                .push(MessageWithPath { file_path: path.to_str().unwrap().to_owned(), messages });
         }
 
         let json_str = serde_json::to_string(&messages_with_path).unwrap();
         self.output.set(json_str.clone());
         buf_writer.write_all(json_str.as_bytes()).unwrap();
-
     }
 
     /// # Panics

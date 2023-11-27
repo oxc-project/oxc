@@ -30,7 +30,7 @@ struct MessageSpan {
 pub struct JSONReportHandler;
 
 impl JSONReportHandler {
-    pub fn render_report(&self, diagnostic: &(dyn Diagnostic)) -> MessageDetail {
+    pub fn render_report(diagnostic: &(dyn Diagnostic)) -> MessageDetail {
         let severity = diagnostic.severity();
         let is_warning = severity == Some(Severity::Warning);
         let labels = diagnostic.labels().unwrap();
@@ -38,7 +38,7 @@ impl JSONReportHandler {
         let mut labels_output = vec![];
         for label in labels {
             let label_ouput = MessageLabel {
-                label: if let Some(l) = label.label() { l.to_owned() } else { "".to_owned() },
+                label: label.label().map_or_else(String::new, ToOwned::to_owned),
                 span: MessageSpan { offset: label.offset(), len: label.len() },
             };
             labels_output.push(label_ouput);

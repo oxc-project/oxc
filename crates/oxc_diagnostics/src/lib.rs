@@ -2,8 +2,8 @@
 //! Exports `thiserror` and `miette`
 
 mod graphic_reporter;
-mod json_reporter;
 mod graphical_theme;
+mod json_reporter;
 mod service;
 
 use std::path::PathBuf;

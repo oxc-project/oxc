@@ -206,7 +206,7 @@ impl FromStr for FormatForFormatter {
     type Err = &'static str;
     fn from_str(str: &str) -> Result<Self, <Self as FromStr>::Err> {
         if str == "json" {
-            return Ok(Self::Json)
+            return Ok(Self::Json);
         }
         Ok(Self::Default)
     }
@@ -217,7 +217,7 @@ impl FromStr for FormatForFormatter {
 pub struct FormatterOptions {
     /// Format for the Formatter, e.g. json
     #[bpaf(argument("Format"), fallback(FormatForFormatter::Default), hide_usage)]
-    pub format: FormatForFormatter
+    pub format: FormatForFormatter,
 }
 
 /// Fix Problems
