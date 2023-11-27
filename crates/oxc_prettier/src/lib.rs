@@ -4,7 +4,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
-mod comment;
+mod comments;
 mod doc;
 mod format;
 mod macros;
