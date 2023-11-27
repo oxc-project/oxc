@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::{doc::Doc, group, indent, ss, Format, Prettier};
+use crate::{doc::Doc, group, indent, line, ss, Format, Prettier};
 
 pub(super) fn print_ternary<'a>(p: &mut Prettier<'a>, expr: &ConditionalExpression<'a>) -> Doc<'a> {
     group![
@@ -8,10 +8,10 @@ pub(super) fn print_ternary<'a>(p: &mut Prettier<'a>, expr: &ConditionalExpressi
         expr.test.format(p),
         indent!(
             p,
-            Doc::Line,
+            line!(),
             ss!("? "),
             expr.consequent.format(p),
-            Doc::Line,
+            line!(),
             ss!(": "),
             expr.alternate.format(p)
         )

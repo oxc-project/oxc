@@ -25,13 +25,7 @@ pub enum Doc<'a> {
     /// Specify a line break.
     /// If an expression fits on one line, the line break will be replaced with a space.
     /// Line breaks always indent the next line with the current level of indentation.
-    Line,
-    /// Specify a line break.
-    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-    Softline,
-    /// Specify a line break that is **always** included in the output,
-    /// no matter if the expression fits on one line or not.
-    Hardline,
+    Line(Line),
     /// This is used to implement trailing comments.
     /// It's not practical to constantly check where the line ends to avoid accidentally printing some code at the end of a comment.
     /// `lineSuffix` buffers docs passed to it and flushes them before any new line.
@@ -44,6 +38,39 @@ pub enum Doc<'a> {
     Fill(Fill<'a>),
     /// Include this anywhere to force all parent groups to break.
     BreakParent,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Line {
+    pub hard: bool,
+    pub soft: bool,
+    pub literal: bool,
+}
+
+impl Line {
+    /// Specify a line break.
+    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
+    pub fn softline() -> Self {
+        Self { soft: true, ..Self::default() }
+    }
+
+    /// Specify a line break that is **always** included in the output,
+    /// no matter if the expression fits on one line or not.
+    pub fn hardline() -> Self {
+        Self { hard: true, ..Self::default() }
+    }
+
+    pub fn literal_line() -> Self {
+        Self { literal: true, ..Self::default() }
+    }
+
+    pub fn hardline_without_break_parent() -> Self {
+        Self { hard: true, ..Self::default() }
+    }
+
+    pub fn literal_line_without_break_parent() -> Self {
+        Self { hard: true, literal: true, ..Self::default() }
+    }
 }
 
 #[derive(Debug)]
@@ -72,11 +99,13 @@ impl<'a> Fill<'a> {
     pub fn new(docs: Vec<'a, Doc<'a>>) -> Self {
         Self { parts: docs }
     }
+
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
         let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         (content, whitespace)
     }
+
     pub fn dequeue(&mut self) -> Option<Doc<'a>> {
         if self.parts.len() > 0 {
             Some(self.parts.remove(0))
@@ -87,9 +116,11 @@ impl<'a> Fill<'a> {
     pub fn enqueue(&mut self, doc: Doc<'a>) {
         self.parts.insert(0, doc);
     }
+
     pub fn parts(&self) -> &[Doc<'a>] {
         &self.parts
     }
+
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
         self.parts
     }
@@ -134,8 +165,8 @@ pub trait DocBuilder<'a> {
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
                 parts.push(match separator {
-                    Separator::Softline => Doc::Softline,
-                    Separator::Hardline => Doc::Hardline,
+                    Separator::Softline => Doc::Line(Line::softline()),
+                    Separator::Hardline => Doc::Line(Line::hardline()),
                     Separator::CommaLine => array![self, ss!(","), line!()],
                 });
             }
@@ -207,14 +238,14 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str(" })");
         }
-        Doc::Line => {
-            string.push_str("line");
-        }
-        Doc::Softline => {
-            string.push_str("softline");
-        }
-        Doc::Hardline => {
-            string.push_str("hardline");
+        Doc::Line(Line { soft, hard, .. }) => {
+            if *soft {
+                string.push_str("softline");
+            } else if *hard {
+                string.push_str("hardline");
+            } else {
+                string.push_str("line");
+            }
         }
         Doc::IfBreak(if_break) => {
             string.push_str(&format!(

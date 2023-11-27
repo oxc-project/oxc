@@ -6,7 +6,7 @@ use crate::{
     array,
     comments::DanglingCommentsPrintOptions,
     doc::{Doc, DocBuilder, Fill, Group},
-    group, if_break, indent, softline, ss, Prettier,
+    group, if_break, indent, line, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -129,7 +129,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array.elements.iter().enumerate() {
                 if i > 0 && i < array.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 parts.push(element.format(p));
@@ -139,7 +139,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in tuple.element_types.iter().enumerate() {
                 if i > 0 && i < tuple.element_types.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 parts.push(element.format(p));
@@ -149,7 +149,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 if let Some(binding_pat) = element {
@@ -159,7 +159,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
-                parts.push(Doc::Line);
+                parts.push(line!());
                 parts.push(rest.format(p));
             }
         }
@@ -167,7 +167,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 if let Some(binding_pat) = element {
@@ -177,7 +177,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
-                parts.push(Doc::Line);
+                parts.push(line!());
                 parts.push(rest.format(p));
             }
         }
@@ -207,7 +207,7 @@ where
                 parts.push(part);
 
                 if !is_last {
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
             }
         }

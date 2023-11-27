@@ -9,7 +9,7 @@ use oxc_allocator::Allocator;
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    doc::{Doc, DocBuilder, Fill, IfBreak},
+    doc::{Doc, DocBuilder, Fill, IfBreak, Line},
     GroupId, PrettierOptions,
 };
 
@@ -71,27 +71,6 @@ impl<'a> Printer<'a> {
         unsafe { String::from_utf8_unchecked(self.out) }
     }
 
-    /// Reference:
-    /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
-    pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
-        match doc {
-            Doc::Hardline => true,
-            Doc::Group(group) => {
-                let should_break =
-                    group.contents.iter_mut().rev().any(|doc| Self::propagate_breaks(doc));
-                if should_break {
-                    group.should_break = should_break;
-                }
-                group.should_break
-            }
-            Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
-            Doc::Array(arr) | Doc::Indent(arr) | Doc::IndentIfBreak(arr) => {
-                arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
-            }
-            _ => false,
-        }
-    }
-
     /// Turn Doc into a string
     ///
     /// Reference:
@@ -105,19 +84,22 @@ impl<'a> Printer<'a> {
                 Doc::Indent(docs) => self.handle_indent(indent, mode, docs),
                 Doc::Group(_) => self.handle_group(indent, mode, doc),
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
-                Doc::Line => self.handle_line(indent, mode),
-                Doc::Softline => self.handle_softline(indent, mode),
-                Doc::Hardline => self.handle_line(indent, Mode::Break),
+                Doc::Line(line) => self.handle_line(line, indent, mode, doc),
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
                 Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
-                Doc::BreakParent => {} // No op
+                Doc::BreakParent => { /* No op */ }
             }
 
             if self.cmds.is_empty() && !self.line_suffix.is_empty() {
                 self.cmds.extend(self.line_suffix.drain(..).rev());
             }
         }
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    fn remaining_width(&self) -> isize {
+        (self.options.print_width as isize) - (self.pos as isize)
     }
 
     fn handle_str(&mut self, s: &str) {
@@ -133,7 +115,7 @@ impl<'a> Printer<'a> {
         self.cmds.extend(
             docs.into_iter()
                 .rev()
-                .map(|doc| Command::new(Indent { length: indent.length + 1 }, mode, doc)),
+                .map(|doc| Command::new(Indent::new(indent.length + 1), mode, doc)),
         );
     }
 
@@ -192,37 +174,44 @@ impl<'a> Printer<'a> {
                 );
             }
             Mode::Break => {
-                self.cmds.extend(docs.into_iter().rev().map(|doc| {
-                    Command::new(Indent { length: indent.length + 1 }, Mode::Break, doc)
-                }));
+                self.cmds.extend(
+                    docs.into_iter()
+                        .rev()
+                        .map(|doc| Command::new(Indent::new(indent.length + 1), Mode::Break, doc)),
+                );
             }
         }
     }
 
-    fn handle_line(&mut self, indent: Indent, mode: Mode) {
-        if mode.is_break() {
-            if !self.line_suffix.is_empty() {
-                self.cmds.extend(self.line_suffix.drain(..).rev());
+    fn handle_line(&mut self, line: Line, indent: Indent, mode: Mode, doc: Doc<'a>) {
+        if mode.is_flat() {
+            if line.hard {
+                // shouldRemeasure = true;
+            } else {
+                if !line.soft {
+                    self.out.push(b' ');
+                    self.pos += 1;
+                }
                 return;
             }
+        }
 
-            self.handle_hardline(indent);
+        if !self.line_suffix.is_empty() {
+            self.cmds.push(Command::new(indent, mode, doc));
+            self.cmds.extend(self.line_suffix.drain(..).rev());
+            return;
+        }
+
+        if line.literal {
+            self.out.extend(self.new_line.as_bytes());
+            if !indent.root {
+                self.pos = 0;
+            }
         } else {
-            self.out.push(b' ');
-            self.pos += 1;
+            self.trim();
+            self.out.extend(self.new_line.as_bytes());
+            self.pos = self.indent(indent.length);
         }
-    }
-
-    fn handle_softline(&mut self, indent: Indent, mode: Mode) {
-        if mode.is_break() {
-            self.handle_line(indent, Mode::Break);
-        }
-    }
-
-    fn handle_hardline(&mut self, indent: Indent) {
-        self.trim();
-        self.out.extend(self.new_line.as_bytes());
-        self.pos = self.indent(indent.length);
     }
 
     fn handle_line_suffix(
@@ -331,6 +320,27 @@ impl<'a> Printer<'a> {
         };
     }
 
+    fn indent(&mut self, size: usize) -> usize {
+        if self.options.use_tabs {
+            self.out.extend("\t".repeat(size).as_bytes());
+            size
+        } else {
+            let count = self.options.tab_width * size;
+            self.out.extend(" ".repeat(count).as_bytes());
+            count
+        }
+    }
+
+    fn trim(&mut self) {
+        while let Some(&last) = self.out.last() {
+            if last == b' ' || last == b'\t' {
+                self.out.pop();
+            } else {
+                break;
+            }
+        }
+    }
+
     #[allow(clippy::cast_possible_wrap)]
     fn fits(&self, next: &Command<'a>, width: isize) -> bool {
         let mut remaining_width = width;
@@ -339,7 +349,6 @@ impl<'a> Printer<'a> {
         let mut cmds = self.cmds.iter().rev();
 
         while let Some((mode, doc)) = queue.pop_front() {
-            let is_break = matches!(mode, Mode::Break);
             match doc {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
@@ -369,19 +378,13 @@ impl<'a> Printer<'a> {
 
                     queue.push_front((mode, contents));
                 }
-                Doc::Line => {
-                    if is_break {
+                Doc::Line(line) => {
+                    if mode.is_break() || line.hard {
                         return true;
                     }
-                    remaining_width -= 1_isize;
-                }
-                Doc::Softline => {
-                    if is_break {
-                        return true;
+                    if !line.soft {
+                        remaining_width -= 1_isize;
                     }
-                }
-                Doc::Hardline => {
-                    return true;
                 }
                 Doc::Fill(fill) => {
                     for part in fill.parts().iter().rev() {
@@ -408,29 +411,24 @@ impl<'a> Printer<'a> {
         true
     }
 
-    fn indent(&mut self, size: usize) -> usize {
-        if self.options.use_tabs {
-            self.out.extend("\t".repeat(size).as_bytes());
-            size
-        } else {
-            let count = self.options.tab_width * size;
-            self.out.extend(" ".repeat(count).as_bytes());
-            count
-        }
-    }
-
-    fn trim(&mut self) {
-        while let Some(&last) = self.out.last() {
-            if last == b' ' || last == b'\t' {
-                self.out.pop();
-            } else {
-                break;
+    /// Reference:
+    /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
+    pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
+        match doc {
+            Doc::BreakParent => true,
+            Doc::Group(group) => {
+                let should_break =
+                    group.contents.iter_mut().rev().any(|doc| Self::propagate_breaks(doc));
+                if should_break {
+                    group.should_break = should_break;
+                }
+                group.should_break
             }
+            Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
+            Doc::Array(arr) | Doc::Indent(arr) | Doc::IndentIfBreak(arr) => {
+                arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
+            }
+            _ => false,
         }
-    }
-
-    #[allow(clippy::cast_possible_wrap)]
-    fn remaining_width(&self) -> isize {
-        (self.options.print_width as isize) - (self.pos as isize)
     }
 }

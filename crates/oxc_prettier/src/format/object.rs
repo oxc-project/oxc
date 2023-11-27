@@ -52,7 +52,7 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
             indent_parts.push(prop.format(p));
             if i < properties.len() - 1 {
                 indent_parts.push(Doc::Str(","));
-                indent_parts.push(Doc::Line);
+                indent_parts.push(line!());
             }
         }
 
@@ -60,9 +60,9 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
         parts.push(if_break!(p, ",", "", None));
 
         if p.options.bracket_spacing {
-            parts.push(Doc::Line);
+            parts.push(line!());
         } else {
-            parts.push(Doc::Softline);
+            parts.push(softline!());
         }
 
         parts.push(ss!("}"));

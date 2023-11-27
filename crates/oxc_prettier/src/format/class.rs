@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     array,
     doc::{Doc, DocBuilder},
-    hardline, indent, ss, Format, Prettier,
+    hardline, ss, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -34,7 +34,14 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
     let mut parts = p.vec();
     parts.push(ss!("{"));
     if !inner_parts.is_empty() {
-        parts.push(array![p, indent!(p, hardline!(), Doc::Array(inner_parts)), hardline!()]);
+        let indent = {
+            let mut parts = p.vec();
+            parts.extend(hardline!());
+            parts.push(Doc::Array(inner_parts));
+            Doc::Indent(parts)
+        };
+        parts.push(array![p, indent]);
+        parts.extend(hardline!());
     }
     parts.push(ss!("}"));
 
