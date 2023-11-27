@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
@@ -6,7 +5,7 @@ use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
 use oxc_index::IndexVec;
 use oxc_span::Atom;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
 use crate::{reference::ReferenceId, symbol::SymbolId};
 
@@ -25,7 +24,7 @@ pub struct ScopeTree {
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
     /// used for global de conflicting, used for generate a global unique identifier
-    references: HashSet<Atom>,
+    references: FxHashSet<Atom>,
     /// only enable in transformer, could remove overhead in oxc-linter
     pub(crate) global_deconflicting: bool,
 }
@@ -158,7 +157,7 @@ impl ScopeTree {
         Atom::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
     }
 
-    pub fn references(&self) -> &HashSet<Atom> {
+    pub fn references(&self) -> &FxHashSet<Atom> {
         &self.references
     }
 }
