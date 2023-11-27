@@ -193,7 +193,7 @@ pub trait DocBuilder<'a> {
 
 impl<'a> fmt::Display for Doc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{})", print_doc_to_debug(self))
+        write!(f, "{}", print_doc_to_debug(self))
     }
 }
 
