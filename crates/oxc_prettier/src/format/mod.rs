@@ -1874,7 +1874,7 @@ impl<'a> Format<'a> for Class<'a> {
 
 impl<'a> Format<'a> for ClassBody<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        class::print_class_body(p, self)
+        wrap!(p, self, ClassBody, { class::print_class_body(p, self) })
     }
 }
 
@@ -2034,19 +2034,21 @@ impl<'a> Format<'a> for StaticBlock<'a> {
 
 impl<'a> Format<'a> for MethodDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function::print_method(p, self)
+        wrap!(p, self, MethodDefinition, { function::print_method(p, self) })
     }
 }
 
 impl<'a> Format<'a> for PropertyDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        wrap!(p, self, PropertyDefinition, {
+            class::print_class_property(p, &class::ClassMemberish::PropertyDefinition(self))
+        })
     }
 }
 
 impl<'a> Format<'a> for AccessorProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        class::print_class_property(p, &class::ClassMemberish::AccessorProperty(self))
     }
 }
 

@@ -36,6 +36,8 @@ pub(super) fn print_block<'a>(
                     | AstKind::ForStatement(_)
                     | AstKind::WhileStatement(_)
                     | AstKind::DoWhileStatement(_)
+                    | AstKind::MethodDefinition(_)
+                    | AstKind::PropertyDefinition(_)
             ) || (matches!(parent, AstKind::CatchClause(_))
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))

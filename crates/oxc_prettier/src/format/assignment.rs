@@ -1,7 +1,8 @@
 use oxc_ast::{
     ast::{
-        AssignmentExpression, AssignmentTarget, AssignmentTargetPattern, AssignmentTargetProperty,
-        BindingPatternKind, Expression, Statement, VariableDeclarator,
+        AccessorProperty, AssignmentExpression, AssignmentTarget, AssignmentTargetPattern,
+        AssignmentTargetProperty, BindingPatternKind, Expression, PropertyDefinition, Statement,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -11,6 +12,8 @@ use crate::{
     doc::{Doc, DocBuilder, Group, IndentIfBreak},
     group, indent, line, ss, Format, Prettier,
 };
+
+use super::class::ClassMemberish;
 
 pub(super) fn print_assignment_expression<'a>(
     p: &mut Prettier<'a>,
@@ -41,12 +44,27 @@ pub(super) fn print_variable_declarator<'a>(
 }
 
 #[derive(Debug, Clone, Copy)]
-enum AssignmentLikeNode<'a, 'b> {
+pub(super) enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
+    PropertyDefinition(&'b PropertyDefinition<'a>),
+    AccessorProperty(&'b AccessorProperty<'a>),
 }
 
-fn print_assignment<'a>(
+impl<'a, 'b> From<ClassMemberish<'a, 'b>> for AssignmentLikeNode<'a, 'b> {
+    fn from(class_memberish: ClassMemberish<'a, 'b>) -> Self {
+        match class_memberish {
+            ClassMemberish::PropertyDefinition(property_def) => {
+                Self::PropertyDefinition(property_def)
+            }
+            ClassMemberish::AccessorProperty(accessor_prop) => {
+                Self::AccessorProperty(accessor_prop)
+            }
+        }
+    }
+}
+
+pub(super) fn print_assignment<'a>(
     p: &mut Prettier<'a>,
     node: AssignmentLikeNode<'a, '_>,
     left_doc: Doc<'a>,
@@ -239,6 +257,7 @@ fn is_complex_destructuring(expr: &AssignmentLikeNode) -> bool {
 
             false
         }
+        _ => false,
     }
 }
 
@@ -258,7 +277,9 @@ fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
             }
             false
         }
-        AssignmentLikeNode::AssignmentExpression(_) => false,
+        AssignmentLikeNode::AssignmentExpression(_)
+        | AssignmentLikeNode::PropertyDefinition(_)
+        | AssignmentLikeNode::AccessorProperty(_) => false,
     }
 }
 
