@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
-use lazy_static::lazy_static;
+// use lazy_static::lazy_static;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
-use regex::Regex;
+// use regex::Regex;
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -117,15 +117,15 @@ impl<'a> FunctionName<'a> {
 fn create_valid_identifier(
     span: Span,
     atom: Atom,
-    unicode_escapes: bool,
+    _unicode_escapes: bool,
 ) -> Option<BindingIdentifier> {
-    lazy_static! {
-        static ref UNICODE_NAME: Regex = Regex::new(r"[\uD800-\uDFFF]").unwrap();
-    }
+    // lazy_static! {
+    //     static ref UNICODE_NAME: Regex = Regex::new(r"(?u)[\u{D800}-\u{DFFF}]").unwrap();
+    // }
 
-    if !unicode_escapes && UNICODE_NAME.is_match(atom.as_str()) {
-        return None;
-    }
+    // if !unicode_escapes && UNICODE_NAME.is_match(atom.as_str()) {
+    //     return None;
+    // }
 
     // TODO: Better way?
     Some(if atom == "eval" || atom == "arguments" || atom == "null" {
