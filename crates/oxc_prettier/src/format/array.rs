@@ -82,6 +82,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
             (false, false)
         };
 
+    let id = p.next_id();
     let should_use_concise_formatting = array.is_concisely_printed();
     let trailing_comma_fn = |p: &Prettier<'a>| {
         if !can_have_trailing_comma {
@@ -89,7 +90,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
         } else if needs_forced_trailing_comma {
             ss!(",")
         } else if should_use_concise_formatting {
-            if_break!(p, ",")
+            if_break!(p, ",", "", Some(id))
         } else {
             ss!("")
         }
@@ -110,7 +111,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
     };
     parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
     let should_break = should_break(array);
-    Doc::Group(Group::new(parts, should_break))
+    Doc::Group(Group::new(parts, should_break).with_id(id))
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {

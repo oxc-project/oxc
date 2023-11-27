@@ -6,7 +6,7 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 use std::fmt;
 
-use crate::{array, line, ss};
+use crate::{array, line, ss, GroupId};
 
 #[derive(Debug)]
 pub enum Doc<'a> {
@@ -37,7 +37,7 @@ pub enum Doc<'a> {
     /// `lineSuffix` buffers docs passed to it and flushes them before any new line.
     LineSuffix(Vec<'a, Doc<'a>>),
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
-    IfBreak(Box<'a, Doc<'a>>),
+    IfBreak(IfBreak<'a>),
     /// This is an alternative type of group which behaves like text layout:
     /// it's going to add a break whenever the next element doesn't fit in the line anymore.
     /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
@@ -50,11 +50,16 @@ pub enum Doc<'a> {
 pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
+    pub id: Option<u32>,
 }
 
 impl<'a> Group<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
-        Self { contents, should_break }
+        Self { contents, should_break, id: None }
+    }
+    pub fn with_id(mut self, id: u32) -> Self {
+        self.id = Some(id);
+        self
     }
 }
 
@@ -88,6 +93,13 @@ impl<'a> Fill<'a> {
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
         self.parts
     }
+}
+
+#[derive(Debug)]
+pub struct IfBreak<'a> {
+    pub break_contents: Box<'a, Doc<'a>>,
+    pub flat_content: Box<'a, Doc<'a>>,
+    pub group_id: Option<GroupId>,
 }
 
 #[derive(Clone, Copy)]
@@ -190,6 +202,9 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str("], { shouldBreak: ");
             string.push_str(&group.should_break.to_string());
+            if let Some(id) = group.id {
+                string.push_str(&format!(", id: {id}"));
+            }
             string.push_str(" })");
         }
         Doc::Line => {
@@ -201,9 +216,15 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::Hardline => {
             string.push_str("hardline");
         }
-        Doc::IfBreak(break_contents) => {
-            string.push_str("ifBreak(");
-            string.push_str(&print_doc_to_debug(break_contents));
+        Doc::IfBreak(if_break) => {
+            string.push_str(&format!(
+                "ifBreak({}, {})",
+                print_doc_to_debug(&if_break.break_contents),
+                print_doc_to_debug(&if_break.flat_content)
+            ));
+            if let Some(group_id) = if_break.group_id {
+                string.push_str(&format!("{{ groupId: {group_id} }}"));
+            }
             string.push(')');
         }
         Doc::Fill(fill) => {

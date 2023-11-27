@@ -78,7 +78,7 @@ pub(super) fn print_binaryish_expression<'a>(
 
     if operator.is_binary() {
         parts.push(group!(p, ss!(operator.as_str()), Doc::Line, right.format(p)));
-        Doc::Group(Group { contents: parts, should_break: false })
+        Doc::Group(Group::new(parts, false))
     } else {
         parts.push(ss!(operator.as_str()));
         parts.push(Doc::Line);

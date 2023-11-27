@@ -57,7 +57,7 @@ pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
         }
 
         parts.push(Doc::Indent(indent_parts));
-        parts.push(if_break!(p, ","));
+        parts.push(if_break!(p, ",", "", None));
 
         if p.options.bracket_spacing {
             parts.push(Doc::Line);

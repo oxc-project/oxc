@@ -64,7 +64,7 @@ pub(super) fn print_call_expression<'a>(
 
     parts.push(print_call_expression_arguments(p, expression));
 
-    Doc::Group(Group { contents: parts, should_break: false })
+    Doc::Group(Group::new(parts, false))
 }
 
 fn print_call_expression_arguments<'a>(
@@ -100,7 +100,7 @@ fn print_call_expression_arguments<'a>(
     if should_break {
         parts_inner.insert(0, Doc::Softline);
         parts.push(Doc::Indent(parts_inner));
-        parts.push(if_break!(p, ","));
+        parts.push(if_break!(p, ",", "", None));
         parts.push(Doc::Softline);
     } else {
         parts.extend(parts_inner);
