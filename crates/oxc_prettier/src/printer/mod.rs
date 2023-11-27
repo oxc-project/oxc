@@ -9,7 +9,7 @@ use oxc_allocator::Allocator;
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    doc::{Doc, DocBuilder, Fill, IfBreak, Line},
+    doc::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
     GroupId, PrettierOptions,
 };
 
@@ -122,28 +122,24 @@ impl<'a> Printer<'a> {
     fn handle_group(&mut self, indent: Indent, mode: Mode, doc: Doc<'a>) {
         match mode {
             Mode::Flat => {
-                let Doc::Group(group) = doc else {
-                    return;
-                };
+                let Doc::Group(group) = doc else { unreachable!() };
                 self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
                     Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
                 }));
+
+                self.set_group_mode_from_last_cmd(group.id);
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = self.remaining_width();
-                let Doc::Group(group) = &doc else {
-                    return;
-                };
+                let Doc::Group(group) = &doc else { unreachable!() };
                 let should_break = group.should_break;
-                let id = group.id;
+                let group_id = group.id;
                 let cmd = Command::new(indent, Mode::Flat, doc);
                 if !should_break && self.fits(&cmd, remaining_width) {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
                 } else {
-                    let Doc::Group(group) = cmd.doc else {
-                        return;
-                    };
+                    let Doc::Group(group) = cmd.doc else { unreachable!() };
                     self.cmds.extend(
                         group
                             .contents
@@ -152,34 +148,29 @@ impl<'a> Printer<'a> {
                             .map(|doc| Command::new(indent, Mode::Break, doc)),
                     );
                 }
-
-                if let Some(id) = id {
-                    let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else { return };
-                    self.group_mode_map.insert(id, mode);
-                }
+                self.set_group_mode_from_last_cmd(group_id);
             }
         }
     }
 
-    fn handle_indent_if_break(
-        &mut self,
-        indent: Indent,
-        mode: Mode,
-        docs: oxc_allocator::Vec<'a, Doc<'a>>,
-    ) {
-        match mode {
-            Mode::Flat => {
-                self.cmds.extend(
-                    docs.into_iter().rev().map(|doc| Command::new(indent, Mode::Flat, doc)),
-                );
+    fn handle_indent_if_break(&mut self, indent: Indent, mode: Mode, doc: IndentIfBreak<'a>) {
+        let IndentIfBreak { contents, group_id } = doc;
+        let group_mode = group_id.map_or(Some(mode), |id| self.group_mode_map.get(&id).copied());
+
+        match group_mode {
+            Some(Mode::Flat) => {
+                self.cmds
+                    .extend(contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
             }
-            Mode::Break => {
+            Some(Mode::Break) => {
                 self.cmds.extend(
-                    docs.into_iter()
+                    contents
+                        .into_iter()
                         .rev()
-                        .map(|doc| Command::new(Indent::new(indent.length + 1), Mode::Break, doc)),
+                        .map(|doc| Command::new(Indent::new(indent.length + 1), mode, doc)),
                 );
             }
+            None => {}
         }
     }
 
@@ -341,6 +332,12 @@ impl<'a> Printer<'a> {
         }
     }
 
+    fn set_group_mode_from_last_cmd(&mut self, id: Option<GroupId>) {
+        let Some(id) = id else { return };
+        let Some(mode) = self.cmds.last().map(|cmd| cmd.mode) else { return };
+        self.group_mode_map.insert(id, mode);
+    }
+
     #[allow(clippy::cast_possible_wrap)]
     fn fits(&self, next: &Command<'a>, width: isize) -> bool {
         let mut remaining_width = width;
@@ -353,7 +350,9 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::IndentIfBreak(docs) | Doc::Indent(docs) | Doc::Array(docs) => {
+                Doc::IndentIfBreak(IndentIfBreak { contents: docs, .. })
+                | Doc::Indent(docs)
+                | Doc::Array(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
                         queue.push_front((mode, d));
@@ -425,7 +424,9 @@ impl<'a> Printer<'a> {
                 group.should_break
             }
             Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
-            Doc::Array(arr) | Doc::Indent(arr) | Doc::IndentIfBreak(arr) => {
+            Doc::Array(arr)
+            | Doc::Indent(arr)
+            | Doc::IndentIfBreak(IndentIfBreak { contents: arr, .. }) => {
                 arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
             }
             _ => false,

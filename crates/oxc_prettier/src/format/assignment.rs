@@ -8,7 +8,7 @@ use oxc_ast::{
 
 use crate::{
     array,
-    doc::{Doc, DocBuilder},
+    doc::{Doc, DocBuilder, Group, IndentIfBreak},
     group, indent, line, ss, Format, Prettier,
 };
 
@@ -67,14 +67,21 @@ fn print_assignment<'a>(
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
-            group!(
-                p,
-                group!(p, left_doc),
-                op,
-                group!(p, indent!(p, line!())),
-                // TODO: wrap `right_doc` in indent_if_break!() when we have support for group IDs.
-                right_doc
-            )
+            let group_id = p.next_id();
+
+            let after_op = {
+                let mut parts = p.vec();
+                parts.push(indent!(p, line!()));
+                Doc::Group(Group::new(parts, false).with_id(group_id))
+            };
+
+            let right_doc = {
+                let mut parts = p.vec();
+                parts.push(group!(p, right_doc));
+                Doc::IndentIfBreak(IndentIfBreak::new(parts).with_id(group_id))
+            };
+
+            group!(p, group!(p, left_doc), op, after_op, right_doc)
         }
         Layout::BreakLhs => {
             group!(p, left_doc, op, ss!(" "), group!(p, right_doc))
