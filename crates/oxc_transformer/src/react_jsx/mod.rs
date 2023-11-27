@@ -71,7 +71,6 @@ impl<'a> CreateVars<'a> for ReactJsx<'a> {
     fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
         unreachable!("This method would not be used")
     }
-    default_runtime: ReactJsxRuntime,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -202,9 +201,9 @@ impl<'a> ReactJsx<'a> {
             self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, id.into()));
         let root_scope_id = self.ctx.scopes().root_scope_id();
 
-        let uid = self.ctx().scopes().generate_uid_based_on_node(&identifier);
+        let uid = self.ctx.scopes().generate_uid_based_on_node(&identifier);
 
-        self.ctx().add_binding_with_scope(uid.clone(), root_scope_id);
+        self.ctx.add_binding_with_scope(uid.clone(), root_scope_id);
         self.import_binding_register.insert(name.to_string(), uid);
     }
 
