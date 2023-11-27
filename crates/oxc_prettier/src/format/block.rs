@@ -1,11 +1,10 @@
 use oxc_ast::{ast::*, AstKind};
 
+use super::{statement, Format};
 use crate::{
     doc::{Doc, DocBuilder},
     hardline, indent, ss, Prettier,
 };
-
-use super::statement;
 
 pub(super) fn print_block<'a>(
     p: &mut Prettier<'a>,
@@ -61,11 +60,11 @@ pub(super) fn print_block_body<'a>(
 
     if has_directives {
         if let Some(directives) = directives {
-            parts.extend(statement::print_statement_sequence(p, directives, false));
+            parts.extend(directives.iter().map(|d| d.format(p)));
         }
     }
 
-    if !stmts.is_empty() {
+    if has_body {
         parts.extend(statement::print_statement_sequence(p, stmts, remove_last_statement_hardline));
     }
 
