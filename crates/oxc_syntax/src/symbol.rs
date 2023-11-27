@@ -1,5 +1,3 @@
-#![allow(non_upper_case_globals)]
-
 use bitflags::bitflags;
 use oxc_index::define_index_type;
 
