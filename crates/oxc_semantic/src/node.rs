@@ -1,5 +1,3 @@
-#![allow(non_upper_case_globals)] // for bitflags
-
 use bitflags::bitflags;
 use oxc_ast::AstKind;
 use oxc_index::{define_index_type, IndexVec};
