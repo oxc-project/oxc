@@ -94,6 +94,7 @@ pub trait TestCase {
                 .map(get_options::<ReactJsxOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
+            function_name: options.get_plugin("transform-function-name").is_some(),
             logical_assignment_operators: options
                 .get_plugin("transform-logical-assignment-operators")
                 .is_some(),

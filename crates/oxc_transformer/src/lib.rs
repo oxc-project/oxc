@@ -138,6 +138,13 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
     }
 
+    fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_assignment_expression(expr));
+
+        self.visit_assignment_target(&mut expr.left);
+        self.visit_expression(&mut expr.right);
+    }
+
     fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
@@ -180,12 +187,21 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.visit_statements(&mut clause.body.body);
     }
 
+    fn visit_object_expression(&mut self, expr: &mut ObjectExpression<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_object_expression(expr));
+
+        for property in expr.properties.iter_mut() {
+            self.visit_object_property_kind(property);
+        }
+    }
+
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
         self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
 
         self.visit_property_key(&mut prop.key);
         self.visit_expression(&mut prop.value);
+
         if let Some(init) = &mut prop.init {
             self.visit_expression(init);
         }
@@ -201,15 +217,23 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
         self.typescript.as_mut().map(|t| t.transform_formal_parameters(params));
+
         for param in params.items.iter_mut() {
             self.visit_formal_parameter(param);
         }
+
         if let Some(rest) = &mut params.rest {
             self.visit_rest_element(rest);
         }
     }
 
-    fn visit_function(&mut self, func: &mut Function<'a>) {
-        self.es2015_function_name.as_mut().map(|t| t.transform_function(func));
+    fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_variable_declarator(declarator));
+
+        self.visit_binding_pattern(&mut declarator.id);
+
+        if let Some(init) = &mut declarator.init {
+            self.visit_expression(init);
+        }
     }
 }

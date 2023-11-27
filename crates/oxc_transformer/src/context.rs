@@ -6,7 +6,7 @@ use std::{
 
 use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
-use oxc_semantic::{AstNodes, ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
+use oxc_semantic::{ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
 use oxc_span::{Atom, SourceType};
 
 #[derive(Clone)]
