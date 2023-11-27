@@ -1,4 +1,4 @@
-Compatibility: 182/591 (30.80%)
+Compatibility: 194/591 (32.83%)
 
 # Failed
 
@@ -129,23 +129,10 @@ Compatibility: 182/591 (30.80%)
 
 ### classes
 * classes/assignment.js
-* classes/class-fields-features.js
 * classes/empty.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
-
-### classes/keyword-property
-* classes/keyword-property/async.js
-* classes/keyword-property/computed.js
-* classes/keyword-property/get.js
-* classes/keyword-property/private.js
-* classes/keyword-property/set.js
-* classes/keyword-property/static-async.js
-* classes/keyword-property/static-get.js
-* classes/keyword-property/static-set.js
-* classes/keyword-property/static-static.js
-* classes/keyword-property/static.js
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
@@ -420,7 +407,6 @@ Compatibility: 182/591 (30.80%)
 * no-semi/comments.js
 * no-semi/issue2006.js
 * no-semi/no-semi.js
-* no-semi/private-field.js
 
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js

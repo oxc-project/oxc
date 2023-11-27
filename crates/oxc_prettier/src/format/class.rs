@@ -34,12 +34,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         parts_inner.push(node.format(p));
 
         if !p.options.semi
-            && matches!(
-                node,
-                ClassElement::PropertyDefinition(_)
-                    | ClassElement::AccessorProperty(_)
-                    | ClassElement::TSAbstractPropertyDefinition(_)
-            )
+            && should_print_semicolon_after_class_property(node, class_body.body.get(i + 1))
         {
             parts_inner.push(ss!(";"));
         }
@@ -177,7 +172,97 @@ pub(super) fn print_class_property<'a>(
     if p.options.semi {
         let mut parts = p.vec();
         parts.push(result);
+        parts.push(ss!(";"));
         result = Doc::Array(parts);
     }
     result
+}
+
+fn should_print_semicolon_after_class_property<'a>(
+    node: &ClassElement<'a>,
+    next_node: Option<&ClassElement<'a>>,
+) -> bool {
+    if !node.computed() {
+        if let ClassElement::PropertyDefinition(property_definition) = node {
+            if property_definition.value.is_none() && property_definition.type_annotation.is_none()
+            {
+                if let Some(key) = property_definition.key.static_name() {
+                    if key == "static" || key == "get" || key == "set" {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    let Some(next_node) = next_node else {
+        return false;
+    };
+
+    if next_node.r#static() || next_node.accessibility().is_some() {
+        return false;
+    }
+
+    if !next_node.computed() {
+        if let Some(prop_key) = next_node.property_key() {
+            if let Some(prop_key) = prop_key.static_name() {
+                if prop_key == "in" || prop_key == "instanceof" {
+                    return true;
+                }
+            }
+        }
+    }
+
+    if !next_node.r#static() {
+        if let ClassElement::PropertyDefinition(def) = next_node {
+            if !def.declare {
+                return true;
+            }
+        }
+    }
+
+    match next_node {
+        ClassElement::PropertyDefinition(property_definition) => property_definition.computed,
+        ClassElement::TSAbstractPropertyDefinition(property_definition) => {
+            property_definition.0.property_definition.computed
+        }
+        ClassElement::StaticBlock(_) => false,
+        ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => true,
+        ClassElement::MethodDefinition(method_definition) => {
+            let is_async = method_definition.value.r#async;
+
+            if is_async
+                || method_definition.kind == MethodDefinitionKind::Get
+                || method_definition.kind == MethodDefinitionKind::Set
+            {
+                return false;
+            }
+
+            let is_generator = method_definition.value.generator;
+
+            if method_definition.computed || is_generator {
+                return true;
+            }
+
+            false
+        }
+        ClassElement::TSAbstractMethodDefinition(ts_abstract_method_definition) => {
+            let is_async = ts_abstract_method_definition.method_definition.value.r#async;
+
+            if is_async
+                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Get
+                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Set
+            {
+                return false;
+            }
+
+            let is_generator = ts_abstract_method_definition.method_definition.value.generator;
+
+            if ts_abstract_method_definition.method_definition.computed || is_generator {
+                return true;
+            }
+
+            false
+        }
+    }
 }
