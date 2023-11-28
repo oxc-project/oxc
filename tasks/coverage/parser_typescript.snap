@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5195/5199 (99.92%)
-Positive Passed: 5188/5199 (99.79%)
-Negative Passed: 1023/4855 (21.07%)
+AST Parsed     : 5201/5205 (99.92%)
+Positive Passed: 5194/5205 (99.79%)
+Negative Passed: 1023/4859 (21.05%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -34,6 +34,7 @@ Expect Syntax Error: "compiler/accessInstanceMemberFromStaticMethod01.ts"
 Expect Syntax Error: "compiler/accessStaticMemberFromInstanceMethod01.ts"
 Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
 Expect Syntax Error: "compiler/accessorDeclarationEmitVisibilityErrors.ts"
+Expect Syntax Error: "compiler/accessorInferredReturnTypeErrorInReturnStatement.ts"
 Expect Syntax Error: "compiler/accessorParameterAccessibilityModifier.ts"
 Expect Syntax Error: "compiler/accessorWithInitializer.ts"
 Expect Syntax Error: "compiler/accessorWithRestParam.ts"
@@ -514,6 +515,7 @@ Expect Syntax Error: "compiler/differentTypesWithSameName.ts"
 Expect Syntax Error: "compiler/discriminateWithMissingProperty.ts"
 Expect Syntax Error: "compiler/discriminatedUnionErrorMessage.ts"
 Expect Syntax Error: "compiler/dissallowSymbolAsWeakType.ts"
+Expect Syntax Error: "compiler/distributiveConditionalTypeConstraints.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes2.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes4.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes5.ts"
@@ -698,6 +700,7 @@ Expect Syntax Error: "compiler/extendsClauseAlreadySeen2.ts"
 Expect Syntax Error: "compiler/externSemantics.ts"
 Expect Syntax Error: "compiler/externSyntax.ts"
 Expect Syntax Error: "compiler/extractInferenceImprovement.ts"
+Expect Syntax Error: "compiler/fakeInfinity1.ts"
 Expect Syntax Error: "compiler/fallFromLastCase2.ts"
 Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
 Expect Syntax Error: "compiler/fieldAndGetterWithSameName.ts"
@@ -2190,6 +2193,7 @@ Expect Syntax Error: "conformance/controlFlow/controlFlowIterationErrors.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowIterationErrorsAsync.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowNullishCoalesce.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain.ts"
+Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain3.tsx"
 Expect Syntax Error: "conformance/controlFlow/controlFlowTypeofObject.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowWhileStatement.ts"
 Expect Syntax Error: "conformance/controlFlow/dependentDestructuredVariables.ts"
