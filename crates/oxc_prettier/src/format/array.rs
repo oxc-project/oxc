@@ -182,6 +182,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
                 parts.push(line!());
+                parts.push(ss!("..."));
                 parts.push(rest.format(p));
             }
         }
