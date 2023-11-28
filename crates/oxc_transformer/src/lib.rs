@@ -139,6 +139,16 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
     }
 
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+        self.typescript.as_mut().map(|t| t.transform_statement(stmt));
+        self.visit_statement_match(stmt);
+    }
+
+    fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
+        self.visit_declaration_match(decl);
+        self.typescript.as_mut().map(|t| t.transform_declaration(decl));
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
         self.react_jsx.as_mut().map(|t| t.transform_expression(expr));

@@ -1922,6 +1922,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "rustc-hash",
  "serde",
 ]
 

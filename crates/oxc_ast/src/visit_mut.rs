@@ -966,6 +966,10 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
+        self.visit_declaration_match(decl);
+    }
+
+    fn visit_declaration_match(&mut self, decl: &mut Declaration<'a>) {
         match decl {
             Declaration::VariableDeclaration(decl) => self.visit_variable_declaration(decl),
             Declaration::FunctionDeclaration(func) => self.visit_function(func),
