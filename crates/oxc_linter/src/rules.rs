@@ -171,6 +171,7 @@ mod unicorn {
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_await;
+    pub mod no_unreadable_iife;
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
@@ -347,6 +348,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_this_assignment,
     unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
+    unicorn::no_unreadable_iife,
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_length_check,
     unicorn::no_useless_promise_resolve_reject,
