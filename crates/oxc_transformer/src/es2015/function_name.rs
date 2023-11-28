@@ -4,9 +4,12 @@ use std::rc::Rc;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
+use oxc_syntax::unicode_id_start::is_id_continue;
 // use regex::Regex;
 
+use crate::context::TransformerCtx;
 use crate::options::{TransformOptions, TransformTarget};
+use crate::utils::is_valid_identifier;
 
 /// ES2015: Function Name
 ///
@@ -15,13 +18,19 @@ use crate::options::{TransformOptions, TransformTarget};
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-function-name>
 pub struct FunctionName<'a> {
     ast: Rc<AstBuilder<'a>>,
+    ctx: TransformerCtx<'a>,
     unicode_escapes: bool,
 }
 
 impl<'a> FunctionName<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        ctx: TransformerCtx<'a>,
+        options: &TransformOptions,
+    ) -> Option<Self> {
         (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
             ast,
+            ctx,
             // TODO hook up the the plugin
             unicode_escapes: true,
         })
@@ -75,6 +84,17 @@ impl<'a> FunctionName<'a> {
         let Some(init) = &mut decl.init else { return };
 
         if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
+            // let has_binding = {
+            //     let s = id
+            //         .symbol_id
+            //         .get()
+            //         .map(|symbol_id| self.ctx.symbols().get_scope_id(symbol_id))
+            //         .map(|scope_id| self.ctx.scopes().get_binding(scope_id, &id.name))
+            //         .map(|binding| binding);
+
+            //     false
+            // };
+
             self.transform_expression(init, id);
         };
     }
@@ -84,6 +104,10 @@ impl<'a> FunctionName<'a> {
         // TODO check local bindings
         // () => {}
         if let Expression::ArrowExpression(arrow) = expr {
+            // let scopes = self.ctx.scopes();
+
+            // for ancestors in scopes.ancestors(scope_id) {}
+
             let arrow = self.ast.copy(&**arrow);
 
             let func = self.ast.function_expression(self.ast.function(
@@ -114,6 +138,7 @@ impl<'a> FunctionName<'a> {
 
 // https://github.com/babel/babel/blob/main/packages/babel-helper-function-name/src/index.ts
 // https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toBindingIdentifierName.ts#L3
+// https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toIdentifier.ts#L4
 fn create_valid_identifier(
     span: Span,
     atom: Atom,
@@ -127,10 +152,17 @@ fn create_valid_identifier(
     //     return None;
     // }
 
-    // TODO: Better way?
-    Some(if atom == "eval" || atom == "arguments" || atom == "null" {
-        BindingIdentifier::new(span, Atom::from(format!("_{}", atom.as_str())))
+    let id = Atom::from(
+        atom.chars().map(|c| if is_id_continue(c) { c } else { '-' }).collect::<String>(),
+    );
+
+    let id = if id == "" {
+        Atom::from("_")
+    } else if id == "eval" || id == "arguments" || id == "null" || !is_valid_identifier(&id, true) {
+        Atom::from(format!("_{}", id))
     } else {
-        BindingIdentifier::new(span, atom)
-    })
+        atom
+    };
+
+    Some(BindingIdentifier::new(span, id))
 }
