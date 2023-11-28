@@ -67,6 +67,8 @@ fn test() {
         // These await expression need parenthesized, but rarely used
         (r"new (await promiseReturnsAClass)", None),
         (r"(await promiseReturnsAFunction)()", None),
+        // typescript
+        (r"async function foo () {return (await promise) as string;}", None),
     ];
 
     let fail = vec![
@@ -93,6 +95,9 @@ fn test() {
         (r"const [firstElementOfProperty] = (await getObject()).firstElementOfProperty", None),
         (r"firstElement = (await getArray())[0]", None),
         (r"property = (await getArray()).property", None),
+        // typescript
+        (r"const foo: Type = (await promise)[0]", None),
+        (r"const foo: Type | A = (await promise).foo", None),
     ];
 
     Tester::new(NoAwaitExpressionMember::NAME, pass, fail).test_and_snapshot();

@@ -163,4 +163,18 @@ expression: no_await_expression_member
    ╰────
   help: Do not access a member directly from an await expression.
 
+  ⚠ eslint(no-await-expression-member): Disallow member access from await expression
+   ╭─[no_await_expression_member.tsx:1:1]
+ 1 │ const foo: Type = (await promise)[0]
+   ·                   ──────────────────
+   ╰────
+  help: Do not access a member directly from an await expression.
+
+  ⚠ eslint(no-await-expression-member): Disallow member access from await expression
+   ╭─[no_await_expression_member.tsx:1:1]
+ 1 │ const foo: Type | A = (await promise).foo
+   ·                       ───────────────────
+   ╰────
+  help: Do not access a member directly from an await expression.
+
 
