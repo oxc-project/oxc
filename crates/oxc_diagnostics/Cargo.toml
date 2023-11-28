@@ -18,9 +18,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-thiserror  = { workspace = true }
-miette     = { workspace = true }
-serde      = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+miette    = { workspace = true }
+serde     = { workspace = true, features = ["derive"] }
 
 unicode-width = "0.1.11"
 owo-colors    = { version = "3.5.0" }
