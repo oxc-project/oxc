@@ -48,7 +48,7 @@ pub struct Oxc {
     codegen_text: String,
     formatted_text: String,
     prettier_formatted_text: String,
-    prettier_ir: String,
+    prettier_ir_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -94,9 +94,9 @@ impl Oxc {
         self.ir.clone()
     }
 
-    #[wasm_bindgen(getter = prettierIr)]
-    pub fn prettier_ir(&self) -> String {
-        self.prettier_ir.clone()
+    #[wasm_bindgen(getter = prettierIrText)]
+    pub fn prettier_ir_text(&self) -> String {
+        self.prettier_ir_text.clone()
     }
 
     #[wasm_bindgen(getter = prettierFormattedText)]
@@ -191,17 +191,6 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        let prettier_doc = {
-            let ret = Parser::new(&allocator, source_text, source_type)
-                .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
-                .parse();
-            Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
-                .doc(&ret.program)
-        };
-
-        self.prettier_ir = prettier_doc.to_string();
-
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)
                 .with_trivias(ret.trivias)
@@ -240,6 +229,22 @@ impl Oxc {
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
                     .build(&ret.program);
             self.prettier_formatted_text = printed;
+        }
+
+        if run_options.prettier_ir() {
+            let ret = Parser::new(&allocator, source_text, source_type)
+                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .preserve_parens(false)
+                .parse();
+            let prettier_doc =
+                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+                    .doc(&ret.program)
+                    .to_string();
+            self.prettier_ir_text = {
+                let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
+                Prettier::new(&allocator, &prettier_doc, ret.trivias, PrettierOptions::default())
+                    .build(&ret.program)
+            };
         }
 
         if run_options.type_check() {
