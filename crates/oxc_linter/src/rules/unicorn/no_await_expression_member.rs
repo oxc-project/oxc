@@ -9,8 +9,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-await-expression-member): Disallow member access from await expression")]
-#[diagnostic(severity(warning), help("Do not access a member directly from an await expression."))]
+#[error("eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression")]
+#[diagnostic(severity(warning), help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable."))]
 struct NoAwaitExpressionMemberDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
