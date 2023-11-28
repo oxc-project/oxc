@@ -7,8 +7,7 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct ReactJsxOptions {
     /// Decides which runtime to use.
-    #[serde(default)]
-    pub runtime: ReactJsxRuntime,
+    pub runtime: Option<ReactJsxRuntimeOption>,
     /// Toggles whether or not to throw an error if an XML namespaced tag name is used. e.g. `<f:image />`
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
     #[serde(default = "default_throw_if_namespace")]
@@ -56,7 +55,7 @@ fn default_pragma_frag() -> Cow<'static, str> {
 impl Default for ReactJsxOptions {
     fn default() -> Self {
         Self {
-            runtime: ReactJsxRuntime::Automatic,
+            runtime: None,
             throw_if_namespace: default_throw_if_namespace(),
             import_source: default_import_source(),
             pragma: default_pragma(),
@@ -67,13 +66,21 @@ impl Default for ReactJsxOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum ReactJsxRuntimeOption {
+    Valid(ReactJsxRuntime),
+    // The order matters. The most permissive variant (i.e. the catch-all)
+    // should be tried last during deserialization.
+    Unknown(String),
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ReactJsxRuntime {
     /// Does not automatically import anything.
     Classic,
     /// Auto imports the functions that JSX transpiles to (default).
-    #[default]
     Automatic,
 }
 
@@ -109,11 +116,11 @@ impl ReactJsxOptions {
             // read jsxRuntime
             match comment.strip_prefix("jsxRuntime").map(str::trim) {
                 Some("classic") => {
-                    self.runtime = ReactJsxRuntime::Classic;
+                    self.runtime = Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic));
                     continue;
                 }
                 Some("automatic") => {
-                    self.runtime = ReactJsxRuntime::Automatic;
+                    self.runtime = Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Automatic));
                     continue;
                 }
                 _ => {}
