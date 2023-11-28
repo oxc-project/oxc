@@ -39,7 +39,6 @@ oxc_type_synthesis = { workspace = true }
 glob               = { workspace = true }
 lazy_static        = { workspace = true }
 regex              = { workspace = true }
-serde              = { workspace = true, features = ["derive"] }
 serde_json         = { workspace = true }
 
 # TODO temp, for type check output, replace with Miette

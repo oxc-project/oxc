@@ -1,6 +1,5 @@
 #![cfg(not(miri))] // Miri does not support custom allocators
 
-mod reporter;
 
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]

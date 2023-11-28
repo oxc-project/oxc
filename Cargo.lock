@@ -1541,7 +1541,6 @@ dependencies = [
  "pretty_assertions",
  "rayon",
  "regex",
- "serde",
  "serde_json",
  "tracing-subscriber",
 ]
@@ -1598,7 +1597,6 @@ dependencies = [
  "miette",
  "owo-colors",
  "serde",
- "serde_json",
  "textwrap",
  "thiserror",
  "unicode-width",
