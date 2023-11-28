@@ -155,10 +155,14 @@ impl IsolatedLintHandler {
         Self::process_diagnostics(&rx_error)
     }
 
-    pub fn run_single(&self, path: &Path) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(
+        &self,
+        path: &Path,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         if Self::is_wanted_ext(path) {
             Some(
-                Self::lint_path(&self.linter, path, Arc::clone(&self.plugin)).map_or(
+                Self::lint_path(&self.linter, path, Arc::clone(&self.plugin), content).map_or(
                     vec![],
                     |(p, errors)| {
                         errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect()
@@ -201,7 +205,7 @@ impl IsolatedLintHandler {
                 let linter = Arc::clone(&linter);
                 let plugin = Arc::clone(&plugin);
                 rayon::spawn(move || {
-                    if let Some(diagnostics) = Self::lint_path(&linter, &path, plugin) {
+                    if let Some(diagnostics) = Self::lint_path(&linter, &path, plugin, None) {
                         tx_error.send(diagnostics).unwrap();
                     }
                     drop(tx_error);
@@ -228,9 +232,12 @@ impl IsolatedLintHandler {
         linter: &Linter,
         path: &Path,
         plugin: Plugin,
+        source_text: Option<String>,
     ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
-        let source_text =
-            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"));
+        let source_text = source_text.unwrap_or_else(|| {
+            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"))
+        });
+
         let allocator = Allocator::default();
         let source_type =
             SourceType::from_path(path).unwrap_or_else(|_| panic!("Incorrect {path:?}"));
@@ -379,7 +386,12 @@ impl ServerLinter {
         .run_full()
     }
 
-    pub fn run_single(&self, root_uri: &Url, uri: &Url) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(
+        &self,
+        root_uri: &Url,
+        uri: &Url,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
@@ -393,6 +405,6 @@ impl ServerLinter {
             Arc::clone(&self.linter),
             Arc::clone(&self.plugin),
         )
-        .run_single(&uri.to_file_path().unwrap())
+        .run_single(&uri.to_file_path().unwrap(), content)
     }
 }

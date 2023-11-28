@@ -148,6 +148,11 @@ impl<'a> Expression<'a> {
         matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
     }
 
+    /// Determines whether the given numeral literal's raw value is exactly val
+    pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
+        matches!(self, Self::NumberLiteral(lit) if lit.raw == val)
+    }
+
     /// Determines whether the given expr evaluate to `undefined`
     pub fn evaluate_to_undefined(&self) -> bool {
         self.is_undefined() || self.is_void()
@@ -1716,6 +1721,16 @@ impl<'a> ClassElement<'a> {
             Self::AccessorProperty(def) => def.computed,
             Self::TSAbstractMethodDefinition(def) => def.method_definition.computed,
             Self::TSAbstractPropertyDefinition(def) => def.property_definition.computed,
+        }
+    }
+
+    pub fn accessibility(&self) -> Option<TSAccessibility> {
+        match self {
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
+            Self::MethodDefinition(def) => def.accessibility,
+            Self::PropertyDefinition(def) => def.accessibility,
+            Self::TSAbstractMethodDefinition(def) => def.method_definition.accessibility,
+            Self::TSAbstractPropertyDefinition(def) => def.property_definition.accessibility,
         }
     }
 

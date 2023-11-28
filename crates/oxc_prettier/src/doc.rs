@@ -6,7 +6,7 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 use std::fmt;
 
-use crate::{array, line, ss};
+use crate::{array, line, ss, GroupId};
 
 #[derive(Debug)]
 pub enum Doc<'a> {
@@ -15,7 +15,7 @@ pub enum Doc<'a> {
     Array(Vec<'a, Doc<'a>>),
     /// Increase the level of indentation.
     Indent(Vec<'a, Doc<'a>>),
-    IndentIfBreak(Vec<'a, Doc<'a>>),
+    IndentIfBreak(IndentIfBreak<'a>),
     /// Mark a group of items which the printer should try to fit on one line.
     /// This is the basic command to tell the printer when to break.
     /// Groups are usually nested, and the printer will try to fit everything on one line,
@@ -25,34 +25,83 @@ pub enum Doc<'a> {
     /// Specify a line break.
     /// If an expression fits on one line, the line break will be replaced with a space.
     /// Line breaks always indent the next line with the current level of indentation.
-    Line,
-    /// Specify a line break.
-    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-    Softline,
-    /// Specify a line break that is **always** included in the output,
-    /// no matter if the expression fits on one line or not.
-    Hardline,
+    Line(Line),
     /// This is used to implement trailing comments.
     /// It's not practical to constantly check where the line ends to avoid accidentally printing some code at the end of a comment.
     /// `lineSuffix` buffers docs passed to it and flushes them before any new line.
     LineSuffix(Vec<'a, Doc<'a>>),
     /// Print something if the current `group` or the current element of `fill` breaks and something else if it doesn't.
-    IfBreak(Box<'a, Doc<'a>>),
+    IfBreak(IfBreak<'a>),
     /// This is an alternative type of group which behaves like text layout:
     /// it's going to add a break whenever the next element doesn't fit in the line anymore.
     /// The difference with `group` is that it's not going to break all the separators, just the ones that are at the end of lines.
     Fill(Fill<'a>),
+    /// Include this anywhere to force all parent groups to break.
+    BreakParent,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Line {
+    pub hard: bool,
+    pub soft: bool,
+    pub literal: bool,
+}
+
+impl Line {
+    /// Specify a line break.
+    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
+    pub fn softline() -> Self {
+        Self { soft: true, ..Self::default() }
+    }
+
+    /// Specify a line break that is **always** included in the output,
+    /// no matter if the expression fits on one line or not.
+    pub fn hardline() -> Self {
+        Self { hard: true, ..Self::default() }
+    }
+
+    pub fn literal_line() -> Self {
+        Self { literal: true, ..Self::default() }
+    }
+
+    pub fn hardline_without_break_parent() -> Self {
+        Self { hard: true, ..Self::default() }
+    }
+
+    pub fn literal_line_without_break_parent() -> Self {
+        Self { hard: true, literal: true, ..Self::default() }
+    }
 }
 
 #[derive(Debug)]
 pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
+    pub id: Option<GroupId>,
 }
 
 impl<'a> Group<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
-        Self { contents, should_break }
+        Self { contents, should_break, id: None }
+    }
+    pub fn with_id(mut self, id: GroupId) -> Self {
+        self.id = Some(id);
+        self
+    }
+}
+#[derive(Debug)]
+pub struct IndentIfBreak<'a> {
+    pub contents: Vec<'a, Doc<'a>>,
+    pub group_id: Option<GroupId>,
+}
+
+impl<'a> IndentIfBreak<'a> {
+    pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
+        Self { contents, group_id: None }
+    }
+    pub fn with_id(mut self, id: GroupId) -> Self {
+        self.group_id = Some(id);
+        self
     }
 }
 
@@ -65,11 +114,13 @@ impl<'a> Fill<'a> {
     pub fn new(docs: Vec<'a, Doc<'a>>) -> Self {
         Self { parts: docs }
     }
+
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
         let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         (content, whitespace)
     }
+
     pub fn dequeue(&mut self) -> Option<Doc<'a>> {
         if self.parts.len() > 0 {
             Some(self.parts.remove(0))
@@ -80,12 +131,21 @@ impl<'a> Fill<'a> {
     pub fn enqueue(&mut self, doc: Doc<'a>) {
         self.parts.insert(0, doc);
     }
+
     pub fn parts(&self) -> &[Doc<'a>] {
         &self.parts
     }
+
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
         self.parts
     }
+}
+
+#[derive(Debug)]
+pub struct IfBreak<'a> {
+    pub break_contents: Box<'a, Doc<'a>>,
+    pub flat_content: Box<'a, Doc<'a>>,
+    pub group_id: Option<GroupId>,
 }
 
 #[derive(Clone, Copy)]
@@ -120,8 +180,8 @@ pub trait DocBuilder<'a> {
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
                 parts.push(match separator {
-                    Separator::Softline => Doc::Softline,
-                    Separator::Hardline => Doc::Hardline,
+                    Separator::Softline => Doc::Line(Line::softline()),
+                    Separator::Hardline => Doc::Line(Line::hardline()),
                     Separator::CommaLine => array![self, ss!(","), line!()],
                 });
             }
@@ -133,7 +193,7 @@ pub trait DocBuilder<'a> {
 
 impl<'a> fmt::Display for Doc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{})", print_doc_to_debug(self))
+        write!(f, "{}", print_doc_to_debug(self))
     }
 }
 
@@ -167,16 +227,21 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str("])");
         }
-        Doc::IndentIfBreak(contents) => {
+        Doc::IndentIfBreak(indent_if_break) => {
             string.push_str("indentIfBreak(");
             string.push_str("[\n");
-            for (idx, doc) in contents.iter().enumerate() {
+            for (idx, doc) in indent_if_break.contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != contents.len() - 1 {
+                if idx != indent_if_break.contents.len() - 1 {
                     string.push_str(", ");
                 }
             }
-            string.push_str("]) \n");
+
+            if let Some(id) = indent_if_break.group_id {
+                string.push_str(&format!(", {{id: {id}}}"));
+            }
+
+            string.push_str("])");
         }
         Doc::Group(group) => {
             string.push_str("group([\n");
@@ -188,20 +253,29 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str("], { shouldBreak: ");
             string.push_str(&group.should_break.to_string());
+            if let Some(id) = group.id {
+                string.push_str(&format!(", id: {id}"));
+            }
             string.push_str(" })");
         }
-        Doc::Line => {
-            string.push_str("line");
+        Doc::Line(Line { soft, hard, .. }) => {
+            if *soft {
+                string.push_str("softline");
+            } else if *hard {
+                string.push_str("hardline");
+            } else {
+                string.push_str("line");
+            }
         }
-        Doc::Softline => {
-            string.push_str("softline");
-        }
-        Doc::Hardline => {
-            string.push_str("hardline");
-        }
-        Doc::IfBreak(break_contents) => {
-            string.push_str("ifBreak(");
-            string.push_str(&print_doc_to_debug(break_contents));
+        Doc::IfBreak(if_break) => {
+            string.push_str(&format!(
+                "ifBreak({}, {}",
+                print_doc_to_debug(&if_break.break_contents),
+                print_doc_to_debug(&if_break.flat_content)
+            ));
+            if let Some(group_id) = if_break.group_id {
+                string.push_str(&format!(", {{ groupId: {group_id} }}"));
+            }
             string.push(')');
         }
         Doc::Fill(fill) => {
@@ -224,6 +298,9 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                 }
             }
             string.push(')');
+        }
+        Doc::BreakParent => {
+            string.push_str("BreakParent");
         }
     }
 

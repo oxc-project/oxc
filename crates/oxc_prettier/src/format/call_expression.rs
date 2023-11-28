@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     doc::{Doc, DocBuilder, Group},
-    if_break, ss, Format, Prettier,
+    if_break, line, softline, ss, Format, Prettier,
 };
 
 pub(super) enum CallExpressionLike<'a, 'b> {
@@ -64,7 +64,7 @@ pub(super) fn print_call_expression<'a>(
 
     parts.push(print_call_expression_arguments(p, expression));
 
-    Doc::Group(Group { contents: parts, should_break: false })
+    Doc::Group(Group::new(parts, false))
 }
 
 fn print_call_expression_arguments<'a>(
@@ -73,8 +73,6 @@ fn print_call_expression_arguments<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("("));
-
-    let mut parts_inner = p.vec();
 
     let callee = expression.callee();
     let arguments = expression.arguments();
@@ -86,7 +84,11 @@ fn print_call_expression_arguments<'a>(
 
     if arguments.is_empty() {
         parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
+        parts.push(ss!(")"));
+        return Doc::Array(parts);
     }
+
+    let mut parts_inner = p.vec();
 
     for (i, element) in arguments.iter().enumerate() {
         let doc = element.format(p);
@@ -94,14 +96,14 @@ fn print_call_expression_arguments<'a>(
 
         if i < arguments.len() - 1 {
             parts_inner.push(ss!(","));
-            parts_inner.push(Doc::Line);
+            parts_inner.push(line!());
         }
     }
     if should_break {
-        parts_inner.insert(0, Doc::Softline);
+        parts_inner.insert(0, softline!());
         parts.push(Doc::Indent(parts_inner));
-        parts.push(if_break!(p, ","));
-        parts.push(Doc::Softline);
+        parts.push(if_break!(p, ",", "", None));
+        parts.push(softline!());
     } else {
         parts.extend(parts_inner);
     }

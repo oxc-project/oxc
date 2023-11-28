@@ -3,7 +3,7 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
     doc::{Doc, DocBuilder, Group},
-    group, ss, Format, Prettier,
+    group, line, ss, Format, Prettier,
 };
 
 pub enum BinaryishLeft<'a, 'b> {
@@ -77,11 +77,11 @@ pub(super) fn print_binaryish_expression<'a>(
     parts.push(ss!(" "));
 
     if operator.is_binary() {
-        parts.push(group!(p, ss!(operator.as_str()), Doc::Line, right.format(p)));
-        Doc::Group(Group { contents: parts, should_break: false })
+        parts.push(group!(p, ss!(operator.as_str()), line!(), right.format(p)));
+        Doc::Group(Group::new(parts, false))
     } else {
         parts.push(ss!(operator.as_str()));
-        parts.push(Doc::Line);
+        parts.push(line!());
         parts.push(right.format(p));
         Doc::Array(parts)
     }

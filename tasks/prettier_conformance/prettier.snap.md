@@ -1,22 +1,17 @@
-Compatibility: 161/591 (27.24%)
+Compatibility: 194/591 (32.83%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
 * arrays/issue-10159.js
-* arrays/nested.js
 * arrays/numbers-in-args.js
-* arrays/numbers-in-assignment.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
-* arrays/numbers-trailing-comma.js
 * arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
-* arrays/numbers1.js
 * arrays/numbers2.js
-* arrays/numbers3.js
 * arrays/preserve_empty_lines.js
 * arrays/tuple-and-record.js
 
@@ -57,30 +52,22 @@ Compatibility: 161/591 (27.24%)
 * assignment/call-with-template.js
 * assignment/chain-two-segments.js
 * assignment/chain.js
-* assignment/destructuring-array.js
-* assignment/destructuring.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
 * assignment/issue-15534.js
-* assignment/issue-1966.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-3819.js
-* assignment/issue-5610.js
 * assignment/issue-6922.js
-* assignment/issue-7091.js
 * assignment/issue-7572.js
-* assignment/issue-8218.js
 * assignment/lone-arg.js
 * assignment/sequence.js
-* assignment/unary.js
 
 ### assignment-comments
 * assignment-comments/call.js
 * assignment-comments/call2.js
 * assignment-comments/function.js
 * assignment-comments/identifier.js
-* assignment-comments/number.js
 * assignment-comments/string.js
 
 ### async
@@ -139,28 +126,13 @@ Compatibility: 161/591 (27.24%)
 
 ### class-static-block
 * class-static-block/class-static-block.js
-* class-static-block/with-line-breaks.js
 
 ### classes
-* classes/asi.js
 * classes/assignment.js
-* classes/class-fields-features.js
 * classes/empty.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
-
-### classes/keyword-property
-* classes/keyword-property/async.js
-* classes/keyword-property/computed.js
-* classes/keyword-property/get.js
-* classes/keyword-property/private.js
-* classes/keyword-property/set.js
-* classes/keyword-property/static-async.js
-* classes/keyword-property/static-get.js
-* classes/keyword-property/static-set.js
-* classes/keyword-property/static-static.js
-* classes/keyword-property/static.js
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
@@ -186,7 +158,6 @@ Compatibility: 161/591 (27.24%)
 * comments/empty-statements.js
 * comments/export-and-import.js
 * comments/export.js
-* comments/first-line.js
 * comments/function-declaration.js
 * comments/if.js
 * comments/issue-3532.js
@@ -228,7 +199,6 @@ Compatibility: 161/591 (27.24%)
 * comments-closure-typecast/comment-in-the-middle.js
 * comments-closure-typecast/comment-placement.js
 * comments-closure-typecast/extra-spaces-and-asterisks.js
-* comments-closure-typecast/iife-issue-5850-isolated.js
 * comments-closure-typecast/iife.js
 * comments-closure-typecast/issue-4124.js
 * comments-closure-typecast/issue-8045.js
@@ -245,9 +215,6 @@ Compatibility: 161/591 (27.24%)
 
 ### comments-pipeline-own-line
 * comments-pipeline-own-line/pipeline_own_line.js
-
-### computed-props
-* computed-props/classes.js
 
 ### conditional
 * conditional/comments.js
@@ -284,9 +251,6 @@ Compatibility: 161/591 (27.24%)
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
 * empty-paren-comment/empty_paren_comment.js
-
-### empty-statement
-* empty-statement/no-newline.js
 
 ### end-of-line
 * end-of-line/example.js
@@ -443,7 +407,6 @@ Compatibility: 161/591 (27.24%)
 * no-semi/comments.js
 * no-semi/issue2006.js
 * no-semi/no-semi.js
-* no-semi/private-field.js
 
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
@@ -473,7 +436,6 @@ Compatibility: 161/591 (27.24%)
 ### optional-chaining
 * optional-chaining/chaining.js
 * optional-chaining/comments.js
-* optional-chaining/eval.js
 
 ### optional-chaining-assignment
 * optional-chaining-assignment/invalid-destructuring-arr.js
@@ -610,9 +572,6 @@ Compatibility: 161/591 (27.24%)
 ### try
 * try/catch.js
 * try/try.js
-
-### unary
-* unary/object.js
 
 ### unary-expression
 * unary-expression/comments.js
