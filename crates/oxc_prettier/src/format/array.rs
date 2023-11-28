@@ -84,6 +84,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
 
     let id = p.next_id();
     let should_use_concise_formatting = array.is_concisely_printed();
+
     let trailing_comma_fn = |p: &Prettier<'a>| {
         if !can_have_trailing_comma {
             ss!("")
@@ -92,7 +93,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
         } else if should_use_concise_formatting {
             if_break!(p, ",", "", Some(id))
         } else {
-            ss!("")
+            if_break!(p, ",", "", None)
         }
     };
 
@@ -109,7 +110,10 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
     } else {
         indent!(p, softline!(), elements)
     };
-    parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
+    parts.push(ss!("["));
+    parts.push(parts_inner);
+    parts.push(softline!());
+    parts.push(ss!("]"));
     let should_break = should_break(array);
     Doc::Group(Group::new(parts, should_break).with_id(id))
 }
@@ -244,11 +248,11 @@ fn should_break(array: &Array) -> bool {
                     }
                 }
 
-                let Expression::ArrayExpression(array) = element else {
-                    return false;
-                };
-
-                array.elements.len() > 1
+                match element {
+                    Expression::ArrayExpression(array) => array.elements.len() > 1,
+                    Expression::ObjectExpression(object) => object.properties.len() > 1,
+                    _ => false,
+                }
             })
         }
         Array::TSTupleType(tuple) => {

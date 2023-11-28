@@ -1,11 +1,10 @@
-Compatibility: 178/591 (30.12%)
+Compatibility: 180/591 (30.46%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
 * arrays/issue-10159.js
-* arrays/nested.js
 * arrays/numbers-in-args.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
@@ -13,7 +12,6 @@ Compatibility: 178/591 (30.12%)
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
 * arrays/numbers2.js
-* arrays/numbers3.js
 * arrays/preserve_empty_lines.js
 * arrays/tuple-and-record.js
 
