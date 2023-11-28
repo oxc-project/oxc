@@ -1,4 +1,4 @@
-Passed: 355/414
+Passed: 375/441
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -10,7 +10,7 @@ Passed: 355/414
 * babel-plugin-transform-template-literals
 
 
-# babel-plugin-transform-class-properties (132/143)
+# babel-plugin-transform-class-properties (137/148)
 * nested-class/super-call-in-decorator/exec.js
 * nested-class/super-property-in-accessor-key/exec.js
 * nested-class/super-property-in-decorator/exec.js
@@ -23,7 +23,7 @@ Passed: 355/414
 * private-loose/parenthesized-optional-member-call-with-transform/exec.js
 * public/computed-toPrimitive/exec.js
 
-# babel-plugin-transform-private-methods (108/115)
+# babel-plugin-transform-private-methods (116/123)
 * accessors-loose/get-only-setter/exec.js
 * accessors-privateFieldsAsProperties/get-only-setter/exec.js
 * accessors-privateFieldsAsSymbols/get-only-setter/exec.js
@@ -45,7 +45,7 @@ Passed: 355/414
 * logical-assignment/named-functions-exec/exec.js
 * logical-assignment/null-coalescing/exec.js
 
-# babel-plugin-transform-dynamic-import (2/9)
+# babel-plugin-transform-dynamic-import (4/18)
 * commonjs/exec-interop/exec.js
 * commonjs/exec-interop-null/exec.js
 * commonjs/exec-interop-string/exec.js
@@ -53,19 +53,26 @@ Passed: 355/414
 * commonjs/exec-to-primitive/exec.js
 * commonjs/exec-to-string-order/exec.js
 * commonjs/exec-transpiled-dep/exec.js
+* commonjs-createImportExpression-false/exec-interop/exec.js
+* commonjs-createImportExpression-false/exec-interop-null/exec.js
+* commonjs-createImportExpression-false/exec-interop-string/exec.js
+* commonjs-createImportExpression-false/exec-template-literal/exec.js
+* commonjs-createImportExpression-false/exec-to-primitive/exec.js
+* commonjs-createImportExpression-false/exec-to-string-order/exec.js
+* commonjs-createImportExpression-false/exec-transpiled-dep/exec.js
 
 # babel-plugin-transform-nullish-coalescing-operator (0/2)
 * assumption-noDocumentAll/runtime-semantics/exec.js
 * nullish-coalescing/runtime-semantics/exec.js
 
-# babel-plugin-transform-optional-chaining (10/15)
+# babel-plugin-transform-optional-chaining (11/16)
 * assumption-noDocumentAll/parenthesized-expression-member-call/exec.js
 * general/parenthesized-expression-member-call/exec.js
 * general/parenthesized-expression-member-call-loose/exec.js
 * general/parenthesized-member-call/exec.js
 * general/parenthesized-member-call-loose/exec.js
 
-# babel-plugin-transform-async-generator-functions (22/25)
+# babel-plugin-transform-async-generator-functions (23/26)
 * yield-star/ecma262-pr-2819/exec.js
 * yield-star/throw-method-with-finally/exec.js
 * yield-star-polyfill-corejs3/throw-method-with-finally/exec.js
