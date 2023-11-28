@@ -486,7 +486,7 @@ class Playground {
       case "prettier-ir":
         this.runOptions.prettier_ir = true;
         this.run();
-        text = this.oxc.prettierIr;
+        text = this.oxc.prettierIrText;
         break;
       case "prettier":
         this.runOptions.prettier_format = true;
