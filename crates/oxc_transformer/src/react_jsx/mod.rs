@@ -121,23 +121,11 @@ impl<'a> ReactJsx<'a> {
             }
         }
 
-        let default_runtime = match jsx_options.runtime.as_ref() {
-            Some(ReactJsxRuntimeOption::Valid(runtime)) => *runtime,
-            None => {
-                // TODO: development mode https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-plugin-transform-react-jsx/src/create-plugin.ts#L77-L81
-                if options.babel_8_breaking == Some(true) {
-                    ReactJsxRuntime::Automatic
-                } else {
-                    ReactJsxRuntime::Classic
-                }
-            }
-            Some(_) => {
-                ctx.error(miette::Error::msg(
-                    "Runtime must be either \"classic\" or \"automatic\".",
-                ));
-                return None;
-            }
-        };
+        let default_runtime = Self::normalize_default_runtime(
+            jsx_options.runtime.as_ref(),
+            options.babel_8_breaking,
+            &mut ctx,
+        )?;
 
         let jsx_runtime_importer =
             if jsx_options.import_source == "react" || default_runtime.is_classic() {
@@ -159,6 +147,30 @@ impl<'a> ReactJsx<'a> {
             babel_8_breaking: options.babel_8_breaking,
             default_runtime,
         })
+    }
+
+    fn normalize_default_runtime(
+        runtime: Option<&ReactJsxRuntimeOption>,
+        babel_8_breaking: Option<bool>,
+        ctx: &mut TransformerCtx<'a>,
+    ) -> Option<ReactJsxRuntime> {
+        match runtime {
+            Some(ReactJsxRuntimeOption::Valid(runtime)) => Some(*runtime),
+            None => {
+                // TODO: development mode https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-plugin-transform-react-jsx/src/create-plugin.ts#L77-L81
+                if babel_8_breaking == Some(true) {
+                    Some(ReactJsxRuntime::Automatic)
+                } else {
+                    Some(ReactJsxRuntime::Classic)
+                }
+            }
+            Some(_) => {
+                ctx.error(miette::Error::msg(
+                    "Runtime must be either \"classic\" or \"automatic\".",
+                ));
+                return None;
+            }
+        }
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
