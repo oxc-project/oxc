@@ -1,13 +1,10 @@
-use oxc_ast::{
-    ast::{Expression, MemberExpression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -50,12 +47,7 @@ impl Rule for NoAwaitExpressionMember {
         };
 
         if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
-            let node_span = match member_expr {
-                MemberExpression::ComputedMemberExpression(expr) => expr.span,
-                MemberExpression::PrivateFieldExpression(expr) => expr.span,
-                MemberExpression::StaticMemberExpression(expr) => expr.span,
-            };
-
+            let node_span = member_expr.span();
             ctx.diagnostic(NoAwaitExpressionMemberDiagnostic(node_span));
         }
     }
