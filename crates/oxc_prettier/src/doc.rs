@@ -15,7 +15,7 @@ pub enum Doc<'a> {
     Array(Vec<'a, Doc<'a>>),
     /// Increase the level of indentation.
     Indent(Vec<'a, Doc<'a>>),
-    IndentIfBreak(Vec<'a, Doc<'a>>),
+    IndentIfBreak(IndentIfBreak<'a>),
     /// Mark a group of items which the printer should try to fit on one line.
     /// This is the basic command to tell the printer when to break.
     /// Groups are usually nested, and the printer will try to fit everything on one line,
@@ -77,15 +77,30 @@ impl Line {
 pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
-    pub id: Option<u32>,
+    pub id: Option<GroupId>,
 }
 
 impl<'a> Group<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
         Self { contents, should_break, id: None }
     }
-    pub fn with_id(mut self, id: u32) -> Self {
+    pub fn with_id(mut self, id: GroupId) -> Self {
         self.id = Some(id);
+        self
+    }
+}
+#[derive(Debug)]
+pub struct IndentIfBreak<'a> {
+    pub contents: Vec<'a, Doc<'a>>,
+    pub group_id: Option<GroupId>,
+}
+
+impl<'a> IndentIfBreak<'a> {
+    pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
+        Self { contents, group_id: None }
+    }
+    pub fn with_id(mut self, id: GroupId) -> Self {
+        self.group_id = Some(id);
         self
     }
 }
@@ -212,16 +227,21 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str("])");
         }
-        Doc::IndentIfBreak(contents) => {
+        Doc::IndentIfBreak(indent_if_break) => {
             string.push_str("indentIfBreak(");
             string.push_str("[\n");
-            for (idx, doc) in contents.iter().enumerate() {
+            for (idx, doc) in indent_if_break.contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
-                if idx != contents.len() - 1 {
+                if idx != indent_if_break.contents.len() - 1 {
                     string.push_str(", ");
                 }
             }
-            string.push_str("]) \n");
+
+            if let Some(id) = indent_if_break.group_id {
+                string.push_str(&format!(", {{id: {id}}}"));
+            }
+
+            string.push_str("])");
         }
         Doc::Group(group) => {
             string.push_str("group([\n");

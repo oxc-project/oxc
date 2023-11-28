@@ -1,4 +1,4 @@
-Compatibility: 177/591 (29.95%)
+Compatibility: 178/591 (30.12%)
 
 # Failed
 
@@ -56,7 +56,6 @@ Compatibility: 177/591 (29.95%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-1419.js
 * assignment/issue-15534.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
