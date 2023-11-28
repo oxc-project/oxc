@@ -74,8 +74,6 @@ fn print_call_expression_arguments<'a>(
     let mut parts = p.vec();
     parts.push(ss!("("));
 
-    let mut parts_inner = p.vec();
-
     let callee = expression.callee();
     let arguments = expression.arguments();
     let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
@@ -86,7 +84,11 @@ fn print_call_expression_arguments<'a>(
 
     if arguments.is_empty() {
         parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
+        parts.push(ss!(")"));
+        return Doc::Array(parts);
     }
+
+    let mut parts_inner = p.vec();
 
     for (i, element) in arguments.iter().enumerate() {
         let doc = element.format(p);
