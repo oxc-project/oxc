@@ -96,6 +96,7 @@ pub enum AstKind<'a> {
     FormalParameter(&'a FormalParameter<'a>),
 
     Class(&'a Class<'a>),
+    ClassBody(&'a ClassBody<'a>),
     ClassHeritage(&'a Expression<'a>),
     StaticBlock(&'a StaticBlock<'a>),
     PropertyDefinition(&'a PropertyDefinition<'a>),
@@ -398,6 +399,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::FormalParameter(x) => x.span,
 
             Self::Class(x) => x.span,
+            Self::ClassBody(x) => x.span,
             Self::ClassHeritage(x) => x.span(),
             Self::StaticBlock(x) => x.span,
             Self::PropertyDefinition(x) => x.span,
@@ -569,6 +571,7 @@ impl<'a> AstKind<'a> {
                 c.id.as_ref().map_or_else(|| "<anonymous>", |id| id.name.as_str())
             )
             .into(),
+            Self::ClassBody(_) => "ClassBody".into(),
             Self::ClassHeritage(_) => "ClassHeritage".into(),
             Self::StaticBlock(_) => "StaticBlock".into(),
             Self::PropertyDefinition(_) => "PropertyDefinition".into(),

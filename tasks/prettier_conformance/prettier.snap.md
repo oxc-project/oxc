@@ -1,4 +1,4 @@
-Compatibility: 180/591 (30.46%)
+Compatibility: 182/591 (30.80%)
 
 # Failed
 
@@ -128,7 +128,6 @@ Compatibility: 180/591 (30.46%)
 * class-static-block/class-static-block.js
 
 ### classes
-* classes/asi.js
 * classes/assignment.js
 * classes/class-fields-features.js
 * classes/empty.js
@@ -229,9 +228,6 @@ Compatibility: 180/591 (30.46%)
 
 ### comments-pipeline-own-line
 * comments-pipeline-own-line/pipeline_own_line.js
-
-### computed-props
-* computed-props/classes.js
 
 ### conditional
 * conditional/comments.js
