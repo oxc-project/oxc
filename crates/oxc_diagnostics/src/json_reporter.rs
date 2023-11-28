@@ -30,6 +30,7 @@ struct MessageSpan {
 pub struct JSONReportHandler;
 
 impl JSONReportHandler {
+    /// # Panics
     pub fn render_report(diagnostic: &(dyn Diagnostic)) -> MessageDetail {
         let severity = diagnostic.severity();
         let is_warning = severity == Some(Severity::Warning);

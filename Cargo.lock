@@ -1548,6 +1548,8 @@ dependencies = [
  "pretty_assertions",
  "rayon",
  "regex",
+ "serde",
+ "serde_json",
  "tracing-subscriber",
 ]
 

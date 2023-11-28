@@ -5,8 +5,12 @@ use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{
     codeowners, command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, CodeownerOptions,
-    FormatForFormatter, LintResult, Runner,
+    LintResult, Runner,
 };
+
+use self::reporter::get_handler;
+
+mod reporter;
 
 pub struct LintRunner {
     options: CliLintOptions,
@@ -84,14 +88,8 @@ impl Runner for LintRunner {
             }
         });
 
-        match formatter_options.format {
-            FormatForFormatter::Default => {
-                diagnostic_service.run();
-            }
-            FormatForFormatter::Json => {
-                diagnostic_service.json_output();
-            }
-        }
+        let report_handler = get_handler(&formatter_options.format);
+        report_handler.handle(&diagnostic_service);
 
         lint_service.linter().print_execution_times_if_enable();
 
@@ -185,6 +183,13 @@ mod test {
         let args = &["--format", "json", "fixtures/nan.js"];
         let result = test_output(args);
         assert_eq!(result.output_of_format, "[{\"file_path\":\"fixtures/nan.js\",\"messages\":[{\"severity\":1,\"message\":\"eslint(use-isnan): Requires calls to isNaN() when checking for NaN\",\"labels\":[{\"label\":\"\",\"span\":{\"offset\":7,\"len\":3}}]}]}]");
+    }
+
+    #[test]
+    fn default_output() {
+        let args = &["fixtures/nan.js"];
+        let result = test_output(args);
+        assert_eq!(result.number_of_files, 1);
     }
 
     #[test]

@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
 pub use graphic_reporter::{GraphicalReportHandler, GraphicalTheme};
+pub use json_reporter::*;
 pub use miette;
 pub use thiserror;
 
