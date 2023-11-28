@@ -1724,6 +1724,16 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    pub fn accessibility(&self) -> Option<TSAccessibility> {
+        match self {
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
+            Self::MethodDefinition(def) => def.accessibility,
+            Self::PropertyDefinition(def) => def.accessibility,
+            Self::TSAbstractMethodDefinition(def) => def.method_definition.accessibility,
+            Self::TSAbstractPropertyDefinition(def) => def.property_definition.accessibility,
+        }
+    }
+
     pub fn method_definition_kind(&self) -> Option<MethodDefinitionKind> {
         match self {
             Self::TSIndexSignature(_)

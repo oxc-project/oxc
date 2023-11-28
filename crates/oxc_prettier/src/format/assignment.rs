@@ -1,16 +1,19 @@
 use oxc_ast::{
     ast::{
-        AssignmentExpression, AssignmentTarget, AssignmentTargetPattern, AssignmentTargetProperty,
-        BindingPatternKind, Expression, Statement, VariableDeclarator,
+        AccessorProperty, AssignmentExpression, AssignmentTarget, AssignmentTargetPattern,
+        AssignmentTargetProperty, BindingPatternKind, Expression, PropertyDefinition, Statement,
+        VariableDeclarator,
     },
     AstKind,
 };
 
 use crate::{
     array,
-    doc::{Doc, DocBuilder},
-    group, indent, ss, Format, Prettier,
+    doc::{Doc, DocBuilder, Group, IndentIfBreak},
+    group, indent, line, ss, Format, Prettier,
 };
+
+use super::class::ClassMemberish;
 
 pub(super) fn print_assignment_expression<'a>(
     p: &mut Prettier<'a>,
@@ -41,12 +44,27 @@ pub(super) fn print_variable_declarator<'a>(
 }
 
 #[derive(Debug, Clone, Copy)]
-enum AssignmentLikeNode<'a, 'b> {
+pub(super) enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
+    PropertyDefinition(&'b PropertyDefinition<'a>),
+    AccessorProperty(&'b AccessorProperty<'a>),
 }
 
-fn print_assignment<'a>(
+impl<'a, 'b> From<ClassMemberish<'a, 'b>> for AssignmentLikeNode<'a, 'b> {
+    fn from(class_memberish: ClassMemberish<'a, 'b>) -> Self {
+        match class_memberish {
+            ClassMemberish::PropertyDefinition(property_def) => {
+                Self::PropertyDefinition(property_def)
+            }
+            ClassMemberish::AccessorProperty(accessor_prop) => {
+                Self::AccessorProperty(accessor_prop)
+            }
+        }
+    }
+}
+
+pub(super) fn print_assignment<'a>(
     p: &mut Prettier<'a>,
     node: AssignmentLikeNode<'a, '_>,
     left_doc: Doc<'a>,
@@ -60,21 +78,28 @@ fn print_assignment<'a>(
 
     match layout {
         Layout::BreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, group!(p, indent!(p, Doc::Line, right_doc)))
+            group!(p, group!(p, left_doc), op, group!(p, indent!(p, line!(), right_doc)))
         }
         Layout::NeverBreakAfterOperator => {
             group!(p, group!(p, left_doc), op, ss!(" "), group!(p, right_doc))
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
-            group!(
-                p,
-                group!(p, left_doc),
-                op,
-                group!(p, indent!(p, Doc::Line)),
-                // TODO: wrap `right_doc` in indent_if_break!() when we have support for group IDs.
-                right_doc
-            )
+            let group_id = p.next_id();
+
+            let after_op = {
+                let mut parts = p.vec();
+                parts.push(indent!(p, line!()));
+                Doc::Group(Group::new(parts, false).with_id(group_id))
+            };
+
+            let right_doc = {
+                let mut parts = p.vec();
+                parts.push(group!(p, right_doc));
+                Doc::IndentIfBreak(IndentIfBreak::new(parts).with_id(group_id))
+            };
+
+            group!(p, group!(p, left_doc), op, after_op, right_doc)
         }
         Layout::BreakLhs => {
             group!(p, left_doc, op, ss!(" "), group!(p, right_doc))
@@ -82,10 +107,10 @@ fn print_assignment<'a>(
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
         Layout::Chain => {
-            array!(p, group!(p, left_doc), op, Doc::Line, right_doc)
+            array!(p, group!(p, left_doc), op, line!(), right_doc)
         }
         Layout::ChainTail => {
-            array!(p, group!(p, left_doc), op, indent!(p, Doc::Line, right_doc))
+            array!(p, group!(p, left_doc), op, indent!(p, line!(), right_doc))
         }
         Layout::ChainTailArrowChain => {
             array!(p, group!(p, left_doc), op, right_doc)
@@ -232,6 +257,7 @@ fn is_complex_destructuring(expr: &AssignmentLikeNode) -> bool {
 
             false
         }
+        _ => false,
     }
 }
 
@@ -251,7 +277,9 @@ fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
             }
             false
         }
-        AssignmentLikeNode::AssignmentExpression(_) => false,
+        AssignmentLikeNode::AssignmentExpression(_)
+        | AssignmentLikeNode::PropertyDefinition(_)
+        | AssignmentLikeNode::AccessorProperty(_) => false,
     }
 }
 

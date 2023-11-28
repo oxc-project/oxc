@@ -16,7 +16,7 @@ impl<'a> Command<'a> {
     }
 }
 
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Break,
     Flat,
@@ -24,17 +24,26 @@ pub enum Mode {
 
 impl Mode {
     pub fn is_break(self) -> bool {
-        matches!(self, Self::Break)
+        self == Self::Break
+    }
+
+    pub fn is_flat(self) -> bool {
+        self == Self::Flat
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Indent {
+    pub root: bool,
     pub length: usize,
 }
 
 impl Indent {
     pub fn root() -> Self {
-        Self { length: 0 }
+        Self { root: true, length: 0 }
+    }
+
+    pub fn new(length: usize) -> Self {
+        Self { root: false, length }
     }
 }

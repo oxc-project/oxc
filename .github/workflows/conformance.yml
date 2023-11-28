@@ -35,8 +35,6 @@ on:
       - 'crates/oxc_resolver/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
-      - 'crates/oxc_prettier/**'
-      - 'tasks/prettier_conformance/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -59,8 +57,7 @@ jobs:
 
       - run: cargo coverage
       - run: cargo run --release -p oxc_transform_conformance -- --exec
-      # - run: cargo run --release -p oxc_prettier_conformance
-
+      - run: cargo run --release -p oxc_prettier_conformance
       # - run: cargo minsize
 
       - name: Check for snapshot diff

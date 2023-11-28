@@ -15,11 +15,11 @@ use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::{Atom, SourceType};
 use oxc_tasks_common::project_root;
 
-// #[test]
-// #[cfg(any(coverage, coverage_nightly))]
-// fn test() {
-// TestRunner::new(TestRunnerOptions::default()).run();
-// }
+#[test]
+#[cfg(any(coverage, coverage_nightly))]
+fn test() {
+    TestRunner::new(TestRunnerOptions::default()).run();
+}
 
 #[derive(Default)]
 pub struct TestRunnerOptions {

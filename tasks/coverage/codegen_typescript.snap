@@ -1,6 +1,6 @@
 codegen_typescript Summary:
-AST Parsed     : 5199/5199 (100.00%)
-Positive Passed: 5172/5199 (99.48%)
+AST Parsed     : 5205/5205 (100.00%)
+Positive Passed: 5178/5205 (99.48%)
 Expect to Parse: "compiler/binopAssignmentShouldHaveType.ts"
 Expect to Parse: "compiler/castExpressionParentheses.ts"
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"

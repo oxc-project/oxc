@@ -1,22 +1,17 @@
-Compatibility: 171/591 (28.93%)
+Compatibility: 194/591 (32.83%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
 * arrays/issue-10159.js
-* arrays/nested.js
 * arrays/numbers-in-args.js
-* arrays/numbers-in-assignment.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
-* arrays/numbers-trailing-comma.js
 * arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
-* arrays/numbers1.js
 * arrays/numbers2.js
-* arrays/numbers3.js
 * arrays/preserve_empty_lines.js
 * arrays/tuple-and-record.js
 
@@ -59,7 +54,6 @@ Compatibility: 171/591 (28.93%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-1419.js
 * assignment/issue-15534.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
@@ -132,28 +126,13 @@ Compatibility: 171/591 (28.93%)
 
 ### class-static-block
 * class-static-block/class-static-block.js
-* class-static-block/with-line-breaks.js
 
 ### classes
-* classes/asi.js
 * classes/assignment.js
-* classes/class-fields-features.js
 * classes/empty.js
 * classes/method.js
 * classes/new.js
 * classes/property.js
-
-### classes/keyword-property
-* classes/keyword-property/async.js
-* classes/keyword-property/computed.js
-* classes/keyword-property/get.js
-* classes/keyword-property/private.js
-* classes/keyword-property/set.js
-* classes/keyword-property/static-async.js
-* classes/keyword-property/static-get.js
-* classes/keyword-property/static-set.js
-* classes/keyword-property/static-static.js
-* classes/keyword-property/static.js
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
@@ -179,7 +158,6 @@ Compatibility: 171/591 (28.93%)
 * comments/empty-statements.js
 * comments/export-and-import.js
 * comments/export.js
-* comments/first-line.js
 * comments/function-declaration.js
 * comments/if.js
 * comments/issue-3532.js
@@ -238,9 +216,6 @@ Compatibility: 171/591 (28.93%)
 ### comments-pipeline-own-line
 * comments-pipeline-own-line/pipeline_own_line.js
 
-### computed-props
-* computed-props/classes.js
-
 ### conditional
 * conditional/comments.js
 * conditional/new-ternary-examples.js
@@ -276,9 +251,6 @@ Compatibility: 171/591 (28.93%)
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
 * empty-paren-comment/empty_paren_comment.js
-
-### empty-statement
-* empty-statement/no-newline.js
 
 ### end-of-line
 * end-of-line/example.js
@@ -435,7 +407,6 @@ Compatibility: 171/591 (28.93%)
 * no-semi/comments.js
 * no-semi/issue2006.js
 * no-semi/no-semi.js
-* no-semi/private-field.js
 
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js

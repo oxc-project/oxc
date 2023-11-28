@@ -6,7 +6,7 @@ use crate::{
     array,
     comments::DanglingCommentsPrintOptions,
     doc::{Doc, DocBuilder, Fill, Group},
-    group, if_break, indent, softline, ss, Prettier,
+    group, if_break, indent, line, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -82,16 +82,18 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
             (false, false)
         };
 
+    let id = p.next_id();
     let should_use_concise_formatting = array.is_concisely_printed();
+
     let trailing_comma_fn = |p: &Prettier<'a>| {
         if !can_have_trailing_comma {
             ss!("")
         } else if needs_forced_trailing_comma {
             ss!(",")
         } else if should_use_concise_formatting {
-            if_break!(p, ",")
+            if_break!(p, ",", "", Some(id))
         } else {
-            ss!("")
+            if_break!(p, ",", "", None)
         }
     };
 
@@ -108,9 +110,12 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
     } else {
         indent!(p, softline!(), elements)
     };
-    parts.push(group!(p, ss!("["), parts_inner, softline!(), ss!("]")));
+    parts.push(ss!("["));
+    parts.push(parts_inner);
+    parts.push(softline!());
+    parts.push(ss!("]"));
     let should_break = should_break(array);
-    Doc::Group(Group::new(parts, should_break))
+    Doc::Group(Group::new(parts, should_break).with_id(id))
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -128,7 +133,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array.elements.iter().enumerate() {
                 if i > 0 && i < array.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 parts.push(element.format(p));
@@ -138,7 +143,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in tuple.element_types.iter().enumerate() {
                 if i > 0 && i < tuple.element_types.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 parts.push(element.format(p));
@@ -148,7 +153,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 if let Some(binding_pat) = element {
@@ -158,7 +163,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
-                parts.push(Doc::Line);
+                parts.push(line!());
                 parts.push(rest.format(p));
             }
         }
@@ -166,7 +171,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
                     parts.push(ss!(","));
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
 
                 if let Some(binding_pat) = element {
@@ -176,7 +181,7 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
-                parts.push(Doc::Line);
+                parts.push(line!());
                 parts.push(rest.format(p));
             }
         }
@@ -206,7 +211,7 @@ where
                 parts.push(part);
 
                 if !is_last {
-                    parts.push(Doc::Line);
+                    parts.push(line!());
                 }
             }
         }
@@ -243,11 +248,11 @@ fn should_break(array: &Array) -> bool {
                     }
                 }
 
-                let Expression::ArrayExpression(array) = element else {
-                    return false;
-                };
-
-                array.elements.len() > 1
+                match element {
+                    Expression::ArrayExpression(array) => array.elements.len() > 1,
+                    Expression::ObjectExpression(object) => object.properties.len() > 1,
+                    _ => false,
+                }
             })
         }
         Array::TSTupleType(tuple) => {

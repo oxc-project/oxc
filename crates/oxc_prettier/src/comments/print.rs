@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::{
     array,
     doc::{Doc, DocBuilder, Separator},
-    hardline, indent, line, ss, Prettier,
+    hardline, line, ss, Prettier,
 };
 
 use super::{Comment, CommentFlags, DanglingCommentsPrintOptions};
@@ -60,18 +60,17 @@ impl<'a> Prettier<'a> {
         parts.push(printed);
 
         if comment.is_block {
-            let line_break = if self.has_newline(comment.end, /* backwards */ false) {
+            if self.has_newline(comment.end, /* backwards */ false) {
                 if self.has_newline(comment.start, /* backwards */ true) {
-                    hardline!()
+                    parts.extend(hardline!());
                 } else {
-                    line!()
+                    parts.push(line!());
                 }
             } else {
-                ss!(" ")
+                parts.push(ss!(" "));
             };
-            parts.push(line_break);
         } else {
-            parts.push(hardline!());
+            parts.extend(hardline!());
         }
 
         if self
@@ -79,7 +78,7 @@ impl<'a> Prettier<'a> {
             .and_then(|idx| self.skip_newline(Some(idx), false))
             .is_some_and(|i| self.has_newline(i, /* backwards */ false))
         {
-            parts.push(hardline!());
+            parts.extend(hardline!());
         }
     }
 
@@ -122,9 +121,9 @@ impl<'a> Prettier<'a> {
             parts.push(printed);
             let suffix = {
                 let mut parts = self.vec();
-                parts.push(hardline!());
+                parts.extend(hardline!());
                 if self.is_previous_line_empty(comment.start) {
-                    parts.push(hardline!());
+                    parts.extend(hardline!());
                 }
                 parts
             };
@@ -185,7 +184,12 @@ impl<'a> Prettier<'a> {
         }
         (!parts.is_empty()).then(|| Doc::Array(self.join(Separator::Hardline, parts))).map(|doc| {
             if dangling_options.is_some_and(|options| options.ident) {
-                indent!(self, hardline!(), doc)
+                Doc::Indent({
+                    let mut parts = self.vec();
+                    parts.extend(hardline!());
+                    parts.push(doc);
+                    parts
+                })
             } else {
                 doc
             }

@@ -52,21 +52,21 @@ macro_rules! indent_if_break {
 #[macro_export]
 macro_rules! line {
     () => {
-        Doc::Line
+        Doc::Line($crate::doc::Line::default())
     };
 }
 
 #[macro_export]
 macro_rules! softline {
     () => {
-        Doc::Softline
+        Doc::Line($crate::doc::Line::softline())
     };
 }
 
 #[macro_export]
 macro_rules! hardline {
     () => {
-        Doc::Hardline
+        [Doc::Line($crate::doc::Line::hardline()), Doc::BreakParent]
     };
 }
 
@@ -100,9 +100,13 @@ macro_rules! group {
 
 #[macro_export]
 macro_rules! if_break {
-    ($p:ident, $s:expr) => {{
-        use $crate::doc::DocBuilder;
-        Doc::IfBreak($p.boxed(Doc::Str($s)))
+    ($p:ident, $s:expr, $flat:expr, $group_id:expr) => {{
+        use $crate::doc::{DocBuilder, IfBreak};
+        Doc::IfBreak(IfBreak {
+            break_contents: $p.boxed(Doc::Str($s)),
+            flat_content: $p.boxed(Doc::Str($flat)),
+            group_id: $group_id,
+        })
     }};
 }
 
