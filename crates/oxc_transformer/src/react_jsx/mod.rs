@@ -168,7 +168,7 @@ impl<'a> ReactJsx<'a> {
                 ctx.error(miette::Error::msg(
                     "Runtime must be either \"classic\" or \"automatic\".",
                 ));
-                return None;
+                None
             }
         }
     }
