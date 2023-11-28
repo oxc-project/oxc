@@ -28,11 +28,8 @@ jobs:
         with:
           submodules: true # Pull submodules for additional files
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: benchmark
-          save-cache: ${{ github.ref_name == 'main' }}
+      - name: Install Rust
+        uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
