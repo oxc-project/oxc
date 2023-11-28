@@ -1,4 +1,4 @@
-Compatibility: 194/591 (32.83%)
+Compatibility: 193/580 (33.28%)
 
 # Failed
 
@@ -255,12 +255,6 @@ Compatibility: 194/591 (32.83%)
 ### end-of-line
 * end-of-line/example.js
 
-### eol
-* eol/cursor-1.js
-* eol/cursor-and-range.js
-* eol/range-1.js
-* eol/range-and-cursor-1.js
-
 ### export
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
@@ -386,17 +380,8 @@ Compatibility: 194/591 (32.83%)
 * method-chain/this.js
 * method-chain/tuple-and-record.js
 
-### module-blocks
-* module-blocks/comments.js
-* module-blocks/module-blocks.js
-* module-blocks/range.js
-* module-blocks/worker.js
-
 ### new-expression
 * new-expression/with-member-expression.js
-
-### new-target
-* new-target/range.js
 
 ### newline
 * newline/backslash_2028.js
@@ -426,7 +411,6 @@ Compatibility: 194/591 (32.83%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
-* objects/range.js
 * objects/right-break.js
 
 ### objects/assignment-expression

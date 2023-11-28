@@ -53,6 +53,7 @@ const IGNORE_TESTS: &[&str] = &[
     "js/import-assertions",
     "js/import-attributes",
     "js/import-reflection",
+    "js/module-blocks",
     "js/multiparser",
     "js/partial-application",
     "js/pipeline-operator",
@@ -61,8 +62,10 @@ const IGNORE_TESTS: &[&str] = &[
     "js/tuple",
     "js/v8_intrinsic",
     "js/ignore", // prettier-ignore
-    "js/range",  // range formatting
-    "js/cursor", // IDE cursor
+    // range formatting
+    "range",
+    // IDE cursor
+    "cursor",
 ];
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
@@ -127,6 +130,7 @@ impl TestRunner {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
+                .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
                 .filter(|e| {
                     self.options
                         .filter
