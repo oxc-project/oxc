@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// const [, secondElement] = await getArray();
     /// ```
     NoAwaitExpressionMember,
-    correctness
+    style
 );
 
 impl Rule for NoAwaitExpressionMember {
