@@ -25,7 +25,6 @@ impl<'a> Parser<'a> {
         }
 
         self.ctx = self.ctx.and_in(has_in);
-        self.ctx = self.ctx.and_in(has_in);
         self.bump(Kind::Comma);
         self.expect(Kind::RParen)?;
         Ok(self.ast.import_expression(self.end_span(span), expression, arguments))
