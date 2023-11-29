@@ -74,7 +74,7 @@ impl<'a> Prettier<'a> {
         }
 
         if self
-            .skip_spaces(comment.end, false)
+            .skip_spaces(Some(comment.end), false)
             .and_then(|idx| self.skip_newline(Some(idx), false))
             .is_some_and(|i| self.has_newline(i, /* backwards */ false))
         {

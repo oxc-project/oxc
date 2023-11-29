@@ -46,7 +46,7 @@ pub(super) fn print_statement_sequence<'a>(
         if i < len - 1 {
             parts.extend(hardline!());
 
-            if p.is_next_line_empty(stmt.span().end) {
+            if p.is_next_line_empty(stmt.span()) {
                 parts.extend(hardline!());
             }
         }
