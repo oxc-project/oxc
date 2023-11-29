@@ -1,4 +1,4 @@
-Compatibility: 201/578 (34.78%)
+Compatibility: 201/561 (35.83%)
 
 # Failed
 
@@ -13,7 +13,6 @@ Compatibility: 201/578 (34.78%)
 * arrays/numbers-with-tricky-comments.js
 * arrays/numbers2.js
 * arrays/preserve_empty_lines.js
-* arrays/tuple-and-record.js
 
 ### arrow-call
 * arrow-call/arrow_call.js
@@ -36,16 +35,12 @@ Compatibility: 201/578 (34.78%)
 * arrows/issue-4166-curry.js
 * arrows/long-contents.js
 * arrows/parens.js
-* arrows/tuple-and-record.js
 
 ### arrows/newline-before-arrow
 * arrows/newline-before-arrow/newline-before-arrow.js
 
 ### arrows/semi
 * arrows/semi/semi.js
-
-### arrows-bind
-* arrows-bind/arrows-bind.js
 
 ### assignment
 * assignment/binaryish.js
@@ -90,7 +85,6 @@ Compatibility: 201/578 (34.78%)
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
-* binary-expressions/tuple-and-record.js
 
 ### binary_math
 * binary_math/parens.js
@@ -122,7 +116,6 @@ Compatibility: 201/578 (34.78%)
 
 ### class-extends
 * class-extends/extends.js
-* class-extends/tuple-and-record.js
 
 ### classes
 * classes/assignment.js
@@ -177,7 +170,6 @@ Compatibility: 201/578 (34.78%)
 * comments/trailing-jsdocs.js
 * comments/trailing_space.js
 * comments/try.js
-* comments/tuple-and-record.js
 * comments/variable_declarator.js
 * comments/while.js
 
@@ -207,7 +199,6 @@ Compatibility: 201/578 (34.78%)
 * comments-closure-typecast/satisfies.js
 * comments-closure-typecast/styled-components.js
 * comments-closure-typecast/superclass.js
-* comments-closure-typecast/tuple-and-record.js
 * comments-closure-typecast/ways-to-specify-type.js
 
 ### comments-pipeline-own-line
@@ -225,15 +216,6 @@ Compatibility: 201/578 (34.78%)
 
 ### destructuring-ignore
 * destructuring-ignore/ignore.js
-
-### destructuring-private-fields
-* destructuring-private-fields/arrow-params.js
-* destructuring-private-fields/assignment.js
-* destructuring-private-fields/async-arrow-params.js
-* destructuring-private-fields/bindings.js
-* destructuring-private-fields/for-lhs.js
-* destructuring-private-fields/nested-bindings.js
-* destructuring-private-fields/valid-multiple-bindings.js
 
 ### directives
 * directives/escaped.js
@@ -275,7 +257,6 @@ Compatibility: 201/578 (34.78%)
 ### function-single-destructuring
 * function-single-destructuring/array.js
 * function-single-destructuring/object.js
-* function-single-destructuring/tuple-and-record.js
 
 ### functional-composition
 * functional-composition/functional_compose.js
@@ -365,7 +346,6 @@ Compatibility: 201/578 (34.78%)
 * method-chain/square_0.js
 * method-chain/test.js
 * method-chain/this.js
-* method-chain/tuple-and-record.js
 
 ### new-expression
 * new-expression/with-member-expression.js
@@ -516,9 +496,6 @@ Compatibility: 201/578 (34.78%)
 * test-declarations/jest-each-template-string.js
 * test-declarations/jest-each.js
 * test-declarations/test_declarations.js
-
-### throw_expressions
-* throw_expressions/throw_expression.js
 
 ### throw_statement
 * throw_statement/binaryish.js
