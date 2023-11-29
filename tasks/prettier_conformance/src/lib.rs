@@ -234,7 +234,7 @@ impl TestRunner {
             })
             .map(|(k, v)| format!("\"{k}\":{v}"))
             .collect::<Vec<_>>()
-            .join(", ");
+            .join(",");
 
         let title_snapshot_options = format!("- {{{snapshot_line}}} ",);
 
@@ -253,6 +253,9 @@ impl TestRunner {
 
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
+            if !snapshot_line.is_empty() {
+                println!("Options: \n{snapshot_line}\n");
+            }
             println!("Input:");
             println!("{input}");
             println!("Output:");
