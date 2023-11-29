@@ -36,6 +36,8 @@ impl<'a> Prettier<'a> {
         }
 
         if matches!(kind, AstKind::ObjectExpression(e) if self.check_object_expression(e))
+            || self.check_for_of_stmt_head_starts_with_async_or_let(kind)
+            || self.check_for_of_stmt_head_starts_with_let(kind)
             || self.check_let_object(kind)
             || self.check_parent_kind(kind)
             || self.check_kind(kind)
@@ -248,6 +250,44 @@ impl<'a> Prettier<'a> {
                 {
                     return true;
                 }
+            }
+        }
+        false
+    }
+
+    /// `for ((async) of []);` and `for ((let) of []);`
+    fn check_for_of_stmt_head_starts_with_async_or_let(&self, kind: AstKind<'a>) -> bool {
+        let AstKind::IdentifierReference(ident) = kind else { return false };
+        let AstKind::ForOfStatement(stmt) = self.parent_kind() else { return false };
+        if let ForStatementLeft::AssignmentTarget(AssignmentTarget::SimpleAssignmentTarget(
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(i),
+        )) = &stmt.left
+        {
+            if (i.span == ident.span) && (i.name == "let" || (i.name == "async" && !stmt.r#await)) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// `for ((let.a) of []);`
+    fn check_for_of_stmt_head_starts_with_let(&self, kind: AstKind<'a>) -> bool {
+        let AstKind::IdentifierReference(ident) = kind else { return false };
+        if ident.name != "let" {
+            return false;
+        }
+        for kind in self.nodes.iter().rev() {
+            if let AstKind::ForOfStatement(stmt) = kind {
+                if let ForStatementLeft::AssignmentTarget(
+                    AssignmentTarget::SimpleAssignmentTarget(
+                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
+                    ),
+                ) = &stmt.left
+                {
+                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                }
+                break;
             }
         }
         false
