@@ -14,12 +14,12 @@ mod printer;
 
 use std::{iter::Peekable, vec};
 
-use doc::DocBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
+use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
-use crate::{doc::Doc, format::Format, printer::Printer};
+use crate::{doc::Doc, doc::DocBuilder, format::Format, printer::Printer};
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 
@@ -135,8 +135,55 @@ impl<'a> Prettier<'a> {
         trailing_comma.is_all() || (trailing_comma.is_es5() && !level_all)
     }
 
-    fn is_next_line_empty(&self, end: u32) -> bool {
-        self.source_text[end as usize..].chars().nth(1).is_some_and(|c| c == '\n')
+    fn is_next_line_empty(&self, span: Span) -> bool {
+        self.is_next_line_empty_after_index(span.end)
+    }
+
+    fn is_next_line_empty_after_index(&self, start_index: u32) -> bool {
+        let mut old_idx = None;
+        let mut idx = Some(start_index);
+        while idx != old_idx {
+            old_idx = idx;
+            idx = self.skip_to_line_end(idx);
+            // idx = self.skip_inline_comment(idx);
+            idx = self.skip_spaces(idx, /* backwards */ false);
+        }
+        // idx = self.skip_trailing_comment(idx);
+        idx = self.skip_newline(idx, /* backwards */ false);
+        idx.is_some_and(|idx| self.has_newline(idx, /* backwards */ false))
+        // self.source_text[end as usize..].chars().nth(1).is_some_and(|c| c == '\n')
+    }
+
+    fn skip_to_line_end(&self, start_index: Option<u32>) -> Option<u32> {
+        self.skip(start_index, false, |c| matches!(c, ' ' | '\t' | ',' | ';'))
+    }
+
+    fn skip_spaces(&self, start_index: Option<u32>, backwards: bool) -> Option<u32> {
+        self.skip(start_index, backwards, |c| matches!(c, ' ' | '\t'))
+    }
+
+    fn skip<F>(&self, start_index: Option<u32>, backwards: bool, f: F) -> Option<u32>
+    where
+        F: Fn(char) -> bool,
+    {
+        let start_index = start_index?;
+        let mut index = start_index;
+        if backwards {
+            for c in self.source_text[..=start_index as usize].chars().rev() {
+                if !f(c) {
+                    return Some(index);
+                }
+                index -= 1_u32;
+            }
+        } else {
+            for c in self.source_text[start_index as usize..].chars() {
+                if !f(c) {
+                    return Some(index);
+                }
+                index += 1_u32;
+            }
+        }
+        None
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -154,26 +201,6 @@ impl<'a> Prettier<'a> {
         Some(start_index)
     }
 
-    fn skip_spaces(&self, start_index: u32, backwards: bool) -> Option<u32> {
-        let mut index = start_index;
-        if backwards {
-            for c in self.source_text[..=start_index as usize].chars().rev() {
-                if !matches!(c, ' ' | '\t') {
-                    return Some(index);
-                }
-                index -= 1_u32;
-            }
-        } else {
-            for c in self.source_text[start_index as usize..].chars() {
-                if !matches!(c, ' ' | '\t') {
-                    return Some(index);
-                }
-                index += 1_u32;
-            }
-        }
-        None
-    }
-
     fn has_newline(&self, start_index: u32, backwards: bool) -> bool {
         if (backwards && start_index == 0)
             || (!backwards && start_index as usize == self.source_text.len())
@@ -181,15 +208,15 @@ impl<'a> Prettier<'a> {
             return false;
         }
         let start_index = if backwards { start_index - 1 } else { start_index };
-        let idx = self.skip_spaces(start_index, backwards);
+        let idx = self.skip_spaces(Some(start_index), backwards);
         let idx2 = self.skip_newline(idx, backwards);
         idx != idx2
     }
 
     fn is_previous_line_empty(&self, start_index: u32) -> bool {
         let idx = start_index - 1;
-        let idx = self.skip_spaces(idx, true);
-        let Some(idx) = self.skip_newline(idx, true) else { return false };
+        let idx = self.skip_spaces(Some(idx), true);
+        let idx = self.skip_newline(idx, true);
         let idx = self.skip_spaces(idx, true);
         let idx2 = self.skip_newline(idx, true);
         idx != idx2
