@@ -1,7 +1,10 @@
 use regex::Regex;
 
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElementName, JSXExpression, JSXExpressionContainer},
+    ast::{
+        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName,
+        JSXExpression, JSXExpressionContainer,
+    },
     AstKind,
 };
 use oxc_diagnostics::{
@@ -119,12 +122,24 @@ impl Rule for ImgRedundantAlt {
             }
         };
 
+        let alt_attribute_name = match alt_prop {
+            JSXAttributeItem::Attribute(attr) => &attr.name,
+            JSXAttributeItem::SpreadAttribute(_) => {
+                return;
+            }
+        };
+
+        let alt_attribute_name_span = match alt_attribute_name {
+            JSXAttributeName::Identifier(iden) => iden.span,
+            JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.span,
+        };
+
         match alt_attribute {
             JSXAttributeValue::StringLiteral(lit) => {
                 let alt_text = lit.value.as_str();
 
                 if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                    ctx.diagnostic(ImgRedundantAltDiagnostic(jsx_el.span));
+                    ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
@@ -135,7 +150,7 @@ impl Rule for ImgRedundantAlt {
                     let alt_text = lit.value.as_str();
 
                     if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                        ctx.diagnostic(ImgRedundantAltDiagnostic(jsx_el.span));
+                        ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
                     }
                 }
                 Expression::TemplateLiteral(lit) => {
@@ -143,7 +158,7 @@ impl Rule for ImgRedundantAlt {
                         let alt_text = quasi.value.raw.as_str();
 
                         if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                            ctx.diagnostic(ImgRedundantAltDiagnostic(jsx_el.span));
+                            ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
                         }
                     }
                 }
