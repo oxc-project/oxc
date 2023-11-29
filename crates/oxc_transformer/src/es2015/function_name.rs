@@ -31,7 +31,7 @@ impl<'a> FunctionName<'a> {
         (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
             ast,
             ctx,
-            // TODO hook up the the plugin
+            // TODO hook up the plugin
             unicode_escapes: true,
         })
     }
@@ -46,7 +46,7 @@ impl<'a> FunctionName<'a> {
                     create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes);
 
                 if let Some(id) = &id {
-                    self.transform_expression(&mut expr.right, id);
+                    self.transform_expression(&mut expr.right, id, false);
                 }
             }
         }
@@ -74,7 +74,7 @@ impl<'a> FunctionName<'a> {
                 };
 
                 if let Some(id) = &id {
-                    self.transform_expression(&mut property.value, id);
+                    self.transform_expression(&mut property.value, id, true);
                 }
             }
         }
@@ -83,48 +83,50 @@ impl<'a> FunctionName<'a> {
     pub fn transform_variable_declarator(&mut self, decl: &mut VariableDeclarator<'a>) {
         let Some(init) = &mut decl.init else { return };
 
-        if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
-            // let has_binding = {
-            //     let s = id
-            //         .symbol_id
-            //         .get()
-            //         .map(|symbol_id| self.ctx.symbols().get_scope_id(symbol_id))
-            //         .map(|scope_id| self.ctx.scopes().get_binding(scope_id, &id.name))
-            //         .map(|binding| binding);
-
-            //     false
-            // };
-
-            self.transform_expression(init, id);
+        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
+            // Create a new ID instead of cloning to avoid local binding/refs
+            if let Some(id) =
+                create_valid_identifier(ident.span, ident.name.clone(), self.unicode_escapes)
+            {
+                self.transform_expression(init, &id, false);
+            }
         };
     }
 
     // Internal only
-    fn transform_expression(&mut self, expr: &mut Expression<'a>, id: &BindingIdentifier) {
-        // TODO check local bindings
+    fn transform_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        id: &BindingIdentifier,
+        check_arrow: bool,
+    ) {
+        let scopes = self.ctx.scopes();
+        let mut self_assignment = false;
+        let mut self_reference = false;
+        let mut outer_decl = scopes.;
+        let mut name = id.name.as_str();
+
         // () => {}
-        if let Expression::ArrowExpression(arrow) = expr {
-            // let scopes = self.ctx.scopes();
+        if check_arrow {
+            if let Expression::ArrowExpression(arrow) = expr {
+                let arrow = self.ast.copy(&**arrow);
 
-            // for ancestors in scopes.ancestors(scope_id) {}
+                let func = self.ast.function_expression(self.ast.function(
+                    FunctionType::FunctionExpression,
+                    arrow.span,
+                    Some(id.to_owned()),
+                    arrow.expression,
+                    arrow.generator,
+                    arrow.r#async,
+                    arrow.params,
+                    Some(arrow.body),
+                    arrow.type_parameters,
+                    arrow.return_type,
+                    Modifiers::default(),
+                ));
 
-            let arrow = self.ast.copy(&**arrow);
-
-            let func = self.ast.function_expression(self.ast.function(
-                FunctionType::FunctionExpression,
-                arrow.span,
-                Some(id.to_owned()),
-                arrow.expression,
-                arrow.generator,
-                arrow.r#async,
-                arrow.params,
-                Some(arrow.body),
-                arrow.type_parameters,
-                arrow.return_type,
-                Modifiers::default(),
-            ));
-
-            *expr = func;
+                *expr = func;
+            }
         }
 
         // function () {} -> function name() {}
