@@ -62,7 +62,7 @@ impl<'a> Prettier<'a> {
             AstKind::NumberLiteral(literal) => {
                 matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
             }
-            AstKind::SequenceExpression(_) => !matches!(parent_kind, AstKind::Program(_)),
+            AstKind::SequenceExpression(e) => self.check_sequence_expression(e.span),
             AstKind::ObjectExpression(e) => self.check_object_function_class(e.span),
             AstKind::Function(f) if f.is_expression() => {
                 if self.check_object_function_class(f.span) {
@@ -229,6 +229,15 @@ impl<'a> Prettier<'a> {
             _ => {}
         }
         false
+    }
+
+    fn check_sequence_expression(&self, span: Span) -> bool {
+        match self.parent_kind() {
+            AstKind::ReturnStatement(_) | AstKind::ForStatement(_) => false,
+            AstKind::ExpressionStatement(expr) => expr.expression.span() != span,
+            AstKind::ArrowExpression(expr) => expr.body.span != span,
+            _ => true,
+        }
     }
 
     fn check_object_expression(&self, obj_expr: &ObjectExpression<'a>) -> bool {
