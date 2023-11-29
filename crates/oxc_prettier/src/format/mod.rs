@@ -88,9 +88,11 @@ impl<'a> Format<'a> for Hashbang {
 impl<'a> Format<'a> for Directive {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(
-            p.str(&string::print_string(self.expression.value.as_str(), p.options.single_quote)),
-        );
+        parts.push(Doc::Str(string::print_string(
+            p,
+            self.expression.value.as_str(),
+            p.options.single_quote,
+        )));
         if p.options.semi {
             parts.push(ss!(";"));
         }
@@ -1350,7 +1352,7 @@ impl<'a> Format<'a> for RegExpLiteral {
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            p.str(&string::print_string(self.value.as_str(), p.options.single_quote))
+            Doc::Str(string::print_string(p, self.value.as_str(), p.options.single_quote))
         })
     }
 }
