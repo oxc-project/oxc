@@ -1,4 +1,4 @@
-Compatibility: 198/580 (34.14%)
+Compatibility: 198/578 (34.26%)
 
 # Failed
 
@@ -255,12 +255,6 @@ Compatibility: 198/580 (34.14%)
 ### export
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
-
-### export-default/escaped
-* export-default/escaped/default-escaped.js
-
-### export-default/export-default-from
-* export-default/export-default-from/export.js
 
 ### expression_statement
 * expression_statement/no_regression.js
