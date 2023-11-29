@@ -11,7 +11,8 @@
 use oxc_ast::{
     ast::{
         AssignmentTarget, AssignmentTargetPattern, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ModuleDeclaration, ObjectExpression, SimpleAssignmentTarget,
+        Expression, ForStatementLeft, MemberExpression, ModuleDeclaration, ObjectExpression,
+        SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -30,34 +31,23 @@ impl<'a> Prettier<'a> {
     }
 
     fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
-        if matches!(kind, AstKind::Program(_)) {
+        if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
         }
 
-        if kind.is_statement() || kind.is_declaration() {
-            return false;
-        }
-
-        let parent_kind = self.parent_kind();
-
-        if let AstKind::ObjectExpression(e) = kind {
-            if self.check_object_expression(e) {
-                return true;
-            }
-        }
-
-        if self.check_parent_kind(kind, parent_kind) {
-            return true;
-        }
-
-        if self.check_kind(kind, parent_kind) {
+        if matches!(kind, AstKind::ObjectExpression(e) if self.check_object_expression(e))
+            || self.check_let_object(kind)
+            || self.check_parent_kind(kind)
+            || self.check_kind(kind)
+        {
             return true;
         }
 
         false
     }
 
-    fn check_kind(&self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
+    fn check_kind(&self, kind: AstKind<'a>) -> bool {
+        let parent_kind = self.parent_kind();
         match kind {
             AstKind::NumberLiteral(literal) => {
                 matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
@@ -190,8 +180,8 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    fn check_parent_kind(&mut self, kind: AstKind<'a>, parent_kind: AstKind<'a>) -> bool {
-        match parent_kind {
+    fn check_parent_kind(&mut self, kind: AstKind<'a>) -> bool {
+        match self.parent_kind() {
             AstKind::Class(class) => {
                 if let Some(h) = &class.super_class {
                     match kind {
@@ -261,6 +251,54 @@ impl<'a> Prettier<'a> {
             }
         }
         false
+    }
+
+    /// `(let)[a] = 1`
+    fn check_let_object(&self, kind: AstKind<'a>) -> bool {
+        let AstKind::IdentifierReference(ident) = kind else { return false };
+        if ident.name != "let" {
+            return false;
+        }
+        let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(expr)) =
+            self.parent_kind()
+        else {
+            return false;
+        };
+        if !matches!(&expr.object, Expression::Identifier(ident) if ident.name == "let") {
+            return false;
+        }
+        let Some(statement) = self.nodes.iter().rev().find(|node| {
+            matches!(
+                node,
+                AstKind::ExpressionStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+            )
+        }) else {
+            return false;
+        };
+        match statement {
+            AstKind::ExpressionStatement(stmt) => {
+                Self::starts_with_no_lookahead_token(&stmt.expression, ident.span)
+            }
+            AstKind::ForStatement(stmt) => stmt
+                .init
+                .as_ref()
+                .and_then(|init| init.expression())
+                .map_or(false, |e| Self::starts_with_no_lookahead_token(e, ident.span)),
+            AstKind::ForInStatement(stmt) => {
+                if let ForStatementLeft::AssignmentTarget(
+                    AssignmentTarget::SimpleAssignmentTarget(
+                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
+                    ),
+                ) = &stmt.left
+                {
+                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                }
+                false
+            }
+            _ => false,
+        }
     }
 
     fn check_object_function_class(&self, span: Span) -> bool {

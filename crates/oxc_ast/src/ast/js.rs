@@ -1248,6 +1248,13 @@ impl<'a> ForStatementInit<'a> {
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
     }
+
+    pub fn expression(&self) -> Option<&Expression<'a>> {
+        match self {
+            Self::Expression(e) => Some(e),
+            _ => None,
+        }
+    }
 }
 
 /// For-In Statement

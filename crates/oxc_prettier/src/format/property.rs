@@ -1,12 +1,12 @@
 use oxc_ast::ast::{Expression, PropertyKey};
-use oxc_syntax::identifier::is_identify_name;
+use oxc_syntax::identifier::is_identifier_name;
 
 pub(super) fn is_property_key_has_quote(key: &PropertyKey<'_>) -> bool {
     matches!(key, PropertyKey::Expression(Expression::StringLiteral(literal)) if is_string_prop_safe_to_unquote(literal.value.as_str()))
 }
 
 pub(super) fn is_string_prop_safe_to_unquote(value: &str) -> bool {
-    !is_identify_name(value) && !is_simple_number(value)
+    !is_identifier_name(value) && !is_simple_number(value)
 }
 
 // Matches “simple” numbers like `123` and `2.5` but not `1_000`, `1e+100` or `0b10`.
