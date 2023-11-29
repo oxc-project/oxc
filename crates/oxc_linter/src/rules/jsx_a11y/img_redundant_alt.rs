@@ -18,8 +18,8 @@ use crate::utils::{get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.")]
-#[diagnostic(severity(warning), help("Provide no redundant alt text for image."))]
+#[error("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.")]
+#[diagnostic(severity(warning), help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop."))]
 struct ImgRedundantAltDiagnostic(#[label] pub Span);
 
 declare_oxc_lint!(
