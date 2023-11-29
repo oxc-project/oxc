@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 // use lazy_static::lazy_static;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, Visit, VisitMut};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_syntax::unicode_id_start::is_id_continue;
@@ -42,11 +42,10 @@ impl<'a> FunctionName<'a> {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(target),
             ) = &expr.left
             {
-                let id =
-                    create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes);
-
-                if let Some(id) = &id {
-                    self.transform_expression(&mut expr.right, id, false);
+                if let Some(id) =
+                    create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes)
+                {
+                    self.transform_expression(&mut expr.right, id);
                 }
             }
         }
@@ -73,8 +72,8 @@ impl<'a> FunctionName<'a> {
                     PropertyKey::Expression(_) => continue,
                 };
 
-                if let Some(id) = &id {
-                    self.transform_expression(&mut property.value, id, true);
+                if let Some(id) = id {
+                    self.transform_expression(&mut property.value, id);
                 }
             }
         }
@@ -88,52 +87,51 @@ impl<'a> FunctionName<'a> {
             if let Some(id) =
                 create_valid_identifier(ident.span, ident.name.clone(), self.unicode_escapes)
             {
-                self.transform_expression(init, &id, false);
+                self.transform_expression(init, id);
             }
         };
     }
 
     // Internal only
-    fn transform_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        id: &BindingIdentifier,
-        check_arrow: bool,
-    ) {
-        let scopes = self.ctx.scopes();
-        let mut self_assignment = false;
-        let mut self_reference = false;
-        let mut outer_decl = scopes.;
-        let mut name = id.name.as_str();
-
-        // () => {}
-        if check_arrow {
-            if let Expression::ArrowExpression(arrow) = expr {
-                let arrow = self.ast.copy(&**arrow);
-
-                let func = self.ast.function_expression(self.ast.function(
-                    FunctionType::FunctionExpression,
-                    arrow.span,
-                    Some(id.to_owned()),
-                    arrow.expression,
-                    arrow.generator,
-                    arrow.r#async,
-                    arrow.params,
-                    Some(arrow.body),
-                    arrow.type_parameters,
-                    arrow.return_type,
-                    Modifiers::default(),
-                ));
-
-                *expr = func;
-            }
-        }
-
+    fn transform_expression<'b>(&mut self, expr: &mut Expression<'a>, mut id: BindingIdentifier) {
         // function () {} -> function name() {}
         if let Expression::FunctionExpression(func) = expr {
-            if func.id.is_none() {
-                func.id = Some(id.to_owned());
+            let scopes = self.ctx.scopes();
+            let mut count = 0;
+
+            // let mut finder = IdentFinder { id, found: 0 };
+            // finder.visit_expression(expr);
+
+            // Check for nested params/vars of the same name
+            for scope in scopes.descendants() {
+                for binding in scopes.get_bindings(scope) {
+                    if binding.0 == &id.name {
+                        count += 1;
+                    }
+                }
             }
+
+            // If we're shadowing, change the name
+            if count > 0 {
+                id.name = Atom::from(format!("{}{}", id.name, count));
+            }
+
+            if func.id.is_none() {
+                func.id = Some(id);
+            }
+        }
+    }
+}
+
+struct IdentFinder {
+    id: BindingIdentifier,
+    found: usize,
+}
+
+impl<'a> Visit<'a> for IdentFinder {
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier) {
+        if ident.name == self.id.name {
+            self.found += 1;
         }
     }
 }
@@ -146,6 +144,7 @@ fn create_valid_identifier(
     atom: Atom,
     _unicode_escapes: bool,
 ) -> Option<BindingIdentifier> {
+    // NOTE: this regex fails to compile on Rust
     // lazy_static! {
     //     static ref UNICODE_NAME: Regex = Regex::new(r"(?u)[\u{D800}-\u{DFFF}]").unwrap();
     // }
