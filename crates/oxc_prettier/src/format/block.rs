@@ -72,7 +72,12 @@ pub(super) fn print_block_body<'a>(
     }
 
     if has_body {
-        parts.extend(statement::print_statement_sequence(p, stmts, remove_last_statement_hardline));
+        parts.extend(statement::print_statement_sequence(
+            p,
+            stmts,
+            remove_last_statement_hardline,
+            !is_root,
+        ));
     }
 
     if is_root {

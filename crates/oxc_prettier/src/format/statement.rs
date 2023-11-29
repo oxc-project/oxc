@@ -13,16 +13,13 @@ pub(super) fn print_statement_sequence<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
     remove_last_statement_hardline: bool,
+    skip_empty_statement: bool,
 ) -> Vec<'a, Doc<'a>> {
     let mut parts = p.vec();
-    let mut len = stmts.len();
+    let len = stmts.len();
 
     for (i, stmt) in stmts.iter().enumerate() {
-        if i < len - 1 && matches!(stmts[i + 1], Statement::EmptyStatement(_)) {
-            len -= 1;
-        }
-
-        if matches!(stmt, Statement::EmptyStatement(_)) {
+        if skip_empty_statement && matches!(stmt, Statement::EmptyStatement(_)) {
             continue;
         }
 
@@ -43,7 +40,7 @@ pub(super) fn print_statement_sequence<'a>(
 
         parts.push(docs);
 
-        if i < len - 1 {
+        if i < len - 1 && !matches!(stmts[i + 1], Statement::EmptyStatement(_)) {
             parts.extend(hardline!());
 
             if p.is_next_line_empty(stmt.span()) {
