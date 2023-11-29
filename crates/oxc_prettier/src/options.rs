@@ -124,6 +124,28 @@ pub enum QuoteProps {
     Preserve,
 }
 
+impl QuoteProps {
+    pub fn is_preserve(self) -> bool {
+        matches!(self, Self::Preserve)
+    }
+    pub fn is_consistent(self) -> bool {
+        matches!(self, Self::Consistent)
+    }
+}
+
+impl FromStr for QuoteProps {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "as_needed" => Self::AsNeeded,
+            "consistent" => Self::Consistent,
+            "preserve" => Self::Preserve,
+            _ => Self::default(),
+        })
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum TrailingComma {
     /// Trailing commas wherever possible (including function parameters and calls).
