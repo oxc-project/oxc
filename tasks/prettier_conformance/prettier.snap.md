@@ -1,4 +1,4 @@
-Compatibility: 198/578 (34.26%)
+Compatibility: 199/578 (34.43%)
 
 # Failed
 
@@ -307,7 +307,6 @@ Compatibility: 198/578 (34.26%)
 
 ### import
 * import/comments.js
-* import/same-local-and-imported.js
 
 ### label
 * label/comment.js

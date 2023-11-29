@@ -1233,7 +1233,7 @@ impl<'a> Format<'a> for IdentifierName {
 
 impl<'a> Format<'a> for BindingIdentifier {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.str(self.name.as_str())
+        wrap!(p, self, BindingIdentifier, { p.str(self.name.as_str()) })
     }
 }
 
