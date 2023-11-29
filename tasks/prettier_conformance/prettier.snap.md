@@ -1,4 +1,4 @@
-Compatibility: 200/578 (34.60%)
+Compatibility: 201/578 (34.78%)
 
 # Failed
 
@@ -456,9 +456,6 @@ Compatibility: 200/578 (34.60%)
 ### return
 * return/binaryish.js
 * return/comment.js
-
-### return-outside-function
-* return-outside-function/return-outside-function.js
 
 ### sequence-break
 * sequence-break/break.js
