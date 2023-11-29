@@ -1,4 +1,4 @@
-Compatibility: 199/578 (34.43%)
+Compatibility: 200/578 (34.60%)
 
 # Failed
 
@@ -449,9 +449,6 @@ Compatibility: 199/578 (34.43%)
 ### require-amd
 * require-amd/named-amd-module.js
 * require-amd/require.js
-
-### reserved-word
-* reserved-word/interfaces.js
 
 ### rest
 * rest/trailing-commas.js
