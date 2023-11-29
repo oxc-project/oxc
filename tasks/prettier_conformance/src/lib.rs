@@ -45,9 +45,11 @@ const IGNORE_TESTS: &[&str] = &[
     "js/deferred-import-evaluation",
     "js/bind-expressions",
     // Unsupported stage3 features
+    "tuple-and-record.js",
     "js/async-do-expressions",
     "js/babel-plugins",
     "js/decorator",
+    "js/destructuring-private-fields",
     "js/do", // do expression
     "js/explicit-resource-management",
     "js/export-default/escaped",
@@ -61,9 +63,12 @@ const IGNORE_TESTS: &[&str] = &[
     "js/pipeline-operator",
     "js/record",
     "js/source-phase-imports",
+    "js/throw_expressions",
     "js/tuple",
+    "js/arrows-bind",
     "js/v8_intrinsic",
-    "js/ignore", // prettier-ignore
+    // prettier-ignore
+    "js/ignore",
     // range formatting
     "range",
     // IDE cursor
