@@ -121,7 +121,7 @@ impl<'a> Prettier<'a> {
         unsafe { std::mem::transmute(t) }
     }
 
-    fn should_print_es5_comma(&self) -> bool {
+    pub fn should_print_es5_comma(&self) -> bool {
         self.should_print_comma_impl(false)
     }
 

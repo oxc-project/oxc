@@ -1,4 +1,4 @@
-Compatibility: 193/580 (33.28%)
+Compatibility: 194/580 (33.45%)
 
 # Failed
 
@@ -550,7 +550,6 @@ Compatibility: 193/580 (33.28%)
 * trailing-comma/es5.js
 * trailing-comma/function-calls.js
 * trailing-comma/jsx.js
-* trailing-comma/object.js
 * trailing-comma/trailing_whitespace.js
 
 ### try
