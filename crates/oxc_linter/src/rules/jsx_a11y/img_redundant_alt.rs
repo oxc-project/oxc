@@ -139,7 +139,7 @@ impl Rule for ImgRedundantAlt {
                     }
                 }
                 Expression::TemplateLiteral(lit) => {
-                    for quasi in lit.quasis.iter() {
+                    for quasi in &lit.quasis {
                         let alt_text = quasi.value.raw.as_str();
 
                         if is_redundant_alt_text(alt_text, &self.redundant_words) {
@@ -147,13 +147,9 @@ impl Rule for ImgRedundantAlt {
                         }
                     }
                 }
-                _ => {
-                    return;
-                }
+                _ => {}
             },
-            _ => {
-                return;
-            }
+            _ => {}
         };
     }
 }
