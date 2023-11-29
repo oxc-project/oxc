@@ -1,6 +1,7 @@
 mod options;
 
-use std::{collections::HashMap, rc::Rc};
+use rustc_hash::FxHashMap;
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -60,7 +61,7 @@ pub struct ReactJsx<'a> {
     require_jsx_runtime: bool,
     jsx_runtime_importer: Atom,
     pub babel_8_breaking: Option<bool>,
-    import_binding_register: HashMap<String, Atom>,
+    import_binding_register: FxHashMap<String, Atom>,
     default_runtime: ReactJsxRuntime,
 }
 
@@ -146,7 +147,7 @@ impl<'a> ReactJsx<'a> {
             import_fragment: false,
             import_create_element: false,
             babel_8_breaking: options.babel_8_breaking,
-            import_binding_register: HashMap::new(),
+            import_binding_register: FxHashMap::default(),
             default_runtime,
         })
     }
@@ -188,16 +189,29 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn register_unique_identifier(&mut self, name: &str, id: &str) {
-        let identifier =
-            self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, id.into()));
         let root_scope_id = self.ctx.scopes().root_scope_id();
 
-        let uid = self.ctx.scopes_mut().generate_uid_based_on_node(&identifier);
+        let uid = self.ctx.scopes_mut().generate_uid(&id, None);
 
         self.ctx.add_binding_with_scope(uid.clone(), root_scope_id);
         self.import_binding_register.insert(name.to_string(), uid);
     }
 
+    /// Generate unique identifier for each runtime binding
+    /// e.g.
+    /// ```js
+    ///
+    /// import {jsx as _jsx2}  from 'react/jsx-runtime'
+    /// const foo = () => {
+    ///   var _jsx = 3000;
+    ///   return _jsx2("div", {})
+    ///   /**
+    ///   if we don't generate a unique identifier for imported `jsx` runtime,
+    ///   the code above will throw an error during runtime.
+    ///   */
+    ///   
+    /// }
+    /// ```
     pub fn register_unique_import_binding(&mut self) {
         if self.default_runtime.is_automatic() {
             self.register_unique_identifier("jsx", "jsx");
@@ -294,7 +308,13 @@ impl<'a> ReactJsx<'a> {
         } else if !self.import_jsxs {
             self.import_jsxs = true;
             let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
-            self.add_import_statement("jsxs", "_jsxs", source);
+
+            let local_binding = self
+                .import_binding_register
+                .get("jsxs")
+                .expect("We have been register the unique local binding before")
+                .to_string();
+            self.add_import_statement("jsxs", &local_binding, source);
         }
     }
 
@@ -304,7 +324,12 @@ impl<'a> ReactJsx<'a> {
         } else if !self.import_fragment {
             self.import_fragment = true;
             let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
-            self.add_import_statement("Fragment", "_Fragment", source);
+            let local_binding = self
+                .import_binding_register
+                .get("fragment")
+                .expect("We have been register the unique local binding before")
+                .to_string();
+            self.add_import_statement("Fragment", &local_binding, source);
             self.add_import_jsx();
         }
     }
@@ -321,7 +346,13 @@ impl<'a> ReactJsx<'a> {
                 );
             } else {
                 let source = Self::new_string_literal(self.options.import_source.as_ref());
-                self.add_import_statement("createElement", "_createElement", source);
+
+                let local_binding = self
+                    .import_binding_register
+                    .get("createElement")
+                    .expect("We have been register the unique local binding before")
+                    .to_string();
+                self.add_import_statement("createElement", &local_binding, source);
             }
         }
     }
