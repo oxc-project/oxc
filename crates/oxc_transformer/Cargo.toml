@@ -25,8 +25,6 @@ oxc_allocator   = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
-rustc-hash      = { workspace = true }
-
 rustc-hash = { workspace = true }
 
 

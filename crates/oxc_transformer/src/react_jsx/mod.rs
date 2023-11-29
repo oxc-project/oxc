@@ -61,16 +61,7 @@ pub struct ReactJsx<'a> {
     jsx_runtime_importer: Atom,
     pub babel_8_breaking: Option<bool>,
     import_binding_register: HashMap<String, Atom>,
-}
-
-impl<'a> CreateVars<'a> for ReactJsx<'a> {
-    fn ctx(&self) -> &TransformerCtx<'a> {
-        &self.ctx
-    }
-
-    fn vars_mut(&mut self) -> &mut Vec<'a, VariableDeclarator<'a>> {
-        unreachable!("This method would not be used")
-    }
+    default_runtime: ReactJsxRuntime,
 }
 
 enum JSXElementOrFragment<'a, 'b> {
@@ -201,14 +192,14 @@ impl<'a> ReactJsx<'a> {
             self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, id.into()));
         let root_scope_id = self.ctx.scopes().root_scope_id();
 
-        let uid = self.ctx.scopes().generate_uid_based_on_node(&identifier);
+        let uid = self.ctx.scopes_mut().generate_uid_based_on_node(&identifier);
 
         self.ctx.add_binding_with_scope(uid.clone(), root_scope_id);
         self.import_binding_register.insert(name.to_string(), uid);
     }
 
     pub fn register_unique_import_binding(&mut self) {
-        if self.options.runtime.is_automatic() {
+        if self.default_runtime.is_automatic() {
             self.register_unique_identifier("jsx", "jsx");
             self.register_unique_identifier("jsxs", "jsxs");
             self.register_unique_identifier("createElement", "createElement");

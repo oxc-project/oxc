@@ -138,7 +138,7 @@ impl ScopeTree {
     }
 
     pub fn has_global(&self, name: &Atom) -> bool {
-        for unresolved in self.unresolved_references.iter() {
+        for unresolved in &self.unresolved_references {
             if unresolved.contains_key(name) {
                 return true;
             }
@@ -146,11 +146,12 @@ impl ScopeTree {
         false
     }
 
-    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId) -> Atom {
+    pub fn generate_uid(&mut self, name: &str, scope_id: Option<ScopeId>) -> Atom {
         let mut i = 0;
+        let scope_id = scope_id.unwrap_or_else(|| self.root_scope_id());
         loop {
             let name = Self::generate_unique_atom(name, i);
-            if !self.has_binding(ScopeId::new(0), &name)
+            if !self.has_binding(scope_id, &name)
                 && !self.references.contains(&name)
                 && !self.has_global(&name)
             {
@@ -168,7 +169,7 @@ impl ScopeTree {
         expr.gather(&mut |part| parts.push(part));
         let name = parts.join("$");
         let name = name.trim_start_matches('_');
-        self.generate_uid(name, scope_id)
+        self.generate_uid(name, None)
     }
 
     fn generate_unique_atom(name: &str, i: i32) -> Atom {
