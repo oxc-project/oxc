@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{BigintLiteral, NumberLiteral},
     AstKind,
@@ -8,6 +9,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -228,9 +230,12 @@ impl NumericSeparatorsStyle {
     }
 
     fn format_decimal(&self, number_raw: &str) -> String {
-        let re = regex::Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
+        lazy_static! {
+            static ref NUMBER_REGEX: Regex =
+                Regex::new(r"^([\d._]*?)(?:([Ee])([+-])?([\d_]+))?$").unwrap();
+        }
 
-        let caps = re.captures(number_raw).unwrap();
+        let caps = NUMBER_REGEX.captures(number_raw).unwrap();
 
         let mut out = String::new();
 
