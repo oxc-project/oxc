@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 8/8 (100.00%)
 Positive Passed: 8/8 (100.00%)
-Negative Passed: 2/2 (100.00%)
+Negative Passed: 3/3 (100.00%)
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
@@ -11,5 +11,19 @@ Negative Passed: 2/2 (100.00%)
    ╭─[fail/oxc-232.js:1:1]
  1 │ x = (/* a */)
    ·     ─────────
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[fail/oxc.js:1:1]
+ 1 │ let.a = 1;
+   · ───
+ 2 │ let()[a] = 1;
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[fail/oxc.js:1:1]
+ 1 │ let.a = 1;
+ 2 │ let()[a] = 1;
+   · ───
    ╰────
 
