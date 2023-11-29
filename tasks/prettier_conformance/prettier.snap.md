@@ -1,4 +1,4 @@
-Compatibility: 201/561 (35.83%)
+Compatibility: 203/561 (36.19%)
 
 # Failed
 
@@ -157,7 +157,6 @@ Compatibility: 201/561 (35.83%)
 * comments/jsdoc.js
 * comments/jsx.js
 * comments/last-arg.js
-* comments/multi-comments-2.js
 * comments/multi-comments-on-same-line-2.js
 * comments/multi-comments-on-same-line.js
 * comments/multi-comments.js
@@ -277,7 +276,6 @@ Compatibility: 201/561 (35.83%)
 * identifier/for-of/let.js
 
 ### identifier/parentheses
-* identifier/parentheses/const.js
 * identifier/parentheses/let.js
 
 ### if

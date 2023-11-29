@@ -28,7 +28,7 @@ use std::borrow::Cow;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identify_name;
+use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
     array,
@@ -95,8 +95,8 @@ impl<'a> Format<'a> for Directive {
             self.expression.value.as_str(),
             p.options.single_quote,
         )));
-        if p.options.semi {
-            parts.push(ss!(";"));
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
         }
         parts.extend(hardline!());
         Doc::Array(parts)
@@ -135,8 +135,8 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
         wrap!(p, self, ExpressionStatement, {
             let mut parts = p.vec();
             parts.push(self.expression.format(p));
-            if p.options.semi {
-                parts.push(ss!(";"));
+            if let Some(semi) = p.semi() {
+                parts.push(semi);
             }
             Doc::Array(parts)
         })
@@ -363,8 +363,8 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(ss!("while ("));
             parts.push(group!(p, indent!(p, softline!(), format!(p, self.test)), softline!()));
             parts.push(ss!(")"));
-            if p.options.semi {
-                parts.push(ss!(";"));
+            if let Some(semi) = p.semi() {
+                parts.push(semi);
             }
 
             Doc::Array(parts)
@@ -651,7 +651,9 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             }));
 
             if !parent_for_loop.is_some_and(|span| span != self.span) {
-                parts.push(ss!(";"));
+                if let Some(semi) = p.semi() {
+                    parts.push(semi);
+                }
             }
 
             Doc::Group(Group::new(parts, false))
@@ -674,8 +676,8 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
         parts.push(ss!(" = "));
         parts.push(format!(p, self.type_annotation));
 
-        if p.options.semi {
-            parts.push(ss!(";"));
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
         }
 
         Doc::Array(parts)
@@ -1047,8 +1049,8 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         }
         parts.push(ss!(" from "));
         parts.push(self.source.format(p));
-        if p.options.semi {
-            parts.push(ss!(";"));
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
         }
         Doc::Array(parts)
     }
@@ -1223,7 +1225,7 @@ impl<'a> Format<'a> for Expression<'a> {
 
 impl<'a> Format<'a> for IdentifierReference {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.str(self.name.as_str())
+        wrap!(p, self, IdentifierReference, { p.str(self.name.as_str()) })
     }
 }
 
@@ -1551,7 +1553,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                         let unquote = if need_quote {
                             false
                         } else {
-                            is_identify_name(literal.value.as_str())
+                            is_identifier_name(literal.value.as_str())
                         };
 
                         if !unquote || p.options.quote_props.is_preserve() {
