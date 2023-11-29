@@ -1,4 +1,4 @@
-Compatibility: 203/561 (36.19%)
+Compatibility: 205/561 (36.54%)
 
 # Failed
 
@@ -270,10 +270,6 @@ Compatibility: 203/561 (36.19%)
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
-
-### identifier/for-of
-* identifier/for-of/await.js
-* identifier/for-of/let.js
 
 ### identifier/parentheses
 * identifier/parentheses/let.js
