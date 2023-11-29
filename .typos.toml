@@ -21,3 +21,6 @@ trivias = "trivias"
 trivia = "trivia"
 xdescribe = "xdescribe"
 seeked = "seeked"
+
+[default.extend-identifiers]
+IIFEs = "IIFEs"
