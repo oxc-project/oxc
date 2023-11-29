@@ -100,7 +100,9 @@ pub(super) fn print_object_properties<'a>(
             }
             indent_parts
         }));
-        parts.push(if_break!(p, ",", "", None));
+        if p.should_print_es5_comma() {
+            parts.push(if_break!(p, ",", "", None));
+        }
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
         parts.push(ss!("}"));
 
