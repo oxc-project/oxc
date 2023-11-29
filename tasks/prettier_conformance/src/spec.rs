@@ -8,7 +8,7 @@ use oxc_ast::{
     VisitMut,
 };
 use oxc_parser::Parser;
-use oxc_prettier::{EndOfLine, PrettierOptions, TrailingComma};
+use oxc_prettier::{EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 use oxc_span::{Atom, GetSpan, SourceType};
 
 #[derive(Default)]
@@ -88,6 +88,10 @@ impl VisitMut<'_> for SpecParser {
                                 "endOfLine" => {
                                     options.end_of_line =
                                         EndOfLine::from_str(literal.value.as_str()).unwrap();
+                                }
+                                "quoteProps" => {
+                                    options.quote_props =
+                                        QuoteProps::from_str(literal.value.as_str()).unwrap();
                                 }
                                 _ => {}
                             },

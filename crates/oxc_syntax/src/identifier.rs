@@ -108,3 +108,8 @@ pub fn is_identifier_part(c: char) -> bool {
     }
     is_id_continue_unicode(c) || c == ZWNJ || c == ZWJ
 }
+
+pub fn is_identify_name(name: &str) -> bool {
+    let mut chars = name.chars();
+    chars.next().is_some_and(is_identifier_start_all) && chars.all(is_identifier_part)
+}

@@ -17,6 +17,7 @@ mod function_parameters;
 mod misc;
 mod module;
 mod object;
+mod property;
 mod statement;
 mod string;
 mod template_literal;
@@ -27,6 +28,7 @@ use std::borrow::Cow;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
+use oxc_syntax::identifier::is_identify_name;
 
 use crate::{
     array,
@@ -1515,14 +1517,50 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 impl<'a> Format<'a> for PropertyKey<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, PropertyKey, {
+            // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
+            let need_quote = p.options.quote_props.is_consistent()
+                && match p.parent_parent_kind() {
+                    Some(AstKind::ObjectExpression(a)) => a.properties.iter().any(|x| match x {
+                        ObjectPropertyKind::ObjectProperty(p) => {
+                            property::is_property_key_has_quote(&p.key)
+                        }
+                        ObjectPropertyKind::SpreadProperty(_) => false,
+                    }),
+                    Some(AstKind::ClassBody(a)) => a.body.iter().any(|x| match x {
+                        ClassElement::PropertyDefinition(p) => {
+                            property::is_property_key_has_quote(&p.key)
+                        }
+                        _ => false,
+                    }),
+                    _ => false,
+                };
+
             match self {
-                PropertyKey::Identifier(ident) => ident.format(p),
+                PropertyKey::Identifier(ident) => {
+                    if need_quote {
+                        Doc::Str(string::print_string(p, &ident.name, p.options.single_quote))
+                    } else {
+                        ident.format(p)
+                    }
+                }
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
                 PropertyKey::Expression(expr) => match expr {
                     Expression::StringLiteral(literal) => {
-                        let value = literal.value.as_bytes();
-                        if !&value[0].is_ascii_digit() && !value.contains(&b'_') {
-                            p.str(&literal.value)
+                        let unquote = if need_quote {
+                            false
+                        } else {
+                            is_identify_name(literal.value.as_str())
+                        };
+
+                        if !unquote || p.options.quote_props.is_preserve() {
+                            literal.format(p)
+                        } else {
+                            p.str(literal.value.as_str())
+                        }
+                    }
+                    Expression::NumberLiteral(literal) => {
+                        if need_quote {
+                            Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
                         } else {
                             literal.format(p)
                         }
