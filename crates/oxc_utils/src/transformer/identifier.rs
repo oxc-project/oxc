@@ -122,16 +122,34 @@ pub fn is_valid_es3_identifier(name: &Atom) -> bool {
 }
 
 pub fn to_identifier(name: &str) -> String {
-    let name =
-        name.chars().map(|item| if is_id_continue(item) { item } else { '-' }).collect::<String>();
+    let name = name
+        .chars()
+        .enumerate()
+        .map(|(i, ch)| {
+            if i == 0 {
+                if is_id_start(ch) {
+                    ch
+                } else {
+                    '-'
+                }
+            } else {
+                if is_id_continue(ch) {
+                    ch
+                } else {
+                    '-'
+                }
+            }
+        })
+        .collect::<String>();
     let name = name.trim_start_matches(|ch: char| ch.is_ascii_digit() || ch == '-');
+
     let mut name = name.to_case(convert_case::Case::Camel);
     if !is_valid_identifier(&name, true) {
         name = format!("_{name}");
     }
     if name.is_empty() {
-        name
-    } else {
         "_".to_string()
+    } else {
+        name
     }
 }

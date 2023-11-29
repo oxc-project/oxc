@@ -1,4 +1,4 @@
-Passed: 208/1103
+Passed: 259/1103
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -511,10 +511,9 @@ Passed: 208/1103
 * to-native-fields/static-shadow/input.js
 * to-native-fields/static-shadowed-binding/input.js
 
-# babel-plugin-transform-logical-assignment-operators (3/6)
+# babel-plugin-transform-logical-assignment-operators (4/6)
 * logical-assignment/general-semantics/input.js
 * logical-assignment/null-coalescing/input.js
-* logical-assignment/null-coalescing-without-other/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
 * export-namespace/namespace-default/input.mjs
@@ -751,9 +750,8 @@ Passed: 208/1103
 * regression/in-uncompiled-class-fields/input.js
 * regression/regression-2765/input.js
 
-# babel-plugin-transform-exponentiation-operator (2/4)
+# babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js
-* regression/4403/input.js
 
 # babel-plugin-transform-unicode-regex (1/4)
 * unicode-regex/basic/input.js
@@ -875,68 +873,19 @@ Passed: 208/1103
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (91/156)
-* autoImport/after-polyfills/input.mjs
-* autoImport/after-polyfills-2/input.mjs
+# babel-plugin-transform-react-jsx (140/156)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 * autoImport/auto-import-react-source-type-module/input.js
-* autoImport/complicated-scope-module/input.js
-* autoImport/import-source/input.js
-* autoImport/import-source-pragma/input.js
-* autoImport/react-defined/input.js
 * react/arrow-functions/input.js
 * react/optimisation.react.constant-elements/input.js
-* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
 * react-automatic/arrow-functions/input.js
-* react-automatic/assignment/input.js
-* react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/dont-coerce-expression-containers/input.js
-* react-automatic/duplicate-props/input.js
-* react-automatic/flattens-spread/input.js
 * react-automatic/handle-fragments/input.js
-* react-automatic/handle-fragments-with-key/input.js
 * react-automatic/handle-fragments-with-no-children/input.js
-* react-automatic/handle-nonstatic-children/input.js
-* react-automatic/handle-spread-with-proto/input.js
-* react-automatic/handle-static-children/input.js
-* react-automatic/jsx-with-retainlines-option/input.js
-* react-automatic/jsx-without-retainlines-option/input.js
-* react-automatic/key-undefined-works/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
-* react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-constructor-as-prop/input.js
-* react-automatic/should-allow-deeper-js-namespacing/input.js
-* react-automatic/should-allow-elements-as-attributes/input.js
-* react-automatic/should-allow-js-namespacing/input.js
 * react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-* react-automatic/should-convert-simple-tags/input.js
-* react-automatic/should-convert-simple-text/input.js
-* react-automatic/should-escape-xhtml-jsxattribute/input.js
-* react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-handle-has-own-property-correctly/input.js
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
-* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
-* react-automatic/should-not-add-quotes-to-identifier-names/input.js
-* react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
-* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
-* react-automatic/should-properly-handle-comments-between-props/input.js
-* react-automatic/should-properly-handle-keys/input.js
-* react-automatic/should-properly-handle-null-prop-spread/input.js
-* react-automatic/should-quote-jsx-attributes/input.js
-* react-automatic/should-support-xml-namespaces-if-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-transform-known-hyphenated-tags/input.js
-* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
-* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
-* react-automatic/this-tag-name/input.js
-* react-automatic/weird-symbols/input.js
-* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
 * spread-transform/transform-to-babel-extend/input.js
