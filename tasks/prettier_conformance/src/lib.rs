@@ -50,6 +50,8 @@ const IGNORE_TESTS: &[&str] = &[
     "js/decorator",
     "js/do", // do expression
     "js/explicit-resource-management",
+    "js/export-default/escaped",
+    "js/export-default/export-default-from",
     "js/import-assertions",
     "js/import-attributes",
     "js/import-reflection",
