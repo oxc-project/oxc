@@ -30,6 +30,8 @@ jobs:
 
       - name: Install Rust
         uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
+        with:
+          cache-base: main
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
