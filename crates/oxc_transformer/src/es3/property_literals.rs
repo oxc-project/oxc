@@ -2,8 +2,8 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::SPAN;
 use std::rc::Rc;
 
-use crate::utils::is_valid_es3_identifier;
 use crate::{TransformOptions, TransformTarget};
+use oxc_utils::transformer::is_valid_es3_identifier;
 
 /// ES3: PropertyLiteral
 ///

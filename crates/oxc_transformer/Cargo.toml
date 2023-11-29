@@ -25,7 +25,9 @@ oxc_allocator   = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
-rustc-hash = { workspace = true }
+oxc_utils       = { workspace = true }
+rustc-hash      = { workspace = true }
+convert_case    = { workspace = true }
 
 
 serde = { workspace = true, features = ["derive"] }

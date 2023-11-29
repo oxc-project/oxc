@@ -5,10 +5,11 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
     NumberBase,
 };
+use oxc_utils::transformer::is_valid_identifier;
 use rustc_hash::FxHashSet;
 use std::{mem, rc::Rc};
 
-use crate::{context::TransformerCtx, utils::is_valid_identifier};
+use crate::context::TransformerCtx;
 
 /// Transform TypeScript
 ///

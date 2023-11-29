@@ -1,13 +1,13 @@
 use std::hash::BuildHasherDefault;
 
+use crate::{reference::ReferenceId, symbol::SymbolId};
 use indexmap::IndexMap;
 use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
 use oxc_index::IndexVec;
 use oxc_span::Atom;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
+use oxc_utils::transformer::to_identifier;
 use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
-
-use crate::{reference::ReferenceId, symbol::SymbolId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
@@ -152,11 +152,13 @@ impl ScopeTree {
         false
     }
 
+    /// https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-traverse/src/scope/index.ts#L495-L517
     pub fn generate_uid(&mut self, name: &str, scope_id: Option<ScopeId>) -> Atom {
         let mut i = 0;
+        let name = to_identifier(name);
         let scope_id = scope_id.unwrap_or_else(|| self.root_scope_id());
         loop {
-            let name = Self::generate_unique_atom(name, i);
+            let name = Self::generate_unique_atom(&name, i);
             if !self.has_binding(scope_id, &name)
                 && !self.references.contains(&name)
                 && !self.has_global(&name, scope_id)

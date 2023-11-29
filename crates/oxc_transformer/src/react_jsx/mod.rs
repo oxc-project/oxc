@@ -191,7 +191,7 @@ impl<'a> ReactJsx<'a> {
     fn register_unique_identifier(&mut self, name: &str, id: &str) {
         let root_scope_id = self.ctx.scopes().root_scope_id();
 
-        let uid = self.ctx.scopes_mut().generate_uid(&id, None);
+        let uid = self.ctx.scopes_mut().generate_uid(id, None);
 
         self.ctx.add_binding_with_scope(uid.clone(), root_scope_id);
         self.import_binding_register.insert(name.to_string(), uid);
