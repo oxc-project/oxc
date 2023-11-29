@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder},
-    group, ss, Format, Prettier,
+    group, if_break, indent, softline, ss, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -105,7 +105,19 @@ pub(super) fn print_return_or_throw_argument<'a>(
 
     if let Some(argument) = argument {
         parts.push(ss!(" "));
-        parts.push(argument.format(p));
+        parts.push(
+            if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
+                group![
+                    p,
+                    if_break!(p, "("),
+                    indent!(p, softline!(), argument.format(p)),
+                    softline!(),
+                    if_break!(p, ")"),
+                ]
+            } else {
+                argument.format(p)
+            },
+        );
     }
 
     parts.push(p.str(";"));

@@ -108,6 +108,12 @@ macro_rules! if_break {
             group_id: $group_id,
         })
     }};
+    ($p:ident, $s:expr, $flat:expr) => {{
+        if_break!($p, $s, $flat, None)
+    }};
+    ($p:ident, $s:expr) => {{
+        if_break!($p, $s, "", None)
+    }};
 }
 
 #[macro_export]

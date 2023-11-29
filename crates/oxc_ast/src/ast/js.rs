@@ -225,6 +225,10 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
     }
 
+    pub fn is_binaryish(&self) -> bool {
+        matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
+    }
+
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
     pub fn get_boolean_value(&self) -> Option<bool> {
