@@ -35,8 +35,8 @@ watch command:
   cargo watch --no-vcs-ignores -i '*snap*' -x '{{command}}'
 
 # Run the example in `parser`, `formatter`, `linter`
-example tool:
-  just watch 'run -p oxc_{{tool}} --example {{tool}}'
+example tool *args='':
+  just watch 'run -p oxc_{{tool}} --example {{tool}} -- {{args}}'
 
 # Format all files
 fmt:

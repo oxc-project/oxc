@@ -1781,6 +1781,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
 ]
 
 [[package]]
