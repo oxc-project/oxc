@@ -1,6 +1,5 @@
-use oxc_allocator::Vec;
 use oxc_ast::ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern};
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{
     doc::{Doc, DocBuilder, Group},
@@ -9,62 +8,100 @@ use crate::{
 
 use super::{misc, Format};
 
-#[allow(clippy::enum_variant_names)]
+#[derive(Debug, Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b ObjectExpression<'a>),
-    ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
-    ObjectPattern(&'b ObjectPattern<'a>),
+    Expression(&'b ObjectExpression<'a>),
+    AssignmentTarget(&'b ObjectAssignmentTarget<'a>),
+    Pattern(&'b ObjectPattern<'a>),
 }
 
-impl ObjectLike<'_, '_> {
-    fn is_object_pattern(&self) -> bool {
-        matches!(self, ObjectLike::ObjectPattern(_))
-    }
-}
-
-impl ObjectLike<'_, '_> {
-    pub fn span(&self) -> Span {
+impl<'a, 'b> ObjectLike<'a, 'b> {
+    fn len(&self) -> usize {
         match self {
-            ObjectLike::ObjectExpression(object) => object.span,
-            ObjectLike::ObjectAssignmentTarget(object) => object.span,
-            ObjectLike::ObjectPattern(object) => object.span,
+            ObjectLike::Expression(object) => object.properties.len(),
+            ObjectLike::AssignmentTarget(object) => object.properties.len(),
+            ObjectLike::Pattern(object) => object.properties.len(),
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        match self {
+            ObjectLike::Expression(object) => object.properties.is_empty(),
+            ObjectLike::AssignmentTarget(object) => object.is_empty(),
+            ObjectLike::Pattern(object) => object.is_empty(),
+        }
+    }
+
+    fn is_object_pattern(&self) -> bool {
+        matches!(self, ObjectLike::Pattern(_))
+    }
+
+    fn span(&self) -> Span {
+        match self {
+            ObjectLike::Expression(object) => object.span,
+            ObjectLike::AssignmentTarget(object) => object.span,
+            ObjectLike::Pattern(object) => object.span,
+        }
+    }
+
+    fn iter(&'b self, p: &'b mut Prettier<'a>) -> Box<dyn Iterator<Item = Doc<'a>> + 'b> {
+        match self {
+            ObjectLike::Expression(object) => {
+                Box::new(object.properties.iter().map(|prop| prop.format(p)))
+            }
+            ObjectLike::AssignmentTarget(object) => {
+                Box::new(object.properties.iter().map(|prop| prop.format(p)))
+            }
+            ObjectLike::Pattern(object) => {
+                Box::new(object.properties.iter().map(|prop| prop.format(p)))
+            }
         }
     }
 }
 
-pub(super) fn print_object_properties<'a, F: Format<'a> + GetSpan>(
+pub(super) fn print_object_properties<'a>(
     p: &mut Prettier<'a>,
-    object: &ObjectLike<'a, '_>,
-    properties: &Vec<'a, F>,
+    object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {
     let left_brace = ss!("{");
     let right_brace = ss!("}");
 
-    let content = if properties.is_empty() {
+    let content = if object.is_empty() {
         group![p, left_brace, softline!(), right_brace]
     } else {
         let mut parts = p.vec();
         parts.push(ss!("{"));
-
-        let mut indent_parts = p.vec();
-        indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-        for (i, prop) in properties.iter().enumerate() {
-            indent_parts.push(prop.format(p));
-            if i < properties.len() - 1 {
-                indent_parts.push(Doc::Str(","));
-                indent_parts.push(line!());
+        parts.push(Doc::Indent({
+            let len = object.len();
+            let mut indent_parts = p.vec();
+            indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
+            for (i, doc) in object.iter(p).enumerate() {
+                indent_parts.push(doc);
+                if i < len - 1 {
+                    indent_parts.push(ss!(","));
+                    indent_parts.push(line!());
+                }
             }
-        }
-
-        parts.push(Doc::Indent(indent_parts));
+            match object {
+                ObjectLike::Expression(object) => {}
+                ObjectLike::AssignmentTarget(object) => {
+                    if let Some(rest) = &object.rest {
+                        indent_parts.push(ss!("..."));
+                        indent_parts.push(rest.format(p));
+                    }
+                }
+                ObjectLike::Pattern(object) => {
+                    if let Some(rest) = &object.rest {
+                        indent_parts.push(ss!(","));
+                        indent_parts.push(line!());
+                        indent_parts.push(rest.format(p));
+                    }
+                }
+            }
+            indent_parts
+        }));
         parts.push(if_break!(p, ",", "", None));
-
-        if p.options.bracket_spacing {
-            parts.push(line!());
-        } else {
-            parts.push(softline!());
-        }
-
+        parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
         parts.push(ss!("}"));
 
         if object.is_object_pattern() {

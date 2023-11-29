@@ -885,6 +885,16 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTarget<'a>>,
 }
 
+impl<'a> ObjectAssignmentTarget<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.properties.is_empty() && self.rest.is_none()
+    }
+
+    pub fn len(&self) -> usize {
+        self.properties.len() + usize::from(self.rest.is_some())
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
@@ -1441,6 +1451,10 @@ impl<'a> ObjectPattern<'a> {
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty() && self.rest.is_none()
     }
+
+    pub fn len(&self) -> usize {
+        self.properties.len() + usize::from(self.rest.is_some())
+    }
 }
 
 #[derive(Debug, Hash)]
@@ -1466,6 +1480,10 @@ pub struct ArrayPattern<'a> {
 impl<'a> ArrayPattern<'a> {
     pub fn is_empty(&self) -> bool {
         self.elements.is_empty() && self.rest.is_none()
+    }
+
+    pub fn len(&self) -> usize {
+        self.elements.len() + usize::from(self.rest.is_some())
     }
 }
 

@@ -20,7 +20,9 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if let Some(rest) = &params.rest {
-        parts.push(ss!(", "));
+        if !params.items.is_empty() {
+            parts.push(ss!(", "));
+        }
         parts.push(rest.format(p));
     }
 

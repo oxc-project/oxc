@@ -1455,11 +1455,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectExpression, {
-            object::print_object_properties(
-                p,
-                &ObjectLike::ObjectExpression(self),
-                &self.properties,
-            )
+            object::print_object_properties(p, ObjectLike::Expression(self))
         })
     }
 }
@@ -1698,11 +1694,7 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(
-            p,
-            &ObjectLike::ObjectAssignmentTarget(self),
-            &self.properties,
-        )
+        object::print_object_properties(p, ObjectLike::AssignmentTarget(self))
     }
 }
 
@@ -2074,7 +2066,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, &ObjectLike::ObjectPattern(self), &self.properties)
+        object::print_object_properties(p, ObjectLike::Pattern(self))
     }
 }
 
