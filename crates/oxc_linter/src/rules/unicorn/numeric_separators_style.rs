@@ -41,50 +41,6 @@ impl Default for NumericSeparatorsStyle {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct NumericBaseConfig {
-    group_length: usize,
-    minimum_digits: usize,
-}
-impl NumericBaseConfig {
-    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
-        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
-            self.group_length = usize::try_from(group_length).unwrap();
-        }
-        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
-            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
-        }
-    }
-}
-
-enum SeparatorDir {
-    Left,
-    Right,
-}
-
-fn add_separators(s: &mut String, dir: &SeparatorDir, config: &NumericBaseConfig) {
-    if s.len() < config.minimum_digits || s.len() < config.group_length + 1 {
-        return;
-    }
-
-    match dir {
-        SeparatorDir::Right => {
-            let mut pos = s.len();
-            while pos > config.group_length {
-                pos -= config.group_length;
-                s.insert(pos, '_');
-            }
-        }
-        SeparatorDir::Left => {
-            let mut pos = config.group_length;
-            while pos < s.len() {
-                s.insert(pos, '_');
-                pos += config.group_length + 1;
-            }
-        }
-    }
-}
-
 declare_oxc_lint!(
     /// ### What it does
     /// Enforces a convention of grouping digits using numeric separators.
@@ -290,6 +246,50 @@ impl NumericSeparatorsStyle {
         };
         formatted.push('n');
         formatted
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct NumericBaseConfig {
+    group_length: usize,
+    minimum_digits: usize,
+}
+impl NumericBaseConfig {
+    pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
+        if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
+            self.group_length = usize::try_from(group_length).unwrap();
+        }
+        if let Some(minimum_digits) = val.get("minimumDigits").and_then(serde_json::Value::as_u64) {
+            self.minimum_digits = usize::try_from(minimum_digits).unwrap();
+        }
+    }
+}
+
+enum SeparatorDir {
+    Left,
+    Right,
+}
+
+fn add_separators(s: &mut String, dir: &SeparatorDir, config: &NumericBaseConfig) {
+    if s.len() < config.minimum_digits || s.len() < config.group_length + 1 {
+        return;
+    }
+
+    match dir {
+        SeparatorDir::Right => {
+            let mut pos = s.len();
+            while pos > config.group_length {
+                pos -= config.group_length;
+                s.insert(pos, '_');
+            }
+        }
+        SeparatorDir::Left => {
+            let mut pos = config.group_length;
+            while pos < s.len() {
+                s.insert(pos, '_');
+                pos += config.group_length + 1;
+            }
+        }
     }
 }
 
