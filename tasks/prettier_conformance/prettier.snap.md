@@ -1,4 +1,4 @@
-Compatibility: 208/561 (37.08%)
+Compatibility: 209/561 (37.25%)
 
 # Failed
 
@@ -289,7 +289,6 @@ Compatibility: 208/561 (37.08%)
 * last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
-* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js

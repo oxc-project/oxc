@@ -623,6 +623,12 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for VariableDeclarator<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, VariableDeclarator, { assignment::print_variable_declarator(p, self) })
+    }
+}
+
 impl<'a> Format<'a> for UsingDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
@@ -956,12 +962,6 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
     }
 }
 
-impl<'a> Format<'a> for VariableDeclarator<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        assignment::print_variable_declarator(p, self)
-    }
-}
-
 impl<'a> Format<'a> for Function<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, Function, { function::print_function(p, self, None) })
@@ -986,7 +986,7 @@ impl<'a> Format<'a> for FormalParameters<'a> {
 
 impl<'a> Format<'a> for FormalParameter<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        self.pattern.format(p)
+        wrap!(p, self, FormalParameter, { self.pattern.format(p) })
     }
 }
 
@@ -2074,7 +2074,9 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, ObjectLike::Pattern(self))
+        wrap!(p, self, ObjectPattern, {
+            object::print_object_properties(p, ObjectLike::Pattern(self))
+        })
     }
 }
 
@@ -2096,13 +2098,15 @@ impl<'a> Format<'a> for RestElement<'a> {
 
 impl<'a> Format<'a> for ArrayPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array::print_array(p, &Array::ArrayPattern(self))
+        wrap!(p, self, ArrayPattern, { array::print_array(p, &Array::ArrayPattern(self)) })
     }
 }
 
 impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array![p, format!(p, self.left), ss!(" = "), format!(p, self.right)]
+        wrap!(p, self, AssignmentPattern, {
+            array![p, format!(p, self.left), ss!(" = "), format!(p, self.right)]
+        })
     }
 }
 

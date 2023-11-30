@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     array,
@@ -42,7 +43,9 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         if i < class_body.body.len() - 1 {
             parts_inner.extend(hardline!());
 
-            // TODO: if the next line is empty, add another hardline
+            if p.is_next_line_empty(node.span()) {
+                parts_inner.extend(hardline!());
+            }
         }
     }
 
@@ -209,14 +212,6 @@ fn should_print_semicolon_after_class_property<'a>(
                 if prop_key == "in" || prop_key == "instanceof" {
                     return true;
                 }
-            }
-        }
-    }
-
-    if !next_node.r#static() {
-        if let ClassElement::PropertyDefinition(def) = next_node {
-            if !def.declare {
-                return true;
             }
         }
     }
