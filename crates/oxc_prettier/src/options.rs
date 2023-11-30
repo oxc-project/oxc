@@ -20,7 +20,8 @@ pub struct PrettierOptions {
     /// Indent lines with tabs instead of spaces.
     pub use_tabs: bool,
 
-    /// End of line
+    /// Which end of line characters to apply.
+    /// Default: "lf"
     pub end_of_line: EndOfLine,
 
     /* JavaScript Options */
