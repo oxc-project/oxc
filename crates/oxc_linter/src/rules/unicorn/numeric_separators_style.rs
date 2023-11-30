@@ -139,19 +139,29 @@ impl Rule for NumericSeparatorsStyle {
 }
 
 impl NumericSeparatorsStyle {
-    //
-    // Numbers
-    //
     fn format_number(&self, number: &NumberLiteral) -> String {
-        match number.base {
-            oxc_syntax::NumberBase::Binary => self.format_binary(number.raw),
-            oxc_syntax::NumberBase::Decimal | oxc_syntax::NumberBase::Float => {
-                self.format_decimal(number.raw)
-            }
+        use oxc_syntax::NumberBase;
 
-            oxc_syntax::NumberBase::Hex => self.format_hex(number.raw),
-            oxc_syntax::NumberBase::Octal => self.format_octal(number.raw),
+        match number.base {
+            NumberBase::Binary => self.format_binary(number.raw),
+            NumberBase::Decimal | oxc_syntax::NumberBase::Float => self.format_decimal(number.raw),
+            NumberBase::Hex => self.format_hex(number.raw),
+            NumberBase::Octal => self.format_octal(number.raw),
         }
+    }
+
+    fn format_bigint(&self, number: &BigintLiteral, raw: &str) -> String {
+        use oxc_syntax::BigintBase;
+
+        let raw_without_bigint_n_suffix = &raw[..raw.len() - 1];
+        let mut formatted = match number.base {
+            BigintBase::Binary => self.format_binary(raw_without_bigint_n_suffix),
+            BigintBase::Decimal => self.format_decimal(raw_without_bigint_n_suffix),
+            BigintBase::Hex => self.format_hex(raw_without_bigint_n_suffix),
+            BigintBase::Octal => self.format_octal(raw_without_bigint_n_suffix),
+        };
+        formatted.push('n');
+        formatted
     }
 
     fn format_binary(&self, raw_number: &str) -> String {
@@ -237,18 +247,6 @@ impl NumericSeparatorsStyle {
         }
 
         out
-    }
-
-    fn format_bigint(&self, number: &BigintLiteral, raw: &str) -> String {
-        let raw_without_bigint_n_suffix = &raw[..raw.len() - 1];
-        let mut formatted = match number.base {
-            oxc_syntax::BigintBase::Binary => self.format_binary(raw_without_bigint_n_suffix),
-            oxc_syntax::BigintBase::Decimal => self.format_decimal(raw_without_bigint_n_suffix),
-            oxc_syntax::BigintBase::Hex => self.format_hex(raw_without_bigint_n_suffix),
-            oxc_syntax::BigintBase::Octal => self.format_octal(raw_without_bigint_n_suffix),
-        };
-        formatted.push('n');
-        formatted
     }
 }
 
