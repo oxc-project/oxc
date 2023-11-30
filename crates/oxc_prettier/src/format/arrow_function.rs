@@ -11,6 +11,10 @@ pub(super) fn print_arrow_function<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
+    if !p.options.semi && p.options.arrow_parens.is_always() {
+        parts.push(ss!(";"));
+    }
+
     if expr.r#async {
         parts.push(ss!("async "));
     }

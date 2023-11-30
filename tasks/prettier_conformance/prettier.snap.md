@@ -1,4 +1,4 @@
-Compatibility: 205/561 (36.54%)
+Compatibility: 207/561 (36.90%)
 
 # Failed
 
@@ -32,15 +32,11 @@ Compatibility: 205/561 (36.54%)
 * arrows/currying-4.js
 * arrows/currying.js
 * arrows/issue-1389-curry.js
-* arrows/issue-4166-curry.js
 * arrows/long-contents.js
 * arrows/parens.js
 
 ### arrows/newline-before-arrow
 * arrows/newline-before-arrow/newline-before-arrow.js
-
-### arrows/semi
-* arrows/semi/semi.js
 
 ### assignment
 * assignment/binaryish.js

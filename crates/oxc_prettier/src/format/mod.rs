@@ -978,7 +978,9 @@ impl<'a> Format<'a> for FunctionBody<'a> {
 
 impl<'a> Format<'a> for FormalParameters<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function_parameters::print_function_parameters(p, self)
+        wrap!(p, self, FormalParameters, {
+            function_parameters::print_function_parameters(p, self)
+        })
     }
 }
 
