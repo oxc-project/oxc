@@ -1475,7 +1475,11 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 return self.value.format(p);
             }
 
-            let left_doc = format!(p, self.key);
+            let left_doc = if self.computed {
+                array!(p, ss!("["), format!(p, self.key), ss!("]"))
+            } else {
+                format!(p, self.key)
+            };
 
             assignment::print_assignment(
                 p,
