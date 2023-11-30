@@ -46,7 +46,10 @@ declare_oxc_lint!(
     /// Enforces a convention of grouping digits using numeric separators.
     ///
     /// ### Why is this bad?
-    /// Long numbers can become really hard to read, so cutting it into groups of digits, separated with a _, is important to keep your code clear. This rule also enforces a proper usage of the numeric separator, by checking if the groups of digits are of the correct size.
+    /// Long numbers can become really hard to read, so cutting it into groups of digits,
+    /// separated with a _, is important to keep your code clear. This rule also enforces
+    /// a proper usage of the numeric separator, by checking if the groups of digits are
+    /// of the correct size.
     ///
     ///
     /// ### Example
