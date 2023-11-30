@@ -138,7 +138,7 @@ macro_rules! wrap {
         let leading = $p.print_leading_comments(kind.span());
         let doc = $block;
         let doc = $p.wrap_parens(doc, kind);
-        let trailing = $p.print_trailing_comments(kind.span());
+        let trailing = $p.print_trailing_comments(kind.span(), None);
         let doc = $p.print_comments(leading, doc, trailing);
         $p.leave_node();
         doc

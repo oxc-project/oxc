@@ -1,4 +1,4 @@
-Compatibility: 205/561 (36.54%)
+Compatibility: 206/561 (36.72%)
 
 # Failed
 
@@ -409,7 +409,6 @@ Compatibility: 205/561 (36.54%)
 * preserve-line/parameter-list.js
 
 ### quote-props
-* quote-props/numeric-separator.js
 * quote-props/objects.js
 * quote-props/with_member_expressions.js
 

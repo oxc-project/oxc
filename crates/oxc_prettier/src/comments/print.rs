@@ -83,7 +83,11 @@ impl<'a> Prettier<'a> {
     }
 
     #[must_use]
-    pub(crate) fn print_trailing_comments(&mut self, range: Span) -> Option<Doc<'a>> {
+    pub(crate) fn print_trailing_comments(
+        &mut self,
+        range: Span,
+        extra_allowed_char: Option<char>,
+    ) -> Option<Doc<'a>> {
         let mut parts = self.vec();
         let mut previous_comment: Option<Comment> = None;
         while let Some((start, end, kind)) = self.trivias.peek().copied() {
@@ -92,7 +96,7 @@ impl<'a> Prettier<'a> {
             if range.end < comment.start
                 && self.source_text[range.end as usize..comment.start as usize]
                     .chars()
-                    .all(|c| c == ' ')
+                    .all(|c| c == ' ' || extra_allowed_char.is_some_and(|s| c == s))
             {
                 self.trivias.next();
                 let previous = self.print_trailing_comment(&mut parts, comment, previous_comment);

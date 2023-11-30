@@ -1473,6 +1473,10 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(format!(p, self.key));
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
+
+                    if let Some(comment) = p.print_trailing_comments(self.span, Some(',')) {
+                        parts.push(comment);
+                    }
                 }
                 Doc::Group(Group::new(parts, false))
             }
