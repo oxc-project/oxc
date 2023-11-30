@@ -1439,10 +1439,7 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            // Perf: Use same print function with BindingProperty
-            if self.shorthand {
-                self.key.format(p)
-            } else {
+            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
                 let mut parts = p.vec();
                 let mut method = self.method;
                 match self.kind {
@@ -1471,8 +1468,22 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
-                Doc::Group(Group::new(parts, false))
+                return Doc::Group(Group::new(parts, false));
             }
+
+            if self.shorthand {
+                return self.value.format(p);
+            }
+
+            let left_doc = format!(p, self.key);
+
+            assignment::print_assignment(
+                p,
+                assignment::AssignmentLikeNode::ObjectProperty(self),
+                left_doc,
+                ss!(":"),
+                Some(&self.value),
+            )
         })
     }
 }
