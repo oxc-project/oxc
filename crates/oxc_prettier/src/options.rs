@@ -192,3 +192,21 @@ pub enum ArrowParens {
     /// Omit parens when possible. `Example: x => x`
     Avoid,
 }
+
+impl ArrowParens {
+    pub fn is_always(self) -> bool {
+        matches!(self, Self::Always)
+    }
+}
+
+impl FromStr for ArrowParens {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "always" => Self::Always,
+            "avoid" => Self::Avoid,
+            _ => Self::default(),
+        })
+    }
+}
