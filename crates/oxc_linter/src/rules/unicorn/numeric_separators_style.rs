@@ -14,8 +14,11 @@ use regex::Regex;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(numeric-separators-style): Enforce the style of numeric separators by correctly grouping digits")]
-#[diagnostic(severity(warning), help("Invalid group length in numeric value."))]
+#[error("eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.")]
+#[diagnostic(
+    severity(warning),
+    help("Group digits with numeric separators (_) so longer numbers are easier to read.")
+)]
 struct NumericSeparatorsStyleDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
