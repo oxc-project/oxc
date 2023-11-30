@@ -41,8 +41,10 @@ pub(super) fn print_function<'a>(
         parts.push(ss!(" "));
         parts.push(body.format(p));
     }
-    if p.options.semi && (func.is_ts_declare_function() || func.body.is_none()) {
-        parts.push(p.str(";"));
+    if func.is_ts_declare_function() || func.body.is_none() {
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
+        }
     }
 
     Doc::Array(parts)
@@ -120,7 +122,9 @@ pub(super) fn print_return_or_throw_argument<'a>(
         );
     }
 
-    parts.push(p.str(";"));
+    if let Some(semi) = p.semi() {
+        parts.push(semi);
+    }
     Doc::Array(parts)
 }
 

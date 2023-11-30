@@ -5,6 +5,13 @@ use crate::{
     ss, Format, Prettier,
 };
 
+pub(super) fn should_hug_the_only_function_parameter(params: &FormalParameters<'_>) -> bool {
+    if params.parameters_count() != 1 {
+        return false;
+    }
+    true
+}
+
 pub(super) fn print_function_parameters<'a>(
     p: &mut Prettier<'a>,
     params: &FormalParameters<'a>,

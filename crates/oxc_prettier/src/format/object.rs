@@ -1,4 +1,7 @@
-use oxc_ast::ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern};
+use oxc_ast::{
+    ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern},
+    AstKind,
+};
 use oxc_span::Span;
 
 use crate::{
@@ -66,6 +69,8 @@ pub(super) fn print_object_properties<'a>(
     let left_brace = ss!("{");
     let right_brace = ss!("}");
 
+    let should_break = false;
+
     let content = if object.is_empty() {
         group![p, left_brace, softline!(), right_brace]
     } else {
@@ -106,7 +111,15 @@ pub(super) fn print_object_properties<'a>(
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
         parts.push(ss!("}"));
 
-        if object.is_object_pattern() {
+        let parent_kind = p.parent_kind();
+        if (object.is_object_pattern() && should_hug_the_only_parameter(parent_kind))
+            || (!should_break
+                && object.is_object_pattern()
+                && matches!(
+                    parent_kind,
+                    AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
+                ))
+        {
             Doc::Array(parts)
         } else {
             let should_break =
@@ -116,4 +129,13 @@ pub(super) fn print_object_properties<'a>(
     };
 
     content
+}
+
+fn should_hug_the_only_parameter(kind: AstKind<'_>) -> bool {
+    match kind {
+        AstKind::FormalParameters(params) => {
+            super::function_parameters::should_hug_the_only_function_parameter(params)
+        }
+        _ => false,
+    }
 }
