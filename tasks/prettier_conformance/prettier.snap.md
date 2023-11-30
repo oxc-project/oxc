@@ -1,4 +1,4 @@
-Compatibility: 207/561 (36.90%)
+Compatibility: 208/561 (37.08%)
 
 # Failed
 
@@ -225,9 +225,6 @@ Compatibility: 207/561 (36.90%)
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
 * empty-paren-comment/empty_paren_comment.js
-
-### end-of-line
-* end-of-line/example.js
 
 ### export
 * export/blank-line-between-specifiers.js

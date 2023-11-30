@@ -77,6 +77,8 @@ const IGNORE_TESTS: &[&str] = &[
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
 const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+const LF: char = '\u{a}';
+const CR: char = '\u{d}';
 
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
@@ -184,7 +186,6 @@ impl TestRunner {
             let result = self.spec.calls.iter().all(|spec| {
                 let expected_file = spec_path.parent().unwrap().join(SNAP_RELATIVE_PATH);
                 let expected = fs::read_to_string(expected_file).unwrap();
-
                 let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1, &expected);
                 if snapshot.trim().is_empty() {
                     return false;
@@ -216,6 +217,35 @@ impl TestRunner {
                 ));
             }
         }
+    }
+
+    fn visualize_end_of_line(content: &str) -> String {
+        let mut chars = content.chars();
+        let mut result = String::new();
+
+        loop {
+            let current = chars.next();
+            let Some(char) = current else {
+                break;
+            };
+
+            match char {
+                LF => result.push_str("<LF>\n"),
+                CR => {
+                    let next = chars.clone().next();
+                    if next == Some(LF) {
+                        result.push_str("<CRLF>\n");
+                        chars.next();
+                    } else {
+                        result.push_str("<CR>\n");
+                    }
+                }
+                _ => {
+                    result.push(char);
+                }
+            }
+        }
+        result
     }
 
     fn get_single_snapshot(
@@ -250,13 +280,19 @@ impl TestRunner {
             if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
         );
 
-        let output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
-        let input = input.replace('`', "\\`");
+        let mut output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
+        let mut input = input.replace('`', "\\`");
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
             .collect::<Vec<_>>()
             .join("\n");
+
+        let need_eol_visualized = snap_content.contains("<LF>");
+        if need_eol_visualized {
+            input = Self::visualize_end_of_line(&input);
+            output = Self::visualize_end_of_line(&output);
+        }
 
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
