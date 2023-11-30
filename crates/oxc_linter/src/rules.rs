@@ -181,6 +181,7 @@ mod unicorn {
     pub mod no_useless_switch_case;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
+    pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat_map;
     pub mod prefer_array_some;
@@ -217,6 +218,7 @@ mod jsx_a11y {
     pub mod anchor_is_valid;
     pub mod heading_has_content;
     pub mod html_has_lang;
+    pub mod img_redundant_alt;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -360,6 +362,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
+    unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_blob_reading_methods,
@@ -407,5 +410,6 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
     jsx_a11y::html_has_lang,
-    jsx_a11y::heading_has_content
+    jsx_a11y::heading_has_content,
+    jsx_a11y::img_redundant_alt
 }

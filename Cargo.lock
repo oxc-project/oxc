@@ -1781,6 +1781,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
 ]
 
 [[package]]
@@ -1817,7 +1818,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "0.5.4"
+version = "0.5.5"
 dependencies = [
  "dashmap",
  "dunce",

@@ -34,7 +34,7 @@ impl<'a> Specifier<'a> {
 
         let mut prev = specifier.chars().next().unwrap();
         let mut escaped_indexes = vec![];
-        for (i, c) in specifier.chars().enumerate().skip(skip) {
+        for (i, c) in specifier.char_indices().skip(skip) {
             if c == '?' {
                 query_start = Some(i);
             }

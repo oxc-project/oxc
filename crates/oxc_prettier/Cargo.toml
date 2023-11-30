@@ -29,3 +29,4 @@ bitflags = { workspace = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 oxc_span   = { workspace = true }
+pico-args  = { workspace = true }

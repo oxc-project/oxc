@@ -267,45 +267,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
                 parts.push(ss!(" await"));
             }
             parts.push(ss!(" ("));
-
-            // for ((async) of []);
-            // for ((let) of []);
-            // for ((let.a) of []);
-            let mut should_hug = false;
-            if let ForStatementLeft::AssignmentTarget(AssignmentTarget::SimpleAssignmentTarget(
-                target,
-            )) = &self.left
-            {
-                if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = target {
-                    if ident.name == "let" {
-                        should_hug = true;
-                    }
-                    if ident.name == "async" && !self.r#await {
-                        should_hug = true;
-                    }
-                }
-                if let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = target {
-                    let object = match &**member_expr {
-                        MemberExpression::ComputedMemberExpression(e) => Some(&e.object),
-                        MemberExpression::StaticMemberExpression(e) => Some(&e.object),
-                        MemberExpression::PrivateFieldExpression(e) => None,
-                    };
-                    if let Some(Expression::Identifier(ident)) = object {
-                        if ident.name == "let" {
-                            should_hug = true;
-                        }
-                    }
-                }
-            }
-
-            if should_hug {
-                parts.push(ss!("("));
-                parts.push(format!(p, self.left));
-                parts.push(ss!(")"));
-            } else {
-                parts.push(format!(p, self.left));
-            }
-
+            parts.push(format!(p, self.left));
             parts.push(ss!(" of "));
             parts.push(format!(p, self.right));
             parts.push(ss!(")"));
@@ -1016,7 +978,9 @@ impl<'a> Format<'a> for FunctionBody<'a> {
 
 impl<'a> Format<'a> for FormalParameters<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function_parameters::print_function_parameters(p, self)
+        wrap!(p, self, FormalParameters, {
+            function_parameters::print_function_parameters(p, self)
+        })
     }
 }
 

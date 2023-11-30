@@ -1,4 +1,4 @@
-Compatibility: 203/561 (36.19%)
+Compatibility: 207/561 (36.90%)
 
 # Failed
 
@@ -32,15 +32,11 @@ Compatibility: 203/561 (36.19%)
 * arrows/currying-4.js
 * arrows/currying.js
 * arrows/issue-1389-curry.js
-* arrows/issue-4166-curry.js
 * arrows/long-contents.js
 * arrows/parens.js
 
 ### arrows/newline-before-arrow
 * arrows/newline-before-arrow/newline-before-arrow.js
-
-### arrows/semi
-* arrows/semi/semi.js
 
 ### assignment
 * assignment/binaryish.js
@@ -270,10 +266,6 @@ Compatibility: 203/561 (36.19%)
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
-
-### identifier/for-of
-* identifier/for-of/await.js
-* identifier/for-of/let.js
 
 ### identifier/parentheses
 * identifier/parentheses/let.js

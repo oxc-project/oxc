@@ -27,6 +27,12 @@ fn resolve() {
         ("file with fragment", f.clone(), "./main1.js#fragment", f.join("main1.js#fragment")),
         ("file with fragment and query", f.clone(), "./main1.js#fragment?query", f.join("main1.js#fragment?query")),
         ("file with query and fragment", f.clone(), "./main1.js?#fragment", f.join("main1.js?#fragment")),
+
+        ("file with query (unicode)", f.clone(), "./测试.js?query", f.join("测试.js?query")),
+        ("file with fragment (unicode)", f.clone(), "./测试.js#fragment", f.join("测试.js#fragment")),
+        ("file with fragment and query (unicode)", f.clone(), "./测试.js#fragment?query", f.join("测试.js#fragment?query")),
+        ("file with query and fragment (unicode)", f.clone(), "./测试.js?#fragment", f.join("测试.js?#fragment")),
+
         ("file in module with query", f.clone(), "m1/a?query", f.join("node_modules/m1/a.js?query")),
         ("file in module with fragment", f.clone(), "m1/a#fragment", f.join("node_modules/m1/a.js#fragment")),
         ("file in module with fragment and query", f.clone(), "m1/a#fragment?query", f.join("node_modules/m1/a.js#fragment?query")),
@@ -43,6 +49,7 @@ fn resolve() {
         ("handle fragment edge case (no fragment)", f.clone(), "./no#fragment/#/#", f.join("no#fragment/#/#.js")),
         ("handle fragment edge case (fragment)", f.clone(), "./no#fragment/#/", f.join("no.js#fragment/#/")),
         ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no#fragment/#/#.js#fragment")),
+
     ];
 
     for (comment, path, request, expected) in pass {

@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     doc::{Doc, DocBuilder},
@@ -10,7 +10,12 @@ pub(super) fn print_function_parameters<'a>(
     params: &FormalParameters<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(ss!("("));
+    let is_arrow_function = matches!(p.parent_kind(), AstKind::ArrowExpression(_));
+    let need_parens =
+        !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
+    if need_parens {
+        parts.push(ss!("("));
+    }
 
     for (i, param) in params.items.iter().enumerate() {
         parts.push(param.format(p));
@@ -26,6 +31,9 @@ pub(super) fn print_function_parameters<'a>(
         parts.push(rest.format(p));
     }
 
-    parts.push(ss!(")"));
+    if need_parens {
+        parts.push(ss!(")"));
+    }
+
     Doc::Array(parts)
 }
