@@ -174,7 +174,6 @@ mod unicorn {
     pub mod no_unnecessary_await;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;
-    
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;

@@ -55,11 +55,11 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: &Opt
         return true;
     }
 
-    if elements.len() == 2 && elements.iter().all(|el| el.is_none()) && rest.is_some() {
+    if elements.len() == 2 && elements.iter().all(std::option::Option::is_none) && rest.is_some() {
         return true;
     }
 
-    return false;
+    false
 }
 
 impl Rule for NoUnreadableArrayDestructuring {
