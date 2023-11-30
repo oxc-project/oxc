@@ -1,14 +1,14 @@
 use std::rc::Rc;
 
 // use lazy_static::lazy_static;
-use oxc_ast::{ast::*, AstBuilder, Visit, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_syntax::unicode_id_start::is_id_continue;
 // use regex::Regex;
 
 use crate::context::TransformerCtx;
-use crate::options::{TransformOptions, TransformTarget};
+use crate::options::TransformOptions;
 use crate::utils::is_valid_identifier;
 
 /// ES2015: Function Name
@@ -17,23 +17,25 @@ use crate::utils::is_valid_identifier;
 /// * <https://babel.dev/docs/babel-plugin-transform-function-name>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-function-name>
 pub struct FunctionName<'a> {
-    ast: Rc<AstBuilder<'a>>,
+    _ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     unicode_escapes: bool,
 }
 
 impl<'a> FunctionName<'a> {
     pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
+        _ast: Rc<AstBuilder<'a>>,
+        _ctx: TransformerCtx<'a>,
+        _options: &TransformOptions,
     ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
-            ast,
-            ctx,
-            // TODO hook up the plugin
-            unicode_escapes: true,
-        })
+        // Disabled for now
+        None
+        // (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
+        //     ast,
+        //     ctx,
+        //     // TODO hook up the plugin
+        //     unicode_escapes: true,
+        // })
     }
 
     pub fn transform_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
