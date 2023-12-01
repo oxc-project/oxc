@@ -36,12 +36,7 @@ use crate::{
     format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
-use self::{
-    array::Array,
-    binaryish::{BinaryishLeft, BinaryishOperator},
-    object::ObjectLike,
-    template_literal::TemplateLiteralPrinter,
-};
+use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 
 pub trait Format<'a> {
     #[must_use]
@@ -1597,8 +1592,8 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
         wrap!(p, self, BinaryExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::Expression(&self.left),
-                BinaryishOperator::BinaryOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
@@ -1615,8 +1610,8 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
         wrap!(p, self, PrivateInExpression, {
             binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::PrivateIdentifier(&self.left),
-                BinaryishOperator::BinaryOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             )
         })
@@ -1628,8 +1623,8 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
         wrap!(p, self, LogicalExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::Expression(&self.left),
-                BinaryishOperator::LogicalOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             );
 

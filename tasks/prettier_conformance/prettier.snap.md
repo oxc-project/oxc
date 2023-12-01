@@ -1,4 +1,4 @@
-Compatibility: 209/561 (37.25%)
+Compatibility: 211/561 (37.61%)
 
 # Failed
 
@@ -71,8 +71,6 @@ Compatibility: 209/561 (37.25%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
-* binary-expressions/equality.js
-* binary-expressions/exp.js
 * binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js

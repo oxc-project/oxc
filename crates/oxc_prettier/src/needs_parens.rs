@@ -17,9 +17,12 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
+use oxc_syntax::{
+    operator::{BinaryOperator, UnaryOperator, UpdateOperator},
+    precedence::GetPrecedence,
+};
 
-use crate::{array, doc::Doc, ss, Prettier};
+use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, Prettier};
 
 impl<'a> Prettier<'a> {
     pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
@@ -120,9 +123,7 @@ impl<'a> Prettier<'a> {
             AstKind::LogicalExpression(e) => self.check_binarish(e.span),
             AstKind::BinaryExpression(e) => match parent_kind {
                 AstKind::UpdateExpression(_) => true,
-                _ if e.operator == BinaryOperator::In
-                    && self.is_path_in_for_statement_initializer(e.span) =>
-                {
+                _ if e.operator.is_in() && self.is_path_in_for_statement_initializer(e.span) => {
                     true
                 }
                 _ => self.check_binarish(e.span),
@@ -385,13 +386,17 @@ impl<'a> Prettier<'a> {
     }
 
     fn check_binarish(&self, span: Span) -> bool {
-        match self.parent_kind() {
-            AstKind::TSAsExpression(_) => !self.is_binary_cast_expression(span),
-            AstKind::TSSatisfiesExpression(_) => !self.is_binary_cast_expression(span),
-            AstKind::ConditionalExpression(_) => self.is_binary_cast_expression(span),
-            AstKind::NewExpression(new_expr) => new_expr.callee.span() == span,
-            AstKind::CallExpression(new_expr) => new_expr.callee.span() == span,
-            AstKind::Class(class) => class.super_class.as_ref().is_some_and(|e| e.span() == span),
+        let current_kind = self.current_kind();
+        let parent_kind = self.parent_kind();
+        match parent_kind {
+            AstKind::TSAsExpression(_) => return !self.is_binary_cast_expression(span),
+            AstKind::TSSatisfiesExpression(_) => return !self.is_binary_cast_expression(span),
+            AstKind::ConditionalExpression(_) => return self.is_binary_cast_expression(span),
+            AstKind::NewExpression(new_expr) => return new_expr.callee.span() == span,
+            AstKind::CallExpression(new_expr) => return new_expr.callee.span() == span,
+            AstKind::Class(class) => {
+                return class.super_class.as_ref().is_some_and(|e| e.span() == span)
+            }
             AstKind::TSTypeAssertion(_)
             | AstKind::TaggedTemplateExpression(_)
             | AstKind::UnaryExpression(_)
@@ -399,16 +404,53 @@ impl<'a> Prettier<'a> {
             | AstKind::SpreadElement(_)
             | AstKind::AwaitExpression(_)
             | AstKind::TSNonNullExpression(_)
-            | AstKind::UpdateExpression(_) => true,
-            AstKind::MemberExpression(member_expr) => member_expr.object().span() == span,
+            | AstKind::UpdateExpression(_) => return true,
+            AstKind::MemberExpression(member_expr) => return member_expr.object().span() == span,
             AstKind::AssignmentExpression(assign_expr) => {
-                assign_expr.left.span() == span && self.is_binary_cast_expression(span)
+                return assign_expr.left.span() == span && self.is_binary_cast_expression(span)
             }
             AstKind::AssignmentPattern(assign_pat) => {
-                assign_pat.left.span() == span && self.is_binary_cast_expression(span)
+                return assign_pat.left.span() == span && self.is_binary_cast_expression(span)
             }
-            _ => false,
+            AstKind::LogicalExpression(parent_logical_expr) => {
+                if let AstKind::LogicalExpression(logical_expr) = current_kind {
+                    return parent_logical_expr.operator != logical_expr.operator;
+                }
+            }
+            _ => {}
         }
+
+        let operator = match self.current_kind() {
+            AstKind::LogicalExpression(e) => BinaryishOperator::from(e.operator),
+            AstKind::BinaryExpression(e) => BinaryishOperator::from(e.operator),
+            _ => return false,
+        };
+
+        let parent_operator = match parent_kind {
+            AstKind::LogicalExpression(e) => BinaryishOperator::from(e.operator),
+            AstKind::BinaryExpression(e) => BinaryishOperator::from(e.operator),
+            _ => return false,
+        };
+
+        let precedence = operator.precedence();
+        let parent_precedence = parent_operator.precedence();
+
+        if parent_precedence > precedence {
+            return true;
+        }
+
+        if parent_precedence == precedence && !parent_operator.should_flatten(operator) {
+            return true;
+        }
+
+        // Add parenthesis when working with bitwise operators
+        // It's not strictly needed but helps with code understanding
+        if matches!(parent_kind, AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_bitwise())
+        {
+            return true;
+        }
+
+        false
     }
 
     fn check_member_call(&self, span: Span) -> bool {

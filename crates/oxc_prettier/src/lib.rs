@@ -4,6 +4,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
+mod binaryish;
 mod comments;
 mod doc;
 mod format;
