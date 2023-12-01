@@ -1,4 +1,4 @@
-Compatibility: 211/561 (37.61%)
+Compatibility: 210/561 (37.43%)
 
 # Failed
 
@@ -59,6 +59,7 @@ Compatibility: 211/561 (37.61%)
 * assignment-comments/call2.js
 * assignment-comments/function.js
 * assignment-comments/identifier.js
+* assignment-comments/number.js
 * assignment-comments/string.js
 
 ### async
