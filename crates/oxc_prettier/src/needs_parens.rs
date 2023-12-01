@@ -219,6 +219,15 @@ impl<'a> Prettier<'a> {
                         || self.should_wrap_function_for_export_default();
                 }
             }
+            AstKind::BinaryExpression(binary_expr) => {
+                if binary_expr.operator.is_relational() {
+                    if let AstKind::UnaryExpression(unary_expr) = kind {
+                        if binary_expr.left.span() == unary_expr.span {
+                            return true;
+                        }
+                    }
+                }
+            }
             _ => {}
         }
         false
