@@ -26,6 +26,16 @@ impl Comment {
         self.has_line_suffix = yes;
         self
     }
+
+    pub fn matches_flags(self, flags: CommentFlags) -> bool {
+        if flags.contains(CommentFlags::Block) && !self.is_block {
+            return false;
+        }
+        if flags.contains(CommentFlags::Line) && self.is_block {
+            return false;
+        }
+        true
+    }
 }
 
 #[derive(Default)]
