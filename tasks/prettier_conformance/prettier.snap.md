@@ -1,4 +1,4 @@
-Compatibility: 215/561 (38.32%)
+Compatibility: 216/561 (38.50%)
 
 # Failed
 
@@ -114,7 +114,6 @@ Compatibility: 215/561 (38.32%)
 * classes/assignment.js
 * classes/empty.js
 * classes/method.js
-* classes/new.js
 * classes/property.js
 
 ### classes-private-fields

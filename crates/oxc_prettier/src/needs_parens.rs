@@ -70,7 +70,15 @@ impl<'a> Prettier<'a> {
                     _ => false,
                 }
             }
-            AstKind::Class(c) if c.is_expression() => self.check_object_function_class(c.span),
+            AstKind::Class(c) if c.is_expression() => {
+                if self.check_object_function_class(c.span) {
+                    return true;
+                }
+                if let AstKind::NewExpression(new_expr) = parent_kind {
+                    return new_expr.callee.span() == c.span;
+                }
+                false
+            }
             AstKind::AssignmentExpression(assign_expr) => match parent_kind {
                 AstKind::ArrowExpression(arrow_expr)
                     if arrow_expr
