@@ -84,26 +84,36 @@ impl BinaryishOperator {
             return false;
         }
 
-        if matches!(parent_op, Self::BinaryOperator(op) if op == BinaryOperator::Exponential) {
+        let Self::BinaryOperator(op) = self else { return true };
+
+        let Self::BinaryOperator(parent_op) = parent_op else { return true };
+
+        // ** is right-associative
+        // x ** y ** z --> x ** (y ** z)
+        if parent_op == BinaryOperator::Exponential {
             return false;
         }
 
-        if matches!(parent_op, Self::BinaryOperator(op) if op.is_equality())
-            && matches!(self, Self::BinaryOperator(op) if op.is_equality())
+        // x == y == z --> (x == y) == z
+        if parent_op.is_equality() && op.is_equality() {
+            return false;
+        }
+
+        // x * y % z --> (x * y) % z
+        if (op == BinaryOperator::Remainder && parent_op.is_multiplicative())
+            || (parent_op == BinaryOperator::Remainder && op.is_multiplicative())
         {
             return false;
         }
 
-        if self != parent_op
-            && matches!(parent_op, Self::BinaryOperator(op) if op.is_multiplicative())
-            && matches!(self, Self::BinaryOperator(op) if op.is_multiplicative())
-        {
+        // x * y / z --> (x * y) / z
+        // x / y * z --> (x / y) * z
+        if op != parent_op && parent_op.is_multiplicative() && op.is_multiplicative() {
             return false;
         }
 
-        if matches!(parent_op, Self::BinaryOperator(op) if op.is_bitshift())
-            && matches!(self, Self::BinaryOperator(op) if op.is_bitshift())
-        {
+        // x << y << z --> (x << y) << z
+        if parent_op.is_bitshift() && op.is_bitshift() {
             return false;
         }
 
