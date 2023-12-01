@@ -72,7 +72,6 @@ Compatibility: 212/561 (37.79%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
-* binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
@@ -258,7 +257,6 @@ Compatibility: 212/561 (37.79%)
 * functional-composition/pipe-function-calls-with-comments.js
 * functional-composition/pipe-function-calls.js
 * functional-composition/ramda_compose.js
-* functional-composition/ramda_pipe.js
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
