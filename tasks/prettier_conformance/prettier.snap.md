@@ -1,4 +1,4 @@
-Compatibility: 217/561 (38.68%)
+Compatibility: 221/561 (39.39%)
 
 # Failed
 
@@ -46,7 +46,6 @@ Compatibility: 217/561 (38.68%)
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
 * assignment/issue-15534.js
-* assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
@@ -77,9 +76,6 @@ Compatibility: 217/561 (38.68%)
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
-
-### binary_math
-* binary_math/parens.js
 
 ### break-calls
 * break-calls/break.js
@@ -117,7 +113,6 @@ Compatibility: 217/561 (38.68%)
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
-* classes-private-fields/with_comments.js
 
 ### comments
 * comments/arrow.js
@@ -358,7 +353,6 @@ Compatibility: 217/561 (38.68%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
-* objects/right-break.js
 
 ### objects/assignment-expression
 * objects/assignment-expression/object-value.js

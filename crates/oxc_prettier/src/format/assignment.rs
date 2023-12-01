@@ -1,8 +1,9 @@
 use oxc_ast::{
     ast::{
-        AccessorProperty, AssignmentExpression, AssignmentTarget, AssignmentTargetPattern,
-        AssignmentTargetProperty, BindingPatternKind, Expression, ObjectProperty,
-        PropertyDefinition, PropertyKind, Statement, VariableDeclarator,
+        AccessorProperty, Argument, AssignmentExpression, AssignmentTarget,
+        AssignmentTargetPattern, AssignmentTargetProperty, BindingPatternKind, Expression,
+        ObjectProperty, PropertyDefinition, PropertyKind, Statement, TSTypeParameterInstantiation,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -13,7 +14,7 @@ use crate::{
     group, indent, line, ss, Format, Prettier,
 };
 
-use super::class::ClassMemberish;
+use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 
 pub(super) fn print_assignment_expression<'a>(
     p: &mut Prettier<'a>,
@@ -200,6 +201,10 @@ fn choose_layout<'a>(
     // wrapping object properties with very short keys usually doesn't add much value
     let has_short_key = is_object_property_with_short_key(p, assignment_like_node, left_doc);
 
+    if should_break_after_operator(p, right_expr, has_short_key) {
+        return Layout::BreakAfterOperator;
+    }
+
     if !can_break_left_doc
         && (has_short_key
             || matches!(
@@ -298,4 +303,113 @@ fn is_object_property_with_short_key<'a>(
     }
 
     true
+}
+
+/// https://github.com/prettier/prettier/blob/eebf0e4b5ec8ac24393c56ced4b4819d4c551f31/src/language-js/print/assignment.js#L182
+fn should_break_after_operator<'a>(
+    p: &Prettier<'a>,
+    expr: &Expression<'a>,
+    has_short_key: bool,
+) -> bool {
+    if matches!(expr, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
+        && !should_inline_logical_expression(expr)
+    {
+        return true;
+    }
+
+    match expr {
+        Expression::SequenceExpression(_) => return true,
+        Expression::ConditionalExpression(conditional_expr) => {
+            return matches!(
+                conditional_expr.test,
+                Expression::LogicalExpression(_) | Expression::BinaryExpression(_)
+            ) && !should_inline_logical_expression(&conditional_expr.test);
+        }
+        Expression::ClassExpression(class_expr) => {
+            if class_expr.decorators.len() > 0 {
+                return true;
+            }
+        }
+        _ => {}
+    }
+
+    if has_short_key {
+        return false;
+    }
+
+    let mut current_expr = expr;
+
+    while let Expression::UnaryExpression(_) | Expression::TSNonNullExpression(_) = current_expr {
+        current_expr = match current_expr {
+            Expression::UnaryExpression(unary) => &unary.argument,
+            Expression::TSNonNullExpression(non_null_expr) => &non_null_expr.expression,
+            // SAFETY: the `while` loop above ensures that `current_expr` is either a `UnaryExpression` or a `TSNonNullExpression`.
+            _ => unreachable!(),
+        };
+    }
+
+    if current_expr.is_string_literal() || is_poorly_breakable_member_or_call_chain(p, expr) {
+        return true;
+    };
+
+    false
+}
+
+fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Expression<'a>) -> bool {
+    let mut is_chain_expression = false;
+    let mut is_ident_or_this_expr = false;
+    let mut call_expressions = vec![];
+
+    let mut expression = Some(expr);
+
+    while let Some(node) = expression.take() {
+        expression = match node {
+            Expression::TSNonNullExpression(non_null_expr) => Some(&non_null_expr.expression),
+            Expression::CallExpression(call_expr) => {
+                is_chain_expression = true;
+                let callee = &call_expr.callee;
+                call_expressions.push(call_expr);
+                Some(callee)
+            }
+            Expression::MemberExpression(member_expr) => {
+                is_chain_expression = true;
+                Some(member_expr.object())
+            }
+            Expression::Identifier(_) | Expression::ThisExpression(_) => {
+                is_ident_or_this_expr = true;
+                break;
+            }
+            _ => {
+                break;
+            }
+        }
+    }
+
+    if !is_chain_expression || !is_ident_or_this_expr {
+        return false;
+    }
+
+    for call_expression in call_expressions {
+        let is_poorly_breakable_call = call_expression.arguments.len() == 0
+            || (call_expression.arguments.len() == 1
+                && is_lone_short_argument(&call_expression.arguments[0]));
+
+        if !is_poorly_breakable_call {
+            return false;
+        }
+
+        if let Some(type_parameters) = &call_expression.type_parameters {
+            return is_complex_type_arguments(type_parameters);
+        }
+    }
+
+    true
+}
+
+fn is_lone_short_argument(arg: &Argument) -> bool {
+    false
+}
+
+fn is_complex_type_arguments(type_parameters: &TSTypeParameterInstantiation) -> bool {
+    false
 }
