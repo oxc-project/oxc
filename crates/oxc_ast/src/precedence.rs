@@ -1,7 +1,4 @@
-use oxc_syntax::{
-    operator::{BinaryOperator, LogicalOperator},
-    precedence::{GetPrecedence, Precedence},
-};
+use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::ast::{
     ArrowExpression, AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression,
@@ -62,39 +59,13 @@ impl<'a> GetPrecedence for AssignmentExpression<'a> {
 
 impl<'a> GetPrecedence for LogicalExpression<'a> {
     fn precedence(&self) -> Precedence {
-        match self.operator {
-            LogicalOperator::Or => Precedence::LogicalOr,
-            LogicalOperator::And => Precedence::LogicalAnd,
-            LogicalOperator::Coalesce => Precedence::Coalesce,
-        }
+        self.operator.precedence()
     }
 }
 
 impl<'a> GetPrecedence for BinaryExpression<'a> {
     fn precedence(&self) -> Precedence {
-        match self.operator {
-            BinaryOperator::BitwiseOR => Precedence::BitwiseOr,
-            BinaryOperator::BitwiseXOR => Precedence::BitwiseXor,
-            BinaryOperator::BitwiseAnd => Precedence::BitwiseAnd,
-            BinaryOperator::Equality
-            | BinaryOperator::Inequality
-            | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality => Precedence::Equality,
-            BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan
-            | BinaryOperator::Instanceof
-            | BinaryOperator::In => Precedence::Relational,
-            BinaryOperator::ShiftLeft
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftRightZeroFill => Precedence::Shift,
-            BinaryOperator::Subtraction | BinaryOperator::Addition => Precedence::Add,
-            BinaryOperator::Multiplication
-            | BinaryOperator::Remainder
-            | BinaryOperator::Division => Precedence::Multiply,
-            BinaryOperator::Exponential => Precedence::Exponential,
-        }
+        self.operator.precedence()
     }
 }
 
