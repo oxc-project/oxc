@@ -31,8 +31,38 @@ impl<'a> Prettier<'a> {
         doc
     }
 
-    #[allow(unused)]
-    pub(crate) fn has_comment(_span: Span, _flags: CommentFlags) -> bool {
+    pub(crate) fn has_comment(&mut self, range: Span, flags: CommentFlags) -> bool {
+        let mut peekable_trivias = self.trivias.clone();
+
+        while let Some(&(start, end, kind)) = peekable_trivias.peek() {
+            let mut should_break = true;
+            let comment = Comment::new(start, end, kind);
+
+            if range.end < comment.start
+                && self.source_text[range.end as usize..comment.start as usize]
+                    .chars()
+                    .all(|c| c == ' ')
+            {
+                if flags.contains(CommentFlags::Trailing) && comment.matches_flags(flags) {
+                    return true;
+                }
+
+                should_break = false;
+            }
+
+            if comment.end <= range.end {
+                if flags.contains(CommentFlags::Dangling) && comment.matches_flags(flags) {
+                    return true;
+                }
+                should_break = false;
+            }
+
+            if should_break {
+                break;
+            }
+            peekable_trivias.next();
+        }
+
         false
     }
 
