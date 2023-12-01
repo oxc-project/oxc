@@ -146,16 +146,17 @@ fn choose_layout<'a>(
 
     let is_tail = !is_assignment(right_expr);
 
-    let should_use_chain_formatting = matches!(p.parent_kind(), AstKind::AssignmentExpression(_))
-        && matches!(
-            p.parent_parent_kind(),
-            Some(AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_))
-        )
-        && (!is_tail
-            || !matches!(
-                p.nth_parent_kind(3),
-                Some(AstKind::ExpressionStatement(_) | AstKind::VariableDeclaration(_))
-            ));
+    let should_use_chain_formatting =
+        matches!(assignment_like_node, AssignmentLikeNode::AssignmentExpression(_))
+            && matches!(
+                p.parent_kind(),
+                AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
+            )
+            && (!is_tail
+                || !matches!(
+                    p.parent_parent_kind(),
+                    Some(AstKind::ExpressionStatement(_) | AstKind::VariableDeclaration(_))
+                ));
 
     if should_use_chain_formatting {
         if !is_tail {

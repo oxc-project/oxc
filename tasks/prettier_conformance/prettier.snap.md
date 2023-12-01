@@ -1,4 +1,4 @@
-Compatibility: 216/561 (38.50%)
+Compatibility: 217/561 (38.68%)
 
 # Failed
 
@@ -48,7 +48,6 @@ Compatibility: 216/561 (38.50%)
 * assignment/issue-15534.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
-* assignment/issue-3819.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
