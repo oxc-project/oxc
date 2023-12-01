@@ -1,4 +1,4 @@
-Compatibility: 210/561 (37.43%)
+Compatibility: 212/561 (37.79%)
 
 # Failed
 
@@ -366,7 +366,6 @@ Compatibility: 210/561 (37.43%)
 * objects/right-break.js
 
 ### objects/assignment-expression
-* objects/assignment-expression/object-property.js
 * objects/assignment-expression/object-value.js
 
 ### optional-chaining
@@ -402,7 +401,6 @@ Compatibility: 210/561 (37.43%)
 ### quote-props
 * quote-props/numeric-separator.js
 * quote-props/objects.js
-* quote-props/with_member_expressions.js
 
 ### quotes
 * quotes/objects.js
