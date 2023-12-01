@@ -452,6 +452,12 @@ impl<'a> Prettier<'a> {
             return true;
         }
 
+        if parent_precedence < precedence
+            && matches!(operator, BinaryishOperator::BinaryOperator(op) if op == BinaryOperator::Remainder)
+        {
+            return matches!(parent_operator, BinaryishOperator::BinaryOperator(op) if matches!(op, BinaryOperator::Addition | BinaryOperator::Subtraction));
+        }
+
         // Add parenthesis when working with bitwise operators
         // It's not strictly needed but helps with code understanding
         if matches!(parent_kind, AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_bitwise())

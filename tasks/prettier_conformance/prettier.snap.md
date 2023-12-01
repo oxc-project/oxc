@@ -1,4 +1,4 @@
-Compatibility: 212/561 (37.79%)
+Compatibility: 215/561 (38.32%)
 
 # Failed
 
@@ -75,7 +75,6 @@ Compatibility: 212/561 (37.79%)
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
-* binary-expressions/math.js
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
