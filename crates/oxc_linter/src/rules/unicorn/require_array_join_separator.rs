@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{CallExpression, MemberExpression},
+    ast::{CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -12,8 +12,8 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(require-array-join-separator): Missing the separator argument.")]
-#[diagnostic(severity(warning), help("Enforce using the separator argument with `Array#join()`."))]
+#[error("eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with `Array#join()`.")]
+#[diagnostic(severity(warning), help("Missing the separator argument."))]
 struct RequireArrayJoinSeparatorDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -41,12 +41,12 @@ declare_oxc_lint!(
     correctness
 );
 
-fn is_empty_join_call(call_expr: &CallExpression) -> bool {
+fn is_empty_join(call_expr: &CallExpression) -> bool {
     // Not optional `arr?.join()`
     !call_expr.optional
-    // Must be join call with no args `arr.join()`
+        // Must be join call with no args `arr.join()`
         && is_method_call(call_expr, None, Some(&["join"]), None, Some(0))
-    // Not be a computed property call `arr["join"]()`
+        // Not be a computed property call `arr["join"]()`
         && !call_expr
             .callee
             .get_member_expr()
@@ -54,20 +54,65 @@ fn is_empty_join_call(call_expr: &CallExpression) -> bool {
             .unwrap_or(false)
 }
 
+fn is_empty_join_dot_call<'a>(call_expr: &'a CallExpression<'a>) -> bool {
+    if call_expr.arguments.len() != 1 || call_expr.arguments[0].is_spread() {
+        return false;
+    }
+
+    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
+    else {
+        return false;
+    };
+
+    if member_expr.optional() {
+        return false;
+    }
+
+    if Some("call") != member_expr.static_property_name() {
+        return false;
+    }
+
+    // … .join.call(foo)
+    let Some(member_expr) = member_expr.object().get_member_expr() else {
+        return false;
+    };
+
+    if Some("join") != member_expr.static_property_name() {
+        return false;
+    }
+
+    if member_expr.optional() || member_expr.is_computed() {
+        return false;
+    }
+
+    if let Expression::ArrayExpression(arr_expr) = &member_expr.object() {
+        return arr_expr.elements.is_empty();
+    }
+
+    // … .prototype.join.call(foo)
+    let Some(member_expr) = member_expr.object().get_member_expr() else {
+        return false;
+    };
+
+    if member_expr.optional() {
+        return false;
+    }
+
+    if Some("prototype") != member_expr.static_property_name() {
+        return false;
+    }
+
+    // Array.prototype.join.call(foo)
+    member_expr.object().is_specific_id("Array")
+}
+
 impl Rule for RequireArrayJoinSeparator {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(callExpression) = node.kind() {
-            dbg!(callExpression);
-            if is_empty_join_call(&callExpression)
-                || is_method_call(
-                    callExpression,
-                    Some(&["join"]),
-                    Some(&["call"]),
-                    Some(1),
-                    Some(1),
-                )
-            {
-                ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(callExpression.span));
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            dbg!(call_expr.span.source_text(ctx.source_text()));
+            dbg!(call_expr);
+            if is_empty_join(&call_expr) || is_empty_join_dot_call(&call_expr) {
+                ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(call_expr.span));
             }
 
             // dbg!(is_join_call_with_0_args, callExpression.span.source_text(ctx.source_text()));
@@ -117,8 +162,7 @@ impl Rule for RequireArrayJoinSeparator {
 fn test_require_array_join_separator() {
     use crate::tester::Tester;
 
-    let pass = vec![];
-    let _pass = vec![
+    let pass = vec![
         r#"foo.join(",")"#,
         r#"join()"#,
         r#"foo.join(...[])"#,
