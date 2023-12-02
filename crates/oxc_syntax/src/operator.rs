@@ -1,6 +1,8 @@
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
+use crate::precedence::{GetPrecedence, Precedence};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum AssignmentOperator {
@@ -129,46 +131,41 @@ pub enum BinaryOperator {
 }
 
 impl BinaryOperator {
+    #[rustfmt::skip]
     pub fn is_equality(self) -> bool {
-        matches!(
-            self,
-            Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality
-        )
+        matches!(self, Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality)
     }
 
+    #[rustfmt::skip]
     pub fn is_compare(self) -> bool {
-        matches!(
-            self,
-            Self::LessThan | Self::LessEqualThan | Self::GreaterThan | Self::GreaterEqualThan
-        )
+        matches!(self, Self::LessThan | Self::LessEqualThan | Self::GreaterThan | Self::GreaterEqualThan)
     }
 
+    #[rustfmt::skip]
     pub fn is_arithmetic(self) -> bool {
-        matches!(
-            self,
-            Self::Addition
-                | Self::Subtraction
-                | Self::Multiplication
-                | Self::Division
-                | Self::Remainder
-                | Self::Exponential
-        )
+        matches!(self, Self::Addition | Self::Subtraction | Self::Multiplication
+                | Self::Division | Self::Remainder | Self::Exponential)
+    }
+
+    pub fn is_multiplicative(self) -> bool {
+        matches!(self, Self::Multiplication | Self::Division | Self::Remainder)
     }
 
     pub fn is_relational(self) -> bool {
         matches!(self, Self::In | Self::Instanceof)
     }
 
+    pub fn is_in(self) -> bool {
+        matches!(self, Self::In)
+    }
+
+    #[rustfmt::skip]
     pub fn is_bitwise(self) -> bool {
-        matches!(
-            self,
-            Self::BitwiseOR
-                | Self::BitwiseXOR
-                | Self::BitwiseAnd
-                | Self::ShiftLeft
-                | Self::ShiftRight
-                | Self::ShiftRightZeroFill,
-        )
+        self.is_bitshift() || matches!(self, Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd)
+    }
+
+    pub fn is_bitshift(self) -> bool {
+        matches!(self, Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill)
     }
 
     pub fn is_numeric_or_string_binary_operator(self) -> bool {
@@ -227,6 +224,29 @@ impl BinaryOperator {
     }
 }
 
+impl GetPrecedence for BinaryOperator {
+    fn precedence(&self) -> Precedence {
+        match self {
+            Self::BitwiseOR => Precedence::BitwiseOr,
+            Self::BitwiseXOR => Precedence::BitwiseXor,
+            Self::BitwiseAnd => Precedence::BitwiseAnd,
+            Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality => {
+                Precedence::Equality
+            }
+            Self::LessThan
+            | Self::LessEqualThan
+            | Self::GreaterThan
+            | Self::GreaterEqualThan
+            | Self::Instanceof
+            | Self::In => Precedence::Relational,
+            Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill => Precedence::Shift,
+            Self::Subtraction | Self::Addition => Precedence::Add,
+            Self::Multiplication | Self::Remainder | Self::Division => Precedence::Multiply,
+            Self::Exponential => Precedence::Exponential,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum LogicalOperator {
@@ -244,6 +264,16 @@ impl LogicalOperator {
             Self::Or => "||",
             Self::And => "&&",
             Self::Coalesce => "??",
+        }
+    }
+}
+
+impl GetPrecedence for LogicalOperator {
+    fn precedence(&self) -> Precedence {
+        match self {
+            Self::Or => Precedence::LogicalOr,
+            Self::And => Precedence::LogicalAnd,
+            Self::Coalesce => Precedence::Coalesce,
         }
     }
 }

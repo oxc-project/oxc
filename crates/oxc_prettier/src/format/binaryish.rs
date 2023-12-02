@@ -1,78 +1,31 @@
 use oxc_ast::ast::*;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
+    binaryish::{BinaryishLeft, BinaryishOperator},
     doc::{Doc, DocBuilder, Group},
     group, line, ss, Format, Prettier,
 };
 
-pub enum BinaryishLeft<'a, 'b> {
-    Expression(&'b Expression<'a>),
-    PrivateIdentifier(&'b PrivateIdentifier),
-}
-
-impl<'a, 'b> Format<'a> for BinaryishLeft<'a, 'b> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            Self::Expression(expr) => expr.format(p),
-            Self::PrivateIdentifier(ident) => ident.format(p),
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum BinaryishOperator {
-    BinaryOperator(BinaryOperator),
-    LogicalOperator(LogicalOperator),
-}
-
-impl BinaryishOperator {
-    fn is_binary(self) -> bool {
-        matches!(self, Self::BinaryOperator(_))
-    }
-}
-
-impl BinaryishOperator {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::BinaryOperator(op) => op.as_str(),
-            Self::LogicalOperator(op) => op.as_str(),
-        }
-    }
-}
-
 pub(super) fn print_binaryish_expression<'a>(
     p: &mut Prettier<'a>,
-    left: &BinaryishLeft<'a, '_>,
+    left: BinaryishLeft<'a, '_>,
     operator: BinaryishOperator,
     right: &Expression<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    match &left {
-        BinaryishLeft::Expression(expr) => match expr {
-            Expression::LogicalExpression(logical) => {
-                parts.push(print_binaryish_expression(
-                    p,
-                    &BinaryishLeft::Expression(&logical.left),
-                    BinaryishOperator::LogicalOperator(logical.operator),
-                    &logical.right,
-                ));
+
+    if left.operator().is_some_and(|left_operator| operator.should_flatten(left_operator)) {
+        parts.push(match left {
+            BinaryishLeft::Expression(Expression::BinaryExpression(e)) => {
+                print_binaryish_expression(p, (&e.left).into(), e.operator.into(), &e.right)
             }
-            Expression::BinaryExpression(binary) => {
-                parts.push(print_binaryish_expression(
-                    p,
-                    &BinaryishLeft::Expression(&binary.left),
-                    BinaryishOperator::BinaryOperator(binary.operator),
-                    &binary.right,
-                ));
+            BinaryishLeft::Expression(Expression::LogicalExpression(e)) => {
+                print_binaryish_expression(p, (&e.left).into(), e.operator.into(), &e.right)
             }
-            _ => {
-                parts.push(left.format(p));
-            }
-        },
-        BinaryishLeft::PrivateIdentifier(ident) => {
-            parts.push(left.format(p));
-        }
+            _ => unreachable!(),
+        });
+    } else {
+        parts.push(group!(p, left.format(p)));
     }
     parts.push(ss!(" "));
 

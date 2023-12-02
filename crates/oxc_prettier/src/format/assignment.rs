@@ -1,8 +1,8 @@
 use oxc_ast::{
     ast::{
         AccessorProperty, AssignmentExpression, AssignmentTarget, AssignmentTargetPattern,
-        AssignmentTargetProperty, BindingPatternKind, Expression, PropertyDefinition, Statement,
-        VariableDeclarator,
+        AssignmentTargetProperty, BindingPatternKind, Expression, ObjectProperty,
+        PropertyDefinition, PropertyKind, Statement, VariableDeclarator,
     },
     AstKind,
 };
@@ -49,6 +49,7 @@ pub(super) enum AssignmentLikeNode<'a, 'b> {
     VariableDeclarator(&'b VariableDeclarator<'a>),
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
+    ObjectProperty(&'b ObjectProperty<'a>),
 }
 
 impl<'a, 'b> From<ClassMemberish<'a, 'b>> for AssignmentLikeNode<'a, 'b> {
@@ -145,16 +146,17 @@ fn choose_layout<'a>(
 
     let is_tail = !is_assignment(right_expr);
 
-    let should_use_chain_formatting = matches!(p.parent_kind(), AstKind::AssignmentExpression(_))
-        && matches!(
-            p.parent_parent_kind(),
-            Some(AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_))
-        )
-        && (!is_tail
-            || !matches!(
-                p.nth_parent_kind(3),
-                Some(AstKind::ExpressionStatement(_) | AstKind::VariableDeclaration(_))
-            ));
+    let should_use_chain_formatting =
+        matches!(assignment_like_node, AssignmentLikeNode::AssignmentExpression(_))
+            && matches!(
+                p.parent_kind(),
+                AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
+            )
+            && (!is_tail
+                || !matches!(
+                    p.parent_parent_kind(),
+                    Some(AstKind::ExpressionStatement(_) | AstKind::VariableDeclaration(_))
+                ));
 
     if should_use_chain_formatting {
         if !is_tail {
@@ -209,7 +211,7 @@ fn choose_layout<'a>(
                     | Expression::ClassExpression(_)
             ))
     {
-        return Layout::BreakAfterOperator;
+        return Layout::NeverBreakAfterOperator;
     }
 
     Layout::Fluid
@@ -279,6 +281,7 @@ fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
         }
         AssignmentLikeNode::AssignmentExpression(_)
         | AssignmentLikeNode::PropertyDefinition(_)
+        | AssignmentLikeNode::ObjectProperty(_)
         | AssignmentLikeNode::AccessorProperty(_) => false,
     }
 }
@@ -288,5 +291,11 @@ fn is_object_property_with_short_key<'a>(
     expr: &AssignmentLikeNode<'a, '_>,
     left_doc: &Doc<'a>,
 ) -> bool {
-    false
+    let AssignmentLikeNode::ObjectProperty(object_prop) = expr else { return false };
+
+    if object_prop.method || object_prop.kind != PropertyKind::Init {
+        return false;
+    }
+
+    true
 }

@@ -4,6 +4,7 @@
 
 #![allow(clippy::wildcard_imports)]
 
+mod binaryish;
 mod comments;
 mod doc;
 mod format;
@@ -107,6 +108,7 @@ impl<'a> Prettier<'a> {
         (len >= 3).then(|| self.nodes[len - 3])
     }
 
+    #[allow(unused)]
     fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
         let len = self.nodes.len();
         (len > n).then(|| self.nodes[len - n - 1])
@@ -152,10 +154,23 @@ impl<'a> Prettier<'a> {
             // idx = self.skip_inline_comment(idx);
             idx = self.skip_spaces(idx, /* backwards */ false);
         }
-        // idx = self.skip_trailing_comment(idx);
+        idx = self.skip_trailing_comment(idx);
         idx = self.skip_newline(idx, /* backwards */ false);
         idx.is_some_and(|idx| self.has_newline(idx, /* backwards */ false))
-        // self.source_text[end as usize..].chars().nth(1).is_some_and(|c| c == '\n')
+    }
+
+    fn skip_trailing_comment(&self, start_index: Option<u32>) -> Option<u32> {
+        let start_index = start_index?;
+        let mut chars = self.source_text[start_index as usize..].chars();
+        let c = chars.next()?;
+        if c != '/' {
+            return Some(start_index);
+        }
+        let c = chars.next()?;
+        if c != '/' {
+            return Some(start_index);
+        }
+        self.skip_everything_but_new_line(Some(start_index), /* backwards */ false)
     }
 
     fn skip_to_line_end(&self, start_index: Option<u32>) -> Option<u32> {
@@ -164,6 +179,14 @@ impl<'a> Prettier<'a> {
 
     fn skip_spaces(&self, start_index: Option<u32>, backwards: bool) -> Option<u32> {
         self.skip(start_index, backwards, |c| matches!(c, ' ' | '\t'))
+    }
+
+    fn skip_everything_but_new_line(
+        &self,
+        start_index: Option<u32>,
+        backwards: bool,
+    ) -> Option<u32> {
+        self.skip(start_index, backwards, |c| !is_line_terminator(c))
     }
 
     fn skip<F>(&self, start_index: Option<u32>, backwards: bool, f: F) -> Option<u32>

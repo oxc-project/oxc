@@ -36,12 +36,7 @@ use crate::{
     format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
 };
 
-use self::{
-    array::Array,
-    binaryish::{BinaryishLeft, BinaryishOperator},
-    object::ObjectLike,
-    template_literal::TemplateLiteralPrinter,
-};
+use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 
 pub trait Format<'a> {
     #[must_use]
@@ -1444,10 +1439,7 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
 impl<'a> Format<'a> for ObjectProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectProperty, {
-            // Perf: Use same print function with BindingProperty
-            if self.shorthand {
-                self.key.format(p)
-            } else {
+            if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
                 let mut parts = p.vec();
                 let mut method = self.method;
                 match self.kind {
@@ -1476,8 +1468,26 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
-                Doc::Group(Group::new(parts, false))
+                return Doc::Group(Group::new(parts, false));
             }
+
+            if self.shorthand {
+                return self.value.format(p);
+            }
+
+            let left_doc = if self.computed {
+                array!(p, ss!("["), format!(p, self.key), ss!("]"))
+            } else {
+                format!(p, self.key)
+            };
+
+            assignment::print_assignment(
+                p,
+                assignment::AssignmentLikeNode::ObjectProperty(self),
+                left_doc,
+                ss!(":"),
+                Some(&self.value),
+            )
         })
     }
 }
@@ -1597,8 +1607,8 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
         wrap!(p, self, BinaryExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::Expression(&self.left),
-                BinaryishOperator::BinaryOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
@@ -1615,8 +1625,8 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
         wrap!(p, self, PrivateInExpression, {
             binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::PrivateIdentifier(&self.left),
-                BinaryishOperator::BinaryOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             )
         })
@@ -1628,8 +1638,8 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
         wrap!(p, self, LogicalExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                &BinaryishLeft::Expression(&self.left),
-                BinaryishOperator::LogicalOperator(self.operator),
+                (&self.left).into(),
+                self.operator.into(),
                 &self.right,
             );
 

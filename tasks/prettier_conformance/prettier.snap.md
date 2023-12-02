@@ -1,4 +1,4 @@
-Compatibility: 209/561 (37.25%)
+Compatibility: 217/561 (38.68%)
 
 # Failed
 
@@ -48,7 +48,6 @@ Compatibility: 209/561 (37.25%)
 * assignment/issue-15534.js
 * assignment/issue-2482-2.js
 * assignment/issue-2540.js
-* assignment/issue-3819.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
@@ -59,6 +58,7 @@ Compatibility: 209/561 (37.25%)
 * assignment-comments/call2.js
 * assignment-comments/function.js
 * assignment-comments/identifier.js
+* assignment-comments/number.js
 * assignment-comments/string.js
 
 ### async
@@ -71,13 +71,9 @@ Compatibility: 209/561 (37.25%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
-* binary-expressions/equality.js
-* binary-expressions/exp.js
-* binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
-* binary-expressions/math.js
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
@@ -117,7 +113,6 @@ Compatibility: 209/561 (37.25%)
 * classes/assignment.js
 * classes/empty.js
 * classes/method.js
-* classes/new.js
 * classes/property.js
 
 ### classes-private-fields
@@ -259,7 +254,6 @@ Compatibility: 209/561 (37.25%)
 * functional-composition/pipe-function-calls-with-comments.js
 * functional-composition/pipe-function-calls.js
 * functional-composition/ramda_compose.js
-* functional-composition/ramda_pipe.js
 * functional-composition/redux_connect.js
 * functional-composition/reselect_createselector.js
 * functional-composition/rxjs_pipe.js
@@ -367,7 +361,6 @@ Compatibility: 209/561 (37.25%)
 * objects/right-break.js
 
 ### objects/assignment-expression
-* objects/assignment-expression/object-property.js
 * objects/assignment-expression/object-value.js
 
 ### optional-chaining
@@ -403,7 +396,6 @@ Compatibility: 209/561 (37.25%)
 ### quote-props
 * quote-props/numeric-separator.js
 * quote-props/objects.js
-* quote-props/with_member_expressions.js
 
 ### quotes
 * quotes/objects.js

@@ -1,12 +1,12 @@
 use oxc_ast::ast::*;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array,
-    comments::DanglingCommentsPrintOptions,
+    comments::{CommentFlags, DanglingCommentsPrintOptions},
     doc::{Doc, DocBuilder, Fill, Group},
-    group, if_break, indent, line, softline, ss, Prettier,
+    group, hardline, if_break, indent, line, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -212,7 +212,20 @@ where
                 parts.push(part);
 
                 if !is_last {
-                    parts.push(line!());
+                    if p.is_next_line_empty_after_index(element.span().end) {
+                        let mut space_parts = p.vec();
+                        space_parts.extend(hardline!());
+                        space_parts.extend(hardline!());
+                        parts.push(Doc::Array(space_parts));
+                    } else if array.elements.get(i + 1).is_some_and(|next| {
+                        p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
+                    }) {
+                        let mut space_parts = p.vec();
+                        space_parts.extend(hardline!());
+                        parts.push(Doc::Array(space_parts));
+                    } else {
+                        parts.push(line!());
+                    }
                 }
             }
         }
