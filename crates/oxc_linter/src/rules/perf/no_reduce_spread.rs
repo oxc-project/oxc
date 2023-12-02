@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{AstKind, ast::{Expression, BindingPatternKind}};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -62,11 +62,14 @@ declare_oxc_lint!(
 const REDUCE: &str = "reduce";
 impl Rule for NoReduceSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // only check spreads on identifiers
         let AstKind::SpreadElement(spread) = node.kind() else { return };
         let Expression::Identifier(ref ident) = spread.argument else { return };
+
         let nodes = ctx.semantic().nodes();
         let symbols = ctx.semantic().symbols();
 
+        // get the AST node + symbol id of the declaration of the identifier
         let Some(reference_id) = ident.reference_id.get() else { return };
         let reference = symbols.get_reference(reference_id);
         let Some(referenced_symbol_id) = reference.symbol_id() else { return };
@@ -74,11 +77,15 @@ impl Rule for NoReduceSpread {
         let declaration = ctx.semantic().nodes().get_node(declaration_id);
         let AstKind::FormalParameters(params) = declaration.kind() else { return };
 
+        // We're only looking for the first parameter, since that's where acc is.
+        // Skip non-parameter or non-first-parameter declarations.
         let first_param_symbol_id =
-            params.items.get(0).map(|item| get_identifier_symbol_id(&item.pattern.kind)).flatten();
+            params.items.get(0).and_then(|item| get_identifier_symbol_id(&item.pattern.kind));
         if !first_param_symbol_id.is_some_and(|id| id == referenced_symbol_id) {
             return;
         }
+
+        // Check if the declaration resides within a call to reduce()
         for parent in nodes.iter_parents(declaration.id()) {
             if is_call_to_reduce(parent) {
                 ctx.diagnostic(NoReduceSpreadDiagnostic(spread.span));
@@ -88,7 +95,7 @@ impl Rule for NoReduceSpread {
     }
 }
 
-fn get_identifier_symbol_id<'a>(ident: &BindingPatternKind<'a>) -> Option<SymbolId> {
+fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
     match ident {
         BindingPatternKind::BindingIdentifier(ident) => ident.symbol_id.get(),
         BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
