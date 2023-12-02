@@ -39,3 +39,25 @@ pub(super) fn print_binaryish_expression<'a>(
         Doc::Array(parts)
     }
 }
+
+pub(super) fn should_inline_logical_expression(expr: &Expression) -> bool {
+    let Expression::LogicalExpression(logical_expr) = expr else { return false };
+
+    if let Expression::ObjectExpression(obj_expr) = &logical_expr.right {
+        if obj_expr.properties.len() > 0 {
+            return true;
+        }
+    }
+
+    if let Expression::ArrayExpression(array_expr) = &logical_expr.right {
+        if array_expr.elements.len() > 0 {
+            return true;
+        }
+    }
+
+    if matches!(logical_expr.right, Expression::JSXElement(_) | Expression::JSXFragment(_)) {
+        return true;
+    }
+
+    false
+}
