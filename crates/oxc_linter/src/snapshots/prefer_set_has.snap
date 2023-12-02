@@ -1,0 +1,392 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_set_has
+---
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     const isExists = foo.includes(1);
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     for (const a of b) {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:2:1]
+ 2 │     async function unicorn() {
+ 3 │         const foo = [1, 2, 3];
+   ·               ───
+ 4 │         for await (const a of b) {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     for (let i = 0; i < n; i++) {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     for (let a in b) {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     while (a)  {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     do {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     do {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     function * unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     async function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     async function * unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     const unicorn = function () {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     const unicorn = () => foo.includes(1);
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     const a = {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     class A {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [...bar];
+   ·           ───
+ 3 │     function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │     const foo = [1, 2, 3];
+   ·           ───
+ 3 │     function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:2:1]
+ 2 │             function wrap() {
+ 3 │                 const foo = [1, 2, 3];
+   ·                       ───
+ 4 │ 
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+    ╭─[prefer_set_has.tsx:9:1]
+  9 │ 
+ 10 │             const bar = [4, 5, 6];
+    ·                   ───
+ 11 │ 
+    ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = [1, 2, 3];
+   ·                   ───
+ 3 │             function wrap() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:7:1]
+ 7 │                 function outer(find) {
+ 8 │                     const foo = [1, 2, 3];
+   ·                           ───
+ 9 │                     while (a) {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+    ╭─[prefer_set_has.tsx:13:1]
+ 13 │                     function inner(find) {
+ 14 │                         const bar = [1, 2, 3];
+    ·                               ───
+ 15 │                         while (a) {
+    ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = Array(1, 2);
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = new Array(1, 2);
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = Array.from({length: 1}, (_, index) => index);
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = Array.of(1, 2);
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.concat();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.copyWithin();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.fill();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.filter();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.flat();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.flatMap();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.map();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.reverse();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.slice();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.sort();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.splice();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.toReversed();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.toSorted();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.toSpliced();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-unicorn(prefer-set-has):
+   ╭─[prefer_set_has.tsx:1:1]
+ 1 │ 
+ 2 │             const foo = bar.with();
+   ·                   ───
+ 3 │             function unicorn() {
+   ╰────
+  help: 
+
+

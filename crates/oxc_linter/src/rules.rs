@@ -211,6 +211,7 @@ mod unicorn {
     pub mod prefer_query_selector;
     pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
+    pub mod prefer_set_has;
     pub mod prefer_set_size;
     pub mod prefer_spread;
     pub mod prefer_string_replace_all;
@@ -350,7 +351,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
-    unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -358,8 +358,8 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
-    unicorn::no_array_reduce,
     unicorn::no_array_for_each,
+    unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
@@ -383,6 +383,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_length_check,
     unicorn::no_useless_promise_resolve_reject,
+    unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
@@ -404,13 +405,14 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_native_coercion_functions,
-    unicorn::no_useless_spread,
+    unicorn::prefer_node_protocol,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_prototype_methods,
     unicorn::prefer_query_selector,
     unicorn::prefer_reflect_apply,
     unicorn::prefer_regexp_test,
+    unicorn::prefer_set_has,
     unicorn::prefer_set_size,
     unicorn::prefer_spread,
     unicorn::prefer_string_replace_all,
