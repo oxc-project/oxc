@@ -1,0 +1,56 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_reduce_spread
+---
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})
+   ·                                          ──────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
+   ·                           ──────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ arr.reduce((differentName, x) => ({ ...differentName, [x]: x }), {})
+   ·                                     ────────────────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
+   ·                               ──────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ get_array().reduce((acc, x) => ({ ...acc, [x]: x }), {})
+   ·                                   ──────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ arr.reduce(function (acc, x) { return { ...acc, [x]: x } }, {})
+   ·                                         ──────
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+  ⚠ perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()
+   ╭─[no_reduce_spread.tsx:1:1]
+ 1 │ arr.reduce((acc, x) => {
+ 2 │             let temp = { ...acc, x }
+   ·                          ──────
+ 3 │             return temp
+   ╰────
+  help: Prefer property assignment or Array.prototype.push()
+
+

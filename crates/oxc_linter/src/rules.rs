@@ -220,6 +220,10 @@ mod jsx_a11y {
     pub mod img_redundant_alt;
 }
 
+mod perf {
+    pub mod no_reduce_spread;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -410,5 +414,6 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_is_valid,
     jsx_a11y::html_has_lang,
     jsx_a11y::heading_has_content,
-    jsx_a11y::img_redundant_alt
+    jsx_a11y::img_redundant_alt,
+    perf::no_reduce_spread
 }
