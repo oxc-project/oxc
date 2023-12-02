@@ -154,6 +154,7 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_array_reduce;
     pub mod no_await_expression_member;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
@@ -330,12 +331,12 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_title,
     unicorn::catch_error_name,
     unicorn::empty_brace_spaces,
-    unicorn::prefer_array_some,
     unicorn::error_message,
     unicorn::escape_case,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
+    unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
@@ -365,6 +366,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_array_some,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
