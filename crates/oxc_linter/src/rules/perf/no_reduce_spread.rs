@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{Expression, BindingPatternKind}};
+use oxc_ast::{
+    ast::{BindingPatternKind, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
