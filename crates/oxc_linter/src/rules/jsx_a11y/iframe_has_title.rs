@@ -17,7 +17,9 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.")]
+#[error(
+    "eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element."
+)]
 #[diagnostic(severity(warning), help("Provide title property for iframe element."))]
 struct IframeHasTitleDiagnostic(#[label] pub Span);
 
