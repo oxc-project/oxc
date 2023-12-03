@@ -2,89 +2,89 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_node_protocol
 ---
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import fs from "fs";
    ·                ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ export {promises} from "fs";
    ·                        ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import fs from "fs/promises";
    ·                ─────────────
    ╰────
-  help: 
+  help: Prefer `node:fs/promises` over `fs/promises`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ export {default} from "fs/promises";
    ·                       ─────────────
    ╰────
-  help: 
+  help: Prefer `node:fs/promises` over `fs/promises`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import {promises} from "fs";
    ·                        ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ export {default as promises} from "fs";
    ·                                   ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import {promises} from 'fs';
    ·                        ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import "buffer";
    ·        ────────
    ╰────
-  help: 
+  help: Prefer `node:buffer` over `buffer`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import "child_process";
    ·        ───────────────
    ╰────
-  help: 
+  help: Prefer `node:child_process` over `child_process`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ import "timers/promises";
    ·        ─────────────────
    ╰────
-  help: 
+  help: Prefer `node:timers/promises` over `timers/promises`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ const {promises} = require("fs")
    ·                            ────
    ╰────
-  help: 
+  help: Prefer `node:fs` over `fs`.
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ const fs = require('fs/promises')
    ·                    ─────────────
    ╰────
-  help: 
+  help: Prefer `node:fs/promises` over `fs/promises`.
 
   × Unexpected token
    ╭─[prefer_node_protocol.tsx:1:1]
@@ -92,11 +92,11 @@ expression: prefer_node_protocol
    ·        ──
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol):
+  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:1]
  1 │ await import('assert/strict')
    ·              ───────────────
    ╰────
-  help: 
+  help: Prefer `node:assert/strict` over `assert/strict`.
 
 

@@ -22,11 +22,11 @@ pub struct PreferOptionalCatchBinding;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers omitting the catch binding parameter if it is unused
+    /// Prefers using the `node:protocol` to import builtin modules
     ///
     /// ### Why is this bad?
     ///
-    /// It is unnecessary to bind the error to a variable if it is not used.
+    /// It is not clear when a Node.js builtin module without `node:` prefix
     ///
     /// ### Example
     /// ```javascript
