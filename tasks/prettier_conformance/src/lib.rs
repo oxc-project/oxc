@@ -294,6 +294,25 @@ impl TestRunner {
             output = Self::visualize_end_of_line(&output);
         }
 
+        let space_line = " ".repeat(prettier_options.print_width);
+        let snapshot_without_output = format!(
+            r#"
+{title}
+====================================options=====================================
+{snapshot_options}
+{space_line}| printWidth
+=====================================input======================================
+{input}"#
+        );
+
+        let snapshot_output = format!(
+            r#"
+=====================================output=====================================
+{output}
+================================================================================
+`;"#
+        );
+
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
             if !snapshot_line.is_empty() {
@@ -303,26 +322,13 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected = Self::get_expect(snap_content, input.as_str()).unwrap_or_default();
+            let expected =
+                Self::get_expect(snap_content, &snapshot_without_output).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
 
-        let space_line = " ".repeat(prettier_options.print_width);
-
-        format!(
-            r#"
-{title}
-====================================options=====================================
-{snapshot_options}
-{space_line}| printWidth
-=====================================input======================================
-{input}
-=====================================output=====================================
-{output}
-================================================================================
-`;"#
-        )
+        format!("{snapshot_without_output}{snapshot_output}")
     }
 
     fn get_expect(expected: &str, input: &str) -> Option<String> {
