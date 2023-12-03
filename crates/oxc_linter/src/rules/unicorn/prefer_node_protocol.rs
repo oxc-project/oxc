@@ -32,12 +32,11 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
-    correctness
+    style
 );
 
 impl Rule for PreferNodeProtocol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        node.kind();
         let string_lit_value_with_span = match node.kind() {
             AstKind::ImportExpression(import) => match import.source {
                 Expression::StringLiteral(ref str_lit) => {
