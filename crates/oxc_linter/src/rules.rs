@@ -218,6 +218,7 @@ mod jsx_a11y {
     pub mod anchor_is_valid;
     pub mod heading_has_content;
     pub mod html_has_lang;
+    pub mod iframe_has_title;
     pub mod img_redundant_alt;
 }
 
@@ -412,5 +413,6 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_is_valid,
     jsx_a11y::html_has_lang,
     jsx_a11y::heading_has_content,
-    jsx_a11y::img_redundant_alt
+    jsx_a11y::iframe_has_title,
+    jsx_a11y::img_redundant_alt,
 }
