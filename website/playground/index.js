@@ -146,7 +146,7 @@ class Playground {
         this.runOxc(view.state.doc.toString());
         return;
       }
-      if (!view.docChanged && view.selectionSet) {
+      if (!view.docChanged && view.selectionSet && this.currentView === 'ast') {
         let ranges = view.state.selection.ranges;
         if (ranges.length === 1 && ranges[0].empty) {
           this.editorRange = view.state.selection.ranges
