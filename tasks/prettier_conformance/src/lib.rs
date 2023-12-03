@@ -280,19 +280,15 @@ impl TestRunner {
             if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
         );
 
-        let mut output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
-        let mut input = input.replace('`', "\\`");
+        let need_eol_visualized = snap_content.contains("<LF>");
+        let output = Self::prettier(path, input, prettier_options);
+        let output = Self::escape_and_convert_snap_string(&output, need_eol_visualized);
+        let input = Self::escape_and_convert_snap_string(input, need_eol_visualized);
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
             .collect::<Vec<_>>()
             .join("\n");
-
-        let need_eol_visualized = snap_content.contains("<LF>");
-        if need_eol_visualized {
-            input = Self::visualize_end_of_line(&input);
-            output = Self::visualize_end_of_line(&output);
-        }
 
         let space_line = " ".repeat(prettier_options.print_width);
         let snapshot_without_output = format!(
@@ -366,6 +362,15 @@ impl TestRunner {
         }
 
         result
+    }
+
+    fn escape_and_convert_snap_string(input: &str, need_eol_visualized: bool) -> String {
+        let input = input.replace('\\', "\\\\").replace('`', "\\`").replace("${", "\\${");
+        if need_eol_visualized {
+            Self::visualize_end_of_line(&input)
+        } else {
+            input
+        }
     }
 
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
