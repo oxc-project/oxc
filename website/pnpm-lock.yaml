@@ -11,7 +11,7 @@ patchedDependencies:
 dependencies:
   '@codemirror/autocomplete':
     specifier: ^6.9.1
-    version: 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0)
+    version: 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1)
   '@codemirror/commands':
     specifier: ^6.3.0
     version: 6.3.0
@@ -39,6 +39,9 @@ dependencies:
   '@ddietr/codemirror-themes':
     specifier: 1.4.1
     version: 1.4.1(patch_hash=yiqcshcf2sgzcw3iuyryzsfwbe)
+  '@lezer/json':
+    specifier: ^1.0.1
+    version: 1.0.1
   '@replit/codemirror-vscode-keymap':
     specifier: ^6.0.2
     version: 6.0.2(@codemirror/autocomplete@6.9.1)(@codemirror/commands@6.3.0)(@codemirror/language@6.9.1)(@codemirror/lint@6.4.2)(@codemirror/search@6.5.4)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)
@@ -47,7 +50,7 @@ dependencies:
     version: 0.0.9(@codemirror/autocomplete@6.9.1)(@codemirror/language@6.9.1)(@codemirror/lint@6.4.2)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/highlight@1.1.6)(graphql@16.8.1)
   codemirror:
     specifier: ^6.0.1
-    version: 6.0.1(@lezer/common@1.1.0)
+    version: 6.0.1(@lezer/common@1.1.1)
   graphql:
     specifier: ^16.8.1
     version: 16.8.1
@@ -62,6 +65,9 @@ dependencies:
     version: 2.3.2
 
 devDependencies:
+  '@lezer/common':
+    specifier: ^1.1.1
+    version: 1.1.1
   '@oxc/wasm-web':
     specifier: link:../npm/wasm-web
     version: link:../npm/wasm-web
@@ -84,7 +90,7 @@ packages:
       regenerator-runtime: 0.14.0
     dev: true
 
-  /@codemirror/autocomplete@6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0):
+  /@codemirror/autocomplete@6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1):
     resolution: {integrity: sha512-yma56tqD7khIZK4gy4X5lX3/k5ArMiCGat7HEWRF/8L2kqOjVdp2qKZqpcJjwTIjSj6fqKAHqi7IjtH3QFE+Bw==}
     peerDependencies:
       '@codemirror/language': ^6.0.0
@@ -95,7 +101,7 @@ packages:
       '@codemirror/language': 6.9.1
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.21.0
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
     dev: false
 
   /@codemirror/commands@6.3.0:
@@ -104,18 +110,18 @@ packages:
       '@codemirror/language': 6.9.1
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.21.0
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
     dev: false
 
   /@codemirror/lang-javascript@6.2.1:
     resolution: {integrity: sha512-jlFOXTejVyiQCW3EQwvKH0m99bUYIw40oPmFjSX2VS78yzfe0HELZ+NEo9Yfo1MkGRpGlj3Gnu4rdxV1EnAs5A==}
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1)
       '@codemirror/language': 6.9.1
       '@codemirror/lint': 6.4.2
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.21.0
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
       '@lezer/javascript': 1.4.7
     dev: false
 
@@ -138,7 +144,7 @@ packages:
     dependencies:
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.21.0
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
       '@lezer/highlight': 1.1.6
       '@lezer/lr': 1.3.12
       style-mod: 4.1.0
@@ -380,14 +386,13 @@ packages:
     dev: true
     optional: true
 
-  /@lezer/common@1.1.0:
-    resolution: {integrity: sha512-XPIN3cYDXsoJI/oDWoR2tD++juVrhgIago9xyKhZ7IhGlzdDM9QgC8D8saKNCz5pindGcznFr2HBSsEQSWnSjw==}
-    dev: false
+  /@lezer/common@1.1.1:
+    resolution: {integrity: sha512-aAPB9YbvZHqAW+bIwiuuTDGB4DG0sYNRObGLxud8cW7osw1ZQxfDuTZ8KQiqfZ0QJGcR34CvpTMDXEyo/+Htgg==}
 
   /@lezer/highlight@1.1.6:
     resolution: {integrity: sha512-cmSJYa2us+r3SePpRCjN5ymCqCPv+zyXmDl0ciWtVaNiORT/MxM7ZgOMQZADD0o51qOaOg24qc/zBViOIwAjJg==}
     dependencies:
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
     dev: false
 
   /@lezer/javascript@1.4.7:
@@ -407,7 +412,7 @@ packages:
   /@lezer/lr@1.3.12:
     resolution: {integrity: sha512-5nwY1JzCueUdRtlMBnlf1SUi69iGCq2ABq7WQFQMkn/kxPvoACAEnTp4P17CtXxYr7WCwtYPLL2AEvxKPuF1OQ==}
     dependencies:
-      '@lezer/common': 1.1.0
+      '@lezer/common': 1.1.1
     dev: false
 
   /@lezer/rust@1.0.1:
@@ -428,7 +433,7 @@ packages:
       '@codemirror/state': ^6.0.0
       '@codemirror/view': ^6.0.0
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1)
       '@codemirror/commands': 6.3.0
       '@codemirror/language': 6.9.1
       '@codemirror/lint': 6.4.2
@@ -512,7 +517,7 @@ packages:
       '@lezer/highlight': ^1.0.0
       graphql: ^16.5.0
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1)
       '@codemirror/language': 6.9.1
       '@codemirror/lint': 6.4.2
       '@codemirror/state': 6.2.1
@@ -522,10 +527,10 @@ packages:
       graphql-language-service: 5.1.7(patch_hash=i445yvp5m23mbfkfcxtdtgt27e)(graphql@16.8.1)
     dev: false
 
-  /codemirror@6.0.1(@lezer/common@1.1.0):
+  /codemirror@6.0.1(@lezer/common@1.1.1):
     resolution: {integrity: sha512-J8j+nZ+CdWmIeFIGXEFbFPtpiYacFMDR8GlHK3IyHQJMCaVRfGx9NT+Hxivv1ckLWPvNdZqndbr/7lVhrf/Svg==}
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.0)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.1)(@codemirror/state@6.2.1)(@codemirror/view@6.21.0)(@lezer/common@1.1.1)
       '@codemirror/commands': 6.3.0
       '@codemirror/language': 6.9.1
       '@codemirror/lint': 6.4.2

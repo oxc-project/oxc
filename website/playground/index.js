@@ -8,6 +8,8 @@ import {
   Compartment,
   RangeSet,
 } from "@codemirror/state";
+import  { findMostInnerNodeForPosition } from './lezor-json.js'
+import { parser } from '@lezer/json'
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { rust, rustLanguage } from "@codemirror/lang-rust";
 import { json, jsonLanguage } from "@codemirror/lang-json";
@@ -142,6 +144,25 @@ class Playground {
     const stateListener = EditorView.updateListener.of((view) => {
       if (view.docChanged) {
         this.runOxc(view.state.doc.toString());
+        return;
+      }
+      if (!view.docChanged && view.selectionSet) {
+        let ranges = view.state.selection.ranges;
+        if (ranges.length === 1 && ranges[0].empty) {
+          this.editorRange = view.state.selection.ranges
+          let {from} = this.editorRange[0]
+          let viewerText = this.viewer.state.doc.toString();
+          let ast = parser.parse(viewerText)
+          let root = ast.cursor().node;
+          let targetNode = findMostInnerNodeForPosition(root.node, from, viewerText)
+          if (!targetNode?.from) {
+            return;
+          }
+          this.viewer.dispatch({
+            selection: EditorSelection.single(targetNode.to, targetNode.from),
+            scrollIntoView: true,
+          })
+        }
       }
     });
 
@@ -214,6 +235,30 @@ class Playground {
   }
 
   initViewer() {
+
+    // scroll selection into the middle https://discuss.codemirror.net/t/cm6-scroll-to-middle/2924/2
+    const viewStateListener = EditorView.updateListener.of((update) => {
+      if (update.transactions.some(tr => tr.scrollIntoView)) {
+        let view = update.view
+        // (Sync with other DOM read/write phases for efficiency)
+        view.requestMeasure({
+          read() {
+            return {
+              cursor: view.coordsAtPos(view.state.selection.main.head),
+              scroller: view.scrollDOM.getBoundingClientRect()
+            }
+          },
+          write({cursor, scroller}) {
+            if (cursor) {
+              let curMid = (cursor.top + cursor.bottom) / 2
+              let eltMid = (scroller.top + scroller.bottom) / 2
+              if (Math.abs(curMid - eltMid) > 5)
+              view.scrollDOM.scrollTop += curMid - eltMid
+            }
+          }
+        })
+      }
+    });
     return new EditorView({
       extensions: [
         linter(
@@ -241,6 +286,7 @@ class Playground {
           },
           { delay: 0 }
         ),
+        viewStateListener,
         basicSetup,
         keymap.of([
           ...vscodeKeymap,
