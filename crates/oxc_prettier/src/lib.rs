@@ -108,6 +108,7 @@ impl<'a> Prettier<'a> {
         (len >= 3).then(|| self.nodes[len - 3])
     }
 
+    #[allow(unused)]
     fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
         let len = self.nodes.len();
         (len > n).then(|| self.nodes[len - n - 1])

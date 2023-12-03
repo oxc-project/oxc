@@ -73,6 +73,9 @@ const IGNORE_TESTS: &[&str] = &[
     "range",
     // IDE cursor
     "cursor",
+    // Invalid
+    "js/call/invalid",
+    "optional-chaining-assignment/invalid-",
 ];
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
@@ -280,19 +283,37 @@ impl TestRunner {
             if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
         );
 
-        let mut output = Self::prettier(path, input, prettier_options).replace('`', "\\`");
-        let mut input = input.replace('`', "\\`");
+        let need_eol_visualized = snap_content.contains("<LF>");
+        let output = Self::prettier(path, input, prettier_options);
+        let output = Self::escape_and_convert_snap_string(&output, need_eol_visualized);
+        let input = Self::escape_and_convert_snap_string(input, need_eol_visualized);
         let snapshot_options = snapshot_options
             .iter()
             .map(|(k, v)| format!("{k}: {v}"))
             .collect::<Vec<_>>()
             .join("\n");
 
-        let need_eol_visualized = snap_content.contains("<LF>");
-        if need_eol_visualized {
-            input = Self::visualize_end_of_line(&input);
-            output = Self::visualize_end_of_line(&output);
-        }
+        let space_line = " ".repeat(prettier_options.print_width);
+        let snapshot_without_output = format!(
+            r#"
+{title}
+====================================options=====================================
+{snapshot_options}
+{space_line}| printWidth
+=====================================input======================================
+{input}"#
+        );
+
+        let snapshot_output = format!(
+            r#"
+=====================================output=====================================
+{output}
+================================================================================
+`;"#
+        );
+
+        // put it here but not in below if-statement to help detect no matched input cases.
+        let expected = Self::get_expect(snap_content, &snapshot_without_output).unwrap();
 
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
@@ -303,26 +324,11 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected = Self::get_expect(snap_content, input.as_str()).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
 
-        let space_line = " ".repeat(prettier_options.print_width);
-
-        format!(
-            r#"
-{title}
-====================================options=====================================
-{snapshot_options}
-{space_line}| printWidth
-=====================================input======================================
-{input}
-=====================================output=====================================
-{output}
-================================================================================
-`;"#
-        )
+        format!("{snapshot_without_output}{snapshot_output}")
     }
 
     fn get_expect(expected: &str, input: &str) -> Option<String> {
@@ -360,6 +366,15 @@ impl TestRunner {
         }
 
         result
+    }
+
+    fn escape_and_convert_snap_string(input: &str, need_eol_visualized: bool) -> String {
+        let input = input.replace('\\', "\\\\").replace('`', "\\`").replace("${", "\\${");
+        if need_eol_visualized {
+            Self::visualize_end_of_line(&input)
+        } else {
+            input
+        }
     }
 
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {

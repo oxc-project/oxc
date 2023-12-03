@@ -1,10 +1,9 @@
-Compatibility: 216/561 (38.50%)
+Compatibility: 227/550 (41.27%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
-* arrays/issue-10159.js
 * arrays/numbers-in-args.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
@@ -45,10 +44,6 @@ Compatibility: 216/561 (38.50%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-15534.js
-* assignment/issue-2482-2.js
-* assignment/issue-2540.js
-* assignment/issue-3819.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
@@ -79,9 +74,6 @@ Compatibility: 216/561 (38.50%)
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 
-### binary_math
-* binary_math/parens.js
-
 ### break-calls
 * break-calls/break.js
 * break-calls/parent.js
@@ -95,9 +87,6 @@ Compatibility: 216/561 (38.50%)
 * call/first-argument-expansion/issue-5172.js
 * call/first-argument-expansion/jsx.js
 * call/first-argument-expansion/test.js
-
-### call/invalid
-* call/invalid/null-arguments-item.js
 
 ### chain-expression
 * chain-expression/test.js
@@ -118,7 +107,6 @@ Compatibility: 216/561 (38.50%)
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
-* classes-private-fields/with_comments.js
 
 ### comments
 * comments/arrow.js
@@ -317,7 +305,6 @@ Compatibility: 216/561 (38.50%)
 * method-chain/inline_merge.js
 * method-chain/issue-11298.js
 * method-chain/issue-3594.js
-* method-chain/issue-3621.js
 * method-chain/issue-4125.js
 * method-chain/logical.js
 * method-chain/multiple-members.js
@@ -359,7 +346,6 @@ Compatibility: 216/561 (38.50%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
-* objects/right-break.js
 
 ### objects/assignment-expression
 * objects/assignment-expression/object-value.js
@@ -369,16 +355,6 @@ Compatibility: 216/561 (38.50%)
 * optional-chaining/comments.js
 
 ### optional-chaining-assignment
-* optional-chaining-assignment/invalid-destructuring-arr.js
-* optional-chaining-assignment/invalid-destructuring-obj.js
-* optional-chaining-assignment/invalid-fn-param-arrow.js
-* optional-chaining-assignment/invalid-fn-param-assign.js
-* optional-chaining-assignment/invalid-fn-param.js
-* optional-chaining-assignment/invalid-for-await-of.js
-* optional-chaining-assignment/invalid-for-in.js
-* optional-chaining-assignment/invalid-for-of.js
-* optional-chaining-assignment/invalid-inc-postfix.js
-* optional-chaining-assignment/invalid-inc-prefix.js
 * optional-chaining-assignment/valid-complex-case.js
 * optional-chaining-assignment/valid-lhs-eq.js
 * optional-chaining-assignment/valid-lhs-plus-eq.js
@@ -402,9 +378,6 @@ Compatibility: 216/561 (38.50%)
 * quotes/objects.js
 * quotes/strings.js
 
-### regex
-* regex/test.js
-
 ### require-amd
 * require-amd/named-amd-module.js
 * require-amd/require.js
@@ -426,7 +399,6 @@ Compatibility: 216/561 (38.50%)
 ### strings
 * strings/escaped.js
 * strings/multiline-literal.js
-* strings/non-octal-eight-and-nine.js
 * strings/strings.js
 * strings/template-literals.js
 

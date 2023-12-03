@@ -40,20 +40,40 @@ impl VisitMut<'_> for SpecParser {
         let mut options = PrettierOptions::default();
 
         if let Some(argument) = expr.arguments.get(1) {
-            if let Argument::Expression(Expression::ArrayExpression(arr_expr)) = argument {
-                parsers = arr_expr
-                    .elements
-                    .iter()
-                    .filter_map(|el| {
-                        if let ArrayExpressionElement::Expression(Expression::StringLiteral(
-                            literal,
-                        )) = el
-                        {
-                            return Some(literal.value.to_string());
-                        }
-                        None
-                    })
-                    .collect::<Vec<String>>();
+            let Argument::Expression(argument_expr) = argument else {
+                return;
+            };
+
+            match argument_expr {
+                Expression::ArrayExpression(arr_expr) => {
+                    parsers = arr_expr
+                        .elements
+                        .iter()
+                        .filter_map(|el| {
+                            if let ArrayExpressionElement::Expression(Expression::StringLiteral(
+                                literal,
+                            )) = el
+                            {
+                                return Some(literal.value.to_string());
+                            }
+                            None
+                        })
+                        .collect::<Vec<String>>();
+                }
+                // There are some files define `parsers` as `const parsers = [parser_1, parser_2]` in prettier, just read the init part is enough now.
+                // https://github.com/prettier/prettier/blob/83400d19b4b60094914b3f7a397260cac9471d1e/tests/format/js/object-property-ignore/jsfmt.spec.js#L1
+                Expression::Identifier(_) => {
+                    let start = "const parser = [";
+                    let end = "];";
+                    let start =
+                        self.source_text.find(start).expect(&self.source_text) + start.len();
+                    let end = self.source_text.find(end).unwrap();
+                    parsers = self.source_text[start..end]
+                        .split(',')
+                        .map(|item| item.trim().trim_matches('"').to_string())
+                        .collect::<Vec<String>>();
+                }
+                _ => {}
             }
         } else {
             return;

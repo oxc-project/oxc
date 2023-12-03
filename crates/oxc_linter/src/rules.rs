@@ -154,6 +154,8 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_array_for_each;
+    pub mod no_array_reduce;
     pub mod no_await_expression_member;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
@@ -195,6 +197,8 @@ mod unicorn {
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_trunc;
     pub mod prefer_native_coercion_functions;
+    pub mod prefer_node_protocol;
+    pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
@@ -205,6 +209,7 @@ mod unicorn {
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_type_error;
+    pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
     pub mod switch_case_braces;
     pub mod text_encoding_identifier_case;
@@ -217,6 +222,7 @@ mod jsx_a11y {
     pub mod anchor_is_valid;
     pub mod heading_has_content;
     pub mod html_has_lang;
+    pub mod iframe_has_title;
     pub mod img_redundant_alt;
 }
 
@@ -332,13 +338,15 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
-    unicorn::prefer_array_some,
     unicorn::error_message,
     unicorn::escape_case,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
+    unicorn::no_array_reduce,
+    unicorn::no_array_for_each,
     unicorn::no_await_expression_member,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
@@ -368,6 +376,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_array_some,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
@@ -379,6 +388,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_native_coercion_functions,
+    unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
@@ -389,6 +399,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_type_error,
+    unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
@@ -414,6 +425,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_is_valid,
     jsx_a11y::html_has_lang,
     jsx_a11y::heading_has_content,
+    jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
     perf::no_reduce_spread
 }
