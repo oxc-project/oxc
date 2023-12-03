@@ -197,6 +197,7 @@ mod unicorn {
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_trunc;
     pub mod prefer_native_coercion_functions;
+    pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
@@ -381,6 +382,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_native_coercion_functions,
+    unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
