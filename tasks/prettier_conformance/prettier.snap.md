@@ -1,10 +1,9 @@
-Compatibility: 221/561 (39.39%)
+Compatibility: 227/561 (40.46%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
-* arrays/issue-10159.js
 * arrays/numbers-in-args.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
@@ -45,8 +44,6 @@ Compatibility: 221/561 (39.39%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-15534.js
-* assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
@@ -311,7 +308,6 @@ Compatibility: 221/561 (39.39%)
 * method-chain/inline_merge.js
 * method-chain/issue-11298.js
 * method-chain/issue-3594.js
-* method-chain/issue-3621.js
 * method-chain/issue-4125.js
 * method-chain/logical.js
 * method-chain/multiple-members.js
@@ -395,9 +391,6 @@ Compatibility: 221/561 (39.39%)
 * quotes/objects.js
 * quotes/strings.js
 
-### regex
-* regex/test.js
-
 ### require-amd
 * require-amd/named-amd-module.js
 * require-amd/require.js
@@ -419,7 +412,6 @@ Compatibility: 221/561 (39.39%)
 ### strings
 * strings/escaped.js
 * strings/multiline-literal.js
-* strings/non-octal-eight-and-nine.js
 * strings/strings.js
 * strings/template-literals.js
 
