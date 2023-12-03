@@ -154,6 +154,7 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_array_for_each;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
     pub mod no_console_spaces;
@@ -197,6 +198,7 @@ mod unicorn {
     pub mod prefer_math_trunc;
     pub mod prefer_native_coercion_functions;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
@@ -340,6 +342,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
     unicorn::no_array_reduce,
+    unicorn::no_array_for_each,
     unicorn::no_await_expression_member,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
@@ -381,6 +384,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_native_coercion_functions,
+    unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
     unicorn::prefer_regexp_test,
