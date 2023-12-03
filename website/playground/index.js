@@ -8,7 +8,7 @@ import {
   Compartment,
   RangeSet,
 } from "@codemirror/state";
-import  { findMostInnerNodeForPosition } from './lezor-json.js'
+import  { findMostInnerNodeForPosition } from './traverseJson.js'
 import { parser } from '@lezer/json'
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { rust, rustLanguage } from "@codemirror/lang-rust";

@@ -1,5 +1,3 @@
-import { parser } from "@lezer/json";
-
 
 let typeFilter = ["JsonText", "Object", "Property", "Array"];
 /**
@@ -33,9 +31,6 @@ export function findMostInnerNodeForPosition(node, offset, source) {
 	}
 	return targetNode;
 }
-
-// let target = travserse(cur.node, 0)
-// console.log(target)
 
 /**
  * @param {import('@lezer/common').SyntaxNode} node
