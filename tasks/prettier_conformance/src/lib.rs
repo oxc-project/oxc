@@ -73,6 +73,9 @@ const IGNORE_TESTS: &[&str] = &[
     "range",
     // IDE cursor
     "cursor",
+    // Invalid
+    "js/call/invalid",
+    "optional-chaining-assignment/invalid-",
 ];
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
@@ -309,6 +312,9 @@ impl TestRunner {
 `;"#
         );
 
+        // put it here but not in below if-statement to help detect no matched input cases.
+        let expected = Self::get_expect(snap_content, &snapshot_without_output).unwrap();
+
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
             if !snapshot_line.is_empty() {
@@ -318,8 +324,6 @@ impl TestRunner {
             println!("{input}");
             println!("Output:");
             println!("{output}");
-            let expected =
-                Self::get_expect(snap_content, &snapshot_without_output).unwrap_or_default();
             println!("Diff:");
             println!("{}", Self::get_diff(&output, &expected));
         }
