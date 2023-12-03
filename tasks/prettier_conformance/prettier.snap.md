@@ -1,4 +1,4 @@
-Compatibility: 227/561 (40.46%)
+Compatibility: 227/550 (41.27%)
 
 # Failed
 
@@ -87,9 +87,6 @@ Compatibility: 227/561 (40.46%)
 * call/first-argument-expansion/issue-5172.js
 * call/first-argument-expansion/jsx.js
 * call/first-argument-expansion/test.js
-
-### call/invalid
-* call/invalid/null-arguments-item.js
 
 ### chain-expression
 * chain-expression/test.js
@@ -358,16 +355,6 @@ Compatibility: 227/561 (40.46%)
 * optional-chaining/comments.js
 
 ### optional-chaining-assignment
-* optional-chaining-assignment/invalid-destructuring-arr.js
-* optional-chaining-assignment/invalid-destructuring-obj.js
-* optional-chaining-assignment/invalid-fn-param-arrow.js
-* optional-chaining-assignment/invalid-fn-param-assign.js
-* optional-chaining-assignment/invalid-fn-param.js
-* optional-chaining-assignment/invalid-for-await-of.js
-* optional-chaining-assignment/invalid-for-in.js
-* optional-chaining-assignment/invalid-for-of.js
-* optional-chaining-assignment/invalid-inc-postfix.js
-* optional-chaining-assignment/invalid-inc-prefix.js
 * optional-chaining-assignment/valid-complex-case.js
 * optional-chaining-assignment/valid-lhs-eq.js
 * optional-chaining-assignment/valid-lhs-plus-eq.js
