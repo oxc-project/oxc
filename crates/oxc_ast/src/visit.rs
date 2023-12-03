@@ -555,7 +555,6 @@ pub trait Visit<'a>: Sized {
             Expression::RegExpLiteral(lit) => self.visit_reg_expr_literal(lit),
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
-
             Expression::Identifier(ident) => self.visit_identifier_reference(ident),
             Expression::MetaProperty(meta) => self.visit_meta_property(meta),
 
@@ -732,10 +731,13 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_import_expression(&mut self, expr: &ImportExpression<'a>) {
+        let kind = AstKind::ImportExpression(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_expression(&expr.source);
         for arg in &expr.arguments {
             self.visit_expression(arg);
         }
+        self.leave_node(kind);
     }
 
     fn visit_logical_expression(&mut self, expr: &LogicalExpression<'a>) {
@@ -1282,12 +1284,15 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
+        let kind = AstKind::ImportDeclaration(self.alloc(decl));
+        self.enter_node(kind);
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
                 self.visit_import_declaration_specifier(specifier);
             }
         }
-        // TODO: source
+        self.visit_string_literal(&decl.source);
+        self.leave_node(kind);
         // TODO: assertions
     }
 
@@ -1332,9 +1337,15 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        let kind = AstKind::ExportNamedDeclaration(self.alloc(decl));
+        self.enter_node(kind);
         if let Some(decl) = &decl.declaration {
             self.visit_declaration(decl);
         }
+        if let Some(ref source) = decl.source {
+            self.visit_string_literal(source);
+        }
+        self.leave_node(kind);
     }
 
     fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {

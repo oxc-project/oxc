@@ -196,6 +196,7 @@ mod unicorn {
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_trunc;
     pub mod prefer_native_coercion_functions;
+    pub mod prefer_node_protocol;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
     pub mod prefer_regexp_test;
@@ -331,6 +332,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
