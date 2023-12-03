@@ -11,7 +11,6 @@ pub enum AstKind<'a> {
     Hashbang(&'a Hashbang),
 
     BlockStatement(&'a BlockStatement<'a>),
-    ImportDeclaration(&'a ImportDeclaration<'a>),
     BreakStatement(&'a BreakStatement),
     ContinueStatement(&'a ContinueStatement),
     DebuggerStatement(&'a DebuggerStatement),
@@ -77,7 +76,6 @@ pub enum AstKind<'a> {
     UpdateExpression(&'a UpdateExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
     ImportExpression(&'a ImportExpression<'a>),
-    ExportNamedDeclaration(&'a ExportNamedDeclaration<'a>),
     PrivateInExpression(&'a PrivateInExpression<'a>),
 
     ObjectProperty(&'a ObjectProperty<'a>),
@@ -458,8 +456,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTypeParameterInstantiation(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
-            Self::ImportDeclaration(x) => x.span,
-            Self::ExportNamedDeclaration(x) => x.span,
         }
     }
 }
@@ -531,9 +527,7 @@ impl<'a> AstKind<'a> {
             Self::ArrowExpression(_) => "ArrowExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
             Self::AwaitExpression(_) => "AwaitExpression".into(),
-            Self::BinaryExpression(b) => {
-                format!("BinaryExpression({})", b.operator.as_str()).into()
-            }
+            Self::BinaryExpression(b) => format!("BinaryExpression{}", b.operator.as_str()).into(),
             Self::CallExpression(_) => "CallExpression".into(),
             Self::ChainExpression(_) => "ChainExpression".into(),
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
@@ -549,8 +543,6 @@ impl<'a> AstKind<'a> {
             Self::UpdateExpression(_) => "UpdateExpression".into(),
             Self::YieldExpression(_) => "YieldExpression".into(),
             Self::ImportExpression(_) => "ImportExpression".into(),
-            Self::ImportDeclaration(_) => "ImportDeclaration".into(),
-            Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::PrivateInExpression(_) => "PrivateInExpression".into(),
 
             Self::ObjectProperty(_) => "ObjectProperty".into(),

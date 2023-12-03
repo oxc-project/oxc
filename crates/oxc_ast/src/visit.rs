@@ -1284,15 +1284,12 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let kind = AstKind::ImportDeclaration(self.alloc(decl));
-        self.enter_node(kind);
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
                 self.visit_import_declaration_specifier(specifier);
             }
         }
         self.visit_string_literal(&decl.source);
-        self.leave_node(kind);
         // TODO: assertions
     }
 
@@ -1337,15 +1334,12 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        let kind = AstKind::ExportNamedDeclaration(self.alloc(decl));
-        self.enter_node(kind);
         if let Some(decl) = &decl.declaration {
             self.visit_declaration(decl);
         }
         if let Some(ref source) = decl.source {
             self.visit_string_literal(source);
         }
-        self.leave_node(kind);
     }
 
     fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {

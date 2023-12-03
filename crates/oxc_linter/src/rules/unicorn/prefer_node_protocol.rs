@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, ModuleDeclaration},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -44,10 +44,10 @@ impl Rule for PreferNodeProtocol {
                 _ => None,
             },
             AstKind::CallExpression(call) if !call.optional => get_static_require_arg(ctx, call),
-            AstKind::ImportDeclaration(import) => {
+            AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
                 Some((import.source.value.clone(), import.source.span))
             }
-            AstKind::ExportNamedDeclaration(export) => {
+            AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(export)) => {
                 export.source.as_ref().map(|item| (item.value.clone(), item.span))
             }
             _ => None,
