@@ -24,8 +24,8 @@ pub struct FunctionName<'a> {
 
 impl<'a> FunctionName<'a> {
     pub fn new(
-        _ast: Rc<AstBuilder<'a>>,
-        _ctx: TransformerCtx<'a>,
+        _ast: &Rc<AstBuilder<'a>>,
+        _ctx: &TransformerCtx<'a>,
         _options: &TransformOptions,
     ) -> Option<Self> {
         // Disabled for now
@@ -95,7 +95,7 @@ impl<'a> FunctionName<'a> {
     }
 
     // Internal only
-    fn transform_expression<'b>(&mut self, expr: &mut Expression<'a>, mut id: BindingIdentifier) {
+    fn transform_expression(&mut self, expr: &mut Expression<'a>, mut id: BindingIdentifier) {
         // function () {} -> function name() {}
         if let Expression::FunctionExpression(func) = expr {
             let scopes = self.ctx.scopes();
@@ -141,6 +141,7 @@ impl<'a> Visit<'a> for IdentFinder {
 // https://github.com/babel/babel/blob/main/packages/babel-helper-function-name/src/index.ts
 // https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toBindingIdentifierName.ts#L3
 // https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toIdentifier.ts#L4
+#[allow(clippy::unnecessary_wraps)]
 fn create_valid_identifier(
     span: Span,
     atom: Atom,
@@ -162,7 +163,7 @@ fn create_valid_identifier(
     let id = if id == "" {
         Atom::from("_")
     } else if id == "eval" || id == "arguments" || id == "null" || !is_valid_identifier(&id, true) {
-        Atom::from(format!("_{}", id))
+        Atom::from(format!("_{id}"))
     } else {
         atom
     };
