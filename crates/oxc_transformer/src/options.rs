@@ -20,6 +20,7 @@ pub struct TransformOptions {
     // es2016
     pub exponentiation_operator: bool,
     // es2015
+    pub function_name: bool,
     pub shorthand_properties: bool,
     pub sticky_regex: bool,
     pub template_literals: bool,

@@ -445,6 +445,10 @@ impl<'a> PropertyKey<'a> {
         self.static_name().is_some_and(|n| n == name)
     }
 
+    pub fn is_identifier(&self) -> bool {
+        matches!(self, Self::PrivateIdentifier(_) | Self::Identifier(_))
+    }
+
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }

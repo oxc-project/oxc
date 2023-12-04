@@ -33,7 +33,7 @@ use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{
-    context::TransformerCtx, es2015::ShorthandProperties, es2016::ExponentiationOperator,
+    context::TransformerCtx, es2015::*, es2016::ExponentiationOperator,
     es2019::OptionalCatchBinding, es2020::NullishCoalescingOperator,
     es2021::LogicalAssignmentOperators, es2022::ClassStaticBlock, es3::PropertyLiteral,
     react_jsx::ReactJsx, regexp::RegexpFlags, typescript::TypeScript, utils::CreateVars,
@@ -62,6 +62,7 @@ pub struct Transformer<'a> {
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
+    es2015_function_name: Option<FunctionName<'a>>,
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
@@ -86,14 +87,22 @@ impl<'a> Transformer<'a> {
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
+            // es2022
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
+            // es2021
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2020
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2019
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            // es2015
+            es2015_function_name: FunctionName::new(&ast, &ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
-            es3_property_literal: PropertyLiteral::new(Rc::clone(&ast ), &options),
+            // other
+            es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
             react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
         }
     }
@@ -127,6 +136,13 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.visit_statements(&mut program.body);
 
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
+    }
+
+    fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_assignment_expression(expr));
+
+        self.visit_assignment_target(&mut expr.left);
+        self.visit_expression(&mut expr.right);
     }
 
     fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
@@ -171,12 +187,21 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.visit_statements(&mut clause.body.body);
     }
 
+    fn visit_object_expression(&mut self, expr: &mut ObjectExpression<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_object_expression(expr));
+
+        for property in expr.properties.iter_mut() {
+            self.visit_object_property_kind(property);
+        }
+    }
+
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
         self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
 
         self.visit_property_key(&mut prop.key);
         self.visit_expression(&mut prop.value);
+
         if let Some(init) = &mut prop.init {
             self.visit_expression(init);
         }
@@ -192,11 +217,23 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
         self.typescript.as_mut().map(|t| t.transform_formal_parameters(params));
+
         for param in params.items.iter_mut() {
             self.visit_formal_parameter(param);
         }
+
         if let Some(rest) = &mut params.rest {
             self.visit_rest_element(rest);
+        }
+    }
+
+    fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        self.es2015_function_name.as_mut().map(|t| t.transform_variable_declarator(declarator));
+
+        self.visit_binding_pattern(&mut declarator.id);
+
+        if let Some(init) = &mut declarator.init {
+            self.visit_expression(init);
         }
     }
 }
