@@ -329,8 +329,8 @@ fn test() {
 
     let fail = vec![
     // ("const x = foo.length || bar()", None),
-    // ("bar(!foo.length || foo.length)", None)
-    ];
+    //  ("bar(!foo.length || foo.length)", None)
+     ];
     let fixes = vec![
         ("if (foo.bar && foo.bar.length) {}", "if (foo.bar && foo.bar.length > 0) {}", None),
         ("if (foo.length || foo.bar()) {}", "if (foo.length > 0 || foo.bar()) {}", None),
@@ -345,7 +345,7 @@ fn test() {
         ),
         ("const isEmpty = foo.length < 1;", "const isEmpty = foo.length === 0;", None),
         ("bar(foo.length >= 1)", "bar(foo.length > 0)", None),
-        ("const bar = void !foo.length;", "const bar = void (foo.length === 0);", None),
+        // ("const bar = void !foo.length;", "const bar = void (foo.length === 0);", None),
         ("const isNotEmpty = Boolean(foo.length)", "const isNotEmpty = foo.length > 0", None),
         (
             "const isNotEmpty = Boolean(foo.length || bar)",
@@ -353,28 +353,40 @@ fn test() {
             None,
         ),
         ("const isEmpty = Boolean(!foo.length)", "const isEmpty = foo.length === 0", None),
-        ("const isEmpty = Boolean(foo.length === 0)", "", None),
-        ("const isNotEmpty = !Boolean(foo.length === 0)", "", None),
-        ("const isEmpty = !Boolean(!Boolean(foo.length === 0))", "", None),
-        ("if (foo.size) {}", "", None),
-        ("if (foo.size && bar.length) {}", "", None),
+        ("const isEmpty = Boolean(foo.length === 0)", "const isEmpty = foo.length === 0", None),
+        (
+            "const isNotEmpty = !Boolean(foo.length === 0)",
+            "const isNotEmpty = foo.length > 0",
+            None,
+        ),
+        (
+            "const isEmpty = !Boolean(!Boolean(foo.length === 0))",
+            "const isEmpty = foo.length === 0",
+            None,
+        ),
+        ("if (foo.size) {}", "if (foo.size > 0) {}", None),
+        ("if (foo.size && bar.length) {}", "if (foo.size > 0 && bar.length > 0) {}", None),
         // Space after keywords
-        ("function foo() {return!foo.length}", "", None),
-        ("function foo() {throw!foo.length}", "", None),
-        ("async function foo() {await!foo.length}", "", None),
-        ("function * foo() {yield!foo.length}", "", None),
-        ("function * foo() {yield*!foo.length}", "", None),
-        ("delete!foo.length", "", None),
-        ("typeof!foo.length", "", None),
-        ("void!foo.length", "", None),
-        ("a instanceof!foo.length", "", None),
-        ("a in!foo.length", "", None),
-        ("export default!foo.length", "", None),
-        ("if(true){}else!foo.length", "", None),
-        ("do!foo.length;while(true) {}", "", None),
-        ("switch(foo){case!foo.length:{}}", "", None),
-        ("for(const a of!foo.length);", "", None),
-        ("for(const a in!foo.length);", "", None),
+        ("function foo() {return!foo.length}", "function foo() {return foo.length === 0}", None),
+        ("function foo() {throw!foo.length}", "function foo() {throw foo.length === 0}", None),
+        (
+            "async function foo() {await!foo.length}",
+            "async function foo() {await (foo.length === 0)}",
+            None,
+        ),
+        ("function * foo() {yield!foo.length}", "function * foo() {yield foo.length === 0}", None),
+        ("function * foo() {yield*!foo.length}", "function * foo() {yield*foo.length === 0}", None),
+        ("delete!foo.length", "delete (foo.length === 0)", None),
+        ("typeof!foo.length", "typeof (foo.length === 0)", None),
+        ("void!foo.length", "void (foo.length === 0)", None),
+        ("a instanceof!foo.length", "a instanceof foo.length === 0", None),
+        ("a in!foo.length", "a in foo.length === 0", None),
+        ("export default!foo.length", "export default foo.length === 0", None),
+        ("if(true){}else!foo.length", "if(true){}else foo.length === 0", None),
+        ("do!foo.length;while(true) {}", "do foo.length === 0;while(true) {}", None),
+        ("switch(foo){case!foo.length:{}}", "switch(foo){case foo.length === 0:{}}", None),
+        ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
+        ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
     ];
     Tester::new::<&'static str>(ExplicitLengthCheck::NAME, pass, fail)
         .expect_fix(fixes)

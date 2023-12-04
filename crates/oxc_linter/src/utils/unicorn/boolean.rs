@@ -26,13 +26,15 @@ pub fn is_boolean_call(kind: &AstKind) -> bool {
     )
 }
 pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let parent = ctx.nodes().parent_kind(node.id());
+    let arg_id = ctx.nodes().parent_id(node.id());
+    let parent = arg_id.and_then(|id| ctx.nodes().parent_kind(id));
+    // println!("{parent:#?}");
     matches!(parent, Some(parent) if is_boolean_call(&parent))
 }
 
 pub fn is_boolean_node<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let kind = node.kind();
-
+    // println!("{kind:#?}");
     if is_logic_not(&kind)
         || is_logic_not_argument(node, ctx)
         || is_boolean_call(&kind)
@@ -69,14 +71,22 @@ pub fn get_boolean_ancestor<'a, 'b>(
     let mut is_negative = false;
     let mut cur = node;
     loop {
-        if is_logic_not_argument(cur, ctx) {
-            is_negative = !is_negative;
-            cur = ctx.nodes().parent_node(cur.id()).unwrap();
-        } else if is_boolean_call_argument(cur, ctx) {
-            cur = ctx.nodes().parent_node(cur.id()).unwrap();
-        } else {
+        if let Some(parent) = outermost_paren_parent(cur, ctx) {
+            let kind = parent.kind();
+            if is_logic_not(&kind) {
+                is_negative = !is_negative;
+                cur = parent;
+                continue;
+            }
+            if let Some(parent) = ctx.nodes().parent_node(parent.id()) {
+                if is_boolean_call(&parent.kind()) {
+                    cur = parent;
+                    continue;
+                }
+            }
             break;
         }
+        break;
     }
     (cur, is_negative)
 }
