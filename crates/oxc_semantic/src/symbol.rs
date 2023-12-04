@@ -39,6 +39,18 @@ impl SymbolTable {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
+    pub fn get_symbol_id_from_span(&self, span: &Span) -> Option<SymbolId> {
+        self.spans
+            .iter_enumerated()
+            .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
+    }
+
+    pub fn get_symbol_id_from_name(&self, name: &Atom) -> Option<SymbolId> {
+        self.names
+            .iter_enumerated()
+            .find_map(|(symbol, inner_name)| if inner_name == name { Some(symbol) } else { None })
+    }
+
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
         self.spans[symbol_id]
     }
@@ -61,6 +73,14 @@ impl SymbolTable {
 
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.scope_ids[symbol_id]
+    }
+
+    pub fn get_scope_id_from_span(&self, span: &Span) -> Option<ScopeId> {
+        self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
+    }
+
+    pub fn get_scope_id_from_name(&self, name: &Atom) -> Option<ScopeId> {
+        self.get_symbol_id_from_name(name).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
     pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {

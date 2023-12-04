@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 // use lazy_static::lazy_static;
 use oxc_ast::{ast::*, AstBuilder, Visit};
+use oxc_semantic::ScopeId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_syntax::unicode_id_start::is_id_continue;
@@ -10,6 +11,7 @@ use oxc_syntax::unicode_id_start::is_id_continue;
 use crate::context::TransformerCtx;
 use crate::options::TransformOptions;
 use crate::utils::is_valid_identifier;
+use crate::TransformTarget;
 
 /// ES2015: Function Name
 ///
@@ -24,18 +26,18 @@ pub struct FunctionName<'a> {
 
 impl<'a> FunctionName<'a> {
     pub fn new(
-        _ast: &Rc<AstBuilder<'a>>,
-        _ctx: &TransformerCtx<'a>,
-        _options: &TransformOptions,
+        ast: Rc<AstBuilder<'a>>,
+        ctx: TransformerCtx<'a>,
+        options: &TransformOptions,
     ) -> Option<Self> {
         // Disabled for now
-        None
-        // (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
-        //     ast,
-        //     ctx,
-        //     // TODO hook up the plugin
-        //     unicode_escapes: true,
-        // })
+        // None
+        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
+            _ast: ast,
+            ctx,
+            // TODO hook up the plugin
+            unicode_escapes: true,
+        })
     }
 
     pub fn transform_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
@@ -47,7 +49,9 @@ impl<'a> FunctionName<'a> {
                 if let Some(id) =
                     create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes)
                 {
-                    self.transform_expression(&mut expr.right, id);
+                    let scope_id = self.ctx.symbols().get_scope_id_from_span(&target.span);
+
+                    self.transform_expression(&mut expr.right, id, scope_id);
                 }
             }
         }
@@ -60,22 +64,28 @@ impl<'a> FunctionName<'a> {
                     continue;
                 }
 
-                let id = match &property.key {
-                    PropertyKey::Identifier(ident) => create_valid_identifier(
-                        ident.span,
-                        ident.name.clone(),
-                        self.unicode_escapes,
+                let (id, scope_id) = match &property.key {
+                    PropertyKey::Identifier(ident) => (
+                        create_valid_identifier(
+                            ident.span,
+                            ident.name.clone(),
+                            self.unicode_escapes,
+                        ),
+                        self.ctx.symbols().get_scope_id_from_span(&ident.span),
                     ),
-                    PropertyKey::PrivateIdentifier(ident) => create_valid_identifier(
-                        ident.span,
-                        ident.name.clone(),
-                        self.unicode_escapes,
+                    PropertyKey::PrivateIdentifier(ident) => (
+                        create_valid_identifier(
+                            ident.span,
+                            ident.name.clone(),
+                            self.unicode_escapes,
+                        ),
+                        self.ctx.symbols().get_scope_id_from_span(&ident.span),
                     ),
                     PropertyKey::Expression(_) => continue,
                 };
 
                 if let Some(id) = id {
-                    self.transform_expression(&mut property.value, id);
+                    self.transform_expression(&mut property.value, id, scope_id);
                 }
             }
         }
@@ -89,26 +99,39 @@ impl<'a> FunctionName<'a> {
             if let Some(id) =
                 create_valid_identifier(ident.span, ident.name.clone(), self.unicode_escapes)
             {
-                self.transform_expression(init, id);
+                let scope_id = match ident.symbol_id.get() {
+                    Some(symbol_id) => Some(self.ctx.symbols().get_scope_id(symbol_id)),
+                    None => self.ctx.symbols().get_scope_id_from_span(&ident.span),
+                };
+
+                self.transform_expression(init, id, scope_id);
             }
         };
     }
 
     // Internal only
-    fn transform_expression(&mut self, expr: &mut Expression<'a>, mut id: BindingIdentifier) {
+    fn transform_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        mut id: BindingIdentifier,
+        scope_id: Option<ScopeId>,
+    ) {
         // function () {} -> function name() {}
         if let Expression::FunctionExpression(func) = expr {
-            let scopes = self.ctx.scopes();
             let mut count = 0;
 
             // let mut finder = IdentFinder { id, found: 0 };
             // finder.visit_expression(expr);
 
             // Check for nested params/vars of the same name
-            for scope in scopes.descendants() {
-                for binding in scopes.get_bindings(scope) {
-                    if binding.0 == &id.name {
-                        count += 1;
+            if let Some(scope_id) = scope_id {
+                let scopes = self.ctx.scopes();
+
+                for scope in scopes.descendants(scope_id) {
+                    for binding in scopes.get_bindings(scope) {
+                        if binding.0 == &id.name {
+                            count += 1;
+                        }
                     }
                 }
             }

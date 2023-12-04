@@ -86,7 +86,7 @@ impl ManglerBuilder {
         let mut max_slot_for_scope = vec![0; scope_tree.len()];
 
         // Walk the scope tree and compute the slot number for each scope
-        for scope_id in scope_tree.descendants() {
+        for scope_id in scope_tree.descendants_from_root() {
             let bindings = scope_tree.get_bindings(scope_id);
             // The current slot number is continued by the maximum slot from the parent scope
             let parent_max_slot = scope_tree

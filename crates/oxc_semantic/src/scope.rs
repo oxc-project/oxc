@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
@@ -38,7 +39,23 @@ impl ScopeTree {
         std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
     }
 
-    pub fn descendants(&self) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        let mut list = vec![];
+        let mut queue = VecDeque::from_iter([scope_id]);
+
+        while let Some(current_id) = queue.pop_front() {
+            for (scope, parent_scope) in self.parent_ids.iter_enumerated() {
+                if parent_scope.as_ref().is_some_and(|parent_id| parent_id == &current_id) {
+                    list.push(scope);
+                    queue.push_back(scope);
+                }
+            }
+        }
+
+        list.into_iter()
+    }
+
+    pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
 
