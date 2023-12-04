@@ -22,14 +22,19 @@ jobs:
   e2e:
     name: Test Linter
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - 'microsoft/vscode'
+          - 'DefinitelyTyped/DefinitelyTyped'
     steps:
       - uses: actions/checkout@v4
 
       - name: Clone VSCode Repo
         uses: actions/checkout@v4
         with:
-          repository: microsoft/vscode
-          path: ./vscode
+          repository: ${{ matrix.repository }}}
+          path: ./e2e
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -40,8 +45,8 @@ jobs:
       - name: Build oxlint
         run: cargo build --release -p oxc_cli --bin oxlint
 
-      - name: Run oxlint on VSCode and throw output to a temp file
-        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode > ./log.tmp
+      - name: Run oxlint on repo and throw output to a temp file
+        run: ./target/release/oxlint --quiet --ignore-path ./e2e/.eslintignore --allow no-control-regex ./e2e > ./log.tmp
 
       - name: Using grep to check if oxlint panic
         run: >
