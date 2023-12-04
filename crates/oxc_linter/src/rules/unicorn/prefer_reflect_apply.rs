@@ -15,10 +15,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[error(
     "eslint-plugin-unicorn(prefer-reflect-apply): Prefer Reflect.apply() over Function#apply()"
 )]
-#[diagnostic(
-    severity(warning),
-    help("Reflect.apply() is less verbose and easier to understand.")
-)]
+#[diagnostic(severity(warning), help("Reflect.apply() is less verbose and easier to understand."))]
 struct PreferReflectApplyDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
