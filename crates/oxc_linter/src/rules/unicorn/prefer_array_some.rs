@@ -15,7 +15,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
+use oxc_syntax::operator::BinaryOperator;
 
 #[derive(Debug, Error, Diagnostic)]
 enum PreferArraySomeDiagnostic {

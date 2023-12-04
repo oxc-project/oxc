@@ -369,6 +369,10 @@ fn test() {
             ) {}",
             None,
         ),
+        (
+            "if ( foo.length || !!foo.length || foo.length != 0 || foo.length > 0 || foo.length >= 1 || 0 !== foo.length || 0 != foo.length || 0 < foo.length || 1 <= foo.length ) {}",
+        "if ( foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 ) {}",
+    Some(serde_json::json!([{"non-zero":"not-equal"}]))),
         ("if (foo.bar && foo.bar.length) {}", "if (foo.bar && foo.bar.length > 0) {}", None),
         ("if (foo.length || foo.bar()) {}", "if (foo.length > 0 || foo.bar()) {}", None),
         ("if (!!(!!foo.length)) {}", "if (foo.length > 0) {}", None),
