@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 )]
 #[diagnostic(
     severity(warning),
-    help("Reflect.apply() is arguably less verbose and easier to understand.")
+    help("Reflect.apply() is less verbose and easier to understand.")
 )]
 struct PreferReflectApplyDiagnostic(#[label] pub Span);
 
