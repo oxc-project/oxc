@@ -11,9 +11,9 @@ use super::is_logical_expression;
 pub fn is_logic_not(node: &AstKind) -> bool {
     matches!(node, AstKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::LogicalNot)
 }
-pub fn is_logic_not_argument(node: &AstNode, ctx: &LintContext) -> bool {
-    let parent = ctx.nodes().parent_kind(node.id());
-    matches!(parent, Some(parent) if is_logic_not(&parent))
+fn is_logic_not_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
+    is_logic_not(&parent.kind())
 }
 pub fn is_boolean_call(kind: &AstKind) -> bool {
     matches!(
@@ -34,7 +34,7 @@ pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintCont
 
 pub fn is_boolean_node<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let kind = node.kind();
-    // println!("{kind:#?}");
+
     if is_logic_not(&kind)
         || is_logic_not_argument(node, ctx)
         || is_boolean_call(&kind)

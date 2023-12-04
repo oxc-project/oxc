@@ -191,8 +191,29 @@ impl ExplicitLengthCheck {
                 }
             }
         };
-        let fixed =
-            format!("{} {}", static_member_expr.span.source_text(ctx.source_text()), check_code);
+        let mut need_pad_start = false;
+        let mut need_pad_end = false;
+        let parent = ctx.nodes().parent_kind(node.id());
+        let need_paren = matches!(kind, AstKind::UnaryExpression(_))
+            && matches!(parent, Some(AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_)));
+        if span.start > 1 {
+            let start = ctx.source_text().as_bytes()[span.start as usize - 1];
+            need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
+        }
+        if (span.end as usize) < ctx.source_text().as_bytes().len() {
+            let end = ctx.source_text().as_bytes()[span.end as usize];
+            need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
+        }
+
+        let fixed = format!(
+            "{}{}{} {}{}{}",
+            if need_pad_start { " " } else { "" },
+            if need_paren { "(" } else { "" },
+            static_member_expr.span.source_text(ctx.source_text()),
+            check_code,
+            if need_paren { ")" } else { "" },
+            if need_pad_end { " " } else { "" },
+        );
         let property = static_member_expr.property.name.clone();
         let diagnostic = if is_zero_length_check {
             ExplicitLengthCheckDiagnostic::Zero(
@@ -328,10 +349,26 @@ fn test() {
     ];
 
     let fail = vec![
-    // ("const x = foo.length || bar()", None),
-    //  ("bar(!foo.length || foo.length)", None)
-     ];
+        ("const x = foo.length || bar()", None),
+        ("const x = foo.length || unknown", None),
+        ("bar(!foo.length || foo.length)", None),
+        // (r#"const NON_NUMBER = "2"; const x = foo.length || NON_NUMBER"#, None),
+        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
+        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero":"not-equal"}]))),
+        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
+        ("() => foo.length && bar()", None),
+        ("alert(foo.length && bar())", None),
+    ];
     let fixes = vec![
+        (
+            r"if ( !!!( !foo.length && foo.length == 0 && foo.length < 1 && 0 === foo.length && 0 == foo.length && 1 > foo.length ) ||
+!( foo.length || !!foo.length || foo.length !== 0 || foo.length != 0 || foo.length >= 1 || 0 !== foo.length || 0 != foo.length || 0 < foo.length || 1 <= foo.length )
+            ) {}",
+            "if ( !!!( foo.length === 0 && foo.length === 0 && foo.length === 0 && foo.length === 0 && foo.length === 0 && foo.length === 0 ) ||
+!( foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 || foo.length > 0 )
+            ) {}",
+            None,
+        ),
         ("if (foo.bar && foo.bar.length) {}", "if (foo.bar && foo.bar.length > 0) {}", None),
         ("if (foo.length || foo.bar()) {}", "if (foo.length > 0 || foo.bar()) {}", None),
         ("if (!!(!!foo.length)) {}", "if (foo.length > 0) {}", None),
