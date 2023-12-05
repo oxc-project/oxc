@@ -95,10 +95,22 @@ impl Rule for NoAccumulatingSpread {
             return;
         }
 
+        // invalid number of parameters to reduce callback
+        let params_count = params.parameters_count();
+        if params_count != 2 {
+            return;
+        }
+
         // Check if the declaration resides within a call to reduce()
         for parent in nodes.iter_parents(declaration.id()) {
             if let AstKind::CallExpression(call_expr) = parent.kind() {
-                if is_method_call(call_expr, None, Some(&["reduce"]), Some(1), Some(2)) {
+                if is_method_call(
+                    call_expr,
+                    None,
+                    Some(&["reduce", "reduceRight"]),
+                    Some(1),
+                    Some(2),
+                ) {
                     ctx.diagnostic(get_diagnostic(call_expr, spread.span));
                 }
                 return;
@@ -189,6 +201,23 @@ fn test() {
             }
         }
         ",
+        // source: https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/valid.jsonc#L3C1-L23C52
+        "foo.reduce((acc, bar) => {acc.push(bar); return acc;}, [])",
+        "foo.reduceRight((acc, bar) => {acc.push(bar); return acc;}, [])",
+        // Array - Allow spreading the item into the accumulator
+        "foo.reduce((acc, bar) => {acc.push(...bar); return acc;}, [])",
+        "foo.reduceRight((acc, bar) => {acc.push(...bar); return acc;}, [])",
+        // Object - Allow setting an attribute on the accumulator
+        "foo.reduce((acc, bar) => {acc[bar.key] = bar.value; return acc;}, {})",
+        "foo.reduceRight((acc, bar) => {acc[bar.key] = bar.value; return acc;}, {})",
+        // Object - Allow spreading the item into the accumulator
+        "foo.reduce((acc, bar) => {acc[bar.key] = { ...bar.value }; return acc;}, {})",
+        "foo.reduceRight((acc, bar) => {acc[bar.key] = { ...bar.value }; return acc;}, {})",
+        // Callbacks with wrong number of parameters
+        "foo.reduce((acc,value,index,array,somethingExtra) => [...acc, value], [])",
+        "foo.reduce((acc) => [...acc], [])",
+        // Wrong number of arguments to known method (reduce can have 1 or 2 args, but not more)
+        "foo.reduce((acc, bar) => [...acc, bar], [], 123)",
     ];
 
     let fail = vec![
@@ -212,6 +241,31 @@ fn test() {
             let temp = { ...acc, x }
             return temp
         }, {})",
+        // source https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/invalid.jsonc#L2-L32
+        // Array - Arrow return
+        "foo.reduce((acc, bar) => [...acc, bar], [])",
+        "foo.reduceRight((acc, bar) => [...acc, bar], [])",
+        // Array - Body return
+        "foo.reduce((acc, bar) => {return [...acc, bar];}, [])",
+        "foo.reduceRight((acc, bar) => {return [...acc, bar];}, [])",
+        // Array - Arrow return with item spread
+        "foo.reduce((acc, bar) => [...acc, ...bar], [])",
+        "foo.reduceRight((acc, bar) => [...acc, ...bar], [])",
+        // Array - Body return with item spread
+        "foo.reduce((acc, bar) => {return [...acc, ...bar];}, [])",
+        "foo.reduceRight((acc, bar) => {return [...acc, ...bar];}, [])",
+        // Object - Arrow return
+        "foo.reduce((acc, bar) => ({...acc, [bar.key]: bar.value}), {})",
+        "foo.reduceRight((acc, bar) => ({...acc, [bar.key]: bar.value}), {})",
+        // Object - Body return
+        "foo.reduce((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})",
+        "foo.reduceRight((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})",
+        // Object - Arrow return with item spread
+        "foo.reduce((acc, bar) => ({...acc, ...bar}), {})",
+        "foo.reduceRight((acc, bar) => ({...acc, ...bar}), {})",
+        // Object - Body return with item spread
+        "foo.reduce((acc, bar) => {return {...acc, ...bar};}, {})",
+        "foo.reduceRight((acc, bar) => {return {...acc, ...bar};}, {})",
     ];
 
     Tester::new_without_config(NoAccumulatingSpread::NAME, pass, fail).test_and_snapshot();
