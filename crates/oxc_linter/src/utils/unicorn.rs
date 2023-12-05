@@ -1,4 +1,11 @@
-use oxc_ast::ast::{Expression, MemberExpression, Statement};
+mod boolean;
+pub use self::boolean::*;
+use oxc_ast::{
+    ast::{Expression, LogicalExpression, MemberExpression, Statement},
+    AstKind,
+};
+use oxc_semantic::AstNode;
+use oxc_syntax::operator::LogicalOperator;
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
@@ -72,4 +79,14 @@ pub fn is_prototype_property(
         }
         _ => false,
     }
+}
+
+pub fn is_logical_expression(node: &AstNode) -> bool {
+    matches!(
+        node.kind(),
+        AstKind::LogicalExpression(LogicalExpression {
+            operator: LogicalOperator::And | LogicalOperator::Or,
+            ..
+        })
+    )
 }

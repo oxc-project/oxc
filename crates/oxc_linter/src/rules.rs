@@ -151,6 +151,7 @@ mod unicorn {
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
+    pub mod explicit_length_check;
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
@@ -201,6 +202,7 @@ mod unicorn {
     pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
+    pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
     pub mod prefer_set_size;
     pub mod prefer_spread;
@@ -342,6 +344,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
+    unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
@@ -391,6 +394,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
+    unicorn::prefer_reflect_apply,
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
     unicorn::prefer_spread,

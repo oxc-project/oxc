@@ -51,6 +51,10 @@ check:
 test:
   cargo test
 
+test-transform:
+  cargo run -p oxc_transform_conformance
+  cargo run -p oxc_transform_conformance -- --exec
+
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings

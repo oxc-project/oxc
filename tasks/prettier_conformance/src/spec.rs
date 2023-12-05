@@ -65,8 +65,7 @@ impl VisitMut<'_> for SpecParser {
                 Expression::Identifier(_) => {
                     let start = "const parser = [";
                     let end = "];";
-                    let start =
-                        self.source_text.find(start).expect(&self.source_text) + start.len();
+                    let start = self.source_text.find(start).unwrap() + start.len();
                     let end = self.source_text.find(end).unwrap();
                     parsers = self.source_text[start..end]
                         .split(',')

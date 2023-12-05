@@ -1,3 +1,10 @@
+use crate::utils::is_boolean_node;
+use crate::{
+    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    AstNode,
+};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
@@ -8,14 +15,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
-
-use crate::{
-    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
-    context::LintContext,
-    rule::Rule,
-    AstNode,
-};
+use oxc_syntax::operator::BinaryOperator;
 
 #[derive(Debug, Error, Diagnostic)]
 enum PreferArraySomeDiagnostic {
@@ -187,50 +187,6 @@ fn is_checking_undefined<'a, 'b>(
         && right_without_paren.is_null()
     {
         return true;
-    }
-
-    false
-}
-
-fn is_logic_not(node: &AstKind) -> bool {
-    let AstKind::UnaryExpression(logic_expr) = node else { return false };
-    logic_expr.operator == UnaryOperator::UnaryNegation
-}
-
-fn is_boolean_call_argument(node: &AstKind) -> bool {
-    let AstKind::CallExpression(call_expr) = node else { return false };
-    let Expression::Identifier(ident) = &call_expr.callee else { return false };
-    ident.name == "Boolean" && call_expr.arguments.len() == 1
-}
-
-fn is_logical_expression(node: &AstNode) -> bool {
-    let AstKind::LogicalExpression(logical_expr) = node.kind() else { return false };
-
-    matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
-}
-
-fn is_boolean_node<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    let kind = node.kind();
-
-    if is_logic_not(&kind) || is_boolean_call_argument(&kind) {
-        return true;
-    }
-
-    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
-
-    if matches!(
-        parent.kind(),
-        AstKind::IfStatement(_)
-            | AstKind::ConditionalExpression(_)
-            | AstKind::WhileStatement(_)
-            | AstKind::DoWhileStatement(_)
-            | AstKind::ForStatement(_)
-    ) {
-        return true;
-    }
-
-    if is_logical_expression(parent) {
-        return is_boolean_node(parent, ctx);
     }
 
     false

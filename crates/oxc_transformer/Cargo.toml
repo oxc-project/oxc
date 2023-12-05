@@ -27,7 +27,6 @@ oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
 rustc-hash      = { workspace = true }
 
-
 serde = { workspace = true, features = ["derive"] }
 phf   = { workspace = true, features = ["macros"] }
 

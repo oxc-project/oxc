@@ -39,6 +39,8 @@ pub enum RuleCategory {
     Suspicious,
     /// Lints which are rather strict or have occasional false positives
     Pedantic,
+    /// Code that can be written to run faster
+    Perf,
     /// Code that should be written in a more idiomatic way
     Style,
     /// Lints which prevent the use of language and library features
@@ -57,6 +59,7 @@ impl RuleCategory {
             "correctness" => Some(Self::Correctness),
             "suspicious" => Some(Self::Suspicious),
             "pedantic" => Some(Self::Pedantic),
+            "perf" => Some(Self::Perf),
             "style" => Some(Self::Style),
             "restriction" => Some(Self::Restriction),
             "nursery" => Some(Self::Nursery),
@@ -71,6 +74,7 @@ impl fmt::Display for RuleCategory {
             Self::Correctness => write!(f, "Correctness"),
             Self::Suspicious => write!(f, "Suspicious"),
             Self::Pedantic => write!(f, "Pedantic"),
+            Self::Perf => write!(f, "Perf"),
             Self::Style => write!(f, "Style"),
             Self::Restriction => write!(f, "Restriction"),
             Self::Nursery => write!(f, "Nursery"),
