@@ -78,7 +78,7 @@ impl Rule for PreferReflectApply {
         }
 
         if is_static_property_name_equal(member_expr, "apply")
-            && matches!(call_expr.arguments.as_slice(), [first, second] if is_apply_signature(&first, &second))
+            && matches!(call_expr.arguments.as_slice(), [first, second] if is_apply_signature(first, second))
         {
             ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
             return;
@@ -99,7 +99,7 @@ impl Rule for PreferReflectApply {
                         return;
                     };
                     if iden.name == "Function"
-                        && matches!(call_expr.arguments.as_slice(), [_, second, third] if is_apply_signature(&second, &third))
+                        && matches!(call_expr.arguments.as_slice(), [_, second, third] if is_apply_signature(second, third))
                     {
                         ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
                     }
