@@ -44,27 +44,13 @@ declare_oxc_lint!(
 );
 
 fn is_apply_signature(argument_1: &Argument, argument_2: &Argument) -> bool {
-    let Argument::Expression(arg_expr_1) = argument_1 else {
-        return false;
-    };
-
-    let Argument::Expression(arg_expr_2) = argument_2 else {
-        return false;
-    };
-
-    if (matches!(arg_expr_1, Expression::ThisExpression(_))
-        || matches!(arg_expr_1, Expression::NullLiteral(_)))
-    {
-        if matches!(arg_expr_2, Expression::ArrayExpression(_)) {
-            return true;
+    match argument_1 {
+        Argument::Expression(Expression::ThisExpression(_) | Expression::NullLiteral(_)) => {
+            matches!(argument_2, Argument::Expression(Expression::ArrayExpression(_)))
+                || matches!(argument_2, Argument::Expression(Expression::Identifier(ident)) if ident.name == "arguments")
         }
-
-        if let Expression::Identifier(iden) = arg_expr_2 {
-            return iden.name == "arguments";
-        }
+        _ => false,
     }
-
-    false
 }
 
 fn is_static_property_name_equal(expr: &MemberExpression, value: &str) -> bool {
@@ -98,24 +84,24 @@ impl Rule for PreferReflectApply {
         }
 
         if is_static_property_name_equal(member_expr, "call") {
-            if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
-                if is_static_property_name_equal(member_expr_obj, "apply") {
-                    if let Expression::MemberExpression(member_expr_obj_obj) =
-                        member_expr_obj.object()
+            let Expression::MemberExpression(member_expr_obj) = member_expr.object() else {
+                return;
+            };
+            if is_static_property_name_equal(member_expr_obj, "apply") {
+                let Expression::MemberExpression(member_expr_obj_obj) = member_expr_obj.object()
+                else {
+                    return;
+                };
+
+                if is_static_property_name_equal(member_expr_obj_obj, "prototype") {
+                    let Expression::Identifier(iden) = member_expr_obj_obj.object() else {
+                        return;
+                    };
+                    if iden.name == "Function"
+                        && call_expr.arguments.len() == 3
+                        && is_apply_signature(&call_expr.arguments[1], &call_expr.arguments[2])
                     {
-                        if is_static_property_name_equal(member_expr_obj_obj, "prototype") {
-                            if let Expression::Identifier(iden) = member_expr_obj_obj.object() {
-                                if iden.name == "Function"
-                                    && call_expr.arguments.len() == 3
-                                    && is_apply_signature(
-                                        &call_expr.arguments[1],
-                                        &call_expr.arguments[2],
-                                    )
-                                {
-                                    ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
-                                }
-                            }
-                        }
+                        ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
                     }
                 }
             }
