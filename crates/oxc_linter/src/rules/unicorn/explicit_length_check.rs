@@ -336,6 +336,7 @@ fn test() {
         ("if (foo.length !== 1) {}", None),
         ("if (foo.length > 1) {}", None),
         ("if (foo.length < 2) {}", None),
+        // need getStaticValue
         // With known static length value
         // (r#"const foo = { size: "small" }; if (foo.size) {}"#, None), // Not a number
         // ("const foo = { length: -1 }; if (foo.length) {}", None), // Array lengths cannot be negative
@@ -346,16 +347,18 @@ fn test() {
         ("const x = foo.length || 2", None),
         // need getStaticValue
         // ("const A_NUMBER = 2; const x = foo.length || A_NUMBER", None),
+        ("class A { a(){ if(this.length); while(!this.size || foo);}}", None),
     ];
 
     let fail = vec![
         ("const x = foo.length || bar()", None),
         ("const x = foo.length || unknown", None),
         ("bar(!foo.length || foo.length)", None),
+        // need getStaticValue
         // (r#"const NON_NUMBER = "2"; const x = foo.length || NON_NUMBER"#, None),
+        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
         ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
-        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero":"not-equal"}]))),
-        ("const x = foo.length || bar()", Some(serde_json::json!([{"non-zero": "greater-than"}]))),
+        ("const x = foo.length || bar()", None),
         ("() => foo.length && bar()", None),
         ("alert(foo.length && bar())", None),
     ];
@@ -371,8 +374,14 @@ fn test() {
         ),
         (
             "if ( foo.length || !!foo.length || foo.length != 0 || foo.length > 0 || foo.length >= 1 || 0 !== foo.length || 0 != foo.length || 0 < foo.length || 1 <= foo.length ) {}",
-        "if ( foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 ) {}",
-    Some(serde_json::json!([{"non-zero":"not-equal"}]))),
+            "if ( foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 ) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}]))
+        ),
+        (
+            "const foo = { length: 123 }; if (foo.length) {}",
+            "const foo = { length: 123 }; if (foo.length !== 0) {}",
+            Some(serde_json::json!([{"non-zero": "not-equal"}]))
+        ),
         ("if (foo.bar && foo.bar.length) {}", "if (foo.bar && foo.bar.length > 0) {}", None),
         ("if (foo.length || foo.bar()) {}", "if (foo.length > 0 || foo.bar()) {}", None),
         ("if (!!(!!foo.length)) {}", "if (foo.length > 0) {}", None),
