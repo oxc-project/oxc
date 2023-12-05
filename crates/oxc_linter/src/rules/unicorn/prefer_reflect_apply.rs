@@ -43,11 +43,11 @@ declare_oxc_lint!(
     style
 );
 
-fn is_apply_signature(argument_1: &Argument, argument_2: &Argument) -> bool {
-    match argument_1 {
+fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
+    match first_arg {
         Argument::Expression(Expression::ThisExpression(_) | Expression::NullLiteral(_)) => {
-            matches!(argument_2, Argument::Expression(Expression::ArrayExpression(_)))
-                || matches!(argument_2, Argument::Expression(Expression::Identifier(ident)) if ident.name == "arguments")
+            matches!(second_arg, Argument::Expression(Expression::ArrayExpression(_)))
+                || matches!(second_arg, Argument::Expression(Expression::Identifier(ident)) if ident.name == "arguments")
         }
         _ => false,
     }
@@ -68,16 +68,17 @@ impl Rule for PreferReflectApply {
         };
 
         if call_expr.optional
-            || matches!(member_expr.object(), Expression::ArrayExpression(_))
-            || matches!(member_expr.object(), Expression::ObjectExpression(_))
+            || matches!(
+                member_expr.object(),
+                Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+            )
             || member_expr.object().is_literal()
         {
             return;
         }
 
         if is_static_property_name_equal(member_expr, "apply")
-            && call_expr.arguments.len() == 2
-            && is_apply_signature(&call_expr.arguments[0], &call_expr.arguments[1])
+            && matches!(call_expr.arguments.as_slice(), [first, second] if is_apply_signature(&first, &second))
         {
             ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
             return;
@@ -98,8 +99,7 @@ impl Rule for PreferReflectApply {
                         return;
                     };
                     if iden.name == "Function"
-                        && call_expr.arguments.len() == 3
-                        && is_apply_signature(&call_expr.arguments[1], &call_expr.arguments[2])
+                        && matches!(call_expr.arguments.as_slice(), [_, second, third] if is_apply_signature(&second, &third))
                     {
                         ctx.diagnostic(PreferReflectApplyDiagnostic(call_expr.span));
                     }
