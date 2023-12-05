@@ -10,15 +10,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("perf(no-reduce-spread): Do not spread accumulators in Array.prototype.reduce()")]
-#[diagnostic(severity(warning), help("Prefer property assignment or Array.prototype.push()"))]
-struct NoReduceSpreadDiagnostic(#[label] pub Span);
+#[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
+#[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.concat()` to mutate the accumulator instead. Using spreads within accumulators leads to `O(n^2)` time complexity."))]
+struct NoAccumulatingSpreadDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoReduceSpread;
+pub struct NoAccumulatingSpread;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -58,12 +58,12 @@ declare_oxc_lint!(
     /// arr.reduce((acc, x) => ({ ...acc, [x]: fn(x) }), {})
     /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
     /// ```
-    NoReduceSpread,
+    NoAccumulatingSpread,
     nursery
 );
 
 const REDUCE: &str = "reduce";
-impl Rule for NoReduceSpread {
+impl Rule for NoAccumulatingSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // only check spreads on identifiers
         let AstKind::SpreadElement(spread) = node.kind() else { return };
@@ -90,8 +90,10 @@ impl Rule for NoReduceSpread {
 
         // Check if the declaration resides within a call to reduce()
         for parent in nodes.iter_parents(declaration.id()) {
-            if is_call_to_reduce(parent) {
-                ctx.diagnostic(NoReduceSpreadDiagnostic(spread.span));
+            if matches!(parent.kind(), AstKind::CallExpression(call_expr) if
+            is_method_call(call_expr, None, Some(&[REDUCE]), None, None) )
+            {
+                ctx.diagnostic(NoAccumulatingSpreadDiagnostic(spread.span));
                 return;
             }
         }
@@ -104,12 +106,6 @@ fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> 
         BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
         _ => None,
     }
-}
-fn is_call_to_reduce(node: &AstNode<'_>) -> bool {
-    let AstKind::CallExpression(call) = node.kind() else { return false };
-    // only check calls to reduce()
-    let Expression::MemberExpression(member_expr) = &call.callee else { return false };
-    member_expr.static_property_name() == Some(REDUCE)
 }
 
 #[test]
@@ -147,5 +143,5 @@ fn test() {
         }, {})",
     ];
 
-    Tester::new_without_config(NoReduceSpread::NAME, pass, fail).test_and_snapshot();
+    Tester::new_without_config(NoAccumulatingSpread::NAME, pass, fail).test_and_snapshot();
 }
