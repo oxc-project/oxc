@@ -112,7 +112,7 @@ pub(super) fn print_object_properties<'a>(
         parts.push(ss!("}"));
 
         let parent_kind = p.parent_kind();
-        if (object.is_object_pattern() && should_hug_the_only_parameter(parent_kind))
+        if (object.is_object_pattern() && should_hug_the_only_parameter(p, parent_kind))
             || (!should_break
                 && object.is_object_pattern()
                 && matches!(
@@ -131,10 +131,10 @@ pub(super) fn print_object_properties<'a>(
     content
 }
 
-fn should_hug_the_only_parameter(kind: AstKind<'_>) -> bool {
+fn should_hug_the_only_parameter(p: &mut Prettier<'_>, kind: AstKind<'_>) -> bool {
     match kind {
         AstKind::FormalParameters(params) => {
-            super::function_parameters::should_hug_the_only_function_parameter(params)
+            super::function_parameters::should_hug_the_only_function_parameter(p, params)
         }
         _ => false,
     }
