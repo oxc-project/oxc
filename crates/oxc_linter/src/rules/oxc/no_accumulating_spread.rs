@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// Object and array spreads create a new object or array on each iteration.
     /// In the worst case, they also cause O(n) copies (both memory and time complexity).
     /// When used on an accumulator, this can lead to `O(n^2)` memory complexity and
-    /// `Ω(n)`/`O(n^2)` time complexity.
+    /// `O(n^2)` time complexity.
     ///
     /// For a more in-depth explanation, see this [blog post](https://prateeksurana.me/blog/why-using-object-spread-with-reduce-bad-idea/)
     /// by Prateek Surana.
@@ -59,10 +59,9 @@ declare_oxc_lint!(
     /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
     /// ```
     NoAccumulatingSpread,
-    perf
+    perf,
 );
 
-const REDUCE: &str = "reduce";
 impl Rule for NoAccumulatingSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // only check spreads on identifiers
@@ -90,10 +89,10 @@ impl Rule for NoAccumulatingSpread {
 
         // Check if the declaration resides within a call to reduce()
         for parent in nodes.iter_parents(declaration.id()) {
-            if matches!(parent.kind(), AstKind::CallExpression(call_expr) if
-            is_method_call(call_expr, None, Some(&[REDUCE]), None, None) )
-            {
-                ctx.diagnostic(NoAccumulatingSpreadDiagnostic(spread.span));
+            if let AstKind::CallExpression(call_expr) = parent.kind() {
+                if is_method_call(call_expr, None, Some(&["reduce"]), Some(1), Some(2)) {
+                    ctx.diagnostic(NoAccumulatingSpreadDiagnostic(spread.span));
+                }
                 return;
             }
         }
@@ -128,6 +127,40 @@ fn test() {
                 acc[x] = { ...x }
                 return acc
             }, {})",
+        // Source: https://github.com/microsoft/vscode/blob/3481f35b91afff6c93d4888a528318d4f9f01a16/src/vs/workbench/contrib/extensions/browser/extensionEditor.ts#L1299-L1303 (MIT license)
+        // testing: view `result` (accumulator) is not spread`
+        r"
+        const views = Object.keys(contrib).reduce((result, location) => {
+			const viewsForLocation: IView[] = contrib[location];
+			result.push(...viewsForLocation.map(view => ({ ...view, location })));
+			return result;
+		}, [] as Array<{ id: string; name: string; location: string }>);
+        ",
+        // Source https://github.com/microsoft/vscode/blob/4bb9f7f4f8bb39a8b07aefe5fe87f09cae10f533/src/vs/platform/policy/common/policy.ts#L51-L53 (MIT license)
+        // testing: incorrect number of args to `reduce`
+        r"
+        export abstract class AbstractPolicyService
+            extends Disposable
+            implements IPolicyService
+        {
+            serialize(): IStringDictionary<{
+                definition: PolicyDefinition;
+                value: PolicyValue;
+            }> {
+                return Iterable.reduce<
+                    [PolicyName, PolicyDefinition],
+                    IStringDictionary<{ definition: PolicyDefinition; value: PolicyValue }>
+                >(
+                    Object.entries(this.policyDefinitions),
+                    (r, [name, definition]) => ({
+                        ...r,
+                        [name]: { definition, value: this.policies.get(name)! },
+                    }),
+                    {}
+                );
+            }
+        }
+        ",
     ];
 
     let fail = vec![
