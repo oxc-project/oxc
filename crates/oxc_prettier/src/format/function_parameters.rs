@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     doc::{Doc, DocBuilder},
-    hardline, line, ss, Format, Prettier,
+    hardline, if_break, indent, line, softline, ss, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -69,29 +69,38 @@ pub(super) fn print_function_parameters<'a>(
         parts.push(ss!("("));
     }
 
+    let mut printed = p.vec();
     for (i, param) in params.items.iter().enumerate() {
-        parts.push(param.format(p));
+        printed.push(param.format(p));
         if i == params.items.len() - 1 {
             break;
         }
-        parts.push(ss!(","));
+        printed.push(ss!(","));
         if should_hug_the_only_function_parameter(p, params) {
-            parts.push(ss!(" "));
+            printed.push(ss!(" "));
         } else if p.is_next_line_empty(param.span) {
-            parts.extend(hardline!());
-            parts.extend(hardline!());
+            printed.extend(hardline!());
+            printed.extend(hardline!());
         } else {
-            parts.push(line!());
+            printed.push(line!());
         }
     }
 
     if let Some(rest) = &params.rest {
         if !params.items.is_empty() {
-            parts.push(ss!(", "));
+            printed.push(ss!(", "));
         }
-        parts.push(rest.format(p));
+        printed.push(rest.format(p));
     }
 
+    let mut indented = p.vec();
+    indented.push(softline!());
+    indented.extend(printed);
+    let indented = indent!(p, Doc::Array(indented));
+    parts.push(indented);
+    let has_rest_parameter = params.rest.is_some();
+    parts.push(if_break!(p, if has_rest_parameter { "" } else { "," }));
+    parts.push(softline!());
     if need_parens {
         parts.push(ss!(")"));
     }
