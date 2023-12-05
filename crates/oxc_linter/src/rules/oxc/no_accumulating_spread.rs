@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
     /// ```
     NoAccumulatingSpread,
-    nursery
+    perf
 );
 
 const REDUCE: &str = "reduce";
