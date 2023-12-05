@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression},
+    ast::{Argument, BindingPatternKind, CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -13,9 +13,17 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
-#[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.concat()` to mutate the accumulator instead. Using spreads within accumulators leads to `O(n^2)` time complexity."))]
-struct NoAccumulatingSpreadDiagnostic(#[label] pub Span);
+enum NoAccumulatingSpreadDiagnostic {
+    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
+    #[diagnostic(severity(warning), help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
+    LikelyArray(#[label] Span),
+    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
+    #[diagnostic(severity(warning), help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
+    LikelyObject(#[label] Span),
+    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
+    #[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
+    Unknown(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAccumulatingSpread;
@@ -91,12 +99,32 @@ impl Rule for NoAccumulatingSpread {
         for parent in nodes.iter_parents(declaration.id()) {
             if let AstKind::CallExpression(call_expr) = parent.kind() {
                 if is_method_call(call_expr, None, Some(&["reduce"]), Some(1), Some(2)) {
-                    ctx.diagnostic(NoAccumulatingSpreadDiagnostic(spread.span));
+                    ctx.diagnostic(get_diagnostic(call_expr, spread.span));
                 }
                 return;
             }
         }
     }
+}
+
+fn get_diagnostic(call_expr: &CallExpression, spread_span: Span) -> NoAccumulatingSpreadDiagnostic {
+    if let Some(Argument::Expression(second_arg)) = call_expr.arguments.get(1) {
+        let second_arg = second_arg.without_parenthesized();
+        let second_arg =
+            if let Expression::TSAsExpression(as_expr) = second_arg.without_parenthesized() {
+                as_expr.expression.without_parenthesized()
+            } else {
+                second_arg
+            };
+
+        if matches!(second_arg, Expression::ObjectExpression(_)) {
+            return NoAccumulatingSpreadDiagnostic::LikelyObject(spread_span);
+        } else if matches!(second_arg, Expression::ArrayExpression(_)) {
+            return NoAccumulatingSpreadDiagnostic::LikelyArray(spread_span);
+        }
+    }
+
+    NoAccumulatingSpreadDiagnostic::Unknown(spread_span)
 }
 
 fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
@@ -165,9 +193,19 @@ fn test() {
 
     let fail = vec![
         "Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})",
+        // check we get the correct diagnostic for parenthesized expressions + as
+        "Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), ({} as foo))",
+        "Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), foo)",
         "arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})",
         "arr.reduce((differentName, x) => ({ ...differentName, [x]: x }), {})",
         "a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})",
+        // check we get the correct diagnostic for parenthesized expressions
+        "a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({} as baz)))",
+        "a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({})))",
+        "a.b.c.d.reduce((acc,x) => ([...acc, x]), [])",
+        "a.b.c.d.reduce((acc,x) => ([...acc, x]), ([]))",
+        "a.b.c.d.reduce((acc,x) => ([...acc, x]), ([] as foo))",
+        "a.b.c.d.reduce((acc,x) => ([...acc, x]), (([]) as foo))",
         "get_array().reduce((acc, x) => ({ ...acc, [x]: x }), {})",
         "arr.reduce(function (acc, x) { return { ...acc, [x]: x } }, {})",
         "arr.reduce((acc, x) => {
