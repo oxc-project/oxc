@@ -228,6 +228,10 @@ mod jsx_a11y {
     pub mod img_redundant_alt;
 }
 
+mod oxc {
+    pub mod no_accumulating_spread;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -423,8 +427,9 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
-    jsx_a11y::html_has_lang,
     jsx_a11y::heading_has_content,
+    jsx_a11y::html_has_lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    oxc::no_accumulating_spread
 }
