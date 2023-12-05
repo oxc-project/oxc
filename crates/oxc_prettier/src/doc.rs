@@ -170,6 +170,11 @@ pub trait DocBuilder<'a> {
     fn vec<T>(&self) -> Vec<'a, T> {
         Vec::new_in(self.allocator())
     }
+    fn vec_single<T>(&self, value: T) -> Vec<'a, T> {
+        let mut vec = Vec::with_capacity_in(1, self.allocator());
+        vec.push(value);
+        vec
+    }
 
     #[inline]
     fn str(&self, s: &str) -> Doc<'a> {

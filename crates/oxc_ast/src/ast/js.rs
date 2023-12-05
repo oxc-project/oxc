@@ -225,6 +225,15 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
     }
 
+    pub fn is_call_expression(&self) -> bool {
+        matches!(self, Expression::CallExpression(_))
+    }
+
+    pub fn is_call_like_expression(&self) -> bool {
+        self.is_call_expression()
+            && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
+    }
+
     pub fn is_binaryish(&self) -> bool {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }

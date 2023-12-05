@@ -313,7 +313,7 @@ impl TestRunner {
         );
 
         // put it here but not in below if-statement to help detect no matched input cases.
-        let expected = Self::get_expect(snap_content, &snapshot_without_output).unwrap();
+        let expected = Self::get_expect(snap_content, &snapshot_without_output).unwrap_or_default();
 
         if self.options.filter.is_some() {
             println!("Input path: {}", path.to_string_lossy());
