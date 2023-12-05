@@ -201,6 +201,7 @@ mod unicorn {
     pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_query_selector;
+    pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
     pub mod prefer_set_size;
     pub mod prefer_spread;
@@ -387,6 +388,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
+    unicorn::prefer_reflect_apply,
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
     unicorn::prefer_spread,
