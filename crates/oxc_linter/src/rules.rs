@@ -226,6 +226,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod scope;
 }
 
 mod oxc {
@@ -431,5 +432,6 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::html_has_lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    jsx_a11y::scope,
     oxc::no_accumulating_spread
 }
