@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
@@ -20,7 +19,12 @@ type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 pub struct ScopeTree {
+    /// Maps a scope to the parent scope it belongs in
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
+
+    /// Maps a scope to direct children scopes
+    childs_ids: IndexMap<ScopeId, Vec<ScopeId>>,
+
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
@@ -41,16 +45,23 @@ impl ScopeTree {
 
     pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
         let mut list = vec![];
-        let mut queue = VecDeque::from_iter([scope_id]);
 
-        while let Some(current_id) = queue.pop_front() {
-            for (scope, parent_scope) in self.parent_ids.iter_enumerated() {
-                if parent_scope.as_ref().is_some_and(|parent_id| parent_id == &current_id) {
-                    list.push(scope);
-                    queue.push_back(scope);
+        // Has to be a `fn` and pass arguments because we can't
+        // have recursive closures
+        fn add_to_list(
+            parent_id: &ScopeId,
+            child_ids: &IndexMap<ScopeId, Vec<ScopeId>>,
+            items: &mut Vec<ScopeId>,
+        ) {
+            if let Some(children) = child_ids.get(parent_id) {
+                for child_id in children {
+                    items.push(*child_id);
+                    add_to_list(child_id, child_ids, items);
                 }
             }
         }
+
+        add_to_list(&scope_id, &self.childs_ids, &mut list);
 
         list.into_iter()
     }
@@ -115,6 +126,15 @@ impl ScopeTree {
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
         _ = self.unresolved_references.push(UnresolvedReferences::default());
+
+        if let Some(parent_id) = parent_id {
+            if let Some(children) = self.childs_ids.get_mut(&parent_id) {
+                children.push(scope_id);
+            } else {
+                self.childs_ids.insert(parent_id, vec![scope_id]);
+            }
+        }
+
         scope_id
     }
 
