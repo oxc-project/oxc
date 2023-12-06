@@ -1511,12 +1511,10 @@ dependencies = [
  "oxc_minifier",
  "oxc_parser",
  "oxc_prettier",
- "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
- "rayon",
 ]
 
 [[package]]
@@ -1744,16 +1742,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_napi_resolver"
-version = "0.0.0"
-dependencies = [
- "napi",
- "napi-build",
- "napi-derive",
- "oxc_resolver",
-]
-
-[[package]]
 name = "oxc_parser"
 version = "0.3.0"
 dependencies = [
@@ -1818,7 +1806,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "0.5.5"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "312bc7937d6e403799b764b29f4c521c70f5c0489c5aaec2a0eeca1831498b2d"
 dependencies = [
  "dashmap",
  "dunce",
@@ -1829,7 +1819,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
- "vfs",
 ]
 
 [[package]]
@@ -3102,12 +3091,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "vfs"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e4fe92cfc1bad19c19925d5eee4b30584dbbdee4ff10183b261acccbef74e2d"
 
 [[package]]
 name = "walkdir"

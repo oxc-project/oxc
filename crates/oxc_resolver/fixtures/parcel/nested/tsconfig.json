@@ -1,8 +1,0 @@
-{
-  "extends": "..",
-  "compilerOptions": {
-    "paths": {
-      "ts-path": ["test.js"]
-    }
-  }
-}
