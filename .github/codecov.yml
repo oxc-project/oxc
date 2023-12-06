@@ -25,3 +25,5 @@ ignore:
   - "crates/oxc_query" # Not aiming for test coverage right now with @u9g
   - "crates/oxc_linter_plugin"
   - "crates/oxc_formatter" # The formatter is not being actively worked on
+  - "crates/oxc_transformer" # not ready
+  - "crates/oxc_js_regex" # not ready
