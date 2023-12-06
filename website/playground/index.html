@@ -11,7 +11,7 @@
       button { cursor: pointer }
       label { display: inline-flex; align-items: center; cursor: pointer; user-select: none; }
       .cm-editor { height: 100%; }
-      #logo { display: flex; justify-content: center; }
+      #logo { display: flex; justify-content: center; cursor: pointer; color: white; text-decoration: inherit; }
       #logo > img { margin-right: .5em; }
       #loading { background: white; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; justify-content: center; align-items: center; }
       #container { display: flex; height: 100vh; }
@@ -42,7 +42,10 @@
     <div id="container">
       <div id="left">
         <div class="header left-container">
-          <div id="logo"><img height="100%" width="20" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico" alt="logo"></img><span>Oxc</span></div>
+          <a id="logo" href="https://oxc-project.github.io">
+            <img height="100%" width="20" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico" alt="logo">
+            <span>Oxc</span>
+          </a>
           <div>
             <label id="type-check">Type Check (experimental)<input id="type-check-checkbox" type="checkbox"></label>
             <label id="syntax">Syntax Check<input id="syntax-checkbox" type="checkbox" checked></label>
