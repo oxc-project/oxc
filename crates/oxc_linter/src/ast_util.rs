@@ -357,6 +357,34 @@ pub fn is_method_call<'a>(
     true
 }
 
+pub fn is_new_expression<'a>(
+    new_expr: &NewExpression<'a>,
+    names: &[&'a str],
+    min_arg_count: Option<usize>,
+    max_arg_count: Option<usize>,
+) -> bool {
+    if let Some(min_arg_count) = min_arg_count {
+        if new_expr.arguments.len() < min_arg_count {
+            return false;
+        }
+    }
+    if let Some(max_arg_count) = max_arg_count {
+        if new_expr.arguments.len() > max_arg_count {
+            return false;
+        }
+    }
+
+    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+        return false;
+    };
+
+    if !names.contains(&ident.name.as_str()) {
+        return false;
+    }
+
+    true
+}
+
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
@@ -366,4 +394,12 @@ pub fn call_expr_method_callee_info<'a>(
     };
 
     member_expr.static_property_info()
+}
+
+pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
+    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+        return None;
+    };
+
+    Some(ident.name.as_str())
 }
