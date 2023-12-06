@@ -1,7 +1,0 @@
-{
-  "compilerOptions": {
-    "paths": {
-      "ts-path": ["foo.js"]
-    }
-  }
-}

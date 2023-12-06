@@ -83,9 +83,6 @@ oxc_query          = { path = "crates/oxc_query" }
 oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_prettier       = { path = "crates/oxc_prettier" }
 
-# published by its own
-oxc_resolver = { path = "crates/oxc_resolver" }
-
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editors/vscode/server" }
 
@@ -106,7 +103,6 @@ jemallocator              = { version = "0.5.4" }
 lazy_static               = { version = "1.4.0" }
 miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
 mimalloc                  = { version = "0.1.39" }
-nodejs-resolver           = { version = "0.1.0" }
 num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.17" }
 phf                       = { version = "0.11" }
