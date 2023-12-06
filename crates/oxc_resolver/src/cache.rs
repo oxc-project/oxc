@@ -277,15 +277,20 @@ impl CachedPathImpl {
                 let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
                     return Ok(None);
                 };
-                let package_json_path = if options.symlinks {
+                let real_path = if options.symlinks {
                     self.realpath(fs)?.join("package.json")
                 } else {
-                    package_json_path
+                    package_json_path.clone()
                 };
-                PackageJson::parse(package_json_path.clone(), &package_json_string, options)
-                    .map(Arc::new)
-                    .map(Some)
-                    .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
+                PackageJson::parse(
+                    package_json_path.clone(),
+                    real_path,
+                    &package_json_string,
+                    options,
+                )
+                .map(Arc::new)
+                .map(Some)
+                .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
             })
             .cloned()
     }

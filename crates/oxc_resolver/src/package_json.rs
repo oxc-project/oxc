@@ -21,6 +21,10 @@ pub struct PackageJson {
     #[serde(skip)]
     pub path: PathBuf,
 
+    /// Realpath to `package.json`. Contains the `package.json` filename.
+    #[serde(skip)]
+    pub realpath: PathBuf,
+
     #[serde(skip)]
     #[serde(default)]
     pub raw_json: Arc<serde_json::Value>,
@@ -117,6 +121,7 @@ impl PackageJson {
     /// # Errors
     pub fn parse(
         path: PathBuf,
+        realpath: PathBuf,
         json: &str,
         options: &ResolveOptions,
     ) -> Result<Self, serde_json::Error> {
@@ -171,6 +176,7 @@ impl PackageJson {
         }
 
         package_json.path = path;
+        package_json.realpath = realpath;
         package_json.raw_json = Arc::new(package_json_value);
         Ok(package_json)
     }
@@ -193,7 +199,7 @@ impl PackageJson {
         Some(value)
     }
 
-    /// Directory to `package.json`
+    /// Raw json of `package.json`
     pub fn raw_json(&self) -> &serde_json::Value {
         self.raw_json.as_ref()
     }
@@ -204,8 +210,8 @@ impl PackageJson {
     ///
     /// * When the package.json path is misconfigured.
     pub fn directory(&self) -> &Path {
-        debug_assert!(self.path.file_name().is_some_and(|x| x == "package.json"));
-        self.path.parent().unwrap()
+        debug_assert!(self.realpath.file_name().is_some_and(|x| x == "package.json"));
+        self.realpath.parent().unwrap()
     }
 
     /// Resolve the request string for this package.json by looking at the `browser` field.

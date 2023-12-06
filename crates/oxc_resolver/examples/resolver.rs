@@ -18,6 +18,7 @@ fn main() {
     println!("request: {request}");
 
     let options = ResolveOptions {
+        alias_fields: vec![vec!["browser".into()]],
         alias: vec![("/asdf".into(), vec![AliasValue::Path("./test.js".into())])],
         ..ResolveOptions::default()
     };
