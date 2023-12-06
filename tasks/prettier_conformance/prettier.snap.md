@@ -1,4 +1,4 @@
-Compatibility: 227/550 (41.27%)
+Compatibility: 228/550 (41.45%)
 
 # Failed
 
@@ -269,7 +269,6 @@ Compatibility: 227/550 (41.27%)
 * last-argument-expansion/dangling-comment-in-arrow-function.js
 * last-argument-expansion/edge_case.js
 * last-argument-expansion/embed.js
-* last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
 * last-argument-expansion/function-body-in-mode-break.js
 * last-argument-expansion/issue-10708.js
