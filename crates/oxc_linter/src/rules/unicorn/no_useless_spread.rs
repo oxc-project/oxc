@@ -120,269 +120,249 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Useless spread in list
-        {
-            if matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
-                let Some(parent) = outermost_paren_parent(node, ctx) else {
-                    return;
-                };
-                if matches!(parent.kind(), AstKind::SpreadElement(_)) {
-                    let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
-                        return;
-                    };
+        check_useless_spread_in_list(node, ctx);
 
-                    match node.kind() {
-                        // { ...{ } }
-                        AstKind::ObjectExpression(object_expr) => {
-                            if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
-                                ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(
-                                    object_expr.span,
-                                ));
-                            }
-                        }
-                        // [ ...[ ] ]
-                        AstKind::ArrayExpression(array_expr) => {
-                            if matches!(parent_parent.kind(), AstKind::ArrayExpressionElement(_))
-                                || matches!(parent_parent.kind(), AstKind::Argument(_))
-                            {
-                                ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(
-                                    array_expr.span,
-                                ));
-                            }
-                        }
-                        _ => {
-                            unreachable!()
-                        }
-                    }
-                }
-            }
+        if let AstKind::ArrayExpression(array_expr) = node.kind() {
+            check_useless_iterable_to_array(node, array_expr, ctx);
+            check_useless_array_clone(array_expr, ctx);
         }
+    }
+}
 
-        // useless iterable to array
-        {
-            if let AstKind::ArrayExpression(array_expr) = node.kind() {
-                let Some(parent) = outermost_paren_parent(node, ctx) else { return };
+fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    if matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
+        let Some(parent) = outermost_paren_parent(node, ctx) else {
+            return;
+        };
+        if let AstKind::SpreadElement(spread_elem) = parent.kind() {
+            let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
+                return;
+            };
 
-                if !is_single_array_spread(array_expr) {
-                    return;
+            let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+
+            match node.kind() {
+                // { ...{ } }
+                AstKind::ObjectExpression(_) => {
+                    if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
+                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span));
+                    }
                 }
-
-                let parent = if let AstKind::Argument(_) = parent.kind() {
-                    let Some(parent) = outermost_paren_parent(parent, ctx) else {
-                        return;
-                    };
-                    parent
-                } else {
-                    parent
-                };
-
-                match parent.kind() {
-                    AstKind::ForOfStatement(for_of_stmt) => {
-                        if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
-                            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInForOf(
-                                array_expr.span,
-                            ));
-                        }
-                    }
-                    AstKind::YieldExpression(yield_expr) => {
-                        if yield_expr.delegate
-                            && yield_expr
-                                .argument
-                                .as_ref()
-                                .is_some_and(|arg| arg.span() == array_expr.span)
-                        {
-                            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInYieldStar(
-                                array_expr.span,
-                            ));
-                        }
-                    }
-
-                    AstKind::NewExpression(new_expr) => {
-                        if !((is_new_expression(
-                            new_expr,
-                            &["Map", "WeakMap", "Set", "WeakSet"],
-                            Some(1),
-                            Some(1),
-                        ) || is_new_expression(
-                            new_expr,
-                            &[
-                                "Int8Array",
-                                "Uint8Array",
-                                "Uint8ClampedArray",
-                                "Int16Array",
-                                "Uint16Array",
-                                "Int32Array",
-                                "Uint32Array",
-                                "Float32Array",
-                                "Float64Array",
-                                "BigInt64Array",
-                                "BigUint64Array",
-                            ],
-                            Some(1),
-                            None,
-                        )) && innermost_paren_arg_span(&new_expr.arguments[0])
-                            == array_expr.span)
-                        {
-                            return;
-                        }
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
-                            array_expr.span,
-                            get_new_expr_ident_name(new_expr).unwrap_or("unknown").into(),
-                        ));
-                    }
-                    AstKind::CallExpression(call_expr) => {
-                        if !((is_method_call(
-                            call_expr,
-                            Some(&["Promise"]),
-                            Some(&["all", "allSettled", "any", "race"]),
-                            Some(1),
-                            Some(1),
-                        ) || is_method_call(
-                            call_expr,
-                            Some(&[
-                                "Array",
-                                "Int8Array",
-                                "Uint8Array",
-                                "Uint8ClampedArray",
-                                "Int16Array",
-                                "Uint16Array",
-                                "Int32Array",
-                                "Uint32Array",
-                                "Float32Array",
-                                "Float64Array",
-                                "BigInt64Array",
-                                "BigUint64Array",
-                            ]),
-                            Some(&["from"]),
-                            Some(1),
-                            Some(1),
-                        ) || is_method_call(
-                            call_expr,
-                            Some(&["Object"]),
-                            Some(&["fromEntries"]),
-                            Some(1),
-                            Some(1),
-                        )) && innermost_paren_arg_span(&call_expr.arguments[0])
-                            == array_expr.span)
-                        {
-                            return;
-                        }
-
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
-                            array_expr.span,
-                            get_method_name(call_expr).unwrap_or("unknown".into()),
-                        ));
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        // Useless array clone
-        {
-            if let AstKind::ArrayExpression(array_expr) = node.kind() {
-                if !is_single_array_spread(array_expr) {
-                    return;
-                }
-
-                let ArrayExpressionElement::SpreadElement(spread_elem) = &array_expr.elements[0]
-                else {
-                    return;
-                };
-
-                if let Expression::CallExpression(call_expr) = &spread_elem.argument {
-                    if !(is_method_call(
-                        call_expr,
-                        None,
-                        Some(&[
-                            "concat",
-                            "copyWithin",
-                            "filter",
-                            "flat",
-                            "flatMap",
-                            "map",
-                            "slice",
-                            "splice",
-                            "toReversed",
-                            "toSorted",
-                            "toSpliced",
-                            "with",
-                        ]),
-                        None,
-                        None,
-                    ) || is_method_call(call_expr, None, Some(&["split"]), None, None)
-                        || is_method_call(
-                            call_expr,
-                            Some(&["Object"]),
-                            Some(&["keys", "values"]),
-                            None,
-                            None,
-                        )
-                        || is_method_call(
-                            call_expr,
-                            Some(&["Array"]),
-                            Some(&["from", "of"]),
-                            None,
-                            None,
-                        ))
+                // [ ...[ ] ]
+                AstKind::ArrayExpression(_) => {
+                    if matches!(parent_parent.kind(), AstKind::ArrayExpressionElement(_))
+                        || matches!(parent_parent.kind(), AstKind::Argument(_))
                     {
-                        return;
-                    }
-
-                    let method = call_expr.callee.get_member_expr().map_or_else(
-                        || "unknown".into(),
-                        |method| {
-                            let object_name =
-                                if let Expression::Identifier(ident) = &method.object() {
-                                    ident.name.as_str()
-                                } else {
-                                    "unknown"
-                                };
-
-                            format!("{}.{}", object_name, method.static_property_name().unwrap())
-                        },
-                    );
-
-                    ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(array_expr.span, method));
-                }
-
-                if let Expression::AwaitExpression(await_expr) = &spread_elem.argument {
-                    if let Expression::CallExpression(call_expr) = &await_expr.argument {
-                        if !is_method_call(
-                            call_expr,
-                            Some(&["Promise"]),
-                            Some(&["all", "allSettled"]),
-                            Some(1),
-                            Some(1),
-                        ) {
-                            return;
-                        }
-                        let method_name = call_expr
-                            .callee
-                            .get_member_expr()
-                            .unwrap()
-                            .static_property_name()
-                            .unwrap();
-
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(
-                            array_expr.span,
-                            format!("Promise.{method_name}"),
-                        ));
+                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span));
                     }
                 }
-
-                if let Expression::NewExpression(new_expr) = &spread_elem.argument {
-                    if !is_new_expression(new_expr, &["Array"], None, None) {
-                        return;
-                    }
-
-                    ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(
-                        array_expr.span,
-                        "new Array".into(),
-                    ));
+                _ => {
+                    unreachable!()
                 }
             }
         }
+    }
+}
+
+fn check_useless_iterable_to_array<'a>(
+    node: &AstNode<'a>,
+    array_expr: &ArrayExpression<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return };
+
+    if !is_single_array_spread(array_expr) {
+        return;
+    }
+
+    let ArrayExpressionElement::SpreadElement(spread_elem) = &array_expr.elements[0] else {
+        return;
+    };
+
+    let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+
+    let parent = if let AstKind::Argument(_) = parent.kind() {
+        let Some(parent) = outermost_paren_parent(parent, ctx) else {
+            return;
+        };
+        parent
+    } else {
+        parent
+    };
+
+    match parent.kind() {
+        AstKind::ForOfStatement(for_of_stmt) => {
+            if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
+                ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInForOf(span));
+            }
+        }
+        AstKind::YieldExpression(yield_expr) => {
+            if yield_expr.delegate
+                && yield_expr.argument.as_ref().is_some_and(|arg| arg.span() == array_expr.span)
+            {
+                ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInYieldStar(span));
+            }
+        }
+
+        AstKind::NewExpression(new_expr) => {
+            if !((is_new_expression(
+                new_expr,
+                &["Map", "WeakMap", "Set", "WeakSet"],
+                Some(1),
+                Some(1),
+            ) || is_new_expression(
+                new_expr,
+                &[
+                    "Int8Array",
+                    "Uint8Array",
+                    "Uint8ClampedArray",
+                    "Int16Array",
+                    "Uint16Array",
+                    "Int32Array",
+                    "Uint32Array",
+                    "Float32Array",
+                    "Float64Array",
+                    "BigInt64Array",
+                    "BigUint64Array",
+                ],
+                Some(1),
+                None,
+            )) && innermost_paren_arg_span(&new_expr.arguments[0]) == array_expr.span)
+            {
+                return;
+            }
+            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
+                span,
+                get_new_expr_ident_name(new_expr).unwrap_or("unknown").into(),
+            ));
+        }
+        AstKind::CallExpression(call_expr) => {
+            if !((is_method_call(
+                call_expr,
+                Some(&["Promise"]),
+                Some(&["all", "allSettled", "any", "race"]),
+                Some(1),
+                Some(1),
+            ) || is_method_call(
+                call_expr,
+                Some(&[
+                    "Array",
+                    "Int8Array",
+                    "Uint8Array",
+                    "Uint8ClampedArray",
+                    "Int16Array",
+                    "Uint16Array",
+                    "Int32Array",
+                    "Uint32Array",
+                    "Float32Array",
+                    "Float64Array",
+                    "BigInt64Array",
+                    "BigUint64Array",
+                ]),
+                Some(&["from"]),
+                Some(1),
+                Some(1),
+            ) || is_method_call(
+                call_expr,
+                Some(&["Object"]),
+                Some(&["fromEntries"]),
+                Some(1),
+                Some(1),
+            )) && innermost_paren_arg_span(&call_expr.arguments[0]) == array_expr.span)
+            {
+                return;
+            }
+
+            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
+                span,
+                get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
+            ));
+        }
+        _ => {}
+    }
+}
+
+fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
+    if !is_single_array_spread(array_expr) {
+        return;
+    }
+
+    let ArrayExpressionElement::SpreadElement(spread_elem) = &array_expr.elements[0] else {
+        return;
+    };
+
+    let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+
+    if let Expression::CallExpression(call_expr) = &spread_elem.argument {
+        if !(is_method_call(
+            call_expr,
+            None,
+            Some(&[
+                "concat",
+                "copyWithin",
+                "filter",
+                "flat",
+                "flatMap",
+                "map",
+                "slice",
+                "splice",
+                "toReversed",
+                "toSorted",
+                "toSpliced",
+                "with",
+            ]),
+            None,
+            None,
+        ) || is_method_call(call_expr, None, Some(&["split"]), None, None)
+            || is_method_call(call_expr, Some(&["Object"]), Some(&["keys", "values"]), None, None)
+            || is_method_call(call_expr, Some(&["Array"]), Some(&["from", "of"]), None, None))
+        {
+            return;
+        }
+
+        let method = call_expr.callee.get_member_expr().map_or_else(
+            || "unknown".into(),
+            |method| {
+                let object_name = if let Expression::Identifier(ident) = &method.object() {
+                    ident.name.as_str()
+                } else {
+                    "unknown"
+                };
+
+                format!("{}.{}", object_name, method.static_property_name().unwrap())
+            },
+        );
+
+        ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(span, method));
+    }
+
+    if let Expression::AwaitExpression(await_expr) = &spread_elem.argument {
+        if let Expression::CallExpression(call_expr) = &await_expr.argument {
+            if !is_method_call(
+                call_expr,
+                Some(&["Promise"]),
+                Some(&["all", "allSettled"]),
+                Some(1),
+                Some(1),
+            ) {
+                return;
+            }
+            let method_name =
+                call_expr.callee.get_member_expr().unwrap().static_property_name().unwrap();
+
+            ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(
+                span,
+                format!("Promise.{method_name}"),
+            ));
+        }
+    }
+
+    if let Expression::NewExpression(new_expr) = &spread_elem.argument {
+        if !is_new_expression(new_expr, &["Array"], None, None) {
+            return;
+        }
+
+        ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(span, "new Array".into()));
     }
 }
 
