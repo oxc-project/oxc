@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     doc::{Doc, DocBuilder},
-    group, hardline, line, ss, Format, Prettier,
+    hardline, line, ss, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -96,5 +96,31 @@ pub(super) fn print_function_parameters<'a>(
         parts.push(ss!(")"));
     }
 
-    group!(p, Doc::Array(parts))
+    Doc::Array(parts)
+}
+
+pub(super) fn should_group_function_parameters(func: &Function) -> bool {
+    let Some(return_type) = &func.return_type else {
+        return false;
+    };
+    let type_parameters = func.type_parameters.as_ref().map(|x| &x.params);
+
+    if let Some(type_parameter) = type_parameters {
+        if type_parameter.len() > 1 {
+            return false;
+        }
+
+        if let Some(type_parameter) = type_parameter.first() {
+            if type_parameter.constraint.is_some() || type_parameter.default.is_some() {
+                return false;
+            }
+        }
+    }
+
+    // TODO: need union `willBreak`
+    func.params.parameters_count() == 1
+        && (matches!(
+            return_type.type_annotation,
+            TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
+        ))
 }

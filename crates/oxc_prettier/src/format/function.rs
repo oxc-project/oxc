@@ -2,6 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder},
+    format::function_parameters::should_group_function_parameters,
     group, if_break, indent, softline, ss, Format, Prettier,
 };
 
@@ -32,11 +33,13 @@ pub(super) fn print_function<'a>(
     if let Some(id) = &func.id {
         parts.push(p.str(id.name.as_str()));
     }
-    if should_group_function_parameters(func) {
-        parts.push(group!(p, func.params.format(p)));
+    let params_doc = if should_group_function_parameters(func) {
+        group!(p, func.params.format(p))
     } else {
-        parts.push(func.params.format(p));
-    }
+        func.params.format(p)
+    };
+    // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
+    parts.push(group!(p, params_doc));
     if let Some(body) = &func.body {
         parts.push(ss!(" "));
         parts.push(body.format(p));
@@ -88,8 +91,20 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
         parts.push(method.key.format(p));
     }
 
-    parts.push(method.value.params.format(p));
-    if let Some(body) = &method.value.body {
+    parts.push(print_method_value(p, &method.value));
+
+    Doc::Array(parts)
+}
+
+fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
+    let mut parts = p.vec();
+    let parameters_doc = function.params.format(p);
+    let should_group_parameters = should_group_function_parameters(function);
+    let parameters_doc =
+        if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
+    parts.push(group!(p, parameters_doc));
+
+    if let Some(body) = &function.body {
         parts.push(ss!(" "));
         parts.push(body.format(p));
     }
@@ -126,30 +141,4 @@ pub(super) fn print_return_or_throw_argument<'a>(
         parts.push(semi);
     }
     Doc::Array(parts)
-}
-
-fn should_group_function_parameters(func: &Function) -> bool {
-    let Some(return_type) = &func.return_type else {
-        return false;
-    };
-    let type_parameters = func.type_parameters.as_ref().map(|x| &x.params);
-
-    if let Some(type_parameter) = type_parameters {
-        if type_parameter.len() > 1 {
-            return false;
-        }
-
-        if let Some(type_parameter) = type_parameter.first() {
-            if type_parameter.constraint.is_some() || type_parameter.default.is_some() {
-                return false;
-            }
-        }
-    }
-
-    // TODO: need union `willBreak`
-    func.params.parameters_count() == 1
-        && (matches!(
-            return_type.type_annotation,
-            TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
-        ))
 }

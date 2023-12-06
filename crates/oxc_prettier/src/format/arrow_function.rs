@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder},
-    ss, Format, Prettier,
+    group, ss, Format, Prettier,
 };
 
 pub(super) fn print_arrow_function<'a>(
@@ -20,7 +20,7 @@ pub(super) fn print_arrow_function<'a>(
     }
 
     let parameters = expr.params.format(p);
-    parts.push(parameters);
+    parts.push(group!(p, parameters));
     parts.push(ss!(" => "));
 
     if expr.expression {
