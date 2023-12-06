@@ -23,7 +23,7 @@ pub struct ScopeTree {
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
     /// Maps a scope to direct children scopes
-    childs_ids: IndexMap<ScopeId, Vec<ScopeId>>,
+    child_ids: IndexMap<ScopeId, Vec<ScopeId>>,
 
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
@@ -61,7 +61,7 @@ impl ScopeTree {
             }
         }
 
-        add_to_list(&scope_id, &self.childs_ids, &mut list);
+        add_to_list(&scope_id, &self.child_ids, &mut list);
 
         list.into_iter()
     }
@@ -128,10 +128,10 @@ impl ScopeTree {
         _ = self.unresolved_references.push(UnresolvedReferences::default());
 
         if let Some(parent_id) = parent_id {
-            if let Some(children) = self.childs_ids.get_mut(&parent_id) {
+            if let Some(children) = self.child_ids.get_mut(&parent_id) {
                 children.push(scope_id);
             } else {
-                self.childs_ids.insert(parent_id, vec![scope_id]);
+                self.child_ids.insert(parent_id, vec![scope_id]);
             }
         }
 
