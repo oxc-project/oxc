@@ -21,6 +21,7 @@ fn main() {
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
+
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     if !ret.errors.is_empty() {
@@ -31,10 +32,8 @@ fn main() {
         return;
     }
 
-    let codegen_options = CodegenOptions;
-    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
     println!("Original:\n");
-    println!("{printed}\n");
+    println!("{source_text}\n");
 
     let semantic = SemanticBuilder::new(&source_text, source_type)
         .with_trivias(ret.trivias)
@@ -43,7 +42,7 @@ fn main() {
 
     let program = allocator.alloc(ret.program);
     let transform_options = TransformOptions {
-        target: TransformTarget::ES2015,
+        target: TransformTarget::ES5,
         react_jsx: Some(ReactJsxOptions {
             runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic)),
             ..ReactJsxOptions::default()
@@ -52,7 +51,7 @@ fn main() {
     };
     Transformer::new(&allocator, source_type, semantic, transform_options).build(program).unwrap();
 
-    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(program);
+    let printed = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
     println!("Transformed:\n");
     println!("{printed}");
 }

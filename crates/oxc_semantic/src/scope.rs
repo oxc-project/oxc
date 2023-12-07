@@ -19,7 +19,12 @@ type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 pub struct ScopeTree {
+    /// Maps a scope to the parent scope it belongs in
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
+
+    /// Maps a scope to direct children scopes
+    child_ids: FxHashMap<ScopeId, Vec<ScopeId>>,
+
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
@@ -38,7 +43,30 @@ impl ScopeTree {
         std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
     }
 
-    pub fn descendants(&self) -> impl Iterator<Item = ScopeId> + '_ {
+    pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        // Has to be a `fn` and pass arguments because we can't
+        // have recursive closures
+        fn add_to_list(
+            parent_id: ScopeId,
+            child_ids: &FxHashMap<ScopeId, Vec<ScopeId>>,
+            items: &mut Vec<ScopeId>,
+        ) {
+            if let Some(children) = child_ids.get(&parent_id) {
+                for child_id in children {
+                    items.push(*child_id);
+                    add_to_list(*child_id, child_ids, items);
+                }
+            }
+        }
+
+        let mut list = vec![];
+
+        add_to_list(scope_id, &self.child_ids, &mut list);
+
+        list.into_iter()
+    }
+
+    pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
 
@@ -98,6 +126,11 @@ impl ScopeTree {
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
         _ = self.unresolved_references.push(UnresolvedReferences::default());
+
+        if let Some(parent_id) = parent_id {
+            self.child_ids.entry(parent_id).or_default().push(scope_id);
+        }
+
         scope_id
     }
 

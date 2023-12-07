@@ -98,7 +98,7 @@ impl<'a> Transformer<'a> {
             // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2015
-            es2015_function_name: FunctionName::new(&ast, &ctx.clone(), &options),
+            es2015_function_name: FunctionName::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             // other
