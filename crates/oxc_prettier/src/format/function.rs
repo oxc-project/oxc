@@ -78,18 +78,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
         parts.push(ss!("*"));
     }
 
-    if method.computed {
-        parts.push(ss!("["));
-        let key = match &method.key {
-            PropertyKey::Identifier(ident) => ident.format(p),
-            PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-            PropertyKey::Expression(expr) => expr.format(p),
-        };
-        parts.push(key);
-        parts.push(ss!("]"));
-    } else {
-        parts.push(method.key.format(p));
-    }
+    parts.push(method.key.format(p));
 
     parts.push(print_method_value(p, &method.value));
 

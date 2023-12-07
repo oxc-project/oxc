@@ -1494,6 +1494,24 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 
 impl<'a> Format<'a> for PropertyKey<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let is_parent_computed = match p.current_kind() {
+            AstKind::MethodDefinition(node) => node.computed,
+            AstKind::PropertyDefinition(node) => node.computed,
+            _ => false,
+        };
+        if is_parent_computed {
+            let mut parts = p.vec();
+            parts.push(ss!("["));
+            let doc = match &self {
+                PropertyKey::Identifier(ident) => ident.format(p),
+                PropertyKey::PrivateIdentifier(ident) => ident.format(p),
+                PropertyKey::Expression(expr) => expr.format(p),
+            };
+            parts.push(doc);
+            parts.push(ss!("]"));
+            return Doc::Array(parts);
+        }
+
         wrap!(p, self, PropertyKey, {
             // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
             let need_quote = p.options.quote_props.is_consistent()
