@@ -1,4 +1,6 @@
+use std::collections::VecDeque;
 use std::hash::BuildHasherDefault;
+use std::thread::scope;
 
 use indexmap::IndexMap;
 use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
@@ -44,26 +46,18 @@ impl ScopeTree {
     }
 
     pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        // Has to be a `fn` and pass arguments because we can't
-        // have recursive closures
-        fn add_to_list(
-            parent_id: ScopeId,
-            child_ids: &FxHashMap<ScopeId, Vec<ScopeId>>,
-            items: &mut Vec<ScopeId>,
-        ) {
-            if let Some(children) = child_ids.get(&parent_id) {
-                for child_id in children {
-                    items.push(*child_id);
-                    add_to_list(*child_id, child_ids, items);
-                }
+        let mut q = VecDeque::from_iter([scope_id]);
+        let mut ret = vec![];
+        while let Some(cur) = q.pop_front() {
+            if cur != scope_id {
+                ret.push(cur);
+            }
+            for item in self.child_ids.get(&cur).unwrap_or(&vec![]) {
+                q.push_back(*item);
             }
         }
 
-        let mut list = vec![];
-
-        add_to_list(scope_id, &self.child_ids, &mut list);
-
-        list.into_iter()
+        ret.into_iter()
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
