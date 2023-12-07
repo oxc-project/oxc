@@ -1,0 +1,69 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 119
+expression: no_autofocus
+---
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus />
+   ·      ─────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus={true} />
+   ·      ────────────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus={false} />
+   ·      ─────────────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus={undefined} />
+   ·      ─────────────────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus='true' />
+   ·      ────────────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <div autoFocus='false' />
+   ·      ─────────────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <input autoFocus />
+   ·        ─────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <Foo autoFocus />
+   ·      ─────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+  ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here
+   ╭─[no_autofocus.tsx:1:1]
+ 1 │ <Button autoFocus />
+   ·         ─────────
+   ╰────
+  help: Remove `autofocus` attribute
+
+
