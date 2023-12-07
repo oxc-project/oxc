@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 // use lazy_static::lazy_static;
-use oxc_ast::{ast::*, AstBuilder, Visit};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_semantic::ScopeId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::AssignmentOperator;
@@ -30,8 +30,6 @@ impl<'a> FunctionName<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
-        // Disabled for now
-        // None
         (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
             _ast: ast,
             ctx,
@@ -120,9 +118,6 @@ impl<'a> FunctionName<'a> {
         if let Expression::FunctionExpression(func) = expr {
             let mut count = 0;
 
-            // let mut finder = IdentFinder { id, found: 0 };
-            // finder.visit_expression(expr);
-
             // Check for nested params/vars of the same name
             if let Some(scope_id) = scope_id {
                 let scopes = self.ctx.scopes();
@@ -144,19 +139,6 @@ impl<'a> FunctionName<'a> {
             if func.id.is_none() {
                 func.id = Some(id);
             }
-        }
-    }
-}
-
-struct IdentFinder {
-    id: BindingIdentifier,
-    found: usize,
-}
-
-impl<'a> Visit<'a> for IdentFinder {
-    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier) {
-        if ident.name == self.id.name {
-            self.found += 1;
         }
     }
 }

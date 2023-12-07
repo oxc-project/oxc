@@ -128,14 +128,7 @@ impl ScopeTree {
         _ = self.unresolved_references.push(UnresolvedReferences::default());
 
         if let Some(parent_id) = parent_id {
-            let list = self.child_ids.entry(parent_id).or_default();
-            list.push(scope_id);
-
-            // if let Some(children) = self.child_ids.get_mut(&parent_id) {
-            //     children.push(scope_id);
-            // } else {
-            //     self.child_ids.insert(parent_id, vec![scope_id]);
-            // }
+            self.child_ids.entry(parent_id).or_default().push(scope_id);
         }
 
         scope_id
