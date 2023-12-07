@@ -8,7 +8,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop, AstNode};
 
-const HTML_TAG: [&str; 149] = [
+use phf::phf_set;
+
+const HTML_TAG: phf::Set<&'static str> = phf_set! {
     "a",
     "abbr",
     "acronym",
@@ -158,7 +160,7 @@ const HTML_TAG: [&str; 149] = [
     "video",
     "wbr",
     "xmp",
-];
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here")]
@@ -241,7 +243,7 @@ impl Rule for NoAutofocus {
                         return;
                     };
                     let name = ident.name.as_str();
-                    if HTML_TAG.iter().any(|tag| *tag == name) {
+                    if HTML_TAG.contains(name) {
                         if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
                             ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
                         }
