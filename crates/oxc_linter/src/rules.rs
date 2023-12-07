@@ -180,6 +180,7 @@ mod unicorn {
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
+    pub mod no_useless_spread;
     pub mod no_useless_switch_case;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
@@ -392,6 +393,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_native_coercion_functions,
+    unicorn::no_useless_spread,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_query_selector,
