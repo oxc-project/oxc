@@ -163,7 +163,7 @@ const HTML_TAG: phf::Set<&'static str> = phf_set! {
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here")]
+#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")]
 #[diagnostic(severity(warning), help("Remove `autofocus` attribute"))]
 struct NoAutofocusDiagnostic(#[label] pub Span);
 
