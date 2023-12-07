@@ -99,6 +99,35 @@ macro_rules! group {
 }
 
 #[macro_export]
+macro_rules! conditional_group {
+    ($p:ident, $c: expr, $( $x:expr ),* $(,)?) => {
+        {
+            use $crate::doc::DocBuilder;
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            let contents = $p.vec_single($c);
+            Doc::Group($crate::doc::Group::new_conditional_group(contents, temp_vec))
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! group_break {
+    ($p:ident, $( $x:expr ),* $(,)?) => {
+        {
+            use $crate::doc::DocBuilder;
+            let mut temp_vec = $p.vec();
+            $(
+                temp_vec.push($x);
+            )*
+            Doc::Group($crate::doc::Group::new(temp_vec, true))
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! if_break {
     ($p:ident, $s:expr, $flat:expr, $group_id:expr) => {{
         use $crate::doc::{DocBuilder, IfBreak};

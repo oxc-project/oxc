@@ -77,12 +77,19 @@ impl Line {
 pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
+    pub expanded_states: Option<Vec<'a, Doc<'a>>>,
     pub id: Option<GroupId>,
 }
 
 impl<'a> Group<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
-        Self { contents, should_break, id: None }
+        Self { contents, should_break, id: None, expanded_states: None }
+    }
+    pub fn new_conditional_group(
+        contents: Vec<'a, Doc<'a>>,
+        expanded_states: Vec<'a, Doc<'a>>,
+    ) -> Self {
+        Self { contents, should_break: false, id: None, expanded_states: Some(expanded_states) }
     }
     pub fn with_id(mut self, id: GroupId) -> Self {
         self.id = Some(id);
@@ -244,6 +251,10 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             string.push_str("])");
         }
         Doc::Group(group) => {
+            if group.expanded_states.is_some() {
+                string.push_str("conditionalGroup([\n");
+            }
+
             string.push_str("group([\n");
             for (idx, doc) in group.contents.iter().enumerate() {
                 string.push_str(&print_doc_to_debug(doc));
@@ -257,6 +268,17 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                 string.push_str(&format!(", id: {id}"));
             }
             string.push_str(" })");
+
+            if let Some(expanded_states) = &group.expanded_states {
+                string.push_str(",\n");
+                for (idx, doc) in expanded_states.iter().enumerate() {
+                    string.push_str(&print_doc_to_debug(doc));
+                    if idx != expanded_states.len() - 1 {
+                        string.push_str(", ");
+                    }
+                }
+                string.push(']');
+            }
         }
         Doc::Line(Line { soft, hard, .. }) => {
             if *soft {

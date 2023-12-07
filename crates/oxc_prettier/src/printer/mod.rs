@@ -140,13 +140,28 @@ impl<'a> Printer<'a> {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
                 } else {
                     let Doc::Group(group) = cmd.doc else { unreachable!() };
-                    self.cmds.extend(
-                        group
-                            .contents
-                            .into_iter()
-                            .rev()
-                            .map(|doc| Command::new(indent, Mode::Break, doc)),
-                    );
+
+                    if let Some(mut expanded_states) = group.expanded_states {
+                        let most_expanded = expanded_states.pop().unwrap();
+                        if group.should_break {
+                            self.cmds.push(Command::new(indent, Mode::Break, most_expanded));
+                            return;
+                        }
+                        for state in expanded_states {
+                            let cmd = Command::new(indent, Mode::Flat, state);
+                            if self.fits(&cmd, remaining_width) {
+                                self.cmds.push(cmd);
+                                return;
+                            }
+                        }
+                        self.cmds.push(Command::new(indent, Mode::Break, most_expanded));
+                    } else {
+                        self.cmds.push(Command::new(
+                            indent,
+                            Mode::Break,
+                            Doc::Array(group.contents),
+                        ));
+                    }
                 }
                 self.set_group_mode_from_last_cmd(group_id);
             }
@@ -360,9 +375,16 @@ impl<'a> Printer<'a> {
                 }
                 Doc::Group(group) => {
                     let mode = if group.should_break { Mode::Break } else { mode };
-                    for d in group.contents.iter().rev() {
-                        queue.push_front((mode, d));
-                    }
+                    if group.expanded_states.is_some() && mode.is_break() {
+                        queue.push_front((
+                            mode,
+                            group.expanded_states.as_ref().unwrap().last().unwrap(),
+                        ));
+                    } else {
+                        for d in group.contents.iter().rev() {
+                            queue.push_front((mode, d));
+                        }
+                    };
                 }
                 Doc::IfBreak(if_break_doc) => {
                     let group_mode = if_break_doc
@@ -413,11 +435,20 @@ impl<'a> Printer<'a> {
     /// Reference:
     /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
     pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
+        let check_array = |arr: &mut oxc_allocator::Vec<'_, Doc<'_>>| {
+            arr.iter_mut().rev().any(|doc| Self::propagate_breaks(doc))
+        };
+
         match doc {
             Doc::BreakParent => true,
             Doc::Group(group) => {
-                let should_break =
-                    group.contents.iter_mut().rev().any(|doc| Self::propagate_breaks(doc));
+                let mut should_break = false;
+                if let Some(expanded_states) = &mut group.expanded_states {
+                    should_break = expanded_states.iter_mut().rev().any(Self::propagate_breaks);
+                }
+                if !should_break {
+                    should_break = check_array(&mut group.contents);
+                }
                 if should_break {
                     group.should_break = should_break;
                 }
@@ -426,9 +457,7 @@ impl<'a> Printer<'a> {
             Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
             Doc::Array(arr)
             | Doc::Indent(arr)
-            | Doc::IndentIfBreak(IndentIfBreak { contents: arr, .. }) => {
-                arr.iter_mut().any(|doc| Self::propagate_breaks(doc))
-            }
+            | Doc::IndentIfBreak(IndentIfBreak { contents: arr, .. }) => check_array(arr),
             _ => false,
         }
     }
