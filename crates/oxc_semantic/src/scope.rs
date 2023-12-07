@@ -23,7 +23,7 @@ pub struct ScopeTree {
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
     /// Maps a scope to direct children scopes
-    child_ids: IndexMap<ScopeId, Vec<ScopeId>>,
+    child_ids: FxHashMap<ScopeId, Vec<ScopeId>>,
 
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
@@ -44,24 +44,24 @@ impl ScopeTree {
     }
 
     pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        let mut list = vec![];
-
         // Has to be a `fn` and pass arguments because we can't
         // have recursive closures
         fn add_to_list(
-            parent_id: &ScopeId,
-            child_ids: &IndexMap<ScopeId, Vec<ScopeId>>,
+            parent_id: ScopeId,
+            child_ids: &FxHashMap<ScopeId, Vec<ScopeId>>,
             items: &mut Vec<ScopeId>,
         ) {
-            if let Some(children) = child_ids.get(parent_id) {
+            if let Some(children) = child_ids.get(&parent_id) {
                 for child_id in children {
                     items.push(*child_id);
-                    add_to_list(child_id, child_ids, items);
+                    add_to_list(*child_id, child_ids, items);
                 }
             }
         }
 
-        add_to_list(&scope_id, &self.child_ids, &mut list);
+        let mut list = vec![];
+
+        add_to_list(scope_id, &self.child_ids, &mut list);
 
         list.into_iter()
     }
@@ -128,11 +128,14 @@ impl ScopeTree {
         _ = self.unresolved_references.push(UnresolvedReferences::default());
 
         if let Some(parent_id) = parent_id {
-            if let Some(children) = self.child_ids.get_mut(&parent_id) {
-                children.push(scope_id);
-            } else {
-                self.child_ids.insert(parent_id, vec![scope_id]);
-            }
+            let list = self.child_ids.entry(parent_id).or_default();
+            list.push(scope_id);
+
+            // if let Some(children) = self.child_ids.get_mut(&parent_id) {
+            //     children.push(scope_id);
+            // } else {
+            //     self.child_ids.insert(parent_id, vec![scope_id]);
+            // }
         }
 
         scope_id
