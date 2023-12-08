@@ -14,7 +14,9 @@
     "url": "https://github.com/oxc-project/oxc.git",
     "directory": "editors/vscode"
   },
-  "categories": ["Linters"],
+  "categories": [
+    "Linters"
+  ],
   "keywords": [
     "linter",
     "oxc"
@@ -86,12 +88,12 @@
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_vscode --release"
   },
   "devDependencies": {
-    "@types/node": "^18.17.5",
-    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.19.3",
+    "@types/vscode": "1.80.0",
     "@vscode/vsce": "^2.22.0",
-    "cross-env": "^7.0.2",
-    "esbuild": "^0.19.5",
-    "typescript": "^5.1.6"
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.19.8",
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
