@@ -69,10 +69,8 @@ export async function activate(context: ExtensionContext) {
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
   const ext = process.platform === "win32" ? ".exe" : "";
-  let serverPath = process.env.SERVER_PATH_DEV ?? `oxc_vscode${ext}`;
-  const command = join(serverPath);
-
-  // window.showInformationMessage(`oxc server path: ${command}`);
+  // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+  const command = process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_vscode${ext}`);
 
   const run: Executable = {
     command: command!,
