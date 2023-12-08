@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '**/package.json'
       - 'npm/**'
       - 'website/**'
       - 'crates/oxc/**'
@@ -25,6 +26,7 @@ on:
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
+      - '**/package.json'
       - 'npm/**'
       - 'website/**'
       - 'crates/oxc/**'
