@@ -11,6 +11,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements")]
+#[diagnostic(severity(warning), help("Must use scope prop only on <th> elements"))]
+struct ScopeDiagnostic(#[label] pub Span);
+
 #[derive(Debug, Default, Clone)]
 pub struct Scope;
 
@@ -36,11 +41,6 @@ declare_oxc_lint!(
     Scope,
     correctness
 );
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements")]
-#[diagnostic(severity(warning), help("Must use scope prop only on <th> elements"))]
-struct ScopeDiagnostic(#[label] pub Span);
 
 impl Rule for Scope {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

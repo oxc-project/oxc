@@ -13,6 +13,17 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
+#[derive(Debug, Error, Diagnostic)]
+enum HtmlHasLangDiagnostic {
+    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")]
+    #[diagnostic(severity(warning), help("Add a lang attribute to the html element whose value represents the primary language of document."))]
+    MissingLangProp(#[label] Span),
+
+    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")]
+    #[diagnostic(severity(warning), help("Must have meaningful value for `lang` prop."))]
+    MissingLangValue(#[label] Span),
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct HtmlHasLang;
 
@@ -40,33 +51,11 @@ declare_oxc_lint!(
     correctness
 );
 
-#[derive(Debug, Error, Diagnostic)]
-enum HtmlHasLangDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")]
-    #[diagnostic(severity(warning), help("Add a lang attribute to the html element whose value represents the primary language of document."))]
-    MissingLangProp(#[label] Span),
-
-    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")]
-    #[diagnostic(severity(warning), help("Must have meaningful value for `lang` prop."))]
-    MissingLangValue(#[label] Span),
-}
-
 fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
     if let JSXAttributeItem::Attribute(attr) = item {
         attr.0.value.as_ref()
     } else {
         None
-    }
-}
-
-fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
-    match get_prop_value(item) {
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => !expr.is_undefined(),
-        Some(JSXAttributeValue::StringLiteral(str)) => !str.value.as_str().is_empty(),
-        _ => true,
     }
 }
 
@@ -92,6 +81,17 @@ impl Rule for HtmlHasLang {
                 }
             },
         );
+    }
+}
+
+fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
+    match get_prop_value(item) {
+        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        })) => !expr.is_undefined(),
+        Some(JSXAttributeValue::StringLiteral(str)) => !str.value.as_str().is_empty(),
+        _ => true,
     }
 }
 

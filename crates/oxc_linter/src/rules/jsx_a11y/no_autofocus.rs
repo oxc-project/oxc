@@ -1,3 +1,5 @@
+use phf::phf_set;
+
 use oxc_ast::{ast::JSXElementName, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -8,7 +10,102 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop, AstNode};
 
-use phf::phf_set;
+#[derive(Debug, Error, Diagnostic)]
+#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")]
+#[diagnostic(severity(warning), help("Remove `autofocus` attribute"))]
+struct NoAutofocusDiagnostic(#[label] pub Span);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoAutofocus {
+    ignore_non_dom: bool,
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// Enforce that autoFocus prop is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users, alike.
+    ///
+    /// ### Rule Option
+    /// This rule takes one optional object argument of type object:
+    ///
+    /// ```
+    /// {
+    ///     "rules": {
+    ///         "jsx-a11y/no-autofocus": [ 2, {
+    ///             "ignoreNonDOM": true
+    ///         }],
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// For the `ignoreNonDOM` option, this determines if developer created components are checked.
+    ///
+    /// ### Example
+    /// // good
+    ///
+    /// ```javascript
+    /// <div />
+    /// ```
+    ///
+    /// // bad
+    ///
+    /// ```
+    /// <div autoFocus />
+    /// <div autoFocus="true" />
+    /// <div autoFocus="false" />
+    /// <div autoFocus={undefined} />
+    /// ```
+    ///
+    NoAutofocus,
+    correctness
+);
+
+impl NoAutofocus {
+    pub fn set_option(&mut self, value: bool) {
+        self.ignore_non_dom = value;
+    }
+}
+
+impl Rule for NoAutofocus {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut no_focus = Self::default();
+
+        let _ = value.as_array().unwrap().iter().find(|v| {
+            if let serde_json::Value::Object(obj) = v {
+                let config = obj.get("ignoreNonDOM").unwrap();
+                if let serde_json::Value::Bool(val) = config {
+                    no_focus.set_option(*val);
+                }
+                return true;
+            }
+            false
+        });
+
+        no_focus
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXElement(jsx_el) = node.kind() {
+            if let Option::Some(autofocus) = has_jsx_prop(&jsx_el.opening_element, "autoFocus") {
+                if self.ignore_non_dom {
+                    let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else {
+                        return;
+                    };
+                    let name = ident.name.as_str();
+                    if HTML_TAG.contains(name) {
+                        if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+                            ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                        }
+                    }
+                    return;
+                }
+
+                if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
+                    ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                }
+            }
+        }
+    }
+}
 
 const HTML_TAG: phf::Set<&'static str> = phf_set! {
     "a",
@@ -161,103 +258,6 @@ const HTML_TAG: phf::Set<&'static str> = phf_set! {
     "wbr",
     "xmp",
 };
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")]
-#[diagnostic(severity(warning), help("Remove `autofocus` attribute"))]
-struct NoAutofocusDiagnostic(#[label] pub Span);
-
-#[derive(Debug, Default, Clone)]
-pub struct NoAutofocus {
-    ignore_non_dom: bool,
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    /// Enforce that autoFocus prop is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users, alike.
-    ///
-    /// ### Rule Option
-    /// This rule takes one optional object argument of type object:
-    ///
-    /// ```
-    /// {
-    ///     "rules": {
-    ///         "jsx-a11y/no-autofocus": [ 2, {
-    ///             "ignoreNonDOM": true
-    ///         }],
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// For the `ignoreNonDOM` option, this determines if developer created components are checked.
-    ///
-    /// ### Example
-    /// // good
-    ///
-    /// ```javascript
-    /// <div />
-    /// ```
-    ///
-    /// // bad
-    ///
-    /// ```
-    /// <div autoFocus />
-    /// <div autoFocus="true" />
-    /// <div autoFocus="false" />
-    /// <div autoFocus={undefined} />
-    /// ```
-    ///
-    NoAutofocus,
-    correctness
-);
-
-impl NoAutofocus {
-    pub fn set_option(&mut self, value: bool) {
-        self.ignore_non_dom = value;
-    }
-}
-
-impl Rule for NoAutofocus {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut no_focus = Self::default();
-
-        let _ = value.as_array().unwrap().iter().find(|v| {
-            if let serde_json::Value::Object(obj) = v {
-                let config = obj.get("ignoreNonDOM").unwrap();
-                if let serde_json::Value::Bool(val) = config {
-                    no_focus.set_option(*val);
-                }
-                return true;
-            }
-            false
-        });
-
-        no_focus
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_el) = node.kind() {
-            if let Option::Some(autofocus) = has_jsx_prop(&jsx_el.opening_element, "autoFocus") {
-                if self.ignore_non_dom {
-                    let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else {
-                        return;
-                    };
-                    let name = ident.name.as_str();
-                    if HTML_TAG.contains(name) {
-                        if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                            ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
-                        }
-                    }
-                    return;
-                }
-
-                if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
-                }
-            }
-        }
-    }
-}
 
 #[test]
 fn test() {

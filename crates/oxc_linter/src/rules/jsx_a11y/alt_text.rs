@@ -60,6 +60,14 @@ enum AltTextDiagnostic {
     InputTypeImage(#[label] Span),
 }
 
+#[derive(Debug, Clone)]
+pub struct AltText {
+    img: Option<Vec<String>>,
+    object: Option<Vec<String>>,
+    area: Option<Vec<String>>,
+    input_type_image: Option<Vec<String>>,
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -93,14 +101,6 @@ declare_oxc_lint!(
     AltText,
     correctness
 );
-
-#[derive(Debug, Clone)]
-pub struct AltText {
-    img: Option<Vec<String>>,
-    object: Option<Vec<String>>,
-    area: Option<Vec<String>>,
-    input_type_image: Option<Vec<String>>,
-}
 
 impl std::default::Default for AltText {
     fn default() -> Self {

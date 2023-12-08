@@ -67,6 +67,39 @@ declare_oxc_lint!(
     correctness
 );
 
+impl Rule for AnchorHasContent {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXElement(jsx_el) = node.kind() {
+            let JSXElementName::Identifier(iden) = &jsx_el.opening_element.name else { return };
+            let name = iden.name.as_str();
+            if name == "a" {
+                // check self attr
+                if has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-hidden").is_some() {
+                    ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHidden(jsx_el.span));
+                    return;
+                }
+
+                // check if self attr has title/aria-label
+                if (has_jsx_prop_lowercase(&jsx_el.opening_element, "title").is_some()
+                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-label").is_some()
+                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "children").is_some()
+                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "dangerouslysetinnerhtml")
+                        .is_some())
+                    && match_valid_prop(&jsx_el.opening_element.attributes)
+                {
+                    // pass
+                    return;
+                }
+
+                // check content accessible
+                check_has_accessible_child(jsx_el, ctx);
+            }
+        }
+
+        // custom component
+    }
+}
+
 fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
     if let JSXAttributeItem::Attribute(attr) = item {
         attr.0.value.as_ref()
@@ -124,39 +157,6 @@ fn check_has_accessible_child(jsx: &JSXElement, ctx: &LintContext) {
 
     if all_not_has_content {
         ctx.diagnostic(diagnostic);
-    }
-}
-
-impl Rule for AnchorHasContent {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let JSXElementName::Identifier(iden) = &jsx_el.opening_element.name else { return };
-            let name = iden.name.as_str();
-            if name == "a" {
-                // check self attr
-                if has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-hidden").is_some() {
-                    ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHidden(jsx_el.span));
-                    return;
-                }
-
-                // check if self attr has title/aria-label
-                if (has_jsx_prop_lowercase(&jsx_el.opening_element, "title").is_some()
-                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-label").is_some()
-                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "children").is_some()
-                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "dangerouslysetinnerhtml")
-                        .is_some())
-                    && match_valid_prop(&jsx_el.opening_element.attributes)
-                {
-                    // pass
-                    return;
-                }
-
-                // check content accessible
-                check_has_accessible_child(jsx_el, ctx);
-            }
-        }
-
-        // custom component
     }
 }
 

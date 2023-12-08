@@ -27,6 +27,7 @@ enum AnchorIsValidDiagnostic {
     #[diagnostic(severity(warning), help("Use a `button` element instead of an `a` element."))]
     CantBeAnchor(#[label] Span),
 }
+
 #[derive(Debug, Default, Clone)]
 pub struct AnchorIsValid;
 
@@ -106,34 +107,6 @@ declare_oxc_lint!(
     correctness
 );
 
-fn check_value_is_empty(value: &JSXAttributeValue) -> bool {
-    match value {
-        JSXAttributeValue::Element(_) => false,
-        JSXAttributeValue::StringLiteral(str_lit) => {
-            str_lit.value.is_empty()
-                || str_lit.value == "#"
-                || str_lit.value == "javascript:void(0)"
-        }
-        JSXAttributeValue::ExpressionContainer(exp) => {
-            if let JSXExpression::Expression(jsexp) = &exp.expression {
-                if let Expression::Identifier(ident) = jsexp {
-                    if ident.name == "undefined" {
-                        return true;
-                    }
-                } else if let Expression::NullLiteral(_) = jsexp {
-                    return true;
-                } else if let Expression::StringLiteral(str_lit) = jsexp {
-                    return str_lit.value.is_empty()
-                        || str_lit.value == "#"
-                        || str_lit.value == "javascript:void(0)";
-                }
-            };
-            false
-        }
-        JSXAttributeValue::Fragment(_) => true,
-    }
-}
-
 impl Rule for AnchorIsValid {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
@@ -190,6 +163,34 @@ impl Rule for AnchorIsValid {
                 ctx.diagnostic(AnchorIsValidDiagnostic::MissingHrefAttribute(ident.span));
             }
         }
+    }
+}
+
+fn check_value_is_empty(value: &JSXAttributeValue) -> bool {
+    match value {
+        JSXAttributeValue::Element(_) => false,
+        JSXAttributeValue::StringLiteral(str_lit) => {
+            str_lit.value.is_empty()
+                || str_lit.value == "#"
+                || str_lit.value == "javascript:void(0)"
+        }
+        JSXAttributeValue::ExpressionContainer(exp) => {
+            if let JSXExpression::Expression(jsexp) = &exp.expression {
+                if let Expression::Identifier(ident) = jsexp {
+                    if ident.name == "undefined" {
+                        return true;
+                    }
+                } else if let Expression::NullLiteral(_) = jsexp {
+                    return true;
+                } else if let Expression::StringLiteral(str_lit) = jsexp {
+                    return str_lit.value.is_empty()
+                        || str_lit.value == "#"
+                        || str_lit.value == "javascript:void(0)";
+                }
+            };
+            false
+        }
+        JSXAttributeValue::Fragment(_) => true,
     }
 }
 
