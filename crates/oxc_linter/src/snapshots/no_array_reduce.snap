@@ -25,30 +25,14 @@ expression: no_array_reduce
    ╰────
   help: Refactor your code to use `for` loops instead.
 
-  × Invalid Unicode escape sequence
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                               ─
+  ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
+   ╭─[no_array_reduce.tsx:2:1]
+ 2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduce(hyphenate);
+   ·                             ──────
+ 4 │             
    ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                                 ─
- 3 │             ["a", "b", "c"].reduce(hyphenate);
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                                  ▲
- 3 │             ["a", "b", "c"].reduce(hyphenate);
-   ╰────
-  help: Try insert a semicolon here
+  help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:1]
@@ -196,30 +180,14 @@ expression: no_array_reduce
    ╰────
   help: Refactor your code to use `for` loops instead.
 
-  × Invalid Unicode escape sequence
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                               ─
+  ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
+   ╭─[no_array_reduce.tsx:2:1]
+ 2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduceRight(hyphenate);
+   ·                             ───────────
+ 4 │             
    ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                                 ─
- 3 │             ["a", "b", "c"].reduceRight(hyphenate);
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[no_array_reduce.tsx:1:1]
- 1 │ 
- 2 │             const hyphenate = (str, char) => \`\${str}-\${char}\`;
-   ·                                                  ▲
- 3 │             ["a", "b", "c"].reduceRight(hyphenate);
-   ╰────
-  help: Try insert a semicolon here
+  help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:1]
