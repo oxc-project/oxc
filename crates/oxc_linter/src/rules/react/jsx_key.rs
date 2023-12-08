@@ -135,7 +135,7 @@ fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &Li
 }
 
 fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    let mut key_idx: Option<usize> = None;
+    let mut key_idx_span: Option<(usize, Span)> = None;
     let mut spread_idx: Option<usize> = None;
 
     for (i, attr) in jsx_elem.opening_element.attributes.iter().enumerate() {
@@ -143,19 +143,19 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
             JSXAttributeItem::Attribute(attr) => {
                 let JSXAttributeName::Identifier(ident) = &attr.name else { continue };
                 if ident.name == "key" {
-                    key_idx = Some(i);
+                    key_idx_span = Some((i, attr.name.span()));
                 }
             }
             JSXAttributeItem::SpreadAttribute(_) => spread_idx = Some(i),
         }
-        if key_idx.is_some() && spread_idx.is_some() {
+        if key_idx_span.map(|x| x.0).is_some() && spread_idx.is_some() {
             break;
         }
     }
 
-    if let (Some(key_idx), Some(spread_idx)) = (key_idx, spread_idx) {
+    if let (Some((key_idx, key_span)), Some(spread_idx)) = (key_idx_span, spread_idx) {
         if key_idx > spread_idx {
-            ctx.diagnostic(JsxKeyDiagnostic::KeyPropMustBePlacedBeforeSpread(jsx_elem.span));
+            ctx.diagnostic(JsxKeyDiagnostic::KeyPropMustBePlacedBeforeSpread(key_span));
         }
     }
 }
@@ -462,7 +462,6 @@ fn test() {
                       {list.map(item => (<div>
                         <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />
                         </div>)
-                      
                       )}
                     </div>
                   );

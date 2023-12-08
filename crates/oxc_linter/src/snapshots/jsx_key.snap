@@ -155,14 +155,14 @@ expression: jsx_key
   ⚠ eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`
    ╭─[jsx_key.tsx:1:1]
  1 │ [<App {...obj} key="keyAfterSpread" />];
-   ·  ─────────────────────────────────────
+   ·                ───
    ╰────
   help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
   ⚠ eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`
    ╭─[jsx_key.tsx:1:1]
  1 │ [<div {...obj} key="keyAfterSpread" />];
-   ·  ─────────────────────────────────────
+   ·                ───
    ╰────
   help: To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
