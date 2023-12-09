@@ -65,6 +65,7 @@ pub struct Transformer<'a> {
     es2015_function_name: Option<FunctionName<'a>>,
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
+    es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
 }
 
@@ -101,6 +102,7 @@ impl<'a> Transformer<'a> {
             es2015_function_name: FunctionName::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
+            es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
             // other
             es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
             react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
@@ -189,6 +191,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_object_expression(&mut self, expr: &mut ObjectExpression<'a>) {
         self.es2015_function_name.as_mut().map(|t| t.transform_object_expression(expr));
+        self.es2015_duplicate_keys.as_mut().map(|t| t.transform_object_expression(expr));
 
         for property in expr.properties.iter_mut() {
             self.visit_object_property_kind(property);

@@ -26,6 +26,7 @@ pub struct TransformOptions {
     pub template_literals: bool,
     pub property_literals: bool,
     pub babel_8_breaking: Option<bool>,
+    pub duplicate_keys: bool
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
