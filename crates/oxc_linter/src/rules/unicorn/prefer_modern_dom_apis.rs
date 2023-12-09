@@ -13,7 +13,7 @@ use phf::phf_map;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using {0} over {1}.")]
+#[error("eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{0}` over `{1}`.")]
 #[diagnostic(severity(warning))]
 struct PreferModernDomApisDiagnostic(pub &'static str, Atom, #[label] pub Span);
 
@@ -92,7 +92,7 @@ impl Rule for PreferModernDomApis {
                 ctx.diagnostic(PreferModernDomApisDiagnostic(
                     preferred_method,
                     Atom::from(method),
-                    call_expr.span,
+                    member_expr.property.span,
                 ));
 
                 return;
@@ -112,7 +112,7 @@ impl Rule for PreferModernDomApis {
                         ctx.diagnostic(PreferModernDomApisDiagnostic(
                             replacer,
                             Atom::from(method),
-                            call_expr.span,
+                            member_expr.property.span,
                         ));
                     }
                 }
