@@ -156,29 +156,12 @@ expression: prefer_regexp_test
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
-  × Invalid Unicode escape sequence
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"re\", \"g\"))) {}
-   ·                           ─
+ 1 │ if (foo.match(new RegExp("re", "g"))) {}
+   ·         ─────
    ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"re\", \"g\"))) {}
-   ·                               ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"re\", \"g\"))) {}
-   ·                                   ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"re\", \"g\"))) {}
-   ·                                      ─
-   ╰────
+  help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
@@ -292,29 +275,12 @@ expression: prefer_regexp_test
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
-  × Invalid Unicode escape sequence
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"a\", \"g\")));
-   ·                           ─
+ 1 │ if (foo.match(new RegExp("a", "g")));
+   ·         ─────
    ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"a\", \"g\")));
-   ·                              ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"a\", \"g\")));
-   ·                                  ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (foo.match(new RegExp(\"a\", \"g\")));
-   ·                                     ─
-   ╰────
+  help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
@@ -344,53 +310,19 @@ expression: prefer_regexp_test
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
-  × Invalid Unicode escape sequence
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"g\").exec(foo));
-   ·                 ─
+ 1 │ if (new RegExp("a", "g").exec(foo));
+   ·                          ────
    ╰────
+  help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
-  × Invalid Unicode escape sequence
+  ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"g\").exec(foo));
-   ·                    ─
+ 1 │ if (new RegExp("a", "y").exec(foo));
+   ·                          ────
    ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"g\").exec(foo));
-   ·                        ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"g\").exec(foo));
-   ·                           ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"y\").exec(foo));
-   ·                 ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"y\").exec(foo));
-   ·                    ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"y\").exec(foo));
-   ·                        ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_regexp_test.tsx:1:1]
- 1 │ if (new RegExp(\"a\", \"y\").exec(foo));
-   ·                           ─
-   ╰────
+  help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:1]
