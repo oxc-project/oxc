@@ -31,6 +31,10 @@ impl<'a> DuplicateKeys<'a> {
                 continue;
             };
 
+            if obj_property.computed {
+                continue;
+            }
+
             if let Some(name) = &obj_property.key.static_name() {
                 let mut is_duplicate = false;
 
