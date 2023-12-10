@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, Span, GetSpan};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -42,8 +42,8 @@ declare_oxc_lint!(
 impl Rule for ReactInJsxScope {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let node_span = match node.kind() {
-            AstKind::JSXOpeningElement(v) => v.span,
-            AstKind::JSXFragment(v) => v.span,
+            AstKind::JSXOpeningElement(v) => v.name.span(),
+            AstKind::JSXFragment(v) => v.opening_fragment.span,
             _ => return,
         };
         let scope = ctx.scopes();
