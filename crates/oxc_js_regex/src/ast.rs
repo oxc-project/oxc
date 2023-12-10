@@ -3,6 +3,8 @@
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 
+use crate::ast_kind::AstKind;
+
 /// The type which includes all nodes.
 #[derive(Debug)]
 pub enum Node<'a> {
@@ -42,46 +44,46 @@ pub enum Leaf<'a> {
 /// The type which includes all atom nodes.
 #[derive(Debug)]
 pub enum Element<'a> {
-    Assertion(Box<'a, Assertion<'a>>),
-    QuantifiableElement(Box<'a, QuantifiableElement<'a>>),
-    Quantifier(Box<'a, Quantifier<'a>>),
+    Assertion(Assertion<'a>),
+    QuantifiableElement(QuantifiableElement<'a>),
+    Quantifier(Quantifier<'a>),
 }
 
 /// The type which includes all atom nodes that Quantifier node can have as children.
 #[derive(Debug)]
 pub enum QuantifiableElement<'a> {
-    Backreference(Box<'a, Backreference<'a>>),
-    CapturingGroup(Box<'a, CapturingGroup<'a>>),
-    Character(Box<'a, Character>),
-    CharacterClass(Box<'a, CharacterClass<'a>>),
-    CharacterSet(Box<'a, CharacterSet<'a>>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
-    Group(Box<'a, Group<'a>>),
-    LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
+    Backreference(Backreference<'a>),
+    CapturingGroup(CapturingGroup<'a>),
+    Character(Character),
+    CharacterClass(CharacterClass<'a>),
+    CharacterSet(CharacterSet<'a>),
+    ExpressionCharacterClass(ExpressionCharacterClass<'a>),
+    Group(Group<'a>),
+    LookaheadAssertion(LookaheadAssertion<'a>),
 }
 
 /// The type which includes all character class atom nodes.
 #[derive(Debug)]
 pub enum CharacterClassElement<'a> {
-    ClassRangesCharacterClassElement(Box<'a, ClassRangesCharacterClassElement<'a>>),
-    UnicodeSetsCharacterClassElement(Box<'a, UnicodeSetsCharacterClassElement<'a>>),
+    ClassRangesCharacterClassElement(ClassRangesCharacterClassElement),
+    UnicodeSetsCharacterClassElement(UnicodeSetsCharacterClassElement<'a>),
 }
 #[derive(Debug)]
-pub enum ClassRangesCharacterClassElement<'a> {
-    Character(Box<'a, Character>),
-    CharacterClassRange(Box<'a, CharacterClassRange>),
-    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet>),
-    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+pub enum ClassRangesCharacterClassElement {
+    Character(Character),
+    CharacterClassRange(CharacterClassRange),
+    CharacterUnicodePropertyCharacterSet(CharacterUnicodePropertyCharacterSet),
+    EscapeCharacterSet(EscapeCharacterSet),
 }
 #[derive(Debug)]
 pub enum UnicodeSetsCharacterClassElement<'a> {
-    Character(Box<'a, Character>),
-    CharacterClassRange(Box<'a, CharacterClassRange>),
-    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
-    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
-    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
-    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
+    Character(Character),
+    CharacterClassRange(CharacterClassRange),
+    ClassStringDisjunction(ClassStringDisjunction<'a>),
+    EscapeCharacterSet(EscapeCharacterSet),
+    ExpressionCharacterClass(ExpressionCharacterClass<'a>),
+    UnicodePropertyCharacterSet(UnicodePropertyCharacterSet<'a>),
+    UnicodeSetsCharacterClass(UnicodeSetsCharacterClass<'a>),
 }
 
 /// The root node.
@@ -176,7 +178,7 @@ pub enum CharacterClass<'a> {
 pub struct ClassRangesCharacterClass<'a> {
     pub span: Span,
     pub unicode_sets: bool,
-    pub elements: Vec<'a, ClassRangesCharacterClassElement<'a>>,
+    pub elements: Vec<'a, ClassRangesCharacterClassElement>,
 }
 
 /// The character class used in Unicode sets mode (`v` flag).

@@ -1600,6 +1600,7 @@ name = "oxc_js_regex"
 version = "0.0.0"
 dependencies = [
  "oxc_allocator",
+ "oxc_diagnostics",
  "oxc_span",
 ]
 
