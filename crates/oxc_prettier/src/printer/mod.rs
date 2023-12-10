@@ -122,7 +122,9 @@ impl<'a> Printer<'a> {
     fn handle_group(&mut self, indent: Indent, mode: Mode, doc: Doc<'a>) {
         match mode {
             Mode::Flat => {
-                let Doc::Group(group) = doc else { unreachable!() };
+                let Doc::Group(group) = doc else {
+                    unreachable!();
+                };
                 self.cmds.extend(group.contents.into_iter().rev().map(|doc| {
                     Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
                 }));
@@ -132,15 +134,18 @@ impl<'a> Printer<'a> {
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
                 let remaining_width = self.remaining_width();
-                let Doc::Group(group) = &doc else { unreachable!() };
+                let Doc::Group(group) = &doc else {
+                    unreachable!();
+                };
                 let should_break = group.should_break;
                 let group_id = group.id;
                 let cmd = Command::new(indent, Mode::Flat, doc);
                 if !should_break && self.fits(&cmd, remaining_width) {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));
                 } else {
-                    let Doc::Group(group) = cmd.doc else { unreachable!() };
-
+                    let Doc::Group(group) = cmd.doc else {
+                        unreachable!();
+                    };
                     if let Some(mut expanded_states) = group.expanded_states {
                         let most_expanded = expanded_states.pop().unwrap();
                         if group.should_break {
@@ -449,7 +454,7 @@ impl<'a> Printer<'a> {
                 if !should_break {
                     should_break = check_array(&mut group.contents);
                 }
-                if should_break {
+                if group.expanded_states.is_none() && should_break {
                     group.should_break = should_break;
                 }
                 group.should_break

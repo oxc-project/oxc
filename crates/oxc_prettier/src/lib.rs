@@ -12,6 +12,7 @@ mod macros;
 mod needs_parens;
 mod options;
 mod printer;
+mod utils;
 
 use std::{iter::Peekable, vec};
 
@@ -37,6 +38,12 @@ impl GroupIdBuilder {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct PrettierArgs {
+    expand_first_arg: bool,
+    expand_last_arg: bool,
+}
+
 pub struct Prettier<'a> {
     allocator: &'a Allocator,
 
@@ -52,6 +59,7 @@ pub struct Prettier<'a> {
     nodes: Vec<AstKind<'a>>,
 
     group_id_builder: GroupIdBuilder,
+    args: PrettierArgs,
 }
 
 impl<'a> DocBuilder<'a> for Prettier<'a> {
@@ -75,6 +83,7 @@ impl<'a> Prettier<'a> {
             trivias: trivias.into_iter().peekable(),
             nodes: vec![],
             group_id_builder: GroupIdBuilder::default(),
+            args: PrettierArgs::default(),
         }
     }
 

@@ -1,10 +1,9 @@
-Compatibility: 228/550 (41.45%)
+Compatibility: 231/550 (42.00%)
 
 # Failed
 
 ### arrays
 * arrays/empty.js
-* arrays/numbers-in-args.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
 * arrays/numbers-with-holes.js
@@ -31,7 +30,7 @@ Compatibility: 228/550 (41.45%)
 * arrows/currying-4.js
 * arrows/currying.js
 * arrows/issue-1389-curry.js
-* arrows/long-contents.js
+* arrows/long-call-no-args.js
 * arrows/parens.js
 
 ### arrows/newline-before-arrow
@@ -44,6 +43,7 @@ Compatibility: 228/550 (41.45%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
+* assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
@@ -61,7 +61,6 @@ Compatibility: 228/550 (41.45%)
 * async/conditional-expression.js
 * async/inline-await.js
 * async/nested.js
-* async/nested2.js
 
 ### binary-expressions
 * binary-expressions/arrow.js
@@ -173,7 +172,6 @@ Compatibility: 228/550 (41.45%)
 * comments-closure-typecast/issue-9358.js
 * comments-closure-typecast/member.js
 * comments-closure-typecast/nested.js
-* comments-closure-typecast/non-casts.js
 * comments-closure-typecast/object-with-comment.js
 * comments-closure-typecast/satisfies.js
 * comments-closure-typecast/styled-components.js
@@ -269,8 +267,10 @@ Compatibility: 228/550 (41.45%)
 * last-argument-expansion/dangling-comment-in-arrow-function.js
 * last-argument-expansion/edge_case.js
 * last-argument-expansion/embed.js
+* last-argument-expansion/empty-lines.js
 * last-argument-expansion/empty-object.js
-* last-argument-expansion/function-body-in-mode-break.js
+* last-argument-expansion/function-expression-issue-2239.js
+* last-argument-expansion/function-expression.js
 * last-argument-expansion/issue-10708.js
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
@@ -291,7 +291,6 @@ Compatibility: 228/550 (41.45%)
 
 ### method-chain
 * method-chain/bracket_0-1.js
-* method-chain/bracket_0.js
 * method-chain/break-last-call.js
 * method-chain/break-last-member.js
 * method-chain/comment.js
@@ -346,9 +345,6 @@ Compatibility: 228/550 (41.45%)
 * objects/expand.js
 * objects/expression.js
 
-### objects/assignment-expression
-* objects/assignment-expression/object-value.js
-
 ### optional-chaining
 * optional-chaining/chaining.js
 * optional-chaining/comments.js
@@ -361,7 +357,6 @@ Compatibility: 228/550 (41.45%)
 
 ### performance
 * performance/nested-real.js
-* performance/nested.js
 
 ### preserve-line
 * preserve-line/argument-list.js

@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    doc::{Doc, DocBuilder},
+    doc::{Doc, DocBuilder, Group},
     hardline, if_break, indent, line, softline, ss, Format, Prettier,
 };
 
@@ -105,7 +105,11 @@ pub(super) fn print_function_parameters<'a>(
         parts.push(ss!(")"));
     }
 
-    Doc::Array(parts)
+    if p.args.expand_first_arg {
+        Doc::Group(Group::new(parts, false))
+    } else {
+        Doc::Array(parts)
+    }
 }
 
 pub(super) fn should_group_function_parameters(func: &Function) -> bool {
