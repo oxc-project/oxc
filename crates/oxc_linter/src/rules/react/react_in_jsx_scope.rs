@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -46,12 +46,15 @@ impl Rule for ReactInJsxScope {
             AstKind::JSXFragment(v) => v.span,
             _ => return,
         };
-
         let scope = ctx.scopes();
+        let react_name: &Atom = &Atom::from("React");
+        if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
+            return;
+        }
 
         if !scope
             .ancestors(node.scope_id())
-            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k.as_str() == "React"))
+            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k == react_name))
         {
             ctx.diagnostic(ReactInJsxScopeDiagnostic(node_span));
         }
