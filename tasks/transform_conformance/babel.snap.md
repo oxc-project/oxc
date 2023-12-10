@@ -1,4 +1,4 @@
-Passed: 270/1103
+Passed: 277/1111
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -771,6 +771,9 @@ Passed: 270/1103
 * default/template-revision/input.js
 * loose/ignoreToPrimitiveHint/input.js
 * loose/mutableTemplateObject/input.js
+
+# babel-plugin-transform-duplicate-keys (7/8)
+* combination/dupes/input.js
 
 # babel-plugin-transform-typescript (66/158)
 * class/abstract-class-decorated/input.ts

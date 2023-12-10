@@ -111,6 +111,7 @@ pub trait TestCase {
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
             template_literals: options.get_plugin("transform-template-literals").is_some(),
             property_literals: options.get_plugin("transform-property-literals").is_some(),
+            duplicate_keys: options.get_plugin("transform-duplicate-keys").is_some(),
         }
     }
 
