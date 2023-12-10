@@ -1,7 +1,9 @@
-use std::rc::Rc;
+#![allow(clippy::similar_names)]
+
+use std::{collections::HashSet, rc::Rc};
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::GetSpan;
+use oxc_span::{Atom, GetSpan};
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -16,11 +18,56 @@ pub struct DuplicateKeys<'a> {
 
 impl<'a> DuplicateKeys<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.shorthand_properties)
-            .then(|| Self { ast })
+        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then(|| Self { ast })
     }
 
-    pub fn transform_object_expression<'b>(&mut self, obj_expr: &mut ObjectExpression) {
-        
+    pub fn transform_object_expression<'b>(&mut self, obj_expr: &'b mut ObjectExpression<'a>) {
+        let mut visited_data: HashSet<Atom> = HashSet::new();
+        let mut visited_getters: HashSet<Atom> = HashSet::new();
+        let mut visited_setters: HashSet<Atom> = HashSet::new();
+
+        for property in obj_expr.properties.iter_mut() {
+            let ObjectPropertyKind::ObjectProperty(obj_property) = property else {
+                continue;
+            };
+
+            if let Some(name) = &obj_property.key.static_name() {
+                let mut is_duplicate = false;
+
+                match obj_property.kind {
+                    PropertyKind::Get => {
+                        if visited_data.contains(name) || visited_getters.contains(name) {
+                            is_duplicate = true;
+                        }
+                        visited_getters.insert(name.clone());
+                    }
+                    PropertyKind::Set => {
+                        if visited_data.contains(name) || visited_setters.contains(name) {
+                            is_duplicate = true;
+                        }
+                        visited_setters.insert(name.clone());
+                    }
+                    PropertyKind::Init => {
+                        if visited_data.contains(name)
+                            || visited_setters.contains(name)
+                            || visited_getters.contains(name)
+                        {
+                            is_duplicate = true;
+                        }
+                        visited_data.insert(name.clone());
+                    }
+                }
+
+                if is_duplicate {
+                    obj_property.computed = true;
+
+                    let str_expr = self.ast.literal_string_expression(StringLiteral {
+                        span: obj_property.key.span(),
+                        value: name.as_str().into(),
+                    });
+                    obj_property.key = PropertyKey::Expression(str_expr);
+                }
+            }
+        }
     }
 }

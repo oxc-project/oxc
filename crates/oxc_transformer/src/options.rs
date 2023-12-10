@@ -20,13 +20,13 @@ pub struct TransformOptions {
     // es2016
     pub exponentiation_operator: bool,
     // es2015
+    pub duplicate_keys: bool,
     pub function_name: bool,
     pub shorthand_properties: bool,
     pub sticky_regex: bool,
     pub template_literals: bool,
     pub property_literals: bool,
     pub babel_8_breaking: Option<bool>,
-    pub duplicate_keys: bool
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
