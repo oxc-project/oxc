@@ -3,7 +3,7 @@
 use std::{collections::HashSet, rc::Rc};
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, GetSpan};
+use oxc_span::{Atom, SPAN};
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -60,12 +60,9 @@ impl<'a> DuplicateKeys<'a> {
 
                 if is_duplicate {
                     obj_property.computed = true;
-
-                    let str_expr = self.ast.literal_string_expression(StringLiteral {
-                        span: obj_property.key.span(),
-                        value: name.as_str().into(),
-                    });
-                    obj_property.key = PropertyKey::Expression(str_expr);
+                    let string_literal = StringLiteral::new(SPAN, name.as_str().into());
+                    let expr = self.ast.literal_string_expression(string_literal);
+                    obj_property.key = PropertyKey::Expression(expr);
                 }
             }
         }
