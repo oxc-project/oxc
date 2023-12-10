@@ -187,6 +187,7 @@ mod unicorn {
     pub mod number_literal_case;
     pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
+    pub mod prefer_array_flat;
     pub mod prefer_array_flat_map;
     pub mod prefer_array_some;
     pub mod prefer_blob_reading_methods;
@@ -384,6 +385,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
+    unicorn::prefer_array_flat,
     unicorn::prefer_array_some,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,

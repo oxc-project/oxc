@@ -64,7 +64,7 @@ impl Rule for NoArrayReduce {
             return;
         };
 
-        let Some(member_expr) = (call_expr).callee.get_member_expr() else {
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
             return;
         };
 
