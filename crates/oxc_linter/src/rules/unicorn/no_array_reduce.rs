@@ -343,7 +343,7 @@ fn test() {
         (r"array.reduce((obj, item) => ({ [item]: null }), {})", None),
         (
             r#"
-			const hyphenate = (str, char) => \`\${str}-\${char}\`;
+			const hyphenate = (str, char) => `${str}-${char}`;
 			["a", "b", "c"].reduce(hyphenate);
 			"#,
             None,
@@ -414,7 +414,7 @@ fn test() {
         (r"array.reduceRight((obj, item) => ({ [item]: null }), {})", None),
         (
             r#"
-			const hyphenate = (str, char) => \`\${str}-\${char}\`;
+			const hyphenate = (str, char) => `${str}-${char}`;
 			["a", "b", "c"].reduceRight(hyphenate);
 			"#,
             None,
