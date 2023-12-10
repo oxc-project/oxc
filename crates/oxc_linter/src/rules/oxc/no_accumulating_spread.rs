@@ -10,19 +10,33 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::{call_expr_method_callee_info, is_method_call},
+    context::LintContext,
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoAccumulatingSpreadDiagnostic {
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyArray(#[label] Span),
+    LikelyArray(
+        #[label("The accumulator is spread here.")] Span,
+        #[label("From a reduce call here.")] Span,
+    ),
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyObject(#[label] Span),
+    LikelyObject(
+        #[label("The accumulator is spread here.")] Span,
+        #[label("From a reduce call here.")] Span,
+    ),
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    Unknown(#[label] Span),
+    Unknown(
+        #[label("The accumulator is spread here.")] Span,
+        #[label("From a reduce call here.")] Span,
+    ),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -119,7 +133,13 @@ impl Rule for NoAccumulatingSpread {
     }
 }
 
-fn get_diagnostic(call_expr: &CallExpression, spread_span: Span) -> NoAccumulatingSpreadDiagnostic {
+fn get_diagnostic<'a>(
+    call_expr: &'a CallExpression<'a>,
+    spread_span: Span,
+) -> NoAccumulatingSpreadDiagnostic {
+    // unwrap is safe because we already checked that this is a reduce call
+    let (reduce_call_span, _) = call_expr_method_callee_info(call_expr).unwrap();
+
     if let Some(Argument::Expression(second_arg)) = call_expr.arguments.get(1) {
         let second_arg = second_arg.without_parenthesized();
         let second_arg =
@@ -130,13 +150,13 @@ fn get_diagnostic(call_expr: &CallExpression, spread_span: Span) -> NoAccumulati
             };
 
         if matches!(second_arg, Expression::ObjectExpression(_)) {
-            return NoAccumulatingSpreadDiagnostic::LikelyObject(spread_span);
+            return NoAccumulatingSpreadDiagnostic::LikelyObject(spread_span, reduce_call_span);
         } else if matches!(second_arg, Expression::ArrayExpression(_)) {
-            return NoAccumulatingSpreadDiagnostic::LikelyArray(spread_span);
+            return NoAccumulatingSpreadDiagnostic::LikelyArray(spread_span, reduce_call_span);
         }
     }
 
-    NoAccumulatingSpreadDiagnostic::Unknown(spread_span)
+    NoAccumulatingSpreadDiagnostic::Unknown(spread_span, reduce_call_span)
 }
 
 fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
