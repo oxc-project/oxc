@@ -1,7 +1,10 @@
 mod boolean;
 pub use self::boolean::*;
 use oxc_ast::{
-    ast::{Expression, LogicalExpression, MemberExpression, Statement},
+    ast::{
+        BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
+        MemberExpression, Statement,
+    },
     AstKind,
 };
 use oxc_semantic::AstNode;
@@ -61,13 +64,7 @@ pub fn is_prototype_property(
 
     match object {
         // `[].method`
-        Some("Array") => {
-            if let Expression::ArrayExpression(array_expr) = member_expr.object() {
-                array_expr.elements.len() == 0
-            } else {
-                false
-            }
-        }
+        Some("Array") => is_empty_array_expression(member_expr.object()),
 
         // `{}.method`
         Some("Object") => {
@@ -81,6 +78,14 @@ pub fn is_prototype_property(
     }
 }
 
+pub fn is_empty_array_expression(expr: &Expression) -> bool {
+    if let Expression::ArrayExpression(array_expr) = expr {
+        array_expr.elements.len() == 0
+    } else {
+        false
+    }
+}
+
 pub fn is_logical_expression(node: &AstNode) -> bool {
     matches!(
         node.kind(),
@@ -89,4 +94,45 @@ pub fn is_logical_expression(node: &AstNode) -> bool {
             ..
         })
     )
+}
+
+// gets the name of the first parameter of a function
+pub fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
+    let first_func_param = arg.items.get(0)?;
+    let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
+    else {
+        return None;
+    };
+    Some(first_func_param.name.as_str())
+}
+
+pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a str> {
+    match body.statements.get(0)? {
+        Statement::BlockStatement(block_stmt) => {
+            let Statement::ReturnStatement(return_stmt) = block_stmt.body.get(0)? else {
+                return None;
+            };
+
+            let Some(Expression::Identifier(ident)) = return_stmt.argument.as_ref() else {
+                return None;
+            };
+
+            Some(ident.name.as_str())
+        }
+        Statement::ReturnStatement(return_stmt) => {
+            let return_expr = return_stmt.argument.as_ref()?;
+            match return_expr {
+                Expression::Identifier(ident) => Some(ident.name.as_str()),
+                _ => None,
+            }
+        }
+        Statement::ExpressionStatement(expr_stmt) => {
+            let Expression::Identifier(ident) = &expr_stmt.expression else {
+                return None;
+            };
+
+            Some(ident.name.as_str())
+        }
+        _ => None,
+    }
 }
