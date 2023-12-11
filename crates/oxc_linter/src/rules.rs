@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod default;
+    pub mod export;
     pub mod named;
     pub mod no_amd;
     pub mod no_cycle;
@@ -434,6 +435,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_cycle,
     import::no_self_import,
     import::no_amd,
+    import::export,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
