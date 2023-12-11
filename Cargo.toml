@@ -86,7 +86,7 @@ oxc_prettier       = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editors/vscode/server" }
 
-bpaf                      = { version = "0.9.6" }
+bpaf                      = { version = "0.9.8" }
 bitflags                  = { version = "2.4.1" }
 bumpalo                   = { version = "3.14.0" }
 compact_str               = { version = "0.7.1" }
