@@ -49,12 +49,12 @@ struct Options {
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;
-        let value = params.initialization_options.and_then(|mut value| {
+        let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
         });
 
-        if let Some(value) = value {
+        if let Some(value) = options {
             debug!("initialize: {:?}", value);
             *self.options.lock().await = value;
         }
@@ -87,14 +87,14 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let options = match serde_json::from_value::<Options>(params.settings) {
+        let changed_options = match serde_json::from_value::<Options>(params.settings) {
             Ok(option) => option,
             Err(err) => {
                 error!("error parsing settings: {:?}", err);
                 return;
             }
         };
-        *self.options.lock().await = options;
+        *self.options.lock().await = changed_options;
     }
 
     async fn initialized(&self, params: InitializedParams) {
