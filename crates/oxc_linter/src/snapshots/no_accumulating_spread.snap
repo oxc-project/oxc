@@ -6,8 +6,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})
    ·                  ───┬──                  ───┬──
-   ·                     │                       ╰── The accumulator is spread here.
-   ·                     ╰── From a reduce call here.
+   ·                     │                       ╰── From this spread
+   ·                     ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -16,8 +16,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), ({} as foo))
    ·                  ───┬──                  ───┬──
-   ·                     │                       ╰── The accumulator is spread here.
-   ·                     ╰── From a reduce call here.
+   ·                     │                       ╰── From this spread
+   ·                     ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -26,8 +26,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), foo)
    ·                  ───┬──                  ───┬──
-   ·                     │                       ╰── The accumulator is spread here.
-   ·                     ╰── From a reduce call here.
+   ·                     │                       ╰── From this spread
+   ·                     ╰── For this reduce
    ╰────
   help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -36,8 +36,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·     ───┬──                ───┬──
-   ·        │                     ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                     ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -46,8 +46,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ arr.reduce((differentName, x) => ({ ...differentName, [x]: x }), {})
    ·     ───┬──                          ────────┬───────
-   ·        │                                    ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                                    ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -56,8 +56,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·         ───┬──                ───┬──
-   ·            │                     ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                     ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -66,8 +66,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({} as baz)))
    ·         ───┬──                ───┬──
-   ·            │                     ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                     ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -76,8 +76,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({})))
    ·         ───┬──                ───┬──
-   ·            │                     ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                     ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -86,8 +86,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), [])
    ·         ───┬──              ───┬──
-   ·            │                   ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                   ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -96,8 +96,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), ([]))
    ·         ───┬──              ───┬──
-   ·            │                   ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                   ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -106,8 +106,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), ([] as foo))
    ·         ───┬──              ───┬──
-   ·            │                   ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                   ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -116,8 +116,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), (([]) as foo))
    ·         ───┬──              ───┬──
-   ·            │                   ╰── The accumulator is spread here.
-   ·            ╰── From a reduce call here.
+   ·            │                   ╰── From this spread
+   ·            ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -126,8 +126,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ get_array().reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·             ───┬──                ───┬──
-   ·                │                     ╰── The accumulator is spread here.
-   ·                ╰── From a reduce call here.
+   ·                │                     ╰── From this spread
+   ·                ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -136,8 +136,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ arr.reduce(function (acc, x) { return { ...acc, [x]: x } }, {})
    ·     ───┬──                              ───┬──
-   ·        │                                   ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                                   ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -146,10 +146,10 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ arr.reduce((acc, x) => {
    ·     ───┬──
-   ·        ╰── From a reduce call here.
+   ·        ╰── For this reduce
  2 │             let temp = { ...acc, x }
    ·                          ───┬──
-   ·                             ╰── The accumulator is spread here.
+   ·                             ╰── From this spread
  3 │             return temp
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
@@ -159,8 +159,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => [...acc, bar], [])
    ·     ───┬──                ───┬──
-   ·        │                     ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                     ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -169,8 +169,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => [...acc, bar], [])
    ·     ─────┬─────                ───┬──
-   ·          │                        ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                        ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -179,8 +179,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => {return [...acc, bar];}, [])
    ·     ───┬──                        ───┬──
-   ·        │                             ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                             ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -189,8 +189,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => {return [...acc, bar];}, [])
    ·     ─────┬─────                        ───┬──
-   ·          │                                ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                                ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -199,8 +199,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => [...acc, ...bar], [])
    ·     ───┬──                ───┬──
-   ·        │                     ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                     ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -209,8 +209,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => [...acc, ...bar], [])
    ·     ─────┬─────                ───┬──
-   ·          │                        ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                        ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -219,8 +219,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => {return [...acc, ...bar];}, [])
    ·     ───┬──                        ───┬──
-   ·        │                             ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                             ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -229,8 +229,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => {return [...acc, ...bar];}, [])
    ·     ─────┬─────                        ───┬──
-   ·          │                                ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                                ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -239,8 +239,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => ({...acc, [bar.key]: bar.value}), {})
    ·     ───┬──                 ───┬──
-   ·        │                      ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                      ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -249,8 +249,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => ({...acc, [bar.key]: bar.value}), {})
    ·     ─────┬─────                 ───┬──
-   ·          │                         ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                         ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -259,8 +259,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})
    ·     ───┬──                        ───┬──
-   ·        │                             ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                             ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -269,8 +269,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})
    ·     ─────┬─────                        ───┬──
-   ·          │                                ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                                ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -279,8 +279,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => ({...acc, ...bar}), {})
    ·     ───┬──                 ───┬──
-   ·        │                      ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                      ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -289,8 +289,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => ({...acc, ...bar}), {})
    ·     ─────┬─────                 ───┬──
-   ·          │                         ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                         ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -299,8 +299,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduce((acc, bar) => {return {...acc, ...bar};}, {})
    ·     ───┬──                        ───┬──
-   ·        │                             ╰── The accumulator is spread here.
-   ·        ╰── From a reduce call here.
+   ·        │                             ╰── From this spread
+   ·        ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
@@ -309,8 +309,8 @@ expression: no_accumulating_spread
    ╭─[no_accumulating_spread.tsx:1:1]
  1 │ foo.reduceRight((acc, bar) => {return {...acc, ...bar};}, {})
    ·     ─────┬─────                        ───┬──
-   ·          │                                ╰── The accumulator is spread here.
-   ·          ╰── From a reduce call here.
+   ·          │                                ╰── From this spread
+   ·          ╰── For this reduce
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.

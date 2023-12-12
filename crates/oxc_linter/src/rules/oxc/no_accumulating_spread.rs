@@ -21,22 +21,13 @@ use crate::{
 enum NoAccumulatingSpreadDiagnostic {
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyArray(
-        #[label("The accumulator is spread here.")] Span,
-        #[label("From a reduce call here.")] Span,
-    ),
+    LikelyArray(#[label("From this spread")] Span, #[label("For this reduce")] Span),
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyObject(
-        #[label("The accumulator is spread here.")] Span,
-        #[label("From a reduce call here.")] Span,
-    ),
+    LikelyObject(#[label("From this spread")] Span, #[label("For this reduce")] Span),
     #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
     #[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    Unknown(
-        #[label("The accumulator is spread here.")] Span,
-        #[label("From a reduce call here.")] Span,
-    ),
+    Unknown(#[label("From this spread")] Span, #[label("For this reduce")] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,7 +53,7 @@ declare_oxc_lint!(
     /// function fn (x) {
     ///   // ...
     /// }
-    ///   
+    ///
     /// arr.reduce((acc, x) => acc.push(fn(x)), [])
     /// Object.keys(obj).reduce((acc, el) => {
     ///   acc[el] = fn(el)
