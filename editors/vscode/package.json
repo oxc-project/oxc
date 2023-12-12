@@ -57,6 +57,16 @@
       "type": "object",
       "title": "oxc",
       "properties": {
+        "oxc-client.run": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "onSave",
+            "onType"
+          ],
+          "default": "onType",
+          "description": "Run the linter on save (onSave) or on type (onType)"
+        },
         "oxc-client.trace.server": {
           "type": "string",
           "scope": "window",
