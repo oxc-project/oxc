@@ -89,7 +89,6 @@ export async function activate(context: ExtensionContext) {
   // Otherwise the run options are used
   // Options to control the language client
   let clientConfig: any = JSON.parse(JSON.stringify(workspace.getConfiguration('oxc-client')));
-  delete clientConfig['trace']
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [

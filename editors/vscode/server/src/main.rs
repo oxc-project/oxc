@@ -54,13 +54,9 @@ impl LanguageServer for Backend {
             serde_json::from_value::<Options>(settings).ok()
         });
 
-        debug!("initialize: {:?}", value);
-        match value {
-            Some(value) => {
-                debug!("{:?}", value);
-                *self.options.lock().await = value;
-            }
-            None => {}
+        if let Some(value) = value {
+            debug!("initialize: {:?}", value);
+            *self.options.lock().await = value;
         }
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
@@ -98,9 +94,7 @@ impl LanguageServer for Backend {
                 return;
             }
         };
-        let mut cur_options = self.options.lock().await;
-        *cur_options = options;
-        debug!("Successfully change configuration {:?}", &cur_options)
+        *self.options.lock().await = options;
     }
 
     async fn initialized(&self, params: InitializedParams) {
