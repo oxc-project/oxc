@@ -1,34 +1,43 @@
 A-ast:
-  - crates/oxc_ast/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_ast/**']
 
 A-cli:
-  - crates/oxc_cli/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_cli/**']
 
 A-prettier:
-  - crates/oxc_prettier/**
-  - tasks/prettier_conformance/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_prettier/**', 'tasks/prettier_conformance/**']
 
 A-transformer:
-  - crates/oxc_transformer/**
-  - tasks/transform_conformance/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_transformer/**', 'tasks/transform_conformance/**']
 
 A-linter:
-  - crates/oxc_linter/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_linter/**']
 
 A-minifier:
-  - crates/oxc_minifier/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_minifier/**']
 
 A-parser:
-  - crates/oxc_parser/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_parser/**']
 
 A-codegen:
-  - crates/oxc_codegen/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_codegen/**']
 
 A-semantic:
-  - crates/oxc_semantic/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_semantic/**']
 
 A-resolver:
-  - crates/oxc_resolver/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_resolver/**']
 
 A-type-checking:
-  - crates/oxc_type_synthesis/**
+- changed-files:
+  - any-glob-to-any-file: ['crates/oxc_type_synthesis/**']
