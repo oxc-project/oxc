@@ -10,9 +10,9 @@ use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`"
+    "eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`."
 )]
-#[diagnostic(severity(warning), help("There are some advantages of using `.textContent`, like performance and more predictable behavior when updating it."))]
+#[diagnostic(severity(warning), help("Replace `.innerText` with `.textContent`."))]
 struct PreferDomNodeTextContentDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,
-    correctness
+    style
 );
 
 impl Rule for PreferDomNodeTextContent {
@@ -60,20 +60,15 @@ impl Rule for PreferDomNodeTextContent {
             return;
         };
 
-        if let AstKind::IdentifierName(identifier) = node.kind() {
-            // const {innerText} = node
-            if identifier.name == "innerText"
-                && matches!(parent_node.kind(), AstKind::PropertyKey(_))
-                && matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
-            {
-                ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier.span));
-                return;
-            }
+        let parent_node_kind = parent_node.kind();
+        let grand_parent_node_kind = grand_parent_node.kind();
 
-            // ({innerText: text} = node)
+        // `const {innerText} = node` or `({innerText: text} = node)`
+        if let AstKind::IdentifierName(identifier) = node.kind() {
             if identifier.name == "innerText"
-                && matches!(parent_node.kind(), AstKind::PropertyKey(_))
-                && matches!(grand_parent_node.kind(), AstKind::AssignmentTarget(_))
+                && matches!(parent_node_kind, AstKind::PropertyKey(_))
+                && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
+                    || matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)))
             {
                 ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier.span));
                 return;
@@ -83,8 +78,8 @@ impl Rule for PreferDomNodeTextContent {
         // ({innerText} = node)
         if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
             if identifier_ref.name == "innerText"
-                && matches!(parent_node.kind(), AstKind::AssignmentTarget(_))
-                && matches!(grand_parent_node.kind(), AstKind::AssignmentExpression(_))
+                && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
+                && matches!(grand_parent_node_kind, AstKind::AssignmentExpression(_))
             {
                 ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier_ref.span));
             }
