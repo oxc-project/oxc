@@ -75,7 +75,7 @@ impl Rule for PreferDomNodeTextContent {
             }
         }
 
-        // ({innerText} = node)
+        // `({innerText} = node)`
         if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
             if identifier_ref.name == "innerText"
                 && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
