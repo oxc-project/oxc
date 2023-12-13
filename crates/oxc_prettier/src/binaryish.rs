@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
@@ -34,6 +35,12 @@ impl<'a, 'b> BinaryishLeft<'a, 'b> {
                 Some(BinaryishOperator::LogicalOperator(e.operator))
             }
             _ => None,
+        }
+    }
+    pub fn span(&self) -> Span {
+        match self {
+            Self::Expression(e) => e.span(),
+            Self::PrivateIdentifier(e) => e.span,
         }
     }
 }
