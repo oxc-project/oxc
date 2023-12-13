@@ -1,4 +1,4 @@
-import { ExtensionContext, window, commands, workspace, StatusBarItem, StatusBarAlignment, ConfigurationTarget } from "vscode";
+import { ExtensionContext, window, commands, workspace, StatusBarItem, StatusBarAlignment, ConfigurationTarget, ThemeColor } from "vscode";
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
@@ -118,8 +118,9 @@ export async function activate(context: ExtensionContext) {
       context.subscriptions.push(myStatusBarItem);
       myStatusBarItem.show()
     }
+    let bgColor = new ThemeColor(enable ?  "statusBarItem.activeBackground" : "statusBarItem.errorBackground")
     myStatusBarItem.text = `oxc: ${enable ? "on" : "off"}`;
-    console.log(myStatusBarItem.text)
+    myStatusBarItem.backgroundColor = bgColor
   }
   updateStatsBar(clientConfig.enable);
   client.start();
