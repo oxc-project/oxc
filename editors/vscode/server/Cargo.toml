@@ -37,3 +37,5 @@ ropey             = { workspace = true }
 tokio             = { workspace = true, features = ["full"] }
 tower-lsp         = { workspace = true, features = ["proposed"] }
 log = "0.4.20"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }

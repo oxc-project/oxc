@@ -1956,6 +1956,8 @@ dependencies = [
  "oxc_span",
  "rayon",
  "ropey",
+ "serde",
+ "serde_json",
  "tokio",
  "tower-lsp",
 ]

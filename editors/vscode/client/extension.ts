@@ -88,6 +88,7 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
+  let clientConfig: any = JSON.parse(JSON.stringify(workspace.getConfiguration('oxc-client')));
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
@@ -96,10 +97,12 @@ export async function activate(context: ExtensionContext) {
       "typescriptreact",
       "javascriptreact",
     ].map(lang => ({ language: lang, scheme: "file" })),
-
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+    },
+    initializationOptions: {
+      settings: clientConfig
     },
     outputChannel,
     traceOutputChannel,
@@ -107,6 +110,15 @@ export async function activate(context: ExtensionContext) {
 
   // Create the language client and start the client.
   client = new LanguageClient(languageClientId, languageClientName, serverOptions, clientOptions);
+  workspace.onDidChangeConfiguration((e) => {
+    let settings: any = {};
+    if (e.affectsConfiguration("oxc-client.run")) {
+      settings.run = workspace.getConfiguration('oxc-client').get("run")
+    }
+    client.sendNotification("workspace/didChangeConfiguration", {
+      settings
+    })
+  })
 
   client.start();
 }

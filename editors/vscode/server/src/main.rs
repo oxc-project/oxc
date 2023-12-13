@@ -4,21 +4,24 @@ mod options;
 mod walk;
 
 use crate::linter::{DiagnosticReport, ServerLinter};
-use log::debug;
+use log::{debug, error};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
 use dashmap::DashMap;
 use futures::future::join_all;
-use tokio::sync::{OnceCell, SetError};
+use tokio::sync::{Mutex, OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-    CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeTextDocumentParams,
-    DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-    InitializedParams, MessageType, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+    CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeConfigurationParams,
+    DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+    InitializeParams, InitializeResult, InitializedParams, MessageType, OneOf, Registration,
+    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
+    Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -28,13 +31,33 @@ struct Backend {
     root_uri: OnceCell<Option<Url>>,
     server_linter: ServerLinter,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
+    options: Mutex<Options>,
+}
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+enum Run {
+    OnSave,
+    #[default]
+    OnType,
+}
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+struct Options {
+    run: Run,
 }
 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;
+        let options = params.initialization_options.and_then(|mut value| {
+            let settings = value.get_mut("settings")?.take();
+            serde_json::from_value::<Options>(settings).ok()
+        });
 
+        if let Some(value) = options {
+            debug!("initialize: {:?}", value);
+            *self.options.lock().await = value;
+        }
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
             offset_encoding: None,
@@ -42,6 +65,13 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
+                workspace: Some(WorkspaceServerCapabilities {
+                    workspace_folders: Some(WorkspaceFoldersServerCapabilities {
+                        supported: Some(true),
+                        change_notifications: Some(OneOf::Left(true)),
+                    }),
+                    file_operations: None,
+                }),
                 code_action_provider: Some(CodeActionProviderCapability::Options(
                     CodeActionOptions {
                         code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
@@ -56,7 +86,18 @@ impl LanguageServer for Backend {
         })
     }
 
-    async fn initialized(&self, _: InitializedParams) {
+    async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+        let changed_options = match serde_json::from_value::<Options>(params.settings) {
+            Ok(option) => option,
+            Err(err) => {
+                error!("error parsing settings: {:?}", err);
+                return;
+            }
+        };
+        *self.options.lock().await = changed_options;
+    }
+
+    async fn initialized(&self, params: InitializedParams) {
         debug!("oxc initialized.");
 
         if let Some(Some(root_uri)) = self.root_uri.get() {
@@ -79,12 +120,21 @@ impl LanguageServer for Backend {
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
+        // drop as fast as possible
+        let options = { self.options.lock().await.run };
+        if options < Run::OnSave {
+            return;
+        }
         self.handle_file_update(params.text_document.uri, None).await;
     }
 
     /// When the document changed, it may not be written to disk, so we should
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let options = { self.options.lock().await.run };
+        if options < Run::OnType {
+            return;
+        }
         let content = params.content_changes.first().map(|c| c.text.clone());
         self.handle_file_update(params.text_document.uri, content).await;
     }
@@ -192,6 +242,7 @@ async fn main() {
         root_uri: OnceCell::new(),
         server_linter,
         diagnostics_report_map,
+        options: tokio::sync::Mutex::new(Options::default()),
     })
     .finish();
 
