@@ -43,6 +43,27 @@ enum Run {
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct Options {
     run: Run,
+    enable: bool,
+}
+
+impl Options {
+    fn get_lint_level(&self) -> SyntheticRunLevel {
+        if self.enable {
+            match self.run {
+                Run::OnSave => SyntheticRunLevel::OnSave,
+                Run::OnType => SyntheticRunLevel::OnType,
+            }
+        } else {
+            SyntheticRunLevel::Disable
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+enum SyntheticRunLevel {
+    Disable,
+    OnSave,
+    OnType,
 }
 
 #[tower_lsp::async_trait]
@@ -94,6 +115,10 @@ impl LanguageServer for Backend {
                 return;
             }
         };
+        if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
+            // clear all exists diagnostics
+            self.publish_all_diagnostics(&vec![]).await;
+        }
         *self.options.lock().await = changed_options;
     }
 
@@ -121,8 +146,8 @@ impl LanguageServer for Backend {
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         // drop as fast as possible
-        let options = { self.options.lock().await.run };
-        if options < Run::OnSave {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnSave {
             return;
         }
         self.handle_file_update(params.text_document.uri, None).await;
@@ -131,8 +156,8 @@ impl LanguageServer for Backend {
     /// When the document changed, it may not be written to disk, so we should
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let options = { self.options.lock().await.run };
-        if options < Run::OnType {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnType {
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -140,6 +165,10 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnType {
+            return;
+        }
         self.handle_file_update(params.text_document.uri, None).await;
     }
 

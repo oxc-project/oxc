@@ -111,10 +111,7 @@ export async function activate(context: ExtensionContext) {
   // Create the language client and start the client.
   client = new LanguageClient(languageClientId, languageClientName, serverOptions, clientOptions);
   workspace.onDidChangeConfiguration((e) => {
-    let settings: any = {};
-    if (e.affectsConfiguration("oxc-client.run")) {
-      settings.run = workspace.getConfiguration('oxc-client').get("run")
-    }
+    let settings: any = JSON.parse(JSON.stringify(workspace.getConfiguration('oxc-client')));
     client.sendNotification("workspace/didChangeConfiguration", {
       settings
     })
