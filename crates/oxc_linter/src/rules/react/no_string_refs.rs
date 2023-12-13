@@ -121,7 +121,7 @@ impl Rule for NoStringRefs {
                 if matches!(member_expr.object(), Expression::ThisExpression(_))
                     && member_expr.static_property_name() == Some("refs")
                     && (get_parent_es5_component(node, ctx).is_some()
-                        || get_parent_es6_component(node, ctx).is_some())
+                        || get_parent_es6_component(ctx).is_some())
                 {
                     ctx.diagnostic(NoStringRefsDiagnostic::ThisRefsDeprecated(member_expr.span()));
                 }
