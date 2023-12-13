@@ -74,6 +74,7 @@ const CASES: &[&str] = &[
     // ES2016
     "babel-plugin-transform-exponentiation-operator",
     // ES2015
+    "babel-plugin-transform-arrow-functions",
     "babel-plugin-transform-shorthand-properties",
     "babel-plugin-transform-sticky-regex",
     "babel-plugin-transform-unicode-regex",

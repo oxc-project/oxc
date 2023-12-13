@@ -40,6 +40,7 @@ use crate::{
 };
 
 pub use crate::{
+    es2015::ArrowFunctionsOptions,
     es2020::NullishCoalescingOperatorOptions,
     options::{TransformOptions, TransformTarget},
     react_jsx::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption},
@@ -63,6 +64,7 @@ pub struct Transformer<'a> {
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
     es2015_function_name: Option<FunctionName<'a>>,
+    es2015_arrow_functions: Option<ArrowFunctions<'a>>,
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
@@ -100,6 +102,7 @@ impl<'a> Transformer<'a> {
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2015
             es2015_function_name: FunctionName::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2015_arrow_functions: ArrowFunctions::new(Rc::clone(&ast), ctx.clone(), &options),
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
@@ -155,6 +158,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.add_vars_to_statements(stmts));
+        self.es2015_arrow_functions.as_mut().map(|t| t.transform_statements(stmts));
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
@@ -174,6 +178,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_arrow_functions.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
 
