@@ -181,7 +181,7 @@ fn test() {
         "[].forEach.call(foo, () => {})",
         "const push = [].push.bind(foo)",
         "const foo = [][method].call(foo)",
-        r#"const method = "realMethodName";const foo = [][method].call(foo)"#, // todo
+        r#"const method = "realMethodName";const foo = [][method].call(foo)"#, // TODO: Improve error message for this case.
         "const array = Reflect.apply([].slice, foo, [])",
         "Reflect.apply([].bar, baz, [])",
         "const foo = ({}).toString.call(bar);",
@@ -193,7 +193,7 @@ fn test() {
         r#"Reflect.apply({}[Symbol("symbol description")], baz, [])"#,
         "Reflect.apply([][Symbol()], baz, [])",
         r#"Reflect.apply({}[Symbol("symbol description")], baz, [])"#,
-        "[][Symbol.iterator].call(foo)",
+        "[][Symbol.iterator].call(foo)", // TODO: Improve error message for this case.
         "const foo = [].at.call(bar)",
         "const foo = [].findLast.call(bar)",
     ];
