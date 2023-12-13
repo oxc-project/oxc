@@ -16,6 +16,7 @@ use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
+use serde_json::Value;
 
 use crate::{Fixer, LintContext, LintOptions, Linter, Message};
 
@@ -63,6 +64,7 @@ impl LintService {
         source_text: &'a str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
+        settings: &Option<Value>,
     ) -> Vec<Message<'a>> {
         self.runtime
             .paths
@@ -77,6 +79,7 @@ impl LintService {
                     source_type,
                     check_syntax_errors,
                     tx_error,
+                    settings.clone(),
                 )
             })
             .collect::<Vec<_>>()
@@ -154,7 +157,7 @@ impl Runtime {
         };
 
         let mut messages =
-            self.process_source(path, &allocator, &source_text, source_type, true, tx_error);
+            self.process_source(path, &allocator, &source_text, source_type, true, tx_error, None);
 
         if self.linter.options().fix {
             let fix_result = Fixer::new(&source_text, messages).fix();
@@ -170,6 +173,7 @@ impl Runtime {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn process_source<'a>(
         &self,
         path: &Path,
@@ -178,6 +182,7 @@ impl Runtime {
         source_type: SourceType,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
+        settings: Option<Value>,
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
             .allow_return_outside_function(true)
@@ -234,8 +239,11 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
+        let lint_ctx = LintContext::new(
+            path.to_path_buf().into_boxed_path(),
+            &Rc::new(semantic_ret.semantic),
+            settings,
+        );
         self.linter.run(lint_ctx)
     }
 

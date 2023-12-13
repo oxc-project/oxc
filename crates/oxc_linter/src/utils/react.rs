@@ -7,6 +7,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolFlags};
+use serde_json::Value;
 
 use crate::LintContext;
 
@@ -162,4 +163,24 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
         }
         None
     })
+}
+pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
+    let JSXElementName::Identifier(ident) = &element.name else {
+        return None;
+    };
+
+    let mut element_type = String::from(ident.name.as_str());
+
+    if let Some(Value::Object(obj)) = context.settings() {
+        if let Some(Value::Object(jsx_a11y)) = obj.get("jsx-a11y") {
+            if let Some(Value::Object(components)) = jsx_a11y.get("components") {
+                if let Some(val) = components.get(&element_type) {
+                    let b = val.as_str().unwrap();
+                    element_type = String::from(b);
+                }
+            }
+        };
+    }
+
+    Some(element_type)
 }

@@ -49,7 +49,7 @@ fn run_individual_test(
     let semantic = Rc::new(semantic);
 
     let mut lint_ctx =
-        LintContext::new(PathBuf::from(file_path).into_boxed_path(), &Rc::clone(&semantic));
+        LintContext::new(PathBuf::from(file_path).into_boxed_path(), &Rc::clone(&semantic), None);
 
     let result = plugin.lint_file_with_rule(
         &mut lint_ctx,

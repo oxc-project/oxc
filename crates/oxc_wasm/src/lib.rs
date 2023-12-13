@@ -205,7 +205,7 @@ impl Oxc {
             self.save_diagnostics(semantic_ret.errors);
 
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
+            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic, None);
             let linter_ret = Linter::new().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);

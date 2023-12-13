@@ -20,8 +20,8 @@ enum TestResult {
 pub struct Tester {
     rule_name: &'static str,
     rule_path: PathBuf,
-    expect_pass: Vec<(String, Option<Value>)>,
-    expect_fail: Vec<(String, Option<Value>)>,
+    expect_pass: Vec<(String, Option<Value>, Option<Value>)>,
+    expect_fail: Vec<(String, Option<Value>, Option<Value>)>,
     expect_fix: Vec<(String, String, Option<Value>)>,
     snapshot: String,
     current_working_directory: Box<Path>,
@@ -36,9 +36,27 @@ impl Tester {
         expect_pass: Vec<(S, Option<Value>)>,
         expect_fail: Vec<(S, Option<Value>)>,
     ) -> Self {
+        let expect_pass =
+            expect_pass.into_iter().map(|(s, r)| (s.into(), r, None)).collect::<Vec<_>>();
+        let expect_fail =
+            expect_fail.into_iter().map(|(s, r)| (s.into(), r, None)).collect::<Vec<_>>();
+        Self::new_with_settings(rule_name, expect_pass, expect_fail)
+    }
+
+    pub fn new_with_settings<S: Into<String>>(
+        rule_name: &'static str,
+        expect_pass: Vec<(S, Option<Value>, Option<Value>)>,
+        expect_fail: Vec<(S, Option<Value>, Option<Value>)>,
+    ) -> Self {
         let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
-        let expect_pass = expect_pass.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
-        let expect_fail = expect_fail.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
+        let expect_pass = expect_pass
+            .into_iter()
+            .map(|(s, r, settings)| (s.into(), r, settings))
+            .collect::<Vec<_>>();
+        let expect_fail = expect_fail
+            .into_iter()
+            .map(|(s, r, settings)| (s.into(), r, settings))
+            .collect::<Vec<_>>();
         let current_working_directory =
             env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
         Self {
@@ -60,9 +78,11 @@ impl Tester {
         expect_pass: Vec<S>,
         expect_fail: Vec<S>,
     ) -> Self {
-        let expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
-        let expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
-        Self::new(rule_name, expect_pass, expect_fail)
+        let expect_pass =
+            expect_pass.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+        let expect_fail =
+            expect_fail.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+        Self::new_with_settings(rule_name, expect_pass, expect_fail)
     }
 
     pub fn update_expect_pass_fail<S: Into<String>>(
@@ -70,8 +90,10 @@ impl Tester {
         expect_pass: Vec<S>,
         expect_fail: Vec<S>,
     ) -> Self {
-        self.expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
-        self.expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
+        self.expect_pass =
+            expect_pass.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+        self.expect_fail =
+            expect_fail.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
         self
     }
 
@@ -121,16 +143,16 @@ impl Tester {
     }
 
     fn test_pass(&mut self) {
-        for (test, config) in self.expect_pass.clone() {
-            let result = self.run(&test, config, false);
+        for (test, config, settings) in self.expect_pass.clone() {
+            let result = self.run(&test, config, false, &settings);
             let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {test} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
-        for (test, config) in self.expect_fail.clone() {
-            let result = self.run(&test, config, false);
+        for (test, config, settings) in self.expect_fail.clone() {
+            let result = self.run(&test, config, false, &settings);
             let failed = result == TestResult::Failed;
             assert!(failed, "expect test to fail: {test}");
         }
@@ -138,7 +160,7 @@ impl Tester {
 
     fn test_fix(&mut self) {
         for (test, expected, config) in self.expect_fix.clone() {
-            let result = self.run(&test, config, true);
+            let result = self.run(&test, config, true, &None);
             if let TestResult::Fixed(fixed_str) = result {
                 assert_eq!(expected, fixed_str);
             } else {
@@ -147,7 +169,13 @@ impl Tester {
         }
     }
 
-    fn run(&mut self, source_text: &str, config: Option<Value>, is_fix: bool) -> TestResult {
+    fn run(
+        &mut self,
+        source_text: &str,
+        config: Option<Value>,
+        is_fix: bool,
+        settings: &Option<Value>,
+    ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
         let options = LintOptions::default()
@@ -168,7 +196,7 @@ impl Tester {
         );
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
-        let result = lint_service.run_source(&allocator, source_text, false, tx_error);
+        let result = lint_service.run_source(&allocator, source_text, false, tx_error, settings);
 
         if result.is_empty() {
             return TestResult::Passed;
