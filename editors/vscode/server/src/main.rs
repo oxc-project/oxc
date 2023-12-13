@@ -18,11 +18,11 @@ use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
     CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeConfigurationParams,
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-    InitializeParams, InitializeResult, InitializedParams, MessageType, OneOf, Registration,
-    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
-    Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-    WorkspaceServerCapabilities, DidCloseTextDocumentParams,
+    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams, MessageType,
+    OneOf, Registration, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -119,10 +119,21 @@ impl LanguageServer for Backend {
         debug!("{:?}", &changed_options.get_lint_level());
         if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
             // clear all exists diagnostics
-            let opened_files = self.diagnostics_report_map.iter().map(|k| {
-                k.key().to_string()
-            }).collect::<Vec<_>>();
-            let cleared_diagnostics = opened_files.into_iter().map(|uri| (Url::from_str(&uri).ok().and_then(|url| url.to_file_path().ok()).expect("should convert ot path"), vec![])).collect::<Vec<_>>();
+            let opened_files =
+                self.diagnostics_report_map.iter().map(|k| k.key().to_string()).collect::<Vec<_>>();
+            let cleared_diagnostics = opened_files
+                .into_iter()
+                .map(|uri| {
+                    (
+                        // should convert successfully, case the key is from `params.document.uri` 
+                        Url::from_str(&uri)
+                            .ok()
+                            .and_then(|url| url.to_file_path().ok())
+                            .expect("should convert to path"),
+                        vec![],
+                    )
+                })
+                .collect::<Vec<_>>();
             self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
         *self.options.lock().await = changed_options;
