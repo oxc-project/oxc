@@ -115,11 +115,16 @@ pub enum AstKind<'a> {
     JSXElement(&'a JSXElement<'a>),
     JSXFragment(&'a JSXFragment<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
+    JSXClosingElement(&'a JSXClosingElement<'a>),
     JSXElementName(&'a JSXElementName<'a>),
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXAttributeItem(&'a JSXAttributeItem<'a>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXText(&'a JSXText),
+    JSXIdentifier(&'a JSXIdentifier),
+    JSXMemberExpression(&'a JSXMemberExpression<'a>),
+    JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>),
+    JSXNamespacedName(&'a JSXNamespacedName),
 
     // TypeScript
     TSModuleBlock(&'a TSModuleBlock<'a>),
@@ -414,6 +419,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ModuleDeclaration(x) => x.span(),
 
             Self::JSXOpeningElement(x) => x.span,
+            Self::JSXClosingElement(x) => x.span,
             Self::JSXElementName(x) => x.span(),
             Self::JSXElement(x) => x.span,
             Self::JSXFragment(x) => x.span,
@@ -421,6 +427,10 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXSpreadAttribute(x) => x.span,
             Self::JSXText(x) => x.span,
             Self::JSXExpressionContainer(x) => x.span,
+            Self::JSXIdentifier(x) => x.span,
+            Self::JSXMemberExpression(x) => x.span,
+            Self::JSXMemberExpressionObject(x) => x.span(),
+            Self::JSXNamespacedName(x) => x.span,
 
             Self::TSModuleBlock(x) => x.span,
 
@@ -585,6 +595,7 @@ impl<'a> AstKind<'a> {
 
             Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
+            Self::JSXClosingElement(_) => "JSXClosingElement".into(),
             Self::JSXElementName(_) => "JSXElementName".into(),
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
@@ -592,6 +603,10 @@ impl<'a> AstKind<'a> {
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
             Self::JSXText(_) => "JSXText".into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
+            Self::JSXIdentifier(_) => "JSXIdentifier".into(),
+            Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
+            Self::JSXMemberExpressionObject(_) => "JSXMemberExpressionObject".into(),
+            Self::JSXNamespacedName(_) => "JSXNamespacedName".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
