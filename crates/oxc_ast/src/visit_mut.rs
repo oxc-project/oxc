@@ -1014,6 +1014,9 @@ pub trait VisitMut<'a>: Sized {
         for child in elem.children.iter_mut() {
             self.visit_jsx_child(child);
         }
+        if let Some(closing_elem) = &mut elem.closing_element {
+            self.visit_jsx_closing_element(closing_elem);
+        }
         self.leave_node(kind);
     }
 
@@ -1028,9 +1031,55 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
+    fn visit_jsx_closing_element(&mut self, elem: &mut JSXClosingElement<'a>) {
+        let kind = AstKind::JSXClosingElement(self.alloc(elem));
+        self.enter_node(kind);
+        self.visit_jsx_element_name(&mut elem.name);
+        self.leave_node(kind);
+    }
+
     fn visit_jsx_element_name(&mut self, name: &mut JSXElementName<'a>) {
         let kind = AstKind::JSXElementName(self.alloc(name));
         self.enter_node(kind);
+        match name {
+            JSXElementName::Identifier(ident) => self.visit_jsx_identifier(ident),
+            JSXElementName::MemberExpression(expr) => self.visit_jsx_member_expression(expr),
+            JSXElementName::NamespacedName(name) => self.visit_jsx_namespaced_name(name),
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier) {
+        let kind = AstKind::JSXIdentifier(self.alloc(ident));
+        self.enter_node(kind);
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_member_expression(&mut self, expr: &mut JSXMemberExpression<'a>) {
+        let kind = AstKind::JSXMemberExpression(self.alloc(expr));
+        self.enter_node(kind);
+        self.visit_jsx_member_expression_object(&mut expr.object);
+        self.visit_jsx_identifier(&mut expr.property);
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_member_expression_object(&mut self, expr: &mut JSXMemberExpressionObject<'a>) {
+        let kind = AstKind::JSXMemberExpressionObject(self.alloc(expr));
+        self.enter_node(kind);
+        match expr {
+            JSXMemberExpressionObject::Identifier(ident) => self.visit_jsx_identifier(ident),
+            JSXMemberExpressionObject::MemberExpression(expr) => {
+                self.visit_jsx_member_expression(expr);
+            }
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_namespaced_name(&mut self, name: &mut JSXNamespacedName) {
+        let kind = AstKind::JSXNamespacedName(self.alloc(name));
+        self.enter_node(kind);
+        self.visit_jsx_identifier(&mut name.namespace);
+        self.visit_jsx_identifier(&mut name.property);
         self.leave_node(kind);
     }
 
