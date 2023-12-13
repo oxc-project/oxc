@@ -118,7 +118,7 @@ impl LanguageServer for Backend {
         };
         debug!("{:?}", &changed_options.get_lint_level());
         if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
-            // clear all exists diagnostics
+            // clear all exists diagnostics when linter is disabled
             let opened_files =
                 self.diagnostics_report_map.iter().map(|k| k.key().to_string()).collect::<Vec<_>>();
             let cleared_diagnostics = opened_files

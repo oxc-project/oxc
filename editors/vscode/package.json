@@ -43,6 +43,11 @@
         "category": "Oxc"
       },
       {
+        "command": "oxc.toggleEnable",
+        "title": "toggle enable",
+        "category": "Oxc"
+      },
+      {
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
         "category": "Oxc"
