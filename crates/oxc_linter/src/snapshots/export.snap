@@ -1,0 +1,141 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: export
+---
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+   ╭─[index.js:1:1]
+ 1 │ let foo; export { foo }; export * from "./export-all"
+   ·                   ───
+   ╰────
+
+  ⚠ eslint-plugin-import(export): No named exports found in module './default-export'
+   ╭─[index.js:1:1]
+ 1 │ export * from "./default-export"
+   ·               ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+   ╭─[index.js:1:1]
+ 1 │ let foo; export { foo as "foo" }; export * from "./export-all"
+   ·                          ─────
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.js:1:1]
+ 1 │  
+ 2 │                 export type Foo = string;
+   ·                             ─┬─
+   ·                              ╰── `Foo` has already been declared here
+ 3 │                 export type Foo = number;
+   ·                             ─┬─
+   ·                              ╰── It can not be redeclared here
+ 4 │             
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[index.js:3:1]
+ 3 │                 export namespace Foo {
+ 4 │                 export const a = 2;
+   ·                              ┬
+   ·                              ╰── `a` has already been declared here
+ 5 │                 export const a = 3;
+   ·                              ┬
+   ·                              ╰── It can not be redeclared here
+ 6 │                 }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 declare module 'foo' {
+   ·                        ─
+ 3 │                     const Foo = 1;
+   ╰────
+  help: Try insert a semicolon here
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.js:3:1]
+ 3 │                     export namespace Bar {
+ 4 │                         export const Foo = 1;
+   ·                                      ─┬─
+   ·                                       ╰── `Foo` has already been declared here
+ 5 │                             export const Foo = 2;
+   ·                                          ─┬─
+   ·                                           ╰── It can not be redeclared here
+ 6 │                     }
+   ╰────
+
+  × Identifier `Bar` has already been declared
+    ╭─[index.js:7:1]
+  7 │                     export namespace Baz {
+  8 │                         export const Bar = 3;
+    ·                                      ─┬─
+    ·                                       ╰── `Bar` has already been declared here
+  9 │                         export const Bar = 4;
+    ·                                      ─┬─
+    ·                                       ╰── It can not be redeclared here
+ 10 │                     } 
+    ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 export enum Foo { }
+   ·                             ─┬─
+   ·                              ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 export const Foo = 'bar';
+   ·                              ─┬─
+   ·                               ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 export function Foo();
+   ·                                      ─
+ 3 │                 export class Foo { }
+   ╰────
+
+  × Unexpected token
+   ╭─[index.js:2:1]
+ 2 │                 export const Foo = 'bar';
+ 3 │                 export function Foo();
+   ·                                      ─
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[index.js:1:1]
+ 1 │ 
+ 2 │                 declare module "a" {
+   ·                        ─
+ 3 │                     const Foo = 1;
+   ╰────
+  help: Try insert a semicolon here
+
+
