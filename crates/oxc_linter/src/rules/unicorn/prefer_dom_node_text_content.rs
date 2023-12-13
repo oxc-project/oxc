@@ -25,8 +25,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are some advantages of using .textContent,
-    /// like performance and more predictable behavior when updating it.
+    /// There are some disadvantages of using .innerText.
+    /// - `.innerText` is much more performance-heavy as it requires layout information to return the result.
+    /// - `.innerText` is defined only for HTMLElement objects, while `/textContent` is defined for all Node objects.
+    /// - `.innerText` is not standard, for example, it is not present in Firefox.
     ///
     /// ### Example
     /// ```javascript
