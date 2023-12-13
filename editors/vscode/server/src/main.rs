@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use dashmap::DashMap;
 use futures::future::join_all;
@@ -21,7 +22,7 @@ use tower_lsp::lsp_types::{
     InitializeParams, InitializeResult, InitializedParams, MessageType, OneOf, Registration,
     ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
     Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-    WorkspaceServerCapabilities,
+    WorkspaceServerCapabilities, DidCloseTextDocumentParams,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -115,9 +116,14 @@ impl LanguageServer for Backend {
                 return;
             }
         };
+        debug!("{:?}", &changed_options.get_lint_level());
         if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
             // clear all exists diagnostics
-            self.publish_all_diagnostics(&vec![]).await;
+            let opened_files = self.diagnostics_report_map.iter().map(|k| {
+                k.key().to_string()
+            }).collect::<Vec<_>>();
+            let cleared_diagnostics = opened_files.into_iter().map(|uri| (Url::from_str(&uri).ok().and_then(|url| url.to_file_path().ok()).expect("should convert ot path"), vec![])).collect::<Vec<_>>();
+            self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
         *self.options.lock().await = changed_options;
     }
@@ -170,6 +176,11 @@ impl LanguageServer for Backend {
             return;
         }
         self.handle_file_update(params.text_document.uri, None).await;
+    }
+
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        let uri = params.text_document.uri.to_string();
+        self.diagnostics_report_map.remove(&uri);
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -228,6 +239,7 @@ impl Backend {
 
     #[allow(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
+        debug!("{:?}", result);
         join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(
                 Url::from_file_path(path).unwrap(),
