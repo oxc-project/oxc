@@ -1,0 +1,110 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_dom_node_text_content
+---
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ node.innerText;
+   ·      ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ node?.innerText;
+   ·       ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ node.innerText = 'foo';
+   ·      ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ innerText.innerText;
+   ·           ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ const {innerText} = node;
+   ·        ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ const {innerText,} = node;
+   ·        ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ const {innerText: text} = node;
+   ·        ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ const {innerText = "default text"} = node;
+   ·        ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ const {innerText: text = "default text"} = node;
+   ·        ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ ({innerText} = node);
+   ·   ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ ({innerText: text} = node);
+   ·   ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ ({innerText = "default text"} = node);
+   ·   ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ ({innerText: text = "default text"} = node);
+   ·   ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ function foo({innerText}) {return innerText}
+   ·               ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
+   ╭─[prefer_dom_node_text_content.tsx:1:1]
+ 1 │ for (const [{innerText}] of elements);
+   ·              ─────────
+   ╰────
+  help: Replace `.innerText` with `.textContent`.
+
+
