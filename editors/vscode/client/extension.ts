@@ -1,4 +1,13 @@
-import { ExtensionContext, window, commands, workspace, StatusBarItem, StatusBarAlignment, ConfigurationTarget, ThemeColor } from "vscode";
+import {
+  ExtensionContext,
+  window,
+  commands,
+  workspace,
+  StatusBarItem,
+  StatusBarAlignment,
+  ConfigurationTarget,
+  ThemeColor,
+} from "vscode";
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
@@ -51,9 +60,8 @@ export async function activate(context: ExtensionContext) {
 
   const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, () => {
     let enabled = workspace.getConfiguration("oxc-client").get("enable");
-    console.log(enabled)
-    let nextState = !enabled
-    workspace.getConfiguration("oxc-client").update("enable",nextState, ConfigurationTarget.Global);
+    let nextState = !enabled;
+    workspace.getConfiguration("oxc-client").update("enable", nextState, ConfigurationTarget.Global);
   });
 
   context.subscriptions.push(restartCommand, showOutputCommand, showTraceOutputCommand, toggleEnable);
@@ -81,8 +89,7 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
-  let clientConfig: any = JSON.parse(JSON.stringify(workspace.getConfiguration("oxc-client", )));
-  console.log(clientConfig)
+  let clientConfig: any = JSON.parse(JSON.stringify(workspace.getConfiguration("oxc-client")));
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: ["typescript", "javascript", "typescriptreact", "javascriptreact"].map(lang => ({
@@ -104,23 +111,22 @@ export async function activate(context: ExtensionContext) {
   client = new LanguageClient(languageClientId, languageClientName, serverOptions, clientOptions);
   workspace.onDidChangeConfiguration(e => {
     let settings: any = JSON.parse(JSON.stringify(workspace.getConfiguration("oxc-client")));
-    updateStatsBar(settings.enable)
+    updateStatsBar(settings.enable);
     client.sendNotification("workspace/didChangeConfiguration", {
       settings,
     });
   });
 
-
   function updateStatsBar(enable: boolean) {
     if (!myStatusBarItem) {
       myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-      myStatusBarItem.command = OxcCommands.ToggleEnable
+      myStatusBarItem.command = OxcCommands.ToggleEnable;
       context.subscriptions.push(myStatusBarItem);
-      myStatusBarItem.show()
+      myStatusBarItem.show();
     }
-    let bgColor = new ThemeColor(enable ?  "statusBarItem.activeBackground" : "statusBarItem.errorBackground")
+    let bgColor = new ThemeColor(enable ? "statusBarItem.activeBackground" : "statusBarItem.errorBackground");
     myStatusBarItem.text = `oxc: ${enable ? "on" : "off"}`;
-    myStatusBarItem.backgroundColor = bgColor
+    myStatusBarItem.backgroundColor = bgColor;
   }
   updateStatsBar(clientConfig.enable);
   client.start();
