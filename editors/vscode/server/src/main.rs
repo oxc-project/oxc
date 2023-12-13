@@ -125,7 +125,7 @@ impl LanguageServer for Backend {
                 .into_iter()
                 .map(|uri| {
                     (
-                        // should convert successfully, case the key is from `params.document.uri` 
+                        // should convert successfully, case the key is from `params.document.uri`
                         Url::from_str(&uri)
                             .ok()
                             .and_then(|url| url.to_file_path().ok())
