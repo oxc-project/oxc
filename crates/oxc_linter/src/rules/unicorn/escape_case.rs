@@ -1,4 +1,4 @@
-use std::{iter::Peekable, str::Chars};
+use std::str::Chars;
 
 use oxc_ast::{
     ast::{StringLiteral, TemplateLiteral},
