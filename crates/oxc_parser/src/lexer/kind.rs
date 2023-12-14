@@ -58,8 +58,8 @@ pub enum Kind {
     Meta, // import.meta
     Of,
     Set,
-    Target, // new.target
-    Accessor,
+    Target,   // new.target
+    Accessor, // keyword from https://github.com/tc39/proposal-decorators
     // TypeScript Contextual Keywords
     Abstract,
     As,
