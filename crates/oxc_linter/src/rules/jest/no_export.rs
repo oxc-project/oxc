@@ -44,8 +44,12 @@ impl Rule for NoExport {
             return;
         }
 
-        for local_export in &ctx.semantic().module_record().local_export_entries {
-            ctx.diagnostic(NoExportDiagnostic(local_export.span));
+        for span in ctx.semantic().module_record().exported_bindings.values() {
+            ctx.diagnostic(NoExportDiagnostic(*span));
+        }
+
+        if let Some(span) = ctx.semantic().module_record().export_default {
+            ctx.diagnostic(NoExportDiagnostic(span));
         }
     }
 }

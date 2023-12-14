@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use regex::Regex;
 
 use crate::{
@@ -117,7 +117,7 @@ fn run<'a>(
             let has_assert_function = check_arguments(call_expr, &rule.assert_function_names, ctx);
 
             if !has_assert_function {
-                ctx.diagnostic(ExpectExpectDiagnostic(call_expr.span));
+                ctx.diagnostic(ExpectExpectDiagnostic(call_expr.callee.span()));
             }
         }
     }
