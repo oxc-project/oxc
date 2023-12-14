@@ -1,4 +1,13 @@
-import { ExtensionContext, window, commands, workspace } from "vscode";
+import {
+  ExtensionContext,
+  window,
+  commands,
+  workspace,
+  StatusBarItem,
+  StatusBarAlignment,
+  ConfigurationTarget,
+  ThemeColor,
+} from "vscode";
 
 import {
   Executable,
@@ -19,9 +28,12 @@ const enum OxcCommands {
   ApplyAllFixes = "oxc.applyAllFixes",
   ShowOutputChannel = "oxc.showOutputChannel",
   ShowTraceOutputChannel = "oxc.showTraceOutputChannel",
+  ToggleEnable = "oxc.toggleEnable",
 }
 
 let client: LanguageClient;
+
+let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
   const restartCommand = commands.registerCommand(
@@ -60,10 +72,22 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
+  const toggleEnable = commands.registerCommand(
+    OxcCommands.ToggleEnable,
+    () => {
+      let enabled = workspace.getConfiguration("oxc-client").get("enable");
+      let nextState = !enabled;
+      workspace
+        .getConfiguration("oxc-client")
+        .update("enable", nextState, ConfigurationTarget.Global);
+    },
+  );
+
   context.subscriptions.push(
     restartCommand,
     showOutputCommand,
     showTraceOutputCommand,
+    toggleEnable,
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName);
@@ -101,7 +125,10 @@ export async function activate(context: ExtensionContext) {
       "javascript",
       "typescriptreact",
       "javascriptreact",
-    ].map((lang) => ({ language: lang, scheme: "file" })),
+    ].map((lang) => ({
+      language: lang,
+      scheme: "file",
+    })),
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
@@ -121,15 +148,34 @@ export async function activate(context: ExtensionContext) {
     clientOptions,
   );
   workspace.onDidChangeConfiguration((e) => {
-    let settings: any = {};
-    if (e.affectsConfiguration("oxc-client.run")) {
-      settings.run = workspace.getConfiguration("oxc-client").get("run");
-    }
+    let settings: any = JSON.parse(
+      JSON.stringify(workspace.getConfiguration("oxc-client")),
+    );
+    updateStatsBar(settings.enable);
     client.sendNotification("workspace/didChangeConfiguration", {
       settings,
     });
   });
 
+  function updateStatsBar(enable: boolean) {
+    if (!myStatusBarItem) {
+      myStatusBarItem = window.createStatusBarItem(
+        StatusBarAlignment.Right,
+        100,
+      );
+      myStatusBarItem.command = OxcCommands.ToggleEnable;
+      context.subscriptions.push(myStatusBarItem);
+      myStatusBarItem.show();
+    }
+    let bgColor = new ThemeColor(
+      enable
+        ? "statusBarItem.activeBackground"
+        : "statusBarItem.errorBackground",
+    );
+    myStatusBarItem.text = `oxc: ${enable ? "on" : "off"}`;
+    myStatusBarItem.backgroundColor = bgColor;
+  }
+  updateStatsBar(clientConfig.enable);
   client.start();
 }
 

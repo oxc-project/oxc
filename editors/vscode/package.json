@@ -43,6 +43,11 @@
         "category": "Oxc"
       },
       {
+        "command": "oxc.toggleEnable",
+        "title": "toggle enable",
+        "category": "Oxc"
+      },
+      {
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
         "category": "Oxc"
@@ -66,6 +71,11 @@
           ],
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
+        },
+        "oxc-client.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "enable oxc linter"
         },
         "oxc-client.trace.server": {
           "type": "string",

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use dashmap::DashMap;
 use futures::future::join_all;
@@ -17,11 +18,11 @@ use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
     CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeConfigurationParams,
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-    InitializeParams, InitializeResult, InitializedParams, MessageType, OneOf, Registration,
-    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
-    Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-    WorkspaceServerCapabilities,
+    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams, MessageType,
+    OneOf, Registration, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -43,6 +44,27 @@ enum Run {
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 struct Options {
     run: Run,
+    enable: bool,
+}
+
+impl Options {
+    fn get_lint_level(&self) -> SyntheticRunLevel {
+        if self.enable {
+            match self.run {
+                Run::OnSave => SyntheticRunLevel::OnSave,
+                Run::OnType => SyntheticRunLevel::OnType,
+            }
+        } else {
+            SyntheticRunLevel::Disable
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+enum SyntheticRunLevel {
+    Disable,
+    OnSave,
+    OnType,
 }
 
 #[tower_lsp::async_trait]
@@ -94,6 +116,25 @@ impl LanguageServer for Backend {
                 return;
             }
         };
+        debug!("{:?}", &changed_options.get_lint_level());
+        if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
+            // clear all exists diagnostics when linter is disabled
+            let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
+            let cleared_diagnostics = opened_files
+                .into_iter()
+                .map(|uri| {
+                    (
+                        // should convert successfully, case the key is from `params.document.uri`
+                        Url::from_str(&uri)
+                            .ok()
+                            .and_then(|url| url.to_file_path().ok())
+                            .expect("should convert to path"),
+                        vec![],
+                    )
+                })
+                .collect::<Vec<_>>();
+            self.publish_all_diagnostics(&cleared_diagnostics).await;
+        }
         *self.options.lock().await = changed_options;
     }
 
@@ -121,8 +162,8 @@ impl LanguageServer for Backend {
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         // drop as fast as possible
-        let options = { self.options.lock().await.run };
-        if options < Run::OnSave {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnSave {
             return;
         }
         self.handle_file_update(params.text_document.uri, None).await;
@@ -131,8 +172,8 @@ impl LanguageServer for Backend {
     /// When the document changed, it may not be written to disk, so we should
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let options = { self.options.lock().await.run };
-        if options < Run::OnType {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnType {
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -140,7 +181,16 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let run_level = { self.options.lock().await.get_lint_level() };
+        if run_level < SyntheticRunLevel::OnType {
+            return;
+        }
         self.handle_file_update(params.text_document.uri, None).await;
+    }
+
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        let uri = params.text_document.uri.to_string();
+        self.diagnostics_report_map.remove(&uri);
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -199,6 +249,7 @@ impl Backend {
 
     #[allow(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
+        debug!("{:?}", result);
         join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(
                 Url::from_file_path(path).unwrap(),
