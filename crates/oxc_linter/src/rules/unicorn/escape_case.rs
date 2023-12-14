@@ -75,7 +75,8 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                 'u' => {
                     let c = p.peek();
                     if c == Some(&'{') {
-                        let iter = p.clone();
+                        let mut iter = p.clone();
+                        iter.next();
                         let mut is_match = false;
                         let mut chars = vec![];
                         for c in iter {
