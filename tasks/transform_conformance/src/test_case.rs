@@ -11,8 +11,8 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions, TransformTarget,
-    Transformer,
+    ArrowFunctionsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions,
+    TransformTarget, Transformer,
 };
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -95,6 +95,9 @@ pub trait TestCase {
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             function_name: options.get_plugin("transform-function-name").is_some(),
+            arrow_functions: options
+                .get_plugin("transform-arrow-functions")
+                .map(get_options::<ArrowFunctionsOptions>),
             logical_assignment_operators: options
                 .get_plugin("transform-logical-assignment-operators")
                 .is_some(),

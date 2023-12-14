@@ -1,4 +1,4 @@
-Passed: 375/441
+Passed: 377/444
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -93,4 +93,7 @@ Passed: 375/441
 * object-spread-loose-builtins/expression/exec.js
 * object-spread-loose-builtins/no-object-assign-exec/exec.js
 * object-spread-loose-builtins/side-effect/exec.js
+
+# babel-plugin-transform-arrow-functions (2/3)
+* arrow-functions/implicit-var-arguments/exec.js
 

@@ -13,8 +13,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode,
     },
 };
 
@@ -77,13 +77,14 @@ fn run<'a>(
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
             return;
-        }
+        };
 
         let has_condition_or_catch = check_parents(node, id_nodes_mapping, ctx, false);
         if has_condition_or_catch {
-            ctx.diagnostic(NoConditionalExpectDiagnostic(call_expr.span));
+            ctx.diagnostic(NoConditionalExpectDiagnostic(jest_fn_call.head.span));
         }
     }
 }

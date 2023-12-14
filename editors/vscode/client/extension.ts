@@ -21,6 +21,8 @@ const traceOutputChannelName = "oxc.trace";
 const enum OxcCommands {
   RestartServer = "oxc.restartServer",
   ApplyAllFixes = "oxc.applyAllFixes",
+  RestartServer = "oxc.restartServer",
+  ApplyAllFixes = "oxc.applyAllFixes",
   ShowOutputChannel = "oxc.showOutputChannel",
   ShowTraceOutputChannel = "oxc.showTraceOutputChannel",
   ToggleEnable = "oxc.toggleEnable",
@@ -71,12 +73,16 @@ export async function activate(context: ExtensionContext) {
 
   const ext = process.platform === "win32" ? ".exe" : "";
   // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-  const command = process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_vscode${ext}`);
+  const command =
+    process.env.SERVER_PATH_DEV ??
+    join(context.extensionPath, `./target/release/oxc_vscode${ext}`);
 
   const run: Executable = {
     command: command!,
     options: {
       env: {
+        ...process.env,
+        RUST_LOG: "debug",
         ...process.env,
         RUST_LOG: "debug",
       },
@@ -101,6 +107,7 @@ export async function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
     },
     initializationOptions: {
+      settings: clientConfig,
       settings: clientConfig,
     },
     outputChannel,

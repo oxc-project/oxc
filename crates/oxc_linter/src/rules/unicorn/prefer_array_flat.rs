@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// const foo = [maybeArray].flat();
     /// ```
     PreferArrayFlat,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferArrayFlat {
