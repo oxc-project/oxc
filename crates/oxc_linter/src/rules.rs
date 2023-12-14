@@ -8,6 +8,7 @@
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod default;
+    pub mod export;
     pub mod named;
     pub mod no_amd;
     pub mod no_cycle;
@@ -196,6 +197,7 @@ mod unicorn {
     pub mod prefer_dom_node_append;
     pub mod prefer_dom_node_dataset;
     pub mod prefer_dom_node_remove;
+    pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
@@ -394,6 +396,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_dom_node_remove,
+    unicorn::prefer_dom_node_text_content,
     unicorn::prefer_event_target,
     unicorn::prefer_includes,
     unicorn::prefer_logical_operator_over_ternary,
@@ -436,6 +439,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_cycle,
     import::no_self_import,
     import::no_amd,
+    import::export,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,

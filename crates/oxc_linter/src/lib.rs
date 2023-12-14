@@ -136,7 +136,9 @@ impl Linter {
         for (category, rules) in rules_by_category {
             writeln!(writer, "{} ({}):", category, rules.len()).unwrap();
             for rule in rules {
-                writeln!(writer, "• {}/{}", rule.plugin_name(), rule.name()).unwrap();
+                // Separate the category and rule name so people don't copy the combination as a whole for `--allow` and `--deny`,
+                // resulting invalid rule names.
+                writeln!(writer, "• {}: {}", rule.plugin_name(), rule.name()).unwrap();
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();

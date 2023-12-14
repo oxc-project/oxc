@@ -187,6 +187,14 @@ impl ExportExportName {
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
+
+    pub fn span(&self) -> Option<Span> {
+        match self {
+            Self::Name(name) => Some(name.span()),
+            Self::Default(span) => Some(*span),
+            Self::Null => None,
+        }
+    }
 }
 
 /// `LocalName` for `ExportEntry`

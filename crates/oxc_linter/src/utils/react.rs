@@ -6,7 +6,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolFlags};
 
 use crate::LintContext;
 
@@ -151,11 +151,15 @@ pub fn get_parent_es5_component<'a, 'b>(
     })
 }
 
-pub fn get_parent_es6_component<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(node.id()).skip(1).find_map(|node_id| {
-        is_es6_component(ctx.nodes().get_node(node_id)).then(|| ctx.nodes().get_node(node_id))
+pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b AstNode<'a>> {
+    ctx.semantic().symbols().iter_rev().find_map(|symbol| {
+        let flags = ctx.semantic().symbols().get_flag(symbol);
+        if flags.contains(SymbolFlags::Class) {
+            let node = ctx.semantic().symbol_declaration(symbol);
+            if is_es6_component(node) {
+                return Some(node);
+            }
+        }
+        None
     })
 }

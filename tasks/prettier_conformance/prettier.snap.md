@@ -1,4 +1,4 @@
-Compatibility: 231/550 (42.00%)
+Compatibility: 232/550 (42.18%)
 
 # Failed
 
@@ -91,7 +91,6 @@ Compatibility: 231/550 (42.00%)
 * chain-expression/test.js
 
 ### class-comment
-* class-comment/class-property.js
 * class-comment/misc.js
 * class-comment/superclass.js
 

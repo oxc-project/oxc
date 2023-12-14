@@ -596,7 +596,9 @@ impl<'a> ReactJsx<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
                 let name = ident.name.clone();
-                if ident.name.chars().next().is_some_and(|c| c.is_ascii_lowercase()) {
+                if name == "this" {
+                    self.ast.this_expression(SPAN)
+                } else if ident.name.chars().next().is_some_and(|c| c.is_ascii_lowercase()) {
                     self.ast.literal_string_expression(StringLiteral::new(SPAN, name))
                 } else {
                     self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name))
