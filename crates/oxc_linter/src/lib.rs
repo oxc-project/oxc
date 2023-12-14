@@ -1,10 +1,11 @@
-#![deny(clippy::print_stdout)]
+#![warn(clippy::print_stdout)]
 #![allow(clippy::self_named_module_files)] // for rules.rs
 
 #[cfg(test)]
 mod tester;
 
 mod ast_util;
+mod config;
 mod context;
 mod disable_directives;
 mod fixer;
@@ -18,6 +19,7 @@ mod utils;
 
 use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
+use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
 use rustc_hash::FxHashMap;
 
@@ -53,9 +55,12 @@ impl Linter {
         Self { rules, options: LintOptions::default() }
     }
 
-    pub fn from_options(options: LintOptions) -> Self {
-        let rules = options.derive_rules();
-        Self { rules, options }
+    /// # Errors
+    ///
+    /// Returns `Err` if there are any errors parsing the configuration file.
+    pub fn from_options(options: LintOptions) -> Result<Self, Report> {
+        let rules = options.derive_rules()?;
+        Ok(Self { rules, options })
     }
 
     #[must_use]
