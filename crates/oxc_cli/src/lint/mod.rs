@@ -1,6 +1,6 @@
 use std::{env, io::BufWriter, path::Path, vec::Vec};
 
-use oxc_diagnostics::DiagnosticService;
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{
@@ -12,6 +12,38 @@ pub struct LintRunner {
     options: CliLintOptions,
 }
 
+impl LintRunner {
+    fn check_options(&self) -> CliRunResult {
+        let CliLintOptions { filter, misc_options, enable_plugins, config, .. } = &self.options;
+
+        if misc_options.rules {
+            let mut stdout = BufWriter::new(std::io::stdout());
+            Linter::print_rules(&mut stdout);
+            return CliRunResult::None;
+        }
+
+        // disallow passing config path and filter at the same time
+        if config.is_some() && !filter.is_empty() {
+            return CliRunResult::InvalidOptions {
+                message: "`--config` and rule filters cannot currently be used together. \nPlease use `--config` to specify a config file, or filter to specify rules."
+                    .to_string(),
+            };
+        }
+
+        if enable_plugins.import_plugin
+            || enable_plugins.jest_plugin
+            || enable_plugins.jsx_a11y_plugin
+        {
+            return CliRunResult::InvalidOptions {
+                message: "`--config` and plugin options cannot currently be used together. \nPlease use `--config` to specify a config file, or plugin options to enable plugins."
+                    .to_string(),
+            };
+        }
+
+        CliRunResult::None
+    }
+}
+
 impl Runner for LintRunner {
     type Options = CliLintOptions;
 
@@ -20,10 +52,10 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
-        if self.options.misc_options.rules {
-            let mut stdout = BufWriter::new(std::io::stdout());
-            Linter::print_rules(&mut stdout);
-            return CliRunResult::None;
+        let result = self.check_options();
+
+        if !matches!(result, CliRunResult::None) {
+            return result;
         }
 
         let CliLintOptions {
@@ -35,6 +67,7 @@ impl Runner for LintRunner {
             misc_options,
             codeowner_options,
             enable_plugins,
+            config,
         } = self.options;
 
         let mut paths = paths;
@@ -63,12 +96,27 @@ impl Runner for LintRunner {
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
+            .with_config_path(config)
             .with_fix(fix_options.fix)
             .with_timing(misc_options.timing)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin);
-        let lint_service = LintService::new(cwd, &paths, lint_options);
+
+        let linter = match Linter::from_options(lint_options) {
+            Ok(lint_service) => lint_service,
+            Err(diagnostic) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
+                eprintln!("{err}");
+                return CliRunResult::InvalidOptions {
+                    message: "Failed to parse configuration file.".to_string(),
+                };
+            }
+        };
+
+        let lint_service = LintService::new(cwd, &paths, linter);
 
         let diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)

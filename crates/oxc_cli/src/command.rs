@@ -123,6 +123,12 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub codeowner_options: CodeownerOptions,
 
+    /// ESLint configuration file (experimental)
+    ///
+    /// * only `.json` extension is supported
+    #[bpaf(long("config"), short('c'), argument("PATH"))]
+    pub config: Option<PathBuf>,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many)]
     pub paths: Vec<PathBuf>,

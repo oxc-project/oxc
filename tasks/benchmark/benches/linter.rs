@@ -35,7 +35,7 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_filter(vec![(AllowWarnDeny::Deny, "all".into())])
                     .with_jest_plugin(true)
                     .with_jsx_a11y_plugin(true);
-                let linter = Linter::from_options(lint_options);
+                let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
                     linter.run(LintContext::new(

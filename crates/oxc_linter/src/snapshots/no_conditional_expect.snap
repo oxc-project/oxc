@@ -6,7 +6,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     something && expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -15,7 +15,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     a || b && expect(something).toHaveBeenCalled();
-   ·                               ────────────────────────────────────
+   ·                               ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -24,7 +24,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     (a || b) && expect(something).toHaveBeenCalled();
-   ·                                 ────────────────────────────────────
+   ·                                 ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -33,7 +33,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     a || (b && expect(something).toHaveBeenCalled());
-   ·                                ────────────────────────────────────
+   ·                                ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -42,7 +42,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     a && b && expect(something).toHaveBeenCalled();
-   ·                               ────────────────────────────────────
+   ·                               ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -51,7 +51,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     a && b || expect(something).toHaveBeenCalled();
-   ·                               ────────────────────────────────────
+   ·                               ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -60,7 +60,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     (a && b) || expect(something).toHaveBeenCalled();
-   ·                                 ────────────────────────────────────
+   ·                                 ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -69,7 +69,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
  3 │                     something && expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -78,7 +78,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -87,7 +87,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it.each``('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -96,7 +96,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it.each()('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -105,7 +105,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
  3 │                     something || expect(something).toHaveBeenCalled();
-   ·                                  ────────────────────────────────────
+   ·                                  ──────
  4 │                 }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -114,7 +114,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     something ? expect(something).toHaveBeenCalled() : noop();
-   ·                                 ────────────────────────────────────
+   ·                                 ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -123,7 +123,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
  3 │                     something ? expect(something).toHaveBeenCalled() : noop();
-   ·                                 ────────────────────────────────────
+   ·                                 ──────
  4 │                 }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -132,7 +132,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
-   ·                                          ────────────────────────────────────
+   ·                                          ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -141,7 +141,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it.each``('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
-   ·                                          ────────────────────────────────────
+   ·                                          ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -150,7 +150,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it.each()('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
-   ·                                          ────────────────────────────────────
+   ·                                          ──────
  4 │                 })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -159,7 +159,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 function getValue() {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
-   ·                                          ────────────────────────────────────
+   ·                                          ──────
  4 │                 }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -168,7 +168,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:6:1]
  6 │                     default:
  7 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  8 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -177,7 +177,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  6 │                     default:
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -186,7 +186,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  6 │                     default:
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -195,7 +195,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  6 │                     default:
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -204,7 +204,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:6:1]
  6 │                     default:
  7 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  8 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -213,7 +213,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:3:1]
  3 │                     if(doSomething) {
  4 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  5 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -222,7 +222,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -231,7 +231,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -240,7 +240,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -249,7 +249,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:3:1]
  3 │                     if(doSomething) {
  4 │                         expect(something).toHaveBeenCalled();
-   ·                         ────────────────────────────────────
+   ·                         ──────
  5 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -258,7 +258,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } else {
  6 │                     expect(something).toHaveBeenCalled();
-   ·                     ────────────────────────────────────
+   ·                     ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -267,7 +267,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch (err) {
  6 │                     expect(err).toMatch('Error');
-   ·                     ────────────────────────────
+   ·                     ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -276,7 +276,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch (err) {
  6 │                     expect(err).toMatch('Error');
-   ·                     ────────────────────────────
+   ·                     ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -285,7 +285,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
-   ·                         ────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -294,7 +294,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
-   ·                         ────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -303,7 +303,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
-   ·                         ────────────────────────────
+   ·                         ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -312,7 +312,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                     } catch {
  6 │                     expect(something).toHaveBeenCalled();
-   ·                     ────────────────────────────────────
+   ·                     ──────
  7 │                     }
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -321,7 +321,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error));
-   ·                                     ───────────────────────────────────
+   ·                                     ──────
  6 │                 });
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -330,7 +330,7 @@ expression: no_conditional_expect
     ╭─[no_conditional_expect.tsx:8:1]
   8 │                     .then(() => { throw new Error('oh noes!'); })
   9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
-    ·                                     ───────────────────────────────────
+    ·                                     ──────
  10 │                 });
     ╰────
   help: Avoid calling `expect` conditionally`
@@ -339,7 +339,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:6:1]
  6 │                     .then(() => { throw new Error('oh noes!'); })
  7 │                     .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                     ───────────────────────────────────
+   ·                                     ──────
  8 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -348,7 +348,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                     ───────────────────────────────────
+   ·                                     ──────
  6 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -357,7 +357,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:5:1]
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
-   ·                                         ───────────────────────────────────
+   ·                                         ──────
  7 │                     });
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -366,7 +366,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                         ───────────────────────────────────
+   ·                                         ──────
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -375,7 +375,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:3:1]
  3 │                       await Promise.resolve()
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                         ───────────────────────────────────
+   ·                                         ──────
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -384,7 +384,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:3:1]
  3 │                     await Promise.resolve()
  4 │                     .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                     ───────────────────────────────────
+   ·                                     ──────
  5 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -393,7 +393,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:4:1]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error));
-   ·                                     ───────────────────────────────────
+   ·                                     ──────
  6 │                 });
    ╰────
   help: Avoid calling `expect` conditionally`
@@ -402,7 +402,7 @@ expression: no_conditional_expect
    ╭─[no_conditional_expect.tsx:2:1]
  2 │                 it('works', async () => {
  3 │                     await somePromise.catch(error => expect(error).toBeInstanceOf(Error));
-   ·                                                      ───────────────────────────────────
+   ·                                                      ──────
  4 │                 });
    ╰────
   help: Avoid calling `expect` conditionally`

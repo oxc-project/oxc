@@ -18,7 +18,7 @@ use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use serde_json::Value;
 
-use crate::{Fixer, LintContext, LintOptions, Linter, Message};
+use crate::{Fixer, LintContext, Linter, Message};
 
 #[derive(Clone)]
 pub struct LintService {
@@ -26,8 +26,7 @@ pub struct LintService {
 }
 
 impl LintService {
-    pub fn new(cwd: Box<Path>, paths: &[Box<Path>], options: LintOptions) -> Self {
-        let linter = Linter::from_options(options);
+    pub fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
         let runtime = Arc::new(Runtime::new(cwd, paths, linter));
         Self { runtime }
     }
