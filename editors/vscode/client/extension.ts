@@ -9,7 +9,12 @@ import {
   ThemeColor,
 } from "vscode";
 
-import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import {
+  Executable,
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+} from "vscode-languageclient/node";
 
 import { join } from "node:path";
 
@@ -31,40 +36,59 @@ let client: LanguageClient;
 let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
-  const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
-    if (!client) {
-      window.showErrorMessage("oxc client not found");
-      return;
-    }
-
-    try {
-      if (client.isRunning()) {
-        await client.restart();
-
-        window.showInformationMessage("oxc server restarted.");
-      } else {
-        await client.start();
+  const restartCommand = commands.registerCommand(
+    OxcCommands.RestartServer,
+    async () => {
+      if (!client) {
+        window.showErrorMessage("oxc client not found");
+        return;
       }
-    } catch (err) {
-      client.error("Restarting client failed", err, "force");
-    }
-  });
 
-  const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
-    client?.outputChannel?.show();
-  });
+      try {
+        if (client.isRunning()) {
+          await client.restart();
 
-  const showTraceOutputCommand = commands.registerCommand(OxcCommands.ShowTraceOutputChannel, () => {
-    client?.traceOutputChannel?.show();
-  });
+          window.showInformationMessage("oxc server restarted.");
+        } else {
+          await client.start();
+        }
+      } catch (err) {
+        client.error("Restarting client failed", err, "force");
+      }
+    },
+  );
 
-  const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, () => {
-    let enabled = workspace.getConfiguration("oxc-client").get("enable");
-    let nextState = !enabled;
-    workspace.getConfiguration("oxc-client").update("enable", nextState, ConfigurationTarget.Global);
-  });
+  const showOutputCommand = commands.registerCommand(
+    OxcCommands.ShowOutputChannel,
+    () => {
+      client?.outputChannel?.show();
+    },
+  );
 
-  context.subscriptions.push(restartCommand, showOutputCommand, showTraceOutputCommand, toggleEnable);
+  const showTraceOutputCommand = commands.registerCommand(
+    OxcCommands.ShowTraceOutputChannel,
+    () => {
+      client?.traceOutputChannel?.show();
+    },
+  );
+
+  const toggleEnable = commands.registerCommand(
+    OxcCommands.ToggleEnable,
+    () => {
+      let enabled = workspace.getConfiguration("oxc-client").get("enable");
+      let nextState = !enabled;
+      workspace
+        .getConfiguration("oxc-client")
+        .update("enable", nextState, ConfigurationTarget.Global);
+    },
+  );
+
+  context.subscriptions.push(
+    restartCommand,
+    showOutputCommand,
+    showTraceOutputCommand,
+    toggleEnable,
+  );
 
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
@@ -91,10 +115,17 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
-  let clientConfig: any = JSON.parse(JSON.stringify(workspace.getConfiguration("oxc-client")));
+  let clientConfig: any = JSON.parse(
+    JSON.stringify(workspace.getConfiguration("oxc-client")),
+  );
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
-    documentSelector: ["typescript", "javascript", "typescriptreact", "javascriptreact"].map(lang => ({
+    documentSelector: [
+      "typescript",
+      "javascript",
+      "typescriptreact",
+      "javascriptreact",
+    ].map((lang) => ({
       language: lang,
       scheme: "file",
     })),
@@ -110,9 +141,16 @@ export async function activate(context: ExtensionContext) {
   };
 
   // Create the language client and start the client.
-  client = new LanguageClient(languageClientId, languageClientName, serverOptions, clientOptions);
-  workspace.onDidChangeConfiguration(e => {
-    let settings: any = JSON.parse(JSON.stringify(workspace.getConfiguration("oxc-client")));
+  client = new LanguageClient(
+    languageClientId,
+    languageClientName,
+    serverOptions,
+    clientOptions,
+  );
+  workspace.onDidChangeConfiguration((e) => {
+    let settings: any = JSON.parse(
+      JSON.stringify(workspace.getConfiguration("oxc-client")),
+    );
     updateStatsBar(settings.enable);
     client.sendNotification("workspace/didChangeConfiguration", {
       settings,
@@ -121,12 +159,19 @@ export async function activate(context: ExtensionContext) {
 
   function updateStatsBar(enable: boolean) {
     if (!myStatusBarItem) {
-      myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+      myStatusBarItem = window.createStatusBarItem(
+        StatusBarAlignment.Right,
+        100,
+      );
       myStatusBarItem.command = OxcCommands.ToggleEnable;
       context.subscriptions.push(myStatusBarItem);
       myStatusBarItem.show();
     }
-    let bgColor = new ThemeColor(enable ? "statusBarItem.activeBackground" : "statusBarItem.errorBackground");
+    let bgColor = new ThemeColor(
+      enable
+        ? "statusBarItem.activeBackground"
+        : "statusBarItem.errorBackground",
+    );
     myStatusBarItem.text = `oxc: ${enable ? "on" : "off"}`;
     myStatusBarItem.backgroundColor = bgColor;
   }
