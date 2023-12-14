@@ -172,7 +172,9 @@ export async function activate(context: ExtensionContext) {
         ? "statusBarItem.activeBackground"
         : "statusBarItem.errorBackground",
     );
-    myStatusBarItem.text = `oxc: ${enable ? "on" : "off"}`;
+    myStatusBarItem.text = `oxc: ${enable ? "$(check-all)" : "$(circle-slash)"}`;
+
+
     myStatusBarItem.backgroundColor = bgColor;
   }
   updateStatsBar(clientConfig.enable);
