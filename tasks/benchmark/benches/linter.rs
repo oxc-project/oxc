@@ -10,7 +10,7 @@ use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, Linter, LintSettings};
+use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, LintSettings, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;

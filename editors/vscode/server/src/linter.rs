@@ -13,7 +13,7 @@ use crate::walk::Walk;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
-use oxc_linter::{LintContext, Linter, LintSettings};
+use oxc_linter::{LintContext, LintSettings, Linter};
 use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;

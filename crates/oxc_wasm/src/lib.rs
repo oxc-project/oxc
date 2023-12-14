@@ -13,7 +13,7 @@ use oxc::{
     span::SourceType,
     transformer::{TransformOptions, TransformTarget, Transformer},
 };
-use oxc_linter::{LintContext, Linter, LintSettings};
+use oxc_linter::{LintContext, LintSettings, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_query::{schema, Adapter, SCHEMA_TEXT};
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
@@ -205,7 +205,8 @@ impl Oxc {
             self.save_diagnostics(semantic_ret.errors);
 
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic, LintSettings::default());
+            let lint_ctx =
+                LintContext::new(path.into_boxed_path(), &semantic, LintSettings::default());
             let linter_ret = Linter::new().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
