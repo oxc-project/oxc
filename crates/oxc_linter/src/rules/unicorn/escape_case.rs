@@ -1,4 +1,5 @@
-use lazy_static::lazy_static;
+use std::{iter::Peekable, str::Chars};
+
 use oxc_ast::{
     ast::{StringLiteral, TemplateLiteral},
     AstKind,
@@ -9,7 +10,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
@@ -42,56 +42,70 @@ declare_oxc_lint!(
     EscapeCase,
     pedantic
 );
-lazy_static! {
-    // \x00
-    static ref HEX_2: Regex = Regex::new(r"^[\dA-Fa-f]{2}").unwrap();
-    // \u0000
-    static ref HEX_4: Regex = Regex::new(r"^[\dA-Fa-f]{4}").unwrap();
-    // \u{00000000}
-    static ref HEX_N: Regex = Regex::new(r"^\{[\dA-Fa-f]+}").unwrap();
+
+fn is_hex_char(c: char) -> bool {
+    matches!(c, '0'..='9' | 'a'..='f' | 'A'..='F')
+}
+fn is_hex(iter: &Peekable<Chars>, count: i32) -> bool {
+    let mut iter = iter.clone();
+    for _ in 0..count {
+        if !matches!(iter.next(), Some(c) if is_hex_char(c)) {
+            return false;
+        }
+    }
+    true
 }
 
 // /(?<=(?:^|[^\\])(?:\\\\)*\\)(?<data>x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4}|u{[\dA-Fa-f]+})/g
 fn check_case(value: &str, is_regex: bool) -> Option<String> {
     let mut in_escape = false;
-    let chars: Vec<char> = value.chars().collect();
     let mut result = String::with_capacity(value.len());
-    let mut index = 0;
-    while index < chars.len() {
-        let c = chars[index];
-        index += 1;
+    let mut p = value.chars().peekable();
+    while let Some(c) = p.next() {
         result.push(c);
         if in_escape {
             match c {
                 'x' => {
-                    if HEX_2.is_match(&value[index..]) {
-                        for c in value[index..index + 2].chars() {
-                            result.push(c.to_ascii_uppercase());
+                    if is_hex(&p, 2) {
+                        for _ in 0..2 {
+                            result.push(p.next().unwrap().to_ascii_uppercase());
                         }
-                        index += 2;
                     }
                 }
                 'u' => {
-                    if HEX_4.is_match(&value[index..]) {
-                        for c in value[index..index + 4].chars() {
-                            result.push(c.to_ascii_uppercase());
+                    let c = p.peek();
+                    if c == Some(&'{') {
+                        let iter = p.clone();
+                        let mut is_match = false;
+                        let mut chars = vec![];
+                        for c in iter {
+                            if c == '}' {
+                                is_match = true;
+                                break;
+                            } else if is_hex_char(c) {
+                                chars.push(c);
+                            } else {
+                                break;
+                            }
                         }
-                        index += 4;
-                    } else if let Some(m) = HEX_N.find(&value[index..]) {
-                        result.push('{');
-                        for c in value[index + 1..index + m.end() - 1].chars() {
-                            result.push(c.to_ascii_uppercase());
+                        if is_match {
+                            p.next();
+                            result.push('{');
+                            for _ in 0..chars.len() {
+                                result.push(p.next().unwrap().to_ascii_uppercase());
+                            }
+                            p.next();
+                            result.push('}');
                         }
-                        index += m.len();
-                        result.push('}');
+                    } else if is_hex(&p, 4) {
+                        for _ in 0..4 {
+                            result.push(p.next().unwrap().to_ascii_uppercase());
+                        }
                     }
                 }
-                // regex control character
                 'c' if is_regex => {
-                    let c = chars[index];
-                    if c.is_ascii_lowercase() {
-                        result.push(c.to_ascii_uppercase());
-                        index += 1;
+                    if matches!(p.peek(), Some(c) if c.is_ascii_lowercase()) {
+                        result.push(p.next().unwrap().to_ascii_uppercase());
                     }
                 }
                 _ => {}
@@ -101,6 +115,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
             in_escape = true;
         }
     }
+
     if result == value {
         None
     } else {
@@ -145,6 +160,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r#"const foo = "\xA9一二三\xA9";"#,
         r#"const foo = "\xA9";"#,
         r#"const foo = "\uD834";"#,
         r#"const foo = "\u{1D306}";"#,
