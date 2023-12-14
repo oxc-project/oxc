@@ -46,7 +46,7 @@ declare_oxc_lint!(
 fn is_hex_char(c: char) -> bool {
     matches!(c, '0'..='9' | 'a'..='f' | 'A'..='F')
 }
-fn is_hex(iter: &Peekable<Chars>, count: i32) -> bool {
+fn is_hex(iter: &Chars, count: i32) -> bool {
     let mut iter = iter.clone();
     for _ in 0..count {
         if !matches!(iter.next(), Some(c) if is_hex_char(c)) {
@@ -60,7 +60,7 @@ fn is_hex(iter: &Peekable<Chars>, count: i32) -> bool {
 fn check_case(value: &str, is_regex: bool) -> Option<String> {
     let mut in_escape = false;
     let mut result = String::with_capacity(value.len());
-    let mut p = value.chars().peekable();
+    let mut p = value.chars();
     while let Some(c) = p.next() {
         result.push(c);
         if in_escape {
@@ -73,10 +73,9 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                     }
                 }
                 'u' => {
-                    let c = p.peek();
-                    if c == Some(&'{') {
-                        let mut iter = p.clone();
-                        iter.next();
+                    let mut iter = p.clone();
+                    let c = iter.next();
+                    if c == Some('{') {
                         let mut is_match = false;
                         let mut chars = vec![];
                         for c in iter {
@@ -105,7 +104,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
                     }
                 }
                 'c' if is_regex => {
-                    if matches!(p.peek(), Some(c) if c.is_ascii_lowercase()) {
+                    if matches!(p.clone().next(), Some(c) if c.is_ascii_lowercase()) {
                         result.push(p.next().unwrap().to_ascii_uppercase());
                     }
                 }
