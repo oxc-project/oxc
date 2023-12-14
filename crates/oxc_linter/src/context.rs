@@ -4,12 +4,11 @@ use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
-use serde_json::Value;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
-    AstNode,
+    AstNode, LintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -26,11 +25,11 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
-    settings: Option<Value>,
+    settings: LintSettings,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>, settings: Option<Value>) -> Self {
+    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>, settings: LintSettings) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -58,7 +57,7 @@ impl<'a> LintContext<'a> {
         &self.disable_directives
     }
 
-    pub fn settings(&self) -> Option<Value> {
+    pub fn settings(&self) -> LintSettings {
         self.settings.clone()
     }
 

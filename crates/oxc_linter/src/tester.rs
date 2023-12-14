@@ -8,7 +8,10 @@ use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSourc
 use oxc_diagnostics::DiagnosticService;
 use serde_json::Value;
 
-use crate::{rules::RULES, Fixer, LintOptions, LintService, Linter, RuleEnum};
+use crate::{
+    config::parse_settings, rules::RULES, Fixer, LintOptions, LintService, LintSettings, Linter,
+    RuleEnum,
+};
 
 #[derive(Eq, PartialEq)]
 enum TestResult {
@@ -178,12 +181,17 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
+        let lint_settings: LintSettings =
+            settings.as_ref().map_or_else(LintSettings::default, parse_settings);
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
             .with_jsx_a11y_plugin(self.jsx_a11y_plugin);
-        let linter = Linter::from_options(options).unwrap().with_rules(vec![rule]);
+        let linter = Linter::from_options(options)
+            .unwrap()
+            .with_rules(vec![rule])
+            .with_settings(lint_settings);
         let path_to_lint = if self.import_plugin {
             self.current_working_directory.join(&self.rule_path)
         } else {
@@ -196,7 +204,7 @@ impl Tester {
         );
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
-        let result = lint_service.run_source(&allocator, source_text, false, tx_error, settings);
+        let result = lint_service.run_source(&allocator, source_text, false, tx_error);
 
         if result.is_empty() {
             return TestResult::Passed;

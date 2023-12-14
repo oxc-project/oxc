@@ -7,9 +7,8 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolFlags};
-use serde_json::Value;
 
-use crate::LintContext;
+use crate::{JsxA11y, LintContext, LintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     if let Some(member_expr) = call_expr.callee.get_member_expr() {
@@ -171,15 +170,10 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
 
     let mut element_type = String::from(ident.name.as_str());
 
-    if let Some(Value::Object(obj)) = context.settings() {
-        if let Some(Value::Object(jsx_a11y)) = obj.get("jsx-a11y") {
-            if let Some(Value::Object(components)) = jsx_a11y.get("components") {
-                if let Some(val) = components.get(&element_type) {
-                    let b = val.as_str().unwrap();
-                    element_type = String::from(b);
-                }
-            }
-        };
+    let LintSettings { jsx_a11y } = context.settings();
+    let JsxA11y { polymorphic_prop_name: _, components } = jsx_a11y;
+    if let Some(val) = components.get(&element_type) {
+        element_type = String::from(val);
     }
 
     Some(element_type)
