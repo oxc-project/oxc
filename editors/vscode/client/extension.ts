@@ -21,8 +21,6 @@ const traceOutputChannelName = "oxc.trace";
 const enum OxcCommands {
   RestartServer = "oxc.restartServer",
   ApplyAllFixes = "oxc.applyAllFixes",
-  RestartServer = "oxc.restartServer",
-  ApplyAllFixes = "oxc.applyAllFixes",
   ShowOutputChannel = "oxc.showOutputChannel",
   ShowTraceOutputChannel = "oxc.showTraceOutputChannel",
   ToggleEnable = "oxc.toggleEnable",
@@ -83,8 +81,6 @@ export async function activate(context: ExtensionContext) {
       env: {
         ...process.env,
         RUST_LOG: "debug",
-        ...process.env,
-        RUST_LOG: "debug",
       },
     },
   };
@@ -107,7 +103,6 @@ export async function activate(context: ExtensionContext) {
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
     },
     initializationOptions: {
-      settings: clientConfig,
       settings: clientConfig,
     },
     outputChannel,
