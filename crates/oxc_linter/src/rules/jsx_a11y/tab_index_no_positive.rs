@@ -50,19 +50,16 @@ impl Rule for TabIndexNoPositive {
     }
 }
 
-fn check_and_diagnose<'a>(attr: &JSXAttributeItem, ctx: &LintContext<'a>) {
+fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
     match attr {
-        JSXAttributeItem::Attribute(attr) => match &attr.value {
-            Some(value) => {
-                if let Ok(parsed_value) = parse_jsx_value(value) {
-                    if parsed_value > 0.0 {
-                        ctx.diagnostic(TabIndexNoPositiveDiagnostic(attr.span));
-                    }
+        JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
+            if let Ok(parsed_value) = parse_jsx_value(value) {
+                if parsed_value > 0.0 {
+                    ctx.diagnostic(TabIndexNoPositiveDiagnostic(attr.span));
                 }
             }
-            _ => {}
-        },
-        _ => {}
+        }),
+        JSXAttributeItem::SpreadAttribute(_) => {}
     }
 }
 
@@ -106,7 +103,7 @@ fn test() {
         (r#"<div tabIndex="-5" />"#, None),
         (r#"<div tabIndex="-5.5" />"#, None),
         (r"<div tabIndex={-5.5} />", None),
-        (r#"<div tabIndex={-5} />"#, None),
+        (r"<div tabIndex={-5} />", None),
     ];
 
     let fail = vec![
