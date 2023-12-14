@@ -86,6 +86,14 @@ pub fn is_empty_array_expression(expr: &Expression) -> bool {
     }
 }
 
+pub fn is_empty_object_expression(expr: &Expression) -> bool {
+    if let Expression::ObjectExpression(object_expr) = expr {
+        object_expr.properties.len() == 0
+    } else {
+        false
+    }
+}
+
 pub fn is_logical_expression(node: &AstNode) -> bool {
     matches!(
         node.kind(),

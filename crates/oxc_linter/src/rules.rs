@@ -207,6 +207,7 @@ mod unicorn {
     pub mod prefer_node_protocol;
     pub mod prefer_number_properties;
     pub mod prefer_optional_catch_binding;
+    pub mod prefer_prototype_methods;
     pub mod prefer_query_selector;
     pub mod prefer_reflect_apply;
     pub mod prefer_regexp_test;
@@ -405,6 +406,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_spread,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
+    unicorn::prefer_prototype_methods,
     unicorn::prefer_query_selector,
     unicorn::prefer_reflect_apply,
     unicorn::prefer_regexp_test,
