@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment},
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -14,19 +14,19 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum JsxKeyDiagnostic {
-    #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in array.")]
+    #[error(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in array."#)]
     #[diagnostic(severity(warning))]
     MissingKeyPropForElementInArray(#[label] Span),
 
-    #[error("eslint-plugin-react(jsx-key): Missing \"key\" prop for element in iterator.")]
-    #[diagnostic(severity(warning), help("Add a \"key\" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."))]
+    #[error(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator."#)]
+    #[diagnostic(severity(warning), help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#))]
     MissingKeyPropForElementInIterator(
         #[label("Iterator starts here")] Span,
         #[label("Element generated here")] Span,
     ),
 
     #[error(
-        "eslint-plugin-react(jsx-key): \"key\" prop must be placed before any `{{...spread}}`"
+        r#"eslint-plugin-react(jsx-key): "key" prop must be placed before any `{{...spread}}`"#
     )]
     #[diagnostic(severity(warning), help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html"))]
     KeyPropMustBePlacedBeforeSpread(#[label] Span),
@@ -81,13 +81,25 @@ fn is_in_array_or_iter<'a, 'b>(
 ) -> Option<InsideArrayOrIterator> {
     let mut node = node;
 
+    let mut is_outside_containing_function = false;
+    let mut is_explicit_return = false;
+
     loop {
         let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return None;
         };
 
         match parent.kind() {
-            AstKind::ArrowExpression(_) | AstKind::Function(_) => {
+            AstKind::ArrowExpression(arrow_expr) => {
+                if !is_explicit_return
+                    && !matches!(
+                        arrow_expr.body.statements.first(),
+                        Some(Statement::ExpressionStatement(_))
+                    )
+                {
+                    return None;
+                }
+
                 let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
                     return None;
                 };
@@ -95,6 +107,23 @@ fn is_in_array_or_iter<'a, 'b>(
                 if let AstKind::ObjectProperty(_) = parent.kind() {
                     return None;
                 }
+                if is_outside_containing_function {
+                    return None;
+                }
+                is_outside_containing_function = true;
+            }
+            AstKind::Function(_) => {
+                let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
+                    return None;
+                };
+
+                if let AstKind::ObjectProperty(_) = parent.kind() {
+                    return None;
+                }
+                if is_outside_containing_function {
+                    return None;
+                }
+                is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => return Some(InsideArrayOrIterator::Array),
             AstKind::CallExpression(v) => {
@@ -112,6 +141,9 @@ fn is_in_array_or_iter<'a, 'b>(
             }
             AstKind::JSXElement(_) | AstKind::JSXOpeningElement(_) | AstKind::ObjectProperty(_) => {
                 return None
+            }
+            AstKind::ReturnStatement(_) => {
+                is_explicit_return = true;
             }
             _ => {}
         }
@@ -327,6 +359,28 @@ fn test() {
               },
             ]);
         "#,
+        r#"
+        function App() {
+          return (
+            <div className="App">
+              {[1, 2, 3, 4, 5].map((val) => {
+                const text = () => <strong>{val}</strong>;
+                return null
+              })}
+            </div>
+          );
+        }"#,
+        r#"
+        function App() {
+          return (
+            <div className="App">
+              {[1, 2, 3, 4, 5].map((val) => {
+                const text = <strong>{val}</strong>;
+                return <button key={val}>{text}</button>;
+              })}
+            </div>
+          );
+        }"#,
     ];
 
     let fail = vec![
