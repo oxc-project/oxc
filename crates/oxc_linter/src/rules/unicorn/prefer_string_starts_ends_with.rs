@@ -90,9 +90,7 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.contains(RegExpFlags::I)
-        || regexp_lit.regex.flags.contains(RegExpFlags::M)
-    {
+    if regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M) {
         return None;
     }
 
@@ -123,6 +121,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Unicorn Tests
         r#"foo.startsWith("bar")"#,
         r#"foo.endsWith("bar")"#,
         r#"reject(new Error("foo"))"#,
@@ -133,10 +132,33 @@ fn test() {
         r"foo()()",
         r"if (foo.match(/^foo/)) {}",
         r"if (/^foo/.exec(foo)) {}",
+        r"/foo/.test(bar)",
+        r"/^foo$/.test(bar)",
+        r"/^foo+/.test(bar)",
+        r"/foo+$/.test(bar)",
+        r"/^[,af]/.test(bar)",
+        r"/[,af]$/.test(bar)",
+        r"/^\w/.test(bar)",
+        r"/\w$/.test(bar)",
+        r"/^foo./.test(bar)",
+        r"/foo.$/.test(bar)",
+        r"/\^foo/.test(bar)",
+        r"/^foo/i.test(bar)",
+        r"/^foo/m.test(bar)",
+        r"/^foo/im.test(bar)",
+        r"/^A|B/.test(bar)",
+        r"/A|B$/.test(bar)",
+        // Additional tests
         r"/^http/i.test(uri)",
     ];
 
     let fail = vec![
+        r"/^foo/.test(bar)",
+        r"/foo$/.test(bar)",
+        r"/^!/.test(bar)",
+        r"/!$/.test(bar)",
+        r"/^ /.test(bar)",
+        r"/ $/.test(bar)",
         r"const foo = {}; /^abc/.test(foo);",
         r"const foo = 123; /^abc/.test(foo);",
         r#"const foo = "hello"; /^abc/.test(foo);"#,

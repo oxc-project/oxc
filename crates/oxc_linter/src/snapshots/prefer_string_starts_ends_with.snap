@@ -4,6 +4,42 @@ expression: prefer_string_starts_ends_with
 ---
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
    ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^foo/.test(bar)
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /foo$/.test(bar)
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^!/.test(bar)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /!$/.test(bar)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ /^ /.test(bar)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+ 1 │ / $/.test(bar)
+   · ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
+   ╭─[prefer_string_starts_ends_with.tsx:1:1]
  1 │ const foo = {}; /^abc/.test(foo);
    ·                 ────────────────
    ╰────
