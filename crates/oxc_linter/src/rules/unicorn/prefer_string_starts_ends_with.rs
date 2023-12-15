@@ -90,7 +90,7 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.contains(RegExpFlags::I | RegExpFlags::M) {
+    if regexp_lit.regex.flags.contains(RegExpFlags::I) || regexp_lit.regex.flags.contains(RegExpFlags::M) {
         return None;
     }
 
@@ -131,6 +131,7 @@ fn test() {
         r"foo()()",
         r"if (foo.match(/^foo/)) {}",
         r"if (/^foo/.exec(foo)) {}",
+        r"/^http/i.test(uri)",
     ];
 
     let fail = vec![
