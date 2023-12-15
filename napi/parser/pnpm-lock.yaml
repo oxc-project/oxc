@@ -4,6 +4,9 @@ devDependencies:
   '@napi-rs/cli':
     specifier: ^2.15.2
     version: 2.15.2
+  flatbuffers:
+    specifier: ^23.5.26
+    version: 23.5.26
 
 packages:
 
@@ -11,4 +14,8 @@ packages:
     resolution: {integrity: sha512-80tBCtCnEhAmFtB9oPM0FL74uW7fAmtpeqjvERH7Q1z/aZzCAs/iNfE7U3ehpwg9Q07Ob2Eh/+1guyCdX/p24w==}
     engines: {node: '>= 10'}
     hasBin: true
+    dev: true
+
+  /flatbuffers@23.5.26:
+    resolution: {integrity: sha512-vE+SI9vrJDwi1oETtTIFldC/o9GsVKRM+s6EL0nQgxXlYV1Vc4Tk30hj4xGICftInKQKj1F3up2n8UbIVobISQ==}
     dev: true

@@ -34,6 +34,11 @@ export function parseWithoutReturn(sourceText: string, options?: ParserOptions |
  */
 export function parseSync(sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 /**
+ * Returns a binary AST in flexbuffers format.
+ * This is a POC API. Error handling is not done yet.
+ */
+export function parseSyncBuffer(sourceText: string, options?: ParserOptions | undefined | null): Buffer
+/**
  * # Panics
  *
  * * Tokio crashes
