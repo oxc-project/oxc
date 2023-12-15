@@ -6,7 +6,8 @@
     "test": "node test.mjs"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.15.2"
+    "@napi-rs/cli": "^2.15.2",
+    "flatbuffers": "^23.5.26"
   },
   "engines": {
     "node": ">=14.*"
