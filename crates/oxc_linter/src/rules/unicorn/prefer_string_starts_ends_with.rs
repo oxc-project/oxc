@@ -102,7 +102,7 @@ fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
 
     if regexp_lit.regex.pattern.ends_with('$')
         && is_simple_string(
-            &regexp_lit.regex.pattern.as_str()[0..regexp_lit.regex.pattern.len() - 2],
+            &regexp_lit.regex.pattern.as_str()[0..regexp_lit.regex.pattern.len() - 1],
         )
     {
         return Some(ErrorKind::EndsWith);
@@ -167,6 +167,8 @@ fn test() {
         r#"/^a/v.test("string")"#,
         r"/a$/.test(`${unknown}`)",
         r"/a$/.test(String(unknown))",
+        r"const a = /你$/.test('a');",
+        r"const a = /^你/.test('a');",
     ];
 
     Tester::new_without_config(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();
