@@ -15,7 +15,6 @@ on:
       - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
       - 'crates/oxc_query/**'
-      - 'crates/oxc_resolver/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
       - 'crates/oxc_prettier/**'
@@ -34,7 +33,6 @@ on:
       - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
       - 'crates/oxc_query/**'
-      - 'crates/oxc_resolver/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
 
