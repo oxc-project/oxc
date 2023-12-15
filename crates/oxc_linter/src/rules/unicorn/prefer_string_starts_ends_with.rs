@@ -90,7 +90,9 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.contains(RegExpFlags::I) || regexp_lit.regex.flags.contains(RegExpFlags::M) {
+    if regexp_lit.regex.flags.contains(RegExpFlags::I)
+        || regexp_lit.regex.flags.contains(RegExpFlags::M)
+    {
         return None;
     }
 
