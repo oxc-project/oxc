@@ -19,7 +19,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use ropey::Rope;
-use tower_lsp::lsp_types::{self, Position, Range, Url};
+use tower_lsp::lsp_types::{self, Position, Range, Url, DiagnosticRelatedInformation};
 
 #[derive(Debug)]
 struct ErrorWithPosition {
@@ -61,7 +61,7 @@ impl ErrorWithPosition {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
             Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
-            _ => Some(lsp_types::DiagnosticSeverity::INFORMATION),
+            _ => Some(lsp_types::DiagnosticSeverity::WARNING),
         };
 
         let related_information = Some(
@@ -85,6 +85,17 @@ impl ErrorWithPosition {
                 })
                 .collect(),
         );
+        let range = related_information.as_ref().map(|infos: &Vec<DiagnosticRelatedInformation>| {
+            let mut ret_range = Range { start: Position { line: u32::MAX, character: u32::MAX }, end: Position { line: u32::MAX, character: u32::MAX } };
+            for info in infos.iter() {
+                if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
+                    ret_range = info.location.range.clone();
+                }
+            }
+            ret_range
+            
+        }).unwrap_or(Range { start: self.start_pos, end: self.end_pos });
+        
 
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
@@ -92,7 +103,7 @@ impl ErrorWithPosition {
         );
 
         lsp_types::Diagnostic {
-            range: Range { start: self.start_pos, end: self.end_pos },
+            range,
             severity,
             code: None,
             message,
@@ -117,7 +128,6 @@ pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
     pub fixed_content: Option<FixedContent>,
 }
-
 #[derive(Debug)]
 struct ErrorReport {
     pub error: Error,
@@ -409,5 +419,22 @@ impl ServerLinter {
             Arc::clone(&self.plugin),
         )
         .run_single(&uri.to_file_path().unwrap(), content)
+    }
+}
+
+
+fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering{
+    if first.start < other.start {
+        return std::cmp::Ordering::Less;
+    } else if first.start == other.start {
+        if first.end < other.end {
+            return std::cmp::Ordering::Less;
+        } else if first.end == other.end{
+            return std::cmp::Ordering::Equal;
+        } else {
+            return std::cmp::Ordering::Greater;
+        }
+    } else {
+        return std::cmp::Ordering::Greater;
     }
 }
