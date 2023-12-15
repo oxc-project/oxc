@@ -34,10 +34,6 @@ A-semantic:
 - changed-files:
   - any-glob-to-any-file: ['crates/oxc_semantic/**']
 
-A-resolver:
-- changed-files:
-  - any-glob-to-any-file: ['crates/oxc_resolver/**']
-
 A-type-checking:
 - changed-files:
   - any-glob-to-any-file: ['crates/oxc_type_synthesis/**']

@@ -63,7 +63,6 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
-          cargo check -p oxc_resolver --target wasm32-unknown-unknown
 
   typos:
     name: Spell Check
