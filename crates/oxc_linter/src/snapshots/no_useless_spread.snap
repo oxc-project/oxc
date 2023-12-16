@@ -9,7 +9,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...{a}}
    ·                 ───
@@ -21,14 +21,16 @@ expression: no_useless_spread
  1 │ foo(...[a])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -37,7 +39,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...{a,}}
    ·                 ───
@@ -49,14 +51,16 @@ expression: no_useless_spread
  1 │ foo(...[a,])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a,])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -65,7 +69,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...{a,},}
    ·                 ───
@@ -77,14 +81,16 @@ expression: no_useless_spread
  1 │ foo(...[a,],)
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a,],)
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -93,7 +99,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...(( {a} ))}
    ·                 ───
@@ -105,14 +111,16 @@ expression: no_useless_spread
  1 │ foo(...(( [a] )))
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...(( [a] )))
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -121,7 +129,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...{}}
    ·                 ───
@@ -133,14 +141,16 @@ expression: no_useless_spread
  1 │ foo(...[])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -154,14 +164,16 @@ expression: no_useless_spread
  1 │ foo(...[,])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[,])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -175,14 +187,16 @@ expression: no_useless_spread
  1 │ foo(...[,,])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[,,])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -196,14 +210,16 @@ expression: no_useless_spread
  1 │ foo(...[a, , b,])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a, , b,])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -217,21 +233,24 @@ expression: no_useless_spread
  1 │ foo(...[a, , b,],)
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a, , b,],)
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ foo(...[,, ,(( a )), ,,(0, b), ,,])
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -240,7 +259,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {a, ...{a, b}}
    ·                    ───
@@ -252,14 +271,16 @@ expression: no_useless_spread
  1 │ foo(a, ...[a, b])
    ·        ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(a, ...[a, b])
    ·            ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -268,7 +289,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {...{a, b}, b,}
    ·                 ───
@@ -280,14 +301,16 @@ expression: no_useless_spread
  1 │ foo(...[a, b], b,)
    ·     ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(...[a, b], b,)
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
@@ -296,7 +319,7 @@ expression: no_useless_spread
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ const object = {a, ...{a, b}, b,}
    ·                    ───
@@ -308,37 +331,39 @@ expression: no_useless_spread
  1 │ foo(a, ...[a, b], b,)
    ·        ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Foo(a, ...[a, b], b,)
    ·            ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ ({a:1, ...{a: 2}})
    ·        ───
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ ({...{a:1}, ...{a: 2}})
    ·   ───
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ ({...{a:1}, ...{a: 2}})
    ·             ───
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ ({[a]:1, ...{[a]: 2}})
    ·          ───
@@ -350,14 +375,16 @@ expression: no_useless_spread
  1 │ Promise.all(...[...iterable])
    ·             ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
  1 │ new Map(...[...iterable])
    ·         ───
    ╰────
-  help: Consider removing the spread operator.
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.tsx:1:1]
@@ -673,5 +700,15 @@ expression: no_useless_spread
    ·                   ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
+
+  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.tsx:2:1]
+ 2 │         if (organization.features?.includes('performance-database-view-percentiles')) {
+ 3 │             availableAggregates.push(...['p50', 'p75', 'p95', 'p99']);
+   ·                                      ───
+ 4 │         }
+   ╰────
+  help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
+        For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
 

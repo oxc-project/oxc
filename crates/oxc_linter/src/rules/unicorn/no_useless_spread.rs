@@ -20,9 +20,12 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoUselessSpreadDiagnostic {
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
+    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {1} unnecessarily.")]
     #[diagnostic(severity(warning), help("Consider removing the spread operator."))]
-    SpreadInList(#[label] Span),
+    SpreadInList(#[label] Span, &'static str),
+    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
+    #[diagnostic(severity(warning), help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`."))]
+    SpreadInArguments(#[label] Span),
     #[error("eslint-plugin-unicorn(no-useless-spread): `{1}` accepts an iterable, so it's unnecessary to convert the iterable to an array.")]
     #[diagnostic(severity(warning), help("Consider removing the spread operator."))]
     IterableToArray(#[label] Span, String),
@@ -134,6 +137,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
         };
+
         if let AstKind::SpreadElement(spread_elem) = parent.kind() {
             let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
                 return;
@@ -142,20 +146,23 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
             let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
 
             match node.kind() {
-                // { ...{ } }
                 AstKind::ObjectExpression(_) => {
+                    // { ...{ } }
                     if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span));
+                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span, "object"));
                     }
                 }
-                // [ ...[ ] ]
-                AstKind::ArrayExpression(_) => {
-                    if matches!(parent_parent.kind(), AstKind::ArrayExpressionElement(_))
-                        || matches!(parent_parent.kind(), AstKind::Argument(_))
-                    {
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span));
+                AstKind::ArrayExpression(_) => match parent_parent.kind() {
+                    // ...[ ]
+                    AstKind::ArrayExpressionElement(_) => {
+                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span, "array"));
                     }
-                }
+                    // foo(...[ ])
+                    AstKind::Argument(_) => {
+                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInArguments(span));
+                    }
+                    _ => {}
+                },
                 _ => {
                     unreachable!()
                 }
@@ -556,6 +563,12 @@ fn test() {
         r"[...await Promise.allSettled(foo)]",
         r"for (const foo of[...iterable]);",
         r"for (const foo of[...iterable2]);",
+        // https://github.com/getsentry/sentry/blob/9e4359030e7ec088aa3f47582f1afbad539a6377/static/app/views/performance/database/useAvailableDurationAggregates.tsx#L15-L17
+        r"
+        if (organization.features?.includes('performance-database-view-percentiles')) {
+            availableAggregates.push(...['p50', 'p75', 'p95', 'p99']);
+        }
+        ",
     ];
 
     Tester::new_without_config(NoUselessSpread::NAME, pass, fail).test_and_snapshot();
