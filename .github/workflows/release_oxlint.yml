@@ -106,10 +106,10 @@ jobs:
           tar czf $BIN_NAME.tar.gz $BIN_NAME
 
       - name: Upload Binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: binaries
+          name: binaries-${{ matrix.code-target }}
           path: |
             *.zip
             *.tar.gz
@@ -132,9 +132,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: binaries
+        uses: actions/download-artifact@v4
+
+      - name: Move download artifacts from directories to root
+        shell: bash
+        run: |
+          mv binaries-*/*.zip .
+          mv binaries-*/*.gz .
 
       - name: Unzip
         uses: montudor/action-zip@v1
