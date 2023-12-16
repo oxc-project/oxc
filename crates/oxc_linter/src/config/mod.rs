@@ -1,4 +1,7 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
 pub mod errors;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
@@ -43,18 +46,9 @@ impl ESLintConfig {
             }
         };
 
-        let extends_hm = match parse_extends(&file) {
-            Ok(Some(extends_hm)) => {
-                extends_hm.into_iter().collect::<std::collections::HashSet<_>>()
-            }
-            Ok(None) => std::collections::HashSet::new(),
-            Err(e) => {
-                return Err(FailedToParseConfigError(vec![Error::new(
-                    FailedToParseConfigJsonError(path.clone(), e.to_string()),
-                )])
-                .into());
-            }
-        };
+        // See https://github.com/oxc-project/oxc/issues/1672
+        let extends_hm: HashSet<&str> = HashSet::new();
+
         let roles_hm = match parse_rules(&file) {
             Ok(roles_hm) => roles_hm
                 .into_iter()
@@ -107,6 +101,7 @@ impl ESLintConfig {
     }
 }
 
+#[allow(unused)]
 fn parse_extends(root_json: &Value) -> Result<Option<Vec<&'static str>>, Report> {
     let Some(extends) = root_json.get("extends") else {
         return Ok(None);
