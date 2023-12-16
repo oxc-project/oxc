@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 pub mod errors;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::{
     rules::{RuleEnum, RULES},
-    AllowWarnDeny,
+    AllowWarnDeny, JsxA11y, LintSettings,
 };
 
 use self::errors::{
@@ -17,6 +17,7 @@ use self::errors::{
 
 pub struct ESLintConfig {
     rules: std::vec::Vec<RuleEnum>,
+    settings: LintSettings,
 }
 
 impl ESLintConfig {
@@ -66,6 +67,8 @@ impl ESLintConfig {
             }
         };
 
+        let settings = parse_settings_from_root(&file);
+
         // `extends` provides the defaults
         // `rules` provides the overrides
         let rules = RULES.clone().into_iter().filter_map(|rule| {
@@ -91,12 +94,16 @@ impl ESLintConfig {
             }
         });
 
-        Ok(Self { rules: rules.collect::<Vec<_>>() })
+        Ok(Self { rules: rules.collect::<Vec<_>>(), settings })
     }
 
-    pub fn into_rules(mut self) -> Vec<RuleEnum> {
+    pub fn into_rules(mut self) -> Self {
         self.rules.sort_unstable_by_key(RuleEnum::name);
-        self.rules
+        self
+    }
+
+    pub fn get_config(self) -> (std::vec::Vec<RuleEnum>, LintSettings) {
+        (self.rules, self.settings)
     }
 }
 
@@ -149,6 +156,42 @@ fn parse_rules(
             Ok((plugin_name, name, rule_severity, rule_config))
         })
         .collect::<Result<Vec<_>, Error>>()
+}
+
+fn parse_settings_from_root(root_json: &Value) -> LintSettings {
+    let Value::Object(root_object) = root_json else { return LintSettings::default() };
+
+    let Some(settings_value) = root_object.get("settings") else { return LintSettings::default() };
+
+    parse_settings(settings_value)
+}
+
+pub fn parse_settings(setting_value: &Value) -> LintSettings {
+    if let Value::Object(settings_object) = setting_value {
+        if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
+            let mut jsx_a11y_setting =
+                JsxA11y { polymorphic_prop_name: None, components: HashMap::new() };
+
+            if let Some(Value::Object(components)) = jsx_a11y.get("components") {
+                let components_map: HashMap<String, String> = components
+                    .iter()
+                    .map(|(key, value)| (String::from(key), String::from(value.as_str().unwrap())))
+                    .collect();
+
+                jsx_a11y_setting.set_components(components_map);
+            }
+
+            if let Some(Value::String(polymorphic_prop_name)) = jsx_a11y.get("polymorphicPropName")
+            {
+                jsx_a11y_setting
+                    .set_polymorphic_prop_name(Some(String::from(polymorphic_prop_name)));
+            }
+
+            return LintSettings { jsx_a11y: jsx_a11y_setting };
+        }
+    }
+
+    LintSettings::default()
 }
 
 pub const EXTENDS_MAP: Map<&'static str, &'static str> = phf_map! {

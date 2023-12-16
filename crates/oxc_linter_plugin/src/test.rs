@@ -23,7 +23,7 @@ fn run_individual_test(
 ) -> std::result::Result<Vec<Report>, Vec<Report>> {
     use std::rc::Rc;
 
-    use oxc_linter::LintContext;
+    use oxc_linter::{LintContext, LintSettings};
 
     let file_path = &test.relative_path.last().expect("there to be atleast 1 path part");
     let source_text = &test.code;
@@ -48,8 +48,11 @@ fn run_individual_test(
 
     let semantic = Rc::new(semantic);
 
-    let mut lint_ctx =
-        LintContext::new(PathBuf::from(file_path).into_boxed_path(), &Rc::clone(&semantic));
+    let mut lint_ctx = LintContext::new(
+        PathBuf::from(file_path).into_boxed_path(),
+        &Rc::clone(&semantic),
+        LintSettings::default(),
+    );
 
     let result = plugin.lint_file_with_rule(
         &mut lint_ctx,

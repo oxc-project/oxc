@@ -17,7 +17,7 @@ mod rules;
 mod service;
 mod utils;
 
-use std::{self, fs, io::Write, rc::Rc, time::Duration};
+use std::{self, collections::HashMap, fs, io::Write, rc::Rc, time::Duration};
 
 use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
@@ -33,10 +33,38 @@ pub use crate::{
 };
 pub(crate) use rules::{RuleEnum, RULES};
 
+#[derive(Debug, Clone)]
+pub struct LintSettings {
+    jsx_a11y: JsxA11y,
+}
+
+impl Default for LintSettings {
+    fn default() -> Self {
+        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: HashMap::new() } }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct JsxA11y {
+    polymorphic_prop_name: Option<String>,
+    components: HashMap<String, String>,
+}
+
+impl JsxA11y {
+    pub fn set_components(&mut self, components: HashMap<String, String>) {
+        self.components = components;
+    }
+
+    pub fn set_polymorphic_prop_name(&mut self, name: Option<String>) {
+        self.polymorphic_prop_name = name;
+    }
+}
+
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
     options: LintOptions,
+    settings: LintSettings,
 }
 
 impl Default for Linter {
@@ -52,20 +80,32 @@ impl Linter {
             .filter(|&rule| rule.category() == RuleCategory::Correctness)
             .cloned()
             .collect::<Vec<_>>();
-        Self { rules, options: LintOptions::default() }
+        Self {
+            rules,
+            options: LintOptions::default(),
+            settings: LintSettings {
+                jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: HashMap::new() },
+            },
+        }
     }
 
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
-        let rules = options.derive_rules()?;
-        Ok(Self { rules, options })
+        let (rules, settings) = options.derive_rules_and_settings()?;
+        Ok(Self { rules, options, settings })
     }
 
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
         self.rules = rules;
+        self
+    }
+
+    #[must_use]
+    pub fn with_settings(mut self, settings: LintSettings) -> Self {
+        self.settings = settings;
         self
     }
 
@@ -120,6 +160,9 @@ impl Linter {
         ctx.into_message()
     }
 
+    pub fn get_settings(&self) -> LintSettings {
+        self.settings.clone()
+    }
     #[allow(unused)]
     fn read_rules_configuration() -> Option<serde_json::Map<String, serde_json::Value>> {
         fs::read_to_string(".eslintrc.json")

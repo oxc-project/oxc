@@ -9,7 +9,7 @@ use crate::{
         ESLintConfig,
     },
     rules::RULES,
-    RuleCategory, RuleEnum,
+    LintSettings, RuleCategory, RuleEnum,
 };
 use oxc_diagnostics::{Error, Report};
 use rustc_hash::FxHashSet;
@@ -145,12 +145,12 @@ const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 impl LintOptions {
     /// # Errors
     /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules(&self) -> Result<Vec<RuleEnum>, Report> {
+    pub fn derive_rules_and_settings(&self) -> Result<(Vec<RuleEnum>, LintSettings), Report> {
         let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
 
         if let Some(path) = &self.config_path {
-            let rules = ESLintConfig::new(path)?.into_rules();
-            return Ok(rules);
+            let (rules, settings) = ESLintConfig::new(path)?.into_rules().get_config();
+            return Ok((rules, settings));
         }
 
         let all_rules = self.get_filtered_rules();
@@ -195,7 +195,7 @@ impl LintOptions {
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
-        Ok(rules)
+        Ok((rules, LintSettings::default()))
     }
 
     // get final filtered rules by reading `self.jest_plugin` and `self.jsx_a11y_plugin`

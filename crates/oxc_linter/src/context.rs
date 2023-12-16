@@ -8,7 +8,7 @@ use oxc_span::SourceType;
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
-    AstNode,
+    AstNode, LintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -24,10 +24,12 @@ pub struct LintContext<'a> {
     current_rule_name: &'static str,
 
     file_path: Box<Path>,
+
+    settings: LintSettings,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
+    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>, settings: LintSettings) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -37,6 +39,7 @@ impl<'a> LintContext<'a> {
             fix: false,
             current_rule_name: "",
             file_path,
+            settings,
         }
     }
 
@@ -52,6 +55,10 @@ impl<'a> LintContext<'a> {
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         &self.disable_directives
+    }
+
+    pub fn settings(&self) -> LintSettings {
+        self.settings.clone()
     }
 
     pub fn source_text(&self) -> &'a str {
