@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 119
 expression: no_access_key
 ---
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create
