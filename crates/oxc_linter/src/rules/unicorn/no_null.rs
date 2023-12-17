@@ -176,12 +176,20 @@ impl Rule for NoNull {
         };
 
         if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
+            let grand_parent_kind = ctx.nodes().parent_kind(parent_node.id());
+
+            if matches!(parent_node.kind(), AstKind::Argument(_)) {
+                if let Some(AstKind::CallExpression(call_expr)) = grand_parent_kind {
+                    if match_call_expression_pass_case(null_literal, call_expr) {
+                        return;
+                    }
+                }
+            }
+
             if let AstKind::BinaryExpression(binary_expr) = parent_node.kind() {
                 diagnose_binary_expression(self, ctx, null_literal, binary_expr);
                 return;
             }
-
-            let grand_parent_kind = ctx.nodes().parent_kind(parent_node.id());
 
             if let AstKind::VariableDeclarator(variable_declarator) = parent_node.kind() {
                 diagnose_variable_declarator(
@@ -194,29 +202,13 @@ impl Rule for NoNull {
                 return;
             }
 
+            // `function foo() { return null; }`,
             if matches!(parent_node.kind(), AstKind::ReturnStatement(_)) {
                 ctx.diagnostic_with_fix(RemoveNullDiagnostic(null_literal.span), || {
                     Fix::delete(null_literal.span)
                 });
 
                 return;
-            }
-
-            if matches!(parent_node.kind(), AstKind::Argument(_)) {
-                // `function foo() { return null; }`,
-                if let Some(AstKind::ReturnStatement(_)) = grand_parent_kind {
-                    ctx.diagnostic_with_fix(RemoveNullDiagnostic(null_literal.span), || {
-                        Fix::delete(null_literal.span)
-                    });
-
-                    return;
-                }
-
-                if let Some(AstKind::CallExpression(call_expr)) = grand_parent_kind {
-                    if match_call_expression_pass_case(null_literal, call_expr) {
-                        return;
-                    }
-                }
             }
         }
 
