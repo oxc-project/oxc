@@ -61,7 +61,6 @@ impl ErrorWithPosition {
     fn to_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
-            Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
             _ => Some(lsp_types::DiagnosticSeverity::WARNING),
         };
         let related_information = Some(
@@ -85,21 +84,21 @@ impl ErrorWithPosition {
                 })
                 .collect(),
         );
-        let range = related_information
-            .as_ref()
-            .map(|infos: &Vec<DiagnosticRelatedInformation>| {
+        let range = related_information.as_ref().map_or(
+            Range { start: self.start_pos, end: self.end_pos },
+            |infos: &Vec<DiagnosticRelatedInformation>| {
                 let mut ret_range = Range {
                     start: Position { line: u32::MAX, character: u32::MAX },
                     end: Position { line: u32::MAX, character: u32::MAX },
                 };
-                for info in infos.iter() {
+                for info in infos {
                     if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
-                        ret_range = info.location.range.clone();
+                        ret_range = info.location.range;
                     }
                 }
                 ret_range
-            })
-            .unwrap_or(Range { start: self.start_pos, end: self.end_pos });
+            },
+        );
 
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
@@ -182,38 +181,36 @@ impl IsolatedLintHandler {
                         errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
                     // a diagnostics connected from related_info to original diagnostic
                     let mut inverted_diagnostics = vec![];
-                    for d in diagnostics.iter() {
-                        match d.diagnostic.related_information {
-                            Some(ref related_info) => {
-                                let related_information =
-                                    Some(vec![DiagnosticRelatedInformation {
-                                        location: lsp_types::Location {
-                                            uri: lsp_types::Url::from_file_path(path).unwrap(),
-                                            range: d.diagnostic.range,
-                                        },
-                                        message: "original diagnostic".to_string(),
-                                    }]);
-                                for r in related_info {
-                                    if r.location.range == d.diagnostic.range {
-                                        continue;
-                                    }
-                                    inverted_diagnostics.push(DiagnosticReport {
-                                        diagnostic: lsp_types::Diagnostic {
-                                            range: r.location.range,
-                                            severity: Some(DiagnosticSeverity::HINT),
-                                            code: None,
-                                            message: r.message.clone(),
-                                            source: Some("oxc".into()),
-                                            code_description: None,
-                                            related_information: related_information.clone(),
-                                            tags: None,
-                                            data: None,
-                                        },
-                                        fixed_content: None,
-                                    });
-                                }
+                    for d in &diagnostics {
+                        let Some(ref related_info) = d.diagnostic.related_information else {
+                            continue;
+                        };
+
+                        let related_information = Some(vec![DiagnosticRelatedInformation {
+                            location: lsp_types::Location {
+                                uri: lsp_types::Url::from_file_path(path).unwrap(),
+                                range: d.diagnostic.range,
+                            },
+                            message: "original diagnostic".to_string(),
+                        }]);
+                        for r in related_info {
+                            if r.location.range == d.diagnostic.range {
+                                continue;
                             }
-                            None => {}
+                            inverted_diagnostics.push(DiagnosticReport {
+                                diagnostic: lsp_types::Diagnostic {
+                                    range: r.location.range,
+                                    severity: Some(DiagnosticSeverity::HINT),
+                                    code: None,
+                                    message: r.message.clone(),
+                                    source: Some("oxc".into()),
+                                    code_description: None,
+                                    related_information: related_information.clone(),
+                                    tags: None,
+                                    data: None,
+                                },
+                                fixed_content: None,
+                            });
                         }
                     }
                     diagnostics.append(&mut inverted_diagnostics);
@@ -464,17 +461,8 @@ impl ServerLinter {
 }
 
 fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
-    if first.start < other.start {
-        return std::cmp::Ordering::Less;
-    } else if first.start == other.start {
-        if first.end < other.end {
-            return std::cmp::Ordering::Less;
-        } else if first.end == other.end {
-            return std::cmp::Ordering::Equal;
-        } else {
-            return std::cmp::Ordering::Greater;
-        }
-    } else {
-        return std::cmp::Ordering::Greater;
+    match first.start.cmp(&other.start) {
+        std::cmp::Ordering::Equal => first.end.cmp(&other.end),
+        o => o,
     }
 }
