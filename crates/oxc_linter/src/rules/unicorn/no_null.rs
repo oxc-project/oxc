@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// let foo
     /// ```
     NoNull,
-    correctness
+    style
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
