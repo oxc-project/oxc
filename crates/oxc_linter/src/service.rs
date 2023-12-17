@@ -15,7 +15,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFi
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::{SourceType, Span, VALID_EXTENSIONS};
 
 use crate::{Fixer, LintContext, Linter, Message};
 
@@ -139,7 +139,7 @@ impl Runtime {
         }
 
         let allocator = Allocator::default();
-        let source_text = match fs::read_to_string(path) {
+        let mut source_text = match fs::read_to_string(path) {
             Ok(source_text) => source_text,
             Err(e) => {
                 tx_error
@@ -151,6 +151,13 @@ impl Runtime {
                 return;
             }
         };
+
+        if let Some(range) = source_type.range() {
+            let js_content = range.source_text(&source_text);
+            let Span { start, end } = range;
+            source_text =
+                format!("{}{}{}", " ".repeat(start as usize), js_content, " ".repeat(end as usize));
+        }
 
         let mut messages =
             self.process_source(path, &allocator, &source_text, source_type, true, tx_error);
