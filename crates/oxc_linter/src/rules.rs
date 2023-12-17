@@ -171,6 +171,7 @@ mod unicorn {
     pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
+    pub mod no_null;
     pub mod no_object_as_default_parameter;
     pub mod no_static_only_class;
     pub mod no_thenable;
@@ -372,6 +373,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
+    unicorn::no_null,
     unicorn::no_object_as_default_parameter,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
