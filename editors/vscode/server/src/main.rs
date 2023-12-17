@@ -66,6 +66,7 @@ enum SyntheticRunLevel {
     OnSave,
     OnType,
 }
+
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
@@ -93,15 +94,15 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
-                // code_action_provider: Some(CodeActionProviderCapability::Options(
-                //     CodeActionOptions {
-                //         code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                //         work_done_progress_options: WorkDoneProgressOptions {
-                //             work_done_progress: None,
-                //         },
-                //         resolve_provider: None,
-                //     },
-                // )),
+                code_action_provider: Some(CodeActionProviderCapability::Options(
+                    CodeActionOptions {
+                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                        work_done_progress_options: WorkDoneProgressOptions {
+                            work_done_progress: None,
+                        },
+                        resolve_provider: None,
+                    },
+                )),
                 ..ServerCapabilities::default()
             },
         })
