@@ -17,7 +17,7 @@ mod rules;
 mod service;
 mod utils;
 
-use std::{self, collections::HashMap, fs, io::Write, rc::Rc, time::Duration};
+use std::{self, fs, io::Write, rc::Rc, time::Duration};
 
 use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
@@ -40,18 +40,18 @@ pub struct LintSettings {
 
 impl Default for LintSettings {
     fn default() -> Self {
-        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: HashMap::new() } }
+        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() } }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct JsxA11y {
     polymorphic_prop_name: Option<String>,
-    components: HashMap<String, String>,
+    components: FxHashMap<String, String>,
 }
 
 impl JsxA11y {
-    pub fn set_components(&mut self, components: HashMap<String, String>) {
+    pub fn set_components(&mut self, components: FxHashMap<String, String>) {
         self.components = components;
     }
 
@@ -80,13 +80,7 @@ impl Linter {
             .filter(|&rule| rule.category() == RuleCategory::Correctness)
             .cloned()
             .collect::<Vec<_>>();
-        Self {
-            rules,
-            options: LintOptions::default(),
-            settings: LintSettings {
-                jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: HashMap::new() },
-            },
-        }
+        Self { rules, options: LintOptions::default(), settings: LintSettings::default() }
     }
 
     /// # Errors

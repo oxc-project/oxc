@@ -1,11 +1,9 @@
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-};
+use std::{collections::HashSet, path::PathBuf};
 
 pub mod errors;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use phf::{phf_map, Map};
+use rustc_hash::FxHashMap;
 use serde_json::Value;
 
 use crate::{
@@ -165,10 +163,10 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
     if let Value::Object(settings_object) = setting_value {
         if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
             let mut jsx_a11y_setting =
-                JsxA11y { polymorphic_prop_name: None, components: HashMap::new() };
+                JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() };
 
             if let Some(Value::Object(components)) = jsx_a11y.get("components") {
-                let components_map: HashMap<String, String> = components
+                let components_map: FxHashMap<String, String> = components
                     .iter()
                     .map(|(key, value)| (String::from(key), String::from(value.as_str().unwrap())))
                     .collect();
