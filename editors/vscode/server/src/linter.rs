@@ -13,7 +13,7 @@ use crate::walk::Walk;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
-use oxc_linter::{LintContext, Linter};
+use oxc_linter::{LintContext, LintSettings, Linter};
 use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -270,8 +270,11 @@ impl IsolatedLintHandler {
             return Some(Self::wrap_diagnostics(path, &source_text, reports));
         };
 
-        let mut lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
+        let mut lint_ctx = LintContext::new(
+            path.to_path_buf().into_boxed_path(),
+            &Rc::new(semantic_ret.semantic),
+            LintSettings::default(),
+        );
         {
             if let Ok(guard) = plugin.read() {
                 if let Some(plugin) = &*guard {

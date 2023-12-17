@@ -14,6 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(catch-error-name): The catch parameter {0:?} should be named {1:?}")]
+#[diagnostic(severity(warning))]
 struct CatchErrorNameDiagnostic(Atom, Atom, #[label] pub Span);
 
 #[derive(Debug, Clone)]

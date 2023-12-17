@@ -124,11 +124,12 @@ impl<'a> Visit<'a> for TestCase<'a> {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             // eslint-plugin-jest use dedent to strips indentation from multi-line strings
+                            // eslint-plugin-unicon use outdent to removes leading indentation from ES6 template strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 let Expression::Identifier(ident) = &tag_expr.tag else {
                                     continue;
                                 };
-                                if ident.name != "dedent" {
+                                if ident.name != "dedent" && ident.name != "outdent" {
                                     continue;
                                 }
                                 tag_expr.quasi.quasi().map(ToString::to_string)
@@ -176,7 +177,8 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     PropertyKey::Identifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
-                        self.config = Some(Cow::Owned(json::wrap_property_in_quotes(option_text)));
+                        self.config =
+                            Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
                     }
                     _ => continue,
                 },
@@ -199,7 +201,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
         let Expression::Identifier(ident) = &expr.tag else {
             return;
         };
-        if ident.name != "dedent" {
+        if ident.name != "dedent" && ident.name != "outdent" {
             return;
         }
         self.code = expr.quasi.quasi().map(std::string::ToString::to_string);
@@ -414,6 +416,7 @@ pub enum RuleKind {
     Unicorn,
     React,
     JSXA11y,
+    Oxc,
 }
 
 impl RuleKind {
@@ -424,6 +427,7 @@ impl RuleKind {
             "unicorn" => Self::Unicorn,
             "react" => Self::React,
             "jsx-a11y" => Self::JSXA11y,
+            "oxc" => Self::Oxc,
             _ => Self::ESLint,
         }
     }
@@ -438,6 +442,7 @@ impl Display for RuleKind {
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
             Self::React => write!(f, "eslint-plugin-react"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
+            Self::Oxc => write!(f, "oxc"),
         }
     }
 }
@@ -458,6 +463,7 @@ fn main() {
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
+        RuleKind::Oxc => String::new(),
     };
 
     println!("Reading test file from {rule_test_path}");

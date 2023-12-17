@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
-use crate::LintContext;
+use crate::{JsxA11y, LintContext, LintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     if let Some(member_expr) = call_expr.callee.get_member_expr() {
@@ -162,4 +162,19 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
         }
         None
     })
+}
+pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
+    let JSXElementName::Identifier(ident) = &element.name else {
+        return None;
+    };
+
+    let mut element_type = String::from(ident.name.as_str());
+
+    let LintSettings { jsx_a11y } = context.settings();
+    let JsxA11y { polymorphic_prop_name: _, components } = jsx_a11y;
+    if let Some(val) = components.get(&element_type) {
+        element_type = String::from(val);
+    }
+
+    Some(element_type)
 }
