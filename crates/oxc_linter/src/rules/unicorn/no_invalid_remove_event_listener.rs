@@ -17,7 +17,10 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     "eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call."
 )]
 #[diagnostic(severity(warning), help("The listener argument should be a function reference."))]
-struct NoInvalidRemoveEventListenerDiagnostic(#[label] pub Span);
+struct NoInvalidRemoveEventListenerDiagnostic(
+    #[label("`removeEventListener` called here.")] pub Span,
+    #[label("Invalid argument here")] pub Span,
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoInvalidRemoveEventListener;
@@ -55,14 +58,15 @@ impl Rule for NoInvalidRemoveEventListener {
 
         let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
 
-        match member_expr {
+        let remove_event_listener_ident_span = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
                 if v.property.name != "removeEventListener" {
                     return;
                 }
+                v.property.span
             }
             _ => return,
-        }
+        };
 
         if member_expr.optional() {
             return;
@@ -96,7 +100,26 @@ impl Rule for NoInvalidRemoveEventListener {
             }
         }
 
-        ctx.diagnostic(NoInvalidRemoveEventListenerDiagnostic(listener.span()));
+        let listener_span = listener.span();
+        let listener_span = if listener_span.size() > 20 {
+            match listener {
+                Expression::FunctionExpression(func_expr) => {
+                    Span::new(func_expr.span.start, func_expr.params.span.end)
+                }
+                Expression::ArrowExpression(arrow_expr) => {
+                    Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
+                }
+                Expression::CallExpression(_) => listener_span,
+                _ => unreachable!(),
+            }
+        } else {
+            listener_span
+        };
+
+        ctx.diagnostic(NoInvalidRemoveEventListenerDiagnostic(
+            remove_event_listener_ident_span,
+            listener_span,
+        ));
     }
 }
 
@@ -126,6 +149,8 @@ fn test() {
         r#"el.removeEventListener("keydown", obj.listener)"#,
         r#"removeEventListener("keyup", () => {})"#,
         r#"removeEventListener("keydown", function () {})"#,
+        "document.removeEventListener('keydown', keydownHandler)",
+        "document.removeEventListener('keydown', this.keydownHandler)",
     ];
 
     let fail = vec![
@@ -139,6 +164,41 @@ fn test() {
         r#"el.removeEventListener("mouseout", function (e) {}, true)"#,
         r#"el.removeEventListener("click", function (e) {}, ...moreArguments)"#,
         r"el.removeEventListener(() => {}, () => {}, () => {})",
+        "document.removeEventListener('keydown', () => foo())",
+        "document.removeEventListener('keydown', function () {})",
+        // make sure that if the listener is a big one, we shorten the span.
+        r#"
+        element.removeEventListener("glider-refresh", event => {
+            // $ExpectType GliderEvent<undefined>
+            event;
+        
+            // $ExpectType boolean
+            event.bubbles;
+        
+            event.target;
+        
+            if (event.target) {
+                // $ExpectType Glider<HTMLElement> | undefined
+                event.target._glider;
+            }
+        });
+        "#,
+        r#"
+        element.removeEventListener("glider-refresh", function (event) {
+            // $ExpectType GliderEvent<undefined>
+            event;
+        
+            // $ExpectType boolean
+            event.bubbles;
+        
+            event.target;
+        
+            if (event.target) {
+                // $ExpectType Glider<HTMLElement> | undefined
+                event.target._glider;
+            }
+        });
+        "#,
     ];
 
     Tester::new_without_config(NoInvalidRemoveEventListener::NAME, pass, fail).test_and_snapshot();
