@@ -294,14 +294,9 @@ impl<'a> Parser<'a> {
         start_span: Span,
     ) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
-
         let (flags, modifiers) = self.eat_modifiers_before_declaration();
-        let declare = flags.declare();
-        let r#async = flags.r#async();
-        self.ctx = self.ctx.and_ambient(declare).and_await(r#async);
-
+        self.ctx = self.ctx.union_ambient_if(flags.declare()).and_await(flags.r#async());
         let result = self.parse_declaration(start_span, modifiers);
-
         self.ctx = reserved_ctx;
         result.map(Statement::Declaration)
     }

@@ -90,6 +90,11 @@ impl Context {
     }
 
     #[inline]
+    pub(crate) fn union_ambient_if(self, include: bool) -> Self {
+        self.union_if(Self::Ambient, include)
+    }
+
+    #[inline]
     pub(crate) fn union_yield_if(self, include: bool) -> Self {
         self.union_if(Self::Yield, include)
     }

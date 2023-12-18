@@ -1,6 +1,6 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
-Positive Passed: 2087/2096 (99.57%)
+Positive Passed: 2088/2096 (99.62%)
 Negative Passed: 1350/1499 (90.06%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -195,15 +195,6 @@ Expect to Parse: "typescript/interface/get-set-properties/input.ts"
    ·          ┬
    ·          ╰── `(` expected
  3 │   set bar: string;
-   ╰────
-
-Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
-  × Missing initializer in const declaration
-   ╭─[typescript/module-namespace/body-nested-declare/input.ts:2:1]
- 2 │     namespace B {
- 3 │         const x: number;
-   ·               ─
- 4 │     }
    ╰────
 
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
