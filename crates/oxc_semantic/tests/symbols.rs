@@ -18,7 +18,6 @@ fn test_class_simple() {
         .test();
 }
 
-#[ignore = "function symbols currently lack SymbolFlags::Function"]
 #[test]
 fn test_function_simple() {
     SemanticTester::js("function foo() { return }")

@@ -122,7 +122,10 @@ impl<'a> Binder for Function<'a> {
                     if (parent_flags.is_strict_mode() || self.r#async || self.generator)
                         && !function_as_var(parent_flags, builder.source_type)
                     {
-                        (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
+                        (
+                            SymbolFlags::Function | SymbolFlags::BlockScopedVariable,
+                            SymbolFlags::BlockScopedVariableExcludes,
+                        )
                     } else {
                         (
                             SymbolFlags::FunctionScopedVariable,
