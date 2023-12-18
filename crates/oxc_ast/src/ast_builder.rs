@@ -742,6 +742,14 @@ impl<'a> AstBuilder<'a> {
         FormalParameter { span, pattern, accessibility, readonly, decorators }
     }
 
+    pub fn ts_this_parameter(
+        &self,
+        span: Span,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    ) -> TSThisParameter<'a> {
+        TSThisParameter { span, type_annotation }
+    }
+
     pub fn function(
         &self,
         r#type: FunctionType,
@@ -750,7 +758,7 @@ impl<'a> AstBuilder<'a> {
         expression: bool,
         generator: bool,
         r#async: bool,
-        this_param: Option<Box<'a, ThisParameter<'a>>>,
+        this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

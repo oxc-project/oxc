@@ -1530,7 +1530,7 @@ pub struct Function<'a> {
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
-    pub this_param: Option<Box<'a, ThisParameter<'a>>>,
+    pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1625,14 +1625,6 @@ impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct ThisParameter<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 #[derive(Debug, Hash)]

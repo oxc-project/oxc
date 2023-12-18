@@ -65,10 +65,6 @@ impl<'a> Parser<'a> {
         Ok(self.ast.function_body(self.end_span(span), directives, statements))
     }
 
-    pub(super) fn parse_this_parameter(&mut self) -> Result<Option<Box<'a, ThisParameter<'a>>>> {
-        todo!();
-    }
-
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
@@ -76,6 +72,18 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let list = FormalParameterList::parse(self)?;
         Ok(self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest))
+    }
+
+    pub(crate) fn parse_formal_parameters_with_ts_this(
+        &mut self,
+        params_kind: FormalParameterKind,
+    ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
+        let span = self.start_span();
+        let list: FormalParameterList<'_> = FormalParameterList::parse(self)?;
+        let formal_parameters =
+            self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest);
+        let this_param = list.this_param;
+        Ok((this_param, formal_parameters))
     }
 
     pub(crate) fn parse_function(
@@ -92,9 +100,8 @@ impl<'a> Parser<'a> {
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
-        let this_param = self.parse_this_parameter()?;
-
-        let params = self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
+        let (this_param, params) =
+            self.parse_formal_parameters_with_ts_this(FormalParameterKind::FormalParameter)?;
 
         let return_type = self.parse_ts_return_type_annotation()?;
 

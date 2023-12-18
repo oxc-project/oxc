@@ -234,11 +234,12 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 pub struct FormalParameterList<'a> {
     pub elements: Vec<'a, FormalParameter<'a>>,
     pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
+    pub this_param: Option<TSThisParameter<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec(), rest: None }
+        Self { elements: p.ast.new_vec(), rest: None, this_param: None }
     }
 
     fn open(&self) -> Kind {
@@ -260,8 +261,8 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
-                let formal_parameter = p.parse_ts_this_parameter()?;
-                self.elements.push(formal_parameter);
+                let this_parameter = p.parse_ts_this_parameter()?;
+                self.this_param.replace(this_parameter);
             }
             Kind::Dot3 => {
                 let rest = p.parse_rest_element()?;
