@@ -19,7 +19,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use ropey::Rope;
-use tower_lsp::lsp_types::{self, Position, Range, Url};
+use tower_lsp::lsp_types::{
+    self, DiagnosticRelatedInformation, DiagnosticSeverity, Position, Range, Url,
+};
 
 #[derive(Debug)]
 struct ErrorWithPosition {
@@ -40,7 +42,6 @@ struct LabeledSpanWithPosition {
 impl ErrorWithPosition {
     pub fn new(error: Error, text: &str, fixed_content: Option<FixedContent>) -> Self {
         let labels = error.labels().map_or(vec![], Iterator::collect);
-
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
             .map(|labeled_span| LabeledSpanWithPosition {
@@ -60,10 +61,8 @@ impl ErrorWithPosition {
     fn to_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
-            Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
-            _ => Some(lsp_types::DiagnosticSeverity::INFORMATION),
+            _ => Some(lsp_types::DiagnosticSeverity::WARNING),
         };
-
         let related_information = Some(
             self.labels_with_pos
                 .iter()
@@ -85,6 +84,21 @@ impl ErrorWithPosition {
                 })
                 .collect(),
         );
+        let range = related_information.as_ref().map_or(
+            Range { start: self.start_pos, end: self.end_pos },
+            |infos: &Vec<DiagnosticRelatedInformation>| {
+                let mut ret_range = Range {
+                    start: Position { line: u32::MAX, character: u32::MAX },
+                    end: Position { line: u32::MAX, character: u32::MAX },
+                };
+                for info in infos {
+                    if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
+                        ret_range = info.location.range;
+                    }
+                }
+                ret_range
+            },
+        );
 
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
@@ -92,7 +106,7 @@ impl ErrorWithPosition {
         );
 
         lsp_types::Diagnostic {
-            range: Range { start: self.start_pos, end: self.end_pos },
+            range,
             severity,
             code: None,
             message,
@@ -117,7 +131,6 @@ pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
     pub fixed_content: Option<FixedContent>,
 }
-
 #[derive(Debug)]
 struct ErrorReport {
     pub error: Error,
@@ -161,14 +174,49 @@ impl IsolatedLintHandler {
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
         if Self::is_wanted_ext(path) {
-            Some(
-                Self::lint_path(&self.linter, path, Arc::clone(&self.plugin), content).map_or(
-                    vec![],
-                    |(p, errors)| {
-                        errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect()
-                    },
-                ),
-            )
+            Some(Self::lint_path(&self.linter, path, Arc::clone(&self.plugin), content).map_or(
+                vec![],
+                |(p, errors)| {
+                    let mut diagnostics: Vec<DiagnosticReport> =
+                        errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
+                    // a diagnostics connected from related_info to original diagnostic
+                    let mut inverted_diagnostics = vec![];
+                    for d in &diagnostics {
+                        let Some(ref related_info) = d.diagnostic.related_information else {
+                            continue;
+                        };
+
+                        let related_information = Some(vec![DiagnosticRelatedInformation {
+                            location: lsp_types::Location {
+                                uri: lsp_types::Url::from_file_path(path).unwrap(),
+                                range: d.diagnostic.range,
+                            },
+                            message: "original diagnostic".to_string(),
+                        }]);
+                        for r in related_info {
+                            if r.location.range == d.diagnostic.range {
+                                continue;
+                            }
+                            inverted_diagnostics.push(DiagnosticReport {
+                                diagnostic: lsp_types::Diagnostic {
+                                    range: r.location.range,
+                                    severity: Some(DiagnosticSeverity::HINT),
+                                    code: None,
+                                    message: r.message.clone(),
+                                    source: Some("oxc".into()),
+                                    code_description: None,
+                                    related_information: related_information.clone(),
+                                    tags: None,
+                                    data: None,
+                                },
+                                fixed_content: None,
+                            });
+                        }
+                    }
+                    diagnostics.append(&mut inverted_diagnostics);
+                    diagnostics
+                },
+            ))
         } else {
             None
         }
@@ -409,5 +457,12 @@ impl ServerLinter {
             Arc::clone(&self.plugin),
         )
         .run_single(&uri.to_file_path().unwrap(), content)
+    }
+}
+
+fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
+    match first.start.cmp(&other.start) {
+        std::cmp::Ordering::Equal => first.end.cmp(&other.end),
+        o => o,
     }
 }
