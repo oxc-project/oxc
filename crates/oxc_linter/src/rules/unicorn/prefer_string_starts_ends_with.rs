@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -75,10 +75,12 @@ impl Rule for PreferStringStartsEndsWith {
 
         match err_kind {
             ErrorKind::StartsWith => {
-                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::StartsWith(call_expr.span));
+                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::StartsWith(
+                    member_expr.span(),
+                ));
             }
             ErrorKind::EndsWith => {
-                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::EndsWith(call_expr.span));
+                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::EndsWith(member_expr.span()));
             }
         }
     }
