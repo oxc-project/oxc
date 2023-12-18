@@ -7,12 +7,14 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '!.github/workflows/benchmark.yml'
   push:
     branches:
       - main
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '!.github/workflows/benchmark.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -39,6 +41,8 @@ jobs:
           tool: cargo-codspeed
 
       - name: Build Benchmark
+        env:
+          RUSTFLAGS: "-C debuginfo=2 -C strip=none"
         run: cargo codspeed build --features codspeed -p oxc_benchmark
 
       - name: Run benchmark
