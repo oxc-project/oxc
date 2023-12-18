@@ -6,7 +6,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accesskey="h" />
-   ·  ───
+   ·      ─────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -14,7 +14,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey="h" />
-   ·  ───
+   ·      ─────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -22,7 +22,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey="h" {...props} />
-   ·  ───
+   ·      ─────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -30,7 +30,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div acCesSKeY="y" />
-   ·  ───
+   ·      ─────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -38,7 +38,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={"y"} />
-   ·  ───
+   ·      ───────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -46,7 +46,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={`${y}`} />
-   ·  ───
+   ·      ──────────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -54,7 +54,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={`${undefined}y${undefined}`} />
-   ·  ───
+   ·      ───────────────────────────────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -62,7 +62,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={`This is ${bad}`} />
-   ·  ───
+   ·      ────────────────────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -70,7 +70,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={accessKey} />
-   ·  ───
+   ·      ─────────────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -78,7 +78,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={`${undefined}`} />
-   ·  ───
+   ·      ──────────────────────────
    ╰────
   help: Remove the accessKey attribute.
 
@@ -86,7 +86,7 @@ expression: no_access_key
   │ a11y complications.
    ╭─[no_access_key.tsx:1:1]
  1 │ <div accessKey={`${undefined}${undefined}`} />
-   ·  ───
+   ·      ──────────────────────────────────────
    ╰────
   help: Remove the accessKey attribute.
 

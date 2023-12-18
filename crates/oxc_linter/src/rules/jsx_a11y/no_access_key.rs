@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXElementName, JSXExpression, JSXExpressionContainer},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXExpressionContainer},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -9,12 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_lowercase},
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")]
@@ -47,22 +42,22 @@ declare_oxc_lint!(
 impl Rule for NoAccessKey {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        let JSXElementName::Identifier(iden) = &jsx_el.name else {
-            return;
-        };
-        if let Some(access_key_prop) = has_jsx_prop_lowercase(jsx_el, "accessKey") {
-            if let Some(JSXAttributeValue::StringLiteral(_)) = get_prop_value(access_key_prop) {
-                ctx.diagnostic(NoAccessKeyDiagnostic(iden.span));
-            }
-            if let Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                expression: JSXExpression::Expression(expr),
-                ..
-            })) = get_prop_value(access_key_prop)
-            {
-                if expr.is_identifier_reference() & expr.is_undefined() {
-                    return;
+        if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(jsx_el, "accessKey")
+        {
+            match attr.value.as_ref() {
+                Some(JSXAttributeValue::StringLiteral(_)) => {
+                    ctx.diagnostic(NoAccessKeyDiagnostic(attr.span));
                 }
-                ctx.diagnostic(NoAccessKeyDiagnostic(iden.span));
+                Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+                    expression: JSXExpression::Expression(expr),
+                    ..
+                })) => {
+                    if expr.is_identifier_reference() & expr.is_undefined() {
+                        return;
+                    }
+                    ctx.diagnostic(NoAccessKeyDiagnostic(attr.span));
+                }
+                _ => {}
             }
         }
     }
