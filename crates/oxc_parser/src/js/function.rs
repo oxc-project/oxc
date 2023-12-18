@@ -65,6 +65,10 @@ impl<'a> Parser<'a> {
         Ok(self.ast.function_body(self.end_span(span), directives, statements))
     }
 
+    pub(super) fn parse_this_parameter(&mut self) -> Result<Option<Box<'a, ThisParameter<'a>>>> {
+        todo!();
+    }
+
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
@@ -87,6 +91,8 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
 
         let type_parameters = self.parse_ts_type_parameters()?;
+
+        let this_param = self.parse_this_parameter()?;
 
         let params = self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
 
@@ -124,6 +130,7 @@ impl<'a> Parser<'a> {
             false, // expression
             generator,
             r#async,
+            this_param,
             params,
             body,
             type_parameters,
