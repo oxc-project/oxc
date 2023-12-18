@@ -30,9 +30,10 @@ impl LintRunner {
             };
         }
 
-        if enable_plugins.import_plugin
-            || enable_plugins.jest_plugin
-            || enable_plugins.jsx_a11y_plugin
+        if config.is_some()
+            && (enable_plugins.import_plugin
+                || enable_plugins.jest_plugin
+                || enable_plugins.jsx_a11y_plugin)
         {
             return CliRunResult::InvalidOptions {
                 message: "`--config` and plugin options cannot currently be used together. \nPlease use `--config` to specify a config file, or plugin options to enable plugins."
