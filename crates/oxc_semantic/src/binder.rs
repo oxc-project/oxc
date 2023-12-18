@@ -133,7 +133,6 @@ impl<'a> Binder for Function<'a> {
                         )
                     };
 
-                println!("{} ", ident.name);
                 let symbol_id = builder.declare_symbol_on_scope(
                     ident.span,
                     &ident.name,
