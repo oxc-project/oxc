@@ -14,12 +14,18 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-useless-catch): Unnecessary try/catch wrapper")]
 #[diagnostic(severity(warning))]
-struct NoUselessCatchDiagnostic(#[label] pub Span);
+struct NoUselessCatchDiagnostic(
+    #[label("is caught here")] pub Span,
+    #[label("and re-thrown here")] pub Span,
+);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-useless-catch): Unnecessary catch clause")]
 #[diagnostic(severity(warning))]
-struct NoUselessCatchFinalizerDiagnostic(#[label] pub Span);
+struct NoUselessCatchFinalizerDiagnostic(
+    #[label("is caught here")] pub Span,
+    #[label("and re-thrown here")] pub Span,
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessCatch;
@@ -63,9 +69,12 @@ impl Rule for NoUselessCatch {
         let Expression::Identifier(throw_ident) = &throw_stmt.argument else { return };
         if binding_ident.name == throw_ident.name {
             if try_stmt.finalizer.is_some() {
-                ctx.diagnostic(NoUselessCatchFinalizerDiagnostic(catch_clause.span));
+                ctx.diagnostic(NoUselessCatchFinalizerDiagnostic(
+                    binding_ident.span,
+                    throw_stmt.span,
+                ));
             } else {
-                ctx.diagnostic(NoUselessCatchDiagnostic(try_stmt.span));
+                ctx.diagnostic(NoUselessCatchDiagnostic(binding_ident.span, throw_stmt.span));
             }
         }
     }
