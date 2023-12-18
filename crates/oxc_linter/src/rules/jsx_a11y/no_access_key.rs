@@ -12,8 +12,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")]
-#[diagnostic(severity(warning), help("Remove the accessKey attribute."))]
+#[error("eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.")]
+#[diagnostic(severity(warning), help("Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications."))]
 struct NoAccessKeyDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
