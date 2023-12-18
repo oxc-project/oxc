@@ -28,7 +28,7 @@ oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
-oxc_resolver    = { version = "0.6.0" }
+oxc_resolver    = { version = "0.6.2" }
 
 rayon        = { workspace = true }
 lazy_static  = { workspace = true }                        # used in oxc_macros
