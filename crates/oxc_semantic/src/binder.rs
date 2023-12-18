@@ -122,7 +122,10 @@ impl<'a> Binder for Function<'a> {
                     if (parent_flags.is_strict_mode() || self.r#async || self.generator)
                         && !function_as_var(parent_flags, builder.source_type)
                     {
-                        (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
+                        (
+                            SymbolFlags::Function | SymbolFlags::BlockScopedVariable,
+                            SymbolFlags::BlockScopedVariableExcludes,
+                        )
                     } else {
                         (
                             SymbolFlags::FunctionScopedVariable,
@@ -130,6 +133,7 @@ impl<'a> Binder for Function<'a> {
                         )
                     };
 
+                println!("{} ", ident.name);
                 let symbol_id = builder.declare_symbol_on_scope(
                     ident.span,
                     &ident.name,
