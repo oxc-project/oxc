@@ -56,13 +56,19 @@ impl Rule for NoUnnecessaryAwait {
                     }
                 })
             } {
-                ctx.diagnostic(NoUnnecessaryAwaitDiagnostic(expr.span));
+                ctx.diagnostic(NoUnnecessaryAwaitDiagnostic(Span::new(
+                    expr.span.start,
+                    expr.span.start + 5,
+                )));
             } else {
-                ctx.diagnostic_with_fix(NoUnnecessaryAwaitDiagnostic(expr.span), || {
-                    let mut formatter = ctx.formatter();
-                    expr.argument.gen(&mut formatter);
-                    Fix::new(formatter.into_code(), expr.span)
-                });
+                ctx.diagnostic_with_fix(
+                    NoUnnecessaryAwaitDiagnostic(Span::new(expr.span.start, expr.span.start + 5)),
+                    || {
+                        let mut formatter = ctx.formatter();
+                        expr.argument.gen(&mut formatter);
+                        Fix::new(formatter.into_code(), expr.span)
+                    },
+                );
             };
         }
     }
@@ -145,6 +151,8 @@ fn test() {
         ("async function foo() {+await +1}", None),
         ("async function foo() {-await-1}", None),
         ("async function foo() {+await -1}", None),
+        // https://github.com/oxc-project/oxc/issues/1718
+        ("await await this.assertTotalDocumentCount(expectedFormattedTotalDocCount);", None),
     ];
 
     let fix = vec![
