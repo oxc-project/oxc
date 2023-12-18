@@ -58,7 +58,7 @@ jobs:
 
       - name: Download coverage file
         if: env.CODECOV_TOKEN
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: codecov
 
