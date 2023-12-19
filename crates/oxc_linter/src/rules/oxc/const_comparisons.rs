@@ -105,12 +105,12 @@ impl Rule for ConstComparisons {
             if left_side_is_useless(left_cmp_op, ordering) {
                 ctx.diagnostic(ConstComparisonsDiagnostic::RedundantLeftHandSide(
                     node.kind().span(),
-                    format!("if `{rhs_str}` evaluates to true, {lhs_str}` will always evaluate to true as well")
+                    format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")
                 ));
             } else {
                 ctx.diagnostic(ConstComparisonsDiagnostic::RedundantRightHandSide(
                     node.kind().span(),
-                    format!("if `{lhs_str}` evaluates to true, {rhs_str}` will always evaluate to true as well")
+                    format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")
                 ));
             }
         } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
