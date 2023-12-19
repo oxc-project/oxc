@@ -1,0 +1,96 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: const_comparisons
+---
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 400 && status_code > 500;
+   · ───────────────────────────────────────
+   ╰────
+  help: since `400` < `500`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 500 && status_code < 400;
+   · ──────────────────────────────────────
+   ╰────
+  help: since `500` > `400`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 500 && status_code > 500;
+   · ──────────────────────────────────────
+   ╰────
+  help: `status_code` cannot simultaneously be greater than and less than `500`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status_code && 600 < status_code;
+   · ───────────────────────────────────────
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status_code && status_code > 600;
+   · ───────────────────────────────────────
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status_code`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status && 600 < status;
+   · ─────────────────────────────
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ 500 >= status && status > 600;
+   · ─────────────────────────────
+   ╰────
+  help: since `500` < `600`, the expression evaluates to false for any value of `status`
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 200 && status_code <= 299;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `200` evaluates to true, 299` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 200 && status_code >= 299;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `299` evaluates to true, 200` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code >= 500 && status_code > 500;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `500` evaluates to true, 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code > 500 && status_code >= 500;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `500` evaluates to true, 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code <= 500 && status_code < 500;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `500` evaluates to true, 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ status_code < 500 && status_code <= 500;
+   · ───────────────────────────────────────
+   ╰────
+  help: if `500` evaluates to true, 500` will always evaluate to true as well
+
+
