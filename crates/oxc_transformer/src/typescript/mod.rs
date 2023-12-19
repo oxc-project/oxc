@@ -33,13 +33,6 @@ impl<'a> TypeScript<'a> {
         Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
     }
 
-    #[allow(clippy::unused_self)]
-    pub fn transform_formal_parameters(&self, params: &mut FormalParameters<'a>) {
-        if params.items.get(0).is_some_and(|param| matches!(&param.pattern.kind, BindingPatternKind::BindingIdentifier(ident) if ident.name =="this")) {
-            params.items.remove(0);
-        }
-    }
-
     /// ```TypeScript
     /// enum Foo {
     ///   X

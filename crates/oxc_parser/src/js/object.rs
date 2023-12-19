@@ -217,7 +217,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
-        if method.params.parameters_count() != method.params.this_parameter().map_or(0, |_| 1) {
+        if method.params.parameters_count() != 0 {
             self.error(diagnostics::GetterParameters(method.params.span));
         }
         let value = self.ast.function_expression(method);
@@ -241,7 +241,7 @@ impl<'a> Parser<'a> {
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
 
-        if method.params.parameters_count() != method.params.this_parameter().map_or(1, |_| 2) {
+        if method.params.parameters_count() != 1 {
             self.error(diagnostics::SetterParameters(method.params.span));
         }
 

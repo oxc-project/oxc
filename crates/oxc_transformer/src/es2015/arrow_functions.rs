@@ -130,6 +130,7 @@ impl<'a> ArrowFunctions<'a> {
                 false,
                 arrow_expr.generator,
                 arrow_expr.r#async,
+                None,
                 self.ast.copy(&arrow_expr.params),
                 Some(body),
                 self.ast.copy(&arrow_expr.type_parameters),

@@ -802,12 +802,19 @@ impl<'a> Parser<'a> {
     fn parse_ts_function_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
-        let params = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_param, params) =
+            self.parse_formal_parameters_with_ts_this(FormalParameterKind::Signature)?;
         self.expect(Kind::Arrow)?;
         let return_type_span = self.start_span();
         let return_type = self.parse_ts_return_type()?;
         let return_type = self.ast.ts_type_annotation(self.end_span(return_type_span), return_type);
-        Ok(self.ast.ts_function_type(self.end_span(span), params, return_type, type_parameters))
+        Ok(self.ast.ts_function_type(
+            self.end_span(span),
+            this_param,
+            params,
+            return_type,
+            type_parameters,
+        ))
     }
 
     fn parse_ts_infer_type(&mut self) -> Result<TSType<'a>> {
@@ -913,12 +920,14 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_ts_call_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
-        let params = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_patam, params) =
+            self.parse_formal_parameters_with_ts_this(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation()?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         Ok(self.ast.ts_call_signature_declaration(
             self.end_span(span),
+            this_patam,
             params,
             return_type,
             type_parameters,
@@ -929,7 +938,8 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
-        let params = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_param, params) =
+            self.parse_formal_parameters_with_ts_this(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation()?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
@@ -939,6 +949,7 @@ impl<'a> Parser<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Get,
+            this_param,
             params,
             return_type,
             None,
@@ -949,7 +960,8 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.expect(Kind::Set)?;
         let (key, computed) = self.parse_property_name()?;
-        let params = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        let (this_param, params) =
+            self.parse_formal_parameters_with_ts_this(FormalParameterKind::Signature)?;
         let return_type = self.parse_ts_return_type_annotation()?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
@@ -962,6 +974,7 @@ impl<'a> Parser<'a> {
             computed,
             /* optional */ false,
             TSMethodSignatureKind::Set,
+            this_param,
             params,
             return_type,
             None,
@@ -996,6 +1009,7 @@ impl<'a> Parser<'a> {
                 computed,
                 optional,
                 TSMethodSignatureKind::Method,
+                call_signature.this_param,
                 call_signature.params,
                 call_signature.return_type,
                 call_signature.type_parameters,

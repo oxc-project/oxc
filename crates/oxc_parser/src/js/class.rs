@@ -357,15 +357,11 @@ impl<'a> Parser<'a> {
 
         let value = self.parse_method(r#async, generator)?;
 
-        if kind == MethodDefinitionKind::Get
-            && value.params.parameters_count() != value.params.this_parameter().map_or(0, |_| 1)
-        {
+        if kind == MethodDefinitionKind::Get && value.params.parameters_count() != 0 {
             self.error(diagnostics::GetterParameters(value.params.span));
         }
 
-        if kind == MethodDefinitionKind::Set
-            && value.params.parameters_count() != value.params.this_parameter().map_or(1, |_| 2)
-        {
+        if kind == MethodDefinitionKind::Set && value.params.parameters_count() != 1 {
             self.error(diagnostics::SetterParameters(value.params.span));
         }
 
