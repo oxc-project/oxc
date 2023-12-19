@@ -38,12 +38,27 @@ declare_oxc_lint!(
 impl Rule for RequireYield {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
-        if (matches!(kind, AstKind::Function(func) if func.generator && func.body.as_ref().is_some_and(|body| !body.statements.is_empty()))
-            || matches!(kind, AstKind::ArrowExpression(arrow) if arrow.generator && !arrow.body.statements.is_empty()))
-            && !node.flags().has_yield()
-        {
-            ctx.diagnostic(RequireYieldDiagnostic(kind.span()));
+
+        if node.flags().has_yield() {
+            return;
         }
+
+        let span = match kind {
+            AstKind::Function(func)
+                if func.generator
+                    && func.body.as_ref().is_some_and(|body| !body.statements.is_empty()) =>
+            {
+                func.id.as_ref().map_or_else(|| kind.span(), |ident| ident.span)
+            }
+            AstKind::ArrowExpression(arrow)
+                if arrow.generator && !arrow.body.statements.is_empty() =>
+            {
+                arrow.span
+            }
+            _ => return,
+        };
+
+        ctx.diagnostic(RequireYieldDiagnostic(span));
     }
 }
 
