@@ -4,113 +4,879 @@ expression: empty_brace_spaces
 ---
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ try{console.log('Hello');}finally{ 
- 2 │ ╰─▶ }
+ 1 │ { }
+   · ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ const a = {
- 2 │ ╰─▶ };
+ 1 │ function foo(){ }
+   ·               ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ return {
- 2 │ │   
- 3 │ ╰─▶ };
+ 1 │ if(foo) { }
+   ·         ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ const x = () => {
- 2 │ │   
- 3 │ ╰─▶ };
+ 1 │ if(foo) {} else if (bar) { }
+   ·                          ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ class A {
- 2 │ ╰─▶ }
+ 1 │ if(foo) {} else { }
+   ·                 ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ function a(){ }
-   ·             ───
+ 1 │ for(;;){ }
+   ·        ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ do { }while(true)
+ 1 │ for(foo in bar){ }
+   ·                ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(foo of bar){ }
+   ·                ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {case bar: { }}
+   ·                         ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {default: { }}
+   ·                        ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try { } catch(foo){}
+   ·     ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){ }
+   ·                  ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){} finally { }
+   ·                             ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ do { } while (foo)
    ·    ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ class A {
- 2 │ static { }
+ 1 │ while (foo){ }
+   ·            ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = () => { }
+   ·             ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = function (){ }
+   ·                  ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ function foo(){ }
+   ·               ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = { }
+   ·       ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {bar() { }}
+   ·                  ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class {bar() { }}
+   ·                    ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {static  { }}
+   ·            ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo { }
+   ·           ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class { }
+   ·             ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ {   }
+   · ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ function foo(){ }
+   ·               ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ if(foo) {   }
+   ·         ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ if(foo) {} else if (bar) {  }
+   ·                          ────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ if(foo) {} else {   }
+   ·                 ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(;;){    }
+   ·        ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(foo in bar){    }
+   ·                ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(foo of bar){    }
+   ·                ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {case bar: {   }}
+   ·                         ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {default: {    }}
+   ·                        ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {   } catch(foo){}
+   ·     ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){  }
+   ·                  ────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){} finally {   }
+   ·                             ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ do {    } while (foo)
+   ·    ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ while (foo){    }
+   ·            ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = () => {   }
+   ·             ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = () => {   }
+   ·             ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = function (){  }
+   ·                  ────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ function foo(){ }
+   ·               ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = { }
+   ·       ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {bar() {  }}
+   ·                  ────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class {bar() {    }}
+   ·                    ──────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {static  {    }}
+   ·            ──────────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo { }
+   ·           ───
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class {   }
+   ·             ─────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ {        }
    · ──────────
- 3 │ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ with (foo) {   }
-   ·            ─────
+ 1 │ function foo(){          }
+   ·               ────────────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ ╭─▶ for(let i = 0; i <3; i += 1) {
- 2 │ ╰─▶   }
+ 1 │ if(foo) {        }
+   ·         ──────────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │     
- 2 │ ╭─▶ if (true) {
+ 1 │ if(foo) {} else if (bar) {       }
+   ·                          ─────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ if(foo) {} else {        }
+   ·                 ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(;;){         }
+   ·        ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(foo in bar){         }
+   ·                ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ for(foo of bar){         }
+   ·                ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {case bar: {        }}
+   ·                         ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ switch (foo) {default: {         }}
+   ·                        ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {        } catch(foo){}
+   ·     ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){       }
+   ·                  ─────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ try {} catch(foo){} finally {        }
+   ·                             ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ do {         } while (foo)
+   ·    ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ while (foo){         }
+   ·            ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = () => {        }
+   ·             ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = function (){       }
+   ·                  ─────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ function foo(){          }
+   ·               ────────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = {          }
+   ·       ────────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {bar() {       }}
+   ·                  ─────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class {bar() {         }}
+   ·                    ───────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {static  {         }}
+   ·            ───────────────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ class Foo {          }
+   ·           ────────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ foo = class {        }
+   ·             ──────────
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ {
+ 2 │ │   
  3 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ 
- 2 │ if (true) {   }
-   ·           ─────
+ 1 │ ╭─▶ function foo(){
+ 2 │ │   
+ 3 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ try{  }catch{  }
-   ·    ────
+ 1 │ ╭─▶ if(foo) {
+ 2 │ │   
+ 3 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
- 1 │ try{  }catch{  }
-   ·             ────
+ 1 │ ╭─▶ if(foo) {} else if (bar) {
+ 2 │ │   
+ 3 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:2:1]
- 2 │ console.log('test');
- 3 │ }catch{ }
-   ·       ───
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ if(foo) {} else {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(;;){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(foo in bar){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(foo of bar){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ switch (foo) {case bar: {
+ 2 │ │   
+ 3 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ switch (foo) {default: {
+ 2 │ │   
+ 3 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {
+ 2 │ │   
+ 3 │ ╰─▶ } catch(foo){}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {} catch(foo){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {} catch(foo){} finally {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ do {
+ 2 │ │   
+ 3 │ ╰─▶ } while (foo)
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ while (foo){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = () => {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = function (){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ function foo(){
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {bar() {
+ 2 │ │   
+ 3 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = class {bar() {
+ 2 │ │   
+ 3 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {static  {
+ 2 │ │   
+ 3 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = class {
+ 2 │ │   
+ 3 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ function foo(){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ if(foo) {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ if(foo) {} else if (bar) {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ if(foo) {} else {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(;;){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(foo in bar){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ for(foo of bar){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ switch (foo) {case bar: {
+ 2 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ switch (foo) {default: {
+ 2 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {
+ 2 │ ╰─▶ } catch(foo){}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {} catch(foo){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ try {} catch(foo){} finally {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ do {
+ 2 │ ╰─▶ } while (foo)
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ while (foo){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = () => {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = function (){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ function foo(){
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {bar() {
+ 2 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = class {bar() {
+ 2 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {static  {
+ 2 │ ╰─▶ }}
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ class Foo {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ ╭─▶ foo = class {
+ 2 │ ╰─▶ }
+   ╰────
+  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
+
+  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
+   ╭─[empty_brace_spaces.tsx:1:1]
+ 1 │ with (foo) {     }
+   ·            ───────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
