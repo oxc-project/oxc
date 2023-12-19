@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-useless-escape): Unnecessary escape character {0:?}")]
@@ -84,7 +84,10 @@ fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize
         let len = c.len_utf8() as u32;
 
         if !is_within_jsx_attribute_item(node_id, ctx) {
-            ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset - 1, offset + len)));
+            let span = Span::new(offset - 1, offset + len);
+            ctx.diagnostic_with_fix(NoUselessEscapeDiagnostic(c, span), || {
+                Fix::new(c.to_string(), span)
+            });
         }
     }
 }
@@ -377,5 +380,35 @@ fn test() {
         r"var stringLiteralWithNextLine = `line 1\line 2`;",
     ];
 
-    Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var foo = /\\#/;", "var foo = /#/;", None),
+        ("var foo = /\\;/;", "var foo = /;/;", None),
+        ("var foo = \"\\'\";", "var foo = \"'\";", None),
+        ("var foo = \"\\#/\";", "var foo = \"#/\";", None),
+        ("var foo = \"\\a\"", "var foo = \"a\"", None),
+        ("var foo = \"\\B\";", "var foo = \"B\";", None),
+        ("var foo = \"\\@\";", "var foo = \"@\";", None),
+        ("var foo = \"foo \\a bar\";", "var foo = \"foo a bar\";", None),
+        ("var foo = '\\\"';", "var foo = '\"';", None),
+        ("var foo = '\\#';", "var foo = '#';", None),
+        ("var foo = '\\$';", "var foo = '$';", None),
+        ("var foo = '\\p';", "var foo = 'p';", None),
+        ("var foo = '\\p\\a\\@';", "var foo = 'p\\a@';", None),
+        ("<foo attr={\"\\d\"}/>", "<foo attr={\"d\"}/>", None),
+        ("var foo = '\\`';", "var foo = '`';", None),
+        ("var foo = `\\\"`;", "var foo = `\"`;", None),
+        ("var foo = `\\'`;", "var foo = `'`;", None),
+        ("var foo = `\\#`;", "var foo = `#`;", None),
+        ("var foo = '\\`foo\\`';", "var foo = '`foo`';", None),
+        ("var foo = `\\\"${foo}\\\"`;", "var foo = `\"${foo}\"`;", None),
+        ("var foo = `\\'${foo}\\'`;", "var foo = `'${foo}'`;", None),
+        ("var foo = `\\#${foo}`;", "var foo = `#${foo}`;", None),
+        ("let foo = '\\ ';", "let foo = ' ';", None),
+        ("let foo = /\\ /;", "let foo = / /;", None),
+        ("var foo = `\\$\\{{${foo}`;", "var foo = `$\\{{${foo}`;", None),
+    ];
+
+    Tester::new_without_config(NoUselessEscape::NAME, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
