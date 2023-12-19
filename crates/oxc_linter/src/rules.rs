@@ -20,6 +20,7 @@ mod deepscan {
     pub mod bad_bitwise_operator;
     pub mod bad_comparison_sequence;
     pub mod bad_min_max_func;
+    pub mod bad_replace_all_arg;
     pub mod missing_throw;
     pub mod number_arg_out_of_range;
     pub mod uninvoked_array_callback;
@@ -250,6 +251,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_bitwise_operator,
     deepscan::bad_comparison_sequence,
     deepscan::bad_min_max_func,
+    deepscan::bad_replace_all_arg,
     deepscan::missing_throw,
     deepscan::number_arg_out_of_range,
     deepscan::uninvoked_array_callback,
