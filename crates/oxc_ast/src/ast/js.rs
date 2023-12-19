@@ -1530,6 +1530,23 @@ pub struct Function<'a> {
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
+    /// https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function
+    /// `this` parameters are fake parameters that come first in the parameter list of a function:
+    /// ```TypeScript
+    /// function f(this: void) {
+    ///   // make sure `this` is unusable in this standalone function
+    /// }
+    /// ```
+    /// ```TypeScript
+    /// interface DB {
+    ///   filterUsers(filter: (this: User) => boolean): User[];
+    /// }
+    ///  
+    /// const db = getDB();
+    /// const admins = db.filterUsers(function (this: User) {
+    ///   return this.admin;
+    /// });
+    /// ```
     pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
