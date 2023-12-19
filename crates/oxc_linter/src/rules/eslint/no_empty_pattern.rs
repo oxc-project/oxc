@@ -9,8 +9,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-pattern): Disallow empty destructuring patterns")]
-#[diagnostic(severity(warning))]
+#[error("eslint(no-empty-pattern): Disallow empty destructuring patterns.")]
+#[diagnostic(
+    severity(warning),
+    help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
+)]
 struct NoEmptyPatternDiagnostic(&'static str, #[label("Empty {0} binding pattern")] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -81,7 +84,6 @@ impl Rule for NoEmptyPattern {
             AstKind::ObjectPattern(object) if object.is_empty() => ("object", object.span),
             _ => return,
         };
-
         ctx.diagnostic(NoEmptyPatternDiagnostic(pattern_type, span));
     }
 }
