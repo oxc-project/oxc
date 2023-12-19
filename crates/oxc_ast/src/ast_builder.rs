@@ -1318,12 +1318,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_call_signature_declaration(
         &self,
         span: Span,
+        this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
         TSSignature::TSCallSignatureDeclaration(self.alloc(TSCallSignatureDeclaration {
             span,
+            this_param,
             params,
             return_type,
             type_parameters,
@@ -1352,6 +1354,7 @@ impl<'a> AstBuilder<'a> {
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
+        this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1362,6 +1365,7 @@ impl<'a> AstBuilder<'a> {
             computed,
             optional,
             kind,
+            this_param,
             params,
             return_type,
             type_parameters,
@@ -1638,12 +1642,14 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_function_type(
         &self,
         span: Span,
+        this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSType<'a> {
         TSType::TSFunctionType(self.alloc(TSFunctionType {
             span,
+            this_param,
             params,
             return_type,
             type_parameters,
