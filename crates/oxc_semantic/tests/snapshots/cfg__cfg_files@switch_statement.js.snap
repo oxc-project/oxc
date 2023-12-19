@@ -1,0 +1,85 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/switch_statement.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+
+}
+
+bb4: {
+	Unreachable()
+}
+
+bb5: {
+
+}
+
+bb6: {
+
+}
+
+bb7: {
+
+}
+
+bb8: {
+
+}
+
+bb9: {
+	Unreachable()
+}
+
+bb10: {
+
+}
+
+bb11: {
+	$return = <value>
+}
+
+bb12: {
+	Unreachable()
+}
+
+bb13: {
+
+}
+
+bb14: {
+
+}
+
+bb15: {
+
+}
+
+bb16: {
+	$return = <value>
+}
+
+bb17: {
+	Unreachable()
+	$return = <value>
+}
+
+bb18: {
+	Unreachable()
+}
+
+bb19: {
+
+}

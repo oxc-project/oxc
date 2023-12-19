@@ -7,20 +7,21 @@ use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette::NamedSource, Error};
 extern crate miette;
-use oxc_semantic::{Semantic, SemanticBuilder};
+use oxc_semantic::{print_basic_block, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
 pub use class_tester::ClassTester;
 pub use expect::Expect;
+use petgraph::dot::{Config, Dot};
 pub use symbol_tester::SymbolTester;
 
-pub struct SemanticTester {
+pub struct SemanticTester<'a> {
     allocator: Allocator,
     source_type: SourceType,
-    source_text: &'static str,
+    source_text: &'a str,
 }
 
-impl SemanticTester {
+impl<'a> SemanticTester<'a> {
     /// Create a new tester for a TypeScript test case.
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
@@ -32,11 +33,12 @@ impl SemanticTester {
     /// Create a new tester for a JavaScript test case.
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases.
+    #[allow(dead_code)]
     pub fn js(source_text: &'static str) -> Self {
         Self::new(source_text, SourceType::default().with_module(true))
     }
 
-    pub fn new(source_text: &'static str, source_type: SourceType) -> Self {
+    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
         Self { allocator: Allocator::default(), source_type, source_text }
     }
 
@@ -98,6 +100,50 @@ impl SemanticTester {
         };
 
         semantic_ret.semantic
+    }
+
+    #[allow(dead_code)]
+    pub fn basic_blocks_count(&self) -> usize {
+        let built = self.build();
+        built.cfg().basic_blocks.len()
+    }
+
+    #[allow(dead_code)]
+    pub fn basic_blocks_printed(&self) -> String {
+        let built = self.build();
+        built
+            .cfg()
+            .basic_blocks
+            .iter()
+            .map(print_basic_block)
+            .enumerate()
+            .map(|(i, it)| {
+                format!(
+                    "bb{i}: {{\n{}\n}}",
+                    it.lines().map(|x| format!("\t{}", x.trim())).join("\n")
+                )
+            })
+            .join("\n\n")
+    }
+
+    #[allow(dead_code)]
+    pub fn cfg_dot_diagram(&self) -> String {
+        let built = self.build();
+        format!(
+            "{:?}",
+            Dot::with_attr_getters(
+                &built.cfg().graph,
+                &[Config::EdgeNoLabel, Config::NodeNoLabel],
+                &|_graph, _edge| String::new(),
+                // todo: We currently do not print edge types into cfg dot diagram
+                // so they aren't snapshotted, but we could by uncommenting this.
+                // &|_graph, edge| format!("label = {:?}", edge.weight()),
+                &|_graph, node| format!(
+                    "label = {:?}",
+                    print_basic_block(&built.cfg().basic_blocks[*node.1],).trim()
+                )
+            )
+        )
     }
 
     /// Tests that a symbol with the given name exists at the top-level scope and provides a
