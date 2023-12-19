@@ -101,6 +101,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
                 let decl_scope = decl.scope_id();
                 match decl.kind() {
                     AstKind::VariableDeclarator(parent_decl) => {
+                        if !parent_decl.id.kind.is_binding_identifier() {
+                            return Some(ident.name.clone());
+                        }
                         match &parent_decl.init {
                             // handles "let a = JSON; let b = a; a();"
                             Some(Expression::Identifier(parent_ident)) => {
@@ -178,6 +181,7 @@ fn test() {
         ),
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
+        ("{const {parse} = JSON;parse('{}')}", None),
     ];
 
     let fail = vec![
