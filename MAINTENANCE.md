@@ -1,10 +1,15 @@
 # Release Linter
 
 * Test in large codebases
-  * vscode - `git clone --depth=1 git@github.com:microsoft/vscode.git`
-  * Kibana - `git clone --depth=1 git@github.com:elastic/kibana.git`
-  * Affine - `git clone --depth=1 git@github.com:toeverything/AFFiNE.git`
-  * DefinitelyTyped - `git clone --depth=1 git@github.com:DefinitelyTyped/DefinitelyTyped.git`
+
+```bash
+git clone --depth=1 git@github.com:microsoft/vscode.git # vscode
+git clone --depth=1 git@github.com:getsentry/sentry.git # sentry
+git clone --depth=1 git@github.com:elastic/kibana.git # kibana
+git clone --depth=1 git@github.com:toeverything/AFFiNE.git # Affine
+git clone --depth=1 git@github.com:DefinitelyTyped/DefinitelyTyped.git # DefinitelyTyped
+```
+
 * push the version commit, e.g. https://github.com/oxc-project/oxc/commit/31600ac8dea270e169d598e0e3b5b7a16cbb1c71
 * clean up the change log
 
