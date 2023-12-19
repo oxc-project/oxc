@@ -417,6 +417,7 @@ pub enum RuleKind {
     React,
     JSXA11y,
     Oxc,
+    DeepScan,
 }
 
 impl RuleKind {
@@ -428,6 +429,7 @@ impl RuleKind {
             "react" => Self::React,
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
+            "deepscan" => Self::DeepScan,
             _ => Self::ESLint,
         }
     }
@@ -442,6 +444,7 @@ impl Display for RuleKind {
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
             Self::React => write!(f, "eslint-plugin-react"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
+            Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
         }
     }
@@ -463,7 +466,7 @@ fn main() {
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
-        RuleKind::Oxc => String::new(),
+        RuleKind::Oxc | RuleKind::DeepScan => String::new(),
     };
 
     println!("Reading test file from {rule_test_path}");
