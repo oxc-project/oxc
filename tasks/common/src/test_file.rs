@@ -22,7 +22,7 @@ impl TestFiles {
     pub fn minimal() -> Self {
         let files = Self::get_files()
             .into_iter()
-            .filter(|name| ["react", "vue", "antd", "typescript"].iter().any(|f| name.contains(f)))
+            .filter(|name| ["react", "antd", "typescript"].iter().any(|f| name.contains(f)))
             .map(|file| TestFile::new(&file))
             .collect();
         Self { files }
