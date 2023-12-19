@@ -745,9 +745,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_this_parameter(
         &self,
         span: Span,
+        this: IdentifierName,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSThisParameter<'a> {
-        TSThisParameter { span, type_annotation }
+        TSThisParameter { span, this, type_annotation }
     }
 
     pub fn function(

@@ -16,6 +16,7 @@ use crate::ast::*;
 pub struct TSThisParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
+    pub this: IdentifierName,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
