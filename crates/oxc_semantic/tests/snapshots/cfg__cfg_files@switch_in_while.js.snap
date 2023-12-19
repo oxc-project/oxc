@@ -1,0 +1,46 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/switch_in_while.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$0 = Reference(<a>)
+}
+
+bb2: {
+	$1 = Reference(<foo>)
+}
+
+bb3: {
+	$2 = Constant(<0>)
+}
+
+bb4: {
+	$3 = Reference(<a>)
+	$4 = $3()
+}
+
+bb5: {
+	Unreachable()
+}
+
+bb6: {
+	Unreachable()
+}
+
+bb7: {
+	$5 = Constant(<1>)
+}
+
+bb8: {
+	$6 = Reference(<b>)
+	$7 = $6()
+}
+
+bb9: {
+
+}

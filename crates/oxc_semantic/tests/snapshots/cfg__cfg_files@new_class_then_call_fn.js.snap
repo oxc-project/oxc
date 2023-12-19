@@ -1,0 +1,14 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/new_class_then_call_fn.js
+---
+bb0: {
+	$1 = Reference(<RegExp>)
+	$2 = Constant(<"a">)
+	$3 = Constant(<"g">)
+	$4 = new $1($2, $3)
+	$0 = $4.exec
+	$5 = Reference(<foo>)
+	$6 = $0($5)
+}

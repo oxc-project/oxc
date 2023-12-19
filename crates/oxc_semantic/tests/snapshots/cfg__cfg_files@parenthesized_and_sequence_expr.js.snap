@@ -1,0 +1,30 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/parenthesized_and_sequence_expr.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$1 = Constant(<1>)
+	$2 = Constant(<2>)
+	$3 = Constant(<3>)
+	$0 = $3.toString
+	$4 = $0()
+}
+
+bb2: {
+	$5 = Function{}
+}
+
+bb3: {
+	$7 = Constant(<"orange">)
+	$6 = $7.toString
+	$8 = $6()
+}
+
+bb4: {
+	$9 = Function{}
+}

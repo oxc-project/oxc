@@ -1,0 +1,19 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/arrow_expressions.js
+---
+bb0: {
+	$0 = Function{}
+	$3 = Function{}
+}
+
+bb1: {
+	$return = Reference(<b>)
+}
+
+bb2: {
+	$1 = Reference(<x>)
+	$2 = Reference(<y>)
+	$return = $1 + $2
+}

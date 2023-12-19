@@ -1,0 +1,58 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/if_else.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$0 = Constant(<true>)
+}
+
+bb2: {
+	$1 = Constant(<false>)
+	$3 = $0 || $1
+}
+
+bb3: {
+	$2 = $0
+}
+
+bb4: {
+
+}
+
+bb5: {
+	$return = Constant(<1>)
+}
+
+bb6: {
+	Unreachable()
+}
+
+bb7: {
+	$return = Constant(<2>)
+}
+
+bb8: {
+	Unreachable()
+}
+
+bb9: {
+
+}
+
+bb10: {
+	Unreachable()
+	$return = Constant(<3>)
+}
+
+bb11: {
+	Unreachable()
+}
+
+bb12: {
+	$4 = Function{}
+}

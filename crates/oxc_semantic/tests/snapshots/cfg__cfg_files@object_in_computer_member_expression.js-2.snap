@@ -1,0 +1,9 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/object_in_computer_member_expression.js
+---
+digraph {
+    0 [ label = "$2 = Reference(<foo>)\n$1 = ObjectMadeWithExpressions{}\n$3 = $2[$1]\n$0 = $3.call\n$4 = Reference(<bar>)\n$5 = $0($4)"]
+}
+

@@ -1,0 +1,71 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/logical_expressions_short_circuit.js
+---
+bb0: {
+	$0 = Constant(<true>)
+}
+
+bb1: {
+	$1 = Constant(<false>)
+	$3 = $0 || $1
+}
+
+bb2: {
+	$2 = $0
+}
+
+bb3: {
+
+}
+
+bb4: {
+	$4 = Constant(<"or">)
+}
+
+bb5: {
+	$5 = Constant(<true>)
+}
+
+bb6: {
+	$6 = Constant(<false>)
+	$8 = $5 && $6
+}
+
+bb7: {
+	$7 = $5
+}
+
+bb8: {
+
+}
+
+bb9: {
+	$9 = Constant(<"and">)
+}
+
+bb10: {
+	$10 = Reference(<x>)
+}
+
+bb11: {
+	$11 = Reference(<y>)
+	$13 = $10 ?? $11
+}
+
+bb12: {
+	$12 = $10
+}
+
+bb13: {
+
+}
+
+bb14: {
+	$14 = Constant(<"and">)
+}
+
+bb15: {
+
+}

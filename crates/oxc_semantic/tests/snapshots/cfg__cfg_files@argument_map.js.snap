@@ -1,0 +1,18 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/argument_map.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$1 = Reference(<arguments>)
+	$0 = Constant(<'map'>)
+	$2 = $1[$0]
+}
+
+bb2: {
+	$3 = Function{}
+}

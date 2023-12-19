@@ -1,0 +1,18 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/conditional_expression.js
+---
+digraph {
+    0 [ label = "$0 = Reference(<a>)\n$1 = $0()"]
+    1 [ label = "$3 = Reference(<b>)\n$2 = $3()"]
+    2 [ label = "$4 = Reference(<c>)\n$2 = $4()"]
+    3 [ label = "$5 = $2\n$6 = Reference(<result>)"]
+    0 -> 1 [ ]
+    1 -> 2 [ ]
+    0 -> 1 [ ]
+    1 -> 3 [ ]
+    0 -> 2 [ ]
+    2 -> 3 [ ]
+}
+

@@ -1,0 +1,15 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/private_in.js
+---
+digraph {
+    0 [ label = "$0 = Reference(<#t>)"]
+    1 [ label = "$1 = Reference(<#t>)\n$2 = ObjectMadeWithExpressions{}\n$return = $1 in $2"]
+    2 [ label = "Unreachable()"]
+    3 [ label = "$3 = Function{}\n$4 = ClassMadeWithExpressions{$0, $3}"]
+    0 -> 1 [ ]
+    1 -> 2 [ ]
+    0 -> 3 [ ]
+}
+

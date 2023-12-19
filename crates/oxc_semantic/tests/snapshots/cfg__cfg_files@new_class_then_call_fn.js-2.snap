@@ -1,0 +1,9 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/new_class_then_call_fn.js
+---
+digraph {
+    0 [ label = "$1 = Reference(<RegExp>)\n$2 = Constant(<\"a\">)\n$3 = Constant(<\"g\">)\n$4 = new $1($2, $3)\n$0 = $4.exec\n$5 = Reference(<foo>)\n$6 = $0($5)"]
+}
+

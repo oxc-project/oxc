@@ -1,0 +1,30 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/member_access_with_unreachable.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$2 = Reference(<x>)
+	$3 = $2.y
+	$4 = $3.z
+	$0 = Reference(<the>)
+	$1 = $0.key
+	$return = $4[$1]
+}
+
+bb2: {
+	Unreachable()
+	$return = Constant(<true>)
+}
+
+bb3: {
+	Unreachable()
+}
+
+bb4: {
+	$5 = Function{}
+}

@@ -1,0 +1,32 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/two_functions.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$return = Constant(<9>)
+}
+
+bb2: {
+	Unreachable()
+}
+
+bb3: {
+	$0 = Function{}
+}
+
+bb4: {
+	$return = Constant(<10>)
+}
+
+bb5: {
+	Unreachable()
+}
+
+bb6: {
+	$1 = Function{}
+}

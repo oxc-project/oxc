@@ -1,0 +1,13 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/unary_operator.js
+---
+bb0: {
+	$0 = Reference(<a>)
+	$1 = ~ $0
+	$2 = Reference(<a>)
+	$3 = ++$2
+	$4 = Reference(<a>)
+	$5 = $4++
+}

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/unary_operator.js
+---
+digraph {
+    0 [ label = "$0 = Reference(<a>)\n$1 = ~ $0\n$2 = Reference(<a>)\n$3 = ++$2\n$4 = Reference(<a>)\n$5 = $4++"]
+}
+

@@ -2,18 +2,23 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod control_flow;
 mod diagnostics;
 mod jsdoc;
 mod module_record;
 mod node;
+pub mod pg;
 mod reference;
 mod scope;
 mod symbol;
 
 use std::{rc::Rc, sync::Arc};
 
+pub use petgraph;
+
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
+use control_flow::ControlFlowGraph;
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
@@ -25,6 +30,12 @@ pub use oxc_syntax::{
 
 pub use crate::{
     builder::VariableInfo,
+    control_flow::{
+        print_basic_block, AssignmentValue, BasicBlockElement, BinaryAssignmentValue, BinaryOp,
+        CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, EdgeType,
+        ObjectPropertyAccessAssignmentValue, Register, UnaryExpressioneAssignmentValue,
+        UpdateAssignmentValue,
+    },
     node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
@@ -53,6 +64,8 @@ pub struct Semantic<'a> {
     unused_labels: Vec<AstNodeId>,
 
     redeclare_variables: Vec<VariableInfo>,
+
+    cfg: ControlFlowGraph,
 }
 
 impl<'a> Semantic<'a> {
@@ -102,6 +115,10 @@ impl<'a> Semantic<'a> {
 
     pub fn unused_labels(&self) -> &Vec<AstNodeId> {
         &self.unused_labels
+    }
+
+    pub fn cfg(&self) -> &ControlFlowGraph {
+        &self.cfg
     }
 
     pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {

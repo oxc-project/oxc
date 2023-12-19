@@ -1,0 +1,30 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/member_access_with_numbered_index.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$1 = Reference(<a>)
+	$2 = $1.c
+	$3 = $2.x
+	$4 = $3.y
+	$0 = Constant(<12>)
+	$return = $4[$0]
+}
+
+bb2: {
+	Unreachable()
+	$return = Constant(<false>)
+}
+
+bb3: {
+	Unreachable()
+}
+
+bb4: {
+	$5 = Function{}
+}

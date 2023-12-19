@@ -1,0 +1,95 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/switch_statement.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$0 = Constant(<true>)
+}
+
+bb2: {
+	$1 = Constant(<1>)
+}
+
+bb3: {
+	$2 = Constant(<'case 1'>)
+}
+
+bb4: {
+	Unreachable()
+}
+
+bb5: {
+	$3 = Constant(<2>)
+}
+
+bb6: {
+	$4 = Constant(<'case 2'>)
+}
+
+bb7: {
+	$5 = Constant(<3>)
+}
+
+bb8: {
+	$6 = Constant(<'case 3'>)
+}
+
+bb9: {
+	Unreachable()
+}
+
+bb10: {
+	$7 = Constant(<4>)
+}
+
+bb11: {
+	$8 = Constant(<'case 4'>)
+	$9 = Constant(<10>)
+	$10 = Reference(<i>)
+	$11 = $10++
+	$return = Reference(<i>)
+}
+
+bb12: {
+	Unreachable()
+}
+
+bb13: {
+	$12 = Constant(<5>)
+}
+
+bb14: {
+	$13 = Constant(<'case 5'>)
+	$14 = Reference(<j>)
+	$15 = $14++
+	$16 = Reference(<foo>)
+	$17 = $16()
+}
+
+bb15: {
+
+}
+
+bb16: {
+	$18 = Constant(<'default'>)
+	$return = Constant(<10>)
+}
+
+bb17: {
+	Unreachable()
+	$19 = Constant(<'function scope'>)
+	$return = Constant(<5>)
+}
+
+bb18: {
+	Unreachable()
+}
+
+bb19: {
+	$20 = Function{}
+}

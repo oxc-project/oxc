@@ -1,0 +1,25 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/spread_in_a_spread.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$0 = Constant(<1>)
+	$1 = Constant(<2>)
+	$2 = Constant(<3>)
+	$3 = Reference(<x>)
+	$4 = ArrayMadeWithExpressions[$2, ...$3]
+	$return = ArrayMadeWithExpressions[$0, $1, ...$4]
+}
+
+bb2: {
+	Unreachable()
+}
+
+bb3: {
+	$5 = Function{}
+}

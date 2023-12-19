@@ -168,14 +168,14 @@ expression: no_null
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
    ╭─[no_null.tsx:1:1]
  1 │ Object[null](null)
-   ·              ────
+   ·        ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
    ╭─[no_null.tsx:1:1]
  1 │ Object[null](null)
-   ·        ────
+   ·              ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 

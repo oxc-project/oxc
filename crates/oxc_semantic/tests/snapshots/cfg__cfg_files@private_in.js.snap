@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/private_in.js
+---
+bb0: {
+	$0 = Reference(<#t>)
+}
+
+bb1: {
+	$1 = Reference(<#t>)
+	$2 = ObjectMadeWithExpressions{}
+	$return = $1 in $2
+}
+
+bb2: {
+	Unreachable()
+}
+
+bb3: {
+	$3 = Function{}
+	$4 = ClassMadeWithExpressions{$0, $3}
+}

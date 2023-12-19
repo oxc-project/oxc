@@ -1,0 +1,71 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/if_stmt_in_for_in.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+	$0 = Reference(<array>)
+}
+
+bb3: {
+
+}
+
+bb4: {
+	$1 = Constant(<'if cond'>)
+}
+
+bb5: {
+	$2 = Constant(<'if block'>)
+}
+
+bb6: {
+	Unreachable()
+}
+
+bb7: {
+	$3 = Constant(<'else cond'>)
+}
+
+bb8: {
+	$4 = Constant(<'else block'>)
+}
+
+bb9: {
+	Unreachable()
+}
+
+bb10: {
+	Unreachable()
+}
+
+bb11: {
+
+}
+
+bb12: {
+
+}
+
+bb13: {
+	Unreachable()
+	$5 = Constant(<'for loop after if-else so this is unreachable'>)
+	$6 = Reference(<i>)
+	$7 = $6++
+}
+
+bb14: {
+	$8 = Constant(<'after for loop'>)
+}
+
+bb15: {
+	$9 = Function{}
+}

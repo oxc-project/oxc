@@ -1,0 +1,30 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/nested_computed_member_expression.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$5 = Reference(<a>)
+	$6 = $5.b
+	$7 = $6.g
+	$8 = $7.h
+	$9 = $8.i
+	$2 = Reference(<c>)
+	$3 = $2.d
+	$0 = Reference(<e>)
+	$1 = $0.f
+	$4 = $3[$1]
+	$return = $9[$4]
+}
+
+bb2: {
+	Unreachable()
+}
+
+bb3: {
+	$10 = Function{}
+}

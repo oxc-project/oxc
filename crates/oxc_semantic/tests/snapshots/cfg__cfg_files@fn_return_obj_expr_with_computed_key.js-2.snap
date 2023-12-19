@@ -1,0 +1,15 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/fn_return_obj_expr_with_computed_key.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = "$0 = Constant(<1>)\n$1 = Reference(<f>)\n$2 = $0 + $1\n$3 = Constant(<3>)\n$4 = Constant(<2>)\n$5 = Constant(<4>)\n$return = ObjectMadeWithExpressions{$2, $3, $4, $5}"]
+    2 [ label = "Unreachable()"]
+    3 [ label = "$6 = Function{}"]
+    0 -> 1 [ ]
+    1 -> 2 [ ]
+    0 -> 3 [ ]
+}
+

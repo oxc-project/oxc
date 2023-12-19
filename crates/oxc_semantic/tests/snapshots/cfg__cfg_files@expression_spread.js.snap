@@ -1,0 +1,12 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/expression_spread.js
+---
+bb0: {
+	$0 = Constant(<1>)
+	$1 = Constant(<'x'>)
+	$2 = Constant(<5>)
+	$3 = Reference(<y>)
+	$4 = ObjectMadeWithExpressions{$0, $1, $2, ...$3}
+}

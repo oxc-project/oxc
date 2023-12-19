@@ -1,0 +1,24 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/infix_operators.js
+---
+bb0: {
+	$0 = Reference(<a>)
+	$1 = Reference(<b>)
+	$2 = $0 instanceof $1
+	$3 = Reference(<a>)
+}
+
+bb1: {
+	$4 = Reference(<b>)
+	$6 = $3 && $4
+}
+
+bb2: {
+	$5 = $3
+}
+
+bb3: {
+
+}

@@ -1,0 +1,13 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/object_in_computer_member_expression.js
+---
+bb0: {
+	$2 = Reference(<foo>)
+	$1 = ObjectMadeWithExpressions{}
+	$3 = $2[$1]
+	$0 = $3.call
+	$4 = Reference(<bar>)
+	$5 = $0($4)
+}

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/index_into_object_with_symbol_as_arg.js
+---
+digraph {
+    0 [ label = "$1 = Reference(<Reflect>)\n$0 = $1.apply\n$4 = ObjectMadeWithExpressions{}\n$2 = Reference(<Symbol>)\n$3 = $2()\n$5 = $4[$3]\n$6 = Reference(<baz>)\n$7 = ArrayMadeWithExpressions[]\n$8 = $0($5, $6, $7)"]
+}
+

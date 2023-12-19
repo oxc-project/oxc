@@ -1,0 +1,45 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/if_stmt_in_for_in.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = "$0 = Reference(<array>)"]
+    3 [ label = ""]
+    4 [ label = "$1 = Constant(<'if cond'>)"]
+    5 [ label = "$2 = Constant(<'if block'>)"]
+    6 [ label = "Unreachable()"]
+    7 [ label = "$3 = Constant(<'else cond'>)"]
+    8 [ label = "$4 = Constant(<'else block'>)"]
+    9 [ label = "Unreachable()"]
+    10 [ label = "Unreachable()"]
+    11 [ label = ""]
+    12 [ label = ""]
+    13 [ label = "Unreachable()\n$5 = Constant(<'for loop after if-else so this is unreachable'>)\n$6 = Reference(<i>)\n$7 = $6++"]
+    14 [ label = "$8 = Constant(<'after for loop'>)"]
+    15 [ label = "$9 = Function{}"]
+    0 -> 1 [ ]
+    5 -> 6 [ ]
+    5 -> 6 [ ]
+    8 -> 9 [ ]
+    9 -> 10 [ ]
+    8 -> 10 [ ]
+    10 -> 11 [ ]
+    7 -> 8 [ ]
+    7 -> 11 [ ]
+    12 -> 13 [ ]
+    6 -> 12 [ ]
+    4 -> 5 [ ]
+    4 -> 7 [ ]
+    11 -> 12 [ ]
+    1 -> 2 [ ]
+    2 -> 3 [ ]
+    3 -> 4 [ ]
+    13 -> 3 [ ]
+    3 -> 14 [ ]
+    9 -> 3 [ ]
+    0 -> 15 [ ]
+}
+

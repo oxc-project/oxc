@@ -1,0 +1,50 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/function_in_finally.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+	$0 = Constant(<"try">)
+}
+
+bb3: {
+	Unreachable()
+}
+
+bb4: {
+
+}
+
+bb5: {
+	$1 = Constant(<"should_be_created_twice_in_cfg">)
+}
+
+bb6: {
+	$2 = Function{}
+	$3 = Constant(<"finally">)
+}
+
+bb7: {
+
+}
+
+bb8: {
+
+}
+
+bb9: {
+	$2 = Function{}
+	$3 = Constant(<"finally">)
+}
+
+bb10: {
+	$1 = Constant(<"should_be_created_twice_in_cfg">)
+}

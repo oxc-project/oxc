@@ -1,0 +1,11 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/import_as_function.js
+---
+digraph {
+    0 [ label = "$1 = Constant(<\"/my-module.js\">)\n$2 = import($1)\n$0 = $2.then\n$9 = Function{}\n$10 = $0($9)"]
+    1 [ label = "$4 = Reference(<console>)\n$3 = $4.log\n$5 = Reference(<mod>)\n$6 = Reference(<mod2>)\n$7 = $5 === $6\n$8 = $3($7)"]
+    0 -> 1 [ ]
+}
+

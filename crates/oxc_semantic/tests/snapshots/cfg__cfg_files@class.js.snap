@@ -1,0 +1,19 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/class.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$1 = this
+	$0 = $1.slice
+	$2 = $0()
+}
+
+bb2: {
+	$3 = Function{}
+	$4 = ClassMadeWithExpressions{$3}
+}

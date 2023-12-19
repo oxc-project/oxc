@@ -7,21 +7,30 @@ use itertools::Itertools;
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use oxc_syntax::{
+    module_record::ModuleRecord,
+    operator::{AssignmentOperator, LogicalOperator},
+};
 use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     class::ClassTableBuilder,
+    control_flow::{
+        AssignmentValue, BinaryAssignmentValue, CallType, CalleeWithArgumentsAssignmentValue,
+        CollectionType, ControlFlowGraph, EdgeType, Register, StatementControlFlowType,
+        UnaryExpressioneAssignmentValue, UpdateAssignmentValue,
+    },
     diagnostics::Redeclaration,
     jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNode, AstNodeId, AstNodes, NodeFlags},
+    pg::replicate_tree_to_leaves,
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    BinaryOp, Semantic,
 };
 
 pub struct LabeledScope<'a> {
@@ -85,6 +94,9 @@ pub struct SemanticBuilder<'a> {
     check_syntax_error: bool,
 
     redeclare_variables: RedeclareVariables,
+
+    pub cfg: ControlFlowGraph,
+
     pub class_table_builder: ClassTableBuilder,
 }
 
@@ -118,6 +130,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
             redeclare_variables: RedeclareVariables { variables: vec![] },
+            cfg: ControlFlowGraph::new(),
             class_table_builder: ClassTableBuilder::new(),
         }
     }
@@ -177,6 +190,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
             redeclare_variables: self.redeclare_variables.variables,
+            cfg: self.cfg,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -194,6 +208,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
             redeclare_variables: self.redeclare_variables.variables,
+            cfg: self.cfg,
         }
     }
 
@@ -402,6 +417,2043 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.leave_kind(kind);
         self.pop_ast_node();
+    }
+
+    fn visit_program(&mut self, program: &Program<'a>) {
+        let kind = AstKind::Program(self.alloc(program));
+        self.enter_scope({
+            let mut flags = ScopeFlags::Top;
+            if program.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
+        self.enter_node(kind);
+
+        /* cfg */
+        let _program_basic_block = self.cfg.new_basic_block();
+        /* cfg - must be above directives as directives are in cfg */
+
+        for directive in &program.directives {
+            self.visit_directive(directive);
+        }
+
+        self.visit_statements(&program.body);
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_statement_match(&mut self, stmt: &Statement<'a>) {
+        match stmt {
+            Statement::BlockStatement(stmt) => self.visit_block_statement(stmt),
+            Statement::BreakStatement(stmt) => self.visit_break_statement(stmt),
+            Statement::ContinueStatement(stmt) => self.visit_continue_statement(stmt),
+            Statement::DebuggerStatement(stmt) => self.visit_debugger_statement(stmt),
+            Statement::DoWhileStatement(stmt) => self.visit_do_while_statement(stmt),
+            Statement::EmptyStatement(stmt) => self.visit_empty_statement(stmt),
+            Statement::ExpressionStatement(stmt) => self.visit_expression_statement(stmt),
+            Statement::ForInStatement(stmt) => self.visit_for_in_statement(stmt),
+            Statement::ForOfStatement(stmt) => self.visit_for_of_statement(stmt),
+            Statement::ForStatement(stmt) => self.visit_for_statement(stmt),
+            Statement::IfStatement(stmt) => self.visit_if_statement(stmt),
+            Statement::LabeledStatement(stmt) => self.visit_labeled_statement(stmt),
+            Statement::ReturnStatement(stmt) => self.visit_return_statement(stmt),
+            Statement::SwitchStatement(stmt) => self.visit_switch_statement(stmt),
+            Statement::ThrowStatement(stmt) => self.visit_throw_statement(stmt),
+            Statement::TryStatement(stmt) => self.visit_try_statement(stmt),
+            Statement::WhileStatement(stmt) => self.visit_while_statement(stmt),
+            Statement::WithStatement(stmt) => self.visit_with_statement(stmt),
+
+            Statement::ModuleDeclaration(decl) => self.visit_module_declaration(decl),
+            Statement::Declaration(decl) => self.visit_declaration(decl),
+        }
+    }
+
+    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
+        let kind = AstKind::BlockStatement(self.alloc(stmt));
+        self.enter_scope(ScopeFlags::empty());
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        /* cfg */
+
+        self.visit_statements(&stmt.body);
+
+        /* cfg */
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_break_statement(&mut self, stmt: &BreakStatement) {
+        let kind = AstKind::BreakStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        /* cfg */
+
+        if let Some(break_target) = &stmt.label {
+            self.visit_label_identifier(break_target);
+
+            /* cfg */
+            if let Some(label_found) =
+                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == break_target.name)
+            {
+                let (_, break_, _) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
+                                                .expect("expected a corresponding break/continue array for a found label owning ast node");
+                self.cfg.basic_blocks_with_breaks[*break_].push(self.cfg.current_node_ix);
+            } else {
+                self.cfg
+                    .basic_blocks_with_breaks
+                    .last_mut()
+                    .expect(
+                        "expected there to be a stack of control flows that a break can belong to",
+                    )
+                    .push(self.cfg.current_node_ix);
+            }
+            /* cfg */
+        }
+        /* cfg */
+        else {
+            self.cfg
+                .basic_blocks_with_breaks
+                .last_mut()
+                .expect("expected there to be a stack of control flows that a break can belong to")
+                .push(self.cfg.current_node_ix);
+        }
+        self.cfg.put_unreachable();
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_continue_statement(&mut self, stmt: &ContinueStatement) {
+        let kind = AstKind::ContinueStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        /* cfg */
+
+        if let Some(continue_target) = &stmt.label {
+            self.visit_label_identifier(continue_target);
+            /* cfg */
+            if let Some(label_found) =
+                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == continue_target.name)
+            {
+                let (_, _, continue_) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
+                                        .expect("expected a corresponding break/continue array for a found label owning ast node");
+                if let Some(continue_) = continue_ {
+                    self.cfg.basic_blocks_with_breaks[*continue_].push(self.cfg.current_node_ix);
+                } else {
+                    self.cfg
+                    .basic_blocks_with_breaks
+                    .last_mut()
+                    .expect(
+                        "expected there to be a stack of control flows that a break can belong to",
+                    )
+                    .push(self.cfg.current_node_ix);
+                }
+            } else {
+                self.cfg
+                    .basic_blocks_with_breaks
+                    .last_mut()
+                    .expect(
+                        "expected there to be a stack of control flows that a break can belong to",
+                    )
+                    .push(self.cfg.current_node_ix);
+            }
+            /* cfg */
+        }
+        /* cfg */
+        else {
+            self.cfg
+                .basic_blocks_with_breaks
+                .last_mut()
+                .expect("expected there to be a stack of control flows that a break can belong to")
+                .push(self.cfg.current_node_ix);
+        }
+        self.cfg.put_unreachable();
+        /* cfg */
+
+        /* cfg */
+        let current_node_ix = self.cfg.current_node_ix;
+        // todo: assert on this instead when continues which
+        // aren't in iterations are nonrecoverable errors
+        if let Some(continues) = self.cfg.basic_blocks_with_continues.last_mut() {
+            continues.push(current_node_ix);
+        }
+        self.cfg.put_unreachable();
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_debugger_statement(&mut self, stmt: &DebuggerStatement) {
+        let kind = AstKind::DebuggerStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        // just take the next_label since it should be taken by the next
+        // statement regardless of whether the statement can use it or not
+        self.cfg.next_label.take();
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_do_while_statement(&mut self, stmt: &DoWhileStatement<'a>) {
+        let kind = AstKind::DoWhileStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let before_do_while_stmt_graph_ix = self.cfg.current_node_ix;
+        let start_body_graph_ix = self.cfg.new_basic_block();
+        let statement_state =
+            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg - condition basic block */
+        let start_of_condition_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&stmt.test);
+
+        /* cfg */
+        let end_of_condition_graph_ix = self.cfg.current_node_ix;
+
+        let end_do_while_graph_ix = self.cfg.new_basic_block();
+
+        // before do while to start of condition basic block
+        self.cfg.add_edge(
+            before_do_while_stmt_graph_ix,
+            start_of_condition_graph_ix,
+            EdgeType::Normal,
+        );
+        // body of do-while to start of condition
+        self.cfg.add_edge(start_body_graph_ix, start_of_condition_graph_ix, EdgeType::Backedge);
+        // end of condition to after do while
+        self.cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
+        // end of condition to after start of body
+        self.cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            // all basic blocks are break here so we connect them to the
+            // basic block after the do-while statement
+            end_do_while_graph_ix,
+            // all basic blocks are continues here so we connect them to the
+            // basic block of the condition
+            Some(start_of_condition_graph_ix),
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
+        let kind = AstKind::ExpressionStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        /* cfg */
+
+        self.visit_expression(&stmt.expression);
+
+        /* cfg */
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
+        let kind = AstKind::ForStatement(self.alloc(stmt));
+        let is_lexical_declaration =
+            stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
+        self.enter_node(kind);
+        if let Some(init) = &stmt.init {
+            self.visit_for_statement_init(init);
+        }
+        /* cfg */
+        let before_for_graph_ix = self.cfg.current_node_ix;
+        let test_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+        if let Some(test) = &stmt.test {
+            self.visit_expression(test);
+        }
+
+        /* cfg */
+        let update_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        if let Some(update) = &stmt.update {
+            self.visit_expression(update);
+        }
+
+        /* cfg */
+        let body_graph_ix = self.cfg.new_basic_block();
+        let statement_state =
+            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg */
+        let after_for_stmt = self.cfg.new_basic_block();
+        self.cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(test_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(body_graph_ix, update_graph_ix, EdgeType::Backedge);
+        self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
+        self.cfg.add_edge(test_graph_ix, after_for_stmt, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            // all basic blocks are break here so we connect them to the
+            // basic block after the for statement
+            self.cfg.current_node_ix,
+            // all basic blocks are continues here so we connect them to the
+            // basic block of the condition
+            Some(test_graph_ix),
+        );
+
+        /* cfg */
+        self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
+    }
+
+    fn visit_for_statement_init(&mut self, init: &ForStatementInit<'a>) {
+        let kind = AstKind::ForStatementInit(self.alloc(init));
+        self.enter_node(kind);
+        match init {
+            ForStatementInit::UsingDeclaration(decl) => {
+                self.visit_using_declaration(decl);
+            }
+            ForStatementInit::VariableDeclaration(decl) => {
+                self.visit_variable_declaration(decl);
+            }
+            ForStatementInit::Expression(expr) => self.visit_expression(expr),
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
+        let kind = AstKind::ForInStatement(self.alloc(stmt));
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
+        self.enter_node(kind);
+        self.visit_for_statement_left(&stmt.left);
+
+        /* cfg */
+        let before_for_stmt_graph_ix = self.cfg.current_node_ix;
+        let start_prepare_cond_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&stmt.right);
+
+        /* cfg */
+        let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
+        // this basic block is always empty since there's no update condition in a for-in loop.
+        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
+        let body_graph_ix = self.cfg.new_basic_block();
+        let statement_state =
+            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg */
+        let end_of_body_graph_ix = self.cfg.current_node_ix;
+        let after_for_graph_ix = self.cfg.new_basic_block();
+        // connect before for statement to the iterable expression
+        self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
+        // connect the end of the iterable expression to the basic block with back edge
+        self.cfg.add_edge(
+            end_of_prepare_cond_graph_ix,
+            basic_block_with_backedge_graph_ix,
+            EdgeType::Normal,
+        );
+        // connect the basic block with back edge to the start of the body
+        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
+        // connect the end of the body back to the basic block
+        // with back edge for the next iteration
+        self.cfg.add_edge(
+            end_of_body_graph_ix,
+            basic_block_with_backedge_graph_ix,
+            EdgeType::Backedge,
+        );
+        // connect the basic block with back edge to the basic block after the for loop
+        // for when there are no more iterations left in the iterable
+        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            // all basic blocks are break here so we connect them to the
+            // basic block after the for-in statement
+            self.cfg.current_node_ix,
+            // all basic blocks are continues here so we connect them to the
+            // basic block of the condition
+            Some(basic_block_with_backedge_graph_ix),
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
+    }
+
+    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
+        let kind = AstKind::ForOfStatement(self.alloc(stmt));
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
+        self.enter_node(kind);
+        self.visit_for_statement_left(&stmt.left);
+
+        /* cfg */
+        let before_for_stmt_graph_ix = self.cfg.current_node_ix;
+        let start_prepare_cond_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&stmt.right);
+
+        /* cfg */
+        let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
+        // this basic block is always empty since there's no update condition in a for-of loop.
+        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
+        let body_graph_ix = self.cfg.new_basic_block();
+        let statement_state =
+            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg */
+        let end_of_body_graph_ix = self.cfg.current_node_ix;
+        let after_for_graph_ix = self.cfg.new_basic_block();
+        // connect before for statement to the iterable expression
+        self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
+        // connect the end of the iterable expression to the basic block with back edge
+        self.cfg.add_edge(
+            end_of_prepare_cond_graph_ix,
+            basic_block_with_backedge_graph_ix,
+            EdgeType::Normal,
+        );
+        // connect the basic block with back edge to the start of the body
+        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
+        // connect the end of the body back to the basic block
+        // with back edge for the next iteration
+        self.cfg.add_edge(
+            end_of_body_graph_ix,
+            basic_block_with_backedge_graph_ix,
+            EdgeType::Backedge,
+        );
+        // connect the basic block with back edge to the basic block after the for loop
+        // for when there are no more iterations left in the iterable
+        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            // all basic blocks are break here so we connect them to the
+            // basic block after the for-of statement
+            self.cfg.current_node_ix,
+            // all basic blocks are continues here so we connect them to the
+            // basic block of the condition
+            Some(basic_block_with_backedge_graph_ix),
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
+    }
+
+    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
+        let kind = AstKind::IfStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        self.visit_expression(&stmt.test);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+
+        let before_if_stmt_graph_ix = self.cfg.current_node_ix;
+
+        // if statement basic block
+        let before_consequent_stmt_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_statement(&stmt.consequent);
+
+        /* cfg */
+        let after_consequent_stmt_graph_ix = self.cfg.current_node_ix;
+        /* cfg */
+
+        let else_graph_ix = if let Some(alternate) = &stmt.alternate {
+            /* cfg */
+            let else_graph_ix = self.cfg.new_basic_block();
+            /* cfg */
+
+            self.visit_statement(alternate);
+
+            Some((else_graph_ix, self.cfg.current_node_ix))
+        } else {
+            None
+        };
+
+        /* cfg - bb after if statement joins consequent and alternate */
+        let after_if_graph_ix = self.cfg.new_basic_block();
+
+        if stmt.alternate.is_some() {
+            self.cfg.put_unreachable();
+        }
+        //  else {
+        self.cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+        // }
+
+        self.cfg.add_edge(
+            before_if_stmt_graph_ix,
+            before_consequent_stmt_graph_ix,
+            EdgeType::Normal,
+        );
+
+        if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
+            else_graph_ix
+        {
+            self.cfg.add_edge(
+                before_if_stmt_graph_ix,
+                start_of_alternate_stmt_graph_ix,
+                EdgeType::Normal,
+            );
+            self.cfg.add_edge(after_alternate_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+        } else {
+            self.cfg.add_edge(before_if_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+        }
+
+        self.cfg.after_statement(&statement_state, self.current_node_id, after_if_graph_ix, None);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
+        let kind = AstKind::LabeledStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        /* cfg */
+
+        self.visit_label_identifier(&stmt.label);
+
+        /* cfg */
+        self.cfg.next_label = Some(stmt.label.name.clone());
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg */
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
+        let kind = AstKind::ReturnStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+
+        // returning something is an assignment to the return register
+        self.cfg.use_this_register = Some(Register::Return);
+        /* cfg */
+
+        if let Some(arg) = &stmt.argument {
+            self.visit_expression(arg);
+        }
+        /* cfg - put implicit undefined as return arg  */
+        else {
+            self.cfg.put_undefined();
+        }
+        /* cfg */
+
+        /* cfg - put unreachable after return */
+        self.cfg.put_unreachable();
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
+        let kind = AstKind::SwitchStatement(self.alloc(stmt));
+        self.enter_scope(ScopeFlags::empty());
+        self.enter_node(kind);
+        self.visit_expression(&stmt.discriminant);
+
+        /* cfg */
+        let discriminant_graph_ix = self.cfg.current_node_ix;
+        self.cfg.switch_case_conditions.push(vec![]);
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let mut ends_of_switch_cases = vec![];
+        /* cfg */
+
+        for case in &stmt.cases {
+            self.visit_switch_case(case);
+            ends_of_switch_cases.push(self.cfg.current_node_ix);
+        }
+
+        /* cfg */
+        let switch_case_conditions = self.cfg.switch_case_conditions.pop().expect(
+            "there must be a corresponding previous_switch_case_last_block in a switch statement",
+        );
+
+        // for each switch case
+        for i in 0..switch_case_conditions.len() {
+            let switch_case_condition_graph_ix = switch_case_conditions[i];
+
+            // every switch case condition can be skipped,
+            // so there's a possible jump from it to the next switch case condition
+            for y in switch_case_conditions.iter().skip(i + 1) {
+                self.cfg.add_edge(switch_case_condition_graph_ix, *y, EdgeType::Normal);
+            }
+
+            // connect the end of each switch statement to
+            // the condition of the next switch statement
+            if switch_case_conditions.len() > i + 1 {
+                let end_of_switch_case = ends_of_switch_cases[i];
+                let next_switch_statement_condition = switch_case_conditions[i + 1];
+
+                self.cfg.add_edge(
+                    end_of_switch_case,
+                    next_switch_statement_condition,
+                    EdgeType::Normal,
+                );
+            }
+
+            self.cfg.add_edge(
+                discriminant_graph_ix,
+                switch_case_condition_graph_ix,
+                EdgeType::Normal,
+            );
+        }
+
+        if let Some(last) = switch_case_conditions.last() {
+            self.cfg.add_edge(*last, self.cfg.current_node_ix, EdgeType::Normal);
+        }
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_switch_case(&mut self, case: &SwitchCase<'a>) {
+        let kind = AstKind::SwitchCase(self.alloc(case));
+        self.enter_node(kind);
+
+        /* cfg */
+        // make a new basic block so that we can jump to it later from the switch
+        //   discriminant and the switch cases above it (if they don't test ss true)
+        let switch_cond_graph_ix = self.cfg.new_basic_block();
+        self.cfg
+            .switch_case_conditions
+            .last_mut()
+            .expect("there must be a switch_case_conditions while in a switch case")
+            .push(switch_cond_graph_ix);
+        /* cfg */
+
+        if let Some(expr) = &case.test {
+            self.visit_expression(expr);
+        }
+
+        /* cfg */
+        let statements_in_switch_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(switch_cond_graph_ix, statements_in_switch_graph_ix, EdgeType::Normal);
+        /* cfg */
+
+        self.visit_statements(&case.consequent);
+
+        self.leave_node(kind);
+    }
+
+    fn visit_throw_statement(&mut self, stmt: &ThrowStatement<'a>) {
+        let kind = AstKind::ThrowStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let throw_expr = self.cfg.new_register();
+        self.cfg.use_this_register = Some(throw_expr);
+        /* cfg */
+
+        self.visit_expression(&stmt.argument);
+        // todo - put unreachable after throw statement
+
+        /* cfg */
+        self.cfg.put_throw(throw_expr);
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_try_statement(&mut self, stmt: &TryStatement<'a>) {
+        let kind = AstKind::TryStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg */
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+
+        let before_try_stmt_graph_ix = self.cfg.current_node_ix;
+        let catch_block_graph_ix = self.cfg.new_basic_block();
+        let catch_block_basic_block_id = self.cfg.current_basic_block;
+        // every statement created with this active adds an edge from that node to this
+        // catch block node
+        //
+        // NOTE: we oversimplify here, realistically even in between basic blocks we
+        // do throwsy things which could cause problems, but for the most part simply
+        // pointing the end of every basic block to the catch block is enough
+        self.cfg.after_throw_block = Some(catch_block_graph_ix);
+        let start_of_try_block_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_block_statement(&stmt.block);
+
+        /* cfg */
+        self.cfg.after_throw_block = None; // only active during try block
+
+        let end_of_try_block_graph_ix = self.cfg.current_node_ix;
+        /* cfg */
+
+        let optional_catch_block_graph_ix = if let Some(handler) = &stmt.handler {
+            /* cfg */
+            self.cfg.current_node_ix = catch_block_graph_ix;
+            self.cfg.current_basic_block = catch_block_basic_block_id;
+            /* cfg */
+
+            self.visit_catch_clause(handler);
+
+            Some((catch_block_graph_ix, self.cfg.current_node_ix))
+        } else {
+            /* cfg */
+            let preserved_node_ix = self.cfg.current_node_ix;
+            // each statement that connects the would be catch block should just point
+            // to an unreachable() as if any statement throws this function would end early
+            self.cfg.current_node_ix = catch_block_graph_ix;
+            self.cfg.put_unreachable();
+            self.cfg.current_node_ix = preserved_node_ix;
+            /* cfg */
+
+            None
+        };
+        let finally = if let Some(finalizer) = &stmt.finalizer {
+            /* cfg */
+            let start_of_finally_block_graph_ix = self.cfg.new_basic_block();
+            /* cfg */
+
+            self.visit_finally_clause(finalizer);
+
+            /* cfg */
+            Some((start_of_finally_block_graph_ix, self.cfg.current_node_ix))
+            /* cfg */
+        } else {
+            None
+        };
+
+        /* cfg */
+        let after_try_stmt_graph_ix = self.cfg.new_basic_block();
+
+        self.cfg.add_edge(before_try_stmt_graph_ix, start_of_try_block_graph_ix, EdgeType::Normal);
+        match (finally, optional_catch_block_graph_ix) {
+            (
+                Some((nothrow_finally_start, nothrow_finally_end)),
+                Some((catch_start, catch_end)),
+            ) => {
+                //                            <try>
+                //                              |
+                //                         (1)/  \(2)
+                //                 <nothrow fin>  |
+                //                     |          |
+                //             <fn continues>  <catch>
+                //                                |
+                //                           <throw fin>
+                //                                |
+                //                           <unreachable>
+                //                                |
+                //       todo: should continue to upper function's catch
+                let duplicated = replicate_tree_to_leaves(nothrow_finally_start, &mut self.cfg);
+                let throw_finally_start = duplicated[&nothrow_finally_start];
+
+                // 1
+                self.cfg.add_edge(end_of_try_block_graph_ix, catch_start, EdgeType::Normal);
+                self.cfg.add_edge(catch_end, throw_finally_start, EdgeType::Normal);
+                // 2
+                self.cfg.add_edge(
+                    end_of_try_block_graph_ix,
+                    nothrow_finally_start,
+                    EdgeType::Normal,
+                );
+                self.cfg.add_edge(nothrow_finally_end, after_try_stmt_graph_ix, EdgeType::Normal);
+
+                // throw can happen before a single statement finishes in try block - essentially skipping try block
+                self.cfg.add_edge(before_try_stmt_graph_ix, catch_start, EdgeType::Normal);
+            }
+            (Some((nothrow_finally_start, nothrow_finally_end)), None) => {
+                //                            <try>
+                //                              |
+                //                         (1)/  \(2)
+                //                 <nothrow fin>  |
+                //                     |          |
+                //             <fn continues>  <catch>
+                //                                |
+                //                           <throw fin>
+                //                                |
+                //                           <unreachable>
+                //                                |
+                //       todo: should continue to upper function's catch
+
+                let duplicated = replicate_tree_to_leaves(nothrow_finally_start, &mut self.cfg);
+                let throw_finally_start = duplicated[&nothrow_finally_start];
+                // 1
+                self.cfg.add_edge(
+                    end_of_try_block_graph_ix,
+                    nothrow_finally_start,
+                    EdgeType::Normal,
+                );
+                self.cfg.add_edge(nothrow_finally_end, after_try_stmt_graph_ix, EdgeType::Normal);
+
+                // 2
+
+                // even though we don't explicitly have a catch block, we still make a catch
+                // block in the cfg which immediately points to the throw catch block.
+                self.cfg.add_edge(
+                    end_of_try_block_graph_ix,
+                    catch_block_graph_ix,
+                    EdgeType::Normal,
+                );
+                self.cfg.add_edge(catch_block_graph_ix, throw_finally_start, EdgeType::Normal);
+                // throw can happen before a single statement finishes in try block - essentially skipping try block
+                self.cfg.add_edge(before_try_stmt_graph_ix, throw_finally_start, EdgeType::Normal);
+            }
+            (None, Some((catch_start, catch_end))) => {
+                self.cfg.add_edge(end_of_try_block_graph_ix, catch_start, EdgeType::Normal);
+                self.cfg.add_edge(catch_end, after_try_stmt_graph_ix, EdgeType::Normal);
+                // if nothing throws
+                self.cfg.add_edge(
+                    end_of_try_block_graph_ix,
+                    after_try_stmt_graph_ix,
+                    EdgeType::Normal,
+                );
+                // throw can happen before a single statement finishes in try block - essentially skipping try block
+                self.cfg.add_edge(before_try_stmt_graph_ix, catch_start, EdgeType::Normal);
+            }
+            (None, None) => {
+                // todo: support unwinding finally/catch blocks that aren't in this function
+                // even if something throws
+                self.cfg.add_edge(
+                    end_of_try_block_graph_ix,
+                    after_try_stmt_graph_ix,
+                    EdgeType::Normal,
+                );
+            }
+        }
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            after_try_stmt_graph_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
+        let kind = AstKind::WhileStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg - condition basic block */
+        let before_while_stmt_graph_ix = self.cfg.current_node_ix;
+        let condition_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&stmt.test);
+
+        /* cfg - body basic block */
+        let body_graph_ix = self.cfg.new_basic_block();
+        let statement_state =
+            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg - after body basic block */
+        let after_body_graph_ix = self.cfg.new_basic_block();
+
+        self.cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(body_graph_ix, condition_graph_ix, EdgeType::Backedge);
+        self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            // all basic blocks are break here so we connect them to the
+            // basic block after the while statement
+            after_body_graph_ix,
+            // all basic blocks are continues here so we connect them to the
+            // basic block of the condition
+            Some(condition_graph_ix),
+        );
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_with_statement(&mut self, stmt: &WithStatement<'a>) {
+        let kind = AstKind::WithStatement(self.alloc(stmt));
+        self.enter_node(kind);
+
+        /* cfg - condition basic block */
+        let before_with_stmt_graph_ix = self.cfg.current_node_ix;
+        let statement_state = self
+            .cfg
+            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let condition_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&stmt.object);
+
+        /* cfg - body basic block */
+        let body_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_statement(&stmt.body);
+
+        /* cfg - after body basic block */
+        let after_body_graph_ix = self.cfg.new_basic_block();
+
+        self.cfg.add_edge(before_with_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
+
+        self.cfg.after_statement(
+            &statement_state,
+            self.current_node_id,
+            self.cfg.current_node_ix,
+            None,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+        let kind = AstKind::Function(self.alloc(func));
+        self.enter_scope({
+            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+            if func.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+
+        let before_function_graph_ix = self.cfg.current_node_ix;
+        let function_graph_ix = self.cfg.new_basic_block_for_function();
+        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
+        self.cfg.add_edge(before_function_graph_ix, function_graph_ix, EdgeType::NewFunction);
+        /* cfg */
+
+        if let Some(ident) = &func.id {
+            self.visit_binding_identifier(ident);
+        }
+        self.visit_formal_parameters(&func.params);
+        if let Some(body) = &func.body {
+            self.visit_function_body(body);
+        }
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        let after_function_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
+        self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
+        /* cfg */
+
+        if let Some(parameters) = &func.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        if let Some(annotation) = &func.return_type {
+            self.visit_ts_type_annotation(annotation);
+        }
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        // Class level decorators are transpiled as functions outside of the class taking the class
+        // itself as argument. They should be visited before class is entered. E.g., they inherit
+        // strict mode from the enclosing scope rather than from class.
+        for decorator in &class.decorators {
+            self.visit_decorator(decorator);
+        }
+        let kind = AstKind::Class(self.alloc(class));
+
+        // FIXME(don): Should we enter a scope when visiting class declarations?
+        let is_class_expr = class.r#type == ClassType::ClassExpression;
+        if is_class_expr {
+            // Class expressions create a temporary scope with the class name as its only variable
+            // E.g., `let c = class A { foo() { console.log(A) } }`
+            self.enter_scope(ScopeFlags::empty());
+        }
+
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        /* cfg */
+
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
+        }
+        if let Some(parameters) = &class.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+
+        if let Some(super_class) = &class.super_class {
+            self.visit_class_heritage(super_class);
+        }
+        if let Some(super_parameters) = &class.super_type_parameters {
+            self.visit_ts_type_parameter_instantiation(super_parameters);
+        }
+        self.visit_class_body(&class.body);
+
+        /* cfg */
+        let elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.spread_indices.push(vec![]);
+        self.cfg.put_collection_in_register(self.current_node_id, CollectionType::Class, elements);
+        /* cfg */
+
+        self.leave_node(kind);
+        if is_class_expr {
+            self.leave_scope();
+        }
+    }
+
+    fn visit_meta_property(&mut self, meta: &MetaProperty) {
+        let kind = AstKind::MetaProperty(self.alloc(meta));
+        self.enter_node(kind);
+
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_array_expression(&mut self, expr: &ArrayExpression<'a>) {
+        let kind = AstKind::ArrayExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        for elem in &expr.elements {
+            self.visit_array_expression_element(elem);
+        }
+
+        /* cfg */
+        let elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_collection_in_register(self.current_node_id, CollectionType::Array, elements);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_spread_element(&mut self, elem: &SpreadElement<'a>) {
+        let kind = AstKind::SpreadElement(self.alloc(elem));
+        self.enter_node(kind);
+
+        self.visit_expression(&elem.argument);
+
+        /* cfg */
+        self.cfg.spread_indices.last_mut().expect("expected there to be a corresponding spread_indices array for a store_assignments_into_this_array").push(self.cfg.store_final_assignments_into_this_array.last().expect("expect a store_assignments_into_this_array after spread expression").len()-1);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
+        let kind = AstKind::AssignmentExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let mut preserved = self.cfg.preserve_expression_state();
+        // can shortcircuit
+        let logical_operator_equivalent = match expr.operator {
+            AssignmentOperator::LogicalNullish => Some(LogicalOperator::Coalesce),
+            AssignmentOperator::LogicalOr => Some(LogicalOperator::Or),
+            AssignmentOperator::LogicalAnd => Some(LogicalOperator::And),
+            _ => None,
+        };
+        let before_logical_expr_graph_ix = self.cfg.current_node_ix;
+
+        let left_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(left_register);
+        /* cfg */
+
+        self.visit_assignment_target(&expr.left);
+
+        /* cfg */
+        // Some((logical_operator_equivalent, right_basic_block_graph_ix)) | None
+        let short_circuit_data =
+            logical_operator_equivalent.map(|x| (x, self.cfg.new_basic_block()));
+
+        let right_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(right_register);
+        /* cfg */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        if let Some((logical_operator_equivalent, right_basic_block_graph_ix)) = short_circuit_data
+        {
+            let result_register =
+                preserved.use_this_register.take().unwrap_or_else(|| self.cfg.new_register());
+
+            self.cfg.put_x_in_register(AssignmentValue::Binary(
+                BinaryAssignmentValue {
+                    id: self.current_node_id,
+                    a: left_register,
+                    b: right_register,
+                    operator: BinaryOp::LogicalOperator(logical_operator_equivalent),
+                }
+                .into(),
+            ));
+
+            // handle preserved state manually
+            if let Some(x) = preserved.store_final_assignments_into_this_array.last_mut() {
+                x.push(result_register);
+            }
+
+            // short circuit path
+            let short_circuit_graph_ix = self.cfg.new_basic_block();
+
+            self.cfg.use_this_register = Some(result_register);
+
+            self.cfg.put_x_in_register(AssignmentValue::Register(left_register));
+
+            self.cfg.add_edge(
+                before_logical_expr_graph_ix,
+                short_circuit_graph_ix,
+                EdgeType::Normal,
+            );
+
+            // dont short circuit path
+            self.cfg.add_edge(
+                before_logical_expr_graph_ix,
+                right_basic_block_graph_ix,
+                EdgeType::Normal,
+            );
+
+            let after_operator_graph_ix = self.cfg.new_basic_block();
+
+            self.cfg.add_edge(
+                right_basic_block_graph_ix,
+                after_operator_graph_ix,
+                EdgeType::Normal,
+            );
+            self.cfg.add_edge(short_circuit_graph_ix, after_operator_graph_ix, EdgeType::Normal);
+
+            self.cfg.restore_expression_state(preserved);
+        } else {
+            self.cfg.restore_expression_state(preserved);
+            self.cfg.put_x_in_register(AssignmentValue::Binary(
+                BinaryAssignmentValue {
+                    id: self.current_node_id,
+                    a: left_register,
+                    b: right_register,
+                    operator: BinaryOp::AssignmentOperator(expr.operator),
+                }
+                .into(),
+            ));
+        }
+
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_arrow_expression(&mut self, expr: &ArrowExpression<'a>) {
+        let kind = AstKind::ArrowExpression(self.alloc(expr));
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
+        self.enter_node(kind);
+
+        self.visit_formal_parameters(&expr.params);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+
+        let current_basic_block_ix = self.cfg.current_basic_block;
+        let current_node_ix = self.cfg.current_node_ix;
+        let function_graph_ix = self.cfg.new_basic_block_for_function();
+        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
+        self.cfg.add_edge(current_node_ix, function_graph_ix, EdgeType::NewFunction);
+        if expr.expression {
+            self.cfg.store_assignments_into_this_array.push(vec![]);
+            self.cfg.use_this_register = Some(Register::Return);
+        }
+        /* cfg */
+
+        self.visit_function_body(&expr.body);
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.current_basic_block = current_basic_block_ix;
+        self.cfg.current_node_ix = current_node_ix;
+        self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
+        /* cfg */
+
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_binary_expression(&mut self, expr: &BinaryExpression<'a>) {
+        let kind = AstKind::BinaryExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+
+        let left_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(left_register);
+        /* cfg */
+
+        self.visit_expression(&expr.left);
+
+        /* cfg */
+        let right_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(right_register);
+        /* cfg */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_x_in_register(AssignmentValue::Binary(
+            BinaryAssignmentValue {
+                id: self.current_node_id,
+                a: left_register,
+                b: right_register,
+                operator: BinaryOp::BinaryOperator(expr.operator),
+            }
+            .into(),
+        ));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        let kind = AstKind::CallExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        let callee_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(callee_register);
+        /* cfg */
+
+        self.visit_expression(&expr.callee);
+
+        /* cfg */
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        for arg in &expr.arguments {
+            self.visit_argument(arg);
+        }
+
+        /* cfg */
+        let arguments = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_callee_with_arguments_in_register(
+            self.current_node_id,
+            callee_register,
+            CallType::CallExpression,
+            arguments,
+        );
+        /* cfg */
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_instantiation(parameters);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
+        let kind = AstKind::ConditionalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let before_cond_expr_node_ix = self.cfg.current_node_ix;
+
+        let preserved = self.cfg.preserve_expression_state();
+        /* cfg */
+
+        self.visit_expression(&expr.test);
+
+        /* cfg - result register */
+        let result_register = self.cfg.new_register();
+        /* cfg */
+
+        /* cfg - bb for consequent */
+        let current_node_ix = self.cfg.current_node_ix;
+        let consequent_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(current_node_ix, consequent_graph_ix, EdgeType::Normal);
+        self.cfg.current_node_ix = consequent_graph_ix;
+
+        self.cfg.use_this_register = Some(result_register);
+        /* cfg */
+
+        self.visit_expression(&expr.consequent);
+
+        /* cfg - bb for alternate */
+        let current_node_ix = self.cfg.current_node_ix;
+        let alternate_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(current_node_ix, alternate_graph_ix, EdgeType::Normal);
+        self.cfg.current_node_ix = alternate_graph_ix;
+
+        self.cfg.use_this_register = Some(result_register);
+        /* cfg */
+
+        self.visit_expression(&expr.alternate);
+
+        /* cfg - bb after conditional expression which joins consequent and alternate */
+        self.cfg.restore_expression_state(preserved);
+
+        let after_conditional_expr_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(before_cond_expr_node_ix, consequent_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(consequent_graph_ix, after_conditional_expr_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(before_cond_expr_node_ix, alternate_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(alternate_graph_ix, after_conditional_expr_graph_ix, EdgeType::Normal);
+
+        self.cfg.put_x_in_register(AssignmentValue::Register(result_register));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_import_expression(&mut self, expr: &ImportExpression<'a>) {
+        let kind = AstKind::ImportExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        let callee_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(callee_register);
+        /* cfg */
+
+        self.visit_expression(&expr.source);
+
+        /* cfg */
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        for arg in &expr.arguments {
+            self.visit_expression(arg);
+        }
+
+        /* cfg */
+        debug_assert_eq!(
+            self.cfg.spread_indices.last().unwrap().len(),
+            0,
+            "There aren't spread elements in an import expression"
+        );
+        let arguments = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_callee_with_arguments_in_register(
+            self.current_node_id,
+            callee_register,
+            CallType::Import,
+            arguments,
+        );
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_logical_expression(&mut self, expr: &LogicalExpression<'a>) {
+        let kind = AstKind::LogicalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let mut preserved = self.cfg.preserve_expression_state();
+        let before_logical_expr_graph_ix = self.cfg.current_node_ix;
+
+        let left_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(left_register);
+        /* cfg */
+
+        self.visit_expression(&expr.left);
+
+        /* cfg */
+        let right_basic_block_graph_ix = self.cfg.new_basic_block();
+        let right_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(right_register);
+        /* cfg */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        let result_register =
+            preserved.use_this_register.take().unwrap_or_else(|| self.cfg.new_register());
+
+        self.cfg.put_x_in_register(AssignmentValue::Binary(
+            BinaryAssignmentValue {
+                id: self.current_node_id,
+                a: left_register,
+                b: right_register,
+                operator: BinaryOp::LogicalOperator(expr.operator),
+            }
+            .into(),
+        ));
+
+        // handle preserved state manually
+        if let Some(x) = preserved.store_final_assignments_into_this_array.last_mut() {
+            x.push(result_register);
+        }
+
+        // short circuit path
+        let short_circuit_graph_ix = self.cfg.new_basic_block();
+
+        self.cfg.use_this_register = Some(result_register);
+
+        self.cfg.put_x_in_register(AssignmentValue::Register(left_register));
+
+        self.cfg.add_edge(before_logical_expr_graph_ix, short_circuit_graph_ix, EdgeType::Normal);
+
+        // dont short circuit path
+        self.cfg.add_edge(
+            before_logical_expr_graph_ix,
+            right_basic_block_graph_ix,
+            EdgeType::Normal,
+        );
+
+        let after_operator_graph_ix = self.cfg.new_basic_block();
+
+        self.cfg.add_edge(right_basic_block_graph_ix, after_operator_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(short_circuit_graph_ix, after_operator_graph_ix, EdgeType::Normal);
+
+        self.cfg.restore_expression_state(preserved);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_member_expression(&mut self, expr: &MemberExpression<'a>) {
+        let kind = AstKind::MemberExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        // store base object of MemberExpression
+        self.cfg.store_assignments_into_this_array.push(Vec::default());
+        /* cfg */
+
+        match expr {
+            MemberExpression::ComputedMemberExpression(expr) => {
+                self.visit_computed_member_expression(expr);
+            }
+            MemberExpression::StaticMemberExpression(expr) => {
+                self.visit_static_member_expression(expr);
+            }
+            MemberExpression::PrivateFieldExpression(expr) => {
+                self.visit_private_field_expression(expr);
+            }
+        }
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        // it's important this happens after the nodes have already been visited above so that we can visit them
+        // in reverse order (but in our case the order we want)
+        match expr {
+            MemberExpression::ComputedMemberExpression(cme) => {
+                self.cfg.visit_computed_member_expression(cme, self.current_node_id);
+            }
+            MemberExpression::StaticMemberExpression(sme) => {
+                self.cfg.visit_static_member_expression(sme, self.current_node_id);
+            }
+            MemberExpression::PrivateFieldExpression(pfe) => {
+                self.cfg.visit_private_field_expression(pfe, self.current_node_id);
+            }
+        }
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_computed_member_expression(&mut self, expr: &ComputedMemberExpression<'a>) {
+        /* cfg */
+        let should_save_stores_for_patching = self.cfg.should_save_stores_for_patching;
+        self.cfg.should_save_stores_for_patching = true;
+        let last_saved_store = self.cfg.saved_store;
+        self.cfg.saved_stores.push(Default::default());
+        self.cfg.saved_store = Some(self.cfg.saved_stores.len() - 1);
+        /* cfg */
+
+        self.visit_expression(&expr.expression);
+
+        /* cfg */
+        self.cfg.should_save_stores_for_patching = should_save_stores_for_patching;
+        self.cfg.saved_store = last_saved_store;
+        /* cfg */
+        self.visit_expression(&expr.object);
+    }
+
+    fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
+        let kind = AstKind::NewExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        let callee_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(callee_register);
+        /* cfg */
+
+        self.visit_expression(&expr.callee);
+
+        /* cfg */
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_instantiation(parameters);
+        }
+        for arg in &expr.arguments {
+            self.visit_argument(arg);
+        }
+
+        /* cfg */
+        let arguments = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_callee_with_arguments_in_register(
+            self.current_node_id,
+            callee_register,
+            CallType::New,
+            arguments,
+        );
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
+        let kind = AstKind::ObjectExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        for prop in &expr.properties {
+            self.visit_object_property_kind(prop);
+        }
+
+        /* cfg */
+        let elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_collection_in_register(self.current_node_id, CollectionType::Object, elements);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_private_in_expression(&mut self, expr: &PrivateInExpression<'a>) {
+        let kind = AstKind::PrivateInExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        /* cfg */
+
+        /* cfg */
+        let identifier_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(identifier_register);
+        /* cfg */
+
+        self.visit_private_identifier(&expr.left);
+
+        /* cfg */
+        let expression_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(expression_register);
+        /* cfg */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_x_in_register(AssignmentValue::Binary(
+            BinaryAssignmentValue {
+                id: self.current_node_id,
+                a: identifier_register,
+                b: expression_register,
+                operator: BinaryOp::BinaryOperator(expr.operator),
+            }
+            .into(),
+        ));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_sequence_expression(&mut self, expr: &SequenceExpression<'a>) {
+        let kind = AstKind::SequenceExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        /* cfg */
+
+        // skip last element on purpose so we can handle it manually
+        for i in 0..expr.expressions.len() - 1 {
+            let expression = &expr.expressions[i];
+
+            self.visit_expression(expression);
+        }
+
+        /* cfg */
+        self.cfg.restore_expression_state(preserved);
+        /* cfg */
+
+        self.visit_expression(&expr.expressions[expr.expressions.len() - 1]);
+        self.leave_node(kind);
+    }
+
+    fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
+        let kind = AstKind::TaggedTemplateExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let callee = self.cfg.new_register();
+        self.cfg.use_this_register = Some(callee);
+        /* cfg */
+
+        self.visit_expression(&expr.tag);
+
+        /* cfg */
+        let argument = self.cfg.new_register();
+        self.cfg.use_this_register = Some(argument);
+        /* cfg */
+
+        self.visit_template_literal(&expr.quasi);
+
+        /* cfg */
+        self.cfg.put_x_in_register(AssignmentValue::CalleeWithArguments(
+            CalleeWithArgumentsAssignmentValue {
+                id: self.current_node_id,
+                callee,
+                arguments: vec![argument],
+                call_type: CallType::TaggedTemplate,
+                spreads: vec![],
+            }
+            .into(),
+        ));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_this_expression(&mut self, expr: &ThisExpression) {
+        let kind = AstKind::ThisExpression(self.alloc(expr));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_x_in_register(AssignmentValue::This);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_unary_expression(&mut self, expr: &UnaryExpression<'a>) {
+        let kind = AstKind::UnaryExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let expr_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(expr_register);
+        /* cfg */
+
+        self.visit_expression(&expr.argument);
+
+        /* cfg */
+        self.cfg.put_x_in_register(AssignmentValue::UnaryExpression(
+            UnaryExpressioneAssignmentValue(self.current_node_id, expr.operator, expr_register)
+                .into(),
+        ));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_update_expression(&mut self, expr: &UpdateExpression<'a>) {
+        let kind = AstKind::UpdateExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let expr_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(expr_register);
+        /* cfg */
+
+        self.visit_simple_assignment_target(&expr.argument);
+
+        /* cfg */
+        self.cfg.put_x_in_register(AssignmentValue::Update(
+            UpdateAssignmentValue {
+                id: self.current_node_id,
+                expr: expr_register,
+                op: expr.operator,
+                prefix: expr.prefix,
+            }
+            .into(),
+        ));
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
+        let kind = AstKind::YieldExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        let yielded_value_register = self.cfg.new_register();
+        self.cfg.use_this_register = Some(yielded_value_register);
+        /* cfg */
+
+        if let Some(argument) = &expr.argument {
+            self.visit_expression(argument);
+        }
+        /* cfg */
+        else {
+            self.cfg.put_undefined();
+        }
+
+        self.cfg.restore_expression_state(preserved);
+        // we don't have any spreads because we don't have any arguments
+        self.cfg.spread_indices.push(vec![]);
+        self.cfg.put_callee_with_arguments_in_register(
+            self.current_node_id,
+            yielded_value_register,
+            CallType::Yield,
+            vec![], // there's no arguments in a yield
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_super(&mut self, expr: &Super) {
+        let kind = AstKind::Super(self.alloc(expr));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_x_in_register(AssignmentValue::Super);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_element(&mut self, elem: &JSXElement<'a>) {
+        let kind = AstKind::JSXElement(self.alloc(elem));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+
+        self.visit_jsx_opening_element(&elem.opening_element);
+        for child in &elem.children {
+            self.visit_jsx_child(child);
+        }
+        if let Some(closing_elem) = &elem.closing_element {
+            self.visit_jsx_closing_element(closing_elem);
+        }
+
+        /* cfg */
+        let elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_collection_in_register(
+            self.current_node_id,
+            CollectionType::JSXElement,
+            elements,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_spread_attribute(&mut self, attribute: &JSXSpreadAttribute<'a>) {
+        self.visit_expression(&attribute.argument);
+
+        /* cfg */
+        self.cfg.spread_indices.last_mut().expect("expected there to be a corresponding spread_indices array for a store_assignments_into_this_array").push(self.cfg.store_final_assignments_into_this_array.last().expect("expect a store_assignments_into_this_array after spread expression").len()-1);
+        /* cfg */
+    }
+
+    fn visit_jsx_fragment(&mut self, elem: &JSXFragment<'a>) {
+        let kind = AstKind::JSXFragment(self.alloc(elem));
+        self.enter_node(kind);
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        self.cfg.spread_indices.push(vec![]);
+        /* cfg */
+        for child in &elem.children {
+            self.visit_jsx_child(child);
+        }
+        /* cfg */
+        let elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
+            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
+        );
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_collection_in_register(
+            self.current_node_id,
+            CollectionType::JSXFragment,
+            elements,
+        );
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_jsx_spread_child(&mut self, child: &JSXSpreadChild<'a>) {
+        self.visit_expression(&child.expression);
+        /* cfg */
+        self.cfg.spread_indices.last_mut().expect("expected there to be a corresponding spread_indices array for a store_assignments_into_this_array").push(self.cfg.store_final_assignments_into_this_array.last().expect("expect a store_assignments_into_this_array after spread expression").len()-1);
+        /* cfg */
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference) {
+        let kind = AstKind::IdentifierReference(self.alloc(ident));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_reference_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_private_identifier(&mut self, ident: &PrivateIdentifier) {
+        let kind = AstKind::PrivateIdentifier(self.alloc(ident));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_reference_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_number_literal(&mut self, lit: &NumberLiteral<'a>) {
+        let kind = AstKind::NumberLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_boolean_literal(&mut self, lit: &BooleanLiteral) {
+        let kind = AstKind::BooleanLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_null_literal(&mut self, lit: &NullLiteral) {
+        let kind = AstKind::NullLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_bigint_literal(&mut self, lit: &BigintLiteral) {
+        let kind = AstKind::BigintLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_string_literal(&mut self, lit: &StringLiteral) {
+        let kind = AstKind::StringLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
+    }
+
+    fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
+        let kind = AstKind::TemplateLiteral(self.alloc(lit));
+        self.enter_node(kind);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        self.cfg.store_final_assignments_into_this_array.push(vec![]);
+        /* cfg */
+
+        for elem in &lit.quasis {
+            self.visit_template_element(elem);
+        }
+        for expr in &lit.expressions {
+            self.visit_expression(expr);
+        }
+
+        /* cfg */
+        let final_asmts = self.cfg.store_final_assignments_into_this_array.pop().expect("expected there to be a corresponding store_final_assignments_into_this_array for a TemplateLiteral");
+        // we don't have any spreads but all cfg collections expect this array to exist
+        self.cfg.spread_indices.push(vec![]);
+        self.cfg.restore_expression_state(preserved);
+        self.cfg.put_collection_in_register(
+            self.current_node_id,
+            CollectionType::TemplateLiteral,
+            final_asmts,
+        );
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_reg_expr_literal(&mut self, lit: &RegExpLiteral) {
+        let kind = AstKind::RegExpLiteral(self.alloc(lit));
+        self.enter_node(kind);
+        /* cfg */
+        self.cfg.put_constant_in_register(self.current_node_id);
+        /* cfg */
+        self.leave_node(kind);
     }
 }
 

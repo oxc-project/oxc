@@ -1,0 +1,52 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/assignment_operators.js
+---
+bb0: {
+	$0 = Reference(<x>)
+}
+
+bb1: {
+	$1 = Reference(<y>)
+	$3 = $0 || $1
+}
+
+bb2: {
+	$2 = $0
+}
+
+bb3: {
+	$4 = Reference(<x>)
+}
+
+bb4: {
+	$5 = Reference(<y>)
+	$7 = $4 && $5
+}
+
+bb5: {
+	$6 = $4
+}
+
+bb6: {
+	$8 = Reference(<x>)
+}
+
+bb7: {
+	$9 = Reference(<y>)
+	$11 = $8 ?? $9
+}
+
+bb8: {
+	$10 = $8
+}
+
+bb9: {
+	$12 = Reference(<x>)
+	$13 = Reference(<y>)
+	$14 = $12 = $13
+	$15 = Reference(<x>)
+	$16 = Reference(<y>)
+	$17 = $15 -= $16
+}

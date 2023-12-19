@@ -1,0 +1,134 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/function_as_expression.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+	$0 = Function{}
+	$1 = $0.length
+}
+
+bb3: {
+
+}
+
+bb4: {
+	$2 = Function{}
+	$3 = typeof $2
+}
+
+bb5: {
+
+}
+
+bb6: {
+	$4 = Function{}
+	$5 = $4()
+}
+
+bb7: {
+
+}
+
+bb8: {
+	$7 = Function{}
+	$6 = $7()
+	$8 = TaggedTemplateMadeWithExpressions{}
+	$9 = TaggedTemplate(tag=$6, template=$8)
+}
+
+bb9: {
+
+}
+
+bb10: {
+	$10 = Function{}
+	$11 = TaggedTemplateMadeWithExpressions{}
+	$12 = TaggedTemplate(tag=$10, template=$11)
+}
+
+bb11: {
+
+}
+
+bb12: {
+	$13 = Function{}
+	$14 = new $13()
+}
+
+bb13: {
+
+}
+
+bb14: {
+	$15 = Function{}
+	$16 = Reference(<a>)
+}
+
+bb15: {
+
+}
+
+bb16: {
+	$18 = Function{}
+}
+
+bb17: {
+	$19 = Reference(<b>)
+	$20 = $18 || $19
+}
+
+bb18: {
+	$17 = $18
+}
+
+bb19: {
+	$21 = $16 = $17
+}
+
+bb20: {
+
+}
+
+bb21: {
+	$22 = Function{}
+}
+
+bb22: {
+	$23 = Reference(<a>)
+	$25 = $22 && $23
+}
+
+bb23: {
+	$24 = $22
+}
+
+bb24: {
+	$26 = Reference(<a>)
+}
+
+bb25: {
+
+}
+
+bb26: {
+	$27 = Function{}
+	$28 = $26 + $27
+}
+
+bb27: {
+
+}
+
+bb28: {
+	$29 = Function{}
+	$30 = new $29()
+}

@@ -327,12 +327,12 @@ expression: no_conditional_expect
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-    ╭─[no_conditional_expect.tsx:8:1]
-  8 │                     .then(() => { throw new Error('oh noes!'); })
-  9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
-    ·                                     ──────
- 10 │                 });
-    ╰────
+   ╭─[no_conditional_expect.tsx:4:1]
+ 4 │                     .then(() => { throw new Error('oh noes!'); })
+ 5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
+   ·                                     ──────
+ 6 │                     .then(() => { throw new Error('oh noes!'); })
+   ╰────
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
@@ -345,11 +345,29 @@ expression: no_conditional_expect
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+    ╭─[no_conditional_expect.tsx:8:1]
+  8 │                     .then(() => { throw new Error('oh noes!'); })
+  9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
+    ·                                     ──────
+ 10 │                 });
+    ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:1]
+ 3 │                       await Promise.resolve()
+ 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
+   ·                                         ──────
+ 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:1]
- 4 │                     .then(() => { throw new Error('oh noes!'); })
- 5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                     ──────
- 6 │                     .then(() => { throw new Error('oh noes!'); })
+ 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
+ 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
+   ·                                         ──────
+ 6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
    ╰────
   help: Avoid calling `expect` conditionally`
 
@@ -359,24 +377,6 @@ expression: no_conditional_expect
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
    ·                                         ──────
  7 │                     });
-   ╰────
-  help: Avoid calling `expect` conditionally`
-
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:4:1]
- 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
- 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                         ──────
- 6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
-   ╰────
-  help: Avoid calling `expect` conditionally`
-
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:3:1]
- 3 │                       await Promise.resolve()
- 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                         ──────
- 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ╰────
   help: Avoid calling `expect` conditionally`
 

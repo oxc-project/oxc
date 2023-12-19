@@ -1,0 +1,32 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/while.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = "$0 = Constant(<0>)"]
+    3 [ label = "$1 = Constant(<1>)\n$3 = $0 || $1"]
+    4 [ label = "$2 = $0"]
+    5 [ label = ""]
+    6 [ label = "$return = Constant(<1>)"]
+    7 [ label = "Unreachable()"]
+    8 [ label = "$return = Constant(<3>)"]
+    9 [ label = "Unreachable()"]
+    10 [ label = "$4 = Function{}"]
+    0 -> 1 [ ]
+    2 -> 4 [ ]
+    2 -> 3 [ ]
+    3 -> 5 [ ]
+    4 -> 5 [ ]
+    6 -> 7 [ ]
+    1 -> 2 [ ]
+    2 -> 6 [ ]
+    6 -> 8 [ ]
+    6 -> 2 [ ]
+    2 -> 8 [ ]
+    8 -> 9 [ ]
+    0 -> 10 [ ]
+}
+

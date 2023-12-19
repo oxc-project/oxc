@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/yield_as_statement_and_expression.js
+---
+bb0: {
+	$0 = Reference(<#Generate>)
+}
+
+bb1: {
+	$1 = Reference(<callCount>)
+	$2 = Constant(<1>)
+	$3 = $1 += $2
+	$5 = <implicit undefined>
+	$6 = yield $5()
+	$4 = ArrayMadeWithExpressions[...$6]
+	$7 = yield $4()
+}
+
+bb2: {
+	$8 = Function{}
+	$9 = ClassMadeWithExpressions{$0, $8}
+}

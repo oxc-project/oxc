@@ -1,0 +1,9 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/expression_spread.js
+---
+digraph {
+    0 [ label = "$0 = Constant(<1>)\n$1 = Constant(<'x'>)\n$2 = Constant(<5>)\n$3 = Reference(<y>)\n$4 = ObjectMadeWithExpressions{$0, $1, $2, ...$3}"]
+}
+

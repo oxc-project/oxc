@@ -1,0 +1,12 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/indexing_into_class_expression.js
+---
+bb0: {
+	$1 = ClassMadeWithExpressions{}
+	$0 = Constant(<1>)
+	$2 = $1[$0]
+	$3 = ClassMadeWithExpressions{}
+	$4 = $3.a
+}

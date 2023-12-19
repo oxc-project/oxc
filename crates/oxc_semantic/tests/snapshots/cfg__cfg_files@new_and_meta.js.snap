@@ -1,0 +1,14 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/new_and_meta.js
+---
+bb0: {
+	$1 = Reference(<URL>)
+	$2 = Constant(<"../public/favicon.ico">)
+	$3 = Constant(<import.meta>)
+	$4 = $3.url
+	$5 = new $1($2, $4)
+	$0 = $5.toString
+	$6 = $0()
+}
