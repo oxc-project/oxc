@@ -1530,18 +1530,16 @@ pub struct Function<'a> {
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
-    /// https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function
-    /// `this` parameters are fake parameters that come first in the parameter list of a function:
-    /// ```TypeScript
-    /// function f(this: void) {
-    ///   // make sure `this` is unusable in this standalone function
-    /// }
-    /// ```
+    /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
+    ///
+    /// The JavaScript specification states that you cannot have a parameter called `this`,
+    /// and so TypeScript uses that syntax space to let you declare the type for `this` in the function body.
+    ///
     /// ```TypeScript
     /// interface DB {
     ///   filterUsers(filter: (this: User) => boolean): User[];
     /// }
-    ///  
+    ///
     /// const db = getDB();
     /// const admins = db.filterUsers(function (this: User) {
     ///   return this.admin;
