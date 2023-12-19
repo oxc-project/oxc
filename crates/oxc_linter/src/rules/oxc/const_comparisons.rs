@@ -27,6 +27,8 @@ enum ConstComparisonsDiagnostic {
     Impossible(#[label] Span, String),
 }
 
+/// https://rust-lang.github.io/rust-clippy/master/index.html#/impossible
+/// https://rust-lang.github.io/rust-clippy/master/index.html#/redundant_comparisons
 #[derive(Debug, Default, Clone)]
 pub struct ConstComparisons;
 
