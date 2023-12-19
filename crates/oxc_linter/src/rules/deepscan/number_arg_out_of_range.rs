@@ -19,7 +19,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 )]
 struct NumberArgOutOfRangeDiagnostic(Atom, usize, usize, #[label] pub Span);
 
-/// `https://deepscan.io/docs/rules/missing-throw`
+/// `https://deepscan.io/docs/rules/number-arg-out-of-range`
 #[derive(Debug, Default, Clone)]
 pub struct NumberArgOutOfRange;
 
@@ -30,8 +30,9 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// function foo() { throw Error() }
-    /// const foo = () => { new Error() }
+    /// var x = 42;
+    /// var s_radix_64 = x.toString(64);
+    /// var s = x.toString(1);
     /// ```
     NumberArgOutOfRange,
     correctness
