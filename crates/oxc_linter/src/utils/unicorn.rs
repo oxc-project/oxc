@@ -231,5 +231,15 @@ fn is_same_member_expression(
         _ => {}
     }
 
+    if let (
+        MemberExpression::ComputedMemberExpression(left),
+        MemberExpression::ComputedMemberExpression(right),
+    ) = (left, right)
+    {
+        if !is_same_reference(&left.expression, &right.expression, ctx) {
+            return false;
+        }
+    }
+
     return is_same_reference(left.object(), right.object(), ctx);
 }
