@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        ConditionalExpression, DoWhileStatement, Expression, ForStatement, IfStatement,
-        WhileStatement,
-    },
+    ast::{AssignmentExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -59,37 +56,26 @@ impl Rule for NoCondAssign {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IfStatement(stmt) if self.is_assignment_expression(&stmt.test) => {
-                ctx.diagnostic(NoCondAssignDiagnostic(stmt.test.span()));
-            }
-            AstKind::WhileStatement(stmt) if self.is_assignment_expression(&stmt.test) => {
-                ctx.diagnostic(NoCondAssignDiagnostic(stmt.test.span()));
-            }
-            AstKind::DoWhileStatement(stmt) if self.is_assignment_expression(&stmt.test) => {
-                ctx.diagnostic(NoCondAssignDiagnostic(stmt.test.span()));
-            }
+            AstKind::IfStatement(stmt) => self.check_expression(ctx, &stmt.test),
+            AstKind::WhileStatement(stmt) => self.check_expression(ctx, &stmt.test),
+            AstKind::DoWhileStatement(stmt) => self.check_expression(ctx, &stmt.test),
             AstKind::ForStatement(stmt) => {
                 if let Some(expr) = &stmt.test {
-                    if self.is_assignment_expression(expr) {
-                        ctx.diagnostic(NoCondAssignDiagnostic(expr.span()));
-                    }
+                    self.check_expression(ctx, expr);
                 }
             }
-            AstKind::ConditionalExpression(expr)
-                if self.is_assignment_expression(expr.test.get_inner_expression()) =>
-            {
-                ctx.diagnostic(NoCondAssignDiagnostic(expr.test.span()));
+            AstKind::ConditionalExpression(expr) => {
+                self.check_expression(ctx, expr.test.get_inner_expression());
             }
-            AstKind::AssignmentExpression(_) if self.config == NoCondAssignConfig::Always => {
+            AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
                 for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
                     match ctx.nodes().kind(node_id) {
-                        AstKind::IfStatement(IfStatement { test, .. })
-                        | AstKind::WhileStatement(WhileStatement { test, .. })
-                        | AstKind::DoWhileStatement(DoWhileStatement { test, .. })
-                        | AstKind::ForStatement(ForStatement { test: Some(test), .. })
-                        | AstKind::ConditionalExpression(ConditionalExpression { test, .. }) => {
-                            ctx.diagnostic(NoCondAssignDiagnostic(test.span()));
-                            return;
+                        AstKind::IfStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ConditionalExpression(_) => {
+                            Self::emit_diagnostic(ctx, expr);
                         }
                         AstKind::Function(_)
                         | AstKind::ArrowExpression(_)
@@ -104,12 +90,25 @@ impl Rule for NoCondAssign {
 }
 
 impl NoCondAssign {
-    fn is_assignment_expression(&self, expr: &Expression<'_>) -> bool {
+    #[allow(clippy::cast_possible_truncation)]
+    fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
+        let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
+        let start =
+            operator_span.source_text(ctx.source_text()).find(expr.operator.as_str()).unwrap_or(0)
+                as u32;
+        operator_span.start += start;
+        operator_span.end = operator_span.start + expr.operator.as_str().len() as u32;
+
+        ctx.diagnostic(NoCondAssignDiagnostic(operator_span));
+    }
+    fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
         if self.config == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();
         }
-        matches!(expr, Expression::AssignmentExpression(_))
+        if let Expression::AssignmentExpression(expr) = expr {
+            Self::emit_diagnostic(ctx, expr);
+        }
     }
 }
 
