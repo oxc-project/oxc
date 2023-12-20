@@ -14,13 +14,7 @@ pub struct LintRunner {
 
 impl LintRunner {
     fn check_options(&self) -> CliRunResult {
-        let CliLintOptions { filter, misc_options, enable_plugins, config, .. } = &self.options;
-
-        if misc_options.rules {
-            let mut stdout = BufWriter::new(std::io::stdout());
-            Linter::print_rules(&mut stdout);
-            return CliRunResult::None;
-        }
+        let CliLintOptions { filter, enable_plugins, config, .. } = &self.options;
 
         // disallow passing config path and filter at the same time
         if config.is_some() && !filter.is_empty() {
@@ -53,6 +47,12 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
+        if self.options.misc_options.rules {
+            let mut stdout = BufWriter::new(std::io::stdout());
+            Linter::print_rules(&mut stdout);
+            return CliRunResult::None;
+        }
+
         let result = self.check_options();
 
         if !matches!(result, CliRunResult::None) {
