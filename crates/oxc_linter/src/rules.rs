@@ -18,6 +18,7 @@ mod import {
 mod deepscan {
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
+    pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
     pub mod bad_min_max_func;
     pub mod bad_replace_all_arg;
@@ -249,6 +250,7 @@ mod oxc {
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
+    deepscan::bad_char_at_comparison,
     deepscan::bad_comparison_sequence,
     deepscan::bad_min_max_func,
     deepscan::bad_replace_all_arg,
