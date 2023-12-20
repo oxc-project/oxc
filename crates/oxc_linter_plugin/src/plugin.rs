@@ -156,8 +156,6 @@ impl LinterPlugin {
                 }
             };
 
-            ctx.with_rule_name(""); // leave this empty as it's a static string so we can't make it at runtime, and it's not userfacing
-
             for plugin_diagnostic in transformed_data_to_span {
                 let error = ErrorFromLinterPlugin::PluginGenerated(
                     plugin.summary.clone(),

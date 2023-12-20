@@ -8,6 +8,7 @@ use oxc_span::SourceType;
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
+    rules::RuleEnum,
     AstNode, LintSettings,
 };
 
@@ -20,8 +21,6 @@ pub struct LintContext<'a> {
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
-
-    current_rule_name: &'static str,
 
     file_path: Box<Path>,
 
@@ -37,7 +36,6 @@ impl<'a> LintContext<'a> {
             diagnostics: RefCell::new(vec![]),
             disable_directives,
             fix: false,
-            current_rule_name: "",
             file_path,
             settings,
         }
@@ -73,10 +71,6 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
-    pub fn with_rule_name(&mut self, name: &'static str) {
-        self.current_rule_name = name;
-    }
-
     /* Diagnostics */
 
     pub fn into_message(self) -> Vec<Message<'a>> {
@@ -84,9 +78,17 @@ impl<'a> LintContext<'a> {
     }
 
     fn add_diagnostic(&self, message: Message<'a>) {
-        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
-            self.diagnostics.borrow_mut().push(message);
+        self.diagnostics.borrow_mut().push(message);
+    }
+
+    pub fn remove_disabled_diagnostics(&self, rule: &RuleEnum) {
+        if self.diagnostics.borrow().is_empty() {
+            return;
         }
+        let rule_name = rule.name();
+        self.diagnostics
+            .borrow_mut()
+            .retain(|message| !self.disable_directives.contains(rule_name, message.start()));
     }
 
     pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
