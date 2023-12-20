@@ -78,6 +78,9 @@ benchmark:
 new-rule name:
   cargo run -p rulegen {{name}}
 
+new-deepscan-rule name:
+  cargo run -p rulegen {{name}} deepscan
+
 new-jest-rule name:
   cargo run -p rulegen {{name}} jest
 
