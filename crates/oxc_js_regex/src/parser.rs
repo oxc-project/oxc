@@ -77,6 +77,9 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn alloc<T>(&self, val: T) -> &mut T {
+        self.lexer.allocator.alloc(val)
+    }
     pub fn is(&self, ch: char) -> bool {
         self.lexer.chars.get(self.index) == Some(&ch)
     }
@@ -194,6 +197,10 @@ fn parse_term<'a>(parser: &mut Parser<'a>) -> (bool, Option<Element<'a>>) {
     todo!()
 }
 
+fn parse_assertion<'a>(parser: &mut Parser<'a>) -> (bool, Option<Assertion<'a>>) {
+    todo!()
+}
+
 fn parse_quantifier<'a>(
     parser: &mut Parser<'a>,
     no_consume: Option<bool>,
@@ -231,7 +238,7 @@ fn parse_quantifier<'a>(
     greedy = !parser.eat('?');
 
     if !no_consume {
-        element = Some(Element::Quantifier(Quantifier {
+        let quantifier = parser.alloc(Quantifier {
             span: Span { start: start as u32, end: parser.index as u32 },
             min,
             max,
@@ -240,7 +247,9 @@ fn parse_quantifier<'a>(
             // it can't be null, or the program will panic, so we put a dummy element, and parent
             // should replace it
             element: QuantifiableElement::Character(Character { span: Span::default(), value: 0 }),
-        }))
+        });
+
+        element = Some(Element::Quantifier(quantifier))
     }
     (true, element)
 }
