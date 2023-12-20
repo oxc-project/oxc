@@ -133,20 +133,20 @@ impl Linter {
         let mut ctx = ctx.with_fix(self.options.fix);
 
         for rule in &self.rules {
-            ctx.with_rule_name(rule.name());
+            // ctx.with_rule_name(rule.name());
             rule.run_once(&ctx, timing);
         }
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
-                ctx.with_rule_name(rule.name());
+                // ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx, timing);
             }
         }
 
         for symbol in semantic.symbols().iter() {
             for rule in &self.rules {
-                ctx.with_rule_name(rule.name());
+                // ctx.with_rule_name(rule.name());
                 rule.run_on_symbol(symbol, &ctx, timing);
             }
         }
