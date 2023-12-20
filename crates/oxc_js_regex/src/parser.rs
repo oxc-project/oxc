@@ -1,12 +1,18 @@
 use std::collections::{HashSet, VecDeque};
 use std::iter::Peekable;
 use std::ops::Range;
+use std::os::unix::fs::OpenOptionsExt;
+use std::panic;
 use std::str::{CharIndices, Chars, Matches};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::Error;
+use oxc_span::Span;
 
-use crate::ast::{Branch, Pattern, RegExpLiteral};
+use crate::ast::{
+    Alternative, Assertion, Branch, Character, Element, Pattern, QuantifiableElement, Quantifier,
+    RegExpLiteral,
+};
 use crate::ecma_version::EcmaVersion;
 
 pub struct Lexer<'a> {
@@ -38,7 +44,10 @@ pub struct Parser<'a> {
     context: ParserContext,
     index: usize,
     group_names: HashSet<String>,
-numCapturingParens: usize
+    num_capturing_parens: usize,
+    last_int_value: usize,
+    back_reference_names: HashSet<String>,
+    last_range: Range<usize>,
 }
 
 #[derive(Default, Copy, Clone)]
@@ -48,6 +57,7 @@ struct ParserContext {
     nflag: bool,
     unicode_sets_mode: bool,
     ecma_version: EcmaVersion,
+    strict: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -60,11 +70,28 @@ impl<'a> Parser<'a> {
             context: ParserContext::default(),
             index: 0,
             group_names: HashSet::new(),
+            num_capturing_parens: 0,
+            back_reference_names: HashSet::new(),
+            last_int_value: 0,
+            last_range: 0..0,
         }
     }
 
-    pub fn eat(&self, ch: char) -> bool {
+    pub fn is(&self, ch: char) -> bool {
         self.lexer.chars.get(self.index) == Some(&ch)
+    }
+
+    pub fn eat(&mut self, ch: char) -> bool {
+        if self.is(ch) {
+            self.index += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn eof(&self) -> bool {
+        self.index < self.lexer.chars.len()
     }
 
     pub fn nth(&self, n: usize) -> Option<&char> {
@@ -108,7 +135,7 @@ pub enum SourceKind {
 }
 
 pub fn parse_literal<'a>(parser: &mut Parser<'a>) -> RegExpLiteral<'a> {
-    if parser.eat('/') {
+    if parser.is('/') {
         parser.advance();
         let pattern = parse_pattern(parser);
         todo!()
@@ -143,15 +170,122 @@ fn parse_pattern<'a>(parser: &mut Parser<'a>) -> Pattern<'a> {
 
 fn parse_pattern_internal<'a>(parser: &mut Parser<'a>) -> Option<Pattern<'a>> {
     let start = parser.index;
-    let 
+    parser.num_capturing_parens = count_capturing_parens(parser);
+    parser.group_names.clear();
+    parser.back_reference_names.clear();
     todo!()
+}
+
+fn parse_disjunction<'a>(parser: &mut Parser<'a>) {
+    let start = parser.index;
+    let mut i = 0;
+    loop {}
+}
+
+fn parser_alternative<'a>(parser: &mut Parser<'a>, i: usize) -> Alternative<'a> {
+    let start = parser.index;
+    // let mut elements = vec![];
+    while !parser.eof() {}
+    Alternative { span: todo!(), elements: todo!() }
+}
+
+fn parse_term<'a>(parser: &mut Parser<'a>) -> (bool, Option<Element<'a>>) {
+    if parser.context.unicode_mode || parser.context.strict {}
+    todo!()
+}
+
+fn parse_quantifier<'a>(
+    parser: &mut Parser<'a>,
+    no_consume: Option<bool>,
+) -> (bool, Option<Element<'a>>) {
+    let mut no_consume = no_consume.unwrap_or_default();
+    let start = parser.index;
+    let mut min = 0;
+    let mut max = 0;
+    let mut greedy = false;
+    let mut element = None;
+    match parser.current().cloned() {
+        Some('*') => {
+            min = 0;
+            max = usize::MAX;
+            parser.advance();
+        }
+        Some('+') => {
+            min = 1;
+            max = usize::MAX;
+            parser.advance();
+        }
+        Some('?') => {
+            min = 0;
+            max = 1;
+            parser.advance();
+        }
+        Some(_) => {
+            if parse_braced_quantifier(parser, no_consume) {
+                min = parser.last_range.start;
+                max = parser.last_range.end;
+            }
+        }
+        None => return (false, None),
+    }
+    greedy = !parser.eat('?');
+
+    if !no_consume {
+        element = Some(Element::Quantifier(Quantifier {
+            span: Span { start: start as u32, end: parser.index as u32 },
+            min,
+            max,
+            greedy,
+            // https://github.com/eslint-community/regexpp/blob/2e8f1af992fb12eae46a446253e8fa3f6cede92a/src/parser.ts#L269-L275
+            // it can't be null, or the program will panic, so we put a dummy element, and parent
+            // should replace it
+            element: QuantifiableElement::Character(Character { span: Span::default(), value: 0 }),
+        }))
+    }
+    (true, element)
+}
+
+fn parse_braced_quantifier<'a>(parser: &mut Parser<'a>, no_error: bool) -> bool {
+    let start = parser.index;
+    if eat_decimal_digits(parser) {
+        let min = parser.last_int_value;
+        let mut max = min;
+        if parser.eat(',') {
+            max = if eat_decimal_digits(parser) { parser.last_int_value } else { usize::MAX };
+        }
+        if parser.eat('}') {
+            if !no_error && max < min {
+                panic!("numbers out of order in {{}} quantifier");
+            }
+            parser.last_range = min..max;
+            return true;
+        }
+    }
+    if !no_error && (parser.context.unicode_mode || parser.context.strict) {
+        panic!("Incomplete quantifier");
+    }
+    parser.rewind(start);
+    false
+}
+
+fn eat_decimal_digits<'a>(parser: &mut Parser<'a>) -> bool {
+    let start = parser.index;
+    parser.last_int_value = 0;
+    while let Some(ch) = parser.current() {
+        let Some(d) = ch.to_digit(10) else {
+            break;
+        };
+        parser.last_int_value = 10 * parser.last_int_value + d as usize;
+        parser.advance();
+    }
+    parser.index != start
 }
 
 fn count_capturing_parens<'a>(parser: &mut Parser<'a>) -> usize {
     let start = parser.index;
     let mut in_class = false;
     let mut escaped = false;
-    let count = 0;
+    let mut count = 0;
     while let Some(ch) = parser.current() {
         if escaped {
             escaped = false;
@@ -165,7 +299,8 @@ fn count_capturing_parens<'a>(parser: &mut Parser<'a>) -> usize {
             }
             '(' if !in_class => {
                 if parser.next() != Some(&'?')
-                    || (parser.nth(2) == Some(&'<') && !matches!(parser.nth(3), '=' | '!'))
+                    || (parser.nth(2) == Some(&'<')
+                        && !matches!(parser.nth(3), Some(&'=') | Some(&'!')))
                 {
                     count += 1;
                 }

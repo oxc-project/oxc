@@ -157,8 +157,10 @@ pub struct LookbehindAssertion<'a> {
 #[derive(Debug)]
 pub struct Quantifier<'a> {
     pub span: Span,
-    pub min: f64,
-    pub max: f64, // can be f64::INFINITY
+    /// https://github.com/eslint-community/regexpp/blob/2e8f1af992fb12eae46a446253e8fa3f6cede92a/src/validator.ts#L384-L398
+    /// both `min` and `max` are integer
+    pub min: usize,
+    pub max: usize,
     pub greedy: bool,
     pub element: QuantifiableElement<'a>,
 }
