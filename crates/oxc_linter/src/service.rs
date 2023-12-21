@@ -17,7 +17,7 @@ use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
-use crate::{Fixer, LintContext, Linter, Message};
+use crate::{partial_loader::PartialLoader, Fixer, LintContext, Linter, Message};
 
 #[derive(Clone)]
 pub struct LintService {
@@ -110,6 +110,7 @@ pub struct Runtime {
     resolver: Resolver,
     module_map: ModuleMap,
     cache_state: CacheState,
+    partial_vue_loader: PartialLoader,
 }
 
 impl Runtime {
@@ -121,6 +122,7 @@ impl Runtime {
             resolver: Self::resolver(),
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
+            partial_vue_loader: PartialLoader::Vue,
         }
     }
 
@@ -131,27 +133,45 @@ impl Runtime {
         })
     }
 
-    fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
-        let Ok(source_type) = SourceType::from_path(path) else { return };
+    fn get_source_type_and_text(&self, path: &Path) -> Option<Result<(SourceType, String), Error>> {
+        let read_file = |path: &Path| -> Result<String, Error> {
+            fs::read_to_string(path)
+                .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
+        };
 
+        if let Ok(source_type) = SourceType::from_path(path) {
+            match read_file(path) {
+                Ok(source_text) => Some(Ok((source_type, source_text))),
+                Err(e) => Some(Err(e)),
+            }
+        } else {
+            let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
+            let partial_loader = if ext == "vue" { Some(&self.partial_vue_loader) } else { None };
+            let partial_loader = partial_loader?;
+
+            let source_text = match read_file(path) {
+                Ok(source_text) => source_text,
+                Err(e) => return Some(Err(e)),
+            };
+
+            let ret = partial_loader.parse(&source_text);
+            Some(Ok((ret.source_type, ret.source_text)))
+        }
+    }
+
+    fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
         }
-
-        let allocator = Allocator::default();
-        let source_text = match fs::read_to_string(path) {
+        let Some(source_type_and_text) = self.get_source_type_and_text(path) else { return };
+        let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
-                tx_error
-                    .send(Some((
-                        path.to_path_buf(),
-                        vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))],
-                    )))
-                    .unwrap();
+                tx_error.send(Some((path.to_path_buf(), vec![e]))).unwrap();
                 return;
             }
         };
-
+        let allocator = Allocator::default();
         let mut messages =
             self.process_source(path, &allocator, &source_text, source_type, true, tx_error);
 
