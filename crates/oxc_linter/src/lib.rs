@@ -133,18 +133,12 @@ impl Linter {
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);
             rule.run_once(&ctx, timing);
-        }
 
-        for symbol in semantic.symbols().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
+            for symbol in semantic.symbols().iter() {
                 rule.run_on_symbol(symbol, &ctx, timing);
             }
-        }
 
-        for node in semantic.nodes().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
+            for node in semantic.nodes().iter() {
                 rule.run(node, &ctx, timing);
             }
         }
