@@ -4,11 +4,13 @@ mod options;
 mod walk;
 
 use crate::linter::{DiagnosticReport, ServerLinter};
+use globset::Glob;
+use ignore::gitignore::Gitignore;
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use dashmap::DashMap;
@@ -33,6 +35,7 @@ struct Backend {
     server_linter: ServerLinter,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
+    gitignore_glob: Mutex<Option<Gitignore>>,
 }
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
@@ -70,7 +73,7 @@ enum SyntheticRunLevel {
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        self.init(params.root_uri)?;
+        self.init(params.root_uri).await?;
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
@@ -166,6 +169,9 @@ impl LanguageServer for Backend {
         if run_level < SyntheticRunLevel::OnSave {
             return;
         }
+        if self.is_ignored(&params.text_document.uri).await {
+            return;
+        }
         self.handle_file_update(params.text_document.uri, None).await;
     }
 
@@ -176,6 +182,10 @@ impl LanguageServer for Backend {
         if run_level < SyntheticRunLevel::OnType {
             return;
         }
+
+        if self.is_ignored(&params.text_document.uri).await {
+            return;
+        }
         let content = params.content_changes.first().map(|c| c.text.clone());
         self.handle_file_update(params.text_document.uri, content).await;
     }
@@ -183,6 +193,9 @@ impl LanguageServer for Backend {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let run_level = { self.options.lock().await.get_lint_level() };
         if run_level < SyntheticRunLevel::OnType {
+            return;
+        }
+        if self.is_ignored(&params.text_document.uri).await {
             return;
         }
         self.handle_file_update(params.text_document.uri, None).await;
@@ -236,7 +249,7 @@ impl LanguageServer for Backend {
 }
 
 impl Backend {
-    fn init(&self, root_uri: Option<Url>) -> Result<()> {
+    async fn init(&self, root_uri: Option<Url>) -> Result<()> {
         self.root_uri.set(root_uri).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => "root uri already initialized".into(),
@@ -244,12 +257,36 @@ impl Backend {
             };
 
             Error { code: ErrorCode::ParseError, message, data: None }
-        })
+        })?;
+        let uri = self
+            .root_uri
+            .get()
+            .expect("The root uri should be initialized already")
+            .as_ref()
+            .expect("should get uri");
+        let mut builder = globset::GlobSetBuilder::new();
+        builder.add(Glob::new("**/.eslintignore").unwrap());
+        builder.add(Glob::new("**/.gitignore").unwrap());
+
+        let ignore_file_glob_set = builder.build().unwrap();
+
+        let mut gitignore_builder = ignore::gitignore::GitignoreBuilder::new(uri.path());
+        let walk = ignore::WalkBuilder::new(uri.path()).ignore(true).hidden(false).git_global(false).build();
+        for item in walk.into_iter() {
+            if let Ok(entry) = item {
+                if ignore_file_glob_set.is_match(entry.path()) {
+                    gitignore_builder.add(entry.path());
+                }
+            }
+        }
+
+        *self.gitignore_glob.lock().await = gitignore_builder.build().ok();
+
+        Ok(())
     }
 
     #[allow(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
-        debug!("{:?}", result);
         join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(
                 Url::from_file_path(path).unwrap(),
@@ -276,6 +313,15 @@ impl Backend {
             }
         }
     }
+
+    async fn is_ignored(&self, uri: &Url) -> bool {
+        let gitignore_globs = self.gitignore_glob.lock().await;
+        let Some(ref gitignore_globs) = *gitignore_globs else {
+            return false;
+        };
+        let path = PathBuf::from(uri.path());
+        gitignore_globs.matched_path_or_any_parents(&path, path.is_dir()).is_ignore()
+    }
 }
 
 #[tokio::main]
@@ -293,7 +339,8 @@ async fn main() {
         root_uri: OnceCell::new(),
         server_linter,
         diagnostics_report_map,
-        options: tokio::sync::Mutex::new(Options::default()),
+        options: Mutex::new(Options::default()),
+        gitignore_glob: Mutex::new(None),
     })
     .finish();
 

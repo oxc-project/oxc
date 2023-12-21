@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
+use log::debug;
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::options::LintOptions;
@@ -12,6 +13,7 @@ pub struct Walk {
 impl Walk {
     /// # Panics
     pub fn new(options: &LintOptions) -> Self {
+        debug!("{:?}", &options.paths[0]);
         let mut inner = WalkBuilder::new(&options.paths[0]);
 
         if let Some(paths) = options.paths.get(1..) {
@@ -35,7 +37,7 @@ impl Walk {
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
         // * it is super rare to have symlinked source code
-        let inner = inner.ignore(false).git_global(false).follow_links(false).build();
+        let inner = inner.git_global(false).follow_links(false).build();
         Self { inner }
     }
 
