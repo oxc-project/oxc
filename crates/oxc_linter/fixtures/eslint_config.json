@@ -1,0 +1,20 @@
+{
+    "rules": {
+        "no-console": "off",
+        "no-bitwise": [
+            "error",
+            {
+                "allow": [
+                    "~"
+                ]
+            }
+        ],
+        "eqeqeq": [
+            "error",
+            "always",
+            {
+                "null": "ignore"
+            }
+        ]
+    }
+}

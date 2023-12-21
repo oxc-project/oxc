@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/config/mod.rs
+expression: rules
+---
+[
+    (
+        "eslint",
+        "no-console",
+        Allow,
+        None,
+    ),
+    (
+        "eslint",
+        "no-bitwise",
+        Deny,
+        Some(
+            Array [
+                Object {
+                    "allow": Array [
+                        String("~"),
+                    ],
+                },
+            ],
+        ),
+    ),
+    (
+        "eslint",
+        "eqeqeq",
+        Deny,
+        Some(
+            Array [
+                String("always"),
+                Object {
+                    "null": String("ignore"),
+                },
+            ],
+        ),
+    ),
+]
