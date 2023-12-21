@@ -83,6 +83,7 @@ mod eslint {
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
     pub mod no_unused_labels;
+    pub mod no_unused_private_class_members;
     pub mod no_useless_catch;
     pub mod no_useless_escape;
     pub mod require_yield;
@@ -312,6 +313,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
+    eslint::no_unused_private_class_members,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::require_yield,
