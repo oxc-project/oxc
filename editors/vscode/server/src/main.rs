@@ -73,7 +73,8 @@ enum SyntheticRunLevel {
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        self.init(params.root_uri).await?;
+        self.init(params.root_uri)?;
+        self.init_ignore_glob().await;
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
@@ -249,7 +250,7 @@ impl LanguageServer for Backend {
 }
 
 impl Backend {
-    async fn init(&self, root_uri: Option<Url>) -> Result<()> {
+    fn init(&self, root_uri: Option<Url>) -> Result<()> {
         self.root_uri.set(root_uri).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => "root uri already initialized".into(),
@@ -258,6 +259,11 @@ impl Backend {
 
             Error { code: ErrorCode::ParseError, message, data: None }
         })?;
+
+        Ok(())
+    }
+
+    async fn init_ignore_glob(&self) {
         let uri = self
             .root_uri
             .get()
@@ -272,18 +278,18 @@ impl Backend {
         let ignore_file_glob_set = builder.build().unwrap();
 
         let mut gitignore_builder = ignore::gitignore::GitignoreBuilder::new(uri.path());
-        let walk = ignore::WalkBuilder::new(uri.path()).ignore(true).hidden(false).git_global(false).build();
-        for item in walk.into_iter() {
-            if let Ok(entry) = item {
-                if ignore_file_glob_set.is_match(entry.path()) {
-                    gitignore_builder.add(entry.path());
-                }
+        let walk = ignore::WalkBuilder::new(uri.path())
+            .ignore(true)
+            .hidden(false)
+            .git_global(false)
+            .build();
+        for entry in walk.flatten() {
+            if ignore_file_glob_set.is_match(entry.path()) {
+                gitignore_builder.add(entry.path());
             }
         }
 
         *self.gitignore_glob.lock().await = gitignore_builder.build().ok();
-
-        Ok(())
     }
 
     #[allow(clippy::ptr_arg)]
@@ -316,9 +322,7 @@ impl Backend {
     }
 
     async fn is_ignored(&self, uri: &Url) -> bool {
-        // TODO: cache the result, for now it only cost a few us to calculate if the file is ignored by gitignore or .eslintignore 
-        let gitignore_globs = self.gitignore_glob.lock().await;
-        let Some(ref gitignore_globs) = *gitignore_globs else {
+        let Some(ref gitignore_globs) = *self.gitignore_glob.lock().await else {
             return false;
         };
         let path = PathBuf::from(uri.path());
