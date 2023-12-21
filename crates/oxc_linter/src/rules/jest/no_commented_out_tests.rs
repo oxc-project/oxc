@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -44,16 +45,18 @@ declare_oxc_lint!(
 
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {
+        lazy_static! {
+        //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
+            static ref RE: Regex =
+            Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
+        }
         let comments = ctx.semantic().trivias().comments();
         let source_text = ctx.semantic().source_text();
-        //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
-        let re =
-            Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
         let commented_tests = comments.iter().filter_map(|(start, comment)| {
             let start = *start;
             let end = comment.end();
             let text = &source_text[(start as usize)..(end as usize)];
-            if re.is_match(text) {
+            if RE.is_match(text) {
                 Some(Span::new(start, end))
             } else {
                 None
