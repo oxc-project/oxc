@@ -51,46 +51,46 @@ expression: const_comparisons
    ╰────
   help: since `500` < `600`, the expression evaluates to false for any value of `status`
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code < 200 && status_code <= 299;
    · ───────────────────────────────────────
    ╰────
-  help: if `200` evaluates to true, `299` will always evaluate to true as well
+  help: if `status_code < 200` evaluates to true, `status_code <= 299` will always evaluate to true as well
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code > 200 && status_code >= 299;
    · ───────────────────────────────────────
    ╰────
-  help: if `299` evaluates to true, `200` will always evaluate to true as well
+  help: if `status_code >= 299` evaluates to true, `status_code > 200` will always evaluate to true as well
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code >= 500 && status_code > 500;
    · ───────────────────────────────────────
    ╰────
-  help: if `500` evaluates to true, `500` will always evaluate to true as well
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code > 500 && status_code >= 500;
    · ───────────────────────────────────────
    ╰────
-  help: if `500` evaluates to true, `500` will always evaluate to true as well
+  help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Left-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 500 && status_code < 500;
    · ───────────────────────────────────────
    ╰────
-  help: if `500` evaluates to true, `500` will always evaluate to true as well
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
-  ⚠ oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect
+  ⚠ oxc(const-comparisons): Right-hand side of `&&` operator has no effect.
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code < 500 && status_code <= 500;
    · ───────────────────────────────────────
    ╰────
-  help: if `500` evaluates to true, `500` will always evaluate to true as well
+  help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
 

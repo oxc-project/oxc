@@ -16,10 +16,10 @@ use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode}
 
 #[derive(Debug, Error, Diagnostic)]
 enum ConstComparisonsDiagnostic {
-    #[error("oxc(const-comparisons): Unexpected redundant comparison. Left-hand side of `&&` operator has no effect")]
+    #[error("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")]
     #[diagnostic(severity(warning), help("{1}"))]
     RedundantLeftHandSide(#[label] Span, String),
-    #[error("oxc(const-comparisons): Unexpected redundant comparison. Right-hand side of `&&` operator has no effect")]
+    #[error("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")]
     #[diagnostic(severity(warning), help("{1}"))]
     RedundantRightHandSide(#[label] Span, String),
     #[error("oxc(const-comparisons): Unexpected constant comparison")]
@@ -98,8 +98,8 @@ impl Rule for ConstComparisons {
         }
 
         if left_cmp_op.direction() == right_cmp_op.direction() {
-            let lhs_str = left_const_expr.value.to_string();
-            let rhs_str = right_const_expr.value.to_string();
+            let lhs_str = logical_expr.left.span().source_text(ctx.source_text());
+            let rhs_str = logical_expr.right.span().source_text(ctx.source_text());
             // We already know that either side of `&&` has no effect,
             // but emit a different error message depending on which side it is
             if left_side_is_useless(left_cmp_op, ordering) {
@@ -114,8 +114,8 @@ impl Rule for ConstComparisons {
                 ));
             }
         } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
-            let lhs_str = left_const_expr.value.to_string();
-            let rhs_str = right_const_expr.value.to_string();
+            let lhs_str = left_const_expr.span.source_text(ctx.source_text());
+            let rhs_str = right_const_expr.span.source_text(ctx.source_text());
             let expr_str = left_expr.span().source_text(ctx.source_text());
             let diagnostic_note = match ordering {
                 Ordering::Less => format!(
