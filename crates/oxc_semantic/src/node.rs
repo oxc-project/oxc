@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use oxc_ast::AstKind;
 use oxc_index::{define_index_type, IndexVec};
 
-use crate::scope::{ScopeFlags, ScopeId};
+use crate::scope::ScopeId;
 
 define_index_type! {
     pub struct AstNodeId = usize;
@@ -68,15 +68,6 @@ impl<'a> AstNode<'a> {
 
     pub fn flags_mut(&mut self) -> &mut NodeFlags {
         &mut self.flags
-    }
-
-    pub fn strict_mode(&self, flags: ScopeFlags) -> bool {
-        // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
-        flags.is_strict_mode() || self.flags.has_class()
-    }
-
-    pub fn is_specific_id_reference(&self, name: &str) -> bool {
-        self.kind().is_specific_id_reference(name)
     }
 }
 
