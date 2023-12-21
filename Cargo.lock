@@ -1683,6 +1683,7 @@ dependencies = [
  "insta",
  "itertools 0.12.0",
  "lazy_static",
+ "memchr",
  "miette",
  "num-traits",
  "once_cell",
@@ -1857,9 +1858,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "0.6.2"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ac76a705bf7db9d1e43904ed4704039de8fa654b0f613cc729c09bb67fd89f6"
+checksum = "8c9cab435ba03dc1974c54e8721313a4d4945af7afaa3882c8eee66e31711da7"
 dependencies = [
  "dashmap",
  "dunce",
