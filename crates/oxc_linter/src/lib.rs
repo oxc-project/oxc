@@ -62,7 +62,7 @@ impl JsxA11y {
 
 #[derive(Debug)]
 pub struct Linter {
-    rules: Vec<RuleEnum>,
+    rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
     settings: LintSettings,
 }
@@ -79,6 +79,7 @@ impl Linter {
             .iter()
             .filter(|&rule| rule.category() == RuleCategory::Correctness)
             .cloned()
+            .map(|rule| (rule.name(), rule))
             .collect::<Vec<_>>();
         Self { rules, options: LintOptions::default(), settings: LintSettings::default() }
     }
@@ -88,12 +89,13 @@ impl Linter {
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
         let (rules, settings) = options.derive_rules_and_settings()?;
+        let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
         Ok(Self { rules, options, settings })
     }
 
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
-        self.rules = rules;
+        self.rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
         self
     }
 
@@ -101,10 +103,6 @@ impl Linter {
     pub fn with_settings(mut self, settings: LintSettings) -> Self {
         self.settings = settings;
         self
-    }
-
-    pub fn rules(&self) -> &Vec<RuleEnum> {
-        &self.rules
     }
 
     pub fn options(&self) -> &LintOptions {
@@ -132,22 +130,22 @@ impl Linter {
         let semantic = Rc::clone(ctx.semantic());
         let mut ctx = ctx.with_fix(self.options.fix);
 
-        for rule in &self.rules {
-            ctx.with_rule_name(rule.name());
+        for (rule_name, rule) in &self.rules {
+            ctx.with_rule_name(rule_name);
             rule.run_once(&ctx, timing);
         }
 
-        for node in semantic.nodes().iter() {
-            for rule in &self.rules {
-                ctx.with_rule_name(rule.name());
-                rule.run(node, &ctx, timing);
+        for symbol in semantic.symbols().iter() {
+            for (rule_name, rule) in &self.rules {
+                ctx.with_rule_name(rule_name);
+                rule.run_on_symbol(symbol, &ctx, timing);
             }
         }
 
-        for symbol in semantic.symbols().iter() {
-            for rule in &self.rules {
-                ctx.with_rule_name(rule.name());
-                rule.run_on_symbol(symbol, &ctx, timing);
+        for node in semantic.nodes().iter() {
+            for (rule_name, rule) in &self.rules {
+                ctx.with_rule_name(rule_name);
+                rule.run(node, &ctx, timing);
             }
         }
 
@@ -191,8 +189,11 @@ impl Linter {
         if !self.options.timing {
             return;
         }
-        let mut timings =
-            self.rules().iter().map(|rule| (rule.name(), rule.execute_time())).collect::<Vec<_>>();
+        let mut timings = self
+            .rules
+            .iter()
+            .map(|(rule_name, rule)| (rule_name, rule.execute_time()))
+            .collect::<Vec<_>>();
 
         timings.sort_by_key(|x| x.1);
         let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
