@@ -237,9 +237,9 @@ mod jsx_a11y {
     pub mod img_redundant_alt;
     pub mod no_access_key;
     pub mod no_autofocus;
+    pub mod no_distracting_elements;
     pub mod scope;
     pub mod tab_index_no_positive;
-    pub mod no_distracting_elements;
 }
 
 mod oxc {

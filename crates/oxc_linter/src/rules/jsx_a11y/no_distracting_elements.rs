@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::JSXElementName};
+use oxc_ast::{ast::JSXElementName, AstKind};
 use oxc_diagnostics::thiserror::Error;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -25,8 +25,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this necessary?
     ///
-    /// Elements that can be visually distracting can cause accessibility issues with visually impaired users. 
-    /// Such elements are most likely deprecated, and should be avoided. By default, <marquee> and <blink> elements are visually distracting. 
+    /// Elements that can be visually distracting can cause accessibility issues with visually impaired users.
+    /// Such elements are most likely deprecated, and should be avoided. By default, <marquee> and <blink> elements are visually distracting.
     ///
     /// ### What it checks
     ///
@@ -85,5 +85,7 @@ fn test() {
         (r"<blink foo={undefined} />", None),
     ];
 
-    Tester::new(NoDistractingElements::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
+    Tester::new(NoDistractingElements::NAME, pass, fail)
+        .with_jsx_a11y_plugin(true)
+        .test_and_snapshot();
 }
