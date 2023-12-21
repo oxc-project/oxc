@@ -166,5 +166,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentTypeExports::NAME, pass, fail).test();
+    Tester::new(ConsistentTypeExports::NAME, pass, fail).test_and_snapshot();
 }
