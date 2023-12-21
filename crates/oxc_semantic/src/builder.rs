@@ -202,10 +202,11 @@ impl<'a> SemanticBuilder<'a> {
         if self.jsdoc.retrieve_jsdoc_comment(kind) {
             flags |= NodeFlags::JSDoc;
         }
-        let ast_node = AstNode::new(kind, self.current_scope_id, flags);
+        let ast_node = AstNode::new(kind);
         let parent_node_id =
             if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };
-        self.current_node_id = self.nodes.add_node(ast_node, parent_node_id);
+        self.current_node_id =
+            self.nodes.add_node(ast_node, parent_node_id, self.current_scope_id, flags);
     }
 
     fn pop_ast_node(&mut self) {
@@ -221,7 +222,7 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
         if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
+            *self.nodes.get_node_flags_mut(*current_function) |= flag;
         }
     }
 

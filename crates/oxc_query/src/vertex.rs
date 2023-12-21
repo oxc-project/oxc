@@ -302,9 +302,8 @@ impl<'a> Vertex<'a> {
             hash_of_node == wanted_node_hash
         });
 
-        adapter.semantic.scopes().get_flags(
-            found.expect("an arrowexpression or function should always be in the ast if we can have the struct of it").scope_id(),
-        )
+        let node = found.expect("an arrowexpression or function should always be in the ast if we can have the struct of it");
+        adapter.semantic.scopes().get_flags(adapter.semantic.nodes().scope_id(node.id()))
     }
 
     pub fn function_parameter(&self) -> VertexIterator<'a, Vertex<'a>> {

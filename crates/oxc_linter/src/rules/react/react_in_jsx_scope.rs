@@ -52,8 +52,9 @@ impl Rule for ReactInJsxScope {
             return;
         }
 
+        let scope_id = ctx.nodes().scope_id(node.id());
         if !scope
-            .ancestors(node.scope_id())
+            .ancestors(scope_id)
             .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k == react_name))
         {
             ctx.diagnostic(ReactInJsxScopeDiagnostic(node_span));

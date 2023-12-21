@@ -98,7 +98,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
             },
             |binding_id| {
                 let decl = nodes.get_node(symbols.get_declaration(binding_id));
-                let decl_scope = decl.scope_id();
+                let decl_scope = ctx.nodes().scope_id(decl.id());
                 match decl.kind() {
                     AstKind::VariableDeclarator(parent_decl) => {
                         if !parent_decl.id.kind.is_binding_identifier() {
@@ -135,9 +135,8 @@ impl Rule for NoObjCalls {
         match callee {
             Expression::Identifier(ident) => {
                 // handle new Math(), Math(), etc
-                if let Some(top_level_reference) =
-                    resolve_global_binding(ident, node.scope_id(), ctx)
-                {
+                let scope_id = ctx.nodes().scope_id(node.id());
+                if let Some(top_level_reference) = resolve_global_binding(ident, scope_id, ctx) {
                     if is_global_obj(&top_level_reference) {
                         ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
                     }

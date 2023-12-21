@@ -3,11 +3,10 @@ mod builder;
 use std::{cell::OnceCell, collections::BTreeMap};
 
 pub use builder::JSDocBuilder;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use self::parser::JSDocParser;
 pub use self::parser::JSDocTag;
-use crate::AstNode;
 
 mod parser;
 
@@ -27,14 +26,6 @@ pub struct JSDocComment<'a> {
 impl<'a> JSDoc<'a> {
     pub fn new(docs: BTreeMap<Span, JSDocComment<'a>>) -> Self {
         Self { docs }
-    }
-
-    pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
-        if !node.flags().has_jsdoc() {
-            return None;
-        }
-        let span = node.kind().span();
-        self.get_by_span(span)
     }
 
     pub fn get_by_span<'b>(&'b self, span: Span) -> Option<JSDocComment<'a>> {

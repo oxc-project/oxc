@@ -63,7 +63,9 @@ impl Rule for ConsistentTypeExports {
             if export_named_declaration.export_kind == ImportOrExportKind::Type {
                 return;
             }
-            check_export_named_declaration(node.scope_id(), export_named_declaration, ctx);
+
+            let scope_id = ctx.nodes().scope_id(node.id());
+            check_export_named_declaration(scope_id, export_named_declaration, ctx);
         }
     }
 }

@@ -39,7 +39,8 @@ declare_oxc_lint!(
 impl Rule for NoAmd {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // not in top level
-        if node.scope_id() != ctx.scopes().root_scope_id() {
+        let scope_id = ctx.nodes().scope_id(node.id());
+        if scope_id != ctx.scopes().root_scope_id() {
             return;
         }
         if let AstKind::CallExpression(call_expr) = node.kind() {

@@ -109,7 +109,7 @@ impl MaxExpects {
         };
 
         if ident.name == "expect" {
-            let position = node.scope_id().index();
+            let position = ctx.nodes().scope_id(node.id()).index();
 
             if let Some(count) = count_map.get(&position) {
                 if count > &self.max {

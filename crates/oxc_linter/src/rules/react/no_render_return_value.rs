@@ -58,10 +58,9 @@ impl Rule for NoRenderReturnValue {
                             ));
                         }
 
-                        let is_arrow_function = ctx
-                            .scopes()
-                            .get_flags(parent_node.scope_id())
-                            .contains(ScopeFlags::Arrow);
+                        let scope_id = ctx.nodes().scope_id(parent_node.id());
+                        let is_arrow_function =
+                            ctx.scopes().get_flags(scope_id).contains(ScopeFlags::Arrow);
 
                         if is_arrow_function {
                             for node_id in ctx.nodes().ancestors(parent_node.id()).skip(1) {

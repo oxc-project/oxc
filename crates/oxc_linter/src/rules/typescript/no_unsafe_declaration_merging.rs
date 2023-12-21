@@ -45,7 +45,8 @@ impl Rule for NoUnsafeDeclarationMerging {
         match node.kind() {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
-                    for (_, symbol_id) in ctx.semantic().scopes().get_bindings(node.scope_id()) {
+                    let scope_id = ctx.nodes().scope_id(node.id());
+                    for (_, symbol_id) in ctx.semantic().scopes().get_bindings(scope_id) {
                         if let AstKind::TSInterfaceDeclaration(scope_interface) =
                             get_symbol_kind(*symbol_id, ctx)
                         {
@@ -55,7 +56,8 @@ impl Rule for NoUnsafeDeclarationMerging {
                 }
             }
             AstKind::TSInterfaceDeclaration(decl) => {
-                for (_, symbol_id) in ctx.semantic().scopes().get_bindings(node.scope_id()) {
+                let scope_id = ctx.nodes().scope_id(node.id());
+                for (_, symbol_id) in ctx.semantic().scopes().get_bindings(scope_id) {
                     if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx) {
                         if let Some(scope_class_ident) = scope_class.id.as_ref() {
                             check_and_diagnostic(&decl.id, scope_class_ident, ctx);
@@ -126,7 +128,7 @@ fn test() {
          			interface Foo {
          			  props: string;
          			}
-        
+
          			function bar() {
          			  return class Foo {};
          			}
@@ -138,7 +140,7 @@ fn test() {
          			interface Foo {
          			  props: string;
          			}
-        
+
          			(function bar() {
          			  class Foo {}
          			})();
@@ -150,7 +152,7 @@ fn test() {
          			declare global {
          			  interface Foo {}
          			}
-        
+
          			class Foo {}
          			    ",
             None,

@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc};
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -125,6 +125,10 @@ impl<'a> LintContext<'a> {
 
     /* JSDoc */
     pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
-        self.semantic().jsdoc().get_by_node(node)
+        let node_flags = self.nodes().node_flags(node.id());
+        if !node_flags.has_jsdoc() {
+            return None;
+        }
+        self.semantic().jsdoc().get_by_span(node.kind().span())
     }
 }

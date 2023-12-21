@@ -39,7 +39,8 @@ impl Rule for RequireYield {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
 
-        if node.flags().has_yield() {
+        let node_flags = ctx.nodes().node_flags(node.id());
+        if node_flags.has_yield() {
             return;
         }
 

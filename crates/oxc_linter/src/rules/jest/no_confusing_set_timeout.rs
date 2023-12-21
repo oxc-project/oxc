@@ -189,7 +189,8 @@ fn handle_jest_set_time_out<'a>(
         };
 
         if expr.property.name == "setTimeout" {
-            if !scopes.get_flags(parent_node.scope_id()).is_top() {
+            let scope_id = ctx.nodes().scope_id(parent_node.id());
+            if !scopes.get_flags(scope_id).is_top() {
                 ctx.diagnostic(NoGlobalSetTimeoutDiagnostic(member_expr.span()));
             }
 

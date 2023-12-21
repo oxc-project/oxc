@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use oxc_ast::AstKind;
 use oxc_index::{define_index_type, IndexVec};
 
-use crate::scope::{ScopeFlags, ScopeId};
+use crate::scope::ScopeId;
 
 define_index_type! {
     pub struct AstNodeId = usize;
@@ -38,16 +38,11 @@ pub struct AstNode<'a> {
     id: AstNodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
-
-    /// Associated Scope (initialized by binding)
-    scope_id: ScopeId,
-
-    flags: NodeFlags,
 }
 
 impl<'a> AstNode<'a> {
-    pub fn new(kind: AstKind<'a>, scope_id: ScopeId, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, scope_id, flags }
+    pub fn new(kind: AstKind<'a>) -> Self {
+        Self { id: AstNodeId::new(0), kind }
     }
 
     pub fn id(&self) -> AstNodeId {
@@ -58,26 +53,14 @@ impl<'a> AstNode<'a> {
         self.kind
     }
 
-    pub fn scope_id(&self) -> ScopeId {
-        self.scope_id
-    }
+    // pub fn strict_mode(&self, flags: ScopeFlags) -> bool {
+    // // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
+    // flags.is_strict_mode() || self.flags.has_class()
+    // }
 
-    pub fn flags(&self) -> NodeFlags {
-        self.flags
-    }
-
-    pub fn flags_mut(&mut self) -> &mut NodeFlags {
-        &mut self.flags
-    }
-
-    pub fn strict_mode(&self, flags: ScopeFlags) -> bool {
-        // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
-        flags.is_strict_mode() || self.flags.has_class()
-    }
-
-    pub fn is_specific_id_reference(&self, name: &str) -> bool {
-        self.kind().is_specific_id_reference(name)
-    }
+    // pub fn is_specific_id_reference(&self, name: &str) -> bool {
+    // self.kind().is_specific_id_reference(name)
+    // }
 }
 
 /// Untyped AST nodes flattened into an vec
@@ -85,6 +68,9 @@ impl<'a> AstNode<'a> {
 pub struct AstNodes<'a> {
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
+    /// Associated Scope (initialized by binding)
+    scope_ids: IndexVec<AstNodeId, ScopeId>,
+    node_flags: IndexVec<AstNodeId, NodeFlags>,
 }
 
 impl<'a> AstNodes<'a> {
@@ -109,6 +95,14 @@ impl<'a> AstNodes<'a> {
         self.parent_ids[ast_node_id]
     }
 
+    pub fn scope_id(&self, ast_node_id: AstNodeId) -> ScopeId {
+        self.scope_ids[ast_node_id]
+    }
+
+    pub fn node_flags(&self, ast_node_id: AstNodeId) -> NodeFlags {
+        self.node_flags[ast_node_id]
+    }
+
     pub fn parent_kind(&self, ast_node_id: AstNodeId) -> Option<AstKind<'a>> {
         self.parent_id(ast_node_id).map(|node_id| self.kind(node_id))
     }
@@ -125,6 +119,10 @@ impl<'a> AstNodes<'a> {
         &mut self.nodes[ast_node_id]
     }
 
+    pub fn get_node_flags_mut(&mut self, ast_node_id: AstNodeId) -> &mut NodeFlags {
+        &mut self.node_flags[ast_node_id]
+    }
+
     /// Walk up the AST, iterating over each parent node.
     ///
     /// The first node produced by this iterator is the first parent of the node
@@ -134,11 +132,19 @@ impl<'a> AstNodes<'a> {
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
-    pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
+    pub fn add_node(
+        &mut self,
+        node: AstNode<'a>,
+        parent_id: Option<AstNodeId>,
+        scope_id: ScopeId,
+        node_flags: NodeFlags,
+    ) -> AstNodeId {
         let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
         node.id = ast_node_id;
         self.nodes.push(node);
+        self.scope_ids.push(scope_id);
+        self.node_flags.push(node_flags);
         ast_node_id
     }
 }

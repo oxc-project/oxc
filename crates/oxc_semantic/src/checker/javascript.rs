@@ -177,7 +177,8 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
             return ctx.error(ReservedKeyword(name.clone(), span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+        let scope_id = ctx.nodes.scope_id(node.id());
+        if ctx.scope.get_flags(scope_id).is_class_static_block() {
             return ctx.error(ClassStatickBlockAwait(span));
         }
     }
@@ -413,7 +414,8 @@ fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &Semantic
         return;
     }
 
-    if !ctx.scope.get_flags(node.scope_id()).is_function() {
+    let scope_id = ctx.nodes.scope_id(node.id());
+    if !ctx.scope.get_flags(scope_id).is_function() {
         return;
     }
 
@@ -518,7 +520,8 @@ fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Semant
         "new" => {
             if prop.property.name == "target" {
                 let mut in_function_scope = false;
-                for scope_id in ctx.scope.ancestors(node.scope_id()) {
+                let node_scope_id = ctx.nodes.scope_id(node.id());
+                for scope_id in ctx.scope.ancestors(node_scope_id) {
                     let flags = ctx.scope.get_flags(scope_id);
                     // In arrow functions, new.target is inherited from the surrounding scope.
                     if flags.contains(ScopeFlags::Arrow) {
@@ -1144,7 +1147,8 @@ fn check_await_expression<'a>(
         ctx.error(AwaitOrYieldInParameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
+    let scope_id = ctx.nodes.scope_id(node.id());
+    if ctx.scope.get_flags(scope_id).is_class_static_block() {
         let start = expr.span.start;
         ctx.error(ClassStatickBlockAwait(Span::new(start, start + 5)));
     }
