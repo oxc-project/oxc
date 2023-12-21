@@ -1987,6 +1987,7 @@ dependencies = [
  "dashmap",
  "env_logger",
  "futures",
+ "globset",
  "ignore",
  "log",
  "miette",
