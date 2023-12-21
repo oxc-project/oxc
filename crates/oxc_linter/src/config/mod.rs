@@ -80,7 +80,7 @@ impl ESLintConfig {
             // The rule is included if it's in the extends set and not explicitly disabled,
             // or if it's explicitly enabled
             if (in_extends && !is_explicitly_handled) || policy.is_enabled() {
-                Some(rule.read_json(config.cloned()))
+                Some(rule.read_json(config.clone()))
             } else {
                 None
             }
@@ -134,7 +134,7 @@ fn parse_extends(root_json: &Value) -> Result<Option<Vec<&'static str>>, Report>
 #[allow(clippy::type_complexity)]
 fn parse_rules(
     root_json: &Value,
-) -> Result<Vec<(&str, &str, AllowWarnDeny, Option<&Value>)>, Error> {
+) -> Result<Vec<(&str, &str, AllowWarnDeny, Option<Value>)>, Error> {
     let Value::Object(rules_object) = root_json else { return Ok(vec![]) };
 
     let Some(Value::Object(rules_object)) = rules_object.get("rules") else { return Ok(vec![]) };
@@ -221,16 +221,36 @@ fn parse_rule_name(name: &str) -> (&str, &str) {
 ///     "rule": ["off", "config"],
 /// }
 /// ```
-fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Option<&Value>), Error> {
+fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Option<Value>), Error> {
     if let Some(v) = value.as_str() {
         return Ok((AllowWarnDeny::try_from(v)?, None));
     }
 
     if let Some(v) = value.as_array() {
+        let mut config = Vec::new();
+        for item in v.iter().skip(1).take(2) {
+            config.push(item.clone());
+        }
+        let config = if config.is_empty() { None } else { Some(Value::Array(config)) };
         if let Some(v_idx_0) = v.get(0) {
-            return Ok((AllowWarnDeny::try_from(v_idx_0)?, v.get(1)));
+            return Ok((AllowWarnDeny::try_from(v_idx_0)?, config));
         }
     }
 
     Err(FailedToParseRuleValueError(value.to_string(), "Invalid rule value").into())
+}
+
+#[cfg(test)]
+mod test {
+    use super::parse_rules;
+    use std::env;
+
+    #[test]
+    fn test_parse_rules() {
+        let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
+        let input = std::fs::read_to_string(fixture_path).unwrap();
+        let file = serde_json::from_str::<serde_json::Value>(&input).unwrap();
+        let rules = parse_rules(&file).unwrap();
+        insta::assert_debug_snapshot!(rules);
+    }
 }
