@@ -35,6 +35,11 @@ bitflags! {
         const ValueModule             = 1 << 17;
         // In a dts file or there is a declare flag
         const Ambient                 = 1 << 18;
+        // Class
+        const PropertyDefinition      = 1 << 19;
+        const ClassGetAccessor        = 1 << 20;
+        const ClassSetAccessor        = 1 << 21;
+        const ClassMethod        = 1 << 23;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 

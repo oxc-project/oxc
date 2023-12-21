@@ -87,3 +87,75 @@ fn test_types_simple() {
         .has_number_of_references(1)
         .test();
 }
+
+#[test]
+fn test_property_definition() {
+    let tester = SemanticTester::js(
+        "
+        class Foo {
+            #baz = 42;
+            test() {
+                this.#baz = 44;
+                this.#baz += 1;
+                console.log(this.#baz + 1);
+                console.log(this.#baz++);
+                [this.#baz] = [1];
+                [...this.#baz] = [1]
+                [this.#baz = 1] = 1
+            }
+        }
+        ",
+    );
+
+    tester
+        .has_some_symbol("baz")
+        .contains_flags(SymbolFlags::PropertyDefinition)
+        .has_number_of_references(7)
+        .has_number_of_reads(3)
+        .has_number_of_writes(6)
+        .test();
+}
+
+#[test]
+fn test_method_definition() {
+    let tester = SemanticTester::js(
+        "
+        class Foo {
+            set #bar(a) {}
+            get #bar() {}
+            get #bae() {}
+            #baz() {}
+            test() {
+                this.#bar = 43;
+                console.log(this.#bar)
+
+                console.log(this.#bae)
+
+                let a = this.#baz();
+            }
+        }
+        ",
+    );
+
+    tester
+        .has_some_symbol("baz")
+        .contains_flags(SymbolFlags::ClassMethod)
+        .has_number_of_references(1)
+        .has_number_of_reads(1)
+        .test();
+
+    tester
+        .has_some_symbol("bar")
+        .contains_flags(SymbolFlags::ClassGetAccessor | SymbolFlags::ClassSetAccessor)
+        .has_number_of_references(2)
+        .has_number_of_writes(1)
+        .has_number_of_reads(1)
+        .test();
+
+    tester
+        .has_some_symbol("bae")
+        .contains_flags(SymbolFlags::ClassGetAccessor)
+        .has_number_of_references(1)
+        .has_number_of_reads(1)
+        .test();
+}

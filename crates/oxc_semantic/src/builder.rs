@@ -421,6 +421,12 @@ impl<'a> SemanticBuilder<'a> {
                 class.bind(self);
                 self.make_all_namespaces_valuelike();
             }
+            AstKind::PropertyDefinition(decl) => {
+                decl.bind(self);
+            }
+            AstKind::MethodDefinition(decl) => {
+                decl.bind(self);
+            }
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
@@ -454,6 +460,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
+            }
+            AstKind::PrivateIdentifierReference(ident) => {
+                self.reference_private_identifier(ident);
             }
             AstKind::JSXElementName(elem) => {
                 self.reference_jsx_element_name(elem);
@@ -552,6 +561,81 @@ impl<'a> SemanticBuilder<'a> {
         for (curr, parent) in self
             .nodes
             .iter_parents(self.current_node_id)
+            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
+        {
+            match (curr.kind(), parent.kind()) {
+                // lhs of assignment expression
+                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                    debug_assert!(!flags.is_read());
+                    flags = ReferenceFlag::write();
+                    // a lhs expr will not propagate upwards into a rhs
+                    // expression, sow e can safely break
+                    break;
+                }
+                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
+                    flags |= if expr.operator == AssignmentOperator::Assign {
+                        ReferenceFlag::write()
+                    } else {
+                        ReferenceFlag::read_write()
+                    };
+                    break;
+                }
+                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
+                    flags |= ReferenceFlag::write();
+                    // continue up tree
+                }
+                (_, AstKind::UpdateExpression(_)) => {
+                    flags |= ReferenceFlag::Write;
+                    // continue up tree
+                }
+                (
+                    AstKind::AssignmentTarget(_),
+                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
+                ) => {
+                    break;
+                }
+                (_, AstKind::ParenthesizedExpression(_)) => {
+                    // continue up tree
+                }
+                _ => {
+                    flags |= ReferenceFlag::Read;
+                    break;
+                }
+            }
+        }
+
+        debug_assert!(flags != ReferenceFlag::None);
+
+        flags
+    }
+
+    fn reference_private_identifier(&mut self, ident: &PrivateIdentifierReference) {
+        let flag = self.resolve_private_identifier_reference_usages();
+        let reference = Reference::new(ident.span, ident.name.clone(), self.current_node_id, flag);
+        let reference_id = self.declare_reference(reference);
+        ident.reference_id.set(Some(reference_id));
+    }
+
+    /// Resolve reference flags for the current ast node.
+    fn resolve_private_identifier_reference_usages(&self) -> ReferenceFlag {
+        let mut flags = ReferenceFlag::None;
+
+        if self.nodes.parent_id(self.current_node_id).is_none() {
+            return ReferenceFlag::Read;
+        }
+
+        // This func should only get called when an PrivateIdentifierReference is
+        // reached
+        debug_assert!(matches!(
+            self.nodes.get_node(self.current_node_id).kind(),
+            AstKind::PrivateIdentifierReference(_)
+        ));
+
+        for (curr, parent) in self
+            .nodes
+            .iter_parents(
+                self.nodes.parent_id(self.current_node_id).unwrap_or(self.current_node_id),
+            )
             .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
         {
             match (curr.kind(), parent.kind()) {

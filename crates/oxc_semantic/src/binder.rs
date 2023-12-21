@@ -91,6 +91,47 @@ impl<'a> Binder for Class<'a> {
     }
 }
 
+impl<'a> Binder for PropertyDefinition<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let mut get_symbol_id = |name: &Atom| {
+            Some(builder.declare_symbol(
+                self.span,
+                name,
+                SymbolFlags::PropertyDefinition,
+                SymbolFlags::empty(),
+            ))
+        };
+        match &self.key {
+            PropertyKey::PrivateIdentifier(ident) => {
+                ident.symbol_id.set(get_symbol_id(&ident.name));
+            }
+            PropertyKey::Identifier(_) | PropertyKey::Expression(_) => {}
+        }
+    }
+}
+
+impl<'a> Binder for MethodDefinition<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let flag = match self.kind {
+            MethodDefinitionKind::Method => SymbolFlags::ClassMethod,
+            MethodDefinitionKind::Get => SymbolFlags::ClassGetAccessor,
+            MethodDefinitionKind::Set => SymbolFlags::ClassSetAccessor,
+            MethodDefinitionKind::Constructor => {
+                return;
+            }
+        };
+        let mut get_symbol_id =
+            |name: &Atom| Some(builder.declare_symbol(self.span, name, flag, SymbolFlags::empty()));
+        match &self.key {
+            PropertyKey::PrivateIdentifier(ident) => {
+                ident.symbol_id.set(get_symbol_id(&ident.name));
+            }
+            // TODO: bind Identifier
+            PropertyKey::Identifier(_) | PropertyKey::Expression(_) => {}
+        }
+    }
+}
+
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.

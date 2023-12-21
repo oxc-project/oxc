@@ -90,3 +90,18 @@ fn test_function_level_strict() {
         .test();
     tester.has_some_symbol("foo").is_not_in_scope(ScopeFlags::StrictMode).test();
 }
+
+#[test]
+fn test_class_block() {
+    SemanticTester::js(
+        "
+        class Foo {
+            #x = 1;
+        }
+        ",
+    )
+    .with_module(false)
+    .has_some_symbol("x")
+    .is_in_scope(ScopeFlags::ClassBlock)
+    .test();
+}
