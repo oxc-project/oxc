@@ -1683,6 +1683,7 @@ dependencies = [
  "insta",
  "itertools 0.12.0",
  "lazy_static",
+ "memchr",
  "miette",
  "num-traits",
  "once_cell",
