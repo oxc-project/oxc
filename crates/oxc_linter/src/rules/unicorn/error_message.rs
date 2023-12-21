@@ -12,6 +12,7 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
+#[diagnostic(severity(warning))]
 pub enum ErrorMessageDiagnostic {
     #[error("eslint-plugin-unicorn(error-message): Pass a message to the {0:1} constructor.")]
     MissingMessage(Atom, #[label] Span),
