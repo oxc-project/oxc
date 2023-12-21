@@ -1771,6 +1771,13 @@ impl Gen for PrivateIdentifier {
     }
 }
 
+impl Gen for PrivateIdentifierReference {
+    fn gen(&self, p: &mut Formatter) {
+        p.print(b'#');
+        p.print_str(self.name.as_bytes());
+    }
+}
+
 impl<'a> Gen for BindingPattern<'a> {
     fn gen(&self, p: &mut Formatter) {
         match &self.kind {

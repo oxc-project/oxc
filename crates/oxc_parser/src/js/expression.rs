@@ -1,5 +1,3 @@
-use std::cell::Cell;
-
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -67,7 +65,7 @@ impl<'a> Parser<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
+        Ok(BindingIdentifier::new(span, name))
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier> {
@@ -118,11 +116,11 @@ impl<'a> Parser<'a> {
     /// `PrivateIdentifier` ::
     ///     # `IdentifierName`
     /// # Panics
-    pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier {
+    pub(crate) fn parse_private_identifier(&mut self) -> (Span, Atom) {
         let span = self.start_span();
         let name = Atom::from(self.cur_string().unwrap());
         self.bump_any();
-        PrivateIdentifier { span: self.end_span(span), name }
+        (self.end_span(span), name)
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)
@@ -614,11 +612,11 @@ impl<'a> Parser<'a> {
     ) -> Result<Expression<'a>> {
         self.bump_any(); // advance `.` or `?.`
         if self.cur_kind() == Kind::PrivateIdentifier {
-            let private_ident = self.parse_private_identifier();
+            let (span, name) = self.parse_private_identifier();
             Ok(self.ast.private_field_expression(
                 self.end_span(lhs_span),
                 lhs,
-                private_ident,
+                PrivateIdentifierReference::new(span, name),
                 optional,
             ))
         } else {
@@ -853,12 +851,12 @@ impl<'a> Parser<'a> {
         let lhs_span = self.start_span();
 
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
-            let left = self.parse_private_identifier();
+            let (span, name) = self.parse_private_identifier();
             self.expect(Kind::In)?;
             let right = self.parse_unary_expression_base(lhs_span)?;
             Expression::PrivateInExpression(self.ast.alloc(PrivateInExpression {
                 span: self.end_span(lhs_span),
-                left,
+                left: PrivateIdentifier::new(span, name),
                 operator: BinaryOperator::In,
                 right,
             }))

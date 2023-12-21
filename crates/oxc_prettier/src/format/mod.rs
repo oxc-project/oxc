@@ -2089,6 +2089,15 @@ impl<'a> Format<'a> for PrivateIdentifier {
     }
 }
 
+impl<'a> Format<'a> for PrivateIdentifierReference {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(ss!("#"));
+        parts.push(p.str(self.name.as_str()));
+        Doc::Array(parts)
+    }
+}
+
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self.kind {

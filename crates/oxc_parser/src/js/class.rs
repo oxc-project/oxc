@@ -322,8 +322,13 @@ impl<'a> Parser<'a> {
     fn parse_class_element_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
-                let private_ident = self.parse_private_identifier();
-                Ok((PropertyKey::PrivateIdentifier(self.ast.alloc(private_ident)), false))
+                let (span, name) = self.parse_private_identifier();
+                Ok((
+                    PropertyKey::PrivateIdentifier(
+                        self.ast.alloc(PrivateIdentifier::new(span, name)),
+                    ),
+                    false,
+                ))
             }
             _ => self.parse_property_name(),
         }

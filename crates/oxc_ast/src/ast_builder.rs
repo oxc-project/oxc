@@ -586,7 +586,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        field: PrivateIdentifier,
+        field: PrivateIdentifierReference,
         optional: bool,
     ) -> Expression<'a> {
         self.member_expression(MemberExpression::PrivateFieldExpression(PrivateFieldExpression {

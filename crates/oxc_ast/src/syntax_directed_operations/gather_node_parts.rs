@@ -69,7 +69,7 @@ impl GatherNodeParts for IdentifierName {
     }
 }
 
-impl GatherNodeParts for PrivateIdentifier {
+impl GatherNodeParts for PrivateIdentifierReference {
     fn gather<F: FnMut(Atom)>(&self, f: &mut F) {
         f(self.name.clone());
     }

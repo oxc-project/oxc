@@ -767,7 +767,7 @@ pub trait VisitMut<'a>: Sized {
 
     fn visit_private_field_expression(&mut self, expr: &mut PrivateFieldExpression<'a>) {
         self.visit_expression(&mut expr.object);
-        self.visit_private_identifier(&mut expr.field);
+        self.visit_private_identifier_reference(&mut expr.field);
     }
 
     fn visit_new_expression(&mut self, expr: &mut NewExpression<'a>) {
@@ -1235,6 +1235,12 @@ pub trait VisitMut<'a>: Sized {
 
     fn visit_private_identifier(&mut self, ident: &mut PrivateIdentifier) {
         let kind = AstKind::PrivateIdentifier(self.alloc(ident));
+        self.enter_node(kind);
+        self.leave_node(kind);
+    }
+
+    fn visit_private_identifier_reference(&mut self, ident: &mut PrivateIdentifierReference) {
+        let kind = AstKind::PrivateIdentifierReference(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }

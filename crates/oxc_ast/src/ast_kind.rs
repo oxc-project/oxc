@@ -44,6 +44,7 @@ pub enum AstKind<'a> {
     BindingIdentifier(&'a BindingIdentifier),
     LabelIdentifier(&'a LabelIdentifier),
     PrivateIdentifier(&'a PrivateIdentifier),
+    PrivateIdentifierReference(&'a PrivateIdentifierReference),
 
     NumberLiteral(&'a NumberLiteral<'a>),
     StringLiteral(&'a StringLiteral),
@@ -352,6 +353,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::BindingIdentifier(x) => x.span,
             Self::LabelIdentifier(x) => x.span,
             Self::PrivateIdentifier(x) => x.span,
+            Self::PrivateIdentifierReference(x) => x.span,
 
             Self::NumberLiteral(x) => x.span,
             Self::StringLiteral(x) => x.span,
@@ -517,6 +519,9 @@ impl<'a> AstKind<'a> {
             Self::BindingIdentifier(x) => format!("BindingIdentifier({})", x.name).into(),
             Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name).into(),
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
+            Self::PrivateIdentifierReference(x) => {
+                format!("PrivateIdentifierReference({})", x.name).into()
+            }
 
             Self::NumberLiteral(n) => format!("NumberLiteral({})", n.value).into(),
             Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),

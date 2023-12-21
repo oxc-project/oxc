@@ -39,11 +39,9 @@ impl<'a> ClassStaticBlock<'a> {
             };
 
             let static_block_private_id = generate_uid(&private_names, &mut i);
-            let key =
-                PropertyKey::PrivateIdentifier(self.ast.alloc(PrivateIdentifier {
-                    span: SPAN,
-                    name: static_block_private_id.clone(),
-                }));
+            let key = PropertyKey::PrivateIdentifier(
+                self.ast.alloc(PrivateIdentifier::new(SPAN, static_block_private_id.clone())),
+            );
 
             let value = match block.body.len() {
                 0 => None,

@@ -651,7 +651,7 @@ pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub field: PrivateIdentifier,
+    pub field: PrivateIdentifierReference,
     pub optional: bool, // for optional chaining
 }
 
@@ -1890,12 +1890,53 @@ pub enum MethodDefinitionKind {
     Set,
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub symbol_id: Cell<Option<SymbolId>>,
+}
+
+impl PrivateIdentifier {
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name, symbol_id: Cell::default() }
+    }
+}
+
+impl Hash for PrivateIdentifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
+}
+
+/// Private Identifier Reference
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct PrivateIdentifierReference {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_id: Cell<Option<ReferenceId>>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_flag: ReferenceFlag,
+}
+
+impl Hash for PrivateIdentifierReference {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl PrivateIdentifierReference {
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+    }
 }
 
 #[derive(Debug, Hash)]

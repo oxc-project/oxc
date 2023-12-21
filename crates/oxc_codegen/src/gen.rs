@@ -2053,6 +2053,13 @@ impl<const MINIFY: bool> Gen<MINIFY> for PrivateIdentifier {
     }
 }
 
+impl<const MINIFY: bool> Gen<MINIFY> for PrivateIdentifierReference {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        p.print(b'#');
+        p.print_str(self.name.as_bytes());
+    }
+}
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingPattern<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match &self.kind {

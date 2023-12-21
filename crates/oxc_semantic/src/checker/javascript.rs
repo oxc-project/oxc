@@ -36,7 +36,12 @@ impl EarlyErrorJavaScript {
                 check_identifier_reference(ident, node, ctx);
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
-            AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
+            AstKind::PrivateIdentifier(ident) => {
+                check_private_identifier(&ident.name, ident.span, node, ctx);
+            }
+            AstKind::PrivateIdentifierReference(ident) => {
+                check_private_identifier(&ident.name, ident.span, node, ctx);
+            }
 
             AstKind::NumberLiteral(lit) => check_number_literal(lit, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
@@ -274,7 +279,8 @@ fn check_identifier_reference<'a>(
 }
 
 fn check_private_identifier<'a>(
-    ident: &PrivateIdentifier,
+    name: &Atom,
+    span: Span,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
@@ -303,7 +309,7 @@ fn check_private_identifier<'a>(
         #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
         struct PrivateNotInClass(Atom, #[label] Span);
-        return ctx.error(PrivateNotInClass(ident.name.clone(), ident.span));
+        return ctx.error(PrivateNotInClass(name.clone(), span));
     };
 
     // Check private identifier declarations in class.
@@ -318,7 +324,7 @@ fn check_private_identifier<'a>(
             // _ => return false,
             // };
             matches!(def.property_key(), Some(PropertyKey::PrivateIdentifier(prop_ident))
-                if prop_ident.name == ident.name)
+                if prop_ident.name == name)
         })
     });
 
@@ -327,7 +333,7 @@ fn check_private_identifier<'a>(
         #[error("Private field '{0}' must be declared in an enclosing class")]
         #[diagnostic()]
         struct PrivateFieldUndeclared(Atom, #[label] Span);
-        ctx.error(PrivateFieldUndeclared(ident.name.clone(), ident.span));
+        ctx.error(PrivateFieldUndeclared(name.clone(), span));
     }
 }
 
