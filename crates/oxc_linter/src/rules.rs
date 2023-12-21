@@ -239,6 +239,7 @@ mod jsx_a11y {
     pub mod no_autofocus;
     pub mod scope;
     pub mod tab_index_no_positive;
+    pub mod no_distracting_elements;
 }
 
 mod oxc {
@@ -459,6 +460,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::no_autofocus,
     jsx_a11y::scope,
     jsx_a11y::tab_index_no_positive,
+    jsx_a11y::no_distracting_elements,
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::no_accumulating_spread,
