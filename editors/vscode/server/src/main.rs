@@ -265,6 +265,7 @@ impl Backend {
             .as_ref()
             .expect("should get uri");
         let mut builder = globset::GlobSetBuilder::new();
+        // Collecting all ignore files
         builder.add(Glob::new("**/.eslintignore").unwrap());
         builder.add(Glob::new("**/.gitignore").unwrap());
 
@@ -315,6 +316,7 @@ impl Backend {
     }
 
     async fn is_ignored(&self, uri: &Url) -> bool {
+        // TODO: cache the result, for now it only cost a few us to calculate if the file is ignored by gitignore or .eslintignore 
         let gitignore_globs = self.gitignore_glob.lock().await;
         let Some(ref gitignore_globs) = *gitignore_globs else {
             return false;

@@ -10,7 +10,6 @@ use std::{
 
 use crate::options::LintOptions;
 use crate::walk::Walk;
-use log::debug;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
