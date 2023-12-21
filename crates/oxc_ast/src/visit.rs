@@ -468,9 +468,11 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
+        self.enter_scope(ScopeFlags::ClassBlock);
         for elem in &body.body {
             self.visit_class_element(elem);
         }
+        self.leave_scope();
     }
 
     fn visit_class_element(&mut self, elem: &ClassElement<'a>) {
