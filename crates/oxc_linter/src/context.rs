@@ -73,6 +73,7 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
+    #[inline]
     pub fn with_rule_name(&mut self, name: &'static str) {
         self.current_rule_name = name;
     }
