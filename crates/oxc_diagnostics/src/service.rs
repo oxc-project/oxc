@@ -1,12 +1,16 @@
 use std::{
     cell::Cell,
     io::{BufWriter, Write},
+    ops::ControlFlow,
     path::{Path, PathBuf},
     sync::mpsc,
     sync::Arc,
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use miette::Error;
+
+use crate::json_report_handler::JsonReportHandler;
+use crate::{miette::NamedSource, GraphicalReportHandler, MinifiedFileError, Severity};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -28,6 +32,14 @@ pub struct DiagnosticService {
 
     sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
+    output_type: OutputType,
+}
+
+#[derive(Debug, Default)]
+pub enum OutputType {
+    Json,
+    #[default]
+    Stylish,
 }
 
 impl Default for DiagnosticService {
@@ -40,6 +52,7 @@ impl Default for DiagnosticService {
             errors_count: Cell::new(0),
             sender,
             receiver,
+            output_type: OutputType::default(),
         }
     }
 }
@@ -54,6 +67,28 @@ impl DiagnosticService {
     #[must_use]
     pub fn with_max_warnings(mut self, max_warnings: Option<usize>) -> Self {
         self.max_warnings = max_warnings;
+        self
+    }
+
+    #[must_use]
+    pub fn with_output_type(mut self, format: Option<String>) -> Self {
+        match format {
+            Some(f) => {
+                let f = f.to_lowercase();
+                match &*f {
+                    "json" => {
+                        self.output_type = OutputType::Json;
+                    }
+                    "stylish" => {
+                        self.output_type = OutputType::Stylish;
+                    }
+                    _ => {}
+                }
+            }
+            None => {
+                self.output_type = OutputType::Stylish;
+            }
+        }
         self
     }
 
@@ -90,35 +125,63 @@ impl DiagnosticService {
     ///
     /// * When the writer fails to write
     pub fn run(&self) {
+        match self.output_type {
+            OutputType::Json => self.run_json(),
+            OutputType::Stylish => self.run_stylish(),
+        }
+    }
+    fn run_json(&self) {
+        let mut buf_writer = BufWriter::new(std::io::stdout());
+        let mut json_handler = JsonReportHandler::new();
+
+        while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+            json_handler.handle_diagnostics(&path, &diagnostics);
+            for diagnostic in diagnostics {
+                if self.handle_severity(&diagnostic) == ControlFlow::Break(()) {
+                    continue;
+                }
+            }
+        }
+        json_handler.write(buf_writer.by_ref()).unwrap();
+        buf_writer.flush().unwrap();
+    }
+
+    fn handle_severity(&self, diagnostic: &Error) -> ControlFlow<()> {
+        let severity = diagnostic.severity();
+        let is_warning = severity == Some(Severity::Warning);
+        let is_error = severity.is_none() || severity == Some(Severity::Error);
+        if is_warning || is_error {
+            if is_warning {
+                let warnings_count = self.warnings_count() + 1;
+                self.warnings_count.set(warnings_count);
+            }
+            if is_error {
+                let errors_count = self.errors_count() + 1;
+                self.errors_count.set(errors_count);
+            }
+            // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
+            // Note that it does not disable ALL diagnostics, only Warning diagnostics
+            else if self.quiet {
+                return ControlFlow::Break(());
+            }
+
+            if let Some(max_warnings) = self.max_warnings {
+                if self.warnings_count() > max_warnings {
+                    return ControlFlow::Break(());
+                }
+            }
+        }
+        ControlFlow::Continue(())
+    }
+
+    fn run_stylish(&self) {
         let mut buf_writer = BufWriter::new(std::io::stdout());
         let handler = GraphicalReportHandler::new();
-
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             let mut output = String::new();
             for diagnostic in diagnostics {
-                let severity = diagnostic.severity();
-                let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity.is_none() || severity == Some(Severity::Error);
-                if is_warning || is_error {
-                    if is_warning {
-                        let warnings_count = self.warnings_count() + 1;
-                        self.warnings_count.set(warnings_count);
-                    }
-                    if is_error {
-                        let errors_count = self.errors_count() + 1;
-                        self.errors_count.set(errors_count);
-                    }
-                    // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-                    // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    else if self.quiet {
-                        continue;
-                    }
-
-                    if let Some(max_warnings) = self.max_warnings {
-                        if self.warnings_count() > max_warnings {
-                            continue;
-                        }
-                    }
+                if self.handle_severity(&diagnostic) == ControlFlow::Break(()) {
+                    continue;
                 }
 
                 let mut err = String::new();
@@ -134,7 +197,6 @@ impl DiagnosticService {
             }
             buf_writer.write_all(output.as_bytes()).unwrap();
         }
-
         buf_writer.flush().unwrap();
     }
 }

@@ -249,6 +249,9 @@ pub struct WarningOptions {
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     #[bpaf(argument("INT"), hide_usage)]
     pub max_warnings: Option<usize>,
+
+    #[bpaf(long("format"), short('f'), argument("STRING"))]
+    pub format: Option<String>,
 }
 
 #[derive(Debug, Clone, Bpaf)]

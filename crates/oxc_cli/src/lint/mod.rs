@@ -69,7 +69,11 @@ impl Runner for LintRunner {
             codeowner_options,
             enable_plugins,
             config,
+            // format
         } = self.options;
+
+        let cli_run_result =
+            matches!(&warning_options.format , Some(f) if f.to_uppercase() == "json");
 
         let mut paths = paths;
 
@@ -120,6 +124,7 @@ impl Runner for LintRunner {
         let lint_service = LintService::new(cwd, &paths, linter);
 
         let diagnostic_service = DiagnosticService::default()
+            .with_output_type(warning_options.format)
             .with_quiet(warning_options.quiet)
             .with_max_warnings(warning_options.max_warnings);
 
@@ -135,15 +140,18 @@ impl Runner for LintRunner {
 
         lint_service.linter().print_execution_times_if_enable();
 
-        CliRunResult::LintResult(LintResult {
-            duration: now.elapsed(),
-            number_of_rules: lint_service.linter().number_of_rules(),
-            number_of_files,
-            number_of_warnings: diagnostic_service.warnings_count(),
-            number_of_errors: diagnostic_service.errors_count(),
-            max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
-            deny_warnings: warning_options.deny_warnings,
-        })
+        if !cli_run_result {
+            return CliRunResult::LintResult(LintResult {
+                duration: now.elapsed(),
+                number_of_rules: lint_service.linter().number_of_rules(),
+                number_of_files,
+                number_of_warnings: diagnostic_service.warnings_count(),
+                number_of_errors: diagnostic_service.errors_count(),
+                max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
+                deny_warnings: warning_options.deny_warnings,
+            });
+        }
+        CliRunResult::None
     }
 }
 

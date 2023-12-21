@@ -18,8 +18,10 @@ workspace = true
 doctest = false
 
 [dependencies]
-thiserror = { workspace = true }
-miette    = { workspace = true }
+thiserror  = { workspace = true }
+miette     = { workspace = true, features = ["serde"] }
+serde_json = { workspace = true }
+serde      = { workspace = true }
 
 unicode-width = "0.1.11"
 owo-colors    = { version = "3.5.0" }
