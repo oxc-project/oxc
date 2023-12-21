@@ -766,18 +766,27 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_computed_member_expression(&mut self, expr: &ComputedMemberExpression<'a>) {
+        let kind = AstKind::ComputedMemberExpression(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_expression(&expr.object);
         self.visit_expression(&expr.expression);
+        self.leave_node(kind);
     }
 
     fn visit_static_member_expression(&mut self, expr: &StaticMemberExpression<'a>) {
+        let kind = AstKind::StaticMemberExpression(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_expression(&expr.object);
         self.visit_identifier_name(&expr.property);
+        self.leave_node(kind);
     }
 
     fn visit_private_field_expression(&mut self, expr: &PrivateFieldExpression<'a>) {
+        let kind = AstKind::PrivateFieldExpression(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_expression(&expr.object);
         self.visit_private_identifier(&expr.field);
+        self.leave_node(kind);
     }
 
     fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
@@ -944,12 +953,15 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_array_assignment_target(&mut self, target: &ArrayAssignmentTarget<'a>) {
+        let kind = AstKind::ArrayAssignmentTarget(self.alloc(target));
+        self.enter_node(kind);
         for element in target.elements.iter().flatten() {
             self.visit_assignment_target_maybe_default(element);
         }
         if let Some(target) = &target.rest {
             self.visit_assignment_target(target);
         }
+        self.leave_node(kind);
     }
 
     fn visit_assignment_target_maybe_default(&mut self, target: &AssignmentTargetMaybeDefault<'a>) {
@@ -972,12 +984,15 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_object_assignment_target(&mut self, target: &ObjectAssignmentTarget<'a>) {
+        let kind = AstKind::ObjectAssignmentTarget(self.alloc(target));
+        self.enter_node(kind);
         for property in &target.properties {
             self.visit_assignment_target_property(property);
         }
         if let Some(target) = &target.rest {
             self.visit_assignment_target(target);
         }
+        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property(&mut self, property: &AssignmentTargetProperty<'a>) {
@@ -995,18 +1010,24 @@ pub trait Visit<'a>: Sized {
         &mut self,
         ident: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
+        let kind = AstKind::AssignmentTargetPropertyIdentifier(self.alloc(ident));
+        self.enter_node(kind);
         self.visit_identifier_reference(&ident.binding);
         if let Some(expr) = &ident.init {
             self.visit_expression(expr);
         }
+        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property_property(
         &mut self,
         property: &AssignmentTargetPropertyProperty<'a>,
     ) {
+        let kind = AstKind::AssignmentTargetPropertyProperty(self.alloc(property));
+        self.enter_node(kind);
         self.visit_property_key(&property.name);
         self.visit_assignment_target_maybe_default(&property.binding);
+        self.leave_node(kind);
     }
 
     /* ----------  Expression ---------- */
