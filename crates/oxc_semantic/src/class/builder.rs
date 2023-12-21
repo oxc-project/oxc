@@ -74,17 +74,18 @@ impl ClassTableBuilder {
             {
                 if let Some(class_id) = self.current_class_id {
                     let property_id = self.classes.get_property_id(class_id, &ident.name);
-                    let method_id = if property_id.is_some() {
-                        None
+                    let method_ids = if property_id.is_some() {
+                        Vec::default()
                     } else {
-                        self.classes.get_method_id(class_id, &ident.name)
+                        self.classes.get_method_ids(class_id, &ident.name)
                     };
+
                     let reference = PrivateIdentifierReference::new(
                         current_node_id,
                         ident.name.clone(),
                         ident.span,
                         property_id,
-                        method_id,
+                        method_ids,
                     );
                     self.classes.add_private_identifier_reference(class_id, reference);
                 }
@@ -108,7 +109,6 @@ impl ClassTableBuilder {
             }
         }
     }
-
     pub fn pop_class(&mut self) {
         self.current_class_id = self
             .current_class_id

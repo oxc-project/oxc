@@ -1894,6 +1894,9 @@ impl MethodDefinitionKind {
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
     }
+    pub fn is_method(&self) -> bool {
+        matches!(self, Self::Method)
+    }
 }
 
 #[derive(Debug, Clone, Hash)]
