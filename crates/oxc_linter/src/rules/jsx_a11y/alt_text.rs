@@ -60,12 +60,34 @@ enum AltTextDiagnostic {
     InputTypeImage(#[label] Span),
 }
 
-#[derive(Debug, Clone)]
-pub struct AltText {
+#[derive(Debug, Default, Clone)]
+pub struct AltText(Box<AltTextConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AltTextConfig {
     img: Option<Vec<String>>,
     object: Option<Vec<String>>,
     area: Option<Vec<String>>,
     input_type_image: Option<Vec<String>>,
+}
+
+impl std::ops::Deref for AltText {
+    type Target = AltTextConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::default::Default for AltTextConfig {
+    fn default() -> Self {
+        Self {
+            img: Some(vec![]),
+            object: Some(vec![]),
+            area: Some(vec![]),
+            input_type_image: Some(vec![]),
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -102,23 +124,13 @@ declare_oxc_lint!(
     correctness
 );
 
-impl std::default::Default for AltText {
-    fn default() -> Self {
-        Self {
-            img: Some(vec![]),
-            object: Some(vec![]),
-            area: Some(vec![]),
-            input_type_image: Some(vec![]),
-        }
-    }
-}
-
 impl Rule for AltText {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut alt_text = Self::default();
+        let mut alt_text = AltTextConfig::default();
         if let Some(config) = value.get(0) {
             if let Some(elements) = config.get("elements").and_then(|v| v.as_array()) {
-                alt_text = Self { img: None, object: None, area: None, input_type_image: None };
+                alt_text =
+                    AltTextConfig { img: None, object: None, area: None, input_type_image: None };
                 for el in elements {
                     match el.as_str() {
                         Some("img") => alt_text.img = Some(vec![]),
@@ -146,8 +158,9 @@ impl Rule for AltText {
             }
         }
 
-        alt_text
+        Self(Box::new(alt_text))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
         let JSXElementName::Identifier(iden) = &jsx_el.name else { return };

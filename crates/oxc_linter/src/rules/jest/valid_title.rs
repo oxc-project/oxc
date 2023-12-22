@@ -27,12 +27,23 @@ use crate::{
 struct ValidTitleDiagnostic(Atom, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct ValidTitle {
+pub struct ValidTitle(Box<ValidTitleConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
     disallowed_words: Vec<String>,
     ignore_space: bool,
     must_not_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
     must_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
+}
+
+impl std::ops::Deref for ValidTitle {
+    type Target = ValidTitleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -88,13 +99,13 @@ impl Rule for ValidTitle {
             .and_then(|v| v.get("mustMatch"))
             .and_then(compile_matcher_patterns)
             .unwrap_or_default();
-        Self {
+        Self(Box::new(ValidTitleConfig {
             ignore_type_of_describe_name,
             disallowed_words,
             ignore_space,
             must_not_match_patterns,
             must_match_patterns,
-        }
+        }))
     }
 
     fn run_once(&self, ctx: &LintContext) {

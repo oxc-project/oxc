@@ -1691,6 +1691,7 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_index",
  "oxc_macros",
  "oxc_parser",
  "oxc_resolver",

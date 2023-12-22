@@ -16,8 +16,19 @@ struct NoGlobalAssignDiagnostic(
 );
 
 #[derive(Debug, Default, Clone)]
-pub struct NoGlobalAssign {
+pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoGlobalAssignConfig {
     excludes: Vec<Atom>,
+}
+
+impl std::ops::Deref for NoGlobalAssign {
+    type Target = NoGlobalAssignConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -39,7 +50,7 @@ impl Rule for NoGlobalAssign {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
 
-        Self {
+        Self(Box::new(NoGlobalAssignConfig {
             excludes: obj
                 .and_then(|v| v.get("exceptions"))
                 .and_then(serde_json::Value::as_array)
@@ -49,7 +60,7 @@ impl Rule for NoGlobalAssign {
                 .filter(std::option::Option::is_some)
                 .map(|x| Atom::from(x.unwrap().to_string()))
                 .collect::<Vec<Atom>>(),
-        }
+        }))
     }
 
     fn run_once(&self, ctx: &LintContext) {

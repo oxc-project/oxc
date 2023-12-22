@@ -22,6 +22,35 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[diagnostic(severity(warning), help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop."))]
 struct ImgRedundantAltDiagnostic(#[label] pub Span);
 
+#[derive(Debug, Default, Clone)]
+pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImgRedundantAltConfig {
+    types_to_validate: Vec<String>,
+    redundant_words: Vec<String>,
+}
+
+impl std::ops::Deref for ImgRedundantAlt {
+    type Target = ImgRedundantAltConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for ImgRedundantAltConfig {
+    fn default() -> Self {
+        Self {
+            types_to_validate: COMPONENTS_FIXED_TO_VALIDATE
+                .iter()
+                .map(|&s| s.to_string())
+                .collect(),
+            redundant_words: REDUNDANT_WORDS.iter().map(|&s| s.to_string()).collect(),
+        }
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -54,31 +83,12 @@ declare_oxc_lint!(
     ImgRedundantAlt,
     correctness
 );
-
-#[derive(Debug, Clone)]
-pub struct ImgRedundantAlt {
-    types_to_validate: Vec<String>,
-    redundant_words: Vec<String>,
-}
-
-impl std::default::Default for ImgRedundantAlt {
-    fn default() -> Self {
-        Self {
-            types_to_validate: COMPONENTS_FIXED_TO_VALIDATE
-                .iter()
-                .map(|&s| s.to_string())
-                .collect(),
-            redundant_words: REDUNDANT_WORDS.iter().map(|&s| s.to_string()).collect(),
-        }
-    }
-}
-
 const COMPONENTS_FIXED_TO_VALIDATE: [&str; 1] = ["img"];
 const REDUNDANT_WORDS: [&str; 3] = ["image", "photo", "picture"];
 
 impl Rule for ImgRedundantAlt {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut img_redundant_alt = Self::default();
+        let mut img_redundant_alt = ImgRedundantAltConfig::default();
         if let Some(config) = value.get(0) {
             if let Some(components) = config.get("components").and_then(|v| v.as_array()) {
                 img_redundant_alt
@@ -93,7 +103,7 @@ impl Rule for ImgRedundantAlt {
             }
         }
 
-        img_redundant_alt
+        Self(Box::new(img_redundant_alt))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };

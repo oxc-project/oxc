@@ -17,13 +17,24 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[diagnostic(severity(warning))]
 struct CatchErrorNameDiagnostic(Atom, Atom, #[label] pub Span);
 
+#[derive(Debug, Default, Clone)]
+pub struct CatchErrorName(Box<CatchErrorNameConfig>);
+
 #[derive(Debug, Clone)]
-pub struct CatchErrorName {
+pub struct CatchErrorNameConfig {
     ignore: Vec<Atom>,
     name: Atom,
 }
 
-impl Default for CatchErrorName {
+impl std::ops::Deref for CatchErrorName {
+    type Target = CatchErrorNameConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for CatchErrorNameConfig {
     fn default() -> Self {
         Self { ignore: vec![], name: Atom::new_inline("error") }
     }
@@ -69,7 +80,7 @@ impl Rule for CatchErrorName {
                 .unwrap_or("error"),
         );
 
-        Self { ignore: ignored_names, name: allowed_name }
+        Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

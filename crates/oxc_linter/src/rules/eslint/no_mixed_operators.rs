@@ -22,15 +22,26 @@ struct NoMixedOperatorsDiagnostic(
     #[label] pub Span, /*Span of the parent operator */
 );
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NoMixedOperators {
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
+pub struct NoMixedOperators(Box<NoMixedOperatorsConfig>);
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct NoMixedOperatorsConfig {
     /// Disallow Mixed operators within one group.
     groups: Vec<Vec<&'static str>>,
     /// Allow operators of the same precedence to be mixed.
     allow_same_precedence: bool,
 }
 
-impl Default for NoMixedOperators {
+impl std::ops::Deref for NoMixedOperators {
+    type Target = NoMixedOperatorsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for NoMixedOperatorsConfig {
     fn default() -> Self {
         Self { groups: default_groups(), allow_same_precedence: true }
     }
@@ -116,7 +127,7 @@ impl NoMixedOperators {
         let allow_same_precedence =
             config.get("allowSamePrecedence").map_or(true, |val| val.as_bool().unwrap_or_default());
 
-        Some(Self { groups, allow_same_precedence })
+        Some(Self(Box::new(NoMixedOperatorsConfig { groups, allow_same_precedence })))
     }
 
     fn is_mixed_with_parent(node: AstKind, parent: AstKind) -> bool {
@@ -356,7 +367,10 @@ mod internal_tests {
         ]);
         let rule = NoMixedOperators::try_from_configuration(&config);
         // missing groups should fall back to default
-        let expected = NoMixedOperators { groups: default_groups(), allow_same_precedence: false };
+        let expected = NoMixedOperators(Box::new(NoMixedOperatorsConfig {
+            groups: default_groups(),
+            allow_same_precedence: false,
+        }));
         assert_eq!(Some(expected), rule);
     }
 }

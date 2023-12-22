@@ -17,12 +17,23 @@ pub struct DeprecatedFunction(pub String, pub String, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct JestConfig {
-    pub version: String,
+    version: String,
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoDeprecatedFunctions {
-    pub jest: JestConfig,
+pub struct NoDeprecatedFunctions(Box<NoDeprecatedFunctionsConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoDeprecatedFunctionsConfig {
+    jest: JestConfig,
+}
+
+impl std::ops::Deref for NoDeprecatedFunctions {
+    type Target = NoDeprecatedFunctionsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -91,7 +102,9 @@ impl Rule for NoDeprecatedFunctions {
 
         let major: Vec<&str> = version.split('.').collect();
 
-        Self { jest: JestConfig { version: major[0].to_string() } }
+        Self(Box::new(NoDeprecatedFunctionsConfig {
+            jest: JestConfig { version: major[0].to_string() },
+        }))
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {

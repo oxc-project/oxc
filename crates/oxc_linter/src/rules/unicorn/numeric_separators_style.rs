@@ -21,15 +21,27 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 )]
 struct NumericSeparatorsStyleDiagnostic(#[label] pub Span);
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NumericSeparatorsStyle {
+pub struct NumericSeparatorsStyleConfig {
     only_if_contains_separator: bool,
     hexadecimal: NumericBaseConfig,
     binary: NumericBaseConfig,
     octal: NumericBaseConfig,
     number: NumericBaseConfig,
 }
-impl Default for NumericSeparatorsStyle {
+
+impl std::ops::Deref for NumericSeparatorsStyle {
+    type Target = NumericSeparatorsStyleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for NumericSeparatorsStyleConfig {
     fn default() -> Self {
         Self {
             only_if_contains_separator: false,
@@ -111,7 +123,7 @@ impl Rule for NumericSeparatorsStyle {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut cfg = Self::default();
+        let mut cfg = NumericSeparatorsStyleConfig::default();
 
         if let Some(config) = value.get(0) {
             if let Some(config) = config.get("binary") {
@@ -134,7 +146,7 @@ impl Rule for NumericSeparatorsStyle {
             }
         }
 
-        cfg
+        Self(Box::new(cfg))
     }
 }
 

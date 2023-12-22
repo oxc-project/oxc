@@ -21,8 +21,19 @@ use crate::{
 pub struct UnexpectedHookDiagonsitc(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoHooks {
-    pub allow: Vec<String>,
+pub struct NoHooks(Box<NoHooksConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoHooksConfig {
+    allow: Vec<String>,
+}
+
+impl std::ops::Deref for NoHooks {
+    type Target = NoHooksConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -84,7 +95,7 @@ impl Rule for NoHooks {
             })
             .unwrap_or_default();
 
-        Self { allow }
+        Self(Box::new(NoHooksConfig { allow }))
     }
 
     fn run_once(&self, ctx: &LintContext) {
