@@ -14,7 +14,10 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 struct NoConsoleDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoConsole {
+pub struct NoConsole(Box<NoConsoleConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoConsoleConfig {
     /// A list of methods allowed to be used.
     ///
     /// ```javascript
@@ -23,6 +26,14 @@ pub struct NoConsole {
     /// console.info('bar'); // will not error
     /// ```
     pub allow: Vec<String>,
+}
+
+impl std::ops::Deref for NoConsole {
+    type Target = NoConsoleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -45,7 +56,7 @@ declare_oxc_lint!(
 
 impl Rule for NoConsole {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
+        Self(Box::new(NoConsoleConfig {
             allow: value
                 .get(0)
                 .and_then(|v| v.get("allow"))
@@ -57,7 +68,7 @@ impl Rule for NoConsole {
                         .collect()
                 })
                 .unwrap_or_default(),
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

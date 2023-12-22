@@ -27,8 +27,19 @@ struct NoStandaloneExpectDiagnostic(#[label] pub Span);
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>
 #[derive(Debug, Default, Clone)]
-pub struct NoStandaloneExpect {
+pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoStandaloneExpectConfig {
     additional_test_block_functions: Vec<String>,
+}
+
+impl std::ops::Deref for NoStandaloneExpect {
+    type Target = NoStandaloneExpectConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -62,7 +73,7 @@ impl Rule for NoStandaloneExpect {
             })
             .unwrap_or_default();
 
-        Self { additional_test_block_functions }
+        Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
     }
     fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);

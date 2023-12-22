@@ -18,9 +18,20 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 struct NoBitwiseDiagnostic(&'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoBitwise {
+pub struct NoBitwise(Box<NoBitwiseConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoBitwiseConfig {
     allow: Vec<String>,
     int32_hint: bool,
+}
+
+impl std::ops::Deref for NoBitwise {
+    type Target = NoBitwiseConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -46,7 +57,7 @@ impl Rule for NoBitwise {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
 
-        Self {
+        Self(Box::new(NoBitwiseConfig {
             allow: obj
                 .and_then(|v| v.get("allow"))
                 .and_then(serde_json::Value::as_array)
@@ -61,7 +72,7 @@ impl Rule for NoBitwise {
                 .and_then(|v| v.get("int32Hint"))
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or_default(),
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

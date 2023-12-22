@@ -36,13 +36,13 @@ mod eslint {
     pub mod getter_return;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
-    // pub mod no_bitwise;
+    pub mod no_bitwise;
     pub mod no_caller;
     pub mod no_case_declarations;
     pub mod no_class_assign;
     pub mod no_compare_neg_zero;
     pub mod no_cond_assign;
-    // pub mod no_console;
+    pub mod no_console;
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
     pub mod no_constant_condition;
@@ -62,11 +62,11 @@ mod eslint {
     pub mod no_extra_boolean_cast;
     pub mod no_fallthrough;
     pub mod no_func_assign;
-    // pub mod no_global_assign;
+    pub mod no_global_assign;
     pub mod no_import_assign;
     pub mod no_inner_declarations;
     pub mod no_loss_of_precision;
-    // pub mod no_mixed_operators;
+    pub mod no_mixed_operators;
     pub mod no_new_symbol;
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
@@ -92,7 +92,7 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
-    // pub mod ban_ts_comment;
+    pub mod ban_ts_comment;
     pub mod ban_types;
     pub mod consistent_type_exports;
     pub mod no_duplicate_enum_values;
@@ -102,7 +102,7 @@ mod typescript {
     pub mod no_misused_new;
     pub mod no_namespace;
     pub mod no_non_null_asserted_optional_chain;
-    // pub mod no_this_alias;
+    pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
@@ -110,28 +110,28 @@ mod typescript {
 }
 
 mod jest {
-    // pub mod expect_expect;
+    pub mod expect_expect;
     pub mod max_expects;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
     pub mod no_confusing_set_timeout;
-    // pub mod no_deprecated_functions;
+    pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
     pub mod no_export;
     pub mod no_focused_tests;
-    // pub mod no_hooks;
+    pub mod no_hooks;
     pub mod no_identical_title;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_mocks_import;
-    // pub mod no_standalone_expect;
+    pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod prefer_todo;
     pub mod valid_describe_callback;
-    // pub mod valid_expect;
-    // pub mod valid_title;
+    pub mod valid_expect;
+    pub mod valid_title;
 }
 
 mod react {
@@ -150,7 +150,7 @@ mod react {
 }
 
 mod unicorn {
-    // pub mod catch_error_name;
+    pub mod catch_error_name;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -188,7 +188,7 @@ mod unicorn {
     pub mod no_useless_switch_case;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
-    // pub mod numeric_separators_style;
+    pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
     pub mod prefer_array_flat;
     pub mod prefer_array_flat_map;
@@ -228,13 +228,13 @@ mod unicorn {
 }
 
 mod jsx_a11y {
-    // pub mod alt_text;
+    pub mod alt_text;
     pub mod anchor_has_content;
     pub mod anchor_is_valid;
-    // pub mod heading_has_content;
+    pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
-    // pub mod img_redundant_alt;
+    pub mod img_redundant_alt;
     pub mod no_access_key;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
@@ -266,13 +266,13 @@ oxc_macros::declare_all_lint_rules! {
     eslint::getter_return,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
-    // eslint::no_bitwise,
+    eslint::no_bitwise,
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
-    // eslint::no_console,
+    eslint::no_console,
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
@@ -292,11 +292,11 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_extra_boolean_cast,
     eslint::no_fallthrough,
     eslint::no_func_assign,
-    // eslint::no_global_assign,
+    eslint::no_global_assign,
     eslint::no_import_assign,
     eslint::no_inner_declarations,
     eslint::no_loss_of_precision,
-    // eslint::no_mixed_operators,
+    eslint::no_mixed_operators,
     eslint::no_new_symbol,
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
@@ -319,7 +319,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
-    // typescript::ban_ts_comment,
+    typescript::ban_ts_comment,
     typescript::ban_types,
     typescript::consistent_type_exports,
     typescript::no_duplicate_enum_values,
@@ -329,34 +329,34 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_misused_new,
     typescript::no_namespace,
     typescript::no_non_null_asserted_optional_chain,
-    // typescript::no_this_alias,
+    typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
     typescript::no_var_requires,
     typescript::prefer_as_const,
-    // jest::expect_expect,
+    jest::expect_expect,
     jest::max_expects,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
     jest::no_confusing_set_timeout,
-    // jest::no_deprecated_functions,
+    jest::no_deprecated_functions,
     jest::no_disabled_tests,
     jest::no_done_callback,
     jest::no_export,
     jest::no_focused_tests,
-    // jest::no_hooks,
+    jest::no_hooks,
     jest::no_identical_title,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_mocks_import,
-    // jest::no_standalone_expect,
+    jest::no_standalone_expect,
     jest::no_test_prefixes,
     jest::prefer_todo,
     jest::valid_describe_callback,
-    // jest::valid_expect,
-    // jest::valid_title,
-    // unicorn::catch_error_name,
+    jest::valid_expect,
+    jest::valid_title,
+    unicorn::catch_error_name,
     unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
@@ -394,7 +394,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
-    // unicorn::numeric_separators_style,
+    unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat_map,
     unicorn::prefer_array_flat,
@@ -449,13 +449,13 @@ oxc_macros::declare_all_lint_rules! {
     import::no_self_import,
     import::no_amd,
     import::export,
-    // jsx_a11y::alt_text,
+    jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
-    // jsx_a11y::heading_has_content,
+    jsx_a11y::heading_has_content,
     jsx_a11y::html_has_lang,
     jsx_a11y::iframe_has_title,
-    // jsx_a11y::img_redundant_alt,
+    jsx_a11y::img_redundant_alt,
     jsx_a11y::no_access_key,
     jsx_a11y::no_autofocus,
     jsx_a11y::scope,

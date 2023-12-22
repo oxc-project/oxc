@@ -22,8 +22,19 @@ use crate::{
 struct HeadingHasContentDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct HeadingHasContent {
+pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct HeadingHasContentConfig {
     components: Option<Vec<String>>,
+}
+
+impl std::ops::Deref for HeadingHasContent {
+    type Target = HeadingHasContentConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -57,7 +68,7 @@ const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
+        Self(Box::new(HeadingHasContentConfig {
             components: value
                 .get(0)
                 .and_then(|v| v.get("components"))
@@ -68,7 +79,7 @@ impl Rule for HeadingHasContent {
                         .map(ToString::to_string)
                         .collect()
                 }),
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

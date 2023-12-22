@@ -31,13 +31,24 @@ struct NoThisAliasDiagnostic(#[label] pub Span);
 )]
 struct NoThisDestructureDiagnostic(#[label] pub Span);
 
+#[derive(Debug, Default, Clone)]
+pub struct NoThisAlias(Box<NoThisAliasConfig>);
+
 #[derive(Debug, Clone)]
-pub struct NoThisAlias {
+pub struct NoThisAliasConfig {
     allow_destructuring: bool,
     allow_names: Vec<Atom>,
 }
 
-impl Default for NoThisAlias {
+impl std::ops::Deref for NoThisAlias {
+    type Target = NoThisAliasConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for NoThisAliasConfig {
     fn default() -> Self {
         Self { allow_destructuring: true, allow_names: vec![] }
     }
@@ -75,13 +86,13 @@ impl Rule for NoThisAlias {
             .map(|x| Atom::from(x.unwrap().to_string()))
             .collect::<Vec<Atom>>();
 
-        Self {
+        Self(Box::new(NoThisAliasConfig {
             allow_destructuring: obj
                 .and_then(|v| v.get("allow_destructuring"))
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or_default(),
             allow_names: allowed_names,
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

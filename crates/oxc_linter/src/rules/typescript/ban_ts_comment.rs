@@ -23,8 +23,11 @@ pub enum BanTsCommentDiagnostic {
     CommentDescriptionNotMatchPattern(String, String, #[label] Span),
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct BanTsComment(Box<BanTsCommentConfig>);
+
 #[derive(Debug, Clone)]
-pub struct BanTsComment {
+pub struct BanTsCommentConfig {
     ts_expect_error: DirectiveConfig,
     ts_ignore: DirectiveConfig,
     ts_nocheck: DirectiveConfig,
@@ -32,7 +35,15 @@ pub struct BanTsComment {
     minimum_description_length: u64,
 }
 
-impl std::default::Default for BanTsComment {
+impl std::ops::Deref for BanTsComment {
+    type Target = BanTsCommentConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for BanTsCommentConfig {
     fn default() -> Self {
         Self {
             ts_expect_error: DirectiveConfig::RequireDescription,
@@ -95,7 +106,7 @@ declare_oxc_lint!(
 
 impl Rule for BanTsComment {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
+        Self(Box::new(BanTsCommentConfig {
             ts_expect_error: value
                 .get(0)
                 .and_then(|x| x.get("ts-expect-error"))
@@ -121,7 +132,7 @@ impl Rule for BanTsComment {
                 .and_then(|x| x.get("minimumDescriptionLength"))
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(3),
-        }
+        }))
     }
 
     fn run_once(&self, ctx: &LintContext) {

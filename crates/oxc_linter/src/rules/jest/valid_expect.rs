@@ -23,15 +23,26 @@ use crate::{
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct ValidExpectDiagnostic(pub Atom, pub &'static str, #[label] pub Span);
 
+#[derive(Debug, Default, Clone)]
+pub struct ValidExpect(Box<ValidExpectConfig>);
+
 #[derive(Debug, Clone)]
-pub struct ValidExpect {
+pub struct ValidExpectConfig {
     async_matchers: Vec<String>,
     min_args: usize,
     max_args: usize,
     always_await: bool,
 }
 
-impl Default for ValidExpect {
+impl std::ops::Deref for ValidExpect {
+    type Target = ValidExpectConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for ValidExpectConfig {
     fn default() -> Self {
         Self {
             async_matchers: vec![String::from("toResolve"), String::from("toReject")],
@@ -88,7 +99,7 @@ impl Rule for ValidExpect {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self { async_matchers, min_args, max_args, always_await }
+        Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
     }
     fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {

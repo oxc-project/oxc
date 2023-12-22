@@ -25,13 +25,24 @@ use crate::{
 #[diagnostic(severity(warning), help("Add assertion(s) in this Test"))]
 struct ExpectExpectDiagnostic(#[label] pub Span);
 
+#[derive(Debug, Default, Clone)]
+pub struct ExpectExpect(Box<ExpectExpectConfig>);
+
 #[derive(Debug, Clone)]
-pub struct ExpectExpect {
+pub struct ExpectExpectConfig {
     assert_function_names: Vec<String>,
     additional_test_block_functions: Vec<String>,
 }
 
-impl Default for ExpectExpect {
+impl std::ops::Deref for ExpectExpect {
+    type Target = ExpectExpectConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for ExpectExpectConfig {
     fn default() -> Self {
         Self {
             assert_function_names: vec![String::from("expect")],
@@ -81,7 +92,10 @@ impl Rule for ExpectExpect {
             })
             .unwrap_or_default();
 
-        Self { assert_function_names, additional_test_block_functions }
+        Self(Box::new(ExpectExpectConfig {
+            assert_function_names,
+            additional_test_block_functions,
+        }))
     }
     fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
