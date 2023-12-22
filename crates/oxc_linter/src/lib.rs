@@ -146,15 +146,28 @@ impl Linter {
             rule.run_once(&ctx, timing);
         }
 
+        let symbol_names = vec![
+            "no-class-assign",
+            "no-const-assign",
+            "no-ex-assign",
+            "no-func-assign",
+            "no-import-assign",
+        ];
+        // split rules to symbol_rules and node_rules
+        let (symbol_rules, node_rules) = self
+            .rules
+            .iter()
+            .partition::<Vec<_>, _>(|(rule_name, _)| symbol_names.contains(&rule_name));
+
         for symbol in semantic.symbols().iter() {
-            for (rule_name, rule) in &self.rules {
+            for (rule_name, rule) in &symbol_rules {
                 ctx.with_rule_name(rule_name);
                 rule.run_on_symbol(symbol, &ctx, timing);
             }
         }
 
         for node in semantic.nodes().iter() {
-            for (rule_name, rule) in &self.rules {
+            for (rule_name, rule) in &node_rules {
                 ctx.with_rule_name(rule_name);
                 rule.run(node, &ctx, timing);
             }
