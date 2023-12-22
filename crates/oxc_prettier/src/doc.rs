@@ -282,7 +282,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                         string.push_str(", ");
                     }
                 }
-                string.push(']');
+                string.push_str("])");
             }
         }
         Doc::Line(Line { soft, hard, .. }) => {
