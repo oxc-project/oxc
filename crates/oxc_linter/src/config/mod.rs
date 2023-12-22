@@ -214,11 +214,12 @@ fn parse_rule_name(name: &str) -> (&str, &str) {
 
 /// Resolves the level of a rule and its config
 ///
-/// Two cases here
+/// Three cases here
 /// ```json
 /// {
 ///     "rule": "off",
 ///     "rule": ["off", "config"],
+///     "rule": ["off", "config1", "config2"],
 /// }
 /// ```
 fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Option<Value>), Error> {
