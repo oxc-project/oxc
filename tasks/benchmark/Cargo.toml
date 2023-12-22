@@ -53,6 +53,7 @@ oxc_semantic     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_transformer  = { workspace = true }
+oxc_diagnostics  = { workspace = true }
 
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }

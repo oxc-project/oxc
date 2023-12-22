@@ -17,6 +17,8 @@ use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_linter(criterion: &mut Criterion) {
+    oxc_diagnostics::init_miette();
+
     let mut group = criterion.benchmark_group("linter");
     for file in TestFiles::minimal().files() {
         group.bench_with_input(

@@ -30,3 +30,24 @@ pub struct MinifiedFileError(pub PathBuf);
 #[error("Failed to open file {0:?} with error \"{1}\"")]
 #[diagnostic(help("Failed to open file {0:?} with error \"{1}\""))]
 pub struct FailedToOpenFileError(pub PathBuf, pub std::io::Error);
+
+/// Initialize data that relies on system calls (e.g. `is_atty`) so they don't block subsequent threads.
+pub fn init_miette() {
+    let c = supports_color::on(supports_color::Stream::Stderr).is_some();
+    let w = terminal_size::terminal_size()
+        .unwrap_or((terminal_size::Width(80), terminal_size::Height(0)))
+        .0
+         .0 as usize;
+    let u = supports_unicode::on(supports_unicode::Stream::Stderr);
+    miette::set_hook(Box::new(move |_| {
+        Box::new(
+            miette::MietteHandlerOpts::new()
+                .color(c)
+                .terminal_links(false)
+                .width(w)
+                .unicode(u)
+                .build(),
+        )
+    }))
+    .unwrap();
+}
