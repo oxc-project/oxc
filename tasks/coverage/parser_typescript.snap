@@ -19592,6 +19592,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ let o8 = { ...*o };
    ╰────
 
+  × TS2681: A constructor cannot have a `this` parameter.
+     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:159:1]
+ 159 │ class ThisConstructor {
+ 160 │     constructor(this: ThisConstructor, private n: number) {
+     ·                 ─────────────────────
+ 161 │     }
+     ╰────
+
+  × TS2681: A constructor cannot have a `this` parameter.
+     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:163:1]
+ 163 │ interface ThisConstructorInterface {
+ 164 │     new(this: ThisConstructor, n: number);
+     ·         ─────────────────────
+ 165 │ }
+     ╰────
+
+  × TS2681: A constructor cannot have a `this` parameter.
+     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:165:1]
+ 165 │ }
+ 166 │ var thisConstructorType: new (this: number) => number;
+     ·                               ────────────
+ 167 │ function notFirst(a: number, this: C): number { return this.n; }
+     ╰────
+
   × Expected `,` but found `this`
      ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:169:1]
  169 │ ///// parse errors /////

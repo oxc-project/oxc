@@ -68,15 +68,6 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
-    ) -> Result<Box<'a, FormalParameters<'a>>> {
-        let span = self.start_span();
-        let list = FormalParameterList::parse(self)?;
-        Ok(self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest))
-    }
-
-    pub(crate) fn parse_formal_parameters_with_ts_this(
-        &mut self,
-        params_kind: FormalParameterKind,
     ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
         let span = self.start_span();
         let list: FormalParameterList<'_> = FormalParameterList::parse(self)?;
@@ -101,7 +92,7 @@ impl<'a> Parser<'a> {
         let type_parameters = self.parse_ts_type_parameters()?;
 
         let (this_param, params) =
-            self.parse_formal_parameters_with_ts_this(FormalParameterKind::FormalParameter)?;
+            self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
 
         let return_type = self.parse_ts_return_type_annotation()?;
 
@@ -476,7 +467,13 @@ impl<'a> Parser<'a> {
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
-        let params = self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters)?;
+        let (this_param, params) =
+            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters)?;
+
+        if let Some(this_param) = this_param {
+            // const x = (this: number) => {};
+            self.error(diagnostics::TSArrowFunctionThisParameter(this_param.span));
+        }
 
         let return_type = self.parse_ts_return_type_annotation()?;
 
