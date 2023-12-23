@@ -46,7 +46,9 @@ impl Rule for NoAriaHiddenOnFocusable {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
         if let Some(aria_hidden_prop) = has_jsx_prop_lowercase(jsx_el, "aria-hidden") {
             if is_aria_hidden_true(aria_hidden_prop) && is_focusable(jsx_el) {
-                ctx.diagnostic(NoAriaHiddenOnFocusableDiagnostic(jsx_el.span));
+                if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
+                    ctx.diagnostic(NoAriaHiddenOnFocusableDiagnostic(boxed_attr.span));
+                }
             }
         }
     }
@@ -66,10 +68,8 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 /// Determines if a JSX element is focusable.
 ///
 /// According to the [W3C's DOM Level 2 HTML specification](https://www.w3.org/TR/DOM-Level-2-HTML/html.html), the elements that are focusable are:
-/// - `<a>` with an `href` attribute
-/// - `<area>` with an `href` attribute (not handled in this implementation)
-/// - `<button>` unless it is disabled
-/// - `<input>`, `<select>`, `<textarea>` unless they are disabled
+/// - `<a>`, `<area>` with an `href` attribute
+/// - `<button>`, `<input>`, `<select>`, `<textarea>` unless they are disabled
 /// - Any element with a `tabIndex` of zero or greater
 ///
 /// This function checks the passed `JSXOpeningElement` against these criteria to determine
