@@ -51,7 +51,11 @@ impl Rule for ConstructorSuper {
         if ctor.kind != MethodDefinitionKind::Constructor || ctor.value.body.is_none() {
             return;
         }
-        let Some(AstKind::Class(class)) = ctx.nodes().parent_kind(node.id()) else { return };
+        let Some(AstKind::Class(class)) =
+            ctx.nodes().parent_id(node.id()).and_then(|id| ctx.nodes().parent_kind(id))
+        else {
+            return;
+        };
 
         // In cases where there's no super-class, calling 'super()' inside the constructor
         // is handled by the parser.

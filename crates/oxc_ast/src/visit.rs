@@ -468,9 +468,12 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
+        let kind = AstKind::ClassBody(self.alloc(body));
+        self.enter_node(kind);
         for elem in &body.body {
             self.visit_class_element(elem);
         }
+        self.leave_node(kind);
     }
 
     fn visit_class_element(&mut self, elem: &ClassElement<'a>) {
@@ -836,8 +839,11 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_private_in_expression(&mut self, expr: &PrivateInExpression<'a>) {
+        let kind = AstKind::PrivateInExpression(self.alloc(expr));
+        self.enter_node(kind);
         self.visit_private_identifier(&expr.left);
         self.visit_expression(&expr.right);
+        self.leave_node(kind);
     }
 
     fn visit_sequence_expression(&mut self, expr: &SequenceExpression<'a>) {
