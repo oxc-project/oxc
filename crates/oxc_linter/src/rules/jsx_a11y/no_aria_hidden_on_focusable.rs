@@ -63,7 +63,7 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
             None => true,
             _ => false,
         },
-        _ => false,
+        JSXAttributeItem::SpreadAttribute(_) => false,
     }
 }
 
@@ -90,18 +90,16 @@ fn is_focusable(element: &JSXOpeningElement) -> bool {
         _ => return false,
     };
 
-    if let Some(tab_index_prop) = has_jsx_prop_lowercase(element, "tabIndex") {
-        if let JSXAttributeItem::Attribute(attr) = tab_index_prop {
-            if let Some(attr_value) = &attr.value {
-                return parse_jsx_value(attr_value).map_or(false, |num| num >= 0.0);
-            }
+    if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(element, "tabIndex") {
+        if let Some(attr_value) = &attr.value {
+            return parse_jsx_value(attr_value).map_or(false, |num| num >= 0.0);
         }
     }
 
     match tag_name {
         "a" | "area" => has_jsx_prop_lowercase(element, "href").is_some(),
         "button" | "input" | "select" | "textarea" => {
-            !has_jsx_prop_lowercase(element, "disabled").is_some()
+            has_jsx_prop_lowercase(element, "disabled").is_none()
         }
         _ => false,
     }
@@ -112,13 +110,13 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"<div aria-hidden="true" />;"#,
-        r#"<div onClick={() => void 0} aria-hidden="true" />;"#,
-        r#"<img aria-hidden="true" />"#,
-        r#"<a aria-hidden="false" href="" />"#,
-        r#"<button aria-hidden="true" tabIndex="-1" />"#,
-        r#"<button />"#,
-        r#"<a href="/" />"#,
+        "<div aria-hidden=\"true\" />;",
+        "<div onClick={() => void 0} aria-hidden=\"true\" />;",
+        "<img aria-hidden=\"true\" />",
+        "<a aria-hidden=\"false\" href=\"\" />",
+        "<button aria-hidden=\"true\" tabIndex=\"-1\" />",
+        "<button />",
+        "<a href=\"/\" />",
     ];
 
     let fail = vec![
