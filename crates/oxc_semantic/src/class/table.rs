@@ -78,6 +78,13 @@ impl ClassTable {
         self.declarations.iter_enumerated()
     }
 
+    pub fn iter_private_identifiers(
+        &self,
+        class_id: ClassId,
+    ) -> impl Iterator<Item = &PrivateIdentifierReference> + '_ {
+        self.private_identifiers[class_id].iter()
+    }
+
     pub fn get_property_id(&self, class_id: ClassId, name: &Atom) -> Option<PropertyId> {
         self.properties[class_id].iter_enumerated().find_map(|(property_id, property)| {
             if property.name == *name {

@@ -15,7 +15,7 @@ use super::{
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder {
     pub current_class_id: Option<ClassId>,
-    classes: ClassTable,
+    pub classes: ClassTable,
 }
 
 impl ClassTableBuilder {

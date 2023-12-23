@@ -85,7 +85,7 @@ pub struct SemanticBuilder<'a> {
     check_syntax_error: bool,
 
     redeclare_variables: RedeclareVariables,
-    class_table_builder: ClassTableBuilder,
+    pub class_table_builder: ClassTableBuilder,
 }
 
 pub struct SemanticBuilderReturn<'a> {
