@@ -63,7 +63,7 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
     }
 }
 
-fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
+pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
         JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {

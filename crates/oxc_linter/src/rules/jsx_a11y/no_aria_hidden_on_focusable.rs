@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, JSXExpressionContainer, JSXIdentifier, JSXOpeningElement,
-    },
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXIdentifier, JSXOpeningElement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -12,6 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
+use crate::rules::jsx_a11y::tab_index_no_positive::parse_jsx_value;
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
@@ -88,67 +86,19 @@ fn is_focusable(element: &JSXOpeningElement) -> bool {
         _ => return false,
     };
 
-    let has_tab_index = element.attributes.iter().any(|attr| match attr {
-        JSXAttributeItem::Attribute(attr) => match &attr.name {
-            JSXAttributeName::Identifier(JSXIdentifier { name, .. }) => {
-                name.as_str() == "tabIndex" || name.as_str() == "tabindex"
+    if let Some(tab_index_prop) = has_jsx_prop_lowercase(element, "tabIndex") {
+        if let JSXAttributeItem::Attribute(attr) = tab_index_prop {
+            if let Some(attr_value) = &attr.value {
+                return parse_jsx_value(attr_value).map_or(false, |num| num >= 0.0);
             }
-            _ => false,
-        },
-        _ => false,
-    });
-
-    if has_tab_index {
-        return element.attributes.iter().any(|attr| match attr {
-            JSXAttributeItem::Attribute(attr) => match &attr.name {
-                JSXAttributeName::Identifier(JSXIdentifier { name, .. })
-                    if (name.as_str() == "tabIndex" || name.as_str() == "tabindex") =>
-                {
-                    match &attr.value {
-                        Some(JSXAttributeValue::StringLiteral(s)) => {
-                            s.value.parse::<i32>().ok().filter(|&num| num >= 0).is_some()
-                        }
-                        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                            expression: JSXExpression::Expression(expr),
-                            ..
-                        })) => match expr {
-                            Expression::NumberLiteral(num) => num.value as i32 >= 0,
-                            _ => false,
-                        },
-                        _ => false,
-                    }
-                }
-                _ => false,
-            },
-            _ => false,
-        });
+        }
     }
 
     match tag_name {
-        "a" | "area" => element.attributes.iter().any(|attr| {
-            if let JSXAttributeItem::Attribute(attr) = attr {
-                match &attr.name {
-                    JSXAttributeName::Identifier(JSXIdentifier { name, .. }) => {
-                        name.as_str() == "href"
-                    }
-                    _ => false,
-                }
-            } else {
-                false
-            }
-        }),
-        "button" | "input" | "select" | "textarea" => !element.attributes.iter().any(|attr| {
-            if let JSXAttributeItem::Attribute(attr) = attr {
-                match &attr.name {
-                    JSXAttributeName::Identifier(JSXIdentifier { name, .. }) => {
-                        name.as_str() == "disabled"
-                    }
-                    _ => false,
-                }
-            } else {
-                false
-            }
-        }),
+        "a" | "area" => has_jsx_prop_lowercase(element, "href").is_some(),
+        "button" | "input" | "select" | "textarea" => {
+            !has_jsx_prop_lowercase(element, "disabled").is_some()
+        }
         _ => false,
     }
 }
