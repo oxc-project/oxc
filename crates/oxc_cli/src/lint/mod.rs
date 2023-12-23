@@ -1,6 +1,6 @@
 use std::{env, io::BufWriter, path::Path, vec::Vec};
 
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
+use oxc_diagnostics::{miette::GraphicalReportHandler, DiagnosticService};
 use oxc_linter::{LintOptions, LintService, Linter};
 
 use crate::{

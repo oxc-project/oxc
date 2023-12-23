@@ -1,14 +1,11 @@
 //! Diagnostics Wrapper
 //! Exports `thiserror` and `miette`
 
-mod graphic_reporter;
-mod graphical_theme;
 mod service;
 
 use std::path::PathBuf;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
-pub use graphic_reporter::{GraphicalReportHandler, GraphicalTheme};
 pub use miette;
 pub use thiserror;
 
@@ -30,3 +27,26 @@ pub struct MinifiedFileError(pub PathBuf);
 #[error("Failed to open file {0:?} with error \"{1}\"")]
 #[diagnostic(help("Failed to open file {0:?} with error \"{1}\""))]
 pub struct FailedToOpenFileError(pub PathBuf, pub std::io::Error);
+
+/// Initialize miette
+///
+/// Some options are forced for modern terminals, which should reduce number of system calls.
+///
+/// # Panics
+///
+/// * miette hook fails to install
+pub fn init_miette() {
+    use miette::{set_hook, GraphicalTheme, MietteHandlerOpts, ThemeCharacters, ThemeStyles};
+    use owo_colors::style;
+    let theme = GraphicalTheme {
+        characters: ThemeCharacters::unicode(),
+        styles: ThemeStyles { error: style().fg_rgb::<225, 80, 80>().bold(), ..ThemeStyles::rgb() },
+    };
+    let opts = MietteHandlerOpts::new()
+        .width(400)
+        .terminal_links(false)
+        .unicode(true)
+        .color(true)
+        .graphical_theme(theme);
+    set_hook(Box::new(move |_| Box::new(opts.clone().build()))).unwrap();
+}

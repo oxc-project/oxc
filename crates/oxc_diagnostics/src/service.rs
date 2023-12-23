@@ -6,7 +6,10 @@ use std::{
     sync::Arc,
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use crate::{
+    miette::{GraphicalReportHandler, NamedSource},
+    Error, MinifiedFileError, Severity,
+};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -131,6 +134,7 @@ impl DiagnosticService {
                     break;
                 }
                 output.push_str(&err);
+                output.push('\n');
             }
             buf_writer.write_all(output.as_bytes()).unwrap();
         }

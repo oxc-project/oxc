@@ -1639,12 +1639,9 @@ dependencies = [
 name = "oxc_diagnostics"
 version = "0.4.0"
 dependencies = [
- "is-terminal",
  "miette",
  "owo-colors",
- "textwrap",
  "thiserror",
- "unicode-width",
 ]
 
 [[package]]
