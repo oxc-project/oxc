@@ -13,6 +13,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     binder::Binder,
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
+    class::ClassTableBuilder,
     diagnostics::Redeclaration,
     jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
@@ -84,6 +85,7 @@ pub struct SemanticBuilder<'a> {
     check_syntax_error: bool,
 
     redeclare_variables: RedeclareVariables,
+    class_table_builder: ClassTableBuilder,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -116,6 +118,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
             redeclare_variables: RedeclareVariables { variables: vec![] },
+            class_table_builder: ClassTableBuilder::new(),
         }
     }
 
@@ -169,6 +172,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
+            classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
@@ -185,6 +189,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
+            classes: self.class_table_builder.build(),
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
@@ -421,6 +426,20 @@ impl<'a> SemanticBuilder<'a> {
                 class.bind(self);
                 self.make_all_namespaces_valuelike();
             }
+            AstKind::ClassBody(body) => {
+                self.class_table_builder.declare_class_body(
+                    body,
+                    self.current_node_id,
+                    &self.nodes,
+                );
+            }
+            AstKind::PrivateIdentifier(ident) => {
+                self.class_table_builder.add_private_identifier_reference(
+                    ident,
+                    self.current_node_id,
+                    &self.nodes,
+                );
+            }
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
@@ -496,6 +515,7 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
+                self.class_table_builder.pop_class();
             }
             AstKind::ModuleDeclaration(decl) => {
                 self.current_symbol_flags -= Self::symbol_flag_from_module_declaration(decl);
