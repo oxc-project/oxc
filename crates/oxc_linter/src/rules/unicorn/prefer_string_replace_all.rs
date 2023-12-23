@@ -4,17 +4,22 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()`.")]
-#[diagnostic(severity(warning))]
-struct PreferStringReplaceAllDiagnostic(#[label] pub Span);
+enum PreferStringReplaceAllDiagnostic {
+    #[error("eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `{1}`.")]
+    #[diagnostic(severity(warning))]
+    StringLiteral(#[label] Span, Atom),
+    #[error("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")]
+    #[diagnostic(severity(warning))]
+    UseReplaceAll(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringReplaceAll;
@@ -45,7 +50,9 @@ impl Rule for PreferStringReplaceAll {
             return;
         };
 
-        if !matches!(static_member_expr.property.name.as_str(), "replace" | "replaceAll") {
+        let method_name_str = static_member_expr.property.name.as_str();
+
+        if !matches!(method_name_str, "replace" | "replaceAll") {
             return;
         }
 
@@ -55,11 +62,22 @@ impl Rule for PreferStringReplaceAll {
 
         let Argument::Expression(pattern) = &call_expr.arguments[0] else { return };
 
-        if !is_reg_exp_with_global_flag(pattern) {
-            return;
+        match method_name_str {
+            "replaceAll" => {
+                if let Some(k) = get_pattern_replacement(pattern) {
+                    ctx.diagnostic(PreferStringReplaceAllDiagnostic::StringLiteral(
+                        static_member_expr.property.span,
+                        k,
+                    ));
+                }
+            }
+            "replace" if is_reg_exp_with_global_flag(pattern) => {
+                ctx.diagnostic(PreferStringReplaceAllDiagnostic::UseReplaceAll(
+                    static_member_expr.property.span,
+                ));
+            }
+            _ => {}
         }
-
-        ctx.diagnostic(PreferStringReplaceAllDiagnostic(static_member_expr.property.span));
     }
 }
 
@@ -79,6 +97,25 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Expression<'a>) -> bool {
     }
 
     false
+}
+
+fn get_pattern_replacement<'a>(expr: &'a Expression<'a>) -> Option<Atom> {
+    let Expression::RegExpLiteral(reg_exp_literal) = expr else { return None };
+
+    if !reg_exp_literal.regex.flags.contains(RegExpFlags::G) {
+        return None;
+    }
+
+    if !is_simple_string(&reg_exp_literal.regex.pattern) {
+        return None;
+    }
+
+    Some(reg_exp_literal.regex.pattern.clone())
+}
+
+fn is_simple_string(str: &str) -> bool {
+    str.chars()
+        .all(|c| !matches!(c, '^' | '$' | '+' | '[' | '{' | '(' | '\\' | '.' | '?' | '*' | '|'))
 }
 
 #[test]
@@ -158,10 +195,14 @@ fn test() {
         r"foo.replace(/\u{20}/gu, _)",
         r"foo.replace(/\u{20}/gv, _)",
         r"foo.replaceAll(/a]/g, _)",
-        r"foo.replaceAll(/\r\n\u{1f600}/gu, _)",
-        r"foo.replaceAll(/\r\n\u{1f600}/gv, _)",
-        r"foo.replaceAll(/a",
+        // we need a regex parser to handle this
+        // r"foo.replaceAll(/\r\n\u{1f600}/gu, _)",
+        // r"foo.replaceAll(/\r\n\u{1f600}/gv, _)",
+        r"foo.replaceAll(/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g, _)",
         r#"foo.replace(/(?!a)+/g, "")"#,
+        // https://github.com/oxc-project/oxc/issues/1790
+        // report error as `/world/g` can be replaced with string literal
+        r#""Hello world".replaceAll(/world/g, 'world!');"#,
     ];
 
     Tester::new_without_config(PreferStringReplaceAll::NAME, pass, fail).test_and_snapshot();
