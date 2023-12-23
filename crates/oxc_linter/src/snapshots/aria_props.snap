@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: aria_props
+---
+  ⚠ eslint-plugin-jsx-a11y(aria-props):
+   ╭─[aria_props.tsx:1:1]
+ 1 │ <div aria-="foobar" />
+   ·      ──────────────
+   ╰────
+  help: aria-: This attribute is an invalid ARIA attribute.
+
+  ⚠ eslint-plugin-jsx-a11y(aria-props):
+   ╭─[aria_props.tsx:1:1]
+ 1 │ <div aria-labeledby="foobar" />
+   ·      ───────────────────────
+   ╰────
+  help: aria-labeledby: This attribute is an invalid ARIA attribute.
+
+  ⚠ eslint-plugin-jsx-a11y(aria-props):
+   ╭─[aria_props.tsx:1:1]
+ 1 │ <div aria-skldjfaria-klajsd="foobar" />
+   ·      ───────────────────────────────
+   ╰────
+  help: aria-skldjfaria-klajsd: This attribute is an invalid ARIA attribute.
+
+
