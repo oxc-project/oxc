@@ -787,7 +787,7 @@ impl<'a> Parser<'a> {
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
 
         if let Some(this_param) = this_param {
-            // type Foo = new (this: numnber) => any;
+            // type Foo = new (this: number) => any;
             self.error(diagnostics::TSConstructorThisParameter(this_param.span));
         }
 
