@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::PropName};
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
 use crate::{diagnostics, lexer::Kind, list::NormalList, Parser, StatementContext};
@@ -363,6 +363,17 @@ impl<'a> Parser<'a> {
 
         if kind == MethodDefinitionKind::Set && value.params.parameters_count() != 1 {
             self.error(diagnostics::SetterParameters(value.params.span));
+        }
+
+        if kind == MethodDefinitionKind::Constructor {
+            if let Some(this_param) = &value.this_param {
+                // class Foo { constructor(this: number) {} }
+                self.error(diagnostics::TSConstructorThisParameter(this_param.span));
+            }
+
+            if r#static {
+                self.error(diagnostics::StaticConstructor(key.span()));
+            }
         }
 
         let method_definition = MethodDefinition {

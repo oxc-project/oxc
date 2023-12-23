@@ -35,7 +35,7 @@ struct NoRedeclareAsBuiltiInDiagnostic(
 struct NoRedeclareBySyntaxDiagnostic(
     Atom,
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
-    #[label("It can not be redeclare here.")] pub Span,
+    #[label("It cannot be redeclared here.")] pub Span,
 );
 
 #[derive(Debug, Default, Clone)]
