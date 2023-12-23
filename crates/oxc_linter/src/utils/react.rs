@@ -178,3 +178,21 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
 
     Some(element_type)
 }
+
+pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
+    match value {
+        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
+        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expression),
+            ..
+        }) => match expression {
+            Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+            Expression::TemplateLiteral(tmpl) => {
+                tmpl.quasis.get(0).unwrap().value.raw.parse().or(Err(()))
+            }
+            Expression::NumberLiteral(num) => Ok(num.value),
+            _ => Err(()),
+        },
+        _ => Err(()),
+    }
+}

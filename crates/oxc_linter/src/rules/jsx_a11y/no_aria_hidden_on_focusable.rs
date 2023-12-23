@@ -9,8 +9,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::rules::jsx_a11y::tab_index_no_positive::parse_jsx_value;
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.")]
