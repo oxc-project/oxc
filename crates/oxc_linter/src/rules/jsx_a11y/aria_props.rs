@@ -44,8 +44,7 @@ impl Rule for AriaProps {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_attribute_name(&attr.name).to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
-                let error_message =
-                    format!("{}: This attribute is an invalid ARIA attribute.", name);
+                let error_message = format!("{name}: This attribute is an invalid ARIA attribute.");
                 ctx.diagnostic(AriaPropsDiagnostic(attr.span, error_message));
             }
         }
@@ -66,13 +65,13 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"<div />"#,
-        r#"<div></div>"#,
+        r"<div />",
+        r"<div></div>",
         r#"<div aria="wee"></div>"#,
         r#"<div abcARIAdef="true"></div>"#,
         r#"<div fooaria-foobar="true"></div>"#,
         r#"<div fooaria-hidden="true"></div>"#,
-        r#"<Bar baz />"#,
+        r"<Bar baz />",
         r#"<input type="text" aria-errormessage="foobar" />"#,
     ];
 
