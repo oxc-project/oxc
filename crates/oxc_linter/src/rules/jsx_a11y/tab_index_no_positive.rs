@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXExpressionContainer},
-    AstKind,
-};
+use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -9,7 +6,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -60,24 +62,6 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
             }
         }),
         JSXAttributeItem::SpreadAttribute(_) => {}
-    }
-}
-
-fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
-    match value {
-        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expression),
-            ..
-        }) => match expression {
-            Expression::StringLiteral(str) => str.value.parse().or(Err(())),
-            Expression::TemplateLiteral(tmpl) => {
-                tmpl.quasis.get(0).unwrap().value.raw.parse().or(Err(()))
-            }
-            Expression::NumberLiteral(num) => Ok(num.value),
-            _ => Err(()),
-        },
-        _ => Err(()),
     }
 }
 
