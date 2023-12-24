@@ -37,7 +37,7 @@ impl<'a> Parser<'a> {
         let mut directives = self.ast.new_vec();
         let mut statements = self.ast.new_vec();
 
-        let mut expecting_diretives = true;
+        let mut expecting_directives = true;
         while !self.at(Kind::Eof) {
             match self.cur_kind() {
                 Kind::RCurly if !is_top_level => break,
@@ -59,7 +59,7 @@ impl<'a> Parser<'a> {
                     // Section 11.2.1 Directive Prologue
                     // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
                     // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-                    if expecting_diretives {
+                    if expecting_directives {
                         if let Statement::ExpressionStatement(expr) = &stmt {
                             if let Expression::StringLiteral(string) = &expr.expression {
                                 // span start will mismatch if they are parenthesized when `preserve_parens = false`
@@ -76,7 +76,7 @@ impl<'a> Parser<'a> {
                                 }
                             }
                         }
-                        expecting_diretives = false;
+                        expecting_directives = false;
                     }
 
                     statements.push(stmt);
