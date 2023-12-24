@@ -8,9 +8,8 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use std::collections::HashSet;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(aria-props):")]
@@ -40,21 +39,14 @@ declare_oxc_lint!(
     AriaProps,
     correctness
 );
-
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let valid_aria_props = create_valid_aria_props();
-
-        if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            for attr in &jsx_el.attributes {
-                if let JSXAttributeItem::Attribute(attr) = attr {
-                    let name = get_attribute_name(&attr.name).to_lowercase();
-                    if name.starts_with("aria-") && !valid_aria_props.contains(&name) {
-                        let error_message =
-                            format!("{}: This attribute is an invalid ARIA attribute.", name);
-                        ctx.diagnostic(AriaPropsDiagnostic(attr.span, error_message));
-                    }
-                }
+        if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
+            let name = get_attribute_name(&attr.name).to_lowercase();
+            if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
+                let error_message =
+                    format!("{}: This attribute is an invalid ARIA attribute.", name);
+                ctx.diagnostic(AriaPropsDiagnostic(attr.span, error_message));
             }
         }
     }
@@ -67,68 +59,6 @@ fn get_attribute_name(attr: &JSXAttributeName) -> String {
             format!("{}:{}", namespaced_name.namespace.name, namespaced_name.property.name)
         }
     }
-}
-
-/// Creates a set of valid ARIA properties from the WAI-ARIA 1.1 specifications.
-///
-/// The properties list is based on W3C's WAI-ARIA standards.
-/// Reference: <https://www.w3.org/TR/wai-aria/#state_prop_def>
-///
-/// # Returns
-/// `HashSet<String>` containing valid ARIA properties.
-fn create_valid_aria_props() -> HashSet<String> {
-    let aria_props = [
-        "aria-activedescendant",
-        "aria-atomic",
-        "aria-autocomplete",
-        "aria-busy",
-        "aria-checked",
-        "aria-colcount",
-        "aria-colindex",
-        "aria-colspan",
-        "aria-controls",
-        "aria-current",
-        "aria-describedby",
-        "aria-details",
-        "aria-disabled",
-        "aria-dropeffect",
-        "aria-errormessage",
-        "aria-expanded",
-        "aria-flowto",
-        "aria-grabbed",
-        "aria-haspopup",
-        "aria-hidden",
-        "aria-invalid",
-        "aria-keyshortcuts",
-        "aria-label",
-        "aria-labelledby",
-        "aria-level",
-        "aria-live",
-        "aria-modal",
-        "aria-multiline",
-        "aria-multiselectable",
-        "aria-orientation",
-        "aria-owns",
-        "aria-placeholder",
-        "aria-posinset",
-        "aria-pressed",
-        "aria-readonly",
-        "aria-relevant",
-        "aria-required",
-        "aria-roledescription",
-        "aria-rowcount",
-        "aria-rowindex",
-        "aria-rowspan",
-        "aria-selected",
-        "aria-setsize",
-        "aria-sort",
-        "aria-valuemax",
-        "aria-valuemin",
-        "aria-valuenow",
-        "aria-valuetext",
-    ];
-
-    aria_props.into_iter().map(|s| s.to_string()).collect()
 }
 
 #[test]
