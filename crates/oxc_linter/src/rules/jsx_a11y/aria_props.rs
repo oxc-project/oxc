@@ -12,8 +12,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-props):")]
-#[diagnostic(severity(warning), help("{1}"))]
+#[error("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")]
+#[diagnostic(severity(warning), help("`{1}` is an invalid ARIA attribute."))]
 struct AriaPropsDiagnostic(#[label] pub Span, String);
 
 #[derive(Debug, Default, Clone)]
@@ -44,8 +44,7 @@ impl Rule for AriaProps {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_attribute_name(&attr.name).to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
-                let error_message = format!("{name}: This attribute is an invalid ARIA attribute.");
-                ctx.diagnostic(AriaPropsDiagnostic(attr.span, error_message));
+                ctx.diagnostic(AriaPropsDiagnostic(attr.span, name));
             }
         }
     }
