@@ -1099,6 +1099,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "language-tags"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4345964bb142484797b161f473a503a434de77149dd8c7427788c6e13379388"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1682,6 +1688,7 @@ dependencies = [
  "dashmap",
  "insta",
  "itertools 0.12.0",
+ "language-tags",
  "lazy_static",
  "memchr",
  "miette",
