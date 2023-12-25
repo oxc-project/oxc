@@ -16,7 +16,7 @@ use std::path::PathBuf;
 
 fn bench_semantic(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("semantic");
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated().files() {
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,

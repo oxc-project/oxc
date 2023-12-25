@@ -18,7 +18,7 @@ use oxc_tasks_common::TestFiles;
 
 fn bench_linter(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("linter");
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated().files() {
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,

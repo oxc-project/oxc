@@ -19,10 +19,7 @@ use oxc_transformer::{TransformOptions, Transformer};
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
 
-    let dir = project_root().join("tasks/coverage/typescript/src/compiler");
-    let files = ["binder.ts", "scanner.ts", "checker.ts", "parser.ts"];
-
-    for file in files {
+    for file in TestFiles::complicated().files() {
         let path = dir.join(file);
         let source_text = fs::read_to_string(&path).unwrap();
         let source_type = SourceType::from_path(file).unwrap();
