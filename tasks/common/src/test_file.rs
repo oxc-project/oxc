@@ -51,7 +51,7 @@ impl TestFiles {
             "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
         ]
         .into_iter()
-        .map(|file| TestFile::new(&file))
+        .map(TestFile::new)
         .collect();
         Self { files }
     }
