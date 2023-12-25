@@ -245,6 +245,7 @@ mod jsx_a11y {
 }
 
 mod oxc {
+    pub mod approx_constant;
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod no_accumulating_spread;
@@ -465,6 +466,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::scope,
     jsx_a11y::tab_index_no_positive,
     jsx_a11y::no_distracting_elements,
+    oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::no_accumulating_spread,
