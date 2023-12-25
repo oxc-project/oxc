@@ -41,19 +41,19 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
-    /// 
+    ///
     /// // good
     /// ```javascript
-    /// <html lang="en"> 
+    /// <html lang="en">
     /// <html lang="en-US">
     /// ```
-    /// 
+    ///
     /// // bad
     /// ```javascript
     /// <html>
     /// <html lang="foo">
     /// ````
-    /// 
+    ///
     /// ### Resources
     /// - [eslint-plugin-jsx-a11y/lang](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/lang.md)
     /// - [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
