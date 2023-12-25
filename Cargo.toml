@@ -96,7 +96,7 @@ crossbeam-channel         = { version = "0.5.8" }
 dashmap                   = { version = "5.5.3" }
 env_logger                = { version = "0.10.1", default-features = false, features = ["auto-color", "humantime"] }
 flate2                    = { version = "1.0.28" }
-futures                   = { version = "0.3.29" }
+futures                   = { version = "0.3.30" }
 ignore                    = { version = "0.4.21" }
 itertools                 = { version = "0.12.0" }
 jemallocator              = { version = "0.5.4" }
@@ -107,7 +107,7 @@ num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.17" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.70" }
+proc-macro2               = { version = "1.0.71" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.33" }
 rayon                     = { version = "1.8.0" }
