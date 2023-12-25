@@ -27,8 +27,6 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
-        with:
-          submodules: true # Pull submodules for additional files
 
       - name: Install Rust
         uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation

@@ -16,14 +16,14 @@ use std::path::PathBuf;
 
 fn bench_semantic(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("semantic");
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated().files() {
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                let source_type = SourceType::from_path(&file.file_name).unwrap();
                 let allocator = Allocator::default();
-                let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+                let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 b.iter_with_large_drop(|| {
                     SemanticBuilder::new(source_text, source_type)
