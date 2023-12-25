@@ -345,3 +345,13 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
         true
     }
 }
+
+pub fn get_attribute_name(attr: &JSXAttributeName) -> String {
+    match attr {
+        JSXAttributeName::Identifier(ident) => ident.name.to_string(),
+
+        JSXAttributeName::NamespacedName(namespaced_name) => {
+            format!("{}:{}", namespaced_name.namespace.name, namespaced_name.property.name)
+        }
+    }
+}
