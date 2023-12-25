@@ -1890,6 +1890,12 @@ pub enum MethodDefinitionKind {
     Set,
 }
 
+impl MethodDefinitionKind {
+    pub fn is_constructor(&self) -> bool {
+        matches!(self, Self::Constructor)
+    }
+}
+
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateIdentifier {

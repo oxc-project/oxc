@@ -1,3 +1,4 @@
+mod class_tester;
 mod expect;
 mod symbol_tester;
 use std::{path::PathBuf, sync::Arc};
@@ -9,6 +10,7 @@ extern crate miette;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
+pub use class_tester::ClassTester;
 pub use expect::Expect;
 pub use symbol_tester::SymbolTester;
 
@@ -106,6 +108,14 @@ impl SemanticTester {
     #[allow(dead_code)]
     pub fn has_root_symbol(&self, name: &str) -> SymbolTester {
         SymbolTester::new_at_root(self, self.build(), name)
+    }
+
+    /// Tests that a class with the given name exists
+    ///
+    /// ## Fails
+    /// If no class with the given name exists.
+    pub fn has_class(&self, name: &str) -> ClassTester {
+        ClassTester::has_class(self.build(), name)
     }
 
     /// Finds some symbol by name in the source code.
