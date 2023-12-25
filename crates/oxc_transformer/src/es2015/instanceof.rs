@@ -1,4 +1,5 @@
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, AstKind};
+use oxc_semantic::AstNodeId;
 use oxc_span::SPAN;
 use std::rc::Rc;
 
@@ -28,12 +29,30 @@ impl<'a> Instanceof<'a> {
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        // if find helper ? skip?
+        // if instanceof syntax is under a helper, it should not be transformed
         if let Expression::BinaryExpression(be) = expr {
             if let BinaryExpression { operator: BinaryOperator::Instanceof, left, right, .. } =
                 &**be
             {
-                // TODO: 判断已经在 helper 里面了
+                let is_under_helper = self
+                    .ctx
+                    .semantic()
+                    .nodes()
+                    // FIXME: how to get the AstNodeId of the expression?
+                    .iter_parents(AstNodeId::new(1)) // expr.get_id or sth
+                    .any(|parent| {
+                        if let AstKind::CallExpression(CallExpression { callee, .. }) =
+                            parent.kind()
+                        {
+                            return callee.is_specific_member_access("babelHelpers", "instanceof");
+                        };
+                        false
+                    });
+
+                if is_under_helper {
+                    return;
+                }
+
                 let object = self.ast.identifier_reference_expression(IdentifierReference::new(
                     SPAN,
                     "babelHelpers".into(),
