@@ -68,6 +68,7 @@ pub struct Transformer<'a> {
     es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
+    es2015_instanceof: Option<Instanceof<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
 }
 
@@ -106,6 +107,7 @@ impl<'a> Transformer<'a> {
             es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
+            es2015_instanceof: Instanceof::new(Rc::clone(&ast), ctx.clone(), &options),
             // other
             es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
             react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
@@ -179,6 +181,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_arrow_functions.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_instanceof.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
 

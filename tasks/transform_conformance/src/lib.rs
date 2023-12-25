@@ -81,6 +81,7 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-unicode-regex",
     "babel-plugin-transform-template-literals",
     "babel-plugin-transform-duplicate-keys",
+    "babel-plugin-transform-instanceof",
     // ES3
     "babel-plugin-transform-property-literals",
     // TypeScript

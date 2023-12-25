@@ -1,4 +1,4 @@
-Passed: 379/444
+Passed: 379/445
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -94,4 +94,7 @@ Passed: 379/444
 
 # babel-plugin-transform-arrow-functions (2/3)
 * arrow-functions/implicit-var-arguments/exec.js
+
+# babel-plugin-transform-instanceof (0/1)
+* instanceof/instanceof/exec.js
 
