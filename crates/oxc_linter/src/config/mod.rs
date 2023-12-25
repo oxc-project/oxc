@@ -41,13 +41,10 @@ impl ESLintConfig {
                 let err = match guess.first() {
                     // syntax error
                     Some(mime) if mime.subtype() == "json" => e.to_string(),
-                    Some(_) => {
-                        format!("only json configuration is supported")
-                    }
+                    Some(_) => "only json configuration is supported".to_string(),
                     None => {
                         format!(
-                            "{}, if the configuration is not a json file, please use json instead.",
-                            e
+                            "{e}, if the configuration is not a json file, please use json instead."
                         )
                     }
                 };
