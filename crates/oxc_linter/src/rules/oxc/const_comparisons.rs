@@ -1,3 +1,4 @@
+// Based on https://github.com/rust-lang/rust-clippy//blob/6246f0446afbe9abff18e8cc1ebaae7505f7cd9e/clippy_lints/src/operators/const_comparisons.rs
 use std::cmp::Ordering;
 
 use oxc_ast::{
@@ -17,14 +18,28 @@ use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode}
 #[derive(Debug, Error, Diagnostic)]
 enum ConstComparisonsDiagnostic {
     #[error("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")]
-    #[diagnostic(severity(warning), help("{1}"))]
-    RedundantLeftHandSide(#[label] Span, String),
+    #[diagnostic(severity(warning), help("{2}"))]
+    RedundantLeftHandSide(
+        #[label("If this evaluates to `true`")] Span,
+        #[label("This will always evaluate to true.")] Span,
+        String,
+    ),
     #[error("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")]
-    #[diagnostic(severity(warning), help("{1}"))]
-    RedundantRightHandSide(#[label] Span, String),
+    #[diagnostic(severity(warning), help("{2}"))]
+    RedundantRightHandSide(
+        #[label("If this evaluates to `true`")] Span,
+        #[label("This will always evaluate to true.")] Span,
+        String,
+    ),
     #[error("oxc(const-comparisons): Unexpected constant comparison")]
-    #[diagnostic(severity(warning), help("{1}"))]
-    Impossible(#[label] Span, String),
+    #[diagnostic(severity(warning), help("{4}"))]
+    Impossible(
+        #[label("Requires that {2}")] Span,
+        #[label("Requires that {3}")] Span,
+        String,
+        String,
+        String,
+    ),
 }
 
 /// https://rust-lang.github.io/rust-clippy/master/index.html#/impossible
@@ -69,70 +84,84 @@ impl Rule for ConstComparisons {
             return;
         }
 
-        let Some((left_cmp_op, left_expr, left_const_expr)) =
-            comparison_to_const(logical_expr.left.without_parenthesized())
-        else {
-            return;
-        };
-        let Some((right_cmp_op, right_expr, right_const_expr)) =
+        let Some((right_cmp_op, right_expr, right_const_expr, _)) =
             comparison_to_const(logical_expr.right.without_parenthesized())
         else {
             return;
         };
 
-        let Some(ordering) = left_const_expr.value.partial_cmp(&right_const_expr.value) else {
-            return;
-        };
-
-        // Rule out the `x >= 42 && x <= 42` corner case immediately
-        // Mostly to simplify the implementation, but it is also covered by `clippy::double_comparisons`
-        if matches!(
-            (&left_cmp_op, &right_cmp_op, ordering),
-            (CmpOp::Le | CmpOp::Ge, CmpOp::Le | CmpOp::Ge, Ordering::Equal)
-        ) {
-            return;
-        }
-
-        if !is_same_reference(left_expr, right_expr, ctx) {
-            return;
-        }
-
-        if left_cmp_op.direction() == right_cmp_op.direction() {
-            let lhs_str = logical_expr.left.span().source_text(ctx.source_text());
-            let rhs_str = logical_expr.right.span().source_text(ctx.source_text());
-            // We already know that either side of `&&` has no effect,
-            // but emit a different error message depending on which side it is
-            if left_side_is_useless(left_cmp_op, ordering) {
-                ctx.diagnostic(ConstComparisonsDiagnostic::RedundantLeftHandSide(
-                    node.kind().span(),
-                    format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")
-                ));
-            } else {
-                ctx.diagnostic(ConstComparisonsDiagnostic::RedundantRightHandSide(
-                    node.kind().span(),
-                    format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")
-                ));
-            }
-        } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
-            let lhs_str = left_const_expr.span.source_text(ctx.source_text());
-            let rhs_str = right_const_expr.span.source_text(ctx.source_text());
-            let expr_str = left_expr.span().source_text(ctx.source_text());
-            let diagnostic_note = match ordering {
-                Ordering::Less => format!(
-                    "since `{lhs_str}` < `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
-                ),
-                Ordering::Equal => {
-                    format!("`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`")
-                },
-                Ordering::Greater => format!(
-                    "since `{lhs_str}` > `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
-                ),
+        for (left_cmp_op, left_expr, left_const_expr, left_span) in
+            all_and_comparison_to_const(logical_expr.left.without_parenthesized())
+        {
+            let Some(ordering) = left_const_expr.value.partial_cmp(&right_const_expr.value) else {
+                return;
             };
 
-            ctx.diagnostic(ConstComparisonsDiagnostic::Impossible(
-                node.kind().span(),
-                diagnostic_note,
-            ));
+            // Rule out the `x >= 42 && x <= 42` corner case immediately
+            // Mostly to simplify the implementation, but it is also covered by `clippy::double_comparisons`
+            if matches!(
+                (&left_cmp_op, &right_cmp_op, ordering),
+                (CmpOp::Le | CmpOp::Ge, CmpOp::Le | CmpOp::Ge, Ordering::Equal)
+            ) {
+                return;
+            }
+
+            if !is_same_reference(left_expr, right_expr, ctx) {
+                return;
+            }
+
+            if left_cmp_op.direction() == right_cmp_op.direction() {
+                let lhs_str = left_span.source_text(ctx.source_text());
+                let rhs_str = logical_expr.right.span().source_text(ctx.source_text());
+                // We already know that either side of `&&` has no effect,
+                // but emit a different error message depending on which side it is
+                if left_side_is_useless(left_cmp_op, ordering) {
+                    ctx.diagnostic(ConstComparisonsDiagnostic::RedundantLeftHandSide(
+                        left_span,
+                        logical_expr.right.span(),
+                        format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")
+                    ));
+                } else {
+                    ctx.diagnostic(ConstComparisonsDiagnostic::RedundantRightHandSide(
+                        logical_expr.right.span(),
+                        left_span,
+                        format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")
+                    ));
+                }
+            } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
+                let lhs_str = left_const_expr.span.source_text(ctx.source_text());
+                let rhs_str = right_const_expr.span.source_text(ctx.source_text());
+                let expr_str = left_expr.span().source_text(ctx.source_text());
+                let diagnostic_note = match ordering {
+                    Ordering::Less => format!(
+                        "since `{lhs_str}` < `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
+                    ),
+                    Ordering::Equal => {
+                        format!("`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`")
+                    },
+                    Ordering::Greater => format!(
+                        "since `{lhs_str}` > `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
+                    ),
+                };
+
+                ctx.diagnostic(ConstComparisonsDiagnostic::Impossible(
+                    left_span,
+                    logical_expr.right.without_parenthesized().span(),
+                    format!(
+                        "`{} {} {}` ",
+                        expr_str,
+                        left_cmp_op,
+                        left_const_expr.span.source_text(ctx.source_text())
+                    ),
+                    format!(
+                        "`{} {} {}` ",
+                        expr_str,
+                        right_cmp_op,
+                        right_const_expr.span.source_text(ctx.source_text())
+                    ),
+                    diagnostic_note,
+                ));
+            }
         }
     }
 }
@@ -141,16 +170,16 @@ impl Rule for ConstComparisons {
 // Flip yoda conditionals, turnings expressions like `42 < x` into `x > 42`
 fn comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
-) -> Option<(CmpOp, &'b Expression<'a>, &'b NumberLiteral<'a>)> {
+) -> Option<(CmpOp, &'b Expression<'a>, &'b NumberLiteral<'a>, Span)> {
     if let Expression::BinaryExpression(bin_expr) = expr {
         if let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator) {
             match (&bin_expr.left.without_parenthesized(), &bin_expr.right.without_parenthesized())
             {
                 (Expression::NumberLiteral(lit), _) => {
-                    return Some((cmp_op.reverse(), &bin_expr.right, lit));
+                    return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
                 }
                 (_, Expression::NumberLiteral(lit)) => {
-                    return Some((cmp_op, &bin_expr.left, lit));
+                    return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
                 }
                 _ => {}
             }
@@ -158,6 +187,28 @@ fn comparison_to_const<'a, 'b>(
     }
 
     None
+}
+
+fn all_and_comparison_to_const<'a, 'b>(
+    expr: &'b Expression<'a>,
+) -> Box<dyn Iterator<Item = (CmpOp, &'b Expression<'a>, &'b NumberLiteral<'a>, Span)> + 'b> {
+    match expr {
+        Expression::LogicalExpression(logical_expr)
+            if logical_expr.operator == LogicalOperator::And =>
+        {
+            let left_iter = all_and_comparison_to_const(logical_expr.left.without_parenthesized());
+            let right_iter =
+                all_and_comparison_to_const(logical_expr.right.without_parenthesized());
+            Box::new(left_iter.chain(right_iter))
+        }
+        _ => {
+            if let Some((cmp_op, expr, lit, span)) = comparison_to_const(expr) {
+                Box::new(std::iter::once((cmp_op, expr, lit, span)))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        }
+    }
 }
 
 fn left_side_is_useless(left_cmp_op: CmpOp, ordering: Ordering) -> bool {
@@ -202,6 +253,17 @@ enum CmpOp {
     Le,
     Ge,
     Gt,
+}
+
+impl std::fmt::Display for CmpOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Lt => write!(f, "<"),
+            Self::Le => write!(f, "<="),
+            Self::Ge => write!(f, ">="),
+            Self::Gt => write!(f, ">"),
+        }
+    }
 }
 
 impl CmpOp {
@@ -258,6 +320,8 @@ fn test() {
         "500 <= foo.baz.que && bar.aaa.fff <= 600;",
         "500 <= foo[0].que && foo[1].que <= 600",
         "styleCodes.length >= 5 && styleCodes[2] >= 0",
+        "status_code <= 400 || foo() && status_code > 500;",
+        "status_code > 500 && foo() && bar || status_code < 400;",
     ];
 
     let fail = vec![
@@ -309,6 +373,32 @@ fn test() {
         // Useless right
         "status_code < 500 && status_code <= 500;",
         //~^ ERROR: right-hand side of `&&` operator has no effect
+
+        // Multiple comparisons
+
+        // always evaluates to false
+        "status_code <= 400 && foo() && status_code > 500;",
+        // always evaluates to false
+        "status_code > 500 && foo() && bar && status_code < 400;",
+        // always evaluates to false
+        "foo() && bar && status_code < 500 && status_code > 500;",
+        // Yoda
+        "500 >= status_code && baz && 600 < status_code;",
+        "que && 500 >= status_code && baz && status_code > 600;",
+        // Yoda - two different types
+        "baz && 500 >= status && 600 < status;",
+        "500 >= status && baz && que() && status > 600;",
+        // Multiple comparisons - useless left
+        "foo() && status_code >= 500 && status_code > 500;",
+        "status_code <= 500 && foo() && status_code < 500;",
+        // Useless left
+        "status_code >= 500 && response && status_code > 500;",
+        // Useless right
+        "response && status_code > 500 && status_code >= 500;",
+        // Useless left
+        "status_code <= 500 && response && status_code < 500;",
+        // Useless right
+        "status_code < 500 && response && status_code <= 500;",
     ];
 
     Tester::new_without_config(ConstComparisons::NAME, pass, fail).test_and_snapshot();

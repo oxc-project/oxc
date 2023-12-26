@@ -94,6 +94,7 @@ pub trait TestCase {
                 .map(get_options::<ReactJsxOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
+            instanceof: options.get_plugin("transform-instanceof").is_some(),
             function_name: options.get_plugin("transform-function-name").is_some(),
             arrow_functions: options
                 .get_plugin("transform-arrow-functions")

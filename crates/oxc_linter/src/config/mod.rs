@@ -37,8 +37,19 @@ impl ESLintConfig {
         let file = match serde_json::from_str::<serde_json::Value>(&file) {
             Ok(file) => file,
             Err(e) => {
+                let guess = mime_guess::from_path(path);
+                let err = match guess.first() {
+                    // syntax error
+                    Some(mime) if mime.subtype() == "json" => e.to_string(),
+                    Some(_) => "only json configuration is supported".to_string(),
+                    None => {
+                        format!(
+                            "{e}, if the configuration is not a json file, please use json instead."
+                        )
+                    }
+                };
                 return Err(FailedToParseConfigError(vec![Error::new(
-                    FailedToParseConfigJsonError(path.clone(), e.to_string()),
+                    FailedToParseConfigJsonError(path.clone(), err),
                 )])
                 .into());
             }

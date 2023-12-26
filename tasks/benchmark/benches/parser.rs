@@ -14,7 +14,8 @@ use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("parser");
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated().files() {
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
@@ -24,7 +25,7 @@ fn bench_parser(criterion: &mut Criterion) {
                     // Otherwise the allocator will allocate huge memory chunks (by power of two) from the
                     // system allocator, which makes time measurement unequal during long runs.
                     let allocator = Allocator::default();
-                    _ = Parser::new(&allocator, source_text, SourceType::default()).parse();
+                    _ = Parser::new(&allocator, source_text, source_type).parse();
                     allocator
                 });
             },

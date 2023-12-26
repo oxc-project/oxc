@@ -1,4 +1,4 @@
-Passed: 294/1170
+Passed: 295/1171
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -6,6 +6,7 @@ Passed: 294/1170
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
 * babel-plugin-transform-sticky-regex
+* babel-plugin-transform-instanceof
 * babel-plugin-transform-property-literals
 
 

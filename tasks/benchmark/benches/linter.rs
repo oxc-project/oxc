@@ -18,13 +18,13 @@ use oxc_tasks_common::TestFiles;
 
 fn bench_linter(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("linter");
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated().files() {
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
                 let allocator = Allocator::default();
-                let source_type = SourceType::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)

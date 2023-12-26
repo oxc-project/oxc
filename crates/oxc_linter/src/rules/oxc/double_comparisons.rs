@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// x >= y;
     /// ```
     DoubleComparisons,
-    restriction,
+    correctness,
 );
 
 #[allow(clippy::similar_names)]
