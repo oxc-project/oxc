@@ -112,8 +112,8 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
-    pub fn get_node_id(&self, scope_id: ScopeId) -> Option<&AstNodeId> {
-        self.node_ids.get(&scope_id)
+    pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
+        self.node_ids[&scope_id]
     }
 
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, Atom)> + '_ {
