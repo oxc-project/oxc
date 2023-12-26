@@ -31,4 +31,11 @@ expression: lang
    ╰────
   help: Set a valid value for lang attribute.
 
+  ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
+   ╭─[lang.tsx:1:1]
+ 1 │ <Box as='html' lang='foo' />
+   ·                ──────────
+   ╰────
+  help: Set a valid value for lang attribute.
+
 

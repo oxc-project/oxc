@@ -151,8 +151,7 @@ fn test() {
         ("<html lang='zz-LL' />", None, None),
         ("<html lang={undefined} />", None, None),
         ("<Foo lang={undefined} />", None, Some(settings())),
-        // TODO: wait polymorphicPropName complete in next PR
-        // ("<Box as='html' lang='foo' />", None, None),
+        ("<Box as='html' lang='foo' />", None, Some(settings())),
     ];
 
     Tester::new_with_settings(Lang::NAME, pass, fail).test_and_snapshot();
