@@ -55,7 +55,7 @@ impl Rule for NoDistractingElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
         let JSXElementName::Identifier(iden) = &jsx_el.name else { return };
-        let Some(element_type) = get_element_type(ctx, &jsx_el) else {
+        let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
 
