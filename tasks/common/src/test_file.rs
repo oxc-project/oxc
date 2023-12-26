@@ -15,16 +15,7 @@ impl Default for TestFiles {
 
 impl TestFiles {
     pub fn new() -> Self {
-        let files = Self::get_files().into_iter().map(|file| TestFile::new(&file)).collect();
-        Self { files }
-    }
-
-    pub fn minimal() -> Self {
-        let files = Self::get_files()
-            .into_iter()
-            .filter(|name| ["react", "antd", "typescript"].iter().any(|f| name.contains(f)))
-            .map(|file| TestFile::new(&file))
-            .collect();
+        let files = Self::get_libs().into_iter().map(|file| TestFile::new(&file)).collect();
         Self { files }
     }
 
@@ -32,13 +23,37 @@ impl TestFiles {
         &self.files
     }
 
-    fn get_files() -> Vec<String> {
+    fn get_libs() -> Vec<String> {
         let root = project_root();
         read_to_string(root.join("./tasks/libs.txt"))
             .unwrap()
             .lines()
             .map(ToString::to_string)
             .collect::<Vec<_>>()
+    }
+
+    pub fn minimal() -> Self {
+        let files = Self::get_libs()
+            .into_iter()
+            .filter(|name| ["react", "antd", "typescript"].iter().any(|f| name.contains(f)))
+            .map(|file| TestFile::new(&file))
+            .collect();
+        Self { files }
+    }
+
+    pub fn complicated() -> Self {
+        let files = [
+            // TypeScript syntax (2.81MB)
+            "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
+            // Heavy with classes (554K)
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
+            // ES5 (3.9M)
+            "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
+        ]
+        .into_iter()
+        .map(TestFile::new)
+        .collect();
+        Self { files }
     }
 }
 

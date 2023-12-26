@@ -36,6 +36,7 @@ impl<'a> SymbolTester<'a> {
         }
     }
 
+    #[allow(dead_code)]
     pub(super) fn new_unique(
         parent: &'a SemanticTester,
         semantic: Semantic<'a>,

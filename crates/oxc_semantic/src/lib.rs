@@ -1,6 +1,7 @@
 mod binder;
 mod builder;
 mod checker;
+mod class;
 mod diagnostics;
 mod jsdoc;
 mod module_record;
@@ -12,6 +13,7 @@ mod symbol;
 use std::{rc::Rc, sync::Arc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+use class::ClassTable;
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
@@ -39,6 +41,8 @@ pub struct Semantic<'a> {
     scopes: ScopeTree,
 
     symbols: SymbolTable,
+
+    classes: ClassTable,
 
     trivias: Rc<TriviasMap>,
 
@@ -70,6 +74,10 @@ impl<'a> Semantic<'a> {
 
     pub fn scopes(&self) -> &ScopeTree {
         &self.scopes
+    }
+
+    pub fn classes(&self) -> &ClassTable {
+        &self.classes
     }
 
     pub fn scopes_mut(&mut self) -> &mut ScopeTree {

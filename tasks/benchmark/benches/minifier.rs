@@ -17,11 +17,11 @@ use oxc_tasks_common::TestFiles;
 fn bench_minifier(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("minifier");
     for file in TestFiles::minimal().files() {
+        let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                let source_type = SourceType::from_path(&file.file_name).unwrap();
                 let options = MinifierOptions::default();
                 b.iter_with_large_drop(|| {
                     let allocator = Allocator::default();
