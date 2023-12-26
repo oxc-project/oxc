@@ -36,8 +36,7 @@ impl EarlyErrorJavaScript {
                 check_identifier_reference(ident, node, ctx);
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
-            AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
-
+            AstKind::PrivateIdentifier(ident) => check_private_identifier_outside_class(ident, ctx),
             AstKind::NumberLiteral(lit) => check_number_literal(lit, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
@@ -273,61 +272,34 @@ fn check_identifier_reference<'a>(
     }
 }
 
-fn check_private_identifier<'a>(
-    ident: &PrivateIdentifier,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    // Ignore private identifier declaration inside class
-    if matches!(ctx.nodes.parent_kind(node.id()), Some(AstKind::PropertyKey(_))) {
-        return;
-    }
-
-    // Find enclosing classes
-    let mut classes = vec![];
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
-        let kind = ctx.nodes.kind(node_id);
-        if let AstKind::Class(class) = kind {
-            classes.push(class);
-        }
-        // stop lookup when the class is a heritage, e.g.
-        // `class C extends class extends class { x = this.#foo; } {} { #foo }`
-        // `class C extends function() { x = this.#foo; } { #foo }`
-        if matches!(kind, AstKind::ClassHeritage(_)) {
-            break;
-        }
-    }
-
-    if classes.is_empty() {
+fn check_private_identifier_outside_class(ident: &PrivateIdentifier, ctx: &SemanticBuilder<'_>) {
+    if ctx.class_table_builder.current_class_id.is_none() {
         #[derive(Debug, Error, Diagnostic)]
         #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
         struct PrivateNotInClass(Atom, #[label] Span);
-        return ctx.error(PrivateNotInClass(ident.name.clone(), ident.span));
-    };
+        ctx.error(PrivateNotInClass(ident.name.clone(), ident.span));
+    }
+}
 
-    // Check private identifier declarations in class.
-    // This implementations does a simple lookup for private identifier declarations inside a class.
-    // Performance can be improved by storing private identifiers for each class inside a lookup table,
-    // but there are not many private identifiers in the wild so we should be good fow now.
-    let found_private_ident = classes.iter().any(|class| {
-        class.body.body.iter().any(|def| {
-            // let key = match def {
-            // ClassElement::PropertyDefinition(def) => &def.key,
-            // ClassElement::MethodDefinition(def) => &def.key,
-            // _ => return false,
-            // };
-            matches!(def.property_key(), Some(PropertyKey::PrivateIdentifier(prop_ident))
-                if prop_ident.name == ident.name)
-        })
-    });
-
-    if !found_private_ident {
-        #[derive(Debug, Error, Diagnostic)]
-        #[error("Private field '{0}' must be declared in an enclosing class")]
-        #[diagnostic()]
-        struct PrivateFieldUndeclared(Atom, #[label] Span);
-        ctx.error(PrivateFieldUndeclared(ident.name.clone(), ident.span));
+fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
+    if let Some(class_id) = ctx.class_table_builder.current_class_id {
+        ctx.class_table_builder.classes.iter_private_identifiers(class_id).for_each(|reference| {
+            if reference.property_id.is_none()
+                && reference.method_id.is_none()
+                && !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
+                    ctx.class_table_builder
+                        .classes
+                        .has_private_definition(class_id, &reference.name)
+                })
+            {
+                #[derive(Debug, Error, Diagnostic)]
+                #[error("Private field '{0}' must be declared in an enclosing class")]
+                #[diagnostic()]
+                struct PrivateFieldUndeclared(Atom, #[label] Span);
+                ctx.error(PrivateFieldUndeclared(reference.name.clone(), reference.span));
+            }
+        });
     }
 }
 
@@ -816,6 +788,8 @@ fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
         #[label("constructor has already been declared here")] Span,
         #[label("it cannot be redeclared here")] Span,
     );
+
+    check_private_identifier(ctx);
 
     // ClassBody : ClassElementList
     // It is a Syntax Error if PrototypePropertyNameList of ClassElementList contains more than one occurrence of "constructor".
