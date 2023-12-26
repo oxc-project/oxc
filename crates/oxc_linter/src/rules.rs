@@ -236,6 +236,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod media_has_caption;
     pub mod no_access_key;
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
@@ -459,6 +460,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::html_has_lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    jsx_a11y::media_has_caption,
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
