@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_tag_over_role
+---
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+  ⚠ eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.
+  help: Replace HTML elements with `role` attribute to corresponding semantic HTML tags.
+
+
