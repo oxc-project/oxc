@@ -5,7 +5,11 @@ use std::collections::BTreeMap;
 use oxc_span::Span;
 
 /// A vec of trivias from the lexer, tupled by (span.start, span.end).
-pub type Trivias = Vec<(u32, u32, CommentKind)>;
+#[derive(Debug, Default)]
+pub struct Trivias {
+    pub comments: Vec<(u32, u32, CommentKind)>,
+    pub whitespaces: Vec<Span>,
+}
 
 /// Trivias such as comments
 ///
@@ -15,11 +19,15 @@ pub type Trivias = Vec<(u32, u32, CommentKind)>;
 pub struct TriviasMap {
     /// Keyed by span.start
     comments: BTreeMap<u32, Comment>,
+    whitespaces: Vec<Span>,
 }
 
 impl From<Trivias> for TriviasMap {
     fn from(trivias: Trivias) -> Self {
-        Self { comments: trivias.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect() }
+        Self {
+            comments: trivias.comments.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect(),
+            whitespaces: trivias.whitespaces,
+        }
     }
 }
 
