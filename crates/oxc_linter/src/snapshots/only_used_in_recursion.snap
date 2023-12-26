@@ -1,0 +1,68 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: only_used_in_recursion
+---
+  ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             function test(arg0) {
+   ·                           ────
+ 3 │                 return test(arg0);
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `arg1` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             function test(arg0, arg1) {
+   ·                                 ────
+ 3 │                 return test("", arg1);
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             function test(arg0) {
+   ·                           ────
+ 3 │                 test(arg0);
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             function test(arg0, arg1) {
+   ·                           ────
+ 3 │                 test(arg0);
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             function test(arg0, arg1) {
+   ·                           ────
+ 3 │                 test(arg0);
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `a` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             module.exports = function test(a) {
+   ·                                            ─
+ 3 │                 test(a)
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+  ⚠ oxc(only-used-in-recursion): Parameter `a` is only used in recursive calls
+   ╭─[only_used_in_recursion.tsx:1:1]
+ 1 │ 
+ 2 │             export function test(a) {
+   ·                                  ─
+ 3 │                 test(a)
+   ╰────
+  help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+
+
