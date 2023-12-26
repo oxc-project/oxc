@@ -251,6 +251,7 @@ mod oxc {
     pub mod approx_constant;
     pub mod const_comparisons;
     pub mod double_comparisons;
+    pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
 }
 
@@ -475,5 +476,6 @@ oxc_macros::declare_all_lint_rules! {
     oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
+    oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
 }
