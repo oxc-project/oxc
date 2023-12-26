@@ -173,7 +173,7 @@ impl LanguageServer for Backend {
         if self.is_ignored(&params.text_document.uri).await {
             return;
         }
-        self.handle_file_update(params.text_document.uri, None).await;
+        self.handle_file_update(params.text_document.uri, None, None).await;
     }
 
     /// When the document changed, it may not be written to disk, so we should
@@ -188,7 +188,12 @@ impl LanguageServer for Backend {
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
-        self.handle_file_update(params.text_document.uri, content).await;
+        self.handle_file_update(
+            params.text_document.uri,
+            content,
+            Some(params.text_document.version),
+        )
+        .await;
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
@@ -199,7 +204,8 @@ impl LanguageServer for Backend {
         if self.is_ignored(&params.text_document.uri).await {
             return;
         }
-        self.handle_file_update(params.text_document.uri, None).await;
+        self.handle_file_update(params.text_document.uri, None, Some(params.text_document.version))
+            .await;
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
@@ -304,7 +310,7 @@ impl Backend {
         .await;
     }
 
-    async fn handle_file_update(&self, uri: Url, content: Option<String>) {
+    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
             if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri, content) {
