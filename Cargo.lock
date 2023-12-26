@@ -1697,6 +1697,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_language_server"
+version = "0.0.1"
+dependencies = [
+ "dashmap",
+ "env_logger",
+ "futures",
+ "globset",
+ "ignore",
+ "log",
+ "miette",
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_linter",
+ "oxc_linter_plugin",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "rayon",
+ "ropey",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-lsp",
+]
+
+[[package]]
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
@@ -1748,32 +1774,6 @@ dependencies = [
  "serde",
  "serde_yaml",
  "trustfall",
-]
-
-[[package]]
-name = "oxc_ls"
-version = "0.0.1"
-dependencies = [
- "dashmap",
- "env_logger",
- "futures",
- "globset",
- "ignore",
- "log",
- "miette",
- "oxc_allocator",
- "oxc_diagnostics",
- "oxc_linter",
- "oxc_linter_plugin",
- "oxc_parser",
- "oxc_semantic",
- "oxc_span",
- "rayon",
- "ropey",
- "serde",
- "serde_json",
- "tokio",
- "tower-lsp",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*","napi/*"]
+members  = ["crates/*", "tasks/*", "napi/*"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -83,8 +83,8 @@ oxc_query          = { path = "crates/oxc_query" }
 oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_prettier       = { path = "crates/oxc_prettier" }
 
-oxc_tasks_common = { path = "tasks/common" }
-oxc_ls       = { path = "crates/oxc_ls" }
+oxc_tasks_common    = { path = "tasks/common" }
+oxc_language_server = { path = "crates/oxc_language_server" }
 
 bpaf                      = { version = "0.9.8" }
 bitflags                  = { version = "2.4.1" }
