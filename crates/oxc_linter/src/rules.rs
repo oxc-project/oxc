@@ -233,6 +233,7 @@ mod jsx_a11y {
     pub mod anchor_has_content;
     pub mod anchor_is_valid;
     pub mod aria_props;
+    pub mod aria_role;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -460,6 +461,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
     jsx_a11y::aria_props,
+    jsx_a11y::aria_role,
     jsx_a11y::heading_has_content,
     jsx_a11y::html_has_lang,
     jsx_a11y::lang,

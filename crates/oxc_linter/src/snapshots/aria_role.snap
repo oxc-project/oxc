@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: aria_role
+---
+  ⚠ eslint-plugin-jsx-a11y(aria-role): `role` must be a valid value.
+   ╭─[aria_role.tsx:1:1]
+ 1 │ <div role="invalidrole" />;
+   ·      ──────────────────
+   ╰────
+  help: Modify the `role` attribute to be a valid value.
+
+  ⚠ eslint-plugin-jsx-a11y(aria-role): `role` must be a valid value.
+   ╭─[aria_role.tsx:1:1]
+ 1 │ <div role="notarole" />;
+   ·      ───────────────
+   ╰────
+  help: Modify the `role` attribute to be a valid value.
+
+
