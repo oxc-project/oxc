@@ -130,20 +130,14 @@ impl Rule for MediaHasCaption {
             return;
         }
 
-        let parent = ctx.nodes().parent_node(node.id()).and_then(|parent_node| {
-            if let AstKind::JSXElement(jsx_element) = parent_node.kind() {
-                Some(jsx_element)
-            } else {
-                None
-            }
-        });
+        let Some(AstKind::JSXElement(parent)) = ctx.nodes().parent_kind(node.id()) else {
+            return;
+        };
 
-        let has_caption = parent.map_or(false, |parent| {
-            if parent.children.is_empty() {
-                ctx.diagnostic(MediaHasCaptionDiagnostic(parent.opening_element.span));
-                return false;
-            }
-
+        let has_caption = if parent.children.is_empty() {
+            ctx.diagnostic(MediaHasCaptionDiagnostic(parent.opening_element.span));
+            false
+        } else {
             parent.children.iter().any(|child| match child {
                 JSXChild::Element(child_el) => {
                     let child_name = get_mapped_element_name(
@@ -166,9 +160,9 @@ impl Rule for MediaHasCaption {
                 }
                 _ => false,
             })
-        });
+        };
 
-        let span = parent.map_or(jsx_el.span, |parent| parent.span);
+        let span = parent.span;
 
         if !has_caption {
             ctx.diagnostic(MediaHasCaptionDiagnostic(span));
