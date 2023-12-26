@@ -21,6 +21,6 @@ impl TriviaBuilder {
     }
 
     pub fn add_whitespace(&mut self, start: u32, end: u32) {
-        todo!()
+        dbg!(start, end);
     }
 }
