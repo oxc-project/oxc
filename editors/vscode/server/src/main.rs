@@ -113,7 +113,6 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        debug!("{:?}", &params.settings);
         let changed_options = match serde_json::from_value::<Options>(params.settings) {
             Ok(option) => option,
             Err(err) => {
