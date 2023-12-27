@@ -286,7 +286,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         ctx.class_table_builder.classes.iter_private_identifiers(class_id).for_each(|reference| {
             if reference.property_id.is_none()
-                && reference.method_id.is_none()
+                && reference.method_ids.is_empty()
                 && !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
                     ctx.class_table_builder
                         .classes

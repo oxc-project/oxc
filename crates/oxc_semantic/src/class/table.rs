@@ -39,7 +39,8 @@ pub struct PrivateIdentifierReference {
     pub name: Atom,
     pub span: Span,
     pub property_id: Option<PropertyId>,
-    pub method_id: Option<MethodId>,
+    /// If the private identifier is used in a get/set method, this will be has 2 method ids
+    pub method_ids: Vec<MethodId>,
 }
 
 impl PrivateIdentifierReference {
@@ -48,9 +49,9 @@ impl PrivateIdentifierReference {
         name: Atom,
         span: Span,
         property_id: Option<PropertyId>,
-        method_id: Option<MethodId>,
+        method_ids: Vec<MethodId>,
     ) -> Self {
-        Self { id, name, span, property_id, method_id }
+        Self { id, name, span, property_id, method_ids }
     }
 }
 
@@ -95,14 +96,23 @@ impl ClassTable {
         })
     }
 
-    pub fn get_method_id(&self, class_id: ClassId, name: &Atom) -> Option<MethodId> {
-        self.methods[class_id].iter_enumerated().find_map(|(method_id, method)| {
+    pub fn get_method_ids(&self, class_id: ClassId, name: &Atom) -> Vec<MethodId> {
+        let mut method_ids = vec![];
+        for (method_id, method) in self.methods[class_id].iter_enumerated() {
             if method.name == *name {
-                Some(method_id)
-            } else {
-                None
+                method_ids.push(method_id);
+                // Only have 1 method id for MethodDefinition::Method
+                if method.kind.is_method() {
+                    break;
+                }
+                // Maximum 2 method ids, for get/set
+                if method_ids.len() == 2 {
+                    break;
+                }
             }
-        })
+        }
+
+        method_ids
     }
 
     pub fn has_private_definition(&self, class_id: ClassId, name: &Atom) -> bool {
