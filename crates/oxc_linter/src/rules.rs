@@ -254,6 +254,7 @@ mod oxc {
     pub mod double_comparisons;
     pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
+    pub mod only_used_in_recursion;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -480,4 +481,5 @@ oxc_macros::declare_all_lint_rules! {
     oxc::double_comparisons,
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
+    oxc::only_used_in_recursion,
 }
