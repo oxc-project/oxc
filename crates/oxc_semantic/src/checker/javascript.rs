@@ -836,73 +836,78 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         _ => None,
     };
 
+    let Some(class_id) = ctx.class_table_builder.current_class_id else {
+        for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
+            let flags = ctx.scope.get_flags(scope_id);
+            if flags.is_function()
+                && matches!(
+                    ctx.nodes.parent_kind(ctx.scope.get_node_id(scope_id)),
+                    Some(AstKind::ObjectProperty(_))
+                )
+            {
+                if let Some(super_call_span) = super_call_span {
+                    ctx.error(UnexpectedSuperCall(super_call_span));
+                }
+                return;
+            };
+        }
+
+        // ModuleBody : ModuleItemList
+        // * It is a Syntax Error if ModuleItemList Contains super.
+        // ScriptBody : StatementList
+        // * It is a Syntax Error if StatementList Contains super
+        return super_call_span.map_or_else(
+            || ctx.error(UnexpectedSuperReference(sup.span)),
+            |super_call_span| ctx.error(UnexpectedSuperCall(super_call_span)),
+        );
+    };
+
     // skip(1) is the self `Super`
     // skip(2) is the parent `CallExpression` or `NewExpression`
     for node_id in ctx.nodes.ancestors(node.id()).skip(2) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Class(class) => {
-                // ClassTail : ClassHeritageopt { ClassBody }
-                // It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
-                // 1. Let constructor be ConstructorMethod of ClassBody.
-                // 2. If constructor is empty, return false.
-                // 3. Return HasDirectSuper of constructor.
-                if class.super_class.is_none() {
-                    return ctx.error(SuperWithoutDerivedClass(sup.span, class.span));
-                }
-                break;
-            }
             AstKind::MethodDefinition(def) => {
                 // ClassElement : MethodDefinition
                 // It is a Syntax Error if PropName of MethodDefinition is not "constructor" and HasDirectSuper of MethodDefinition is true.
                 if let Some(super_call_span) = super_call_span {
                     if def.kind == MethodDefinitionKind::Constructor {
-                        // pass through and let AstKind::Class check ClassHeritage
-                    } else {
-                        return ctx.error(UnexpectedSuperCall(super_call_span));
+                        // It is a Syntax Error if SuperCall in nested set/get function
+                        if ctx.scope.get_flags(node.scope_id()).is_set_or_get_accessor() {
+                            return ctx.error(UnexpectedSuperCall(super_call_span));
+                        }
+
+                        // check ClassHeritage
+                        if let AstKind::Class(class) =
+                            ctx.nodes.kind(ctx.class_table_builder.classes.get_node_id(class_id))
+                        {
+                            // ClassTail : ClassHeritageopt { ClassBody }
+                            // It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
+                            // 1. Let constructor be ConstructorMethod of ClassBody.
+                            // 2. If constructor is empty, return false.
+                            // 3. Return HasDirectSuper of constructor.
+                            if class.super_class.is_none() {
+                                return ctx.error(SuperWithoutDerivedClass(sup.span, class.span));
+                            }
+                        }
+                        break;
                     }
-                } else {
-                    // super references are allowed in method
-                    break;
+                    return ctx.error(UnexpectedSuperCall(super_call_span));
                 }
+                // super references are allowed in method
+                break;
             }
             // FieldDefinition : ClassElementName Initializer opt
             // * It is a Syntax Error if Initializer is present and Initializer Contains SuperCall is true.
             // PropertyDefinition : MethodDefinition
             // * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
-            AstKind::PropertyDefinition(_) => {
+            AstKind::PropertyDefinition(_)
+            // ClassStaticBlockBody : ClassStaticBlockStatementList
+            // * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
+            | AstKind::StaticBlock(_) => {
                 if let Some(super_call_span) = super_call_span {
                     return ctx.error(UnexpectedSuperCall(super_call_span));
                 }
                 break;
-            }
-            AstKind::ObjectProperty(prop) => {
-                if prop.value.is_function() {
-                    match super_call_span {
-                        Some(super_call_span) if super_call_span.start > prop.key.span().end => {
-                            return ctx.error(UnexpectedSuperCall(super_call_span));
-                        }
-                        _ => {
-                            break;
-                        }
-                    }
-                }
-            }
-            // ClassStaticBlockBody : ClassStaticBlockStatementList
-            // * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
-            AstKind::StaticBlock(_) => {
-                if let Some(super_call_span) = super_call_span {
-                    return ctx.error(UnexpectedSuperCall(super_call_span));
-                }
-            }
-            // ModuleBody : ModuleItemList
-            // * It is a Syntax Error if ModuleItemList Contains super.
-            // ScriptBody : StatementList
-            // * It is a Syntax Error if StatementList Contains super
-            AstKind::Program(_) => {
-                return super_call_span.map_or_else(
-                    || ctx.error(UnexpectedSuperReference(sup.span)),
-                    |super_call_span| ctx.error(UnexpectedSuperCall(super_call_span)),
-                );
             }
             _ => {}
         }
