@@ -392,9 +392,9 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.1 Irregular White Space
-    fn skip_irregular_whitespace(&mut self) -> Kind {
+    #[inline]
+    fn skip_irregular_whitespace(&mut self) {
         self.trivia_builder.add_whitespace(self.current.token.start);
-        Kind::WhiteSpace
     }
 
     /// Section 12.4 Multi Line Comment
@@ -1826,3 +1826,4 @@ const L_Y: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
     "ield" => Kind::Yield,
     _ => Kind::Ident,
 };
+
