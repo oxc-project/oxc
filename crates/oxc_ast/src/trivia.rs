@@ -102,9 +102,5 @@ impl TriviasMap {
     pub fn whitespaces(&self) -> &Vec<Span> {
         &self.whitespaces
     }
-
-    pub fn add_whitespace(&mut self, span: Span) {
-        let whitespace = Span { start: span.start, end: span.end };
-        self.whitespaces.insert(0, whitespace);
-    }
+    
 }
