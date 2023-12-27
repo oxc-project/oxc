@@ -1,7 +1,6 @@
 //! Trivias such as comments
 
 use std::collections::BTreeMap;
-
 use oxc_span::Span;
 
 /// A vec of trivias from the lexer, tupled by (span.start, span.end).
@@ -98,5 +97,14 @@ impl TriviasMap {
 
     pub fn comments_spans(&self) -> impl Iterator<Item = (Comment, Span)> + '_ {
         self.comments().iter().map(|(start, comment)| (*comment, Span::new(*start, comment.end)))
+    }
+
+    pub fn whitespaces(&self) -> &Vec<Span> {
+        &self.whitespaces
+    }
+
+    pub fn add_whitespace(&mut self, span: Span) {
+        let whitespace = Span { start: span.start, end: span.end };
+        self.whitespaces.insert(0, whitespace);
     }
 }
