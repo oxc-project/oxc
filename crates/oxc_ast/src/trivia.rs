@@ -7,7 +7,7 @@ use oxc_span::Span;
 #[derive(Debug, Default)]
 pub struct Trivias {
     pub comments: Vec<(u32, u32, CommentKind)>,
-    pub whitespaces: Vec<(u32, u32)>,
+    pub whitespaces: Vec<u32>,
 }
 
 /// Trivias such as comments
@@ -18,14 +18,14 @@ pub struct Trivias {
 pub struct TriviasMap {
     /// Keyed by span.start
     comments: BTreeMap<u32, Comment>,
-    whitespaces: Vec<Span>,
+    whitespaces: Vec<u32>,
 }
 
 impl From<Trivias> for TriviasMap {
     fn from(trivias: Trivias) -> Self {
         Self {
             comments: trivias.comments.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect(),
-            whitespaces: trivias.whitespaces.iter().map(|(start, end)| Span::new(*start, *end)).collect()
+            whitespaces: trivias.whitespaces,
         }
     }
 }
@@ -99,7 +99,7 @@ impl TriviasMap {
         self.comments().iter().map(|(start, comment)| (*comment, Span::new(*start, comment.end)))
     }
 
-    pub fn whitespaces(&self) -> &Vec<Span> {
+    pub fn whitespaces(&self) -> &Vec<u32> {
         &self.whitespaces
     }
     

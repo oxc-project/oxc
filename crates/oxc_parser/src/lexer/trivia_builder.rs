@@ -20,7 +20,7 @@ impl TriviaBuilder {
         self.trivias.comments.push((start + 2, end - 2, CommentKind::MultiLine));
     }
 
-    pub fn add_whitespace(&mut self, start: u32, end: u32) {
-        self.trivias.whitespaces.push((start, end));
+    pub fn add_whitespace(&mut self, index: u32) {
+        self.trivias.whitespaces.push(index);
     }
 }

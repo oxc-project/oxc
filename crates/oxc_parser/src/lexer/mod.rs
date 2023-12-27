@@ -393,7 +393,7 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.1 Irregular White Space
     fn skip_irregular_whitespace(&mut self) -> Kind {
-        self.trivia_builder.add_whitespace(self.current.token.start, self.offset());
+        self.trivia_builder.add_whitespace(self.current.token.start);
         Kind::WhiteSpace
     }
 
