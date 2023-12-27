@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 144
 expression: html_has_lang
 ---
   ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
@@ -29,5 +30,12 @@ expression: html_has_lang
    · ────────────────
    ╰────
   help: Must have meaningful value for `lang` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
+   ╭─[html_has_lang.tsx:1:1]
+ 1 │ <HTMLTop />
+   ·  ───────
+   ╰────
+  help: Add a lang attribute to the html element whose value represents the primary language of document.
 
 
