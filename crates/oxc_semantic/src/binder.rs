@@ -2,7 +2,10 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
+use oxc_ast::{
+    syntax_directed_operations::{BoundNames, IsSimpleParameterList},
+    AstKind,
+};
 use oxc_span::{Atom, SourceType};
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder, VariableInfo};
@@ -182,9 +185,29 @@ impl<'a> Binder for Function<'a> {
 }
 
 impl<'a> Binder for FormalParameters<'a> {
+    // Binds the formal parameters of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
         let includes = SymbolFlags::FunctionScopedVariable;
-        let excludes = SymbolFlags::FunctionScopedVariableExcludes;
+
+        let is_not_allowed_duplicate_parameters = matches!(
+                self.kind,
+                // ArrowFormalParameters: UniqueFormalParameters
+                FormalParameterKind::ArrowFormalParameters |
+                // UniqueFormalParameters : FormalParameters
+                // * It is a Syntax Error if BoundNames of FormalParameters contains any duplicate elements.
+                FormalParameterKind::UniqueFormalParameters
+            ) ||
+            // Multiple occurrences of the same BindingIdentifier in a FormalParameterList is only allowed for functions which have simple parameter lists and which are not defined in strict mode code.
+            builder.strict_mode() ||
+            // FormalParameters : FormalParameterList
+            // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
+            !self.is_simple_parameter_list();
+
+        let excludes = if is_not_allowed_duplicate_parameters {
+            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
+        } else {
+            SymbolFlags::FunctionScopedVariableExcludes
+        };
         let is_signature = self.kind == FormalParameterKind::Signature;
         self.bound_names(&mut |ident| {
             if !is_signature {

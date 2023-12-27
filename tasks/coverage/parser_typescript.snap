@@ -5905,9 +5905,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:5:1]
  5 │ function f2({b}, {b}) { }
  6 │ function f3([c,[c],[[c]]]) { }
-   ·                 ┬    ┬
-   ·                 │    ╰── It can not be redeclared here
-   ·                 ╰── `c` has already been declared here
+   ·              ┬       ┬
+   ·              │       ╰── It can not be redeclared here
+   ·              ╰── `c` has already been declared here
  7 │ function f4({d, d:{d}}) { }
    ╰────
 
@@ -5935,9 +5935,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:7:1]
  7 │ function f4({d, d:{d}}) { }
  8 │ function f5({e, e: {e}}, {e}, [d,e, [[e]]], ...e) { }
-   ·                     ┬     ┬
-   ·                     │     ╰── It can not be redeclared here
-   ·                     ╰── `e` has already been declared here
+   ·              ┬            ┬
+   ·              │            ╰── It can not be redeclared here
+   ·              ╰── `e` has already been declared here
  9 │ function f6([f, ...f]) { }
    ╰────
 
@@ -5945,9 +5945,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:7:1]
  7 │ function f4({d, d:{d}}) { }
  8 │ function f5({e, e: {e}}, {e}, [d,e, [[e]]], ...e) { }
-   ·                           ┬      ┬
-   ·                           │      ╰── It can not be redeclared here
-   ·                           ╰── `e` has already been declared here
+   ·              ┬                   ┬
+   ·              │                   ╰── It can not be redeclared here
+   ·              ╰── `e` has already been declared here
  9 │ function f6([f, ...f]) { }
    ╰────
 
@@ -5955,9 +5955,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:7:1]
  7 │ function f4({d, d:{d}}) { }
  8 │ function f5({e, e: {e}}, {e}, [d,e, [[e]]], ...e) { }
-   ·                                  ┬    ┬
-   ·                                  │    ╰── It can not be redeclared here
-   ·                                  ╰── `e` has already been declared here
+   ·              ┬                        ┬
+   ·              │                        ╰── It can not be redeclared here
+   ·              ╰── `e` has already been declared here
  9 │ function f6([f, ...f]) { }
    ╰────
 
@@ -5965,9 +5965,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:7:1]
  7 │ function f4({d, d:{d}}) { }
  8 │ function f5({e, e: {e}}, {e}, [d,e, [[e]]], ...e) { }
-   ·                                       ┬        ┬
-   ·                                       │        ╰── It can not be redeclared here
-   ·                                       ╰── `e` has already been declared here
+   ·              ┬                                 ┬
+   ·              │                                 ╰── It can not be redeclared here
+   ·              ╰── `e` has already been declared here
  9 │ function f6([f, ...f]) { }
    ╰────
 
@@ -6035,9 +6035,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration2.ts:6:1]
  6 │ function f2({b}, {b}) { }
  7 │ function f3([c, [c], [[c]]]) { }
-   ·                  ┬     ┬
-   ·                  │     ╰── It can not be redeclared here
-   ·                  ╰── `c` has already been declared here
+   ·              ┬         ┬
+   ·              │         ╰── It can not be redeclared here
+   ·              ╰── `c` has already been declared here
  8 │ function f4({d, d: {d}}) { }
    ╰────
 
@@ -6065,9 +6065,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration2.ts:8:1]
   8 │ function f4({d, d: {d}}) { }
   9 │ function f5({e, e: {e}}, {e}, [d, e, [[e]]], ...e) { }
-    ·                     ┬     ┬
-    ·                     │     ╰── It can not be redeclared here
-    ·                     ╰── `e` has already been declared here
+    ·              ┬            ┬
+    ·              │            ╰── It can not be redeclared here
+    ·              ╰── `e` has already been declared here
  10 │ function f6([f, ...f]) { }
     ╰────
 
@@ -6075,9 +6075,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration2.ts:8:1]
   8 │ function f4({d, d: {d}}) { }
   9 │ function f5({e, e: {e}}, {e}, [d, e, [[e]]], ...e) { }
-    ·                           ┬       ┬
-    ·                           │       ╰── It can not be redeclared here
-    ·                           ╰── `e` has already been declared here
+    ·              ┬                    ┬
+    ·              │                    ╰── It can not be redeclared here
+    ·              ╰── `e` has already been declared here
  10 │ function f6([f, ...f]) { }
     ╰────
 
@@ -6085,9 +6085,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration2.ts:8:1]
   8 │ function f4({d, d: {d}}) { }
   9 │ function f5({e, e: {e}}, {e}, [d, e, [[e]]], ...e) { }
-    ·                                   ┬    ┬
-    ·                                   │    ╰── It can not be redeclared here
-    ·                                   ╰── `e` has already been declared here
+    ·              ┬                         ┬
+    ·              │                         ╰── It can not be redeclared here
+    ·              ╰── `e` has already been declared here
  10 │ function f6([f, ...f]) { }
     ╰────
 
@@ -6095,9 +6095,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration2.ts:8:1]
   8 │ function f4({d, d: {d}}) { }
   9 │ function f5({e, e: {e}}, {e}, [d, e, [[e]]], ...e) { }
-    ·                                        ┬        ┬
-    ·                                        │        ╰── It can not be redeclared here
-    ·                                        ╰── `e` has already been declared here
+    ·              ┬                                  ┬
+    ·              │                                  ╰── It can not be redeclared here
+    ·              ╰── `e` has already been declared here
  10 │ function f6([f, ...f]) { }
     ╰────
 
@@ -12342,9 +12342,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/es6/destructuring/destructuringParameterDeclaration1ES6.ts:96:1]
  96 │ 
  97 │ function e6({x: [number, number, number]}) { }  // error, duplicate identifier;
-    ·                          ───┬──  ───┬──
-    ·                             │       ╰── It can not be redeclared here
-    ·                             ╰── `number` has already been declared here
+    ·                  ───┬──          ───┬──
+    ·                     │               ╰── It can not be redeclared here
+    ·                     ╰── `number` has already been declared here
  98 │ 
     ╰────
 

@@ -118,8 +118,8 @@ fn test() {
         r"array.forEach(({foo}, index = foo) => {})",
         r"array.forEach((element, {bar = element}) => {})",
         r"array.forEach(({foo}, {bar = foo}) => {})",
-        r"foo.forEach(function(element, element) {})",
-        r"foo.forEach(function element(element, element) {})",
+        r"foo.forEach(function(element, element1) {})",
+        r"foo.forEach(function element(element, element1) {})",
         r"this._listeners.forEach((listener: () => void) => listener());",
         r"return foo.forEach(element => {bar(element)});",
     ];
