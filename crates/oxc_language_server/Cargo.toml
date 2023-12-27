@@ -16,7 +16,7 @@ categories.workspace   = true
 workspace = true
 
 [[bin]]
-name              = "oxc_language_server"
+name = "oxc_language_server"
 test = false
 
 [dependencies]
@@ -36,7 +36,7 @@ rayon             = { workspace = true }
 ropey             = { workspace = true }
 tokio             = { workspace = true, features = ["full"] }
 tower-lsp         = { workspace = true, features = ["proposed"] }
-log = "0.4.20"
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-globset = "0.4.14"
+log               = "0.4.20"
+serde             = { workspace = true, features = ["derive"] }
+serde_json        = { workspace = true }
+globset           = "0.4.14"
