@@ -1,5 +1,4 @@
 use oxc_ast::{CommentKind, Trivias};
-// use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
@@ -22,7 +21,6 @@ impl TriviaBuilder {
     }
 
     pub fn add_whitespace(&mut self, start: u32, end: u32) {
-        // self.trivias.whitespaces.push(Span::new(start, end));
-        (start, end);
+        self.trivias.whitespaces.push((start, end));
     }
 }

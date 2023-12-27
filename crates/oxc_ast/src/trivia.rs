@@ -7,7 +7,7 @@ use oxc_span::Span;
 #[derive(Debug, Default)]
 pub struct Trivias {
     pub comments: Vec<(u32, u32, CommentKind)>,
-    pub whitespaces: Vec<Span>,
+    pub whitespaces: Vec<(u32, u32)>,
 }
 
 /// Trivias such as comments
@@ -25,7 +25,7 @@ impl From<Trivias> for TriviasMap {
     fn from(trivias: Trivias) -> Self {
         Self {
             comments: trivias.comments.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect(),
-            whitespaces: trivias.whitespaces,
+            whitespaces: trivias.whitespaces.iter().map(|(start, end)| Span::new(*start, *end)).collect()
         }
     }
 }
