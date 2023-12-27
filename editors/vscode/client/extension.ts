@@ -125,6 +125,7 @@ export async function activate(context: ExtensionContext) {
       "javascript",
       "typescriptreact",
       "javascriptreact",
+      "vue"
     ].map((lang) => ({
       language: lang,
       scheme: "file",

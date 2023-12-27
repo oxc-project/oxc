@@ -8,12 +8,17 @@ use std::{
     },
 };
 
-use crate::options::LintOptions;
 use crate::walk::Walk;
+use crate::{options::LintOptions, walk::Extensions};
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
-use oxc_linter::{LintContext, LintSettings, Linter};
+use oxc_linter::{
+    partial_loader::{
+        vue_partial_loader::VuePartialLoader, PartialLoader, LINT_PARTIAL_LOADER_EXT,
+    },
+    LintContext, LintSettings, Linter,
+};
 use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -223,8 +228,8 @@ impl IsolatedLintHandler {
     }
 
     fn is_wanted_ext(path: &Path) -> bool {
-        path.extension()
-            .map_or(false, |ext| VALID_EXTENSIONS.contains(&ext.to_string_lossy().as_ref()))
+        let extensions = get_extensions();
+        path.extension().map_or(false, |ext| extensions.contains(&ext.to_string_lossy().as_ref()))
     }
 
     fn process_paths(
@@ -234,7 +239,7 @@ impl IsolatedLintHandler {
     ) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
-        let walk = Walk::new(&self.options);
+        let walk = Walk::new(&self.options).with_extensions(Extensions(get_extensions()));
         let number_of_files = Arc::clone(number_of_files);
         rayon::spawn(move || {
             let mut count = 0;
@@ -276,19 +281,37 @@ impl IsolatedLintHandler {
             .collect()
     }
 
+    fn get_source_type_and_text(
+        path: &Path,
+        source_text: Option<String>,
+    ) -> Option<(SourceType, String)> {
+        let read_file = |path: &Path| -> String {
+            if let Some(source_text) = source_text {
+                return source_text;
+            }
+            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"))
+        };
+
+        if let Ok(source_type) = SourceType::from_path(path) {
+            return Some((source_type, read_file(path)));
+        }
+        let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
+        let partial_loader = if ext == "vue" { Some(PartialLoader::Vue) } else { None };
+        let partial_loader = partial_loader?;
+
+        let source_text = read_file(path);
+        let ret = partial_loader.parse(&source_text);
+        Some((ret.source_type, ret.source_text))
+    }
+
     fn lint_path(
         linter: &Linter,
         path: &Path,
         plugin: Plugin,
         source_text: Option<String>,
     ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
-        let source_text = source_text.unwrap_or_else(|| {
-            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"))
-        });
-
+        let (source_type, source_text) = Self::get_source_type_and_text(path, source_text)?;
         let allocator = Allocator::default();
-        let source_type =
-            SourceType::from_path(path).unwrap_or_else(|_| panic!("Incorrect {path:?}"));
         let ret = Parser::new(&allocator, &source_text, source_type)
             .allow_return_outside_function(true)
             .parse();
@@ -387,6 +410,14 @@ impl IsolatedLintHandler {
             .collect();
         (path.to_path_buf(), diagnostics)
     }
+}
+
+fn get_extensions() -> Vec<&'static str> {
+    VALID_EXTENSIONS
+        .iter()
+        .chain(LINT_PARTIAL_LOADER_EXT.iter())
+        .copied()
+        .collect::<Vec<&'static str>>()
 }
 
 #[allow(clippy::cast_possible_truncation)]
