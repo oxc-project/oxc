@@ -154,38 +154,33 @@ impl ModuleRecordBuilder {
         }
     }
 
-    pub fn visit_variable_declaration(&mut self, var_decl: &VariableDeclaration) {
-        for declaration in &var_decl.declarations {
-            let Some(init) = &declaration.init else {
-                continue;
+    pub fn visit_variable_declarator(&mut self, declarator: &VariableDeclarator) {
+        let Some(Expression::CallExpression(call)) = &declarator.init else {
+            return;
+        };
+        let Expression::Identifier(ident) = &call.callee else {
+            return;
+        };
+        if ident.name == "require" {
+            let Some(Argument::Expression(Expression::StringLiteral(module))) =
+                call.arguments.get(0)
+            else {
+                return;
             };
-            let Expression::CallExpression(call) = &init else {
-                continue;
-            };
-            let Expression::Identifier(ident) = &call.callee else {
-                continue;
-            };
-            if ident.name == "require" {
-                let Some(Argument::Expression(Expression::StringLiteral(module))) =
-                    call.arguments.get(0)
-                else {
-                    continue;
-                };
 
-                let module_request = NameSpan::new(module.value.clone(), module.span);
+            let module_request = NameSpan::new(module.value.clone(), module.span);
 
-                declaration.id.bound_names(&mut |identifier| {
-                    let identifier = NameSpan::new(identifier.name.clone(), identifier.span);
+            declarator.id.bound_names(&mut |identifier| {
+                let identifier = NameSpan::new(identifier.name.clone(), identifier.span);
 
-                    self.add_import_entry(ImportEntry {
-                        module_request: module_request.clone(),
-                        import_name: ImportImportName::Name(identifier.clone()),
-                        local_name: identifier,
-                    });
+                self.add_import_entry(ImportEntry {
+                    module_request: module_request.clone(),
+                    import_name: ImportImportName::Name(identifier.clone()),
+                    local_name: identifier,
                 });
+            });
 
-                self.add_module_request(&module_request);
-            }
+            self.add_module_request(&module_request);
         }
     }
 
