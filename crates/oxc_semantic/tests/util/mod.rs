@@ -1,7 +1,7 @@
 mod class_tester;
 mod expect;
 mod symbol_tester;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
@@ -82,7 +82,6 @@ impl SemanticTester {
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
-            .build_module_record(PathBuf::new(), program)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {

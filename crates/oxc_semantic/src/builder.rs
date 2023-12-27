@@ -76,7 +76,7 @@ pub struct SemanticBuilder<'a> {
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    pub(crate) module_record: Arc<ModuleRecord>,
+    pub module_record_builder: ModuleRecordBuilder,
 
     unused_labels: UnusedLabels<'a>,
 
@@ -113,7 +113,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
-            module_record: Arc::new(ModuleRecord::default()),
+            module_record_builder: ModuleRecordBuilder::default(),
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
@@ -135,21 +135,10 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    /// Get the built module record from `build_module_record`
-    pub fn module_record(&self) -> Arc<ModuleRecord> {
-        Arc::clone(&self.module_record)
-    }
-
-    /// Build the module record with a shallow AST visit
+    /// Update the module record with the resolved absolute path
     #[must_use]
-    pub fn build_module_record(
-        mut self,
-        resolved_absolute_path: PathBuf,
-        program: &'a Program<'a>,
-    ) -> Self {
-        let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
-        module_record_builder.visit(program);
-        self.module_record = Arc::new(module_record_builder.build());
+    pub fn with_module_record(mut self, resolved_absolute_path: PathBuf) -> Self {
+        self.module_record_builder.update_module_record(resolved_absolute_path);
         self
     }
 
@@ -173,7 +162,7 @@ impl<'a> SemanticBuilder<'a> {
             scopes: self.scope,
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
-            module_record: Arc::clone(&self.module_record),
+            module_record: Arc::new(self.module_record_builder.build()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
             redeclare_variables: self.redeclare_variables.variables,
@@ -406,7 +395,11 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
                 self.current_symbol_flags |= Self::symbol_flag_from_module_declaration(decl);
+                self.module_record_builder.visit_module_declaration(decl);
                 decl.bind(self);
+            }
+            AstKind::VariableDeclaration(decl) => {
+                self.module_record_builder.visit_variable_declaration(decl);
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
@@ -515,6 +508,7 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::Program(_) => self.module_record_builder.resolve_export_entries(),
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();

@@ -9,7 +9,7 @@ mod module_record_tests {
     use oxc_span::{SourceType, Span};
     #[allow(clippy::wildcard_imports)]
     use oxc_syntax::module_record::*;
-    use std::{path::PathBuf, sync::Arc};
+    use std::sync::Arc;
 
     use crate::SemanticBuilder;
 
@@ -18,10 +18,8 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
-            .build_module_record(PathBuf::new(), program)
-            .build(program);
+        let semantic_ret =
+            SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
         Arc::clone(&semantic_ret.semantic.module_record)
     }
 

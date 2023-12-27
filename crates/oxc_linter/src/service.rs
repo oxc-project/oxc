@@ -194,12 +194,13 @@ impl Runtime {
         let semantic_builder = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
-        let module_record = semantic_builder.module_record();
+            .with_module_record(path.to_path_buf());
+
+        let semantic_ret = semantic_builder.build(program);
 
         if self.linter.options().import_plugin {
-            self.module_map
-                .insert(path.to_path_buf().into_boxed_path(), Arc::clone(&module_record));
+            let module_record = semantic_ret.semantic.module_record();
+            self.module_map.insert(path.to_path_buf().into_boxed_path(), Arc::clone(module_record));
             self.update_cache_state(path);
 
             // Retrieve all dependency modules from this module.
@@ -227,8 +228,6 @@ impl Runtime {
                 return vec![];
             }
         }
-
-        let semantic_ret = semantic_builder.build(program);
 
         if !semantic_ret.errors.is_empty() {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();

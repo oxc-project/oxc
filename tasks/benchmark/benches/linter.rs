@@ -29,7 +29,6 @@ fn bench_linter(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)
                     .with_trivias(ret.trivias)
-                    .build_module_record(PathBuf::new(), program)
                     .build(program);
                 let lint_options = LintOptions::default()
                     .with_filter(vec![(AllowWarnDeny::Deny, "all".into())])
