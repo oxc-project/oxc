@@ -358,7 +358,8 @@ impl<'a> Lexer<'a> {
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
-                self.trivia_builder.add_whitespace(self.current.token.start, self.offset());
+                self.trivia_builder
+                    .add_irregular_whitespace(self.current.token.start, self.offset());
                 self.consume_char();
                 Kind::WhiteSpace
             }
