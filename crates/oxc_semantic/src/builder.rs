@@ -415,12 +415,12 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
-                self.add_node_id();
+                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowExpression(_) => {
                 self.function_stack.push(self.current_node_id);
-                self.add_node_id();
+                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {
@@ -539,7 +539,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn add_node_id(&mut self) {
+    fn add_current_node_id_to_current_scope(&mut self) {
         self.scope.add_node_id(self.current_scope_id, self.current_node_id);
     }
 
