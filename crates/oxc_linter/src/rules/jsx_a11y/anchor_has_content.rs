@@ -14,7 +14,12 @@ use oxc_span::Span;
 
 use oxc_allocator::Vec;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_prop_value, has_jsx_prop_lowercase},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 enum AnchorHasContentDiagnostic {
@@ -97,14 +102,6 @@ impl Rule for AnchorHasContent {
         }
 
         // custom component
-    }
-}
-
-fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
-    if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
-    } else {
-        None
     }
 }
 
