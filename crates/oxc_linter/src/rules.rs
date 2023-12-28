@@ -21,6 +21,7 @@ mod deepscan {
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
     pub mod bad_min_max_func;
+    pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
     pub mod missing_throw;
     pub mod number_arg_out_of_range;
@@ -263,6 +264,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_bitwise_operator,
     deepscan::bad_char_at_comparison,
     deepscan::bad_comparison_sequence,
+    deepscan::bad_object_literal_comparison,
     deepscan::bad_min_max_func,
     deepscan::bad_replace_all_arg,
     deepscan::missing_throw,
