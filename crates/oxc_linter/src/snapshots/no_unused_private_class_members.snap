@@ -1,0 +1,165 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_unused_private_class_members
+---
+  ⚠ eslint(no-unused-private-class-members): 'unusedMember' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedMember = 5;
+   ·                 ─────────────
+ 3 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedMemberInSecondClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:2:1]
+ 2 │             class Second {
+ 3 │                 #unusedMemberInSecondClass = 5;
+   ·                 ──────────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedMemberInFirstClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class First {
+ 2 │                 #unusedMemberInFirstClass = 5;
+   ·                 ─────────────────────────
+ 3 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'firstUnusedMemberInSameClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class First {
+ 2 │                 #firstUnusedMemberInSameClass = 5;
+   ·                 ─────────────────────────────
+ 3 │                 #secondUnusedMemberInSameClass = 5;
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'secondUnusedMemberInSameClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:2:1]
+ 2 │                 #firstUnusedMemberInSameClass = 5;
+ 3 │                 #secondUnusedMemberInSameClass = 5;
+   ·                 ──────────────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOnlyInWrite' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #usedOnlyInWrite = 5;
+   ·                 ────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOnlyInWriteStatement' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #usedOnlyInWriteStatement = 5;
+   ·                 ─────────────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOnlyInIncrement' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class C {
+ 2 │                 #usedOnlyInIncrement;
+   ·                 ────────────────────
+ 3 │             
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInOuterClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class C {
+ 2 │                 #unusedInOuterClass;
+   ·                 ───────────────────
+ 3 │             
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedOnlyInSecondNestedClass' is defined but never used.
+    ╭─[no_unused_private_class_members.tsx:19:1]
+ 19 │                     return class {
+ 20 │                         #unusedOnlyInSecondNestedClass;
+    ·                         ──────────────────────────────
+ 21 │                     }
+    ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedMethod' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedMethod() {}
+   ·                 ─────────────
+ 3 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedMethod' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedMethod() {}
+   ·                 ─────────────
+ 3 │                 #usedMethod() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedSetter' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 set #unusedSetter(value) {}
+   ·                     ─────────────
+ 3 │             }
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedForInLoop' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedForInLoop;
+   ·                 ────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedForOfLoop' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedForOfLoop;
+   ·                 ────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInDestructuring' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedInDestructuring;
+   ·                 ──────────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInRestPattern' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedInRestPattern;
+   ·                 ────────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInAssignmentPattern' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedInAssignmentPattern;
+   ·                 ──────────────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'unusedInAssignmentPattern' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class Foo {
+ 2 │                 #unusedInAssignmentPattern;
+   ·                 ──────────────────────────
+ 3 │                 method() {
+   ╰────
+
+  ⚠ eslint(no-unused-private-class-members): 'usedOnlyInTheSecondInnerClass' is defined but never used.
+   ╭─[no_unused_private_class_members.tsx:1:1]
+ 1 │ class C {
+ 2 │                 #usedOnlyInTheSecondInnerClass;
+   ·                 ──────────────────────────────
+ 3 │             
+   ╰────
+
+

@@ -21,6 +21,7 @@ mod deepscan {
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
     pub mod bad_min_max_func;
+    pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
     pub mod missing_throw;
     pub mod number_arg_out_of_range;
@@ -83,6 +84,7 @@ mod eslint {
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
     pub mod no_unused_labels;
+    pub mod no_unused_private_class_members;
     pub mod no_useless_catch;
     pub mod no_useless_escape;
     pub mod require_yield;
@@ -206,6 +208,7 @@ mod unicorn {
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
+    pub mod prefer_modern_math_apis;
     pub mod prefer_native_coercion_functions;
     pub mod prefer_node_protocol;
     pub mod prefer_number_properties;
@@ -251,7 +254,10 @@ mod oxc {
     pub mod approx_constant;
     pub mod const_comparisons;
     pub mod double_comparisons;
+    pub mod erasing_op;
+    pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
+    pub mod only_used_in_recursion;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -259,6 +265,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_bitwise_operator,
     deepscan::bad_char_at_comparison,
     deepscan::bad_comparison_sequence,
+    deepscan::bad_object_literal_comparison,
     deepscan::bad_min_max_func,
     deepscan::bad_replace_all_arg,
     deepscan::missing_throw,
@@ -319,6 +326,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
+    eslint::no_unused_private_class_members,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::require_yield,
@@ -417,6 +425,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_logical_operator_over_ternary,
     unicorn::prefer_math_trunc,
     unicorn::prefer_modern_dom_apis,
+    unicorn::prefer_modern_math_apis,
     unicorn::prefer_native_coercion_functions,
     unicorn::no_useless_spread,
     unicorn::prefer_number_properties,
@@ -475,5 +484,8 @@ oxc_macros::declare_all_lint_rules! {
     oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
+    oxc::erasing_op,
+    oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
+    oxc::only_used_in_recursion,
 }

@@ -15,7 +15,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
     AstNode,
 };
 
@@ -89,14 +89,6 @@ impl Rule for Lang {
                 }
             },
         );
-    }
-}
-
-fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
-    if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
-    } else {
-        None
     }
 }
 

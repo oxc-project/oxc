@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: misrefactored_assign_op
+---
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a += a + 1;
+   · ──────────
+   ╰────
+  help: Did you mean `a += 1`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a += 1 + a;
+   · ──────────
+   ╰────
+  help: Did you mean `a += 1`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a -= a - 1;
+   · ──────────
+   ╰────
+  help: Did you mean `a -= 1`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= a * 99;
+   · ───────────
+   ╰────
+  help: Did you mean `a *= 99`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= 42 * a;
+   · ───────────
+   ╰────
+  help: Did you mean `a *= 42`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a /= a / 2;
+   · ──────────
+   ╰────
+  help: Did you mean `a /= 2`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a %= a % 5;
+   · ──────────
+   ╰────
+  help: Did you mean `a %= 5`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a &= a & 1;
+   · ──────────
+   ╰────
+  help: Did you mean `a &= 1`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= a * a;
+   · ──────────
+   ╰────
+  help: Did you mean `a *= a`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= a * a;
+   · ──────────
+   ╰────
+  help: Did you mean `a *= a`?
+
+

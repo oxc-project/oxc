@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: erasing_op
+---
+  ⚠ oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.
+   ╭─[erasing_op.tsx:1:1]
+ 1 │ x * 0;
+   · ─────
+   ╰────
+  help: This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable
+
+  ⚠ oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.
+   ╭─[erasing_op.tsx:1:1]
+ 1 │ 0 * x;
+   · ─────
+   ╰────
+  help: This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable
+
+  ⚠ oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.
+   ╭─[erasing_op.tsx:1:1]
+ 1 │ 0 & x;
+   · ─────
+   ╰────
+  help: This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable
+
+  ⚠ oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.
+   ╭─[erasing_op.tsx:1:1]
+ 1 │ 0 / x;
+   · ─────
+   ╰────
+  help: This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable
+
+

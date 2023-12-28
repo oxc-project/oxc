@@ -7,7 +7,7 @@ use oxc_span::Atom;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
-use crate::{reference::ReferenceId, symbol::SymbolId};
+use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
@@ -24,7 +24,8 @@ pub struct ScopeTree {
 
     /// Maps a scope to direct children scopes
     child_ids: FxHashMap<ScopeId, Vec<ScopeId>>,
-
+    // Maps a scope to its node id
+    node_ids: FxHashMap<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
@@ -111,6 +112,10 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
+    pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
+        self.node_ids[&scope_id]
+    }
+
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, Atom)> + '_ {
         self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
             bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name.clone()))
@@ -132,6 +137,10 @@ impl ScopeTree {
         }
 
         scope_id
+    }
+
+    pub(crate) fn add_node_id(&mut self, scope_id: ScopeId, node_id: AstNodeId) {
+        self.node_ids.insert(scope_id, node_id);
     }
 
     pub fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {

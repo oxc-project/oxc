@@ -211,7 +211,7 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
     false
 }
 
-fn is_same_member_expression(
+pub fn is_same_member_expression(
     left: &MemberExpression,
     right: &MemberExpression,
     ctx: &LintContext,

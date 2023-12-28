@@ -11,7 +11,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 enum HtmlHasLangDiagnostic {
@@ -51,27 +56,23 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
-    if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
-    } else {
-        None
-    }
-}
-
 impl Rule for HtmlHasLang {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
+
+        let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
 
-        let name = identifier.name.as_str();
-        if name != "html" {
+        if element_type != "html" {
             return;
         }
+
+        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
+            return;
+        };
 
         has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangProp(identifier.span)),
@@ -99,25 +100,35 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
 fn test() {
     use crate::tester::Tester;
 
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "jsx-a11y": {
+                "components": {
+                    "HTMLTop": "html",
+                }
+            }
+        })
+    }
+
     let pass = vec![
-        (r"<div />;", None),
-        (r#"<html lang="en" />"#, None),
-        (r#"<html lang="en-US" />"#, None),
-        (r"<html lang={foo} />;", None),
-        (r"<html lang />;", None),
-        (r"<HTML />;", None),
-        // TODO: When polymorphic components are supported
-        // (r#"<HTMLTop lang="en" />"#, None),
+        (r"<div />;", None, None),
+        (r#"<html lang="en" />"#, None, None),
+        (r#"<html lang="en-US" />"#, None, None),
+        (r"<html lang={foo} />;", None, None),
+        (r"<html lang />;", None, None),
+        (r"<HTML />;", None, None),
+        ("<HTMLTop lang='en' />", None, Some(settings())),
     ];
 
     let fail = vec![
-        (r"<html />;", None),
-        (r"<html {...props} />;", None),
-        (r"<html lang={undefined} />;", None),
-        (r#"<html lang="" />;"#, None),
-        // TODO: When polymorphic components are supported
-        // (r"<HTMLTop />;", None),
+        (r"<html />;", None, None),
+        (r"<html {...props} />;", None, None),
+        (r"<html lang={undefined} />;", None, None),
+        (r#"<html lang="" />;"#, None, None),
+        ("<HTMLTop />", None, Some(settings())),
     ];
 
-    Tester::new(HtmlHasLang::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
+    Tester::new_with_settings(HtmlHasLang::NAME, pass, fail)
+        .with_jsx_a11y_plugin(true)
+        .test_and_snapshot();
 }
