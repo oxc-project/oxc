@@ -44,6 +44,9 @@ impl EarlyErrorJavaScript {
             AstKind::Directive(dir) => check_directive(dir, node, ctx),
             AstKind::ModuleDeclaration(decl) => {
                 check_module_declaration(decl, node, ctx);
+                if let ModuleDeclaration::ImportDeclaration(import_decl) = decl {
+                    check_import_declaration(import_decl, ctx);
+                }
             }
             AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
 
@@ -442,6 +445,13 @@ fn check_module_declaration<'a>(
             ctx.error(TopLevel(text, span));
         }
     }
+}
+
+fn check_import_declaration(decl: &ImportDeclaration, ctx: &SemanticBuilder<'_>) {
+    // ModuleItem : ImportDeclaration
+    // It is a Syntax Error if the BoundNames of ImportDeclaration contains any duplicate entries.
+    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
+    check_duplicate_bound_names(decl, ctx);
 }
 
 fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
