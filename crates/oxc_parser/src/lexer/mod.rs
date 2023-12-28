@@ -358,6 +358,8 @@ impl<'a> Lexer<'a> {
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
+                self.trivia_builder
+                    .add_irregular_whitespace(self.current.token.start, self.offset());
                 self.consume_char();
                 Kind::WhiteSpace
             }
@@ -393,7 +395,6 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.1 Irregular White Space
     fn skip_irregular_whitespace(&mut self) -> Kind {
-        self.trivia_builder.add_whitespace(self.current.token.start, self.offset());
         Kind::WhiteSpace
     }
 
