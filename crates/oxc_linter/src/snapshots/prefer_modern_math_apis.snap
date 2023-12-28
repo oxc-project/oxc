@@ -1,0 +1,171 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_modern_math_apis
+---
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a + b * b)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a ** 2 + b ** 2)
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a + b ** 2)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a + b * b + c * c)
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a ** 2 + b ** 2 + c ** 2)
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a)
+   · ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a ** 2)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a,)
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a ** 2,)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt((a, b) ** 2)
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt((++a) ** 2)
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a * a + b * b,)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.sqrt(a ** 2 + b ** 2,)
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log(x) * Math.LOG10E`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log(x) * Math.LOG10E
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.LOG10E * Math.log(x)`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.LOG10E * Math.log(x)
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log(x) / Math.LN10`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log(x) / Math.LN10
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log((( 0,x ))) * Math.LOG10E`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log((( 0,x ))) * Math.LOG10E
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.LOG10E * Math.log((( 0,x )))`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.LOG10E * Math.log((( 0,x )))
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log((( 0,x ))) / Math.LN10`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log((( 0,x ))) / Math.LN10
+   · ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log(x) / Math.LN10`
+   ╭─[prefer_modern_math_apis.tsx:3:1]
+ 3 │                     return (
+ 4 │ ╭─▶                     Math.log(x)
+ 5 │ ╰─▶                         / Math.LN10
+ 6 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log(x) * Math.LOG2E`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log(x) * Math.LOG2E
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.LOG2E * Math.log(x)`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.LOG2E * Math.log(x)
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log(x) / Math.LN2`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log(x) / Math.LN2
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log((( 0,x ))) * Math.LOG2E`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log((( 0,x ))) * Math.LOG2E
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.LOG2E * Math.log((( 0,x )))`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.LOG2E * Math.log((( 0,x )))
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log((( 0,x ))) / Math.LN2`
+   ╭─[prefer_modern_math_apis.tsx:1:1]
+ 1 │ Math.log((( 0,x ))) / Math.LN2
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log(x) / Math.LN2`
+   ╭─[prefer_modern_math_apis.tsx:3:1]
+ 3 │                     return (
+ 4 │ ╭─▶                     Math.log(x)
+ 5 │ ╰─▶                         / Math.LN2
+ 6 │                     );
+   ╰────
+
+

@@ -148,6 +148,10 @@ impl<'a> Expression<'a> {
         matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
     }
 
+    pub fn is_number(&self, val: f64) -> bool {
+        matches!(self, Self::NumberLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
+    }
+
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
         matches!(self, Self::NumberLiteral(lit) if lit.raw == val)
