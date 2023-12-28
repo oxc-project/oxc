@@ -17976,15 +17976,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·          ╰── `x` has already been declared here
     ╰────
 
-  × Identifier `x` has already been declared
-    ╭─[language/import/dup-bound-names.js:15:1]
- 15 │ 
- 16 │ import { x, y as x } from 'z';
-    ·          ┬       ┬
-    ·          │       ╰── It can not be redeclared here
-    ·          ╰── `x` has already been declared here
-    ╰────
-
   × Keywords cannot contain escape characters
     ╭─[language/import/escaped-as-import-specifier.js:25:1]
  25 │ 
