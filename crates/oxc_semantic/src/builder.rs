@@ -395,12 +395,12 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
                 self.current_symbol_flags |= Self::symbol_flag_from_module_declaration(decl);
-                // self.module_record_builder.visit_module_declaration(decl);
+                self.module_record_builder.visit_module_declaration(decl);
                 decl.bind(self);
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
-                // self.module_record_builder.visit_variable_declarator(decl);
+                self.module_record_builder.visit_variable_declarator(decl);
                 self.make_all_namespaces_valuelike();
             }
             AstKind::Function(func) => {
@@ -506,7 +506,7 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            // AstKind::Program(_) => self.module_record_builder.resolve_export_entries(),
+            AstKind::Program(_) => self.module_record_builder.resolve_export_entries(),
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
