@@ -1089,7 +1089,7 @@ fn check_unary_expression<'a>(
 fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::FormalParameters(_) => return true,
+            AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
             _ => {}
         }
