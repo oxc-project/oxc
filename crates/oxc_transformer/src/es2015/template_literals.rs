@@ -45,7 +45,7 @@ impl<'a> TemplateLiterals<'a> {
                 }
 
                 // make sure the first node is a string
-                if !matches!(nodes.get(0), Some(Expression::StringLiteral(_))) {
+                if !matches!(nodes.first(), Some(Expression::StringLiteral(_))) {
                     let literal = StringLiteral::new(SPAN, Atom::from(""));
                     let string_literal = self.ast.literal_string_expression(literal);
                     nodes.insert(0, string_literal);

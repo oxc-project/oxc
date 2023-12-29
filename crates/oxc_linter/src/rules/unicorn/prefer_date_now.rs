@@ -81,7 +81,7 @@ impl Rule for PreferDateNow {
                     if matches!(ident.name.as_str(), "Number" | "BigInt")
                         && call_expr.arguments.len() == 1
                     {
-                        if let Some(Argument::Expression(expr)) = call_expr.arguments.get(0) {
+                        if let Some(Argument::Expression(expr)) = call_expr.arguments.first() {
                             if is_new_date(expr.without_parenthesized()) {
                                 ctx.diagnostic(
                                     PreferDateNowDiagnostic::PreferDateNowOverNumberDateObject(

@@ -80,7 +80,7 @@ impl Rule for BadArrayMethodOnArguments {
                         // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
                         if template.expressions.is_empty() && template.quasis.len() == 1 {
                             if let Some(name) =
-                                template.quasis.get(0).and_then(|template_element| {
+                                template.quasis.first().and_then(|template_element| {
                                     template_element.value.cooked.as_deref()
                                 })
                             {

@@ -1110,6 +1110,7 @@ impl<'a> Parser<'a> {
                 break;
             }
 
+            #[allow(clippy::unnecessary_fallible_conversions)]
             if let Ok(modifier_flag) = self.cur_kind().try_into() {
                 flags.set(modifier_flag, true);
             } else {

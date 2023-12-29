@@ -46,7 +46,7 @@ impl ModuleRecordBuilder {
                 };
                 if ident.name == "require" {
                     let Some(Argument::Expression(Expression::StringLiteral(module))) =
-                        call.arguments.get(0)
+                        call.arguments.first()
                     else {
                         continue;
                     };

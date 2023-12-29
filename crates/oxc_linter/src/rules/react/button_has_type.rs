@@ -95,7 +95,7 @@ impl Rule for ButtonHasType {
             AstKind::CallExpression(call_expr) => {
                 if is_create_element_call(call_expr) {
                     let Some(Argument::Expression(Expression::StringLiteral(str))) =
-                        call_expr.arguments.get(0)
+                        call_expr.arguments.first()
                     else {
                         return;
                     };
@@ -144,7 +144,7 @@ impl Rule for ButtonHasType {
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.get(0)).and_then(|val| val.as_object());
+        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
 
         Self {
             button: value

@@ -66,7 +66,7 @@ impl Rule for NoMocksImport {
             };
 
             let Some(Argument::Expression(Expression::StringLiteral(string_literal))) =
-                call_expr.arguments.get(0)
+                call_expr.arguments.first()
             else {
                 return;
             };

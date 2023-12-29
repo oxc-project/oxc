@@ -176,7 +176,7 @@ fn find_argument_of_callback<'a>(
     }
 
     if matches!(kind, JestFnKind::General(JestGeneralFnKind::Hook)) {
-        return call_expr.arguments.get(0);
+        return call_expr.arguments.first();
     }
 
     if matches!(kind, JestFnKind::General(JestGeneralFnKind::Test)) {

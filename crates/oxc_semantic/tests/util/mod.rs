@@ -114,6 +114,7 @@ impl SemanticTester {
     ///
     /// ## Fails
     /// If no class with the given name exists.
+    #[allow(dead_code)]
     pub fn has_class(&self, name: &str) -> ClassTester {
         ClassTester::has_class(self.build(), name)
     }
@@ -124,6 +125,7 @@ impl SemanticTester {
     /// 1. No symbol with the given name exists,
     /// 2. More than one symbol with the given name exists, so a symbol cannot
     ///    be uniquely obtained.
+    #[allow(dead_code)]
     pub fn has_some_symbol(&self, name: &str) -> SymbolTester {
         SymbolTester::new_unique(self, self.build(), name)
     }
