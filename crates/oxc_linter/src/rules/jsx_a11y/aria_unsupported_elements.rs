@@ -44,7 +44,7 @@ struct AriaUnsupportedElementsDiagnostic(#[label] pub Span);
 impl Rule for AriaUnsupportedElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(el_type) = get_element_type(ctx, &jsx_el) else {
+            let Some(el_type) = get_element_type(ctx, jsx_el) else {
                 return;
             };
             if RESERVED_HTML_TAG.contains(&el_type) {
