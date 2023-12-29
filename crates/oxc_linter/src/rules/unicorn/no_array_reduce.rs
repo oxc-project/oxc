@@ -73,7 +73,7 @@ impl Rule for NoArrayReduce {
         };
 
         if is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2))
-            && !matches!(call_expr.arguments.get(0), Some(Argument::SpreadElement(_)))
+            && !matches!(call_expr.arguments.first(), Some(Argument::SpreadElement(_)))
             && !call_expr.optional
             && !member_expr.is_computed()
         {
@@ -99,7 +99,7 @@ impl Rule for NoArrayReduce {
 }
 
 fn is_simple_operation(node: &CallExpression) -> bool {
-    let Some(Argument::Expression(callback_arg)) = node.arguments.get(0) else {
+    let Some(Argument::Expression(callback_arg)) = node.arguments.first() else {
         return false;
     };
     let function_body = match callback_arg {

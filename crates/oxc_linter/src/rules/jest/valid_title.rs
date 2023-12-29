@@ -133,7 +133,7 @@ impl ValidTitle {
             return;
         }
 
-        let Some(Argument::Expression(expr)) = call_expr.arguments.get(0) else {
+        let Some(Argument::Expression(expr)) = call_expr.arguments.first() else {
             return;
         };
 
@@ -263,7 +263,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
             Some((reg, None))
         }
         MatcherPattern::Vec(pattern) => {
-            let reg_str = pattern.get(0).and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
+            let reg_str = pattern.first().and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
             let reg = Regex::new(&reg_str).ok()?;
             let message = pattern.get(1).map(std::string::ToString::to_string);
             Some((reg, message))

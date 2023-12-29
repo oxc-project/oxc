@@ -72,7 +72,7 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         }
 
-        if matches!(call_expr.arguments.get(0), Some(Argument::SpreadElement(_))) {
+        if matches!(call_expr.arguments.first(), Some(Argument::SpreadElement(_))) {
             return;
         }
 

@@ -69,7 +69,7 @@ impl BabelOptions {
 
     pub fn is_typescript_definition(&self) -> bool {
         self.plugins.iter().filter_map(Value::as_array).any(|p| {
-            let typescript = p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+            let typescript = p.first().and_then(Value::as_str).is_some_and(|s| s == "typescript");
             let dts = p
                 .get(1)
                 .and_then(Value::as_object)
@@ -91,7 +91,7 @@ impl BabelOptions {
     pub fn get_plugin(&self, name: &str) -> Option<Option<Value>> {
         self.plugins.iter().find_map(|v| match v {
             Value::String(s) if s == name => Some(None),
-            Value::Array(a) if a.get(0).and_then(Value::as_str).is_some_and(|s| s == name) => {
+            Value::Array(a) if a.first().and_then(Value::as_str).is_some_and(|s| s == name) => {
                 Some(a.get(1).cloned())
             }
             _ => None,

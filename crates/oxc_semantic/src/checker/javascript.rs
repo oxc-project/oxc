@@ -430,7 +430,8 @@ fn check_module_declaration<'a>(
         | ModuleDeclaration::TSExportAssignment(_)
         | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
     };
-    let span = Span::new(decl.span().start, decl.span().start + 6);
+    let start = decl.span().start;
+    let span = Span::new(start, start + 6);
     match ctx.source_type.module_kind() {
         ModuleKind::Script => {
             ctx.error(ModuleCode(text, span));
@@ -1088,7 +1089,7 @@ fn check_unary_expression<'a>(
 fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::FormalParameters(_) => return true,
+            AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
             _ => {}
         }

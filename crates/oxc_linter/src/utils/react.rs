@@ -196,7 +196,7 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
         }) => match expression {
             Expression::StringLiteral(str) => str.value.parse().or(Err(())),
             Expression::TemplateLiteral(tmpl) => {
-                tmpl.quasis.get(0).unwrap().value.raw.parse().or(Err(()))
+                tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
             Expression::NumberLiteral(num) => Ok(num.value),
             _ => Err(()),

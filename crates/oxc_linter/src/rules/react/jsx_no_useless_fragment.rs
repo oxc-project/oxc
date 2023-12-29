@@ -198,7 +198,7 @@ fn is_fragment_with_only_text_and_is_not_child<'a>(
         return false;
     }
 
-    if let Some(JSXChild::Text(_)) = node.get(0) {
+    if let Some(JSXChild::Text(_)) = node.first() {
         let Some(parent) = ctx.nodes().parent_kind(id) else { return false };
         return !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_));
     }
