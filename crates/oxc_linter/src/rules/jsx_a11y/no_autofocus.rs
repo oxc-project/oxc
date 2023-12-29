@@ -73,16 +73,16 @@ impl Rule for NoAutofocus {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut no_focus = Self::default();
 
-        let _ = value.as_array().unwrap().iter().find(|v| {
+        if value.as_array().unwrap().iter().any(|v| {
             if let serde_json::Value::Object(obj) = v {
-                let config = obj.get("ignoreNonDOM").unwrap();
-                if let serde_json::Value::Bool(val) = config {
-                    no_focus.set_option(*val);
+                if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
+                    return *val;
                 }
-                return true;
             }
             false
-        });
+        }) {
+            no_focus.set_option(true);
+        }
 
         no_focus
     }
