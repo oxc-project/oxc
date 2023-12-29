@@ -141,3 +141,22 @@ pub const VALID_ARIA_PROPS: phf::Set<&'static str> = phf_set! {
     "aria-valuenow",
     "aria-valuetext"
 };
+
+pub const RESERVED_HTML_TAG: phf::Set<&'static str> = phf_set! {
+    "base",
+    "col",
+    "colgroup",
+    "head",
+    "html",
+    "link",
+    "meta",
+    "noembed",
+    "noscript",
+    "param",
+    "picture",
+    "script",
+    "source",
+    "style",
+    "title",
+    "track",
+};

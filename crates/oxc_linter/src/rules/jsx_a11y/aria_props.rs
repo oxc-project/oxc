@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName},
-    AstKind,
-};
+use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -9,7 +6,9 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, AstNode};
+use crate::{
+    context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_attribute_name, AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")]
@@ -46,15 +45,6 @@ impl Rule for AriaProps {
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
                 ctx.diagnostic(AriaPropsDiagnostic(attr.span, name));
             }
-        }
-    }
-}
-
-fn get_attribute_name(attr: &JSXAttributeName) -> String {
-    match attr {
-        JSXAttributeName::Identifier(ident) => ident.name.to_string(),
-        JSXAttributeName::NamespacedName(namespaced_name) => {
-            format!("{}:{}", namespaced_name.namespace.name, namespaced_name.property.name)
         }
     }
 }
