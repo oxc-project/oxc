@@ -430,7 +430,8 @@ fn check_module_declaration<'a>(
         | ModuleDeclaration::TSExportAssignment(_)
         | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
     };
-    let span = Span::new(decl.span().start, decl.span().start + 6);
+    let start = decl.span().start;
+    let span = Span::new(start, start + 6);
     match ctx.source_type.module_kind() {
         ModuleKind::Script => {
             ctx.error(ModuleCode(text, span));
