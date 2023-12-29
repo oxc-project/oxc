@@ -15,6 +15,7 @@ use crate::{context::LintContext, rule::Rule};
 struct FilenameCaseDiagnostic(#[label] pub Span, &'static str);
 
 #[derive(Debug, Clone)]
+#[allow(clippy::struct_field_names)]
 pub struct FilenameCase {
     kebab_case: bool,
     camel_case: bool,

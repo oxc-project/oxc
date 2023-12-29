@@ -138,7 +138,7 @@ fn filter_and_process_jest_result<'a>(
         return None;
     };
 
-    match call_expr.arguments.get(0) {
+    match call_expr.arguments.first() {
         Some(Argument::Expression(Expression::StringLiteral(string_lit))) => {
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }

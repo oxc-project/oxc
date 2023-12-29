@@ -116,7 +116,7 @@ impl Rule for CatchErrorName {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             if let Expression::MemberExpression(member_expr) = &call_expr.callee {
                 if member_expr.static_property_name() == Some("catch") {
-                    if let Some(arg0) = call_expr.arguments.get(0) {
+                    if let Some(arg0) = call_expr.arguments.first() {
                         if let Some(diagnostic) = self.check_function_arguments(arg0, ctx) {
                             ctx.diagnostic(diagnostic);
                         }
@@ -149,7 +149,7 @@ impl CatchErrorName {
         let expr = expr.without_parenthesized();
 
         if let Expression::ArrowExpression(arrow_expr) = expr {
-            if let Some(arg0) = arrow_expr.params.items.get(0) {
+            if let Some(arg0) = arrow_expr.params.items.first() {
                 if let BindingPatternKind::BindingIdentifier(v) = &arg0.pattern.kind {
                     if self.is_name_allowed(&v.name) {
                         return None;
@@ -177,7 +177,7 @@ impl CatchErrorName {
         }
 
         if let Expression::FunctionExpression(fn_expr) = expr {
-            if let Some(arg0) = fn_expr.params.items.get(0) {
+            if let Some(arg0) = fn_expr.params.items.first() {
                 if let BindingPatternKind::BindingIdentifier(binding_ident) = &arg0.pattern.kind {
                     if self.is_name_allowed(&binding_ident.name) {
                         return None;

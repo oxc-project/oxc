@@ -244,7 +244,7 @@ fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Optio
             config.push(item.clone());
         }
         let config = if config.is_empty() { None } else { Some(Value::Array(config)) };
-        if let Some(v_idx_0) = v.get(0) {
+        if let Some(v_idx_0) = v.first() {
             return Ok((AllowWarnDeny::try_from(v_idx_0)?, config));
         }
     }

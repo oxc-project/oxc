@@ -642,7 +642,7 @@ impl<'a> Prettier<'a> {
             }
             Expression::SequenceExpression(e) => e
                 .expressions
-                .get(0)
+                .first()
                 .map_or(false, |e| Self::starts_with_no_lookahead_token(e, span)),
             Expression::ChainExpression(e) => match &e.expression {
                 ChainElement::CallExpression(e) => {

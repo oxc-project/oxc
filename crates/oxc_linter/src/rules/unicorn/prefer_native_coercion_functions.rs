@@ -108,7 +108,7 @@ impl Rule for PreferNativeCoercionFunctions {
 }
 
 fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
-    let first_func_param = arg.items.get(0)?;
+    let first_func_param = arg.items.first()?;
     let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
     else {
         return None;

@@ -993,7 +993,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             parts.push(ss!(" type"));
         }
         if let Some(specifiers) = &self.specifiers {
-            let is_default = specifiers.get(0).is_some_and(|x| {
+            let is_default = specifiers.first().is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
             });
 
@@ -1001,7 +1001,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
                 matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
             };
 
-            let is_namespace = specifiers.get(0).is_some_and(validate_namespace)
+            let is_namespace = specifiers.first().is_some_and(validate_namespace)
                 || specifiers.get(1).is_some_and(validate_namespace);
 
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));

@@ -93,7 +93,7 @@ impl NoRegexSpaces {
             }
         }
 
-        if let Some(Argument::Expression(Expression::StringLiteral(pattern))) = args.get(0) {
+        if let Some(Argument::Expression(Expression::StringLiteral(pattern))) = args.first() {
             if Self::has_exempted_char_class(&pattern.value) {
                 return None; // skip spaces inside char class, e.g. RegExp('[  ]')
             }

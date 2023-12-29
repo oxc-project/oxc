@@ -164,7 +164,7 @@ fn choose_layout<'a>(
             return Layout::Chain;
         } else if let Expression::ArrowExpression(arrow_expr) = right_expr {
             if let Some(Statement::ExpressionStatement(expr_stmt)) =
-                arrow_expr.body.statements.get(0)
+                arrow_expr.body.statements.first()
             {
                 if let Expression::ArrowExpression(_) = expr_stmt.expression {
                     return Layout::ChainTailArrowChain;
