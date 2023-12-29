@@ -236,6 +236,7 @@ mod jsx_a11y {
     pub mod anchor_has_content;
     pub mod anchor_is_valid;
     pub mod aria_props;
+    pub mod aria_role;
     pub mod aria_unsupported_elements;
     pub mod heading_has_content;
     pub mod html_has_lang;
@@ -482,6 +483,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::no_autofocus,
     jsx_a11y::scope,
     jsx_a11y::tab_index_no_positive,
+    jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
     oxc::approx_constant,
     oxc::const_comparisons,
