@@ -321,8 +321,6 @@ impl<'a> Lexer<'a> {
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
     fn read_next_token(&mut self) -> Kind {
-        self.current.token.start = self.offset();
-
         loop {
             let offset = self.offset();
             self.current.token.start = offset;
@@ -1587,8 +1585,7 @@ const BTO: ByteHandler = |lexer| {
 // \
 const ESC: ByteHandler = |lexer| {
     let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
+    lexer.consume_char();
     builder.force_allocation_without_current_ascii_char(lexer);
     lexer.identifier_unicode_escape_sequence(&mut builder, true);
     let text = lexer.identifier_name(builder);
