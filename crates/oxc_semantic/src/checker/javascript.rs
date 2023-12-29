@@ -24,7 +24,6 @@ pub struct EarlyErrorJavaScript;
 impl EarlyErrorJavaScript {
     pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         let kind = node.kind();
-        check_function_declaration(kind, node, ctx);
 
         match kind {
             AstKind::BindingIdentifier(ident) => {
@@ -47,13 +46,36 @@ impl EarlyErrorJavaScript {
             }
             AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
 
-            AstKind::WithStatement(stmt) => check_with_statement(stmt, ctx),
+            AstKind::WithStatement(stmt) => {
+                check_function_declaration(&stmt.body, false, ctx);
+                check_with_statement(stmt, ctx);
+            }
             AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
-            AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
-            AstKind::ForInStatement(stmt) => check_for_statement_left(&stmt.left, true, node, ctx),
-            AstKind::ForOfStatement(stmt) => check_for_statement_left(&stmt.left, false, node, ctx),
+            AstKind::LabeledStatement(stmt) => {
+                check_function_declaration(&stmt.body, true, ctx);
+                check_labeled_statement(stmt, node, ctx);
+            }
+            AstKind::ForInStatement(stmt) => {
+                check_function_declaration(&stmt.body, false, ctx);
+                check_for_statement_left(&stmt.left, true, node, ctx);
+            }
+            AstKind::ForOfStatement(stmt) => {
+                check_function_declaration(&stmt.body, false, ctx);
+                check_for_statement_left(&stmt.left, false, node, ctx);
+            }
+            AstKind::WhileStatement(WhileStatement { body, .. })
+            | AstKind::DoWhileStatement(DoWhileStatement { body, .. })
+            | AstKind::ForStatement(ForStatement { body, .. }) => {
+                check_function_declaration(body, false, ctx);
+            }
+            AstKind::IfStatement(stmt) => {
+                check_function_declaration(&stmt.consequent, true, ctx);
+                if let Some(alternate) = &stmt.alternate {
+                    check_function_declaration(alternate, true, ctx);
+                }
+            }
 
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
@@ -504,8 +526,8 @@ fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Semant
 }
 
 fn check_function_declaration<'a>(
-    kind: AstKind<'a>,
-    _node: &AstNode<'a>,
+    stmt: &Statement<'a>,
+    is_if_stmt_or_labeled_stmt: bool,
     ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
@@ -523,34 +545,13 @@ fn check_function_declaration<'a>(
     struct FunctionDeclarationNonStrict(#[label] Span);
 
     // Function declaration not allowed in statement position
-    let check = |stmt: &Statement<'a>| {
-        if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
-            if ctx.strict_mode() {
-                ctx.error(FunctionDeclarationStrict(decl.span));
-            } else if !matches!(kind, AstKind::IfStatement(_) | AstKind::LabeledStatement(_)) {
-                ctx.error(FunctionDeclarationNonStrict(decl.span));
-            }
+    if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
+        if ctx.strict_mode() {
+            ctx.error(FunctionDeclarationStrict(decl.span));
+        } else if !is_if_stmt_or_labeled_stmt {
+            ctx.error(FunctionDeclarationNonStrict(decl.span));
         }
     };
-
-    match kind {
-        AstKind::WithStatement(WithStatement { body, .. })
-        | AstKind::WhileStatement(WhileStatement { body, .. })
-        | AstKind::DoWhileStatement(DoWhileStatement { body, .. })
-        | AstKind::ForStatement(ForStatement { body, .. })
-        | AstKind::ForInStatement(ForInStatement { body, .. })
-        | AstKind::ForOfStatement(ForOfStatement { body, .. })
-        | AstKind::LabeledStatement(LabeledStatement { body, .. }) => {
-            check(body);
-        }
-        AstKind::IfStatement(if_stmt) => {
-            check(&if_stmt.consequent);
-            if let Some(alternate) = &if_stmt.alternate {
-                check(alternate);
-            }
-        }
-        _ => {}
-    }
 }
 
 fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
