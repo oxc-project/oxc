@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXExpressionContainer},
+    ast::{JSXAttributeValue, JSXExpression, JSXExpressionContainer},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -18,9 +18,12 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-role):Elements with ARIA roles must use a valid, non-abstract ARIA role.")]
-#[diagnostic(severity(warning), help("Set a valid, non-abstract ARIA role for element with ARIA"))]
-struct AriaRoleDiagnostic(#[label] pub Span);
+#[error("eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.")]
+#[diagnostic(
+    severity(warning),
+    help("Set a valid, non-abstract ARIA role for element with ARIA{1}")
+)]
+struct AriaRoleDiagnostic(#[label] pub Span, String);
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaRole(Box<AriaRoleConfig>);
@@ -122,7 +125,7 @@ impl Rule for AriaRole {
                     return;
                 };
 
-                if valid_aria_role(aria_role, &self.allowed_invalid_roles) {
+                if self.ignore_non_dom && !HTML_TAG.contains(&element_type) {
                     return;
                 }
 
@@ -130,36 +133,34 @@ impl Rule for AriaRole {
                     return;
                 };
 
-                if self.ignore_non_dom {
-                    if HTML_TAG.contains(&element_type) {
-                        ctx.diagnostic(AriaRoleDiagnostic(attr.span));
+                match get_prop_value(aria_role) {
+                    Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+                        expression: JSXExpression::Expression(expr),
+                        ..
+                    })) => {
+                        if expr.is_undefined() || expr.is_null() {
+                            ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                        }
                     }
-                    return;
+                    Some(JSXAttributeValue::StringLiteral(str)) => {
+                        let words_str = String::from(str.value.as_str());
+                        let words = words_str.split_whitespace();
+                        if let Some(error_prop) = words.into_iter().find(|word| {
+                            !VALID_ARIA_ROLES.contains(word)
+                                && !self.allowed_invalid_roles.contains(&(*word).to_string())
+                        }) {
+                            ctx.diagnostic(AriaRoleDiagnostic(
+                                str.span,
+                                format!(", `{error_prop}` is an invalid aria role"),
+                            ));
+                        }
+                    }
+                    _ => {
+                        ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                    }
                 }
-
-                ctx.diagnostic(AriaRoleDiagnostic(attr.span));
             }
         }
-    }
-}
-
-fn valid_aria_role(item: &JSXAttributeItem, allowed_invalid_roles: &[String]) -> bool {
-    match get_prop_value(item) {
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => !expr.is_undefined() && !expr.is_null(),
-        Some(JSXAttributeValue::StringLiteral(str)) => {
-            let str = String::from(str.value.as_str());
-            let words = str.split_whitespace();
-            if words.into_iter().all(|word| {
-                VALID_ARIA_ROLES.contains(word) || allowed_invalid_roles.contains(&word.to_string())
-            }) {
-                return true;
-            }
-            false
-        }
-        _ => false,
     }
 }
 

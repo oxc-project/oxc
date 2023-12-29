@@ -144,8 +144,9 @@ pub const VALID_ARIA_PROPS: phf::Set<&'static str> = phf_set! {
 
 /// set of valid ARIA role definitions
 /// Reference: <https://www.w3.org/TR/wai-aria/#role_definitions>
+/// Reference: <https://github.com/A11yance/aria-query/blob/main/src/rolesMap.js>
 pub const VALID_ARIA_ROLES: phf::Set<&'static str> = phf_set! {
-    "alert",
+  "alert",
   "alertdialog",
   "application",
   "article",
