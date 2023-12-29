@@ -5,12 +5,13 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop},
+    utils::{get_element_type, get_rule_config, has_jsx_prop},
     AstNode,
 };
 
@@ -70,18 +71,13 @@ impl NoAutofocus {
 }
 
 impl Rule for NoAutofocus {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         let mut no_focus = Self::default();
 
-        if value.as_array().unwrap().iter().any(|v| {
-            if let serde_json::Value::Object(obj) = v {
-                if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                    return *val;
-                }
+        if let Some(Value::Bool(val)) = get_rule_config(&value, "ignoreNonDOM") {
+            if val {
+                no_focus.set_option(true);
             }
-            false
-        }) {
-            no_focus.set_option(true);
         }
 
         no_focus
@@ -119,6 +115,12 @@ fn test() {
         }])
     }
 
+    fn config2() -> serde_json::Value {
+        serde_json::json!({
+            "ignoreNonDOM": true
+        })
+    }
+
     fn settings() -> serde_json::Value {
         serde_json::json!({
             "jsx-a11y": {
@@ -151,7 +153,7 @@ fn test() {
         ("<input autoFocus />", None, None),
         ("<Foo autoFocus />", None, None),
         ("<Button autoFocus />", None, None),
-        ("<Button autoFocus />", Some(config()), Some(settings())),
+        ("<Button autoFocus />", Some(config2()), Some(settings())),
     ];
 
     Tester::new_with_settings(NoAutofocus::NAME, pass, fail).test_and_snapshot();
