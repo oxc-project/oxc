@@ -425,6 +425,11 @@ pub const HTML_TAG: phf::Set<&'static str> = phf_set! {
     "xmp",
 };
 
+/// set of reserved HTML tag names definition
+/// if it's not reserved, then it can have aria-* roles, states, and properties
+/// Reference: <https://github.com/GoogleChrome/accessibility-developer-tools/wiki/Audit-Rules#ax_aria_12>
+/// Reference: <https://www.w3.org/TR/html-aria/#rules-wd>
+/// Reference: <https://github.com/A11yance/aria-query/blob/main/src/domMap.js>
 pub const RESERVED_HTML_TAG: phf::Set<&'static str> = phf_set! {
     "base",
     "col",
