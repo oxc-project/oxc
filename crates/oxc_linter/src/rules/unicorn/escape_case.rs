@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 fn is_hex_char(c: char) -> bool {
-    matches!(c, '0'..='9' | 'a'..='f' | 'A'..='F')
+    c.is_ascii_hexdigit()
 }
 fn is_hex(iter: &Chars, count: i32) -> bool {
     let mut iter = iter.clone();

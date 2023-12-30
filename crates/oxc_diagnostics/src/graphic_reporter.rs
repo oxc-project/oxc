@@ -134,9 +134,9 @@ impl GraphicalReportHandler {
     /// Render a [`Diagnostic`]. This function is mostly internal and meant to
     /// be called by the toplevel [`ReportHandler`] handler, but is made public
     /// to make it easier (possible) to test in isolation from global state.
-    pub fn render_report(
+    pub fn render_report<T: fmt::Write>(
         &self,
-        f: &mut impl fmt::Write,
+        f: &mut T,
         diagnostic: &(dyn Diagnostic),
     ) -> fmt::Result {
         self.render_header(f, diagnostic)?;

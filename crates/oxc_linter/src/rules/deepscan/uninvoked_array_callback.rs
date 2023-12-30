@@ -52,7 +52,7 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
         if !matches!(
-            new_expr.arguments.get(0),
+            new_expr.arguments.first(),
             Some(Argument::Expression(Expression::NumberLiteral(_)))
         ) {
             return;
@@ -69,7 +69,7 @@ impl Rule for UninvokedArrayCallback {
         else {
             return;
         };
-        if !matches!(call_expr.arguments.get(0), Some(Argument::Expression(arg_expr)) if arg_expr.is_function())
+        if !matches!(call_expr.arguments.first(), Some(Argument::Expression(arg_expr)) if arg_expr.is_function())
         {
             return;
         }

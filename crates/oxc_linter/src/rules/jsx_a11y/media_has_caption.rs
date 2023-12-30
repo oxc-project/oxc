@@ -1,7 +1,6 @@
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild,
-        JSXElementName, JSXExpression, JSXOpeningElement,
+        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression,
     },
     AstKind,
 };
@@ -11,10 +10,8 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHasher;
-use std::{collections::HashMap, hash::BuildHasherDefault};
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element")]
@@ -86,13 +83,11 @@ impl Rule for MediaHasCaption {
         Self(Box::new(config))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let jsx_a11y_settings = ctx.settings().jsx_a11y;
-        let customed_components = jsx_a11y_settings.components;
-        let polymorphic_prop_name = &jsx_a11y_settings.polymorphic_prop_name;
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
 
-        let element_name =
-            get_mapped_element_name(jsx_el, &customed_components, polymorphic_prop_name.as_ref());
+        let Some(element_name) = get_element_type(ctx, jsx_el) else {
+            return;
+        };
 
         let is_audio_or_video =
             self.0.audio.contains(&element_name) || self.0.video.contains(&element_name);
@@ -140,11 +135,9 @@ impl Rule for MediaHasCaption {
         } else {
             parent.children.iter().any(|child| match child {
                 JSXChild::Element(child_el) => {
-                    let child_name = get_mapped_element_name(
-                        &child_el.opening_element,
-                        &customed_components,
-                        polymorphic_prop_name.as_ref(),
-                    );
+                    let Some(child_name) = get_element_type(ctx, &child_el.opening_element) else {
+                        return false;
+                    };
                     self.0.track.contains(&child_name)
                         && child_el.opening_element.attributes.iter().any(|attr| {
                             if let JSXAttributeItem::Attribute(attr) = attr {
@@ -170,37 +163,6 @@ impl Rule for MediaHasCaption {
     }
 }
 
-/// Get the value of the `as` prop if it exists.
-fn get_polymorphic_element_name(
-    jsx_el: &JSXOpeningElement<'_>,
-    polymorphic_prop_name: &str,
-) -> Option<String> {
-    has_jsx_prop(jsx_el, polymorphic_prop_name).and_then(|attr_item| match attr_item {
-        JSXAttributeItem::Attribute(attr) => match &attr.value {
-            Some(JSXAttributeValue::StringLiteral(lit)) => Some(lit.value.to_string()),
-            _ => None,
-        },
-        JSXAttributeItem::SpreadAttribute(_) => None,
-    })
-}
-
-/// Get the name of the element, taking into account custom components and polymorphic components.
-fn get_mapped_element_name(
-    jsx_el: &JSXOpeningElement,
-    customed_components: &HashMap<String, String, BuildHasherDefault<FxHasher>>,
-    polymorphic_prop_name: Option<&String>,
-) -> String {
-    let JSXElementName::Identifier(iden) = &jsx_el.name else { return String::new() };
-    let element_name = polymorphic_prop_name.map_or_else(
-        || iden.name.to_string(),
-        |polymorphic_name| {
-            get_polymorphic_element_name(jsx_el, polymorphic_name)
-                .unwrap_or_else(|| iden.name.to_string())
-        },
-    );
-    customed_components.get(&element_name).unwrap_or(&element_name).to_string()
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -216,11 +178,11 @@ fn test() {
     fn settings() -> serde_json::Value {
         serde_json::json!({
             "jsx-a11y": {
-            "polymorphicPropName": "as",
-            "components": {
-                "Audio": "audio",
-                "Video": "video",
-                "Track": "track",
+                "polymorphicPropName": "as",
+                "components": {
+                    "Audio": "audio",
+                    "Video": "video",
+                    "Track": "track",
                 },
             }
         })

@@ -105,7 +105,7 @@ impl Rule for PreferSpread {
                     }
                 }
 
-                if let Some(first_arg) = call_expr.arguments.get(0) {
+                if let Some(first_arg) = call_expr.arguments.first() {
                     let Argument::Expression(first_arg) = first_arg else { return };
                     if let Expression::NumberLiteral(num_lit) = first_arg.without_parenthesized() {
                         if num_lit.value != 0.0 {

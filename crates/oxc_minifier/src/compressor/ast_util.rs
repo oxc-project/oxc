@@ -457,7 +457,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
             // only for ``
             template_literal
                 .quasis
-                .get(0)
+                .first()
                 .filter(|quasi| quasi.tail)
                 .and_then(|quasi| quasi.value.cooked.as_ref())
                 .map(|cooked| !cooked.is_empty())
@@ -550,7 +550,7 @@ pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
             // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
             template_literal
                 .quasis
-                .get(0)
+                .first()
                 .filter(|quasi| quasi.tail)
                 .and_then(|quasi| quasi.value.cooked.as_ref())
                 .map(|cooked| Cow::Borrowed(cooked.as_str()))

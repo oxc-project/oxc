@@ -108,7 +108,7 @@ pub fn is_logical_expression(node: &AstNode) -> bool {
 
 // gets the name of the first parameter of a function
 pub fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
-    let first_func_param = arg.items.get(0)?;
+    let first_func_param = arg.items.first()?;
     let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
     else {
         return None;
@@ -117,9 +117,9 @@ pub fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str
 }
 
 pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a str> {
-    match body.statements.get(0)? {
+    match body.statements.first()? {
         Statement::BlockStatement(block_stmt) => {
-            let Statement::ReturnStatement(return_stmt) = block_stmt.body.get(0)? else {
+            let Statement::ReturnStatement(return_stmt) = block_stmt.body.first()? else {
                 return None;
             };
 

@@ -71,7 +71,7 @@ impl Rule for PreferQuerySelector {
             return;
         }
 
-        let Argument::Expression(argument_expr) = call_expr.arguments.get(0).unwrap() else {
+        let Argument::Expression(argument_expr) = call_expr.arguments.first().unwrap() else {
             return;
         };
 
@@ -97,7 +97,7 @@ impl Rule for PreferQuerySelector {
                 Expression::StringLiteral(literal) => Some(literal.value.trim()),
                 Expression::TemplateLiteral(literal) => {
                     if literal.expressions.len() == 0 {
-                        literal.quasis.get(0).unwrap().value.cooked.as_deref().map(str::trim)
+                        literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
                     } else {
                         None
                     }
