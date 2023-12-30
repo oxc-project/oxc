@@ -294,6 +294,12 @@ impl<'a> GetSpan for JSXElementName<'a> {
     }
 }
 
+impl<'a> GetSpan for JSXElement<'a> {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for TSSignature<'a> {
     fn span(&self) -> Span {
         match self {
