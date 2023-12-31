@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{
         JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject,
@@ -12,7 +11,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -47,11 +45,9 @@ fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier 
     }
 }
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {
-    static STRING_ELEMENT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-z]").unwrap());
-
     match node {
         JSXElementName::Identifier(ref ident)
-            if !STRING_ELEMENT_REGEX.is_match(ident.name.as_str()) =>
+            if !(ident.name.as_str().starts_with(char::is_lowercase)) =>
         {
             Some(ident)
         }
