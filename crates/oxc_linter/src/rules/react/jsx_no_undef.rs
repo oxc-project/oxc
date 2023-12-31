@@ -11,28 +11,30 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(jsx-no-undef):")]
-#[diagnostic(severity(warning), help(""))]
-struct JsxNoUndefDiagnostic(#[label] pub Span);
+#[error("eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX")]
+#[diagnostic(severity(warning), help("'{0}' is not defined."))]
+struct JsxNoUndefDiagnostic(Atom, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoUndef;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// This rule helps locate potential ReferenceErrors resulting from misspellings or missing components.
+    /// Disallow undeclared variables in JSX
     ///
     /// ### Why is this bad?
-    ///
+    /// It is most likely a potential ReferenceError caused by a misspelling of a variable or parameter name.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
+    /// const A = () => <App />
+    /// const C = <B />
     /// ```
     JsxNoUndef,
     correctness
@@ -68,7 +70,7 @@ impl Rule for JsxNoUndef {
                     .map_or(false, |scope_id| ctx.scopes().has_binding(scope_id, &ident.name));
 
                 if !has_binding {
-                    ctx.diagnostic(JsxNoUndefDiagnostic(ident.span));
+                    ctx.diagnostic(JsxNoUndefDiagnostic(ident.name.clone(), ident.span));
                 }
             }
         }

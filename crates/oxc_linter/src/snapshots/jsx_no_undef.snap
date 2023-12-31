@@ -3,39 +3,39 @@ source: crates/oxc_linter/src/tester.rs
 assertion_line: 144
 expression: jsx_no_undef
 ---
-  ⚠ eslint-plugin-react(jsx-no-undef):
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:1]
  1 │ var React; React.render(<App />);
    ·                          ───
    ╰────
-  help: 
+  help: 'App' is not defined.
 
-  ⚠ eslint-plugin-react(jsx-no-undef):
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:1]
  1 │ var React; React.render(<Appp.Foo />);
    ·                          ────
    ╰────
-  help: 
+  help: 'Appp' is not defined.
 
-  ⚠ eslint-plugin-react(jsx-no-undef):
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:1]
  1 │ var React; React.render(<appp.Foo />);
    ·                          ────
    ╰────
-  help: 
+  help: 'appp' is not defined.
 
-  ⚠ eslint-plugin-react(jsx-no-undef):
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:1]
  1 │ var React; React.render(<appp.foo.Bar />);
    ·                          ────
    ╰────
-  help: 
+  help: 'appp' is not defined.
 
-  ⚠ eslint-plugin-react(jsx-no-undef):
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:1]
  1 │ var React; React.render(<Foo />);
    ·                          ───
    ╰────
-  help: 
+  help: 'Foo' is not defined.
 
 
