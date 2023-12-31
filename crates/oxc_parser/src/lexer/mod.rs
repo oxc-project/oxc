@@ -75,7 +75,7 @@ impl<'a> Lexer<'a> {
         // Token's start and end are u32s, so limit for length of source is u32::MAX bytes.
         // Only a debug assertion is required, as parser checks length of source before calling
         // this method.
-        debug_assert!(source.len() <= MAX_LEN);
+        debug_assert!(source.len() <= MAX_LEN, "Source length exceeds MAX_LEN");
 
         let token = Token {
             // the first token is at the start of file, so is allows on a new line
