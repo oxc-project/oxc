@@ -1,11 +1,14 @@
 //! Trivias such as comments
 
+use oxc_span::Span;
 use std::collections::BTreeMap;
 
-use oxc_span::Span;
-
 /// A vec of trivias from the lexer, tupled by (span.start, span.end).
-pub type Trivias = Vec<(u32, u32, CommentKind)>;
+#[derive(Debug, Default)]
+pub struct Trivias {
+    pub comments: Vec<(u32, u32, CommentKind)>,
+    pub irregular_whitespaces: Vec<Span>,
+}
 
 /// Trivias such as comments
 ///
@@ -15,11 +18,15 @@ pub type Trivias = Vec<(u32, u32, CommentKind)>;
 pub struct TriviasMap {
     /// Keyed by span.start
     comments: BTreeMap<u32, Comment>,
+    irregular_whitespaces: Vec<Span>,
 }
 
 impl From<Trivias> for TriviasMap {
     fn from(trivias: Trivias) -> Self {
-        Self { comments: trivias.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect() }
+        Self {
+            comments: trivias.comments.iter().map(|t| (t.0, Comment::new(t.1, t.2))).collect(),
+            irregular_whitespaces: trivias.irregular_whitespaces,
+        }
     }
 }
 
@@ -90,5 +97,9 @@ impl TriviasMap {
 
     pub fn comments_spans(&self) -> impl Iterator<Item = (Comment, Span)> + '_ {
         self.comments().iter().map(|(start, comment)| (*comment, Span::new(*start, comment.end)))
+    }
+
+    pub fn irregular_whitespaces(&self) -> &Vec<Span> {
+        &self.irregular_whitespaces
     }
 }

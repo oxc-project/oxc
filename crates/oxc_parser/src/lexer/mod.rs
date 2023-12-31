@@ -356,6 +356,8 @@ impl<'a> Lexer<'a> {
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
+                self.trivia_builder
+                    .add_irregular_whitespace(self.current.token.start, self.offset());
                 self.consume_char();
                 Kind::WhiteSpace
             }
@@ -387,6 +389,11 @@ impl<'a> Lexer<'a> {
         // EOF
         self.trivia_builder.add_single_line_comment(start, self.offset());
         Kind::Comment
+    }
+
+    /// Section 12.1 Irregular White Space
+    fn skip_irregular_whitespace(&mut self) -> Kind {
+        Kind::WhiteSpace
     }
 
     /// Section 12.4 Multi Line Comment
@@ -1319,6 +1326,7 @@ const ERR: ByteHandler = |lexer| {
 
 // <TAB> <VT> <FF>
 const SPS: ByteHandler = |lexer| {
+    lexer.skip_irregular_whitespace();
     lexer.consume_char();
     Kind::WhiteSpace
 };

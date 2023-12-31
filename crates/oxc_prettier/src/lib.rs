@@ -80,7 +80,7 @@ impl<'a> Prettier<'a> {
             allocator,
             source_text,
             options,
-            trivias: trivias.into_iter().peekable(),
+            trivias: trivias.comments.into_iter().peekable(),
             nodes: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
