@@ -32,7 +32,7 @@ use self::{
     string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
 };
-use crate::diagnostics;
+use crate::{diagnostics, MAX_LEN};
 
 #[derive(Debug, Clone)]
 pub struct LexerCheckpoint<'a> {
@@ -72,6 +72,11 @@ pub struct Lexer<'a> {
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
     pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
+        // Token's start and end are u32s, so limit for length of source is u32::MAX bytes.
+        // Only a debug assertion is required, as parser checks length of source before calling
+        // this method.
+        debug_assert!(source.len() <= MAX_LEN);
+
         let token = Token {
             // the first token is at the start of file, so is allows on a new line
             is_on_new_line: true,

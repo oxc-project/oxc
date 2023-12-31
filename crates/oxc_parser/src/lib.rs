@@ -84,6 +84,10 @@ use crate::{
     state::ParserState,
 };
 
+/// Maximum length of source in bytes which can be parsed (~4 GiB).
+// Span's start and end are u32s, so size limit is u32::MAX bytes.
+pub const MAX_LEN: usize = u32::MAX as usize;
+
 /// Return value of parser consisting of AST, errors and comments
 ///
 /// The parser always return a valid AST.
@@ -135,8 +139,12 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     /// Create a new parser
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        // If source exceeds size limit, substitute a short source which will fail to parse.
+        // `parse()` will convert error to `diagnostics::OverlongSource`.
+        let source_text_for_lexer = if source_text.len() > MAX_LEN { "\0" } else { source_text };
+
         Self {
-            lexer: Lexer::new(allocator, source_text, source_type),
+            lexer: Lexer::new(allocator, source_text_for_lexer, source_type),
             source_type,
             source_text,
             errors: vec![],
@@ -177,7 +185,9 @@ impl<'a> Parser<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
-                self.error(self.flow_error().unwrap_or(error));
+                self.error(
+                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error)),
+                );
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
@@ -223,6 +233,15 @@ impl<'a> Parser<'a> {
                 || self.source_text.starts_with("/* @flow */"))
         {
             return Some(diagnostics::Flow(Span::new(0, 8)).into());
+        }
+        None
+    }
+
+    /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
+    /// Original parsing error is not real - `Parser::new` substituted "\0" as the source text.
+    fn overlong_error(&self) -> Option<Error> {
+        if self.source_text.len() > MAX_LEN {
+            return Some(diagnostics::OverlongSource(Span::default()).into());
         }
         None
     }
@@ -279,5 +298,42 @@ mod test {
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+    }
+
+    // Source with length u32::MAX + 1 fails to parse
+    #[test]
+    fn overlong_source() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "var x = 123456;\n".repeat(256 * 1024 * 1024);
+        assert_eq!(source.len() - 1, u32::MAX as usize);
+        let ret = Parser::new(&allocator, &source, source_type).parse();
+        assert!(ret.program.is_empty());
+        assert!(ret.panicked);
+        assert_eq!(ret.errors.len(), 1);
+        assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
+    }
+
+    // Source with length u32::MAX parses OK.
+    // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
+    // `not(debug_assertions)` is a proxy for detecting release mode.
+    #[cfg(not(debug_assertions))]
+    #[test]
+    fn legal_length_source() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        // Build a string u32::MAX bytes long which doesn't take too long to parse
+        let head = "const x = 1;\n/*";
+        let foot = "*/\nconst y = 2;\n";
+        let mut source = "x".repeat(u32::MAX as usize);
+        source.replace_range(..head.len(), head);
+        source.replace_range(source.len() - foot.len().., foot);
+        assert_eq!(source.len(), u32::MAX as usize);
+
+        let ret = Parser::new(&allocator, &source, source_type).parse();
+        assert!(!ret.panicked);
+        assert!(ret.errors.is_empty());
+        assert_eq!(ret.program.body.len(), 2);
     }
 }
