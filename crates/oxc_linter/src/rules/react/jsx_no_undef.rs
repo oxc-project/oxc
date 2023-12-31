@@ -64,6 +64,9 @@ impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(JSXOpeningElement { name: el_name, .. }) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(el_name) {
+                if ident.name.as_str() == "this" {
+                    return;
+                }
                 let has_binding = ctx
                     .symbols()
                     .get_scope_id_from_name(&ident.name)
@@ -88,7 +91,7 @@ fn test() {
         ("var React, app; React.render(<app.Foo />);", None),
         ("var React, app; React.render(<app.foo.Bar />);", None),
         ("var React; React.render(<Apppp:Foo />);", None),
-        /*(
+        (
             r"
         var React;
         class Hello extends React.Component {
@@ -98,8 +101,8 @@ fn test() {
         }
         ",
             None,
-        ),*/
-        // TODO: globals ("var React; React.render(<Text />);", None),
+        ),
+        // TODO: Text should be declared in globals ("var React; React.render(<Text />);", None),
         (
             r#"
         import Text from "cool-module";
@@ -118,15 +121,8 @@ fn test() {
         ("var React; React.render(<Appp.Foo />);", None),
         ("var React; React.render(<appp.Foo />);", None),
         ("var React; React.render(<appp.foo.Bar />);", None),
-        /* TODO: Something about allow global (r#"
-          const TextWrapper = function (props) {
-            return (
-              <Text />
-            );
-          };
-          export default TextWrapper;
-        "#, None), */
         ("var React; React.render(<Foo />);", None),
+        ("var React; Unknown; React.render(<Unknown />)", None),
     ];
 
     Tester::new(JsxNoUndef::NAME, pass, fail).test_and_snapshot();

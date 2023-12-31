@@ -38,4 +38,11 @@ expression: jsx_no_undef
    ╰────
   help: 'Foo' is not defined.
 
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; Unknown; React.render(<Unknown />)
+   ·                                   ───────
+   ╰────
+  help: 'Unknown' is not defined.
+
 
