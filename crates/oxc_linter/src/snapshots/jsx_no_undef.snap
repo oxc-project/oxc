@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 144
+expression: jsx_no_undef
+---
+  ⚠ eslint-plugin-react(jsx-no-undef):
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; React.render(<App />);
+   ·                          ───
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-react(jsx-no-undef):
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; React.render(<Appp.Foo />);
+   ·                          ────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-react(jsx-no-undef):
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; React.render(<appp.Foo />);
+   ·                          ────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-react(jsx-no-undef):
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; React.render(<appp.foo.Bar />);
+   ·                          ────
+   ╰────
+  help: 
+
+  ⚠ eslint-plugin-react(jsx-no-undef):
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; React.render(<Foo />);
+   ·                          ───
+   ╰────
+  help: 
+
+
