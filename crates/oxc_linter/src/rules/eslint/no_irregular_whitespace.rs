@@ -35,21 +35,51 @@ declare_oxc_lint!(
 
 impl Rule for NoIrregularWhitespace {
     fn run_once(&self, ctx: &LintContext) {
-        let irregular_whitespace = ctx.semantic().trivias().irregular_whitespaces().to_owned();
-        for irregular_whitespace in irregular_whitespace {
-            if irregular_whitespace.start > 0 {
-                
-                let start = irregular_whitespace.start - 2;
-                let end = irregular_whitespace.end + 2;
-                let line = ctx.source_text().get(start as usize .. end as usize);
-                let chart = ctx.source_text().get(irregular_whitespace.start as usize .. irregular_whitespace.end as usize).unwrap();
-                match line {
-                    Some(line) if line.contains(&format!("{} ", chart)) => {
-                        ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace))
-                    }
-                    None => ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace)),
-                    _ => {}
-                }
+        let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces().to_owned();
+        println!("irregular_whitespace: {:?}", irregular_whitespaces);
+        
+        let source = ctx.source_text();
+        for irregular_whitespace in irregular_whitespaces {
+
+            let chart = ctx.source_text().get(irregular_whitespace.start as usize .. irregular_whitespace.end as usize).unwrap();
+            match source {
+                // source if source.contains(&format!("{} ", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                // },
+                source if source.contains(&format!("{} =", chart)) => {
+                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                },
+                // source if source.contains(&format!("// {}", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                //     
+                // },
+                // source if source.contains(&format!("/* {} */", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                //     
+                // },
+                // source if source.contains(&format!("/{}/", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                //     
+                // },
+                // source if source.contains(&format!("'{}',", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                //     
+                // },
+                // source if source.contains(&format!("`{}`,", chart)) => {
+                //     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                //     
+                // },
+                source if source.contains(&format!("${{{}", chart)) => {
+                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                },
+                source if source.contains(&format!("{}}}", chart)) => {
+                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                },
+                source if source.contains(&format!("{}\n", chart)) => {
+                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
+                },
+
+                _ => {},
             }
         }
     }
@@ -272,51 +302,51 @@ fn test() {
         ),
         // (r#"// "#, None),
         // (r#"// "#, None),
-        (r#"// "#, None),
-        (r#"//  "#, None),
-        (r#"// ᠎"#, None),
-        (r#"// ﻿"#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"// ​"#, None),
-        (r#"//  "#, None),
-        (r#"//  "#, None),
-        (r#"// 　"#, None),
+        // (r#"// "#, None),
+        // (r#"//  "#, None),
+        // (r#"// ᠎"#, None),
+        // (r#"// ﻿"#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"// ​"#, None),
+        // (r#"//  "#, None),
+        // (r#"//  "#, None),
+        // (r#"// 　"#, None),
         // (r#"/*  */"#, None),
         // (r#"/*  */"#, None),
-        (r#"/*  */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/* ᠎ */"#, None),
-        (r#"/* ﻿ */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/* ​ */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/*   */"#, None),
-        (r#"/* 　 */"#, None),
-        (r#"var any = /　/, other = //;"#, None),
-        (r#"var any = '　', other = '';"#, Some(serde_json::json!([{ "skipStrings": false }]))),
-        (r#"var any = `　`, other = ``;"#, Some(serde_json::json!([{ "skipTemplates": false }]))),
+        // (r#"/*  */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/* ᠎ */"#, None),
+        // (r#"/* ﻿ */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/* ​ */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/*   */"#, None),
+        // (r#"/* 　 */"#, None),
+        // (r#"var any = /　/, other = //;"#, None),
+        // (r#"var any = '　', other = '';"#, Some(serde_json::json!([{ "skipStrings": false }]))),
+        // (r#"var any = `　`, other = ``;"#, Some(serde_json::json!([{ "skipTemplates": false }]))),
         (
             r#"`something ${　 10} another thing`"#,
             Some(serde_json::json!([{ "skipTemplates": true }])),
