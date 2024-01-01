@@ -19,7 +19,7 @@ oxc_syntax = { workspace = true, features = ["serde"] }
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }
-similar      = "2.3.0"
+similar      = "2.4.0"
 
 ureq = { workspace = true }
 url  = { workspace = true }
