@@ -7,7 +7,7 @@ use oxc_span::Span;
 #[derive(Debug, Error, Diagnostic)]
 #[error("Source length exceeds 4 GiB limit")]
 #[diagnostic()]
-pub struct OverlongSource(#[label] pub Span);
+pub struct OverlongSource;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Flow is not supported")]

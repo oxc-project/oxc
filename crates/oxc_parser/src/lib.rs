@@ -241,7 +241,7 @@ impl<'a> Parser<'a> {
     /// Original parsing error is not real - `Parser::new` substituted "\0" as the source text.
     fn overlong_error(&self) -> Option<Error> {
         if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::OverlongSource(Span::default()).into());
+            return Some(diagnostics::OverlongSource.into());
         }
         None
     }
