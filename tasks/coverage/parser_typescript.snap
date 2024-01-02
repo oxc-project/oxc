@@ -17097,15 +17097,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[conformance/parser/ecmascript5/RegressionTests/parser509669.ts:1:1]
- 1 │ function foo():any {
- 2 │  return ():void {};
-   ·           ▲
- 3 │ }
-   ╰────
-  help: Try insert a semicolon here
-
   × Expected `}` but found `EOF`
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser512084.ts:1:1]
  1 │ class foo {
