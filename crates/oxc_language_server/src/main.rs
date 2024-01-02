@@ -328,6 +328,14 @@ impl Backend {
     }
 
     async fn is_ignored(&self, uri: &Url) -> bool {
+        let Some(Some(root_uri)) = self.root_uri.get() else {
+            return false;
+        };
+
+        // The file is not under current workspace
+        if !uri.path().starts_with(root_uri.path()) {
+            return false;
+        }
         let Some(ref gitignore_globs) = *self.gitignore_glob.lock().await else {
             return false;
         };
