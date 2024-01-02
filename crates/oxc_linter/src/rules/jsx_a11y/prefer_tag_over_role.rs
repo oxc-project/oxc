@@ -13,7 +13,7 @@ use oxc_span::Span;
 use phf::phf_map;
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.")]
+#[error("eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer using semantic HTML tags over `role` attribute.")]
 #[diagnostic(
     severity(warning),
     help("Replace HTML elements with `role` attribute to corresponding semantic HTML tags.")
