@@ -44,10 +44,16 @@ enum Run {
     #[default]
     OnType,
 }
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Options {
     run: Run,
     enable: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self { enable: true, run: Run::default() }
+    }
 }
 
 impl Options {
