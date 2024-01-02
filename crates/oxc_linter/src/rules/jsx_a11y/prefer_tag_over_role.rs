@@ -6,19 +6,22 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer using semantic HTML tags over `role` attribute.")]
+#[error(
+    "eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `{tag}` over `role` attribute `{role}`."
+)]
 #[diagnostic(
     severity(warning),
-    help("Replace HTML elements with `role` attribute to corresponding semantic HTML tags.")
+    help("Replace HTML elements with `role` attribute `{role}` to corresponding semantic HTML tag `{tag}`.")
 )]
 struct PreferTagOverRoleDiagnostic {
+    #[label]
     pub span: Span,
     pub tag: String,
     pub role: String,
