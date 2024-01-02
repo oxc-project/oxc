@@ -132,7 +132,7 @@ impl LanguageServer for Backend {
                     }])
                     .await
                     .ok()
-                    .and_then(|mut config| config.first_mut().map(|first| first.take()))
+                    .and_then(|mut config| config.first_mut().map(serde_json::Value::take))
                     .and_then(|value| serde_json::from_value::<Options>(value).ok())
                 else {
                     error!("Can't fetch `oxc_language_server` configuration");
