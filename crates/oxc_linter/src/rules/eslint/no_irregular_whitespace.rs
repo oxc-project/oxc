@@ -44,19 +44,19 @@ impl Rule for NoIrregularWhitespace {
                 .get(irregular_whitespace.start as usize..irregular_whitespace.end as usize)
                 .unwrap();
             match source {
-                source if source.contains(&format!(r"{} =", chart)) => {
+                source if source.contains(&format!(r"{chart} =")) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
                 }
-                source if source.contains(&format!(r"${{{}", chart)) => {
+                source if source.contains(&format!(r"${{{chart}")) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
                 }
-                source if source.contains(&format!(r"{}}}", chart)) => {
+                source if source.contains(&format!(r"{chart}}}")) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
                 }
-                source if source.contains(&format!(r"{}\n", chart)) => {
+                source if source.contains(&format!(r"{chart}\n")) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
                 }
-                source if source.contains(&format!(r"{}`{}", chart, chart)) => {
+                source if source.contains(&format!(r"{chart}`{chart}")) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
                 }
                 source if source.contains("\u{a0}\u{2002}\u{2003}") => {
