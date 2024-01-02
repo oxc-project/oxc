@@ -19,12 +19,12 @@ use tokio::sync::{Mutex, OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-    CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeConfigurationParams,
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams, MessageType,
-    OneOf, Registration, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
-    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
+    DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
+    DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
+    InitializedParams, MessageType, OneOf, Registration, ServerCapabilities, ServerInfo,
+    TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions,
+    WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -118,14 +118,29 @@ impl LanguageServer for Backend {
         })
     }
 
+    /// Using pull mode to make client implementation easier
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let changed_options = match serde_json::from_value::<Options>(params.settings) {
-            Ok(option) => option,
-            Err(err) => {
-                error!("error parsing settings: {:?}", err);
-                return;
-            }
-        };
+        let changed_options =
+            if let Ok(options) = serde_json::from_value::<Options>(params.settings) {
+                options
+            } else {
+                let Some(options) = self
+                    .client
+                    .configuration(vec![ConfigurationItem {
+                        scope_uri: None,
+                        section: Some("oxc_language_server".into()),
+                    }])
+                    .await
+                    .ok()
+                    .and_then(|mut config| config.first_mut().map(|first| first.take()))
+                    .and_then(|value| serde_json::from_value::<Options>(value).ok())
+                else {
+                    error!("Can't fetch `oxc_language_server` configuration");
+                    return;
+                };
+                options
+            };
+
         debug!("{:?}", &changed_options.get_lint_level());
         if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
             // clear all exists diagnostics when linter is disabled
