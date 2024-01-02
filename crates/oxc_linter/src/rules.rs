@@ -141,6 +141,7 @@ mod react {
     pub mod jsx_key;
     pub mod jsx_no_comment_text_nodes;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
@@ -244,10 +245,12 @@ mod jsx_a11y {
     pub mod img_redundant_alt;
     pub mod lang;
     pub mod media_has_caption;
+    pub mod mouse_events_have_key_events;
     pub mod no_access_key;
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod prefer_tag_over_role;
     pub mod scope;
     pub mod tab_index_no_positive;
 }
@@ -453,6 +456,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_comment_text_nodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
+    react::jsx_no_undef,
     react::react_in_jsx_scope,
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
@@ -478,9 +482,11 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
     jsx_a11y::media_has_caption,
+    jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
+    jsx_a11y::prefer_tag_over_role,
     jsx_a11y::scope,
     jsx_a11y::tab_index_no_positive,
     jsx_a11y::aria_role,

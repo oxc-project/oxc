@@ -11,6 +11,7 @@ mod disable_directives;
 mod fixer;
 mod globals;
 mod options;
+pub mod partial_loader;
 pub mod rule;
 mod rule_timer;
 mod rules;

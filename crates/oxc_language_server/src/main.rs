@@ -44,10 +44,16 @@ enum Run {
     #[default]
     OnType,
 }
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Options {
     run: Run,
     enable: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self { enable: true, run: Run::default() }
+    }
 }
 
 impl Options {
@@ -328,6 +334,14 @@ impl Backend {
     }
 
     async fn is_ignored(&self, uri: &Url) -> bool {
+        let Some(Some(root_uri)) = self.root_uri.get() else {
+            return false;
+        };
+
+        // The file is not under current workspace
+        if !uri.path().starts_with(root_uri.path()) {
+            return false;
+        }
         let Some(ref gitignore_globs) = *self.gitignore_glob.lock().await else {
             return false;
         };

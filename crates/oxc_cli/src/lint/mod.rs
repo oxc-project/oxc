@@ -1,11 +1,14 @@
 use std::{env, io::BufWriter, path::Path, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
-use oxc_linter::{LintOptions, LintService, Linter};
+use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
+use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    codeowners, command::LintOptions as CliLintOptions, walk::Walk, CliRunResult, CodeownerOptions,
-    LintResult, Runner,
+    codeowners,
+    command::LintOptions as CliLintOptions,
+    walk::{Extensions, Walk},
+    CliRunResult, CodeownerOptions, LintResult, Runner,
 };
 
 pub struct LintRunner {
@@ -85,7 +88,14 @@ impl Runner for LintRunner {
 
         let now = std::time::Instant::now();
 
-        let paths = Walk::new(&paths, &ignore_options).paths();
+        let extensions = VALID_EXTENSIONS
+            .iter()
+            .chain(LINT_PARTIAL_LOADER_EXT.iter())
+            .copied()
+            .collect::<Vec<&'static str>>();
+
+        let paths =
+            Walk::new(&paths, &ignore_options).with_extensions(Extensions(extensions)).paths();
 
         let paths = match Self::apply_codeowners_file(&codeowner_options, paths) {
             Ok(new_paths) => new_paths,
@@ -221,24 +231,24 @@ mod test {
         let args = &[];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_files, 5);
+        assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]
     fn dir() {
-        let args = &["fixtures"];
+        let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 2);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_files, 3);
+        assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]
     fn file() {
-        let args = &["fixtures/debugger.js"];
+        let args = &["fixtures/linter/debugger.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
@@ -247,7 +257,7 @@ mod test {
 
     #[test]
     fn multi_files() {
-        let args = &["fixtures/debugger.js", "fixtures/nan.js"];
+        let args = &["fixtures/linter/debugger.js", "fixtures/linter/nan.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 2);
         assert_eq!(result.number_of_warnings, 2);
@@ -265,7 +275,7 @@ mod test {
 
     #[test]
     fn ignore_pattern() {
-        let args = &["--ignore-pattern", "**/*.js", "fixtures"];
+        let args = &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -283,10 +293,19 @@ mod test {
 
     #[test]
     fn filter_allow_one() {
-        let args = &["-D", "correctness", "-A", "no-debugger", "fixtures/debugger.js"];
+        let args = &["-D", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn test_lint_vue_file() {
+        let args = &["fixtures/linter/debugger.vue"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 }

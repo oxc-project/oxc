@@ -68,15 +68,26 @@ impl Rule for MediaHasCaption {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut config = MediaHasCaptionConfig::default();
 
-        if let Some(rule_config) = value.as_object() {
-            if let Some(audio) = rule_config.get("audio").and_then(|v| v.as_array()) {
-                config.audio.extend(audio.iter().filter_map(|v| v.as_str().map(String::from)));
-            }
-            if let Some(video) = rule_config.get("video").and_then(|v| v.as_array()) {
-                config.video.extend(video.iter().filter_map(|v| v.as_str().map(String::from)));
-            }
-            if let Some(track) = rule_config.get("track").and_then(|v| v.as_array()) {
-                config.track.extend(track.iter().filter_map(|v| v.as_str().map(String::from)));
+        if let Some(arr) = value.as_array() {
+            for v in arr {
+                if let serde_json::Value::Object(rule_config) = v {
+                    if let Some(audio) = rule_config.get("audio").and_then(|v| v.as_array()) {
+                        config
+                            .audio
+                            .extend(audio.iter().filter_map(|v| v.as_str().map(String::from)));
+                    }
+                    if let Some(video) = rule_config.get("video").and_then(|v| v.as_array()) {
+                        config
+                            .video
+                            .extend(video.iter().filter_map(|v| v.as_str().map(String::from)));
+                    }
+                    if let Some(track) = rule_config.get("track").and_then(|v| v.as_array()) {
+                        config
+                            .track
+                            .extend(track.iter().filter_map(|v| v.as_str().map(String::from)));
+                    }
+                    break;
+                }
             }
         }
 
@@ -168,11 +179,11 @@ fn test() {
     use crate::tester::Tester;
 
     fn config() -> serde_json::Value {
-        serde_json::json!({
+        serde_json::json!([{
             "audio": [ "Audio" ],
             "video": [ "Video" ],
             "track": [ "Track" ],
-        })
+        }])
     }
 
     fn settings() -> serde_json::Value {
