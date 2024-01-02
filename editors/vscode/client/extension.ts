@@ -75,7 +75,9 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      let enabled = workspace.getConfiguration("oxc_language_server").get("enable");
+      let enabled = workspace
+        .getConfiguration("oxc_language_server")
+        .get("enable");
       let nextState = !enabled;
       workspace
         .getConfiguration("oxc_language_server")
@@ -98,7 +100,6 @@ export async function activate(context: ExtensionContext) {
   const command =
     process.env.SERVER_PATH_DEV ??
     join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
-    console.log(command)
   const run: Executable = {
     command: command!,
     options: {
@@ -125,7 +126,7 @@ export async function activate(context: ExtensionContext) {
       "javascript",
       "typescriptreact",
       "javascriptreact",
-      "vue"
+      "vue",
     ].map((lang) => ({
       language: lang,
       scheme: "file",
@@ -149,8 +150,7 @@ export async function activate(context: ExtensionContext) {
     clientOptions,
   );
   workspace.onDidChangeConfiguration((e) => {
-    console.log(e)
-    let isAffected = e.affectsConfiguration("oxc_language_server")
+    let isAffected = e.affectsConfiguration("oxc_language_server");
     if (!isAffected) {
       return;
     }
@@ -158,7 +158,7 @@ export async function activate(context: ExtensionContext) {
       JSON.stringify(workspace.getConfiguration("oxc_language_server")),
     );
     updateStatsBar(settings.enable);
-    client.sendNotification("workspace/didChangeConfiguration", {settings});
+    client.sendNotification("workspace/didChangeConfiguration", { settings });
   });
 
   function updateStatsBar(enable: boolean) {
@@ -176,8 +176,9 @@ export async function activate(context: ExtensionContext) {
         ? "statusBarItem.activeBackground"
         : "statusBarItem.errorBackground",
     );
-    myStatusBarItem.text = `oxc: ${enable ? "$(check-all)" : "$(circle-slash)"}`;
-
+    myStatusBarItem.text = `oxc: ${
+      enable ? "$(check-all)" : "$(circle-slash)"
+    }`;
 
     myStatusBarItem.backgroundColor = bgColor;
   }

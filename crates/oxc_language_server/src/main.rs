@@ -118,12 +118,12 @@ impl LanguageServer for Backend {
         })
     }
 
-    /// Using pull mode to make client implementation easier
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         let changed_options =
             if let Ok(options) = serde_json::from_value::<Options>(params.settings) {
                 options
             } else {
+                // Fallback if some client didn't took changed configuration in params of `workspace/configuration`
                 let Some(options) = self
                     .client
                     .configuration(vec![ConfigurationItem {
