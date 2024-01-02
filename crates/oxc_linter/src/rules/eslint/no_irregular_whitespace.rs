@@ -1,15 +1,15 @@
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-irregular-whitespace):")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning), help("Try to remove the irregular whitespace"))]
 struct NoIrregularWhitespaceDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
