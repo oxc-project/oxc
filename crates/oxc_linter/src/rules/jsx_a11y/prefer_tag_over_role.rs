@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
     AstKind,
@@ -11,6 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::phf_map;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y/prefer-tag-over-role: Prefer using semantic HTML tags over `role` attribute.")]
@@ -46,24 +46,10 @@ declare_oxc_lint!(
 );
 
 impl PreferTagOverRole {
-    fn get_role_to_tag_map(&self) -> HashMap<&str, &str> {
-        [
-            ("checkbox", "input"),
-            ("button", "button"),
-            ("heading", "h1,h2,h3,h4,h5,h6"),
-            ("link", "a,area"),
-            ("rowgroup", "tbody,tfoot,thead"),
-            ("banner", "header"),
-        ]
-        .iter()
-        .cloned()
-        .collect()
-    }
-
     fn check_roles<'a>(
         &self,
         role_prop: &JSXAttributeItem<'a>,
-        role_to_tag: &HashMap<&str, &str>,
+        role_to_tag: &phf::Map<&str, &str>,
         jsx_name: &JSXElementName<'a>,
         ctx: &LintContext<'a>,
     ) {
@@ -80,7 +66,7 @@ impl PreferTagOverRole {
     fn check_role<'a>(
         &self,
         role: &str,
-        role_to_tag: &HashMap<&str, &str>,
+        role_to_tag: &phf::Map<&str, &str>,
         jsx_name: &JSXElementName<'a>,
         span: Span,
         ctx: &LintContext<'a>,
@@ -100,12 +86,22 @@ impl PreferTagOverRole {
     }
 }
 
+static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|| {
+    phf_map! {
+        "checkbox" => "input",
+        "button" => "button",
+        "heading" => "h1,h2,h3,h4,h5,h6",
+        "link" => "a,area",
+        "rowgroup" => "tbody,tfoot,thead",
+        "banner" => "header",
+    }
+});
+
 impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let role_to_tag = self.get_role_to_tag_map();
             if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
-                self.check_roles(&role_prop, &role_to_tag, &jsx_el.name, ctx);
+                self.check_roles(&role_prop, &ROLE_TO_TAG_MAP, &jsx_el.name, ctx);
             }
         }
     }
