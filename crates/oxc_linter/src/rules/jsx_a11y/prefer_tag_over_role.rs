@@ -43,7 +43,7 @@ declare_oxc_lint!(
     ///
     /// // Good
     /// <button />
-    ///
+    /// ```
     PreferTagOverRole,
     correctness
 );
