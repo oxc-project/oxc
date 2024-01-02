@@ -39,27 +39,30 @@ impl Rule for NoIrregularWhitespace {
         let source = ctx.source_text();
 
         for irregular_whitespace in irregular_whitespaces {
-            let chart = ctx.source_text().get(irregular_whitespace.start as usize .. irregular_whitespace.end as usize).unwrap();
+            let chart = ctx
+                .source_text()
+                .get(irregular_whitespace.start as usize..irregular_whitespace.end as usize)
+                .unwrap();
             match source {
                 source if source.contains(&format!(r"{} =", chart)) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
+                }
                 source if source.contains(&format!(r"${{{}", chart)) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
+                }
                 source if source.contains(&format!(r"{}}}", chart)) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
+                }
                 source if source.contains(&format!(r"{}\n", chart)) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
+                }
                 source if source.contains(&format!(r"{}`{}", chart, chart)) => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
+                }
                 source if source.contains("\u{a0}\u{2002}\u{2003}") => {
                     ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
@@ -272,7 +275,7 @@ fn test() {
         (r#"var any 　 = 'thing';"#, None),
         // (
         //     r#"var a = 'b', c = 'd',
-		// 	e = 'f' "#,
+        // 	e = 'f' "#,
         //     None,
         // ),
         (
@@ -378,20 +381,20 @@ fn test() {
         // (r#""#, None),
         (r#"   "#, None),
         // (
-        //     r#"var foo = 
-		// 	bar;"#,
+        //     r#"var foo =
+        // 	bar;"#,
         //     None,
         // ),
         // (
-        //     r#"var foo =
-		// 	bar;"#,
+        //     r#"var foo =
+        // 	bar;"#,
         //     None,
         // ),
         // (
-        //     r#"var foo = 
-		// 	bar
-		// 	;
-		// 	"#,
+        //     r#"var foo =
+        // 	bar
+        // 	;
+        // 	"#,
         //     None,
         // ),
         // (r#"var foo =  bar;"#, None),
@@ -401,8 +404,8 @@ fn test() {
         // (r#"foo  "#, None),
         // (r#"foo  "#, None),
         // (
-        //     r#"foo 
-		// 	 "#,
+        //     r#"foo
+        // 	 "#,
         //     None,
         // ),
         // (r#"foo "#, None),
