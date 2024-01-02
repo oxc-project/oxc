@@ -50,7 +50,6 @@ declare_oxc_lint!(
 
 impl PreferTagOverRole {
     fn check_roles<'a>(
-        &self,
         role_prop: &JSXAttributeItem<'a>,
         role_to_tag: &phf::Map<&str, &str>,
         jsx_name: &JSXElementName<'a>,
@@ -60,14 +59,13 @@ impl PreferTagOverRole {
             if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
                 let roles = role_values.value.split_whitespace();
                 for role in roles {
-                    self.check_role(role, role_to_tag, jsx_name, attr.span, ctx);
+                    Self::check_role(role, role_to_tag, jsx_name, attr.span, ctx);
                 }
             }
         }
     }
 
     fn check_role<'a>(
-        &self,
         role: &str,
         role_to_tag: &phf::Map<&str, &str>,
         jsx_name: &JSXElementName<'a>,
@@ -79,7 +77,7 @@ impl PreferTagOverRole {
                 JSXElementName::Identifier(id) if id.name != *tag => {
                     ctx.diagnostic(PreferTagOverRoleDiagnostic {
                         span,
-                        tag: tag.to_string(),
+                        tag: (*tag).to_string(),
                         role: role.to_string(),
                     });
                 }
@@ -104,12 +102,11 @@ impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
-                self.check_roles(&role_prop, &ROLE_TO_TAG_MAP, &jsx_el.name, ctx);
+                Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &jsx_el.name, ctx);
             }
         }
     }
 }
-
 #[test]
 fn test() {
     use crate::tester::Tester;
