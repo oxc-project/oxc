@@ -331,16 +331,15 @@ impl Backend {
         let Some(Some(root_uri)) = self.root_uri.get() else {
             return false;
         };
+
+        // The file is not under current workspace
+        if !uri.path().starts_with(root_uri.path()) {
+            return false;
+        }
         let Some(ref gitignore_globs) = *self.gitignore_glob.lock().await else {
             return false;
         };
-
-        let root_path = PathBuf::from(root_uri.path());
         let path = PathBuf::from(uri.path());
-        // The file is not under current workspace
-        if !path.starts_with(root_path) {
-            return false;
-        }
         gitignore_globs.matched_path_or_any_parents(&path, path.is_dir()).is_ignore()
     }
 }
