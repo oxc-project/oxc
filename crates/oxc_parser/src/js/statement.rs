@@ -44,13 +44,16 @@ impl<'a> Parser<'a> {
                 Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
                     let stmt = self.parse_import_declaration()?;
                     statements.push(stmt);
+                    expecting_directives = false;
                 }
                 Kind::Export => {
                     let stmt = self.parse_export_declaration()?;
                     statements.push(stmt);
+                    expecting_directives = false;
                 }
                 Kind::At => {
                     self.eat_decorators()?;
+                    expecting_directives = false;
                     continue;
                 }
                 _ => {
