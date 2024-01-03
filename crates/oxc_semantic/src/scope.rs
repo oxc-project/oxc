@@ -67,6 +67,10 @@ impl ScopeTree {
         list.into_iter()
     }
 
+    pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
+        self.child_ids.get(&scope_id)
+    }
+
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }

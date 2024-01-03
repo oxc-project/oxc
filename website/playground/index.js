@@ -519,6 +519,12 @@ class Playground {
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
         break;
+      case "scope":
+        this.runOptions.scope = true;
+        this.run();
+        this.runOptions.scope = false
+        text = this.oxc.scopeText;
+        break;
       case "codegen":
         this.run();
         text = this.oxc.codegenText;
@@ -791,6 +797,10 @@ async function main() {
 
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
+  };
+
+  document.getElementById("scope").onclick = () => {
+    playground.updateView("scope");
   };
 
   document.getElementById("codegen").onclick = () => {

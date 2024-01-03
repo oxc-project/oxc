@@ -9,7 +9,7 @@ use oxc::{
     formatter::{Formatter, FormatterOptions},
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{Parser, ParserReturn},
-    semantic::{SemanticBuilder, SemanticBuilderReturn},
+    semantic::{ScopeId, Semantic, SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{TransformOptions, TransformTarget, Transformer},
 };
@@ -45,6 +45,7 @@ pub struct Oxc {
     ast: JsValue,
     ir: JsValue,
 
+    scope_text: String,
     codegen_text: String,
     formatted_text: String,
     prettier_formatted_text: String,
@@ -112,6 +113,11 @@ impl Oxc {
     #[wasm_bindgen(getter = codegenText)]
     pub fn codegen_text(&self) -> String {
         self.codegen_text.clone()
+    }
+
+    #[wasm_bindgen(getter = scopeText)]
+    pub fn scope_text(&self) -> String {
+        self.scope_text.clone()
     }
 
     /// Returns Array of String
@@ -191,14 +197,16 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
+        let semantic_builder = SemanticBuilder::new(source_text, source_type);
+
         if run_options.syntax() && !run_options.lint() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            let semantic_ret = semantic_builder
                 .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
             self.save_diagnostics(semantic_ret.errors);
         } else if run_options.lint() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            let semantic_ret = semantic_builder
                 .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
@@ -266,6 +274,11 @@ impl Oxc {
             }
         }
 
+        if run_options.scope() {
+            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            self.scope_text = Self::get_scope_text(&semantic);
+        }
+
         let program = allocator.alloc(program);
 
         if minifier_options.compress() || minifier_options.mangle() {
@@ -287,6 +300,45 @@ impl Oxc {
         };
 
         Ok(())
+    }
+
+    fn get_scope_text(semantic: &Semantic) -> String {
+        fn write_scope_text(
+            semantic: &Semantic,
+            scope_text: &mut String,
+            depth: usize,
+            scope_ids: &Vec<ScopeId>,
+        ) {
+            let space = " ".repeat(depth * 2);
+
+            for scope_id in scope_ids {
+                let flag = semantic.scopes().get_flags(*scope_id);
+                let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
+
+                scope_text.push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", *scope_id + 1));
+                let bindings = semantic.scopes().get_bindings(*scope_id);
+                let binding_space = " ".repeat((depth + 1) * 2);
+                if !bindings.is_empty() {
+                    scope_text.push_str(&format!("{binding_space}Bindings: {{"));
+                }
+                bindings.iter().for_each(|(name, symbol_id)| {
+                    let symbol_flag = semantic.symbols().get_flag(*symbol_id);
+                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flag:?})",));
+                });
+                if !bindings.is_empty() {
+                    scope_text.push_str(&format!("\n{binding_space}}}\n"));
+                }
+
+                if let Some(next_scope_ids) = next_scope_ids {
+                    write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
+                }
+                scope_text.push_str(&format!("{space}}}\n"));
+            }
+        }
+
+        let mut scope_text = String::default();
+        write_scope_text(semantic, &mut scope_text, 0, &vec![semantic.scopes().root_scope_id()]);
+        scope_text
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
