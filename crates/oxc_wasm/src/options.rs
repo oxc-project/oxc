@@ -10,6 +10,7 @@ pub struct OxcRunOptions {
     prettier_ir: bool,
     transform: bool,
     type_check: bool,
+    scope: bool,
 }
 
 #[wasm_bindgen]
@@ -87,6 +88,16 @@ impl OxcRunOptions {
     #[wasm_bindgen(setter)]
     pub fn set_type_check(&mut self, yes: bool) {
         self.type_check = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn scope(self) -> bool {
+        self.scope
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_scope(&mut self, yes: bool) {
+        self.scope = yes;
     }
 }
 
