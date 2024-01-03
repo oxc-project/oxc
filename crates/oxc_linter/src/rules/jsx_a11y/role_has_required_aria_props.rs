@@ -1,0 +1,154 @@
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use once_cell::sync::Lazy;
+use oxc_ast::{
+    ast::{JSXAttributeItem, JSXAttributeValue},
+    AstKind,
+};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::{self, Error},
+};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use phf::phf_map;
+
+#[derive(Debug, Error, Diagnostic)]
+#[error(
+    "eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."
+)]
+#[diagnostic(
+    severity(warning),
+    help("Add missing aria props `{props}` to the element with `{role}` role.")
+)]
+struct RoleHasRequiredAriaPropsDiagnostic {
+    #[label]
+    pub span: Span,
+    pub role: String,
+    pub props: String,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct RoleHasRequiredAriaProps;
+declare_oxc_lint!(
+    /// ### What it does
+    /// Enforces that elements with ARIA roles must have all required attributes for that role.
+    ///
+    /// ### Why is this bad?
+    /// Certain ARIA roles require specific attributes to express necessary semantics for assistive technology.
+    ///
+    /// ### Example
+    /// ```javascript
+    /// // Bad
+    /// <div role="checkbox" />
+    ///
+    /// // Good
+    /// <div role="checkbox" aria-checked="false" />
+    /// ````
+    RoleHasRequiredAriaProps,
+    correctness
+);
+
+static ROLE_TO_REQUIRED_ARIA_PROPS: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|| {
+    phf_map! {
+        "checkbox" => "aria-checked",
+        "radio" => "aria-checked",
+        "combobox" => "aria-controls, aria-expanded",
+        "tab" => "aria-selected",
+        "slider" => "aria-valuemax, aria-valuemin, aria-valuenow",
+        "scrollbar" => "aria-valuemax, aria-valuemin, aria-valuenow, aria-orientation, aria-controls",
+        "heading" => "aria-level",
+        "option" => "aria-selected",
+    }
+});
+
+impl Rule for RoleHasRequiredAriaProps {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
+            let role_prop = match has_jsx_prop_lowercase(jsx_el, "role") {
+                Some(role_prop) => role_prop,
+                None => return,
+            };
+            let attr = match role_prop {
+                JSXAttributeItem::Attribute(attr) => attr,
+                JSXAttributeItem::SpreadAttribute(_) => return,
+            };
+            let role_values = match &attr.value {
+                Some(JSXAttributeValue::StringLiteral(role_values)) => role_values,
+                _ => return,
+            };
+            let roles = role_values.value.split_whitespace();
+            for role in roles {
+                let required_props = match ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
+                    Some(required_props) => required_props,
+                    None => continue,
+                };
+                for prop in required_props.split(',').map(str::trim) {
+                    if has_jsx_prop_lowercase(jsx_el, prop).is_none() {
+                        ctx.diagnostic(RoleHasRequiredAriaPropsDiagnostic {
+                            span: attr.span,
+                            role: role.into(),
+                            props: prop.into(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test() {
+    use crate::rules::RoleHasRequiredAriaProps;
+    use crate::tester::Tester;
+
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "jsx-a11y": {
+                "components": {
+                    "MyComponent": "div",
+                }
+            }
+        })
+    }
+
+    let pass = vec![
+        ("<Bar baz />", None, None),
+        ("<div />", None, None),
+        ("<div></div>", None, None),
+        ("<div role={role} />", None, None),
+        ("<div role={role || 'button'} />", None, None),
+        ("<div role={role || 'foobar'} />", None, None),
+        ("<div role='row' />", None, None),
+        (
+            "<span role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0'></span>",
+            None,
+            None,
+        ),
+        ("<input role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' {...props} type='checkbox' />", None, None),
+        ("<input type='checkbox' role='switch' />", None, None),
+        ("<MyComponent role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' />", None, Some(settings())),
+    ];
+
+    let fail = vec![
+        ("<div role='slider' />", None, None),
+        ("<div role='slider' aria-valuemax />", None, None),
+        ("<div role='slider' aria-valuemax aria-valuemin />", None, None),
+        ("<div role='checkbox' />", None, None),
+        ("<div role='checkbox' checked />", None, None),
+        ("<div role='checkbox' aria-chcked />", None, None),
+        ("<span role='checkbox' aria-labelledby='foo' tabindex='0'></span>", None, None),
+        ("<div role='combobox' />", None, None),
+        ("<div role='combobox' expanded />", None, None),
+        ("<div role='combobox' aria-expandd />", None, None),
+        ("<div role='scrollbar' />", None, None),
+        ("<div role='scrollbar' aria-valuemax />", None, None),
+        ("<div role='scrollbar' aria-valuemax aria-valuemin />", None, None),
+        ("<div role='scrollbar' aria-valuemax aria-valuenow />", None, None),
+        ("<div role='scrollbar' aria-valuemin aria-valuenow />", None, None),
+        ("<div role='heading' />", None, None),
+        ("<div role='option' />", None, None),
+        ("<MyComponent role='combobox' />", None, Some(settings())),
+    ];
+
+    Tester::new_with_settings(RoleHasRequiredAriaProps::NAME, pass, fail).test_and_snapshot();
+}
