@@ -14096,9 +14096,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/function/param-duplicated-strict-3.js:21:1]
  21 │ 
  22 │ (function (param, param, param) { });
-    ·                   ──┬──  ──┬──
-    ·                     │      ╰── It can not be redeclared here
-    ·                     ╰── `param` has already been declared here
+    ·            ──┬──         ──┬──
+    ·              │             ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
     ╰────
 
   × Identifier `param` has already been declared
@@ -14132,9 +14132,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/function/param-duplicated-strict-body-3.js:20:1]
  20 │ 
  21 │ (function (param, param, param) { 'use strict'; });
-    ·                   ──┬──  ──┬──
-    ·                     │      ╰── It can not be redeclared here
-    ·                     ╰── `param` has already been declared here
+    ·            ──┬──         ──┬──
+    ·              │             ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -31656,9 +31656,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/function/param-duplicated-strict-3.js:21:1]
  21 │ 
  22 │ function _13_1_7_fun(param, param, param) { }
-    ·                             ──┬──  ──┬──
-    ·                               │      ╰── It can not be redeclared here
-    ·                               ╰── `param` has already been declared here
+    ·                      ──┬──         ──┬──
+    ·                        │             ╰── It can not be redeclared here
+    ·                        ╰── `param` has already been declared here
     ╰────
 
   × Identifier `param` has already been declared
@@ -31692,9 +31692,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/function/param-duplicated-strict-body-3.js:21:1]
  21 │ 
  22 │ function _13_1_28_fun(param, param, param) { 'use strict'; }
-    ·                              ──┬──  ──┬──
-    ·                                │      ╰── It can not be redeclared here
-    ·                                ╰── `param` has already been declared here
+    ·                       ──┬──         ──┬──
+    ·                         │             ╰── It can not be redeclared here
+    ·                         ╰── `param` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode

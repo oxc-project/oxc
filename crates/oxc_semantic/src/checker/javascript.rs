@@ -1,7 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
-    syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
+    syntax_directed_operations::{IsSimpleParameterList, PropName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -15,7 +15,6 @@ use oxc_syntax::{
     NumberBase,
 };
 use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::Redeclaration, scope::ScopeFlags, AstNode};
 
@@ -155,15 +154,6 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
     {
         ctx.error(DuplicateExport("default".into(), *default_span, *span));
     }
-}
-
-fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
-    let mut idents: FxHashMap<Atom, Span> = FxHashMap::default();
-    bound_names.bound_names(&mut |ident| {
-        if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
-            ctx.error(Redeclaration(ident.name.clone(), old_span, ident.span));
-        }
-    });
 }
 
 #[derive(Debug, Error, Diagnostic)]
@@ -936,20 +926,6 @@ fn check_formal_parameters<'a>(
             ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
         }
     }
-
-    if params.is_empty() {
-        return;
-    }
-
-    // Note: all other cases forbid duplicate parameter names.
-    if params.kind == FormalParameterKind::FormalParameter
-        && !ctx.strict_mode()
-        && params.is_simple_parameter_list()
-    {
-        return;
-    }
-
-    check_duplicate_bound_names(params, ctx);
 }
 
 fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
