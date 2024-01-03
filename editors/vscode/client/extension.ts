@@ -18,10 +18,10 @@ import {
 
 import { join } from "node:path";
 
-const languageClientId = "oxc-client";
+const languageClientId = "oxc-vscode";
 const languageClientName = "oxc";
-const outputChannelName = "oxc";
-const traceOutputChannelName = "oxc.trace";
+const outputChannelName = "oxc_language_server";
+const traceOutputChannelName = "oxc_language_server.trace";
 
 const enum OxcCommands {
   RestartServer = "oxc.restartServer",
@@ -75,10 +75,12 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      let enabled = workspace.getConfiguration("oxc-client").get("enable");
+      let enabled = workspace
+        .getConfiguration("oxc_language_server")
+        .get("enable");
       let nextState = !enabled;
       workspace
-        .getConfiguration("oxc-client")
+        .getConfiguration("oxc_language_server")
         .update("enable", nextState, ConfigurationTarget.Global);
     },
   );
@@ -98,7 +100,6 @@ export async function activate(context: ExtensionContext) {
   const command =
     process.env.SERVER_PATH_DEV ??
     join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
-
   const run: Executable = {
     command: command!,
     options: {
@@ -116,7 +117,7 @@ export async function activate(context: ExtensionContext) {
   // Otherwise the run options are used
   // Options to control the language client
   let clientConfig: any = JSON.parse(
-    JSON.stringify(workspace.getConfiguration("oxc-client")),
+    JSON.stringify(workspace.getConfiguration("oxc_language_server")),
   );
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
@@ -125,7 +126,7 @@ export async function activate(context: ExtensionContext) {
       "javascript",
       "typescriptreact",
       "javascriptreact",
-      "vue"
+      "vue",
     ].map((lang) => ({
       language: lang,
       scheme: "file",
@@ -149,13 +150,15 @@ export async function activate(context: ExtensionContext) {
     clientOptions,
   );
   workspace.onDidChangeConfiguration((e) => {
+    let isAffected = e.affectsConfiguration("oxc_language_server");
+    if (!isAffected) {
+      return;
+    }
     let settings: any = JSON.parse(
-      JSON.stringify(workspace.getConfiguration("oxc-client")),
+      JSON.stringify(workspace.getConfiguration("oxc_language_server")),
     );
     updateStatsBar(settings.enable);
-    client.sendNotification("workspace/didChangeConfiguration", {
-      settings,
-    });
+    client.sendNotification("workspace/didChangeConfiguration", { settings });
   });
 
   function updateStatsBar(enable: boolean) {
@@ -173,8 +176,9 @@ export async function activate(context: ExtensionContext) {
         ? "statusBarItem.activeBackground"
         : "statusBarItem.errorBackground",
     );
-    myStatusBarItem.text = `oxc: ${enable ? "$(check-all)" : "$(circle-slash)"}`;
-
+    myStatusBarItem.text = `oxc: ${
+      enable ? "$(check-all)" : "$(circle-slash)"
+    }`;
 
     myStatusBarItem.backgroundColor = bgColor;
   }
