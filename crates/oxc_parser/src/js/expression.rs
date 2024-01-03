@@ -202,13 +202,14 @@ impl<'a> Parser<'a> {
         let mut expressions = list.elements;
         let paren_span = self.end_span(span);
 
+        if expressions.is_empty() {
+            return Err(diagnostics::EmptyParenthesizedExpression(paren_span).into());
+        }
+
         // ParenthesizedExpression is from acorn --preserveParens
         let expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
-            if expressions.is_empty() {
-                self.error(diagnostics::EmptyParenthesizedExpression(paren_span));
-            }
             self.ast.sequence_expression(
                 Span::new(paren_span.start + 1, paren_span.end - 1),
                 expressions,

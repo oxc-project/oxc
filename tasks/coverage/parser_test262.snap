@@ -9679,15 +9679,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected `{` but found `=>`
-    ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
- 22 │ 
- 23 │ var C = class extends () => {} {
-    ·                          ─┬
-    ·                           ╰── `{` expected
- 24 │   
-    ╰────
-
-  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-async-arrow-heritage.js:22:1]
  22 │ 
  23 │ var C = class extends async () => {} {
@@ -14743,15 +14734,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·               ──
  25 │   }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/in/private-field-invalid-rhs.js:23:1]
- 23 │   constructor() {
- 24 │     #field in () => {};
-    ·                 ─
- 25 │   }
-    ╰────
-  help: Try insert a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[language/expressions/in/private-field-rhs-yield-absent.js:30:1]
@@ -25170,15 +25152,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │ 
  23 │ class C extends () => {} {
     ·                 ──
- 24 │   
-    ╰────
-
-  × Expected `{` but found `=>`
-    ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
- 22 │ 
- 23 │ class C extends () => {} {
-    ·                    ─┬
-    ·                     ╰── `{` expected
  24 │   
     ╰────
 
