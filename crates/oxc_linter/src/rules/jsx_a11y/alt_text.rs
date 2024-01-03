@@ -295,9 +295,9 @@ fn object_rule<'a>(
 ) {
     let has_aria_label =
         has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby =
+    let has_aria_labelledby =
         has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
-    let has_label = has_aria_label || has_aria_labeledby;
+    let has_label = has_aria_label || has_aria_labelledby;
     let has_title_attr = has_jsx_prop_lowercase(node, "title")
         .and_then(get_literal_prop_value)
         .map_or(false, |v| !v.is_empty());
@@ -311,9 +311,9 @@ fn object_rule<'a>(
 fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
         has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby =
+    let has_aria_labelledby =
         has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
-    let has_label = has_aria_label || has_aria_labeledby;
+    let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;
     }
@@ -332,9 +332,9 @@ fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
 fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
         has_jsx_prop_lowercase(node, "aria-label").map_or(false, aria_label_has_value);
-    let has_aria_labeledby =
+    let has_aria_labelledby =
         has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
-    let has_label = has_aria_label || has_aria_labeledby;
+    let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;
     }
