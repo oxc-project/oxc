@@ -300,6 +300,22 @@ mod test {
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
     }
 
+    #[test]
+    fn directives() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let sources = [
+            ("import x from 'foo'; 'use strict';", 2),
+            ("export {x} from 'foo'; 'use strict';", 2),
+            ("@decorator 'use strict';", 1),
+        ];
+        for (source, body_length) in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.program.directives.is_empty(), "{source}");
+            assert_eq!(ret.program.body.len(), body_length, "{source}");
+        }
+    }
+
     // Source with length u32::MAX + 1 fails to parse
     #[test]
     fn overlong_source() {
