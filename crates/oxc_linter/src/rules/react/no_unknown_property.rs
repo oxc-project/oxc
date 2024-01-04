@@ -10,7 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use regex::{Regex, RegexBuilder};
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
@@ -25,8 +25,8 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 enum NoUnknownPropertyDiagnostic {
     #[error("eslint-plugin-react(no-unknown-property): Invalid property found")]
-    #[diagnostic(severity(warning), help("This property is only allowed on: {2}"))]
-    InvalidPropOnTag(#[label("tag")] Span, #[label("property")] Span, String),
+    #[diagnostic(severity(warning), help("Property '{1}' is only allowed on: {2}"))]
+    InvalidPropOnTag(#[label] Span, String, String),
     #[error("eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element")]
     #[diagnostic(severity(warning), help("Use '{1}' instead"))]
     DataLowercaseRequired(#[label] Span, String),
@@ -424,11 +424,9 @@ lazy_static! {
 /// then the attribute is a valid data attribute.
 ///
 fn is_valid_data_attr(name: &str) -> bool {
-    static DATA_XML_REGEX: Lazy<Regex> =
-        Lazy::new(|| RegexBuilder::new(r"^data-xml").case_insensitive(true).build().unwrap());
     static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
 
-    !DATA_XML_REGEX.is_match(name) && DATA_ATTR_REGEX.is_match(name)
+    !name.to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
 }
 
 fn normalize_attribute_case(name: &str) -> &str {
@@ -448,6 +446,8 @@ impl Rule for NoUnknownProperty {
         Self(Box::new(serde_json::from_value(value.unwrap().clone()).unwrap()))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
+
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
             return;
         };
@@ -459,7 +459,6 @@ impl Rule for NoUnknownProperty {
             return;
         }
 
-        static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
         let is_valid_html_tag = HTML_TAG_CONVENTION.is_match(el_type.as_str())
             && el.attributes.iter().all(|attr| {
                 let JSXAttributeItem::Attribute(jsx_attr) = attr else {
@@ -499,8 +498,8 @@ impl Rule for NoUnknownProperty {
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.iter().any(|tag| *tag == el_type.as_str()) {
                         ctx.diagnostic(NoUnknownPropertyDiagnostic::InvalidPropOnTag(
-                            el.span,
                             span,
+                            actual_name.to_string(),
                             tags.join(", "),
                         ));
                     }
@@ -511,19 +510,22 @@ impl Rule for NoUnknownProperty {
                     return;
                 }
 
-                if let Some(prop) = DOM_PROPETIES_LOWER_MAP.get(&name.to_lowercase()) {
-                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownPropWithStandartName(
-                        span,
-                        prop.to_string(),
-                    ))
-                } else if let Some(prop) = DOM_ATTRIBUTES_TO_CAMEL.get(name) {
-                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownPropWithStandartName(
-                        span,
-                        prop.to_string(),
-                    ))
-                } else {
-                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownProp(span))
-                }
+                DOM_PROPETIES_LOWER_MAP
+                    .get(&name.to_lowercase())
+                    .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
+                    .map_or_else(
+                        || {
+                            ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownProp(span));
+                        },
+                        |prop| {
+                            ctx.diagnostic(
+                                NoUnknownPropertyDiagnostic::UnknownPropWithStandartName(
+                                    span,
+                                    (*prop).to_string(),
+                                ),
+                            );
+                        },
+                    );
             });
     }
 }
@@ -542,7 +544,7 @@ fn test() {
         (r#"<App xlink:href="bar" />;"#, None),
         (r#"<App clip-path="bar" />;"#, None),
         (r#"<div className="bar"></div>;"#, None),
-        (r#"<div onMouseDown={this._onMouseDown}></div>;"#, None),
+        (r"<div onMouseDown={this._onMouseDown}></div>;", None),
         (r#"<a href="someLink" download="foo">Read more</a>"#, None),
         (r#"<area download="foo" />"#, None),
         (r#"<img src="cat_keyboard.jpeg" alt="A cat sleeping on a keyboard" align="top" />"#, None),
@@ -553,7 +555,7 @@ fn test() {
         (r#"<div inert children="anything" />"#, None),
         (r#"<iframe scrolling="?" onLoad={a} onError={b} align="top" />"#, None),
         (r#"<input key="bar" type="radio" />"#, None),
-        (r#"<button disabled>You cannot click me</button>;"#, None),
+        (r"<button disabled>You cannot click me</button>;", None),
         (
             r#"<svg key="lock" viewBox="box" fill={10} d="d" stroke={1} strokeWidth={2} strokeLinecap={3} strokeLinejoin={4} transform="something" clipRule="else" x1={5} x2="6" y1="7" y2="8"></svg>"#,
             None,
@@ -566,27 +568,27 @@ fn test() {
             r#"<input type="checkbox" checked={checked} disabled={disabled} id={id} onChange={onChange} />"#,
             None,
         ),
-        (r#"<video playsInline />"#, None),
-        (r#"<img onError={foo} onLoad={bar} />"#, None),
-        (r#"<picture inert={false} onError={foo} onLoad={bar} />"#, None),
-        (r#"<iframe onError={foo} onLoad={bar} />"#, None),
-        (r#"<script onLoad={bar} onError={foo} />"#, None),
-        (r#"<source onLoad={bar} onError={foo} />"#, None),
-        (r#"<link onLoad={bar} onError={foo} />"#, None),
+        (r"<video playsInline />", None),
+        (r"<img onError={foo} onLoad={bar} />", None),
+        (r"<picture inert={false} onError={foo} onLoad={bar} />", None),
+        (r"<iframe onError={foo} onLoad={bar} />", None),
+        (r"<script onLoad={bar} onError={foo} />", None),
+        (r"<source onLoad={bar} onError={foo} />", None),
+        (r"<link onLoad={bar} onError={foo} />", None),
         (
             r#"<link rel="preload" as="image" href="someHref" imageSrcSet="someImageSrcSet" imageSizes="someImageSizes" />"#,
             None,
         ),
-        (r#"<object onLoad={bar} />"#, None),
-        (r#"<video allowFullScreen webkitAllowFullScreen mozAllowFullScreen />"#, None),
-        (r#"<iframe allowFullScreen webkitAllowFullScreen mozAllowFullScreen />"#, None),
+        (r"<object onLoad={bar} />", None),
+        (r"<video allowFullScreen webkitAllowFullScreen mozAllowFullScreen />", None),
+        (r"<iframe allowFullScreen webkitAllowFullScreen mozAllowFullScreen />", None),
         (r#"<table border="1" />"#, None),
         (r#"<th abbr="abbr" />"#, None),
         (r#"<td abbr="abbr" />"#, None),
-        (r#"<div onPointerDown={this.onDown} onPointerUp={this.onUp} />"#, None),
+        (r"<div onPointerDown={this.onDown} onPointerUp={this.onUp} />", None),
         (r#"<input type="checkbox" defaultChecked={this.state.checkbox} />"#, None),
         (
-            r#"<div onTouchStart={this.startAnimation} onTouchEnd={this.stopAnimation} onTouchCancel={this.cancel} onTouchMove={this.move} onMouseMoveCapture={this.capture} onTouchCancelCapture={this.log} />"#,
+            r"<div onTouchStart={this.startAnimation} onTouchEnd={this.stopAnimation} onTouchCancel={this.cancel} onTouchMove={this.move} onMouseMoveCapture={this.capture} onTouchCancelCapture={this.log} />",
             None,
         ),
         (r#"<meta charset="utf-8" />;"#, None),
@@ -606,13 +608,13 @@ fn test() {
         ),
         (r#"<div class="bar"></div>;"#, Some(serde_json::json!([{ "ignore": ["class"] }]))),
         (r#"<div someProp="bar"></div>;"#, Some(serde_json::json!([{ "ignore": ["someProp"] }]))),
-        (r#"<div css={{flex: 1}}></div>;"#, Some(serde_json::json!([{ "ignore": ["css"] }]))),
+        (r"<div css={{flex: 1}}></div>;", Some(serde_json::json!([{ "ignore": ["css"] }]))),
         (r#"<button aria-haspopup="true">Click me to open pop up</button>;"#, None),
         (r#"<button aria-label="Close" onClick={someThing.close} />;"#, None),
-        (r#"<script crossOrigin noModule />"#, None),
-        (r#"<audio crossOrigin />"#, None),
-        (r#"<svg focusable><image crossOrigin /></svg>"#, None),
-        (r#"<details onToggle={this.onToggle}>Some details</details>"#, None),
+        (r"<script crossOrigin noModule />", None),
+        (r"<audio crossOrigin />", None),
+        (r"<svg focusable><image crossOrigin /></svg>", None),
+        (r"<details onToggle={this.onToggle}>Some details</details>", None),
         (
             r#"<path fill="pink" d="M 10,30 A 20,20 0,0,1 50,30 A 20,20 0,0,1 90,30 Q 90,60 50,90 Q 10,60 10,30 z"></path>"#,
             None,
@@ -689,18 +691,18 @@ fn test() {
         (r#"<div onMousedown="bar"></div>;"#, None),
         (r#"<use xlink:href="bar" />;"#, None),
         (r#"<rect clip-path="bar" />;"#, None),
-        (r#"<script crossorigin nomodule />"#, None),
-        (r#"<div crossorigin />"#, None),
-        (r#"<div crossOrigin />"#, None),
+        (r"<script crossorigin nomodule />", None),
+        (r"<div crossorigin />", None),
+        (r"<div crossOrigin />", None),
         (r#"<div as="audio" />"#, None),
         (
-            r#"<div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />"#,
+            r"<div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />",
             None,
         ),
-        (r#"<div onLoad={this.load} />"#, None),
+        (r"<div onLoad={this.load} />", None),
         (r#"<div fill="pink" />"#, None),
         (
-            r#"<div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>"#,
+            r"<div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>",
             None,
         ),
         (r#"<div download="foo" />"#, None),
