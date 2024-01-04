@@ -75,6 +75,32 @@ impl Runner for LintRunner {
         } = self.options;
 
         let mut paths = paths;
+        let provided_path_count = paths.len();
+        let now = std::time::Instant::now();
+
+        // The ignore crate whitelists explicit paths, but priority
+        // should be given to the ignore file. Many users lint
+        // automatically and pass a list of changed files explicitly.
+        // To accommodate this, unless `--no-ignore` is passed,
+        // pre-filter the paths.
+        if !paths.is_empty() && !ignore_options.no_ignore {
+            let (ignore, _err) = ignore::gitignore::Gitignore::new(&ignore_options.ignore_path);
+            paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
+        }
+
+        // If explicit paths were provided, but all have been
+        // filtered, return early.
+        if provided_path_count > 0 && paths.is_empty() {
+            return CliRunResult::LintResult(LintResult {
+                duration: now.elapsed(),
+                number_of_rules: 0,
+                number_of_files: 0,
+                number_of_warnings: 0,
+                number_of_errors: 0,
+                max_warnings_exceeded: false,
+                deny_warnings: warning_options.deny_warnings,
+            });
+        }
 
         if paths.is_empty() {
             if let Ok(cwd) = env::current_dir() {
@@ -85,8 +111,6 @@ impl Runner for LintRunner {
                 };
             }
         }
-
-        let now = std::time::Instant::now();
 
         let extensions = VALID_EXTENSIONS
             .iter()
@@ -279,6 +303,32 @@ mod test {
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    /// When a file is explicitly passed as a path and `--no-ignore`
+    /// is not present, the ignore file should take precedence.
+    /// See https://github.com/oxc-project/oxc/issues/1124
+    #[test]
+    fn ignore_file_overrides_explicit_args() {
+        let args = &["--ignore-path", "fixtures/linter/.customignore", "fixtures/linter/nan.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn ignore_file_no_ignore() {
+        let args = &[
+            "--ignore-path",
+            "fixtures/linter/.customignore",
+            "--no-ignore",
+            "fixtures/linter/nan.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
