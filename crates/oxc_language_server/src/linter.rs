@@ -288,7 +288,8 @@ impl IsolatedLintHandler {
         ext: &str,
     ) -> Option<(SourceType, String)> {
         let source_type = SourceType::from_path(path);
-        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        let not_supported_yet =
+            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -305,12 +306,12 @@ impl IsolatedLintHandler {
         source_text: &'a str,
         ext: &str,
     ) -> Option<(&'a str, SourceType)> {
-        if ext == "vue" {
-            let PartialLoaderValue { source_text, source_type } =
-                PartialLoader::Vue.parse(source_text);
-            Some((source_text, source_type))
-        } else {
-            None
+        match ext {
+            "vue" => PartialLoader::Vue.build(source_text).map(|r| (r.source_text, r.source_type)),
+            "astro" => {
+                PartialLoader::Astro.build(source_text).map(|r| (r.source_text, r.source_type))
+            }
+            _ => None,
         }
     }
 

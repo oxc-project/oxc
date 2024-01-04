@@ -19,7 +19,7 @@ pub struct VuePartialLoader<'a> {
 }
 
 impl<'a> VuePartialLoader<'a> {
-    pub fn from(source_text: &'a str) -> Self {
+    pub fn new(source_text: &'a str) -> Self {
         Self {
             source_text,
             chars: source_text.chars(),
@@ -31,13 +31,14 @@ impl<'a> VuePartialLoader<'a> {
             template_depth: 0,
         }
     }
-    pub fn build(mut self) -> PartialLoaderValue<'a> {
+
+    pub fn build(mut self) -> Option<PartialLoaderValue<'a>> {
         self.parse();
         if self.end <= self.start {
-            return PartialLoaderValue::default();
+            return None;
         }
         let js_code = Span::new(self.start, self.end).source_text(self.source_text);
-        PartialLoaderValue::from(js_code, self.is_ts, self.is_jsx)
+        Some(PartialLoaderValue::new(js_code, self.is_ts, self.is_jsx))
     }
 
     fn parse(&mut self) {
@@ -253,7 +254,7 @@ mod test {
         <script> console.log("hi") </script>
         "#;
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert_eq!(loader_value.source_text, r#" console.log("hi") "#);
     }
 
@@ -272,7 +273,7 @@ mod test {
         </script>
         "#;
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(!loader_value.source_type.is_typescript());
         assert_eq!(
             loader_value.source_text,
@@ -294,7 +295,7 @@ mod test {
         </script>
         "#;
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "1/1");
     }
@@ -307,7 +308,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "1/1");
     }
@@ -320,7 +321,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "1/1");
     }
@@ -333,7 +334,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(loader_value.source_type.is_jsx());
         assert!(loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "1/1");
@@ -348,7 +349,7 @@ mod test {
         <template> </template>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(!loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), r"a.replace(/&#39;/g, '\''))");
     }
@@ -361,7 +362,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert_eq!(loader_value.source_text.trim(), r"`a${b( `c \`${d}\``)}`");
     }
 
@@ -375,7 +376,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert_eq!(loader_value.source_text.trim(), r"`${/{/}`");
     }
 
@@ -390,7 +391,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(!loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "console.log('success')");
     }
@@ -411,7 +412,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert!(!loader_value.source_type.is_typescript());
         assert_eq!(loader_value.source_text.trim(), "console.log('success')");
     }
@@ -422,9 +423,8 @@ mod test {
             <template></template>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
-        assert!(!loader_value.source_type.is_typescript());
-        assert_eq!(loader_value.source_text.trim(), "");
+        let loader_value = VuePartialLoader::new(source_text).build();
+        assert!(loader_value.is_none());
     }
 
     #[test]
@@ -433,9 +433,8 @@ mod test {
         <script>
             console.log('error')
         ";
-        let loader_value = VuePartialLoader::from(source_text).build();
-        assert!(!loader_value.source_type.is_typescript());
-        assert_eq!(loader_value.source_text.trim(), "");
+        let loader_value = VuePartialLoader::new(source_text).build();
+        assert!(loader_value.is_none());
     }
 
     #[test]
@@ -452,7 +451,7 @@ mod test {
         </script>
         ";
 
-        let loader_value = VuePartialLoader::from(source_text).build();
+        let loader_value = VuePartialLoader::new(source_text).build().unwrap();
         assert_eq!(
             loader_value.source_text.trim(),
             "let 日历 = '2000年';
