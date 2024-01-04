@@ -29,8 +29,13 @@ rustc-hash = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 indexmap   = { workspace = true }
 itertools  = { workspace = true }
+serde      = { workspace = true, features = ["derive"], optional = true }
 
 [dev-dependencies]
 oxc_parser    = { workspace = true }
 oxc_allocator = { workspace = true }
 miette        = { workspace = true, features = ["fancy-no-backtrace"] }
+
+[features]
+default = []
+serde   = ["dep:serde", "oxc_span/serde", "oxc_syntax/serde", "oxc_index/serde"]
