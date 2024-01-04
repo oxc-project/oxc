@@ -58,7 +58,13 @@ declare_oxc_lint!(
     /// You can use unknown property name that has no effect.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
+    ///  // Unknown properties
+    ///  const Hello = <div class="hello">Hello World</div>;
+    ///  const Alphabet = <div abc="something">Alphabet</div>;
+    ///  
+    ///  // Invalid aria-* attribute
+    ///  const IconButton = <div aria-foo="bar" />;
     /// ```
     NoUnknownProperty,
     correctness
