@@ -34,6 +34,7 @@ oxc_resolver    = { version = "1.1.0" }
 rayon         = { workspace = true }
 lazy_static   = { workspace = true }                        # used in oxc_macros
 serde_json    = { workspace = true }
+serde         = { workspace = true }
 regex         = { workspace = true }
 rustc-hash    = { workspace = true }
 phf           = { workspace = true, features = ["macros"] }

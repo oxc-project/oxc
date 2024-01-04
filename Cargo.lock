@@ -1749,6 +1749,7 @@ dependencies = [
  "regex",
  "rust-lapper",
  "rustc-hash",
+ "serde",
  "serde_json",
 ]
 

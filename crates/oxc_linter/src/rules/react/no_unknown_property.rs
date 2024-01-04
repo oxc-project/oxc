@@ -1,19 +1,54 @@
+use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
+use oxc_ast::{
+    ast::{JSXAttributeItem, JSXAttributeName},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use regex::{Regex, RegexBuilder};
+use serde::Deserialize;
+use std::collections::hash_map::HashMap;
+use std::collections::hash_set::HashSet;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, get_prop_name},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-unknown-property):")]
-#[diagnostic(severity(warning), help(""))]
-struct NoUnknownPropertyDiagnostic(#[label] pub Span);
+enum NoUnknownPropertyDiagnostic {
+    #[error("eslint-plugin-react(no-unknown-property): Invalid property found")]
+    #[diagnostic(severity(warning), help("This property is only allowed on: {2}"))]
+    InvalidPropOnTag(#[label("tag")] Span, #[label("property")] Span, String),
+    #[error("eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element")]
+    #[diagnostic(severity(warning), help("Use '{1}' instead"))]
+    DataLowercaseRequired(#[label] Span, String),
+    #[error("eslint-plugin-react(no-unknown-property): Unknown property found")]
+    #[diagnostic(severity(warning), help("Use '{1}' instead"))]
+    UnknownPropWithStandartName(#[label] Span, String),
+    #[error("eslint-plugin-react(no-unknown-property): Unknown property found")]
+    #[diagnostic(severity(warning), help("Remove unknown property"))]
+    UnknownProp(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
-pub struct NoUnknownProperty;
+pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NoUnknownPropertyConfig {
+    #[serde(default)]
+    ignore: Vec<String>,
+    #[serde(default)]
+    require_data_lowercase: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -29,8 +64,468 @@ declare_oxc_lint!(
     correctness
 );
 
+lazy_static! {
+    static ref ATTRIBUTE_TAGS_MAP: HashMap<&'static str, Vec<&'static str>> = HashMap::from([
+      ("abbr", vec!["th", "td"]),
+      ("charset", vec!["meta"]),
+      ("checked", vec!["input"]),
+      // image is required for SVG support, all other tags are HTML.
+      ("crossOrigin", vec!["script", "img", "video", "audio", "link", "image"]),
+      ("displaystyle", vec!["math"]),
+      // https://html.spec.whatwg.org/multipage/links.html#downloading-resources
+      ("download", vec!["a", "area"]),
+      (
+          "fill",
+          vec![
+              // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill
+              // Fill color
+              "altGlyph",
+              "circle",
+              "ellipse",
+              "g",
+              "line",
+              "marker",
+              "mask",
+              "path",
+              "polygon",
+              "polyline",
+              "rect",
+              "svg",
+              "symbol",
+              "text",
+              "textPath",
+              "tref",
+              "tspan",
+              "use",
+              // Animation final state
+              "animate",
+              "animateColor",
+              "animateMotion",
+              "animateTransform",
+              "set",
+          ],
+      ),
+      ("focusable", vec!["svg"]),
+      ("imageSizes", vec!["link"]),
+      ("imageSrcSet", vec!["link"]),
+      ("property", vec!["meta"]),
+      ("viewBox", vec!["marker", "pattern", "svg", "symbol", "view"]),
+      ("as", vec!["link"]),
+      (
+          "align",
+          vec![
+              "applet", "caption", "col", "colgroup", "hr", "iframe", "img", "table", "tbody", "td",
+              "tfoot", "th", "thead", "tr",
+          ],
+      ), // deprecated, but known
+      ("valign", vec!["tr", "td", "th", "thead", "tbody", "tfoot", "colgroup", "col"]), // deprecated, but known
+      ("noModule", vec!["script"]),
+      // Media events allowed only on audio and video tags, see https://github.com/facebook/react/blob/256aefbea1449869620fb26f6ec695536ab453f5/CHANGELOG.md#notable-enhancements
+      ("onAbort", vec!["audio", "video"]),
+      ("onCancel", vec!["dialog"]),
+      ("onCanPlay", vec!["audio", "video"]),
+      ("onCanPlayThrough", vec!["audio", "video"]),
+      ("onClose", vec!["dialog"]),
+      ("onDurationChange", vec!["audio", "video"]),
+      ("onEmptied", vec!["audio", "video"]),
+      ("onEncrypted", vec!["audio", "video"]),
+      ("onEnded", vec!["audio", "video"]),
+      ("onError", vec!["audio", "video", "img", "link", "source", "script", "picture", "iframe"]),
+      ("onLoad", vec!["script", "img", "link", "picture", "iframe", "object", "source"]),
+      ("onLoadedData", vec!["audio", "video"]),
+      ("onLoadedMetadata", vec!["audio", "video"]),
+      ("onLoadStart", vec!["audio", "video"]),
+      ("onPause", vec!["audio", "video"]),
+      ("onPlay", vec!["audio", "video"]),
+      ("onPlaying", vec!["audio", "video"]),
+      ("onProgress", vec!["audio", "video"]),
+      ("onRateChange", vec!["audio", "video"]),
+      ("onResize", vec!["audio", "video"]),
+      ("onSeeked", vec!["audio", "video"]),
+      ("onSeeking", vec!["audio", "video"]),
+      ("onStalled", vec!["audio", "video"]),
+      ("onSuspend", vec!["audio", "video"]),
+      ("onTimeUpdate", vec!["audio", "video"]),
+      ("onVolumeChange", vec!["audio", "video"]),
+      ("onWaiting", vec!["audio", "video"]),
+      ("autoPictureInPicture", vec!["video"]),
+      ("controls", vec!["audio", "video"]),
+      ("controlsList", vec!["audio", "video"]),
+      ("disablePictureInPicture", vec!["video"]),
+      ("disableRemotePlayback", vec!["audio", "video"]),
+      ("loop", vec!["audio", "video"]),
+      ("muted", vec!["audio", "video"]),
+      ("playsInline", vec!["video"]),
+      ("allowFullScreen", vec!["iframe", "video"]),
+      ("webkitAllowFullScreen", vec!["iframe", "video"]),
+      ("mozAllowFullScreen", vec!["iframe", "video"]),
+      ("poster", vec!["video"]),
+      ("preload", vec!["audio", "video"]),
+      ("scrolling", vec!["iframe"]),
+      ("returnValue", vec!["dialog"]),
+      ("webkitDirectory", vec!["input"]),
+  ]);
+  static ref DOM_PROPERTIES_NAMES: HashSet<&'static str> = [
+  // Global attributes - can be used on any HTML/DOM element
+  // See https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
+  "dir", "draggable", "hidden", "id", "lang", "nonce", "part", "slot", "style", "title", "translate", "inert",
+  // Element specific attributes
+  // See https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes (includes global attributes too)
+  // To be considered if these should be added also to ATTRIBUTE_TAGS_MAP
+  "accept", "action", "allow", "alt", "as", "async", "buffered", "capture", "challenge", "cite", "code", "cols",
+  "content", "coords", "csp", "data", "decoding", "default", "defer", "disabled", "form",
+  "headers", "height", "high", "href", "icon", "importance", "integrity", "kind", "label",
+  "language", "loading", "list", "loop", "low", "manifest", "max", "media", "method", "min", "multiple", "muted",
+  "name", "open", "optimum", "pattern", "ping", "placeholder", "poster", "preload", "profile",
+  "rel", "required", "reversed", "role", "rows", "sandbox", "scope", "seamless", "selected", "shape", "size", "sizes",
+  "span", "src", "start", "step", "summary", "target", "type", "value", "width", "wmode", "wrap",
+  // SVG attributes
+  // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
+  "accumulate", "additive", "alphabetic", "amplitude", "ascent", "azimuth", "bbox", "begin",
+  "bias", "by", "clip", "color", "cursor", "cx", "cy", "d", "decelerate", "descent", "direction",
+  "display", "divisor", "dur", "dx", "dy", "elevation", "end", "exponent", "fill", "filter",
+  "format", "from", "fr", "fx", "fy", "g1", "g2", "hanging", "height", "hreflang", "ideographic",
+  "in", "in2", "intercept", "k", "k1", "k2", "k3", "k4", "kerning", "local", "mask", "mode",
+  "offset", "opacity", "operator", "order", "orient", "orientation", "origin", "overflow", "path",
+  "ping", "points", "r", "radius", "rel", "restart", "result", "rotate", "rx", "ry", "scale",
+  "seed", "slope", "spacing", "speed", "stemh", "stemv", "string", "stroke", "to", "transform",
+  "u1", "u2", "unicode", "values", "version", "visibility", "widths", "x", "x1", "x2", "xmlns",
+  "y", "y1", "y2", "z",
+  // OpenGraph meta tag attributes
+  "property",
+  // React specific attributes
+  "ref", "key", "children",
+  // Non-standard
+  "results", "security",
+  // Video specific
+  "controls",
+  // TWO WORD DOM_PROPERTIES_NAMES
+
+  // Global attributes - can be used on any HTML/DOM element
+  // See https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
+  "accessKey", "autoCapitalize", "autoFocus", "contentEditable", "enterKeyHint", "exportParts",
+  "inputMode", "itemID", "itemRef", "itemProp", "itemScope", "itemType", "spellCheck", "tabIndex",
+  // Element specific attributes
+  // See https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes (includes global attributes too)
+  // To be considered if these should be added also to ATTRIBUTE_TAGS_MAP
+  "acceptCharset", "autoComplete", "autoPlay", "border", "cellPadding", "cellSpacing", "classID", "codeBase",
+  "colSpan", "contextMenu", "dateTime", "encType", "formAction", "formEncType", "formMethod", "formNoValidate", "formTarget",
+  "frameBorder", "hrefLang", "httpEquiv", "imageSizes", "imageSrcSet", "isMap", "keyParams", "keyType", "marginHeight", "marginWidth",
+  "maxLength", "mediaGroup", "minLength", "noValidate", "onAnimationEnd", "onAnimationIteration", "onAnimationStart",
+  "onBlur", "onChange", "onClick", "onContextMenu", "onCopy", "onCompositionEnd", "onCompositionStart",
+  "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
+  "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
+  "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
+  "onMouseUp", "onPaste", "onScroll", "onSelect", "onSubmit", "onToggle", "onTransitionEnd", "radioGroup", "readOnly", "referrerPolicy",
+  "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
+  // SVG attributes
+  // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
+  "crossOrigin", "accentHeight", "alignmentBaseline", "arabicForm", "attributeName",
+  "attributeType", "baseFrequency", "baselineShift", "baseProfile", "calcMode", "capHeight",
+  "clipPathUnits", "clipPath", "clipRule", "colorInterpolation", "colorInterpolationFilters",
+  "colorProfile", "colorRendering", "contentScriptType", "contentStyleType", "diffuseConstant",
+  "dominantBaseline", "edgeMode", "enableBackground", "fillOpacity", "fillRule", "filterRes",
+  "filterUnits", "floodColor", "floodOpacity", "fontFamily", "fontSize", "fontSizeAdjust",
+  "fontStretch", "fontStyle", "fontVariant", "fontWeight", "glyphName",
+  "glyphOrientationHorizontal", "glyphOrientationVertical", "glyphRef", "gradientTransform",
+  "gradientUnits", "horizAdvX", "horizOriginX", "imageRendering", "kernelMatrix",
+  "kernelUnitLength", "keyPoints", "keySplines", "keyTimes", "lengthAdjust", "letterSpacing",
+  "lightingColor", "limitingConeAngle", "markerEnd", "markerMid", "markerStart", "markerHeight",
+  "markerUnits", "markerWidth", "maskContentUnits", "maskUnits", "mathematical", "numOctaves",
+  "overlinePosition", "overlineThickness", "panose1", "paintOrder", "pathLength",
+  "patternContentUnits", "patternTransform", "patternUnits", "pointerEvents", "pointsAtX",
+  "pointsAtY", "pointsAtZ", "preserveAlpha", "preserveAspectRatio", "primitiveUnits",
+  "referrerPolicy", "refX", "refY", "rendering-intent", "repeatCount", "repeatDur",
+  "requiredExtensions", "requiredFeatures", "shapeRendering", "specularConstant",
+  "specularExponent", "spreadMethod", "startOffset", "stdDeviation", "stitchTiles", "stopColor",
+  "stopOpacity", "strikethroughPosition", "strikethroughThickness", "strokeDasharray",
+  "strokeDashoffset", "strokeLinecap", "strokeLinejoin", "strokeMiterlimit", "strokeOpacity",
+  "strokeWidth", "surfaceScale", "systemLanguage", "tableValues", "targetX", "targetY",
+  "textAnchor", "textDecoration", "textRendering", "textLength", "transformOrigin",
+  "underlinePosition", "underlineThickness", "unicodeBidi", "unicodeRange", "unitsPerEm",
+  "vAlphabetic", "vHanging", "vIdeographic", "vMathematical", "vectorEffect", "vertAdvY",
+  "vertOriginX", "vertOriginY", "viewBox", "viewTarget", "wordSpacing", "writingMode", "xHeight",
+  "xChannelSelector", "xlinkActuate", "xlinkArcrole", "xlinkHref", "xlinkRole", "xlinkShow",
+  "xlinkTitle", "xlinkType", "xmlBase", "xmlLang", "xmlnsXlink", "xmlSpace", "yChannelSelector",
+  "zoomAndPan",
+  // Safari/Apple specific, no listing available
+  "autoCorrect", // https://stackoverflow.com/questions/47985384/html-autocorrect-for-text-input-is-not-working
+  "autoSave", // https://stackoverflow.com/questions/25456396/what-is-autosave-attribute-supposed-to-do-how-do-i-use-it
+  // React specific attributes https://reactjs.org/docs/dom-elements.html#differences-in-attributes
+  "className", "dangerouslySetInnerHTML", "defaultValue", "defaultChecked", "htmlFor",
+  // Events" capture events
+  "onBeforeInput", "onChange",
+  "onInvalid", "onReset", "onTouchCancel", "onTouchEnd", "onTouchMove", "onTouchStart", "suppressContentEditableWarning", "suppressHydrationWarning",
+  "onAbort", "onCanPlay", "onCanPlayThrough", "onDurationChange", "onEmptied", "onEncrypted", "onEnded",
+  "onLoadedData", "onLoadedMetadata", "onLoadStart", "onPause", "onPlay", "onPlaying", "onProgress", "onRateChange", "onResize",
+  "onSeeked", "onSeeking", "onStalled", "onSuspend", "onTimeUpdate", "onVolumeChange", "onWaiting",
+  "onCopyCapture", "onCutCapture", "onPasteCapture", "onCompositionEndCapture", "onCompositionStartCapture", "onCompositionUpdateCapture",
+  "onFocusCapture", "onBlurCapture", "onChangeCapture", "onBeforeInputCapture", "onInputCapture", "onResetCapture", "onSubmitCapture",
+  "onInvalidCapture", "onLoadCapture", "onErrorCapture", "onKeyDownCapture", "onKeyPressCapture", "onKeyUpCapture",
+  "onAbortCapture", "onCanPlayCapture", "onCanPlayThroughCapture", "onDurationChangeCapture", "onEmptiedCapture", "onEncryptedCapture",
+  "onEndedCapture", "onLoadedDataCapture", "onLoadedMetadataCapture", "onLoadStartCapture", "onPauseCapture", "onPlayCapture",
+  "onPlayingCapture", "onProgressCapture", "onRateChangeCapture", "onSeekedCapture", "onSeekingCapture", "onStalledCapture", "onSuspendCapture",
+  "onTimeUpdateCapture", "onVolumeChangeCapture", "onWaitingCapture", "onSelectCapture", "onTouchCancelCapture", "onTouchEndCapture",
+  "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onWheelCapture", "onAnimationEndCapture", "onAnimationIteration",
+  "onAnimationStartCapture", "onTransitionEndCapture",
+  "onAuxClick", "onAuxClickCapture", "onClickCapture", "onContextMenuCapture", "onDoubleClickCapture",
+  "onDragCapture", "onDragEndCapture", "onDragEnterCapture", "onDragExitCapture", "onDragLeaveCapture",
+  "onDragOverCapture", "onDragStartCapture", "onDropCapture", "onMouseDown", "onMouseDownCapture",
+  "onMouseMoveCapture", "onMouseOutCapture", "onMouseOverCapture", "onMouseUpCapture",
+  // Video specific
+  "autoPictureInPicture", "controlsList", "disablePictureInPicture", "disableRemotePlayback",
+
+  // React on props
+  "onGotPointerCaptureCapture",
+  "onLostPointerCapture",
+  "onLostPointerCapture",
+  "onLostPointerCaptureCapture",
+  "onPointerCancel",
+  "onPointerCancelCapture",
+  "onPointerDown",
+  "onPointerDownCapture",
+  "onPointerEnter",
+  "onPointerEnterCapture",
+  "onPointerLeave",
+  "onPointerLeaveCapture",
+  "onPointerMove",
+  "onPointerMoveCapture",
+  "onPointerOut",
+  "onPointerOutCapture",
+  "onPointerOver",
+  "onPointerOverCapture",
+  "onPointerUp",
+  "onPointerUpCapture",
+  ].into();
+  static ref DOM_PROPETIES_LOWER_MAP: HashMap<String, &'static str> = DOM_PROPERTIES_NAMES.iter().map(|it| (it.to_lowercase(), *it)).collect::<HashMap<_, _>>();
+
+  static ref ARIA_PROPERTIES: HashSet<&'static str> = HashSet::from([
+  // See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes
+  // Global attributes
+  "aria-atomic", "aria-braillelabel", "aria-brailleroledescription", "aria-busy", "aria-controls", "aria-current",
+  "aria-describedby", "aria-description", "aria-details",
+  "aria-disabled", "aria-dropeffect", "aria-errormessage", "aria-flowto", "aria-grabbed", "aria-haspopup",
+  "aria-hidden", "aria-invalid", "aria-keyshortcuts", "aria-label", "aria-labelledby", "aria-live",
+  "aria-owns", "aria-relevant", "aria-roledescription",
+  // Widget attributes
+  "aria-autocomplete", "aria-checked", "aria-expanded", "aria-level", "aria-modal", "aria-multiline", "aria-multiselectable",
+  "aria-orientation", "aria-placeholder", "aria-pressed", "aria-readonly", "aria-required", "aria-selected",
+  "aria-sort", "aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-valuetext",
+  // Relationship attributes
+  "aria-activedescendant", "aria-colcount", "aria-colindex", "aria-colindextext", "aria-colspan",
+  "aria-posinset", "aria-rowcount", "aria-rowindex", "aria-rowindextext", "aria-rowspan", "aria-setsize",
+  ]);
+
+  static ref DOM_PROPERTIES_IGNORE_CASE: Box<[&'static str]> = Box::new([
+    "charset",
+    "allowFullScreen",
+    "webkitAllowFullScreen",
+    "mozAllowFullScreen",
+    "webkitDirectory",
+  ]);
+
+  static ref DOM_ATTRIBUTES_TO_CAMEL: HashMap<&'static str, &'static str> = HashMap::from([
+  ("accept-charset", "acceptCharset"),
+  ("class", "className"),
+  ("http-equiv", "httpEquiv"),
+  ("crossorigin", "crossOrigin"),
+  ("for", "htmlFor"),
+  ("nomodule", "noModule"),
+   // svg
+("accent-height", "accentHeight"),
+("alignment-baseline", "alignmentBaseline"),
+("arabic-form", "arabicForm"),
+("baseline-shift", "baselineShift"),
+("cap-height", "capHeight"),
+("clip-path", "clipPath"),
+("clip-rule", "clipRule"),
+("color-interpolation", "colorInterpolation"),
+("color-interpolation-filters", "colorInterpolationFilters"),
+("color-profile", "colorProfile"),
+("color-rendering", "colorRendering"),
+("dominant-baseline", "dominantBaseline"),
+("enable-background", "enableBackground"),
+("fill-opacity", "fillOpacity"),
+("fill-rule", "fillRule"),
+("flood-color", "floodColor"),
+("flood-opacity", "floodOpacity"),
+("font-family", "fontFamily"),
+("font-size", "fontSize"),
+("font-size-adjust", "fontSizeAdjust"),
+("font-stretch", "fontStretch"),
+("font-style", "fontStyle"),
+("font-variant", "fontVariant"),
+("font-weight", "fontWeight"),
+("glyph-name", "glyphName"),
+("glyph-orientation-horizontal", "glyphOrientationHorizontal"),
+("glyph-orientation-vertical", "glyphOrientationVertical"),
+("horiz-adv-x", "horizAdvX"),
+("horiz-origin-x", "horizOriginX"),
+("image-rendering", "imageRendering"),
+("letter-spacing", "letterSpacing"),
+("lighting-color", "lightingColor"),
+("marker-end", "markerEnd"),
+("marker-mid", "markerMid"),
+("marker-start", "markerStart"),
+("overline-position", "overlinePosition"),
+("overline-thickness", "overlineThickness"),
+("paint-order", "paintOrder"),
+("panose-1", "panose1"),
+("pointer-events", "pointerEvents"),
+("rendering-intent", "renderingIntent"),
+("shape-rendering", "shapeRendering"),
+("stop-color", "stopColor"),
+("stop-opacity", "stopOpacity"),
+("strikethrough-position", "strikethroughPosition"),
+("strikethrough-thickness", "strikethroughThickness"),
+("stroke-dasharray", "strokeDasharray"),
+("stroke-dashoffset", "strokeDashoffset"),
+("stroke-linecap", "strokeLinecap"),
+("stroke-linejoin", "strokeLinejoin"),
+("stroke-miterlimit", "strokeMiterlimit"),
+("stroke-opacity", "strokeOpacity"),
+("stroke-width", "strokeWidth"),
+("text-anchor", "textAnchor"),
+("text-decoration", "textDecoration"),
+("text-rendering", "textRendering"),
+("underline-position", "underlinePosition"),
+("underline-thickness", "underlineThickness"),
+("unicode-bidi", "unicodeBidi"),
+("unicode-range", "unicodeRange"),
+("units-per-em", "unitsPerEm"),
+("v-alphabetic", "vAlphabetic"),
+("v-hanging", "vHanging"),
+("v-ideographic", "vIdeographic"),
+("v-mathematical", "vMathematical"),
+("vector-effect", "vectorEffect"),
+("vert-adv-y", "vertAdvY"),
+("vert-origin-x", "vertOriginX"),
+("vert-origin-y", "vertOriginY"),
+("word-spacing", "wordSpacing"),
+("writing-mode", "writingMode"),
+("x-height", "xHeight"),
+("xlink:actuate", "xlinkActuate"),
+("xlink:arcrole", "xlinkArcrole"),
+("xlink:href", "xlinkHref"),
+("xlink:role", "xlinkRole"),
+("xlink:show", "xlinkShow"),
+("xlink:title", "xlinkTitle"),
+("xlink:type", "xlinkType"),
+("xml:base", "xmlBase"),
+("xml:lang", "xmlLang"),
+("xml:space", "xmlSpace"),
+  ]);
+}
+
+///
+/// Checks if an attribute name is a valid `data-*` attribute:
+/// if the name starts with "data-" and has alphanumeric words (browsers require lowercase, but React and TS lowercase them),
+/// not start with any casing of "xml", and separated by hyphens (-) (which is also called "kebab case" or "dash case"),
+/// then the attribute is a valid data attribute.
+///
+fn is_valid_data_attr(name: &str) -> bool {
+    static DATA_XML_REGEX: Lazy<Regex> =
+        Lazy::new(|| RegexBuilder::new(r"^data-xml").case_insensitive(true).build().unwrap());
+    static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
+
+    !DATA_XML_REGEX.is_match(name) && DATA_ATTR_REGEX.is_match(name)
+}
+
+fn normalize_attribute_case(name: &str) -> &str {
+    DOM_PROPERTIES_IGNORE_CASE
+        .iter()
+        .find(|camel_name| camel_name.to_lowercase() == name.to_lowercase())
+        .unwrap_or(&name)
+}
+fn has_uppercase(name: &str) -> bool {
+    name.contains(char::is_uppercase)
+}
+
 impl Rule for NoUnknownProperty {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let value = value.as_array().and_then(|arr| arr.first());
+
+        Self(Box::new(serde_json::from_value(value.unwrap().clone()).unwrap()))
+    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::JSXOpeningElement(el) = &node.kind() else {
+            return;
+        };
+        let Some(el_type) = get_element_type(ctx, el) else {
+            return;
+        };
+        // fbt/fbs nodes are bonkers, let's not go there
+        if !el_type.starts_with(char::is_lowercase) || el_type == "fbt" || el_type == "fbs" {
+            return;
+        }
+
+        static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
+        let is_valid_html_tag = HTML_TAG_CONVENTION.is_match(el_type.as_str())
+            && el.attributes.iter().all(|attr| {
+                let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                    return true;
+                };
+                let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
+                    return true;
+                };
+                ident.name.as_str() != "is"
+            });
+
+        el.attributes
+            .iter()
+            .filter_map(|attr| match &attr {
+                JSXAttributeItem::Attribute(regular) => Some(&**regular),
+                JSXAttributeItem::SpreadAttribute(_) => None,
+            })
+            .for_each(|attr| {
+                let span = attr.name.span();
+                let actual_name = get_prop_name(&attr.name);
+                if self.0.ignore.contains(&(actual_name)) {
+                    return;
+                };
+                if is_valid_data_attr(actual_name.as_str()) {
+                    if self.0.require_data_lowercase && has_uppercase(actual_name.as_str()) {
+                        ctx.diagnostic(NoUnknownPropertyDiagnostic::DataLowercaseRequired(
+                            span,
+                            actual_name.to_lowercase(),
+                        ));
+                    }
+                    return;
+                };
+                if ARIA_PROPERTIES.contains(actual_name.as_str()) || !is_valid_html_tag {
+                    return;
+                };
+                let name = normalize_attribute_case(actual_name.as_str());
+                if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
+                    if !tags.iter().any(|tag| *tag == el_type.as_str()) {
+                        ctx.diagnostic(NoUnknownPropertyDiagnostic::InvalidPropOnTag(
+                            el.span,
+                            span,
+                            tags.join(", "),
+                        ));
+                    }
+                    return;
+                }
+
+                if DOM_PROPERTIES_NAMES.contains(name) {
+                    return;
+                }
+
+                if let Some(prop) = DOM_PROPETIES_LOWER_MAP.get(&name.to_lowercase()) {
+                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownPropWithStandartName(
+                        span,
+                        prop.to_string(),
+                    ))
+                } else if let Some(prop) = DOM_ATTRIBUTES_TO_CAMEL.get(name) {
+                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownPropWithStandartName(
+                        span,
+                        prop.to_string(),
+                    ))
+                } else {
+                    ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownProp(span))
+                }
+            });
+    }
 }
 
 #[test]
@@ -88,7 +583,6 @@ fn test() {
         (r#"<table border="1" />"#, None),
         (r#"<th abbr="abbr" />"#, None),
         (r#"<td abbr="abbr" />"#, None),
-        (r#"<div allowTransparency="true" />"#, None),
         (r#"<div onPointerDown={this.onDown} onPointerUp={this.onUp} />"#, None),
         (r#"<input type="checkbox" defaultChecked={this.state.checkbox} />"#, None),
         (
