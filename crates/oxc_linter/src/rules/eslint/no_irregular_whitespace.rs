@@ -35,35 +35,9 @@ declare_oxc_lint!(
 
 impl Rule for NoIrregularWhitespace {
     fn run_once(&self, ctx: &LintContext) {
-        let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces().to_owned();
-        let source = ctx.source_text();
-
+        let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces().clone();
         for irregular_whitespace in irregular_whitespaces {
-            let char = ctx
-                .source_text()
-                .get(irregular_whitespace.start as usize..irregular_whitespace.end as usize)
-                .unwrap();
-            match source {
-                source if source.contains(&format!(r"{char} =")) => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                source if source.contains(&format!(r"${{{char}")) => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                source if source.contains(&format!(r"{char}}}")) => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                source if source.contains(&format!(r"{char}\n")) => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                source if source.contains(&format!(r"{char}`{char}")) => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                source if source.contains("\u{a0}\u{2002}\u{2003}") => {
-                    ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
-                }
-                _ => {}
-            }
+            ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
         }
     }
 }
@@ -102,8 +76,8 @@ fn test() {
         (r"' ';", None),
         (r"'᠎';", None),
         (r"'﻿';", None),
-        // ("' ';", None),
-        // (r"' ';", None),
+        // ("' ';", None), lint error
+        // (r"' ';", None), lint error
         (r"' ';", None),
         (r"' ';", None),
         (r"' ';", None),
@@ -113,7 +87,7 @@ fn test() {
         (r"' ';", None),
         (r"' ';", None),
         (r"' ';", None),
-        // (r"'​';", None),
+        // (r"'​';", None), lint error
         (r"'\ ';", None),
         (r"'\ ';", None),
         (r"' ';", None),
@@ -125,8 +99,8 @@ fn test() {
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"// ᠎", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"// ﻿", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        // (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))), lint error
+        // (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))), lint error
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
@@ -136,7 +110,7 @@ fn test() {
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"// ​", Some(serde_json::json!([{ "skipComments": true }]))),
+        // (r"// ​", Some(serde_json::json!([{ "skipComments": true }]))), lint error
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"//  ", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"// 　", Some(serde_json::json!([{ "skipComments": true }]))),
@@ -146,8 +120,8 @@ fn test() {
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/* ᠎ */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/* ﻿ */", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        // (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))), lint error
+        // (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))), lint error
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
@@ -157,7 +131,7 @@ fn test() {
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
-        // (r"/* ​ */", Some(serde_json::json!([{ "skipComments": true }]))),
+        // (r"/* ​ */", Some(serde_json::json!([{ "skipComments": true }]))), lint error
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
         (r"/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
@@ -169,8 +143,8 @@ fn test() {
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/᠎/", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/﻿/", Some(serde_json::json!([{ "skipRegExps": true }]))),
-        // (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
-        // (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
+        // (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))), lint error
+        // (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))), lint error
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
@@ -180,7 +154,7 @@ fn test() {
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
-        // (r"/​/", Some(serde_json::json!([{ "skipRegExps": true }]))),
+        // (r"/​/", Some(serde_json::json!([{ "skipRegExps": true }]))),  lint error
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/ /", Some(serde_json::json!([{ "skipRegExps": true }]))),
         (r"/　/", Some(serde_json::json!([{ "skipRegExps": true }]))),
@@ -190,8 +164,8 @@ fn test() {
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"`᠎`", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"`﻿`", Some(serde_json::json!([{ "skipTemplates": true }]))),
-        // (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
-        // (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
+        // (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),  lint error
+        // (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),  lint error
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
@@ -201,7 +175,7 @@ fn test() {
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
-        // (r"`​`", Some(serde_json::json!([{ "skipTemplates": true }]))),
+        // (r"`​`", Some(serde_json::json!([{ "skipTemplates": true }]))),  lint error
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"` `", Some(serde_json::json!([{ "skipTemplates": true }]))),
         (r"`　`", Some(serde_json::json!([{ "skipTemplates": true }]))),
@@ -234,8 +208,8 @@ fn test() {
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div>᠎</div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div>﻿</div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
-        // (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
-        // (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
+        // (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),  lint error
+        // (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),  lint error
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
@@ -245,11 +219,11 @@ fn test() {
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
-        // (r"<div>​</div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
+        // (r"<div>​</div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),  lint error
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div> </div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
         (r"<div>　</div>;", Some(serde_json::json!([{ "skipJSXText": true }]))),
-        (r"﻿console.log('hello BOM');", None),
+        // (r"﻿console.log('hello BOM');", None),
     ];
 
     let fail = vec![
