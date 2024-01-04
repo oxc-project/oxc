@@ -18,7 +18,6 @@ pub struct PartialLoaderValue<'a> {
 
 impl<'a> PartialLoaderValue<'a> {
     pub fn from(source_text: &'a str, is_ts: bool, is_jsx: bool) -> Self {
-        // `module_kind`  should be `ModuleKind::Module` for allow `import`
         let source_type =
             SourceType::default().with_typescript(is_ts).with_module(true).with_jsx(is_jsx);
         Self { source_text, source_type }
