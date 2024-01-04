@@ -44,6 +44,7 @@ pub struct Oxc {
 
     ast: JsValue,
     ir: JsValue,
+    symbols: JsValue,
 
     scope_text: String,
     codegen_text: String,
@@ -118,6 +119,11 @@ impl Oxc {
     #[wasm_bindgen(getter = scopeText)]
     pub fn scope_text(&self) -> String {
         self.scope_text.clone()
+    }
+
+    #[wasm_bindgen(getter = symbols)]
+    pub fn symbols(&self) -> JsValue {
+        self.symbols.clone()
     }
 
     /// Returns Array of String
@@ -274,9 +280,13 @@ impl Oxc {
             }
         }
 
-        if run_options.scope() {
+        if run_options.scope() || run_options.symbol() {
             let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
-            self.scope_text = Self::get_scope_text(&semantic);
+            if run_options.scope() {
+                self.scope_text = Self::get_scope_text(&semantic);
+            } else if run_options.symbol() {
+                self.symbols = semantic.symbols().serialize(&self.serializer)?;
+            }
         }
 
         let program = allocator.alloc(program);

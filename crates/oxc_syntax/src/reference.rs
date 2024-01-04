@@ -1,5 +1,7 @@
 use bitflags::bitflags;
 use oxc_index::define_index_type;
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 define_index_type! {
     pub struct ReferenceId = u32;
@@ -7,6 +9,7 @@ define_index_type! {
 
 bitflags! {
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+    #[cfg_attr(feature = "serde", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;
         const Read = 1 << 0;
