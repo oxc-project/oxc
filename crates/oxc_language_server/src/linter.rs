@@ -15,7 +15,8 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
 use oxc_linter::{
     partial_loader::{
-        vue_partial_loader::VuePartialLoader, PartialLoader, LINT_PARTIAL_LOADER_EXT,
+        vue_partial_loader::VuePartialLoader, PartialLoader, PartialLoaderValue,
+        LINT_PARTIAL_LOADER_EXT,
     },
     LintContext, LintSettings, Linter,
 };
@@ -284,24 +285,33 @@ impl IsolatedLintHandler {
     fn get_source_type_and_text(
         path: &Path,
         source_text: Option<String>,
+        ext: &str,
     ) -> Option<(SourceType, String)> {
-        let read_file = |path: &Path| -> String {
-            if let Some(source_text) = source_text {
-                return source_text;
-            }
-            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"))
-        };
-
-        if let Ok(source_type) = SourceType::from_path(path) {
-            return Some((source_type, read_file(path)));
+        let source_type = SourceType::from_path(path);
+        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        if not_supported_yet {
+            return None;
         }
-        let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
-        let partial_loader = if ext == "vue" { Some(PartialLoader::Vue) } else { None };
-        let partial_loader = partial_loader?;
+        let source_type = source_type.unwrap_or_default();
+        let source_text = source_text.map_or_else(
+            || fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}")),
+            |source_text| source_text,
+        );
 
-        let source_text = read_file(path);
-        let ret = partial_loader.parse(&source_text);
-        Some((ret.source_type, ret.source_text))
+        Some((source_type, source_text))
+    }
+
+    fn may_need_extract_js_content<'a>(
+        source_text: &'a str,
+        ext: &str,
+    ) -> Option<(&'a str, SourceType)> {
+        if ext == "vue" {
+            let PartialLoaderValue { source_text, source_type } =
+                PartialLoader::Vue.parse(source_text);
+            Some((source_text, source_type))
+        } else {
+            None
+        }
     }
 
     fn lint_path(
@@ -310,9 +320,13 @@ impl IsolatedLintHandler {
         plugin: Plugin,
         source_text: Option<String>,
     ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
-        let (source_type, source_text) = Self::get_source_type_and_text(path, source_text)?;
+        let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
+        let (source_type, source_text) = Self::get_source_type_and_text(path, source_text, ext)?;
+        let (source_text, source_type) = Self::may_need_extract_js_content(&source_text, ext)
+            .unwrap_or((&source_text, source_type));
+
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source_text, source_type)
+        let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(true)
             .parse();
 
@@ -323,11 +337,11 @@ impl IsolatedLintHandler {
                 .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                 .collect();
 
-            return Some(Self::wrap_diagnostics(path, &source_text, reports));
+            return Some(Self::wrap_diagnostics(path, source_text, reports));
         };
 
         let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
             .with_check_syntax_error(true)
             .build(program);
@@ -338,7 +352,7 @@ impl IsolatedLintHandler {
                 .into_iter()
                 .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                 .collect();
-            return Some(Self::wrap_diagnostics(path, &source_text, reports));
+            return Some(Self::wrap_diagnostics(path, source_text, reports));
         };
 
         let mut lint_ctx = LintContext::new(
@@ -371,9 +385,9 @@ impl IsolatedLintHandler {
                     let fixed_content = msg.fix.map(|f| FixedContent {
                         code: f.content.to_string(),
                         range: Range {
-                            start: offset_to_position(f.span.start as usize, &source_text)
+                            start: offset_to_position(f.span.start as usize, source_text)
                                 .unwrap_or_default(),
-                            end: offset_to_position(f.span.end as usize, &source_text)
+                            end: offset_to_position(f.span.end as usize, source_text)
                                 .unwrap_or_default(),
                         },
                     });
@@ -382,14 +396,14 @@ impl IsolatedLintHandler {
                 })
                 .collect::<Vec<ErrorReport>>();
 
-            return Some(Self::wrap_diagnostics(path, &source_text, reports));
+            return Some(Self::wrap_diagnostics(path, source_text, reports));
         }
 
         let errors = result
             .into_iter()
             .map(|diagnostic| ErrorReport { error: diagnostic.error, fixed_content: None })
             .collect();
-        Some(Self::wrap_diagnostics(path, &source_text, errors))
+        Some(Self::wrap_diagnostics(path, source_text, errors))
     }
 
     fn wrap_diagnostics(
