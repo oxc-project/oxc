@@ -1,4 +1,5 @@
-use std::{env, io::BufWriter, path::Path, vec::Vec};
+use ignore::gitignore::Gitignore;
+use std::{env, io::BufWriter, path::Path, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
@@ -76,7 +77,7 @@ impl Runner for LintRunner {
 
         let mut paths = paths;
         let provided_path_count = paths.len();
-        let now = std::time::Instant::now();
+        let now = Instant::now();
 
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
@@ -84,25 +85,21 @@ impl Runner for LintRunner {
         // To accommodate this, unless `--no-ignore` is passed,
         // pre-filter the paths.
         if !paths.is_empty() && !ignore_options.no_ignore {
-            let (ignore, _err) = ignore::gitignore::Gitignore::new(&ignore_options.ignore_path);
+            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
             paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
         }
 
-        // If explicit paths were provided, but all have been
-        // filtered, return early.
-        if provided_path_count > 0 && paths.is_empty() {
-            return CliRunResult::LintResult(LintResult {
-                duration: now.elapsed(),
-                number_of_rules: 0,
-                number_of_files: 0,
-                number_of_warnings: 0,
-                number_of_errors: 0,
-                max_warnings_exceeded: false,
-                deny_warnings: warning_options.deny_warnings,
-            });
-        }
-
         if paths.is_empty() {
+            // If explicit paths were provided, but all have been
+            // filtered, return early.
+            if provided_path_count > 0 {
+                return CliRunResult::LintResult(LintResult {
+                    duration: now.elapsed(),
+                    deny_warnings: warning_options.deny_warnings,
+                    ..LintResult::default()
+                });
+            }
+
             if let Ok(cwd) = env::current_dir() {
                 paths.push(cwd);
             } else {

@@ -14,7 +14,7 @@ pub enum CliRunResult {
     TypeCheckResult { duration: Duration, number_of_diagnostics: usize },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LintResult {
     pub duration: Duration,
     pub number_of_rules: usize,
