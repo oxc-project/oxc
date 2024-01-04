@@ -1,4 +1,5 @@
-use std::{env, io::BufWriter, path::Path, vec::Vec};
+use ignore::gitignore::Gitignore;
+use std::{env, io::BufWriter, path::Path, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
@@ -75,8 +76,30 @@ impl Runner for LintRunner {
         } = self.options;
 
         let mut paths = paths;
+        let provided_path_count = paths.len();
+        let now = Instant::now();
+
+        // The ignore crate whitelists explicit paths, but priority
+        // should be given to the ignore file. Many users lint
+        // automatically and pass a list of changed files explicitly.
+        // To accommodate this, unless `--no-ignore` is passed,
+        // pre-filter the paths.
+        if !paths.is_empty() && !ignore_options.no_ignore {
+            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
+            paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
+        }
 
         if paths.is_empty() {
+            // If explicit paths were provided, but all have been
+            // filtered, return early.
+            if provided_path_count > 0 {
+                return CliRunResult::LintResult(LintResult {
+                    duration: now.elapsed(),
+                    deny_warnings: warning_options.deny_warnings,
+                    ..LintResult::default()
+                });
+            }
+
             if let Ok(cwd) = env::current_dir() {
                 paths.push(cwd);
             } else {
@@ -85,8 +108,6 @@ impl Runner for LintRunner {
                 };
             }
         }
-
-        let now = std::time::Instant::now();
 
         let extensions = VALID_EXTENSIONS
             .iter()
@@ -231,8 +252,7 @@ mod test {
         let args = &[];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 5);
-        assert_eq!(result.number_of_warnings, 3);
+        assert!(result.number_of_warnings > 0);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -241,8 +261,8 @@ mod test {
         let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 3);
-        assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -275,7 +295,20 @@ mod test {
 
     #[test]
     fn ignore_pattern() {
-        let args = &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures"];
+        let args =
+            &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    /// When a file is explicitly passed as a path and `--no-ignore`
+    /// is not present, the ignore file should take precedence.
+    /// See https://github.com/oxc-project/oxc/issues/1124
+    #[test]
+    fn ignore_file_overrides_explicit_args() {
+        let args = &["--ignore-path", "fixtures/linter/.customignore", "fixtures/linter/nan.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -283,8 +316,22 @@ mod test {
     }
 
     #[test]
+    fn ignore_file_no_ignore() {
+        let args = &[
+            "--ignore-path",
+            "fixtures/linter/.customignore",
+            "--no-ignore",
+            "fixtures/linter/nan.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn filter_allow_all() {
-        let args = &["-A", "all", "fixtures"];
+        let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_files > 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -301,11 +348,20 @@ mod test {
     }
 
     #[test]
-    fn test_lint_vue_file() {
-        let args = &["fixtures/linter/debugger.vue"];
+    fn lint_vue_file() {
+        let args = &["fixtures/vue/debugger.vue"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn lint_empty_vue_file() {
+        let args = &["fixtures/vue/empty.vue"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
     }
 }

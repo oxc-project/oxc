@@ -34,7 +34,7 @@ oxc_minifier    = { workspace = true, optional = true }
 oxc_codegen     = { workspace = true, optional = true }
 
 [features]
-serde       = ["oxc_ast/serde"]
+serde       = ["oxc_ast/serde", "oxc_semantic/serde"]
 semantic    = ["oxc_semantic"]
 formatter   = ["oxc_formatter"]
 transformer = ["oxc_transformer"]

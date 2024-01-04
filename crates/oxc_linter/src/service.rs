@@ -133,37 +133,56 @@ impl Runtime {
         })
     }
 
-    fn get_source_type_and_text(&self, path: &Path) -> Option<Result<(SourceType, String), Error>> {
+    fn get_source_type_and_text(
+        path: &Path,
+        ext: &str,
+    ) -> Option<Result<(SourceType, String), Error>> {
         let read_file = |path: &Path| -> Result<String, Error> {
             fs::read_to_string(path)
                 .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
         };
-
-        if let Ok(source_type) = SourceType::from_path(path) {
-            match read_file(path) {
-                Ok(source_text) => Some(Ok((source_type, source_text))),
-                Err(e) => Some(Err(e)),
-            }
-        } else {
-            let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
-            let partial_loader = if ext == "vue" { Some(&self.partial_vue_loader) } else { None };
-            let partial_loader = partial_loader?;
-
-            let source_text = match read_file(path) {
-                Ok(source_text) => source_text,
-                Err(e) => return Some(Err(e)),
-            };
-
-            let ret = partial_loader.parse(&source_text);
-            Some(Ok((ret.source_type, ret.source_text)))
+        let source_type = SourceType::from_path(path);
+        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        if not_supported_yet {
+            return None;
         }
+        let source_type = source_type.unwrap_or_default();
+        let source_text = match read_file(path) {
+            Ok(source_text) => source_text,
+            Err(e) => {
+                return Some(Err(e));
+            }
+        };
+
+        Some(Ok((source_type, source_text)))
+    }
+
+    /// Extract js section of specifial files.
+    /// Returns `None` if the specifial file does not have a js section.
+    fn extract_js<'a>(
+        &self,
+        source_text: &'a str,
+        source_type: SourceType,
+        ext: &str,
+    ) -> Option<(&'a str, SourceType)> {
+        if ext == "vue" {
+            let result = self.partial_vue_loader.parse(source_text);
+            if result.source_text.is_empty() {
+                return None;
+            }
+            return Some((result.source_text, result.source_type));
+        }
+        Some((source_text, source_type))
     }
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
         }
-        let Some(source_type_and_text) = self.get_source_type_and_text(path) else { return };
+        let Some(ext) = path.extension().and_then(std::ffi::OsStr::to_str) else {
+            return;
+        };
+        let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else { return };
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
@@ -171,12 +190,17 @@ impl Runtime {
                 return;
             }
         };
+        let Some((source_text, source_type)) = self.extract_js(&source_text, source_type, ext)
+        else {
+            return;
+        };
+
         let allocator = Allocator::default();
         let mut messages =
-            self.process_source(path, &allocator, &source_text, source_type, true, tx_error);
+            self.process_source(path, &allocator, source_text, source_type, true, tx_error);
 
         if self.linter.options().fix {
-            let fix_result = Fixer::new(&source_text, messages).fix();
+            let fix_result = Fixer::new(source_text, messages).fix();
             fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
             messages = fix_result.messages;
         }
@@ -184,7 +208,7 @@ impl Runtime {
         if !messages.is_empty() {
             let errors = messages.into_iter().map(|m| m.error).collect();
             let path = path.strip_prefix(&self.cwd).unwrap_or(path);
-            let diagnostics = DiagnosticService::wrap_diagnostics(path, &source_text, errors);
+            let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
             tx_error.send(Some(diagnostics)).unwrap();
         }
     }

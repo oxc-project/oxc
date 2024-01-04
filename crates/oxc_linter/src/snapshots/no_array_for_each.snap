@@ -74,14 +74,14 @@ expression: no_array_for_each
 
   ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:1]
- 1 │ foo.forEach(function(element, element) {})
+ 1 │ foo.forEach(function(element, element1) {})
    ·     ───────
    ╰────
   help: Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.
 
   ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:1]
- 1 │ foo.forEach(function element(element, element) {})
+ 1 │ foo.forEach(function element(element, element1) {})
    ·     ───────
    ╰────
   help: Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.

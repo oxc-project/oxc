@@ -62,7 +62,7 @@
       "type": "object",
       "title": "oxc",
       "properties": {
-        "oxc-client.run": {
+        "oxc_language_server.run": {
           "scope": "resource",
           "type": "string",
           "enum": [
@@ -72,12 +72,12 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         },
-        "oxc-client.enable": {
+        "oxc_language_server.enable": {
           "type": "boolean",
           "default": true,
-          "description": "enable oxc linter"
+          "description": "enable oxc language server"
         },
-        "oxc-client.trace.server": {
+        "oxc_language_server.trace.server": {
           "type": "string",
           "scope": "window",
           "enum": [
@@ -99,7 +99,7 @@
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square-min.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
-    "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify",
+    "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap",
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_vscode.vsix",
     "install-extension": "code --install-extension oxc_vscode.vsix --force",

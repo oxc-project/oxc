@@ -1,10 +1,13 @@
 use oxc_span::{Atom, Span};
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use crate::{symbol::SymbolId, AstNodeId};
 
 pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to

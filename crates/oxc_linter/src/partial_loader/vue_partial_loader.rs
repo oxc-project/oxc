@@ -7,7 +7,10 @@ use super::PartialLoaderValue;
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
     chars: Chars<'a>,
-    code: Vec<u8>,
+    /// JS code start position
+    start: u32,
+    /// JS code end position
+    end: u32,
     is_ts: bool,
     is_jsx: bool,
     is_reading_js: bool,
@@ -20,35 +23,34 @@ impl<'a> VuePartialLoader<'a> {
         Self {
             source_text,
             chars: source_text.chars(),
-            code: vec![],
+            start: 0,
+            end: 0,
             is_ts: false,
             is_jsx: false,
             is_reading_js: false,
             template_depth: 0,
         }
     }
-    pub fn build(mut self) -> PartialLoaderValue {
+    pub fn build(mut self) -> PartialLoaderValue<'a> {
         self.parse();
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        let js_content = unsafe { String::from_utf8_unchecked(self.code) };
-        PartialLoaderValue::from(js_content, self.is_ts, self.is_jsx)
+        if self.end <= self.start {
+            return PartialLoaderValue::default();
+        }
+        let js_code = Span::new(self.start, self.end).source_text(self.source_text);
+        PartialLoaderValue::from(js_code, self.is_ts, self.is_jsx)
     }
+
     fn parse(&mut self) {
         while let Some(ch) = self.advance() {
-            // if ch equals '<', we should check if it is the started char of </script>
-            let may_end_script_tag = self.is_reading_js && ch == '<';
-            if !may_end_script_tag {
-                self.push_ch_or_space(ch);
-            }
-
             if self.is_reading_js {
                 match ch {
                     '<' => {
                         if self.can_eat("/script>") {
                             self.is_reading_js = false;
+                            // minus 1 for '<'
+                            self.end = self.offset() - 1;
                             break;
                         }
-                        self.push_ch_or_space(ch);
                     }
                     '\'' | '"' => {
                         self.skip_until_next_delimiter(ch);
@@ -82,6 +84,7 @@ impl<'a> VuePartialLoader<'a> {
                 self.is_ts = VuePartialLoader::contains_ts_flag(attributes_text);
                 self.is_jsx = VuePartialLoader::contains_jsx_flag(attributes_text);
                 self.is_reading_js = true;
+                self.start = self.offset();
             }
         }
     }
@@ -114,10 +117,8 @@ impl<'a> VuePartialLoader<'a> {
     }
     fn skip_to_end_of_template_literal(&mut self) {
         let mut last_is_escape = false;
-        let mut chars = vec![];
 
         while let Some(c) = self.advance() {
-            chars.push(c as u8);
             if last_is_escape {
                 last_is_escape = false;
                 continue;
@@ -129,24 +130,19 @@ impl<'a> VuePartialLoader<'a> {
                 }
                 '$' => {
                     if self.peek() == Some('{') {
-                        let sub_chars = self.skip_to_end_dollar_brace();
-                        chars.extend(sub_chars);
+                        self.skip_to_end_dollar_brace();
                     }
                 }
                 _ => last_is_escape = false,
             }
         }
-
-        self.push_str_or_multi_space(chars);
     }
-    fn skip_to_end_dollar_brace(&mut self) -> Vec<u8> {
+    fn skip_to_end_dollar_brace(&mut self) {
         self.advance();
-        let mut chars = vec![b'{'];
         let mut brace_depth = 0;
         let mut last_is_escape = false;
 
         while let Some(c) = self.advance() {
-            chars.push(c as u8);
             if last_is_escape {
                 last_is_escape = false;
                 continue;
@@ -167,14 +163,10 @@ impl<'a> VuePartialLoader<'a> {
                 _ => {}
             }
         }
-        chars
     }
     fn skip_until_next_delimiter(&mut self, delimiter: char) {
         let mut last_is_escape = false;
-        let mut chars = vec![];
-
         for c in self.chars.by_ref() {
-            chars.push(c as u8);
             if last_is_escape {
                 last_is_escape = false;
                 continue;
@@ -189,18 +181,16 @@ impl<'a> VuePartialLoader<'a> {
                 _ => last_is_escape = false,
             }
         }
-
-        self.push_str_or_multi_space(chars);
     }
+    // O(1) time complexity
+    // More info: https://oxc-project.github.io/docs/learn/parser_in_rust/lexer.html#token
     #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
         (self.source_text.len() - self.chars.as_str().len()) as u32
     }
     fn eat(&mut self, target: &str) -> bool {
         let mut chars = self.chars.clone();
-        let mut code = vec![];
         for ch in target.chars() {
-            code.push(ch as u8);
             if let Some(c) = chars.next() {
                 if c != ch {
                     return false;
@@ -210,7 +200,6 @@ impl<'a> VuePartialLoader<'a> {
             }
         }
 
-        self.push_str_or_multi_space(code);
         self.chars = chars;
         true
     }
@@ -229,16 +218,12 @@ impl<'a> VuePartialLoader<'a> {
         true
     }
     fn eat_to(&mut self, target: char) -> bool {
-        let mut chars = vec![];
         for ch in self.chars.by_ref() {
-            chars.push(ch as u8);
             if target == ch {
-                self.push_str_or_multi_space(chars);
                 return true;
             }
         }
 
-        self.push_str_or_multi_space(chars);
         false
     }
 
@@ -253,40 +238,11 @@ impl<'a> VuePartialLoader<'a> {
             .iter()
             .any(|flag| s.contains(flag))
     }
-
-    fn push_str_or_multi_space(&mut self, s: Vec<u8>) {
-        for byte in s {
-            self.push_ch_or_space(byte as char);
-        }
-    }
-
-    fn push_ch_or_space(&mut self, ch: char) {
-        if self.is_reading_js {
-            self.code.push(ch as u8);
-        } else {
-            self.code.push(if ch == '\n' { b'\n' } else { b' ' });
-        }
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use itertools::Itertools;
-
     use super::VuePartialLoader;
-
-    fn visualize_empty_line(source: &str) -> String {
-        source
-            .lines()
-            .map(|line| {
-                if matches!(line.trim(), "" | "\n") {
-                    "-".repeat(line.len())
-                } else {
-                    line.to_string()
-                }
-            })
-            .join("\n")
-    }
 
     #[test]
     fn test_parse_vue_one_line() {
@@ -298,14 +254,7 @@ mod test {
         "#;
 
         let loader_value = VuePartialLoader::from(source_text).build();
-        assert_eq!(
-            visualize_empty_line(&loader_value.source_text),
-            r#"
-------------------
-------------------------------
--------------------
-                 console.log("hi") "#
-        );
+        assert_eq!(loader_value.source_text, r#" console.log("hi") "#);
     }
 
     #[test]
@@ -326,18 +275,14 @@ mod test {
         let loader_value = VuePartialLoader::from(source_text).build();
         assert!(!loader_value.source_type.is_typescript());
         assert_eq!(
-            visualize_empty_line(&loader_value.source_text),
+            loader_value.source_text,
             r#"
-------------------
-------------------------------
--------------------
-----------------
             console.log("hi")
             console.log("I am multi line")
             console.log("<script></script>")
             console.log(`<script></script>`)
             console.log('<script></script>')
---------"#
+        "#
         );
     }
 
@@ -490,6 +435,34 @@ mod test {
         ";
         let loader_value = VuePartialLoader::from(source_text).build();
         assert!(!loader_value.source_type.is_typescript());
-        assert_eq!(loader_value.source_text.trim(), "console.log('error')");
+        assert_eq!(loader_value.source_text.trim(), "");
+    }
+
+    #[test]
+    fn test_unicode() {
+        let source_text = r"
+        <script setup>
+        let 日历 = '2000年';
+        const t = useTranslate({
+            'zh-CN': {
+                calendar: '日历',
+                tiledDisplay: '平铺展示',
+            },
+        });
+        </script>
+        ";
+
+        let loader_value = VuePartialLoader::from(source_text).build();
+        assert_eq!(
+            loader_value.source_text.trim(),
+            "let 日历 = '2000年';
+        const t = useTranslate({
+            'zh-CN': {
+                calendar: '日历',
+                tiledDisplay: '平铺展示',
+            },
+        });"
+            .trim()
+        );
     }
 }

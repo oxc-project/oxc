@@ -8,6 +8,7 @@ import {
   Compartment,
   RangeSet,
 } from "@codemirror/state";
+import  { convertToUtf8, getStartAndEnd } from './editor.js'
 import  { findMostInnerNodeForPosition } from './traverseJson.js'
 import { parser } from '@lezer/json'
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
@@ -37,6 +38,7 @@ import initWasm, {
   OxcTypeCheckingOptions,
   graphql_schema_text,
 } from "@oxc/wasm-web";
+import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 
 const placeholderText = `
 import React, { useEffect, useRef } from 'react'
@@ -477,6 +479,7 @@ class Playground {
       case "ir":
         return "rust";
       case "ast":
+      case "symbol":
         return "json";
       case "query":
         return "graphql";
@@ -518,6 +521,18 @@ class Playground {
       case "ast":
         this.run();
         text = JSON.stringify(this.oxc.ast, null, 2);
+        break;
+      case "scope":
+        this.runOptions.scope = true;
+        this.run();
+        this.runOptions.scope = false
+        text = this.oxc.scopeText;
+        break;
+      case "symbol":
+        this.runOptions.symbol = true;
+        this.run();
+        this.runOptions.symbol = false
+        text = renderSymbols(this.oxc.symbols)
         break;
       case "codegen":
         this.run();
@@ -615,7 +630,9 @@ query {
   }
 
   highlightEditorRange(view, range) {
-    if (range.from === 0 && range.to === 0) {
+    let ranges = Array.isArray(range) ? range : [range];
+    ranges = ranges.filter((range) => range.from !== 0 || range.to !== 0);
+    if (ranges.length === 0) {
       return;
     }
     const addHighlight = StateEffect.define({
@@ -641,7 +658,7 @@ query {
       },
       provide: (f) => EditorView.decorations.from(f),
     });
-    const effects = [addHighlight.of(range)];
+    const effects = ranges.map((range) => addHighlight.of(range));
     if (!view.state.field(highlightField, false)) {
       effects.push(
         StateEffect.appendConfig.of([highlightField, Playground.highlightTheme])
@@ -661,56 +678,44 @@ query {
 
   // Highlight the editor by searching for `start` and `end` values.
   highlightEditorFromViewer(e, view) {
-    if (this.currentLanguage() != "json") {
-      return;
+    if (this.currentView === 'symbol') {
+      const pos = view.posAtCoords(e);
+      const tree = syntaxTree(view.state);
+      let cursor = tree.cursorAt(pos);
+      let [start, end] = getStartAndEnd.call(this, view, cursor)
+      // if we didn't find a start or an end, return early
+      if (start == undefined || end == undefined) return;
+      let ranges = getSymbolAndReferencesSpan(start, end)
+      this.highlightEditorRange(
+        this.editor,
+        ranges.map(range => EditorSelection.range(convertToUtf8(this.sourceTextUtf8, range.start), convertToUtf8(this.sourceTextUtf8, range.end)))
+      );
     }
-    const pos = view.posAtCoords(e);
-    const tree = syntaxTree(view.state);
-    let cursor = tree.cursorAt(pos);
-    // Go up and find the `type` key
-    while (true) {
-      if (view.state.doc.sliceString(cursor.from, cursor.to) == '"type"') {
-        break;
+    else if (this.currentView === "ast") {
+      const pos = view.posAtCoords(e);
+      const tree = syntaxTree(view.state);
+      let cursor = tree.cursorAt(pos);
+      // Go up and find the `type` key
+      while (true) {
+        if (view.state.doc.sliceString(cursor.from, cursor.to) == '"type"') {
+          break;
+        }
+        if (!cursor.prev()) {
+          break;
+        }
       }
-      if (!cursor.prev()) {
-        break;
-      }
-    }
-    // Go down and find the `start` and `end` keys
-    let start, end;
-    while (true) {
-      if (
-        !start &&
-        this.getTextFromView(view, cursor.from, cursor.to) == '"start"'
-      ) {
-        cursor.next();
-        start = this.getTextFromView(view, cursor.from, cursor.to);
-      }
-      if (
-        !end &&
-        this.getTextFromView(view, cursor.from, cursor.to) == '"end"'
-      ) {
-        cursor.next();
-        end = this.getTextFromView(view, cursor.from, cursor.to);
-      }
-      if (start && end) {
-        break;
-      }
-      if (!cursor.next()) {
-        break;
-      }
-    }
-    // if we didn't find a start or an end, return early
-    if (start == undefined || end == undefined) return;
+      let [start, end] = getStartAndEnd.call(this, view, cursor)
+      // if we didn't find a start or an end, return early
+      if (start == undefined || end == undefined) return;
 
-    // convert utf8 to utf16 span so they show correctly in the editor
-    start = new TextDecoder().decode(this.sourceTextUtf8.slice(0, start)).length;
-    end = new TextDecoder().decode(this.sourceTextUtf8.slice(0, end)).length;
+      start = convertToUtf8(this.sourceTextUtf8, start)
+      end = convertToUtf8(this.sourceTextUtf8, end)
 
-    this.highlightEditorRange(
-      this.editor,
-      EditorSelection.range(start, end)
-    );
+      this.highlightEditorRange(
+        this.editor,
+        EditorSelection.range(start, end)
+      );
+    }
   }
 }
 
@@ -791,6 +796,14 @@ async function main() {
 
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
+  };
+
+  document.getElementById("scope").onclick = () => {
+    playground.updateView("scope");
+  };
+
+  document.getElementById("symbol").onclick = () => {
+    playground.updateView("symbol");
   };
 
   document.getElementById("codegen").onclick = () => {

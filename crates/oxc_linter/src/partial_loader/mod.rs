@@ -11,14 +11,13 @@ pub enum PartialLoader {
 }
 
 #[derive(Default)]
-pub struct PartialLoaderValue {
-    pub source_text: String,
+pub struct PartialLoaderValue<'a> {
+    pub source_text: &'a str,
     pub source_type: SourceType,
 }
 
-impl PartialLoaderValue {
-    pub fn from(source_text: String, is_ts: bool, is_jsx: bool) -> Self {
-        // `module_kind`  should be `ModuleKind::Module` for allow `import`
+impl<'a> PartialLoaderValue<'a> {
+    pub fn from(source_text: &'a str, is_ts: bool, is_jsx: bool) -> Self {
         let source_type =
             SourceType::default().with_typescript(is_ts).with_module(true).with_jsx(is_jsx);
         Self { source_text, source_type }
@@ -26,7 +25,7 @@ impl PartialLoaderValue {
 }
 
 impl PartialLoader {
-    pub fn parse(&self, source_text: &str) -> PartialLoaderValue {
+    pub fn parse<'a>(&self, source_text: &'a str) -> PartialLoaderValue<'a> {
         if matches!(self, Self::Vue) {
             return VuePartialLoader::from(source_text).build();
         }

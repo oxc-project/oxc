@@ -9679,15 +9679,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected `{` but found `=>`
-    ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
- 22 │ 
- 23 │ var C = class extends () => {} {
-    ·                          ─┬
-    ·                           ╰── `{` expected
- 24 │   
-    ╰────
-
-  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-async-arrow-heritage.js:22:1]
  22 │ 
  23 │ var C = class extends async () => {} {
@@ -14105,9 +14096,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/function/param-duplicated-strict-3.js:21:1]
  21 │ 
  22 │ (function (param, param, param) { });
-    ·                   ──┬──  ──┬──
-    ·                     │      ╰── It can not be redeclared here
-    ·                     ╰── `param` has already been declared here
+    ·            ──┬──         ──┬──
+    ·              │             ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
     ╰────
 
   × Identifier `param` has already been declared
@@ -14141,9 +14132,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/function/param-duplicated-strict-body-3.js:20:1]
  20 │ 
  21 │ (function (param, param, param) { 'use strict'; });
-    ·                   ──┬──  ──┬──
-    ·                     │      ╰── It can not be redeclared here
-    ·                     ╰── `param` has already been declared here
+    ·            ──┬──         ──┬──
+    ·              │             ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -14743,15 +14734,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·               ──
  25 │   }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/in/private-field-invalid-rhs.js:23:1]
- 23 │   constructor() {
- 24 │     #field in () => {};
-    ·                 ─
- 25 │   }
-    ╰────
-  help: Try insert a semicolon here
 
   × The keyword 'yield' is reserved
     ╭─[language/expressions/in/private-field-rhs-yield-absent.js:30:1]
@@ -25174,15 +25156,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected `{` but found `=>`
-    ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
- 22 │ 
- 23 │ class C extends () => {} {
-    ·                    ─┬
-    ·                     ╰── `{` expected
- 24 │   
-    ╰────
-
-  × Expected `{` but found `=>`
     ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-async-arrow-heritage.js:22:1]
  22 │ 
  23 │ class C extends async () => {} {
@@ -31683,9 +31656,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/function/param-duplicated-strict-3.js:21:1]
  21 │ 
  22 │ function _13_1_7_fun(param, param, param) { }
-    ·                             ──┬──  ──┬──
-    ·                               │      ╰── It can not be redeclared here
-    ·                               ╰── `param` has already been declared here
+    ·                      ──┬──         ──┬──
+    ·                        │             ╰── It can not be redeclared here
+    ·                        ╰── `param` has already been declared here
     ╰────
 
   × Identifier `param` has already been declared
@@ -31719,9 +31692,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/function/param-duplicated-strict-body-3.js:21:1]
  21 │ 
  22 │ function _13_1_28_fun(param, param, param) { 'use strict'; }
-    ·                              ──┬──  ──┬──
-    ·                                │      ╰── It can not be redeclared here
-    ·                                ╰── `param` has already been declared here
+    ·                       ──┬──         ──┬──
+    ·                         │             ╰── It can not be redeclared here
+    ·                         ╰── `param` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
