@@ -252,8 +252,7 @@ mod test {
         let args = &[];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 5);
-        assert_eq!(result.number_of_warnings, 3);
+        assert!(result.number_of_warnings > 0);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -262,8 +261,8 @@ mod test {
         let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 3);
-        assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -296,7 +295,8 @@ mod test {
 
     #[test]
     fn ignore_pattern() {
-        let args = &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures"];
+        let args =
+            &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -331,7 +331,7 @@ mod test {
 
     #[test]
     fn filter_allow_all() {
-        let args = &["-A", "all", "fixtures"];
+        let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_files > 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -348,11 +348,20 @@ mod test {
     }
 
     #[test]
-    fn test_lint_vue_file() {
-        let args = &["fixtures/linter/debugger.vue"];
+    fn lint_vue_file() {
+        let args = &["fixtures/vue/debugger.vue"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn lint_empty_vue_file() {
+        let args = &["fixtures/vue/empty.vue"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
     }
 }

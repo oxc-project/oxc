@@ -17,10 +17,7 @@ use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
-use crate::{
-    partial_loader::{PartialLoader, PartialLoaderValue},
-    Fixer, LintContext, Linter, Message,
-};
+use crate::{partial_loader::PartialLoader, Fixer, LintContext, Linter, Message};
 
 #[derive(Clone)]
 pub struct LintService {
@@ -160,18 +157,22 @@ impl Runtime {
         Some(Ok((source_type, source_text)))
     }
 
-    fn may_need_extract_js_content<'a>(
+    /// Extract js section of specifial files.
+    /// Returns `None` if the specifial file does not have a js section.
+    fn extract_js<'a>(
         &self,
         source_text: &'a str,
+        source_type: SourceType,
         ext: &str,
     ) -> Option<(&'a str, SourceType)> {
         if ext == "vue" {
-            let PartialLoaderValue { source_text, source_type } =
-                self.partial_vue_loader.parse(source_text);
-            Some((source_text, source_type))
-        } else {
-            None
+            let result = self.partial_vue_loader.parse(source_text);
+            if result.source_text.is_empty() {
+                return None;
+            }
+            return Some((result.source_text, result.source_type));
         }
+        Some((source_text, source_type))
     }
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
@@ -189,9 +190,10 @@ impl Runtime {
                 return;
             }
         };
-        let (source_text, source_type) = self
-            .may_need_extract_js_content(&source_text, ext)
-            .unwrap_or((&source_text, source_type));
+        let Some((source_text, source_type)) = self.extract_js(&source_text, source_type, ext)
+        else {
+            return;
+        };
 
         let allocator = Allocator::default();
         let mut messages =
