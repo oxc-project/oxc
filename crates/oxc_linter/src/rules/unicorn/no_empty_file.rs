@@ -6,7 +6,9 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt};
+use crate::{
+    context::LintContext, partial_loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")]
@@ -38,6 +40,13 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyFile {
     fn run_once(&self, ctx: &LintContext) {
+        if ctx
+            .file_path()
+            .extension()
+            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXT.contains(&ext.to_string_lossy().as_ref()))
+        {
+            return;
+        }
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
 
