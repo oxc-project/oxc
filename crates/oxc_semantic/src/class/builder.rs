@@ -1,14 +1,17 @@
 use oxc_ast::{
-    ast::{ClassBody, ClassElement, MethodDefinition, PrivateIdentifier, PropertyDefinition},
+    ast::{
+        AccessorProperty, ClassBody, ClassElement, MethodDefinition, PrivateIdentifier,
+        PropertyDefinition,
+    },
     AstKind,
 };
 use oxc_span::GetSpan;
-use oxc_syntax::class::ClassId;
+use oxc_syntax::class::{ClassId, ElementKind};
 
 use crate::{AstNodeId, AstNodes};
 
 use super::{
-    table::{Method, PrivateIdentifierReference, Property},
+    table::{Element, PrivateIdentifierReference},
     ClassTable,
 };
 
@@ -44,7 +47,25 @@ impl ClassTableBuilder {
                 ClassElement::MethodDefinition(definition) => {
                     self.declare_class_method(definition.0);
                 }
+                ClassElement::AccessorProperty(definition) => {
+                    self.declare_class_accessor(definition.0);
+                }
                 _ => {}
+            }
+        }
+    }
+
+    pub fn declare_class_accessor(&mut self, property: &AccessorProperty) {
+        let is_private = property.key.is_private_identifier();
+        let name =
+            if is_private { property.key.private_name() } else { property.key.static_name() };
+
+        if let Some(name) = name {
+            if let Some(class_id) = self.current_class_id {
+                self.classes.add_element(
+                    class_id,
+                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                );
             }
         }
     }
@@ -56,8 +77,10 @@ impl ClassTableBuilder {
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
-                self.classes
-                    .add_property(class_id, Property::new(name, property.key.span(), is_private));
+                self.classes.add_element(
+                    class_id,
+                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                );
             }
         }
     }
@@ -73,19 +96,13 @@ impl ClassTableBuilder {
             if matches!(parent_kind, AstKind::PrivateInExpression(_) | AstKind::MemberExpression(_))
             {
                 if let Some(class_id) = self.current_class_id {
-                    let property_id = self.classes.get_property_id(class_id, &ident.name);
-                    let method_ids = if property_id.is_some() {
-                        Vec::default()
-                    } else {
-                        self.classes.get_method_ids(class_id, &ident.name)
-                    };
+                    let element_ids = self.classes.get_element_ids(class_id, &ident.name);
 
                     let reference = PrivateIdentifierReference::new(
                         current_node_id,
                         ident.name.clone(),
                         ident.span,
-                        property_id,
-                        method_ids,
+                        element_ids,
                     );
                     self.classes.add_private_identifier_reference(class_id, reference);
                 }
@@ -102,9 +119,9 @@ impl ClassTableBuilder {
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
-                self.classes.add_method(
+                self.classes.add_element(
                     class_id,
-                    Method::new(name, method.key.span(), is_private, method.kind),
+                    Element::new(name, method.key.span(), is_private, ElementKind::Method),
                 );
             }
         }

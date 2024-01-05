@@ -19,8 +19,25 @@ fn test_class_simple() {
     ",
     )
     .has_class("Foo")
-    .has_number_of_methods(3)
-    .has_number_of_properties(2)
+    .has_number_of_elements(5)
     .has_method("a")
     .has_property("privateProperty");
+}
+
+#[test]
+fn test_class_with_ts() {
+    SemanticTester::ts(
+        "
+      class Foo {
+        accessor ap = 1;
+        accessor #pap = 1;
+        constructor() {} // this method is skip
+      }
+        
+    ",
+    )
+    .has_class("Foo")
+    .has_number_of_elements(2)
+    .has_accessor("ap")
+    .has_accessor("pap");
 }
