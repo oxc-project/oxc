@@ -25,35 +25,35 @@ impl<'a> VuePartialLoader<'a> {
     ///  * one <script setup> block (excluding normal <script>).
     /// https://vuejs.org/api/sfc-spec.html#script
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
-        let Some(result1) = self.parse_script(0) else { return vec![] };
-        let start = result1.source_text.len() + SCRIPT_END.len();
-        let Some(result2) = self.parse_script(start) else { return vec![result1] };
+        let mut pointer = 0;
+        let Some(result1) = self.parse_script(&mut pointer) else { return vec![] };
+        let Some(result2) = self.parse_script(&mut pointer) else { return vec![result1] };
         vec![result1, result2]
     }
 
-    fn parse_script(&self, start: usize) -> Option<JavaScriptSource<'a>> {
+    fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
 
-        let mut pointer = start;
-
         // find opening "<script"
-        let offset = script_start_finder.find(self.source_text[pointer..].as_bytes())?;
-        pointer += offset + SCRIPT_START.len();
+        let offset = script_start_finder.find(self.source_text[*pointer..].as_bytes())?;
+        *pointer += offset + SCRIPT_START.len();
 
         // find closing ">"
-        let offset = self.source_text[pointer..].find('>')?;
+        let offset = self.source_text[*pointer..].find('>')?;
 
         // get ts and jsx attribute
-        let content = &self.source_text[pointer..pointer + offset];
+        let content = &self.source_text[*pointer..*pointer + offset];
         let is_ts = content.contains("ts");
         let is_jsx = content.contains("tsx") || content.contains("jsx");
-        pointer += offset + 1;
-        let js_start = pointer;
+
+        *pointer += offset + 1;
+        let js_start = *pointer;
 
         // find "</script>"
-        let offset = script_end_finder.find(self.source_text[pointer..].as_bytes())?;
-        let js_end = pointer + offset;
+        let offset = script_end_finder.find(self.source_text[*pointer..].as_bytes())?;
+        let js_end = *pointer + offset;
+        *pointer += offset + SCRIPT_END.len();
 
         let source_text = &self.source_text[js_start..js_end];
         let source_type =
@@ -198,6 +198,7 @@ mod test {
     #[test]
     fn test_multiple_scripts() {
         let source_text = r"
+        <template></template>
         <script>a</script>
         <script setup>b</script>
         ";
