@@ -364,4 +364,13 @@ mod test {
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
     }
+
+    #[test]
+    fn lint_astro_file() {
+        let args = &["fixtures/astro/debugger.astro"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
 }

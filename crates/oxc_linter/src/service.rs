@@ -17,7 +17,10 @@ use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
-use crate::{partial_loader::PartialLoader, Fixer, LintContext, Linter, Message};
+use crate::{
+    partial_loader::{PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    Fixer, LintContext, Linter, Message,
+};
 
 #[derive(Clone)]
 pub struct LintService {
@@ -110,7 +113,6 @@ pub struct Runtime {
     resolver: Resolver,
     module_map: ModuleMap,
     cache_state: CacheState,
-    partial_vue_loader: PartialLoader,
 }
 
 impl Runtime {
@@ -122,7 +124,6 @@ impl Runtime {
             resolver: Self::resolver(),
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
-            partial_vue_loader: PartialLoader::Vue,
         }
     }
 
@@ -142,7 +143,8 @@ impl Runtime {
                 .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
         };
         let source_type = SourceType::from_path(path);
-        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        let not_supported_yet =
+            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -160,19 +162,17 @@ impl Runtime {
     /// Extract js section of specifial files.
     /// Returns `None` if the specifial file does not have a js section.
     fn extract_js<'a>(
-        &self,
         source_text: &'a str,
         source_type: SourceType,
         ext: &str,
     ) -> Option<(&'a str, SourceType)> {
-        if ext == "vue" {
-            let result = self.partial_vue_loader.parse(source_text);
-            if result.source_text.is_empty() {
-                return None;
+        match ext {
+            "vue" => PartialLoader::Vue.build(source_text).map(|r| (r.source_text, r.source_type)),
+            "astro" => {
+                PartialLoader::Astro.build(source_text).map(|r| (r.source_text, r.source_type))
             }
-            return Some((result.source_text, result.source_type));
+            _ => Some((source_text, source_type)),
         }
-        Some((source_text, source_type))
     }
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
@@ -190,7 +190,7 @@ impl Runtime {
                 return;
             }
         };
-        let Some((source_text, source_type)) = self.extract_js(&source_text, source_type, ext)
+        let Some((source_text, source_type)) = Self::extract_js(&source_text, source_type, ext)
         else {
             return;
         };
