@@ -370,7 +370,7 @@ mod test {
         let args = &["fixtures/astro/debugger.astro"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_warnings, 4);
         assert_eq!(result.number_of_errors, 0);
     }
 }
