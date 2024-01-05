@@ -88,6 +88,7 @@ mod eslint {
     pub mod no_unused_private_class_members;
     pub mod no_useless_catch;
     pub mod no_useless_escape;
+    pub mod no_var;
     pub mod require_yield;
     pub mod use_isnan;
     pub mod valid_typeof;
@@ -336,6 +337,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unused_private_class_members,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
+    eslint::no_var,
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
