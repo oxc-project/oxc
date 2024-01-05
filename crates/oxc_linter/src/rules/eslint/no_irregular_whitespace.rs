@@ -35,7 +35,7 @@ declare_oxc_lint!(
 
 impl Rule for NoIrregularWhitespace {
     fn run_once(&self, ctx: &LintContext) {
-        let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces().clone();
+        let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces();
         for irregular_whitespace in irregular_whitespaces {
             ctx.diagnostic(NoIrregularWhitespaceDiagnostic(irregular_whitespace));
         }
