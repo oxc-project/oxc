@@ -7,6 +7,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
 use oxc_span::{Atom, Span};
+use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -92,34 +93,22 @@ declare_oxc_lint!(
 impl Rule for NoUnusedPrivateClassMembers {
     fn run_once(&self, ctx: &LintContext) {
         ctx.semantic().classes().iter_enumerated().for_each(|(class_id, _)| {
-            for (property_id, property) in
-                ctx.semantic().classes().properties[class_id].iter_enumerated()
+            for (element_id, element) in
+                ctx.semantic().classes().elements[class_id].iter_enumerated()
             {
-                if property.is_private
+                if !element.kind.intersects(ElementKind::Property | ElementKind::Method) {
+                    continue;
+                }
+                if element.is_private
                     && !ctx.semantic().classes().iter_private_identifiers(class_id).any(|ident| {
-                        is_read(ident.id, ctx.semantic().nodes())
-                            && ident.property_id.is_some_and(|id| id == property_id)
+                        // If the element is a property, it must be read.
+                        (!element.kind.is_property() || is_read(ident.id, ctx.semantic().nodes()))
+                            && ident.element_ids.contains(&element_id)
                     })
                 {
                     ctx.diagnostic(NoUnusedPrivateClassMembersDiagnostic(
-                        property.name.clone(),
-                        property.span,
-                    ));
-                }
-            }
-
-            for (method_id, method) in ctx.semantic().classes().methods[class_id].iter_enumerated()
-            {
-                if method.is_private
-                    && !ctx
-                        .semantic()
-                        .classes()
-                        .iter_private_identifiers(class_id)
-                        .any(|ident| ident.method_ids.contains(&method_id))
-                {
-                    ctx.diagnostic(NoUnusedPrivateClassMembersDiagnostic(
-                        method.name.clone(),
-                        method.span,
+                        element.name.clone(),
+                        element.span,
                     ));
                 }
             }

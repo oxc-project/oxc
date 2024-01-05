@@ -28,28 +28,33 @@ impl<'a> ClassTester<'a> {
         }
     }
 
-    pub fn has_number_of_properties(&self, len: usize) -> &Self {
-        let property_len = self.semantic.classes().properties[self.class_id].len();
-        debug_assert!(property_len == len, "Expected {len} properties, found {property_len}");
-        self
-    }
-
-    pub fn has_number_of_methods(&self, len: usize) -> &Self {
-        let method_len = self.semantic.classes().methods[self.class_id].len();
-        debug_assert!(method_len == len, "Expected `{len}` methods, found {method_len}");
+    pub fn has_number_of_elements(&self, len: usize) -> &Self {
+        let element_len = self.semantic.classes().elements[self.class_id].len();
+        debug_assert!(element_len == len, "Expected {len} elements, found {element_len}");
         self
     }
 
     pub fn has_property(&self, name: &str) -> &Self {
-        let property =
-            self.semantic.classes().properties[self.class_id].iter().find(|p| p.name == name);
+        let property = self.semantic.classes().elements[self.class_id]
+            .iter()
+            .find(|p| p.kind.is_property() && p.name == name);
         debug_assert!(property.is_some(), "Expected property `{name}` not found");
         self
     }
 
     pub fn has_method(&self, name: &str) -> &Self {
-        let method = self.semantic.classes().methods[self.class_id].iter().find(|m| m.name == name);
+        let method = self.semantic.classes().elements[self.class_id]
+            .iter()
+            .find(|m| m.kind.is_method() && m.name == name);
         debug_assert!(method.is_some(), "Expected method `{name}` not found");
+        self
+    }
+
+    pub fn has_accessor(&self, name: &str) -> &Self {
+        let method = self.semantic.classes().elements[self.class_id]
+            .iter()
+            .find(|m| m.kind.is_accessor() && m.name == name);
+        debug_assert!(method.is_some(), "Expected accessor `{name}` not found");
         self
     }
 }
