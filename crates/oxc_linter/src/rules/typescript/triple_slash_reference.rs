@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{ModuleDeclaration, TSModuleReference},
     AstKind,
@@ -13,6 +14,10 @@ use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
+
+static REFERENCE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"^\/\s*<reference\s*(types|path|lib)\s*=\s*["|'](.*)["|']"#).unwrap()
+});
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(triple-slash-reference): Do not use a triple slash reference for {0}, use `import` style instead.")]
@@ -120,13 +125,10 @@ impl Rule for TripleSlashReference {
             }
         }
 
-        let reference_regexp =
-            Regex::new(r#"^\/\s*<reference\s*(types|path|lib)\s*=\s*["|'](.*)["|']"#).unwrap();
         let comments = ctx.semantic().trivias().comments();
-
         for (start, comment) in comments {
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
-            if let Some(captures) = reference_regexp.captures(raw) {
+            if let Some(captures) = REFERENCE_REGEX.captures(raw) {
                 let group1 = captures.get(1).map_or("", |m| m.as_str());
                 let group2 = captures.get(2).map_or("", |m| m.as_str());
 
