@@ -1,40 +1,42 @@
 use memchr::memmem;
-use oxc_span::Span;
 
-use super::PartialLoaderValue;
+use oxc_span::{SourceType, Span};
+
+use super::JavaScriptSource;
 
 pub struct AstroPartialLoader<'a> {
     source_text: &'a str,
-    /// JS code start position
-    start: u32,
-    /// JS code end position
-    end: u32,
 }
 
 impl<'a> AstroPartialLoader<'a> {
     pub fn new(source_text: &'a str) -> Self {
-        Self { source_text, start: 0, end: 0 }
+        Self { source_text }
     }
 
-    pub fn build(mut self) -> Option<PartialLoaderValue<'a>> {
-        self.parse();
-        if self.end <= self.start {
+    pub fn parse(self) -> Vec<JavaScriptSource<'a>> {
+        let mut results = vec![];
+        results.extend(self.parse_frontmatter());
+        results
+    }
+
+    /// Parse `---` front matter block
+    #[allow(clippy::cast_possible_truncation)]
+    fn parse_frontmatter(&self) -> Option<JavaScriptSource<'a>> {
+        let split = "---";
+        let indexes = memmem::find_iter(self.source_text.as_bytes(), split).collect::<Vec<_>>();
+        if indexes.len() <= 1 {
             return None;
         }
-        let js_code = Span::new(self.start, self.end).source_text(self.source_text);
-        Some(PartialLoaderValue::new(js_code, /* is_ts */ true, /* self.is_jsx */ false))
-    }
 
-    fn parse(&mut self) {
-        let indexes = memmem::find_iter(self.source_text.as_bytes(), "---").collect::<Vec<_>>();
-        if indexes.len() <= 1 {
-            return;
-        }
-        let Some(start) = indexes.first() else { return };
-        let Some(end) = indexes.last() else { return };
-        let Ok(start) = u32::try_from(*start) else { return };
-        let Ok(end) = u32::try_from(*end) else { return };
-        self.start = start + 3;
-        self.end = end;
+        let start = indexes.first()?;
+        let end = indexes.last()?;
+        let Ok(start) = u32::try_from(*start) else { return None };
+        let Ok(end) = u32::try_from(*end) else { return None };
+
+        let js_code = Span::new(start + split.len() as u32, end).source_text(self.source_text);
+        Some(JavaScriptSource::new(
+            js_code,
+            SourceType::default().with_typescript(true).with_module(true),
+        ))
     }
 }

@@ -1,8 +1,8 @@
 use std::str::Chars;
 
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 
-use super::PartialLoaderValue;
+use super::JavaScriptSource;
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
@@ -32,13 +32,17 @@ impl<'a> VuePartialLoader<'a> {
         }
     }
 
-    pub fn build(mut self) -> Option<PartialLoaderValue<'a>> {
+    pub fn build(mut self) -> Option<JavaScriptSource<'a>> {
         self.parse();
         if self.end <= self.start {
             return None;
         }
         let js_code = Span::new(self.start, self.end).source_text(self.source_text);
-        Some(PartialLoaderValue::new(js_code, self.is_ts, self.is_jsx))
+        let source_type = SourceType::default()
+            .with_typescript(self.is_ts)
+            .with_jsx(self.is_jsx)
+            .with_module(true);
+        Some(JavaScriptSource::new(js_code, source_type))
     }
 
     fn parse(&mut self) {

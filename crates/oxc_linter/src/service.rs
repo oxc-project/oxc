@@ -18,7 +18,7 @@ use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    partial_loader::{PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
     Fixer, LintContext, Linter, Message,
 };
 
@@ -165,13 +165,11 @@ impl Runtime {
         source_text: &'a str,
         source_type: SourceType,
         ext: &str,
-    ) -> Option<(&'a str, SourceType)> {
+    ) -> Vec<JavaScriptSource<'a>> {
         match ext {
-            "vue" => PartialLoader::Vue.build(source_text).map(|r| (r.source_text, r.source_type)),
-            "astro" => {
-                PartialLoader::Astro.build(source_text).map(|r| (r.source_text, r.source_type))
-            }
-            _ => Some((source_text, source_type)),
+            "vue" => PartialLoader::Vue.build(source_text),
+            "astro" => PartialLoader::Astro.build(source_text),
+            _ => vec![JavaScriptSource::new(source_text, source_type)],
         }
     }
 
@@ -190,26 +188,29 @@ impl Runtime {
                 return;
             }
         };
-        let Some((source_text, source_type)) = Self::extract_js(&source_text, source_type, ext)
-        else {
+        let sources = Self::extract_js(&source_text, source_type, ext);
+
+        if sources.is_empty() {
             return;
-        };
-
-        let allocator = Allocator::default();
-        let mut messages =
-            self.process_source(path, &allocator, source_text, source_type, true, tx_error);
-
-        if self.linter.options().fix {
-            let fix_result = Fixer::new(source_text, messages).fix();
-            fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-            messages = fix_result.messages;
         }
 
-        if !messages.is_empty() {
-            let errors = messages.into_iter().map(|m| m.error).collect();
-            let path = path.strip_prefix(&self.cwd).unwrap_or(path);
-            let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
-            tx_error.send(Some(diagnostics)).unwrap();
+        for JavaScriptSource { source_text, source_type } in sources {
+            let allocator = Allocator::default();
+            let mut messages =
+                self.process_source(path, &allocator, source_text, source_type, true, tx_error);
+
+            if self.linter.options().fix {
+                let fix_result = Fixer::new(source_text, messages).fix();
+                fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                messages = fix_result.messages;
+            }
+
+            if !messages.is_empty() {
+                let errors = messages.into_iter().map(|m| m.error).collect();
+                let path = path.strip_prefix(&self.cwd).unwrap_or(path);
+                let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
+                tx_error.send(Some(diagnostics)).unwrap();
+            }
         }
     }
 
