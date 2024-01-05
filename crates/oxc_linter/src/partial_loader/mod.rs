@@ -12,7 +12,7 @@ pub enum PartialLoader {
     Astro,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct JavaScriptSource<'a> {
     pub source_text: &'a str,
     pub source_type: SourceType,
@@ -27,11 +27,7 @@ impl<'a> JavaScriptSource<'a> {
 impl PartialLoader {
     pub fn build<'a>(&self, source_text: &'a str) -> Vec<JavaScriptSource<'a>> {
         match self {
-            Self::Vue => {
-                let mut results = vec![];
-                results.extend(VuePartialLoader::new(source_text).build());
-                results
-            }
+            Self::Vue => VuePartialLoader::new(source_text).parse(),
             Self::Astro => AstroPartialLoader::new(source_text).parse(),
         }
     }
