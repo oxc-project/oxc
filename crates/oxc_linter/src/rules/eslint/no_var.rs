@@ -22,7 +22,7 @@ pub struct NoVar;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// ECMAScript 6 allows programmers to create variables with block scope instead of function scope using the `let` and `const` keywords.  
+    /// ECMAScript 6 allows programmers to create variables with block scope instead of function scope using the `let` and `const` keywords.
     /// Block scope is common in many other programming languages and helps programmers avoid mistakes
     ///
     /// ### Why is this bad?
@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// const CONFIG = {};
     /// ```
     NoVar,
-    correctness
+    restriction
 );
 
 impl Rule for NoVar {
