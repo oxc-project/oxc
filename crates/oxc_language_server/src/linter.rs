@@ -15,10 +15,7 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
 use oxc_linter::{
-    partial_loader::{
-        vue_partial_loader::VuePartialLoader, JavaScriptSource, PartialLoader,
-        LINT_PARTIAL_LOADER_EXT,
-    },
+    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
     LintContext, LintSettings, Linter,
 };
 use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};

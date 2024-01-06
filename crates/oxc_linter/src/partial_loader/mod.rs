@@ -1,9 +1,9 @@
-pub mod astro_partial_loader;
-pub mod vue_partial_loader;
+mod astro;
+mod vue;
 
 use oxc_span::SourceType;
 
-use self::{astro_partial_loader::AstroPartialLoader, vue_partial_loader::VuePartialLoader};
+pub use self::{astro::AstroPartialLoader, vue::VuePartialLoader};
 
 pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro"];
 
