@@ -1,3 +1,4 @@
+use log::debug;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -291,6 +292,7 @@ impl IsolatedLintHandler {
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
         if not_supported_yet {
+            debug!("extension {ext} not supported yet.");
             return None;
         }
         let source_type = source_type.unwrap_or_default();
@@ -324,6 +326,8 @@ impl IsolatedLintHandler {
         let (source_type, source_text) = Self::get_source_type_and_text(path, source_text, ext)?;
         let (source_text, source_type) = Self::may_need_extract_js_content(&source_text, ext)
             .unwrap_or((&source_text, source_type));
+
+        debug!("lint {path:?}");
 
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type)

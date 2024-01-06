@@ -191,10 +191,11 @@ impl LanguageServer for Backend {
         if run_level < SyntheticRunLevel::OnSave {
             return;
         }
-        if self.is_ignored(&params.text_document.uri).await {
+        let uri = params.text_document.uri;
+        if self.is_ignored(&uri).await {
             return;
         }
-        self.handle_file_update(params.text_document.uri, None, None).await;
+        self.handle_file_update(uri, None, None).await;
     }
 
     /// When the document changed, it may not be written to disk, so we should
@@ -205,7 +206,9 @@ impl LanguageServer for Backend {
             return;
         }
 
-        if self.is_ignored(&params.text_document.uri).await {
+        let uri = &params.text_document.uri;
+        if self.is_ignored(uri).await {
+            return;
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -361,7 +364,11 @@ impl Backend {
             return false;
         };
         let path = PathBuf::from(uri.path());
-        gitignore_globs.matched_path_or_any_parents(&path, path.is_dir()).is_ignore()
+        let ignored = gitignore_globs.matched_path_or_any_parents(&path, path.is_dir()).is_ignore();
+        if ignored {
+            debug!("ignored: {uri}");
+        }
+        ignored
     }
 }
 
