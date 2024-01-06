@@ -42,6 +42,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedLabels {
     fn run_once(&self, ctx: &LintContext) {
+        if ctx.file_path().extension().is_some_and(|ext| ext == "svelte") {
+            return;
+        }
         for id in ctx.semantic().unused_labels() {
             let node = ctx.semantic().nodes().get_node(*id);
             if let AstKind::LabeledStatement(stmt) = node.kind() {
