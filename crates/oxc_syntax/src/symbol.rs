@@ -1,12 +1,16 @@
 use bitflags::bitflags;
 use oxc_index::define_index_type;
 
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 define_index_type! {
     pub struct SymbolId = u32;
 }
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]
+    #[cfg_attr(feature = "serde", derive(Serialize))]
     pub struct SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter

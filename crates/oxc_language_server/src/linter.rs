@@ -15,7 +15,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
 use oxc_linter::{
     partial_loader::{
-        vue_partial_loader::VuePartialLoader, PartialLoader, PartialLoaderValue,
+        vue_partial_loader::VuePartialLoader, JavaScriptSource, PartialLoader,
         LINT_PARTIAL_LOADER_EXT,
     },
     LintContext, LintSettings, Linter,
@@ -288,7 +288,8 @@ impl IsolatedLintHandler {
         ext: &str,
     ) -> Option<(SourceType, String)> {
         let source_type = SourceType::from_path(path);
-        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        let not_supported_yet =
+            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -305,13 +306,12 @@ impl IsolatedLintHandler {
         source_text: &'a str,
         ext: &str,
     ) -> Option<(&'a str, SourceType)> {
-        if ext == "vue" {
-            let PartialLoaderValue { source_text, source_type } =
-                PartialLoader::Vue.parse(source_text);
-            Some((source_text, source_type))
-        } else {
-            None
-        }
+        None
+        // match ext {
+        // "vue" => PartialLoader::Vue.build(source_text),
+        // "astro" => PartialLoader::Astro.build(source_text)),
+        // _ => None,
+        // }
     }
 
     fn lint_path(

@@ -18,7 +18,7 @@ use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    partial_loader::{PartialLoader, PartialLoaderValue},
+    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
     Fixer, LintContext, Linter, Message,
 };
 
@@ -113,7 +113,6 @@ pub struct Runtime {
     resolver: Resolver,
     module_map: ModuleMap,
     cache_state: CacheState,
-    partial_vue_loader: PartialLoader,
 }
 
 impl Runtime {
@@ -125,7 +124,6 @@ impl Runtime {
             resolver: Self::resolver(),
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
-            partial_vue_loader: PartialLoader::Vue,
         }
     }
 
@@ -145,7 +143,8 @@ impl Runtime {
                 .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
         };
         let source_type = SourceType::from_path(path);
-        let not_supported_yet = source_type.as_ref().is_err_and(|_| !matches!(ext, "vue"));
+        let not_supported_yet =
+            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -160,17 +159,17 @@ impl Runtime {
         Some(Ok((source_type, source_text)))
     }
 
-    fn may_need_extract_js_content<'a>(
-        &self,
+    /// Extract js section of specifial files.
+    /// Returns `None` if the specifial file does not have a js section.
+    fn extract_js<'a>(
         source_text: &'a str,
+        source_type: SourceType,
         ext: &str,
-    ) -> Option<(&'a str, SourceType)> {
-        if ext == "vue" {
-            let PartialLoaderValue { source_text, source_type } =
-                self.partial_vue_loader.parse(source_text);
-            Some((source_text, source_type))
-        } else {
-            None
+    ) -> Vec<JavaScriptSource<'a>> {
+        match ext {
+            "vue" => PartialLoader::Vue.build(source_text),
+            "astro" => PartialLoader::Astro.build(source_text),
+            _ => vec![JavaScriptSource::new(source_text, source_type)],
         }
     }
 
@@ -189,25 +188,29 @@ impl Runtime {
                 return;
             }
         };
-        let (source_text, source_type) = self
-            .may_need_extract_js_content(&source_text, ext)
-            .unwrap_or((&source_text, source_type));
+        let sources = Self::extract_js(&source_text, source_type, ext);
 
-        let allocator = Allocator::default();
-        let mut messages =
-            self.process_source(path, &allocator, source_text, source_type, true, tx_error);
-
-        if self.linter.options().fix {
-            let fix_result = Fixer::new(source_text, messages).fix();
-            fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-            messages = fix_result.messages;
+        if sources.is_empty() {
+            return;
         }
 
-        if !messages.is_empty() {
-            let errors = messages.into_iter().map(|m| m.error).collect();
-            let path = path.strip_prefix(&self.cwd).unwrap_or(path);
-            let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
-            tx_error.send(Some(diagnostics)).unwrap();
+        for JavaScriptSource { source_text, source_type } in sources {
+            let allocator = Allocator::default();
+            let mut messages =
+                self.process_source(path, &allocator, source_text, source_type, true, tx_error);
+
+            if self.linter.options().fix {
+                let fix_result = Fixer::new(source_text, messages).fix();
+                fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+                messages = fix_result.messages;
+            }
+
+            if !messages.is_empty() {
+                let errors = messages.into_iter().map(|m| m.error).collect();
+                let path = path.strip_prefix(&self.cwd).unwrap_or(path);
+                let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
+                tx_error.send(Some(diagnostics)).unwrap();
+            }
         }
     }
 

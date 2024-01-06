@@ -4,5 +4,5 @@
 !out/main.js
 !package.json
 !README.md
-!target/release/oxc_vscode
-!target/release/oxc_vscode.exe
+!target/release/oxc_language_server
+!target/release/oxc_language_server.exe

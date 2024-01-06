@@ -11,10 +11,14 @@ use crate::{
     reference::{Reference, ReferenceId},
 };
 
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, Atom>,

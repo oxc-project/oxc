@@ -1,6 +1,6 @@
 parser_typescript Summary:
 AST Parsed     : 5201/5205 (99.92%)
-Positive Passed: 5192/5205 (99.75%)
+Positive Passed: 5194/5205 (99.79%)
 Negative Passed: 1023/4859 (21.05%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -3880,39 +3880,6 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
    ·       ────
    ╰────
 
-Expect to Parse: "conformance/classes/propertyMemberDeclarations/autoAccessor2.ts"
-  × Private field 'a' must be declared in an enclosing class
-    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor2.ts:9:1]
-  9 │     constructor() {
- 10 │         this.#a = 3;
-    ·              ──
- 11 │         this.#b = 4;
-    ╰────
-
-  × Private field 'b' must be declared in an enclosing class
-    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor2.ts:10:1]
- 10 │         this.#a = 3;
- 11 │         this.#b = 4;
-    ·              ──
- 12 │     }
-    ╰────
-
-  × Private field 'c' must be declared in an enclosing class
-    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor2.ts:14:1]
- 14 │     static {
- 15 │         this.#c = 5;
-    ·              ──
- 16 │         this.#d = 6;
-    ╰────
-
-  × Private field 'd' must be declared in an enclosing class
-    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor2.ts:15:1]
- 15 │         this.#c = 5;
- 16 │         this.#d = 6;
-    ·              ──
- 17 │     }
-    ╰────
-
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
   × Classes may not have a static property named prototype
     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:55:1]
@@ -3971,23 +3938,6 @@ Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJ
  69 │     var y = _;
     ╰────
 
-Expect to Parse: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts"
-  × Private field 'field1' must be declared in an enclosing class
-    ╭─[conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts:14:1]
- 14 │     static {
- 15 │         this.#field1;
-    ·              ───────
- 16 │         this.#field1 = 1;
-    ╰────
-
-  × Private field 'field1' must be declared in an enclosing class
-    ╭─[conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts:15:1]
- 15 │         this.#field1;
- 16 │         this.#field1 = 1;
-    ·              ───────
- 17 │     }
-    ╰────
-
 Expect to Parse: "conformance/esDecorators/esDecorators-preservesThis.ts"
   × Unexpected token
     ╭─[conformance/esDecorators/esDecorators-preservesThis.ts:26:1]
@@ -4003,14 +3953,6 @@ Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
  6 │ // await allowed in import=namespace when not a module
  7 │ import await = foo.await;
    ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[conformance/externalModules/topLevelAwait.2.ts:3:1]
- 3 │ 
- 4 │ declare namespace foo { const await: any; }
-   ·                               ─────
- 5 │ 
    ╰────
 
   × The keyword 'await' is reserved
@@ -15682,14 +15624,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  7 │ // await disallowed in import=namespace when in a module
  8 │ import await = foo.await;
    ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[conformance/externalModules/topLevelAwaitErrors.12.ts:4:1]
- 4 │ export {};
- 5 │ declare namespace foo { const await: any; }
-   ·                               ─────
- 6 │ 
    ╰────
 
   × The keyword 'await' is reserved

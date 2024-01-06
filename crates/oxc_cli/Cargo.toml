@@ -19,6 +19,11 @@ workspace = true
 doctest = false
 
 [[bin]]
+name = "oxc_cli"
+path = "src/main.rs"
+test = false
+
+[[bin]]
 name = "oxlint"
 path = "src/lint/main.rs"
 test = false

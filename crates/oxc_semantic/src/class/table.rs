@@ -1,34 +1,20 @@
-use oxc_ast::ast::MethodDefinitionKind;
 use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};
-use oxc_syntax::class::{ClassId, MethodId, PropertyId};
+use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 use rustc_hash::FxHashMap;
 
 use crate::node::AstNodeId;
 
 #[derive(Debug)]
-pub struct Property {
+pub struct Element {
     pub name: Atom,
     pub span: Span,
     pub is_private: bool,
+    pub kind: ElementKind,
 }
 
-impl Property {
-    pub fn new(name: Atom, span: Span, is_private: bool) -> Self {
-        Self { name, span, is_private }
-    }
-}
-
-#[derive(Debug)]
-pub struct Method {
-    pub name: Atom,
-    pub span: Span,
-    pub is_private: bool,
-    pub kind: MethodDefinitionKind,
-}
-
-impl Method {
-    pub fn new(name: Atom, span: Span, is_private: bool, kind: MethodDefinitionKind) -> Self {
+impl Element {
+    pub fn new(name: Atom, span: Span, is_private: bool, kind: ElementKind) -> Self {
         Self { name, span, is_private, kind }
     }
 }
@@ -38,20 +24,12 @@ pub struct PrivateIdentifierReference {
     pub id: AstNodeId,
     pub name: Atom,
     pub span: Span,
-    pub property_id: Option<PropertyId>,
-    /// If the private identifier is used in a get/set method, this will be has 2 method ids
-    pub method_ids: Vec<MethodId>,
+    pub element_ids: Vec<ElementId>,
 }
 
 impl PrivateIdentifierReference {
-    pub fn new(
-        id: AstNodeId,
-        name: Atom,
-        span: Span,
-        property_id: Option<PropertyId>,
-        method_ids: Vec<MethodId>,
-    ) -> Self {
-        Self { id, name, span, property_id, method_ids }
+    pub fn new(id: AstNodeId, name: Atom, span: Span, element_ids: Vec<ElementId>) -> Self {
+        Self { id, name, span, element_ids }
     }
 }
 
@@ -62,10 +40,7 @@ impl PrivateIdentifierReference {
 pub struct ClassTable {
     pub parent_ids: FxHashMap<ClassId, ClassId>,
     pub declarations: IndexVec<ClassId, AstNodeId>,
-    // PropertyDefinition
-    pub properties: IndexVec<ClassId, IndexVec<PropertyId, Property>>,
-    // MethodDefinition
-    pub methods: IndexVec<ClassId, IndexVec<MethodId, Method>>,
+    pub elements: IndexVec<ClassId, IndexVec<ElementId, Element>>,
     // PrivateIdentifier reference
     pub private_identifiers: IndexVec<ClassId, Vec<PrivateIdentifierReference>>,
 }
@@ -90,38 +65,29 @@ impl ClassTable {
         self.declarations[class_id]
     }
 
-    pub fn get_property_id(&self, class_id: ClassId, name: &Atom) -> Option<PropertyId> {
-        self.properties[class_id].iter_enumerated().find_map(|(property_id, property)| {
-            if property.name == *name {
-                Some(property_id)
-            } else {
-                None
-            }
-        })
-    }
+    pub fn get_element_ids(&self, class_id: ClassId, name: &Atom) -> Vec<ElementId> {
+        let mut element_ids = vec![];
+        for (element_id, element) in self.elements[class_id].iter_enumerated() {
+            if element.name == *name {
+                element_ids.push(element_id);
 
-    pub fn get_method_ids(&self, class_id: ClassId, name: &Atom) -> Vec<MethodId> {
-        let mut method_ids = vec![];
-        for (method_id, method) in self.methods[class_id].iter_enumerated() {
-            if method.name == *name {
-                method_ids.push(method_id);
-                // Only have 1 method id for MethodDefinition::Method
-                if method.kind.is_method() {
+                // Property or Accessor only has 1 element
+                if element.kind.intersects(ElementKind::Accessor | ElementKind::Property) {
                     break;
                 }
+
                 // Maximum 2 method ids, for get/set
-                if method_ids.len() == 2 {
+                if element_ids.len() == 2 {
                     break;
                 }
             }
         }
 
-        method_ids
+        element_ids
     }
 
     pub fn has_private_definition(&self, class_id: ClassId, name: &Atom) -> bool {
-        self.properties[class_id].iter().any(|p| p.is_private && p.name == *name)
-            || self.methods[class_id].iter().any(|m| m.is_private && m.name == *name)
+        self.elements[class_id].iter().any(|p| p.is_private && p.name == *name)
     }
 
     pub fn declare_class(&mut self, parent_id: Option<ClassId>, ast_node_id: AstNodeId) -> ClassId {
@@ -129,18 +95,13 @@ impl ClassTable {
         if let Some(parent_id) = parent_id {
             self.parent_ids.insert(class_id, parent_id);
         };
-        self.properties.push(IndexVec::default());
-        self.methods.push(IndexVec::default());
+        self.elements.push(IndexVec::default());
         self.private_identifiers.push(Vec::new());
         class_id
     }
 
-    pub fn add_property(&mut self, class_id: ClassId, property: Property) {
-        self.properties[class_id].push(property);
-    }
-
-    pub fn add_method(&mut self, class_id: ClassId, method: Method) {
-        self.methods[class_id].push(method);
+    pub fn add_element(&mut self, class_id: ClassId, element: Element) {
+        self.elements[class_id].push(element);
     }
 
     pub fn add_private_identifier_reference(

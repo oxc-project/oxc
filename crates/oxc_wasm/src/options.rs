@@ -11,6 +11,7 @@ pub struct OxcRunOptions {
     transform: bool,
     type_check: bool,
     scope: bool,
+    symbol: bool,
 }
 
 #[wasm_bindgen]
@@ -98,6 +99,16 @@ impl OxcRunOptions {
     #[wasm_bindgen(setter)]
     pub fn set_scope(&mut self, yes: bool) {
         self.scope = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn symbol(self) -> bool {
+        self.symbol
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_symbol(&mut self, yes: bool) {
+        self.symbol = yes;
     }
 }
 

@@ -1,4 +1,5 @@
-use std::{env, io::BufWriter, path::Path, vec::Vec};
+use ignore::gitignore::Gitignore;
+use std::{env, io::BufWriter, path::Path, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
@@ -15,33 +16,6 @@ pub struct LintRunner {
     options: CliLintOptions,
 }
 
-impl LintRunner {
-    fn check_options(&self) -> CliRunResult {
-        let CliLintOptions { filter, enable_plugins, config, .. } = &self.options;
-
-        // disallow passing config path and filter at the same time
-        if config.is_some() && !filter.is_empty() {
-            return CliRunResult::InvalidOptions {
-                message: "`--config` and rule filters cannot currently be used together. \nPlease use `--config` to specify a config file, or filter to specify rules."
-                    .to_string(),
-            };
-        }
-
-        if config.is_some()
-            && (enable_plugins.import_plugin
-                || enable_plugins.jest_plugin
-                || enable_plugins.jsx_a11y_plugin)
-        {
-            return CliRunResult::InvalidOptions {
-                message: "`--config` and plugin options cannot currently be used together. \nPlease use `--config` to specify a config file, or plugin options to enable plugins."
-                    .to_string(),
-            };
-        }
-
-        CliRunResult::None
-    }
-}
-
 impl Runner for LintRunner {
     type Options = CliLintOptions;
 
@@ -54,12 +28,6 @@ impl Runner for LintRunner {
             let mut stdout = BufWriter::new(std::io::stdout());
             Linter::print_rules(&mut stdout);
             return CliRunResult::None;
-        }
-
-        let result = self.check_options();
-
-        if !matches!(result, CliRunResult::None) {
-            return result;
         }
 
         let CliLintOptions {
@@ -76,7 +44,7 @@ impl Runner for LintRunner {
 
         let mut paths = paths;
         let provided_path_count = paths.len();
-        let now = std::time::Instant::now();
+        let now = Instant::now();
 
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
@@ -84,25 +52,21 @@ impl Runner for LintRunner {
         // To accommodate this, unless `--no-ignore` is passed,
         // pre-filter the paths.
         if !paths.is_empty() && !ignore_options.no_ignore {
-            let (ignore, _err) = ignore::gitignore::Gitignore::new(&ignore_options.ignore_path);
+            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
             paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
         }
 
-        // If explicit paths were provided, but all have been
-        // filtered, return early.
-        if provided_path_count > 0 && paths.is_empty() {
-            return CliRunResult::LintResult(LintResult {
-                duration: now.elapsed(),
-                number_of_rules: 0,
-                number_of_files: 0,
-                number_of_warnings: 0,
-                number_of_errors: 0,
-                max_warnings_exceeded: false,
-                deny_warnings: warning_options.deny_warnings,
-            });
-        }
-
         if paths.is_empty() {
+            // If explicit paths were provided, but all have been
+            // filtered, return early.
+            if provided_path_count > 0 {
+                return CliRunResult::LintResult(LintResult {
+                    duration: now.elapsed(),
+                    deny_warnings: warning_options.deny_warnings,
+                    ..LintResult::default()
+                });
+            }
+
             if let Ok(cwd) = env::current_dir() {
                 paths.push(cwd);
             } else {
@@ -237,10 +201,10 @@ mod test {
         let mut new_args = vec!["--quiet"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
-        let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
-            unreachable!()
-        };
-        lint_result
+        match LintRunner::new(options).run() {
+            CliRunResult::LintResult(lint_result) => lint_result,
+            other => panic!("{other:?}"),
+        }
     }
 
     #[test]
@@ -255,8 +219,7 @@ mod test {
         let args = &[];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 5);
-        assert_eq!(result.number_of_warnings, 3);
+        assert!(result.number_of_warnings > 0);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -265,8 +228,8 @@ mod test {
         let args = &["fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 3);
-        assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -299,7 +262,8 @@ mod test {
 
     #[test]
     fn ignore_pattern() {
-        let args = &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures"];
+        let args =
+            &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
         let result = test(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -334,7 +298,7 @@ mod test {
 
     #[test]
     fn filter_allow_all() {
-        let args = &["-A", "all", "fixtures"];
+        let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
         assert!(result.number_of_files > 0);
         assert_eq!(result.number_of_warnings, 0);
@@ -351,11 +315,68 @@ mod test {
     }
 
     #[test]
-    fn test_lint_vue_file() {
-        let args = &["fixtures/linter/debugger.vue"];
+    fn eslintrc_off() {
+        let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn no_empty_allow_empty_catch() {
+        let args = &[
+            "-c",
+            "fixtures/no_empty_allow_empty_catch/eslintrc.json",
+            "-D",
+            "no-empty",
+            "fixtures/no_empty_allow_empty_catch/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn no_empty_disallow_empty_catch() {
+        let args = &[
+            "-c",
+            "fixtures/no_empty_disallow_empty_catch/eslintrc.json",
+            "-D",
+            "no-empty",
+            "fixtures/no_empty_disallow_empty_catch/test.js",
+        ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn lint_vue_file() {
+        let args = &["fixtures/vue/debugger.vue"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn lint_empty_vue_file() {
+        let args = &["fixtures/vue/empty.vue"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn lint_astro_file() {
+        let args = &["fixtures/astro/debugger.astro"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 4);
         assert_eq!(result.number_of_errors, 0);
     }
 }

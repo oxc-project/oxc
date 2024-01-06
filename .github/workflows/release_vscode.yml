@@ -99,31 +99,31 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build with cross
-        run: cross build -p oxc_vscode --release --target=${{ matrix.target }}
+        run: cross build -p oxc_language_server --release --target=${{ matrix.target }}
 
       - name: Copy binary
         if: runner.os == 'Windows'
         run: |
           mkdir -p editors/vscode/target/release
-          # .vscodeignore uses `!target/release/oxc_vscode` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode.exe editors/vscode/target/release/oxc_vscode.exe
+          # .vscodeignore uses `!target/release/oxc_language_server.exe` to package the binary
+          cp target/${{ matrix.target }}/release/oxc_language_server.exe editors/vscode/target/release/oxc_language_server.exe
 
       - name: Copy binary
         if: runner.os != 'Windows'
         run: |
           mkdir -p editors/vscode/target/release/
-          # .vscodeignore uses `!target/release/oxc_vscode.exe` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode editors/vscode/target/release/oxc_vscode
+          # .vscodeignore uses `!target/release/oxc_language_server` to package the binary
+          cp target/${{ matrix.target }}/release/oxc_language_server editors/vscode/target/release/oxc_language_server
 
       - name: Package Extension
         working-directory: editors/vscode
-        run: pnpm exec vsce package -o "../../oxc_vscode-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
+        run: pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
         uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.code-target }}
-          path: ./oxc_vscode-${{ matrix.code-target }}.vsix
+          path: ./oxc_language_server-${{ matrix.code-target }}.vsix
           if-no-files-found: error
 
   publish:
@@ -160,6 +160,6 @@ jobs:
 
       - name: Publish extension to Microsoft Marketplace
         working-directory: editors/vscode
-        run: pnpm exec vsce publish --packagePath oxc_vscode-*.vsix
+        run: pnpm exec vsce publish --packagePath oxc_language_server-*.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}

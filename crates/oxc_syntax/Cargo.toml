@@ -32,4 +32,4 @@ phf              = { workspace = true, features = ["macros"] }
 
 [features]
 default = []
-serde   = ["dep:serde"]
+serde   = ["dep:serde", "bitflags/serde"]
