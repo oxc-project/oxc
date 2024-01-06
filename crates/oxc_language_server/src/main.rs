@@ -1,7 +1,5 @@
-#![allow(unused)]
 mod linter;
 mod options;
-mod walk;
 
 use crate::linter::{DiagnosticReport, ServerLinter};
 use globset::Glob;
@@ -10,7 +8,7 @@ use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use dashmap::DashMap;
@@ -22,9 +20,9 @@ use tower_lsp::lsp_types::{
     CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
     DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
     DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-    InitializedParams, MessageType, OneOf, Registration, ServerCapabilities, ServerInfo,
-    TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions,
-    WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
@@ -164,20 +162,11 @@ impl LanguageServer for Backend {
         *self.options.lock().await = changed_options;
     }
 
-    async fn initialized(&self, params: InitializedParams) {
+    async fn initialized(&self, _params: InitializedParams) {
         debug!("oxc initialized.");
 
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
-            // let result = self.server_linter.run_full(root_uri);
-
-            // self.publish_all_diagnostics(
-            // &result
-            // .into_iter()
-            // .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
-            // .collect(),
-            // )
-            // .await;
         }
     }
 
@@ -209,7 +198,6 @@ impl LanguageServer for Backend {
 
         let uri = &params.text_document.uri;
         if self.is_ignored(uri).await {
-            return;
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -335,7 +323,7 @@ impl Backend {
         .await;
     }
 
-    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
+    async fn handle_file_update(&self, uri: Url, content: Option<String>, _version: Option<i32>) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
             if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri, content) {
