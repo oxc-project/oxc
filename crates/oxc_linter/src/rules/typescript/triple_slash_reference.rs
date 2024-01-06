@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
@@ -123,18 +123,21 @@ impl Rule for TripleSlashReference {
                         TSModuleReference::TypeName(_) => {}
                     }
                 }
-                Statement::ModuleDeclaration(st) => match **st {
-                    ModuleDeclaration::ImportDeclaration(ref decl) => {
+                Statement::ModuleDeclaration(st) => {
+                    if let ModuleDeclaration::ImportDeclaration(ref decl) = **st {
                         import_source_set.insert(decl.source.value.as_str());
                     }
-                    _ => {}
-                },
+                }
                 _ => {}
             }
         }
 
+        // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
+        // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
+        let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
+
         let comments = ctx.semantic().trivias().comments();
-        for (start, comment) in comments {
+        for (start, comment) in comments.range(0..comments_range_end) {
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
             if let Some(captures) = REFERENCE_REGEX.captures(raw) {
                 let group1 = captures.get(1).map_or("", |m| m.as_str());
