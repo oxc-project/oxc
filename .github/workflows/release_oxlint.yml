@@ -40,8 +40,6 @@ jobs:
     if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
-    outputs:
-      version: ${{ env.version }}
     strategy:
       matrix:
         include:
@@ -122,6 +120,8 @@ jobs:
       id-token: write # for `npm publish --provenance`
     needs:
       - build
+    env:
+      version: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -169,8 +169,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: oxlint v${{ needs.build.outputs.version }}
+          name: oxlint v${{ env.version }}
+          tag_name: oxlint_v${{ env.version }}
           draft: true
           files: oxlint-*
           fail_on_unmatched_files: true
-          generate_release_notes: true
