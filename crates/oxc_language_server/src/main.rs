@@ -6,7 +6,7 @@ mod walk;
 use crate::linter::{DiagnosticReport, ServerLinter};
 use globset::Glob;
 use ignore::gitignore::Gitignore;
-use log::{debug, error};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -87,7 +87,8 @@ impl LanguageServer for Backend {
         });
 
         if let Some(value) = options {
-            debug!("initialize: {:?}", value);
+            info!("initialize: {:?}", value);
+            info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
             *self.options.lock().await = value;
         }
         Ok(InitializeResult {
