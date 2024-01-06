@@ -99,21 +99,21 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build with cross
-        run: cross build -p oxc_vscode --release --target=${{ matrix.target }}
+        run: cross build -p oxc_language_server --release --target=${{ matrix.target }}
 
       - name: Copy binary
         if: runner.os == 'Windows'
         run: |
           mkdir -p editors/vscode/target/release
           # .vscodeignore uses `!target/release/oxc_vscode` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode.exe editors/vscode/target/release/oxc_vscode.exe
+          cp target/${{ matrix.target }}/release/oxc_language_server.exe editors/vscode/target/release/oxc_vscode.exe
 
       - name: Copy binary
         if: runner.os != 'Windows'
         run: |
           mkdir -p editors/vscode/target/release/
           # .vscodeignore uses `!target/release/oxc_vscode.exe` to package the binary
-          cp target/${{ matrix.target }}/release/oxc_vscode editors/vscode/target/release/oxc_vscode
+          cp target/${{ matrix.target }}/release/oxc_language_server editors/vscode/target/release/oxc_vscode
 
       - name: Package Extension
         working-directory: editors/vscode
