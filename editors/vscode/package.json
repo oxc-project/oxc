@@ -101,8 +101,8 @@
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
     "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap",
     "watch": "pnpm run compile --watch",
-    "package": "vsce package --no-dependencies -o oxc_vscode.vsix",
-    "install-extension": "code --install-extension oxc_vscode.vsix --force",
+    "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
+    "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "fmt:js": "prettier --write ./**/*.{js,ts,json}"
