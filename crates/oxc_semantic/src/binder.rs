@@ -41,7 +41,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
         // Logic for scope hoisting `var`
 
         let mut var_scope_ids = vec![];
-        if !builder.scope.get_flags(current_scope_id).is_var() {
+        if !builder.current_scope_flags().is_var() {
             for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
                 if builder.scope.get_flags(scope_id).is_var() {
                     var_scope_ids.push(scope_id);
@@ -106,8 +106,7 @@ impl<'a> Binder for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.current_scope_id;
         if let Some(ident) = &self.id {
-            let flags = builder.scope.get_flags(current_scope_id);
-            if !flags.is_strict_mode()
+            if !builder.current_scope_flags().is_strict_mode()
                 && matches!(
                     builder.nodes.parent_kind(builder.current_node_id),
                     Some(AstKind::IfStatement(_))
@@ -158,7 +157,7 @@ impl<'a> Binder for Function<'a> {
         }
 
         // bind scope flags: Constructor | GetAccessor | SetAccessor
-        debug_assert!(builder.scope.get_flags(current_scope_id).contains(ScopeFlags::Function));
+        debug_assert!(builder.current_scope_flags().contains(ScopeFlags::Function));
         if let Some(kind) = builder.nodes.parent_kind(builder.current_node_id) {
             match kind {
                 AstKind::MethodDefinition(def) => {

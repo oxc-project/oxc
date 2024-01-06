@@ -219,8 +219,12 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    pub fn current_scope_flags(&self) -> ScopeFlags {
+        self.scope.get_flags(self.current_scope_id)
+    }
+
     pub fn strict_mode(&self) -> bool {
-        self.scope.get_flags(self.current_scope_id).is_strict_mode()
+        self.current_scope_flags().is_strict_mode()
             || self.current_node_flags.contains(NodeFlags::Class)
     }
 
