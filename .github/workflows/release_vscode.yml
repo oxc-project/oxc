@@ -119,7 +119,7 @@ jobs:
         working-directory: editors/vscode
         shell: bash
         run: |
-          ls editors/vscode/target/release
+          ls ./target/release
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
