@@ -105,7 +105,7 @@ export async function activate(context: ExtensionContext) {
     options: {
       env: {
         ...process.env,
-        RUST_LOG: "debug",
+        RUST_LOG: process.env.RUST_LOG || "info",
       },
     },
   };
