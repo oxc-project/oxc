@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use once_cell::sync::Lazy;
 use oxc_ast::{
-    ast::{ModuleDeclaration, TSModuleReference},
+    ast::{Declaration, ModuleDeclaration, Statement, TSModuleReference},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -109,17 +109,25 @@ impl Rule for TripleSlashReference {
         }))
     }
     fn run_once(&self, ctx: &LintContext) {
+        let Some(root) = ctx.nodes().iter().next() else { return };
+        let AstKind::Program(program) = root.kind() else { return };
         let mut import_source_set = HashSet::new();
-        for node in ctx.nodes().iter() {
-            match node.kind() {
-                AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
-                    import_source_set.insert(import.source.value.as_str());
-                }
-                AstKind::TSImportEqualsDeclaration(decl) => match *decl.module_reference {
-                    TSModuleReference::ExternalModuleReference(ref mod_ref) => {
-                        import_source_set.insert(mod_ref.expression.value.as_str());
+
+        for stmt in &program.body {
+            match stmt {
+                Statement::Declaration(Declaration::TSImportEqualsDeclaration(decl)) => {
+                    match *decl.module_reference {
+                        TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                            import_source_set.insert(mod_ref.expression.value.as_str());
+                        }
+                        TSModuleReference::TypeName(_) => {}
                     }
-                    TSModuleReference::TypeName(_) => {}
+                }
+                Statement::ModuleDeclaration(st) => match **st {
+                    ModuleDeclaration::ImportDeclaration(ref decl) => {
+                        import_source_set.insert(decl.source.value.as_str());
+                    }
+                    _ => {}
                 },
                 _ => {}
             }
