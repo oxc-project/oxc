@@ -3,21 +3,14 @@ use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        mpsc, Arc, RwLock,
-    },
+    sync::{Arc, RwLock},
 };
 
-use crate::walk::Walk;
-use crate::{options::LintOptions, walk::Extensions};
+use crate::options::LintOptions;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
-use oxc_linter::{
-    partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
-    LintContext, LintSettings, Linter,
-};
+use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintContext, LintSettings, Linter};
 use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -151,25 +144,16 @@ type Plugin = Arc<RwLock<Option<LinterPlugin>>>;
 
 #[derive(Debug)]
 pub struct IsolatedLintHandler {
+    #[allow(unused)]
     options: Arc<LintOptions>,
     linter: Arc<Linter>,
+    #[allow(unused)]
     plugin: Plugin,
 }
 
 impl IsolatedLintHandler {
     pub fn new(options: Arc<LintOptions>, linter: Arc<Linter>, plugin: Plugin) -> Self {
         Self { options, linter, plugin }
-    }
-
-    /// # Panics
-    ///
-    /// * When `mpsc::channel` fails to send.
-    pub fn run_full(&self) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
-        let number_of_files = Arc::new(AtomicUsize::new(0));
-        let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<ErrorWithPosition>)>();
-
-        self.process_paths(&number_of_files, tx_error);
-        Self::process_diagnostics(&rx_error)
     }
 
     pub fn run_single(
@@ -231,55 +215,6 @@ impl IsolatedLintHandler {
         path.extension().map_or(false, |ext| extensions.contains(&ext.to_string_lossy().as_ref()))
     }
 
-    fn process_paths(
-        &self,
-        number_of_files: &Arc<AtomicUsize>,
-        tx_error: mpsc::Sender<(PathBuf, Vec<ErrorWithPosition>)>,
-    ) {
-        let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
-
-        let walk = Walk::new(&self.options).with_extensions(Extensions(get_extensions()));
-        let number_of_files = Arc::clone(number_of_files);
-        rayon::spawn(move || {
-            let mut count = 0;
-            walk.iter().for_each(|path| {
-                count += 1;
-                tx_path.send(path).unwrap();
-            });
-            number_of_files.store(count, Ordering::Relaxed);
-        });
-
-        let linter = Arc::clone(&self.linter);
-        let plugin = Arc::clone(&self.plugin);
-        rayon::spawn(move || {
-            while let Ok(path) = rx_path.recv() {
-                let tx_error = tx_error.clone();
-                let linter = Arc::clone(&linter);
-                let plugin = Arc::clone(&plugin);
-                rayon::spawn(move || {
-                    if let Some(diagnostics) = Self::lint_path(&linter, &path, plugin, None) {
-                        tx_error.send(diagnostics).unwrap();
-                    }
-                    drop(tx_error);
-                });
-            }
-        });
-    }
-
-    fn process_diagnostics(
-        rx_error: &mpsc::Receiver<(PathBuf, Vec<ErrorWithPosition>)>,
-    ) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
-        rx_error
-            .iter()
-            .map(|(path, errors)| {
-                (
-                    path.clone(),
-                    errors.into_iter().map(|e| e.into_diagnostic_report(&path)).collect(),
-                )
-            })
-            .collect()
-    }
-
     fn get_source_type_and_text(
         path: &Path,
         source_text: Option<String>,
@@ -302,8 +237,8 @@ impl IsolatedLintHandler {
     }
 
     fn may_need_extract_js_content<'a>(
-        source_text: &'a str,
-        ext: &str,
+        _source_text: &'a str,
+        _ext: &str,
     ) -> Option<(&'a str, SourceType)> {
         None
         // match ext {
@@ -464,23 +399,6 @@ impl ServerLinter {
             let mut plugin = self.plugin.write().unwrap();
             plugin.replace(LinterPlugin::new(&path).unwrap());
         }
-    }
-
-    pub fn run_full(&self, root_uri: &Url) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
-        let options = LintOptions {
-            paths: vec![root_uri.to_file_path().unwrap()],
-            ignore_path: "node_modules".into(),
-            ignore_pattern: vec!["!**/node_modules/**/*".into()],
-            fix: true,
-            ..LintOptions::default()
-        };
-
-        IsolatedLintHandler::new(
-            Arc::new(options),
-            Arc::clone(&self.linter),
-            Arc::clone(&self.plugin),
-        )
-        .run_full()
     }
 
     pub fn run_single(
