@@ -1,16 +1,15 @@
 mod astro;
+mod svelte;
 mod vue;
 
 use oxc_span::SourceType;
 
-pub use self::{astro::AstroPartialLoader, vue::VuePartialLoader};
+pub use self::{astro::AstroPartialLoader, svelte::SveltePartialLoader, vue::VuePartialLoader};
 
-pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro"];
+const SCRIPT_START: &str = "<script";
+const SCRIPT_END: &str = "</script>";
 
-pub enum PartialLoader {
-    Vue,
-    Astro,
-}
+pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro", "svelte"];
 
 #[derive(Debug, Clone, Copy)]
 pub struct JavaScriptSource<'a> {
@@ -24,11 +23,17 @@ impl<'a> JavaScriptSource<'a> {
     }
 }
 
+pub struct PartialLoader;
+
 impl PartialLoader {
-    pub fn build<'a>(&self, source_text: &'a str) -> Vec<JavaScriptSource<'a>> {
-        match self {
-            Self::Vue => VuePartialLoader::new(source_text).parse(),
-            Self::Astro => AstroPartialLoader::new(source_text).parse(),
+    /// Extract js section of specifial files.
+    /// Returns `None` if the specifial file does not have a js section.
+    pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
+        match ext {
+            "vue" => Some(VuePartialLoader::new(source_text).parse()),
+            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
+            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
+            _ => None,
         }
     }
 }
