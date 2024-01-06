@@ -1,0 +1,5 @@
+{
+  "rules": {
+    "no-empty": ["error", { "allowEmptyCatch": true }]
+  }
+}

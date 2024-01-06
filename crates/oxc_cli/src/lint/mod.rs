@@ -16,33 +16,6 @@ pub struct LintRunner {
     options: CliLintOptions,
 }
 
-impl LintRunner {
-    fn check_options(&self) -> CliRunResult {
-        let CliLintOptions { filter, enable_plugins, config, .. } = &self.options;
-
-        // disallow passing config path and filter at the same time
-        if config.is_some() && !filter.is_empty() {
-            return CliRunResult::InvalidOptions {
-                message: "`--config` and rule filters cannot currently be used together. \nPlease use `--config` to specify a config file, or filter to specify rules."
-                    .to_string(),
-            };
-        }
-
-        if config.is_some()
-            && (enable_plugins.import_plugin
-                || enable_plugins.jest_plugin
-                || enable_plugins.jsx_a11y_plugin)
-        {
-            return CliRunResult::InvalidOptions {
-                message: "`--config` and plugin options cannot currently be used together. \nPlease use `--config` to specify a config file, or plugin options to enable plugins."
-                    .to_string(),
-            };
-        }
-
-        CliRunResult::None
-    }
-}
-
 impl Runner for LintRunner {
     type Options = CliLintOptions;
 
@@ -55,12 +28,6 @@ impl Runner for LintRunner {
             let mut stdout = BufWriter::new(std::io::stdout());
             Linter::print_rules(&mut stdout);
             return CliRunResult::None;
-        }
-
-        let result = self.check_options();
-
-        if !matches!(result, CliRunResult::None) {
-            return result;
         }
 
         let CliLintOptions {
@@ -234,10 +201,10 @@ mod test {
         let mut new_args = vec!["--quiet"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
-        let CliRunResult::LintResult(lint_result) = LintRunner::new(options).run() else {
-            unreachable!()
-        };
-        lint_result
+        match LintRunner::new(options).run() {
+            CliRunResult::LintResult(lint_result) => lint_result,
+            other => panic!("{other:?}"),
+        }
     }
 
     #[test]
@@ -344,6 +311,45 @@ mod test {
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn eslintrc_off() {
+        let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn no_empty_allow_empty_catch() {
+        let args = &[
+            "-c",
+            "fixtures/no_empty_allow_empty_catch/eslintrc.json",
+            "-D",
+            "no-empty",
+            "fixtures/no_empty_allow_empty_catch/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn no_empty_disallow_empty_catch() {
+        let args = &[
+            "-c",
+            "fixtures/no_empty_disallow_empty_catch/eslintrc.json",
+            "-D",
+            "no-empty",
+            "fixtures/no_empty_disallow_empty_catch/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
