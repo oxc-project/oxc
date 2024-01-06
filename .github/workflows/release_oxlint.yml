@@ -16,7 +16,7 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ env.version }}
+      version: ${{ steps.version.outputs.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,6 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: |
           echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
-          echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
 
   build:
     needs: check
