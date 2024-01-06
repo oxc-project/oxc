@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use once_cell::sync::Lazy;
 use oxc_ast::{
@@ -111,32 +111,13 @@ impl Rule for TripleSlashReference {
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
-        let mut import_source_set = HashSet::new();
-
-        for stmt in &program.body {
-            match stmt {
-                Statement::Declaration(Declaration::TSImportEqualsDeclaration(decl)) => {
-                    match *decl.module_reference {
-                        TSModuleReference::ExternalModuleReference(ref mod_ref) => {
-                            import_source_set.insert(mod_ref.expression.value.as_str());
-                        }
-                        TSModuleReference::TypeName(_) => {}
-                    }
-                }
-                Statement::ModuleDeclaration(st) => {
-                    if let ModuleDeclaration::ImportDeclaration(ref decl) = **st {
-                        import_source_set.insert(decl.source.value.as_str());
-                    }
-                }
-                _ => {}
-            }
-        }
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
-
         let comments = ctx.semantic().trivias().comments();
+        let mut refs_for_import = HashMap::new();
+
         for (start, comment) in comments.range(0..comments_range_end) {
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
             if let Some(captures) = REFERENCE_REGEX.captures(raw) {
@@ -153,14 +134,41 @@ impl Rule for TripleSlashReference {
                     ));
                 }
 
-                if group1 == "types"
-                    && self.types == TypesOption::PreferImport
-                    && import_source_set.contains(group2)
-                {
-                    ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                        group2.to_string(),
-                        Span { start: *start - 2, end: comment.end() },
-                    ));
+                if group1 == "types" && self.types == TypesOption::PreferImport {
+                    refs_for_import.insert(group2, Span { start: *start - 2, end: comment.end() });
+                }
+            }
+        }
+
+        if !refs_for_import.is_empty() {
+            for stmt in &program.body {
+                match stmt {
+                    Statement::Declaration(Declaration::TSImportEqualsDeclaration(decl)) => {
+                        match *decl.module_reference {
+                            TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                                if let Some(v) =
+                                    refs_for_import.get(mod_ref.expression.value.as_str())
+                                {
+                                    ctx.diagnostic(TripleSlashReferenceDiagnostic(
+                                        mod_ref.expression.value.to_string(),
+                                        *v,
+                                    ));
+                                }
+                            }
+                            TSModuleReference::TypeName(_) => {}
+                        }
+                    }
+                    Statement::ModuleDeclaration(st) => {
+                        if let ModuleDeclaration::ImportDeclaration(ref decl) = **st {
+                            if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
+                                ctx.diagnostic(TripleSlashReferenceDiagnostic(
+                                    decl.source.value.to_string(),
+                                    *v,
+                                ));
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
