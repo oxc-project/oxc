@@ -52,6 +52,10 @@ impl ScopeFlags {
         self.contains(Self::ClassStaticBlock)
     }
 
+    pub fn is_ts_module_block(&self) -> bool {
+        self.contains(Self::TsModuleBlock)
+    }
+
     pub fn is_var(&self) -> bool {
         self.intersects(Self::Var)
     }

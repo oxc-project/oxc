@@ -179,6 +179,10 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
 };
 
 fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+    // ts module block allows revered keywords
+    if ctx.current_scope_flags().is_ts_module_block() {
+        return;
+    }
     if *name == "await" {
         // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
         if ctx.source_type.is_module() {
