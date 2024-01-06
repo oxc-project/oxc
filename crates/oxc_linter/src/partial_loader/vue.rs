@@ -2,10 +2,7 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
-use super::JavaScriptSource;
-
-const SCRIPT_START: &str = "<script";
-const SCRIPT_END: &str = "</script>";
+use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START};
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
