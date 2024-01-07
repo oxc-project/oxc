@@ -1710,7 +1710,6 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
- "rayon",
  "ropey",
  "serde",
  "serde_json",
