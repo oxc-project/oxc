@@ -44,6 +44,7 @@ dashmap       = { workspace = true }
 convert_case  = { workspace = true }
 language-tags = { workspace = true }
 mime_guess    = { workspace = true }
+dunce = "1.0.4" # Normalize Windows paths to the most compatible format, avoiding UNC where possible
 
 rust-lapper = "1.1.0"
 once_cell   = "1.19.0"

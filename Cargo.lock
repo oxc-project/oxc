@@ -1723,6 +1723,7 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "dashmap",
+ "dunce",
  "insta",
  "itertools 0.12.0",
  "language-tags",
