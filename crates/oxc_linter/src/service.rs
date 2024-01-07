@@ -139,6 +139,8 @@ impl Runtime {
         ext: &str,
     ) -> Option<Result<(SourceType, String), Error>> {
         let read_file = |path: &Path| -> Result<String, Error> {
+            dbg!(&path);
+            if path.is_relative() {}
             fs::read_to_string(path)
                 .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
         };
@@ -236,13 +238,13 @@ impl Runtime {
             self.update_cache_state(path);
 
             // Retrieve all dependency modules from this module.
-            let dir = path.parent().unwrap();
+            let dir = path.parent().unwrap().canonicalize().unwrap();
             module_record
                 .requested_modules
                 .keys()
                 .par_bridge()
                 .map_with(&self.resolver, |resolver, specifier| {
-                    resolver.resolve(dir, specifier).ok().map(|r| (specifier, r))
+                    resolver.resolve(&dir, specifier).ok().map(|r| (specifier, r))
                 })
                 .flatten()
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
