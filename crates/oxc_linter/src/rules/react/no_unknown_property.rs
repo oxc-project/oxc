@@ -121,7 +121,7 @@ lazy_static! {
             "tfoot", "th", "thead", "tr",
         },
         // deprecated, but known
-        "valign" => phf_set! {"tr", "td", "th", "thead", "tbody", "tfoot", "colgroup", "col"}, // deprecated, but kno,
+        "valign" => phf_set! {"tr", "td", "th", "thead", "tbody", "tfoot", "colgroup", "col"}, // deprecated, but known
         "noModule" => phf_set! {"script"},
         // Media events allowed only on audio and video tags, see https://github.com/facebook/react/blob/256aefbea1449869620fb26f6ec695536ab453f5/CHANGELOG.md#notable-enhancements
         "onAbort" => phf_set! {"audio", "video"},
