@@ -1,5 +1,4 @@
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -48,18 +47,16 @@ declare_oxc_lint!(
     correctness
 );
 
-static ROLE_TO_REQUIRED_ARIA_PROPS: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|| {
-    phf_map! {
-        "checkbox" => "aria-checked",
-        "radio" => "aria-checked",
-        "combobox" => "aria-controls, aria-expanded",
-        "tab" => "aria-selected",
-        "slider" => "aria-valuemax, aria-valuemin, aria-valuenow",
-        "scrollbar" => "aria-valuemax, aria-valuemin, aria-valuenow, aria-orientation, aria-controls",
-        "heading" => "aria-level",
-        "option" => "aria-selected",
-    }
-});
+static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, &'static str> = phf_map! {
+    "checkbox" => "aria-checked",
+    "radio" => "aria-checked",
+    "combobox" => "aria-controls, aria-expanded",
+    "tab" => "aria-selected",
+    "slider" => "aria-valuemax, aria-valuemin, aria-valuenow",
+    "scrollbar" => "aria-valuemax, aria-valuemin, aria-valuenow, aria-orientation, aria-controls",
+    "heading" => "aria-level",
+    "option" => "aria-selected",
+};
 
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
