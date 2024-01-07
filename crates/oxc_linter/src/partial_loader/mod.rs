@@ -15,7 +15,8 @@ pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro", "svelte"];
 pub struct JavaScriptSource<'a> {
     pub source_text: &'a str,
     pub source_type: SourceType,
-    /// The start position of the source text in the original file.
+    /// The javascript source could be embedded in some file,  
+    /// use `start` to record start offset of js block in the original file.
     pub start: usize,
 }
 

@@ -49,29 +49,23 @@ impl ErrorWithPosition {
         fixed_content: Option<FixedContent>,
         start: usize,
     ) -> Self {
-        debug!("error with pos {start}");
         let labels = error.labels().map_or(vec![], Iterator::collect);
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
-            .map(|labeled_span| {
-                debug!("{:?}", labeled_span);
-                LabeledSpanWithPosition {
-                    start_pos: offset_to_position(labeled_span.offset() + start, text)
-                        .unwrap_or_default(),
-                    end_pos: offset_to_position(
-                        labeled_span.offset() + start + labeled_span.len(),
-                        text,
-                    )
+            .map(|labeled_span| LabeledSpanWithPosition {
+                start_pos: offset_to_position(labeled_span.offset() + start, text)
                     .unwrap_or_default(),
-                    message: labeled_span.label().map(ToString::to_string),
-                }
+                end_pos: offset_to_position(
+                    labeled_span.offset() + start + labeled_span.len(),
+                    text,
+                )
+                .unwrap_or_default(),
+                message: labeled_span.label().map(ToString::to_string),
             })
             .collect();
 
         let start_pos = labels_with_pos[0].start_pos;
         let end_pos = labels_with_pos[labels_with_pos.len() - 1].end_pos;
-        debug!("{:?}", start_pos);
-        debug!("{:?}", end_pos);
 
         Self { miette_err: error, start_pos, end_pos, labels_with_pos, fixed_content }
     }
@@ -234,8 +228,6 @@ impl IsolatedLintHandler {
 
     fn is_wanted_ext(path: &Path) -> bool {
         let extensions = get_valid_extensions();
-        debug!("{:?}", extensions);
-        debug!("{:?}", &path.extension());
         path.extension().map_or(false, |ext| extensions.contains(&ext.to_string_lossy().as_ref()))
     }
 
@@ -281,10 +273,10 @@ impl IsolatedLintHandler {
         let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
         let (source_type, original_source_text) =
             Self::get_source_type_and_text(path, source_text, ext)?;
-        let javascript_sources =
-            Self::may_need_extract_js_content(&original_source_text, ext).unwrap_or_else(|| vec![
-                JavaScriptSource { source_text: &original_source_text, source_type, start: 0 },
-            ]);
+        let javascript_sources = Self::may_need_extract_js_content(&original_source_text, ext)
+            .unwrap_or_else(|| {
+                vec![JavaScriptSource { source_text: &original_source_text, source_type, start: 0 }]
+            });
 
         debug!("lint {path:?}");
         let mut diagnostics = vec![];
@@ -302,12 +294,7 @@ impl IsolatedLintHandler {
                     .into_iter()
                     .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                     .collect();
-                return Some(Self::wrap_diagnostics(
-                    path,
-                    &original_source_text,
-                    reports,
-                    start,
-                ));
+                return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
             let program = allocator.alloc(ret.program);
@@ -322,12 +309,7 @@ impl IsolatedLintHandler {
                     .into_iter()
                     .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                     .collect();
-                return Some(Self::wrap_diagnostics(
-                    path,
-                    &original_source_text,
-                    reports,
-                    start,
-                ));
+                return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
             let mut lint_ctx = LintContext::new(
@@ -344,7 +326,6 @@ impl IsolatedLintHandler {
                     }
                 }
             }
-
 
             let result = linter.run(lint_ctx);
 
