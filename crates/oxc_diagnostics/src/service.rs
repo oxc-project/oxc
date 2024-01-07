@@ -1,10 +1,13 @@
 use std::{
     cell::Cell,
+    fmt::Display,
     io::{BufWriter, Write},
     path::{Path, PathBuf},
     sync::mpsc,
     sync::Arc,
 };
+
+use miette::{Diagnostic, LabeledSpan, SourceCode};
 
 use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
 
@@ -136,5 +139,67 @@ impl DiagnosticService {
         }
 
         buf_writer.flush().unwrap();
+    }
+}
+
+#[derive(Debug, Error)]
+pub struct DiagnosticLabelOverride {
+    report: miette::Report,
+    offset: usize,
+}
+
+impl DiagnosticLabelOverride {
+    pub fn new(report: miette::Report, offset: usize) -> Self {
+        Self { report, offset }
+    }
+}
+
+impl std::fmt::Display for DiagnosticLabelOverride {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.report, f)
+    }
+}
+
+impl Diagnostic for DiagnosticLabelOverride {
+    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.report.code()
+    }
+
+    fn severity(&self) -> Option<Severity> {
+        self.report.severity()
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.report.help()
+    }
+
+    fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.report.url()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        self.report.source_code()
+    }
+
+    fn labels(&self) -> Option<Box<dyn Iterator<Item = LabeledSpan> + '_>> {
+        self.report.labels().map(|labels| {
+            let iter = labels.map(|label| {
+                let offset = label.offset() + self.offset;
+                LabeledSpan::new(
+                    label.label().map(std::string::ToString::to_string),
+                    offset,
+                    label.len(),
+                )
+            });
+            Box::new(iter) as Box<dyn Iterator<Item = LabeledSpan>>
+        })
+    }
+
+    fn related<'a>(&'a self) -> Option<Box<dyn Iterator<Item = &'a dyn Diagnostic> + 'a>> {
+        self.report.related()
+    }
+
+    fn diagnostic_source(&self) -> Option<&dyn Diagnostic> {
+        self.report.diagnostic_source()
     }
 }

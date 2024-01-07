@@ -7,7 +7,9 @@ mod service;
 
 use std::path::PathBuf;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
+pub use crate::service::{
+    DiagnosticLabelOverride, DiagnosticSender, DiagnosticService, DiagnosticTuple,
+};
 pub use graphic_reporter::{GraphicalReportHandler, GraphicalTheme};
 pub use miette;
 pub use thiserror;

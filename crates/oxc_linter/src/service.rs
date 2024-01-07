@@ -7,11 +7,14 @@ use std::{
 };
 
 use dashmap::DashMap;
+use memchr::memmem::Finder;
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
+use oxc_diagnostics::{
+    DiagnosticLabelOverride, DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError,
+};
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
@@ -167,7 +170,7 @@ impl Runtime {
             return;
         };
         let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else { return };
-        let (source_type, source_text) = match source_type_and_text {
+        let (source_type, original_source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
                 tx_error.send(Some((path.to_path_buf(), vec![e]))).unwrap();
@@ -175,12 +178,30 @@ impl Runtime {
             }
         };
 
-        let sources = PartialLoader::parse(ext, &source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type)]);
+        let sources = PartialLoader::parse(ext, &original_source_text)
+            .unwrap_or_else(|| vec![JavaScriptSource::new(&original_source_text, source_type)]);
 
         if sources.is_empty() {
             return;
         }
+
+        let get_errors = |source_text: &str, messages: Vec<Message>| {
+            if original_source_text == source_text {
+                messages.into_iter().map(|message| message.error).collect()
+            } else {
+                messages
+                    .into_iter()
+                    .map(|message| {
+                        // TODO: Is 80 enough?
+                        let len = 80.min(source_text.len());
+                        let finder = Finder::new(&source_text[0..len]);
+                        let offset = finder.find(original_source_text.as_bytes()).unwrap_or(0);
+                        let diagnostic = DiagnosticLabelOverride::new(message.error, offset);
+                        diagnostic.into()
+                    })
+                    .collect()
+            }
+        };
 
         for JavaScriptSource { source_text, source_type } in sources {
             let allocator = Allocator::default();
@@ -194,9 +215,10 @@ impl Runtime {
             }
 
             if !messages.is_empty() {
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = get_errors(source_text, messages);
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
-                let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
+                let diagnostics =
+                    DiagnosticService::wrap_diagnostics(path, &original_source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
             }
         }
