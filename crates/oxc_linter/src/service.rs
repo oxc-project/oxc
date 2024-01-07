@@ -236,6 +236,8 @@ impl Runtime {
             self.update_cache_state(path);
 
             // Retrieve all dependency modules from this module.
+            // Since the path maybe a relative path, we need to canonicalize it before pass into
+            // resolver, related to #1887
             let dir = path.parent().unwrap().canonicalize().unwrap();
             module_record
                 .requested_modules
