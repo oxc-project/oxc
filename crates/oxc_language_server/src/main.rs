@@ -210,6 +210,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        debug!("{:?}",&params);
         let run_level = { self.options.lock().await.get_lint_level() };
         if run_level < SyntheticRunLevel::OnType {
             return;

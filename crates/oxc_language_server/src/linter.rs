@@ -182,8 +182,9 @@ impl IsolatedLintHandler {
         path: &Path,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
+        debug!("run single {path:?}");
         if Self::is_wanted_ext(path) {
-            Some(Self::lint_path(&self.linter, path, Arc::clone(&self.plugin), content).map_or(
+            Some(Self::lint_path(&self.linter, path, &Arc::clone(&self.plugin), content).map_or(
                 vec![],
                 |(p, errors)| {
                     let mut diagnostics: Vec<DiagnosticReport> =
@@ -233,6 +234,8 @@ impl IsolatedLintHandler {
 
     fn is_wanted_ext(path: &Path) -> bool {
         let extensions = get_valid_extensions();
+        debug!("{:?}", extensions);
+        debug!("{:?}", &path.extension());
         path.extension().map_or(false, |ext| extensions.contains(&ext.to_string_lossy().as_ref()))
     }
 
@@ -278,21 +281,16 @@ impl IsolatedLintHandler {
         let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
         let (source_type, original_source_text) =
             Self::get_source_type_and_text(path, source_text, ext)?;
-        let javascript_sources = Self::may_need_extract_js_content(&original_source_text, ext)
-            .unwrap_or(vec![JavaScriptSource {
-                source_text: &original_source_text,
-                source_type,
-                start: 0,
-            }]);
+        let javascript_sources =
+            Self::may_need_extract_js_content(&original_source_text, ext).unwrap_or_else(|| vec![
+                JavaScriptSource { source_text: &original_source_text, source_type, start: 0 },
+            ]);
 
         debug!("lint {path:?}");
         let mut diagnostics = vec![];
         for source in javascript_sources {
-            let JavaScriptSource {
-                source_text: javascript_source_text,
-                source_type,
-                start,
-            } = source;
+            let JavaScriptSource { source_text: javascript_source_text, source_type, start } =
+                source;
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
                 .allow_return_outside_function(true)
@@ -308,7 +306,7 @@ impl IsolatedLintHandler {
                     path,
                     &original_source_text,
                     reports,
-                    start as usize,
+                    start,
                 ));
             };
 
@@ -328,7 +326,7 @@ impl IsolatedLintHandler {
                     path,
                     &original_source_text,
                     reports,
-                    start as usize,
+                    start,
                 ));
             };
 
@@ -347,7 +345,6 @@ impl IsolatedLintHandler {
                 }
             }
 
-            drop(plugin); // explicitly drop plugin so that we consume the plugin in this function's body
 
             let result = linter.run(lint_ctx);
 
@@ -358,12 +355,12 @@ impl IsolatedLintHandler {
                         code: f.content.to_string(),
                         range: Range {
                             start: offset_to_position(
-                                f.span.start as usize + start as usize,
+                                f.span.start as usize + start,
                                 javascript_source_text,
                             )
                             .unwrap_or_default(),
                             end: offset_to_position(
-                                f.span.end as usize + start as usize,
+                                f.span.end as usize + start,
                                 javascript_source_text,
                             )
                             .unwrap_or_default(),
@@ -374,11 +371,11 @@ impl IsolatedLintHandler {
                 })
                 .collect::<Vec<ErrorReport>>();
             let (_, errors_with_position) =
-                Self::wrap_diagnostics(path, &original_source_text, reports, start as usize);
+                Self::wrap_diagnostics(path, &original_source_text, reports, start);
             diagnostics.extend(errors_with_position);
         }
 
-        return Some((path.to_path_buf(), diagnostics));
+        Some((path.to_path_buf(), diagnostics))
     }
 
     fn wrap_diagnostics(

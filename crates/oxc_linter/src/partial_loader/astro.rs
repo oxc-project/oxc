@@ -82,7 +82,7 @@ impl<'a> AstroPartialLoader<'a> {
             results.push(JavaScriptSource::new(
                 &self.source_text[js_start..js_end],
                 SourceType::default().with_typescript(true).with_module(true),
-                js_start
+                js_start,
             ));
         }
         results
