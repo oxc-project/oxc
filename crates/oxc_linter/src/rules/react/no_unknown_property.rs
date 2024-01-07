@@ -15,6 +15,7 @@ use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
 use serde::Deserialize;
 use std::collections::hash_map::HashMap;
+use std::collections::hash_set::HashSet;
 
 use crate::{
     context::LintContext,
@@ -46,7 +47,7 @@ pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 #[serde(rename_all = "camelCase")]
 pub struct NoUnknownPropertyConfig {
     #[serde(default)]
-    ignore: Vec<String>,
+    ignore: HashSet<String>,
     #[serde(default)]
     require_data_lowercase: bool,
 }
