@@ -99,6 +99,9 @@ new-jsx-a11y-rule name:
 new-oxc-rule name:
   cargo run -p rulegen {{name}} oxc
 
+new-nextjs-rule name:
+  cargo run -p rulegen {{name}} nextjs
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote
