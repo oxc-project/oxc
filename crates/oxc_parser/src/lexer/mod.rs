@@ -26,9 +26,9 @@ use oxc_syntax::{
 };
 pub use token::{RegExp, Token, TokenValue};
 
-pub use self::kind::Kind;
+pub use self::{kind::Kind, number::parse_big_int};
 use self::{
-    number::{parse_big_int, parse_float, parse_int},
+    number::{parse_float, parse_int},
     string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
 };
@@ -105,7 +105,7 @@ impl<'a> Lexer<'a> {
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
             chars: self.current.chars.clone(),
-            token: self.current.token.clone(),
+            token: self.current.token,
             errors_pos: self.errors.len(),
         }
     }
@@ -178,7 +178,9 @@ impl<'a> Lexer<'a> {
         self.current.token.kind = kind;
         self.current.token.end = self.offset();
         debug_assert!(self.current.token.start <= self.current.token.end);
-        std::mem::take(&mut self.current.token)
+        let token = self.current.token;
+        self.current.token = Token::default();
+        token
     }
 
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -299,10 +301,11 @@ impl<'a> Lexer<'a> {
     fn set_numeric_value(&mut self, kind: Kind, src: &'a str) {
         let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                src.strip_suffix('n').map_or_else(
-                    || parse_int(src, kind).map(TokenValue::Number),
-                    |src| parse_big_int(src, kind).map(TokenValue::BigInt),
-                )
+                if src.ends_with('n') {
+                    // BigInt is parsed lazily in the parser
+                    return;
+                }
+                parse_int(src, kind).map(TokenValue::Number)
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src).map(TokenValue::Number)
