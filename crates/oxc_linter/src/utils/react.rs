@@ -54,6 +54,15 @@ pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXA
     }
 }
 
+pub fn get_prop_name(item: &JSXAttributeName) -> String {
+    match item {
+        JSXAttributeName::NamespacedName(name) => {
+            format!("{}:{}", name.namespace.name.as_str(), name.property.name.as_str())
+        }
+        JSXAttributeName::Identifier(ident) => ident.name.to_string(),
+    }
+}
+
 pub fn get_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
     get_prop_value(item).and_then(|v| {
         if let JSXAttributeValue::StringLiteral(s) = v {
