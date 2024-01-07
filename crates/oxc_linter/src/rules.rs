@@ -268,6 +268,10 @@ mod oxc {
     pub mod only_used_in_recursion;
 }
 
+mod nextjs {
+    pub mod google_font_display;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -504,4 +508,5 @@ oxc_macros::declare_all_lint_rules! {
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
     oxc::only_used_in_recursion,
+    nextjs::google_font_display,
 }
