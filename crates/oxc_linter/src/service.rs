@@ -238,7 +238,8 @@ impl Runtime {
             // Retrieve all dependency modules from this module.
             // Since the path maybe a relative path, we need to canonicalize it before pass into
             // resolver, related to #1887
-            let dir = path.parent().unwrap().canonicalize().unwrap();
+            let path_buf = path.canonicalize().unwrap();
+            let dir = path_buf.parent().unwrap();
             module_record
                 .requested_modules
                 .keys()
