@@ -1710,7 +1710,6 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
- "rayon",
  "ropey",
  "serde",
  "serde_json",
@@ -1749,6 +1748,7 @@ dependencies = [
  "regex",
  "rust-lapper",
  "rustc-hash",
+ "serde",
  "serde_json",
 ]
 
