@@ -61,18 +61,9 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, &'static str> = phf_m
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let role_prop = match has_jsx_prop_lowercase(jsx_el, "role") {
-                Some(role_prop) => role_prop,
-                None => return,
-            };
-            let attr = match role_prop {
-                JSXAttributeItem::Attribute(attr) => attr,
-                JSXAttributeItem::SpreadAttribute(_) => return,
-            };
-            let role_values = match &attr.value {
-                Some(JSXAttributeValue::StringLiteral(role_values)) => role_values,
-                _ => return,
-            };
+            let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") else { return };
+            let JSXAttributeItem::Attribute(attr) = role_prop else { return };
+            let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else { return };
             let roles = role_values.value.split_whitespace();
             for role in roles {
                 let required_props = match ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
