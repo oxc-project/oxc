@@ -274,6 +274,7 @@ mod nextjs {
     pub mod inline_script_id;
     pub mod next_script_for_ga;
     pub mod no_assign_module_variable;
+    pub mod no_async_client_component;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -517,4 +518,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::inline_script_id,
     nextjs::next_script_for_ga,
     nextjs::no_assign_module_variable,
+    nextjs::no_async_client_component,
 }
