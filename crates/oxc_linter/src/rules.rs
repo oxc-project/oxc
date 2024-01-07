@@ -270,6 +270,7 @@ mod oxc {
 
 mod nextjs {
     pub mod google_font_display;
+    pub mod google_font_preconnect;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -509,4 +510,5 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_accumulating_spread,
     oxc::only_used_in_recursion,
     nextjs::google_font_display,
+    nextjs::google_font_preconnect,
 }
