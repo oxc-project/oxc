@@ -139,8 +139,6 @@ impl Runtime {
         ext: &str,
     ) -> Option<Result<(SourceType, String), Error>> {
         let read_file = |path: &Path| -> Result<String, Error> {
-            dbg!(&path);
-            if path.is_relative() {}
             fs::read_to_string(path)
                 .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
         };
