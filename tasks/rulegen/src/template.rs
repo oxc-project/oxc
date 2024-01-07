@@ -38,8 +38,10 @@ impl<'a> Template<'a> {
             RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
             RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
             RuleKind::DeepScan => Path::new("crates/oxc_linter/src/rules/deepscan"),
+            RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
         };
 
+        std::fs::create_dir_all(path)?;
         let out_path = path.join(format!("{}.rs", self.context.snake_rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
