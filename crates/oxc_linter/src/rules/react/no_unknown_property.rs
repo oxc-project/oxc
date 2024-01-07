@@ -443,9 +443,11 @@ fn has_uppercase(name: &str) -> bool {
 
 impl Rule for NoUnknownProperty {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first());
-
-        Self(Box::new(serde_json::from_value(value.unwrap().clone()).unwrap()))
+        value
+            .as_array()
+            .and_then(|arr| arr.first())
+            .and_then(|value| serde_json::from_value(value.clone()).ok())
+            .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
