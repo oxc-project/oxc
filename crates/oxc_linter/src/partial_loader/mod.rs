@@ -15,11 +15,13 @@ pub const LINT_PARTIAL_LOADER_EXT: &[&str] = &["vue", "astro", "svelte"];
 pub struct JavaScriptSource<'a> {
     pub source_text: &'a str,
     pub source_type: SourceType,
+    /// The start position of the source text in the original file.
+    pub start: usize,
 }
 
 impl<'a> JavaScriptSource<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { source_text, source_type }
+    pub fn new(source_text: &'a str, source_type: SourceType, start: usize) -> Self {
+        Self { source_text, source_type, start }
     }
 }
 
