@@ -49,7 +49,6 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportAriaProps;
 
-// TODO: add error message
 #[derive(Debug, Error, Diagnostic)]
 enum RoleSupportAriaPropsDiagnostic {
     #[error("eslint-plugin-jsx-a11y(role-support-aria-props): The attribute {1} is not supported by the role {2}.")]
