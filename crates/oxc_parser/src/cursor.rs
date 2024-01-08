@@ -236,7 +236,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
-            cur_token: self.token.clone(),
+            cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
         }

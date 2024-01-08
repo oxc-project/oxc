@@ -163,8 +163,13 @@ impl<'a> AstBuilder<'a> {
         TemplateElementValue { raw, cooked }
     }
 
-    pub fn reg_exp_literal(&self, span: Span, pattern: Atom, flags: RegExpFlags) -> RegExpLiteral {
-        RegExpLiteral { span, value: EmptyObject, regex: RegExp { pattern, flags } }
+    pub fn reg_exp_literal(
+        &self,
+        span: Span,
+        pattern: &'a str,
+        flags: RegExpFlags,
+    ) -> RegExpLiteral {
+        RegExpLiteral { span, value: EmptyObject, regex: RegExp { pattern: pattern.into(), flags } }
     }
 
     pub fn literal_string_expression(&self, literal: StringLiteral) -> Expression<'a> {

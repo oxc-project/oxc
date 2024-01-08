@@ -24,11 +24,11 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
-pub use token::{RegExp, Token, TokenValue};
+pub use token::{Token, TokenValue};
 
-pub use self::kind::Kind;
+pub use self::{kind::Kind, number::parse_big_int};
 use self::{
-    number::{parse_big_int, parse_float, parse_int},
+    number::{parse_float, parse_int},
     string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
 };
@@ -105,7 +105,7 @@ impl<'a> Lexer<'a> {
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
             chars: self.current.chars.clone(),
-            token: self.current.token.clone(),
+            token: self.current.token,
             errors_pos: self.errors.len(),
         }
     }
@@ -178,7 +178,9 @@ impl<'a> Lexer<'a> {
         self.current.token.kind = kind;
         self.current.token.end = self.offset();
         debug_assert!(self.current.token.start <= self.current.token.end);
-        std::mem::take(&mut self.current.token)
+        let token = self.current.token;
+        self.current.token = Token::default();
+        token
     }
 
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -299,10 +301,11 @@ impl<'a> Lexer<'a> {
     fn set_numeric_value(&mut self, kind: Kind, src: &'a str) {
         let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                src.strip_suffix('n').map_or_else(
-                    || parse_int(src, kind).map(TokenValue::Number),
-                    |src| parse_big_int(src, kind).map(TokenValue::BigInt),
-                )
+                if src.ends_with('n') {
+                    // BigInt is parsed lazily in the parser
+                    return;
+                }
+                parse_int(src, kind).map(TokenValue::Number)
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src).map(TokenValue::Number)
@@ -816,7 +819,6 @@ impl<'a> Lexer<'a> {
 
     /// 12.9.5 Regular Expression Literals
     fn read_regex(&mut self) -> Kind {
-        let start = self.current.token.start + 1; // +1 to exclude `/`
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
@@ -845,39 +847,26 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let end = self.offset() - 1; // -1 to exclude `/`
-        let pattern = &self.source[start as usize..end as usize];
-
         let mut flags = RegExpFlags::empty();
 
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.current.chars.next();
             if !ch.is_ascii_lowercase() {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                continue;
+                return Kind::Undetermined;
             }
-            let flag = match ch {
-                'g' => RegExpFlags::G,
-                'i' => RegExpFlags::I,
-                'm' => RegExpFlags::M,
-                's' => RegExpFlags::S,
-                'u' => RegExpFlags::U,
-                'y' => RegExpFlags::Y,
-                'd' => RegExpFlags::D,
-                'v' => RegExpFlags::V,
-                _ => {
-                    self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                    continue;
-                }
+            let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
+                flag
+            } else {
+                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
+                return Kind::Undetermined;
             };
             if flags.contains(flag) {
                 self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
-                continue;
+                return Kind::Undetermined;
             }
             flags |= flag;
         }
-
-        self.current.token.value = TokenValue::RegExp(RegExp { pattern, flags });
 
         Kind::RegExp
     }

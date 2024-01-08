@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: inline_script_id
+---
+  ⚠ eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:4:1]
+ 4 │                       return (
+ 5 │                         <Script>
+   ·                          ──────
+ 6 │                           {`console.log('Hello world');`}
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:4:1]
+ 4 │                       return (
+ 5 │                         <Script
+   ·                          ──────
+ 6 │                           dangerouslySetInnerHTML={{
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:4:1]
+ 4 │                       return (
+ 5 │                         <MyScript>
+   ·                          ────────
+ 6 │                           {`console.log('Hello world');`}
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+  ⚠ eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
+   ╭─[inline_script_id.tsx:4:1]
+ 4 │                       return (
+ 5 │                         <MyScript
+   ·                          ────────
+ 6 │                           dangerouslySetInnerHTML={{
+   ╰────
+  help: See https://nextjs.org/docs/messages/inline-script-id
+
+
