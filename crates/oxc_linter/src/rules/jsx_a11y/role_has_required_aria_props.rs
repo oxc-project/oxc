@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_map;
+use phf::{phf_map, phf_set};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -47,15 +47,15 @@ declare_oxc_lint!(
     correctness
 );
 
-static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, &'static str> = phf_map! {
-    "checkbox" => "aria-checked",
-    "radio" => "aria-checked",
-    "combobox" => "aria-controls, aria-expanded",
-    "tab" => "aria-selected",
-    "slider" => "aria-valuemax, aria-valuemin, aria-valuenow",
-    "scrollbar" => "aria-valuemax, aria-valuemin, aria-valuenow, aria-orientation, aria-controls",
-    "heading" => "aria-level",
-    "option" => "aria-selected",
+static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
+    "checkbox" => phf_set!{"aria-checked"},
+    "radio" => phf_set!{"aria-checked"},
+    "combobox" => phf_set!{"aria-controls", "aria-expanded"},
+    "tab" => phf_set!{"aria-selected"},
+    "slider" => phf_set!{"aria-valuemax", "aria-valuemin", "aria-valuenow"},
+    "scrollbar" => phf_set!{"aria-valuemax", "aria-valuemin", "aria-valuenow", "aria-orientation", "aria-controls"},
+    "heading" => phf_set!{"aria-level"},
+    "option" => phf_set!{"aria-selected"},
 };
 
 impl Rule for RoleHasRequiredAriaProps {
@@ -66,17 +66,15 @@ impl Rule for RoleHasRequiredAriaProps {
             let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else { return };
             let roles = role_values.value.split_whitespace();
             for role in roles {
-                let required_props = match ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
-                    Some(required_props) => required_props,
-                    None => continue,
-                };
-                for prop in required_props.split(',').map(str::trim) {
-                    if has_jsx_prop_lowercase(jsx_el, prop).is_none() {
-                        ctx.diagnostic(RoleHasRequiredAriaPropsDiagnostic {
-                            span: attr.span,
-                            role: role.into(),
-                            props: prop.into(),
-                        });
+                if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
+                    for prop in props {
+                        if has_jsx_prop_lowercase(jsx_el, prop).is_none() {
+                            ctx.diagnostic(RoleHasRequiredAriaPropsDiagnostic {
+                                span: attr.span,
+                                role: role.into(),
+                                props: (*prop).into(),
+                            });
+                        }
                     }
                 }
             }
