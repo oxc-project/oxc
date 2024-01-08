@@ -24,7 +24,7 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
-pub use token::{RegExp, Token, TokenValue};
+pub use token::{Token, TokenValue};
 
 pub use self::{kind::Kind, number::parse_big_int};
 use self::{
@@ -819,7 +819,6 @@ impl<'a> Lexer<'a> {
 
     /// 12.9.5 Regular Expression Literals
     fn read_regex(&mut self) -> Kind {
-        let start = self.current.token.start + 1; // +1 to exclude `/`
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
@@ -848,39 +847,26 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let end = self.offset() - 1; // -1 to exclude `/`
-        let pattern = &self.source[start as usize..end as usize];
-
         let mut flags = RegExpFlags::empty();
 
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.current.chars.next();
             if !ch.is_ascii_lowercase() {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                continue;
+                return Kind::Undetermined;
             }
-            let flag = match ch {
-                'g' => RegExpFlags::G,
-                'i' => RegExpFlags::I,
-                'm' => RegExpFlags::M,
-                's' => RegExpFlags::S,
-                'u' => RegExpFlags::U,
-                'y' => RegExpFlags::Y,
-                'd' => RegExpFlags::D,
-                'v' => RegExpFlags::V,
-                _ => {
-                    self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                    continue;
-                }
+            let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
+                flag
+            } else {
+                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
+                return Kind::Undetermined;
             };
             if flags.contains(flag) {
                 self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
-                continue;
+                return Kind::Undetermined;
             }
             flags |= flag;
         }
-
-        self.current.token.value = TokenValue::RegExp(RegExp { pattern, flags });
 
         Kind::RegExp
     }

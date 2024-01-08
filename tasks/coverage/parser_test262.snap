@@ -18251,11 +18251,21 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     · ─
     ╰────
 
+  × Unexpected token
+    ╭─[language/line-terminators/invalid-regexp-cr.js:18:1]
+ 18 │ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[language/line-terminators/invalid-regexp-lf.js:16:1]
  16 │ 
  17 │ /
     · ──
+ 18 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/line-terminators/invalid-regexp-lf.js:18:1]
  18 │ /
     ╰────
 
@@ -18266,11 +18276,21 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     · ──
     ╰────
 
+  × Unexpected token
+    ╭─[language/line-terminators/invalid-regexp-ls.js:17:1]
+ 17 │ / /
+    ╰────
+
   × Unterminated regular expression
     ╭─[language/line-terminators/invalid-regexp-ps.js:16:1]
  16 │ 
  17 │ / /
     · ──
+    ╰────
+
+  × Unexpected token
+    ╭─[language/line-terminators/invalid-regexp-ps.js:17:1]
+ 17 │ / /
     ╰────
 
   × Unterminated string
@@ -31535,6 +31555,11 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  16 │ 
  17 │ function __func(){/ ABC}
     ·                   ───────
+    ╰────
+
+  × Expected `}` but found `EOF`
+    ╭─[language/statements/function/invalid-function-body-1.js:17:1]
+ 17 │ function __func(){/ ABC}
     ╰────
 
   × Unexpected token

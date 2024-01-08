@@ -185,8 +185,8 @@ impl<'a> Parser<'a> {
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => {
                 self.read_regex();
-                self.parse_literal_regexp()
-                    .map(|literal| self.ast.literal_regexp_expression(literal))
+                let literal = self.parse_literal_regexp();
+                Ok(self.ast.literal_regexp_expression(literal))
             }
             // JSXElement, JSXFragment
             Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
@@ -315,20 +315,28 @@ impl<'a> Parser<'a> {
         Ok(self.ast.bigint_literal(self.end_span(span), value, base))
     }
 
-    pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral> {
+    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral {
         let span = self.start_span();
-        let r = match self.cur_kind() {
-            Kind::RegExp => self.cur_token().value.as_regex(),
-            _ => return Err(self.unexpected()),
-        };
-        let pattern = Atom::from(r.pattern);
-        let flags = r.flags;
+
+        // split out the flag part of `/regex/flag` by looking for `/` from the end
+        let regex_src = self.cur_src();
+        let mut flags = RegExpFlags::empty();
+
+        let mut split_index = None;
+        for (i, c) in regex_src.char_indices().rev() {
+            if let Ok(flag) = RegExpFlags::try_from(c) {
+                flags |= flag;
+            } else {
+                split_index.replace(i);
+                break;
+            }
+        }
+
+        // `/` are omitted from the pattern
+        let pattern = split_index.map_or(regex_src, |i| regex_src.get(1..i).unwrap_or(""));
+
         self.bump_any();
-        Ok(RegExpLiteral {
-            span: self.end_span(span),
-            value: EmptyObject {},
-            regex: RegExp { pattern, flags },
-        })
+        self.ast.reg_exp_literal(self.end_span(span), pattern, flags)
     }
 
     pub(crate) fn parse_literal_string(&mut self) -> Result<StringLiteral> {

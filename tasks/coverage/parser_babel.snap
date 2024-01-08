@@ -1144,6 +1144,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ /
    ╰────
 
+  × Unexpected token
+   ╭─[core/uncategorised/380/input.js:1:1]
+ 1 │ var x = /
+ 2 │ /
+   ╰────
+
   × Unterminated string
    ╭─[core/uncategorised/381/input.js:1:1]
  1 │ var x = "
@@ -1523,6 +1529,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[core/uncategorised/441/input.js:1:1]
  1 │ /a\
    · ────
+ 2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[core/uncategorised/441/input.js:1:1]
+ 1 │ /a\
  2 │ /
    ╰────
 
@@ -7967,6 +7979,11 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ /
    ╰────
 
+  × Unexpected token
+   ╭─[esprima/invalid-syntax/migrated_0040/input.js:2:1]
+ 2 │ /
+   ╰────
+
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0041/input.js:1:1]
  1 │ var x = /[a-z]/\ux
@@ -8138,6 +8155,11 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0062/input.js:1:1]
  1 │ var x = /
    ·         ──
+ 2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[esprima/invalid-syntax/migrated_0062/input.js:2:1]
  2 │ /
    ╰────
 
@@ -8678,6 +8700,11 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0157/input.js:1:1]
  1 │ /a\
    · ────
+ 2 │ /
+   ╰────
+
+  × Unexpected token
+   ╭─[esprima/invalid-syntax/migrated_0157/input.js:2:1]
  2 │ /
    ╰────
 
