@@ -168,7 +168,6 @@ impl IsolatedLintHandler {
         path: &Path,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        debug!("run single {path:?}");
         if Self::is_wanted_ext(path) {
             Some(Self::lint_path(&self.linter, path, content).map_or(vec![], |(p, errors)| {
                 let mut diagnostics: Vec<DiagnosticReport> =
