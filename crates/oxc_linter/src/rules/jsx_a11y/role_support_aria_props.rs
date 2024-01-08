@@ -14,7 +14,9 @@ use crate::{
     context::LintContext,
     globals::{VALID_ARIA_PROPS, VALID_ARIA_ROLES},
     rule::Rule,
-    utils::{get_attribute_name, get_element_type, get_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{
+        get_attribute_name, get_element_type, get_string_literal_prop_value, has_jsx_prop_lowercase,
+    },
     AstNode,
 };
 
@@ -66,7 +68,7 @@ impl Rule for RoleSupportAriaProps {
                 let role = has_jsx_prop_lowercase(jsx_el, "role");
                 let role_value = role.map_or_else(
                     || get_implicit_role(jsx_el, el_type.as_str()),
-                    |i| get_literal_prop_value(i),
+                    |i| get_string_literal_prop_value(i),
                 );
                 let is_implicit = role_value.is_some() && role.is_none();
                 if let Some(role_value) = role_value {
@@ -122,10 +124,11 @@ fn get_implicit_role<'a>(
         "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "heading",
         "hr" => "separator",
         "img" => has_jsx_prop_lowercase(node, "alt").map_or("img", |i| {
-            get_literal_prop_value(i).map_or("img", |v| if v.is_empty() { "" } else { "img" })
+            get_string_literal_prop_value(i)
+                .map_or("img", |v| if v.is_empty() { "" } else { "img" })
         }),
         "input" => has_jsx_prop_lowercase(node, "type").map_or("textbox", |input_type| {
-            match get_literal_prop_value(input_type) {
+            match get_string_literal_prop_value(input_type) {
                 Some("button" | "image" | "reset" | "submit") => "button",
                 Some("checkbox") => "checkbox",
                 Some("radio") => "radio",
@@ -135,15 +138,19 @@ fn get_implicit_role<'a>(
         }),
         "li" => "listitem",
         "menu" => has_jsx_prop_lowercase(node, "type").map_or("", |v| {
-            get_literal_prop_value(v).map_or("", |v| if v == "toolbar" { "toolbar" } else { "" })
+            get_string_literal_prop_value(v)
+                .map_or("", |v| if v == "toolbar" { "toolbar" } else { "" })
         }),
         "menuitem" => {
-            has_jsx_prop_lowercase(node, "type").map_or("", |v| match get_literal_prop_value(v) {
-                Some("checkbox") => "menuitemcheckbox",
-                Some("command") => "menuitem",
-                Some("radio") => "menuitemradio",
-                _ => "",
-            })
+            has_jsx_prop_lowercase(node, "type").map_or(
+                "",
+                |v| match get_string_literal_prop_value(v) {
+                    Some("checkbox") => "menuitemcheckbox",
+                    Some("command") => "menuitem",
+                    Some("radio") => "menuitemradio",
+                    _ => "",
+                },
+            )
         }
         "meter" | "progress" => "progressbar",
         "nav" => "navigation",
