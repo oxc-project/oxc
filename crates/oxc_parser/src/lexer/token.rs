@@ -5,7 +5,7 @@ use oxc_span::Span;
 
 use super::kind::Kind;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Token<'a> {
     /// Token Kind
     pub kind: Kind,
@@ -38,16 +38,15 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum TokenValue<'a> {
     None,
     Number(f64),
-    BigInt(num_bigint::BigInt),
     String(&'a str),
     RegExp(RegExp<'a>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct RegExp<'a> {
     pub pattern: &'a str,
     pub flags: RegExpFlags,
@@ -64,13 +63,6 @@ impl<'a> TokenValue<'a> {
         match self {
             Self::Number(s) => *s,
             _ => unreachable!("expected number!"),
-        }
-    }
-
-    pub fn as_bigint(&self) -> num_bigint::BigInt {
-        match self {
-            Self::BigInt(s) => s.clone(),
-            _ => unreachable!("expected bigint!"),
         }
     }
 

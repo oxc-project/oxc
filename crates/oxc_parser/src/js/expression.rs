@@ -17,6 +17,7 @@ use super::{
 };
 use crate::{
     diagnostics,
+    lexer::parse_big_int,
     lexer::{Kind, TokenValue},
     list::SeparatedList,
     Context, Parser,
@@ -306,12 +307,12 @@ impl<'a> Parser<'a> {
             Kind::Hex => BigintBase::Hex,
             _ => return Err(self.unexpected()),
         };
-        let value = match self.cur_kind() {
-            kind if kind.is_number() => self.cur_token().value.as_bigint(),
-            _ => return Err(self.unexpected()),
-        };
+        let token = self.cur_token();
+        let src = self.cur_src().strip_suffix('n').unwrap();
+        let value = parse_big_int(src, token.kind)
+            .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
         self.bump_any();
-        Ok(BigintLiteral { span: self.end_span(span), value, base })
+        Ok(self.ast.bigint_literal(self.end_span(span), value, base))
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral> {
