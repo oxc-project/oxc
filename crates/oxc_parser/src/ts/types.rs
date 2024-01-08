@@ -302,13 +302,8 @@ impl<'a> Parser<'a> {
             return self.parse_ts_infer_type();
         }
 
-        let mut operator = None;
-
-        if !self.at(Kind::Str) {
-            if let Some(atom) = self.cur_string() {
-                operator = TSTypeOperator::from_src(atom);
-            }
-        }
+        let operator =
+            if self.at(Kind::Str) { None } else { TSTypeOperator::from_src(self.cur_string()) };
 
         // test ts ts_type_operator
         // type B = keyof A;

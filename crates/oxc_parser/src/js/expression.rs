@@ -17,8 +17,7 @@ use super::{
 };
 use crate::{
     diagnostics,
-    lexer::{parse_big_int, parse_float, parse_int},
-    lexer::{Kind, TokenValue},
+    lexer::{parse_big_int, parse_float, parse_int, Kind},
     list::SeparatedList,
     Context, Parser,
 };
@@ -96,10 +95,7 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom) {
         let span = self.start_span();
-        let name = match std::mem::take(&mut self.token.value) {
-            TokenValue::String(value) => value,
-            TokenValue::None => "",
-        };
+        let name = self.cur_string();
         self.bump_remap(kind);
         (self.end_span(span), Atom::from(name))
     }
@@ -121,7 +117,7 @@ impl<'a> Parser<'a> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier {
         let span = self.start_span();
-        let name = Atom::from(self.cur_string().unwrap());
+        let name = Atom::from(self.cur_string());
         self.bump_any();
         PrivateIdentifier { span: self.end_span(span), name }
     }
@@ -349,9 +345,7 @@ impl<'a> Parser<'a> {
         if !self.at(Kind::Str) {
             return Err(self.unexpected());
         }
-        let TokenValue::String(value) = std::mem::take(&mut self.token.value) else {
-            unreachable!()
-        };
+        let value = self.cur_string();
         let span = self.start_span();
         self.bump_any();
         Ok(StringLiteral { span: self.end_span(span), value: value.into() })
@@ -454,8 +448,9 @@ impl<'a> Parser<'a> {
             _ => unreachable!(),
         };
 
-        // cooked = None when template literal has invalid escape sequence
-        let cooked = self.cur_string().map(Atom::from);
+        // `cooked = None` when template literal has invalid escape sequence
+        // This is matched by `is_valid_escape_sequence` in `Lexer::read_template_literal`
+        let cooked = self.cur_token().escaped_string_id.map(|_| self.cur_string());
 
         let raw = &self.cur_src()[1..self.cur_src().len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
@@ -475,7 +470,11 @@ impl<'a> Parser<'a> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
-        TemplateElement { span, tail, value: TemplateElementValue { raw, cooked } }
+        TemplateElement {
+            span,
+            tail,
+            value: TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
+        }
     }
 
     /// Section 13.3 Meta Property
