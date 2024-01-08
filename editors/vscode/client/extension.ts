@@ -127,6 +127,7 @@ export async function activate(context: ExtensionContext) {
       "typescriptreact",
       "javascriptreact",
       "vue",
+      "svelte",
     ].map((lang) => ({
       language: lang,
       scheme: "file",

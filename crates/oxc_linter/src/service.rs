@@ -176,13 +176,13 @@ impl Runtime {
         };
 
         let sources = PartialLoader::parse(ext, &source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type)]);
+            .unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
             return;
         }
 
-        for JavaScriptSource { source_text, source_type } in sources {
+        for JavaScriptSource { source_text, source_type, .. } in sources {
             let allocator = Allocator::default();
             let mut messages =
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);

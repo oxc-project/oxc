@@ -28,11 +28,12 @@
     "url": "https://github.com/sponsors/boshen"
   },
   "activationEvents": [
-    "onStartupFinished",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:typescript",
-    "onLanguage:typescriptreact"
+    "onLanguage:typescriptreact",
+    "onLanguage:vue",
+    "onLanguage:svelte"
   ],
   "main": "./out/main.js",
   "contributes": {

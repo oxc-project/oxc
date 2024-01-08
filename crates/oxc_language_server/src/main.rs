@@ -323,7 +323,7 @@ impl Backend {
         .await;
     }
 
-    async fn handle_file_update(&self, uri: Url, content: Option<String>, _version: Option<i32>) {
+    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             self.server_linter.make_plugin(root_uri);
             if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri, content) {
@@ -331,7 +331,7 @@ impl Backend {
                     .publish_diagnostics(
                         uri.clone(),
                         diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                        None,
+                        version,
                     )
                     .await;
 
