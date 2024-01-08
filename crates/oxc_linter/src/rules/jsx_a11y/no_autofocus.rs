@@ -132,28 +132,28 @@ fn test() {
     }
 
     let pass = vec![
-        ("<div />;", None, None),
-        ("<div autofocus />;", None, None),
-        ("<input autofocus='true' />;", None, None),
-        ("<Foo bar />", None, None),
-        ("<Button />", None, None),
-        ("<Foo autoFocus />", Some(config()), None),
-        ("<div><div autofocus /></div>", Some(config()), None),
-        ("<Button />", None, Some(settings())),
-        ("<Button />", Some(config()), Some(settings())),
+        ("<div />;", None, None, None),
+        ("<div autofocus />;", None, None, None),
+        ("<input autofocus='true' />;", None, None, None),
+        ("<Foo bar />", None, None, None),
+        ("<Button />", None, None, None),
+        ("<Foo autoFocus />", Some(config()), None, None),
+        ("<div><div autofocus /></div>", Some(config()), None, None),
+        ("<Button />", None, Some(settings()), None),
+        ("<Button />", Some(config()), Some(settings()), None),
     ];
 
     let fail = vec![
-        ("<div autoFocus />", None, None),
-        ("<div autoFocus={true} />", None, None),
-        ("<div autoFocus={false} />", None, None),
-        ("<div autoFocus={undefined} />", None, None),
-        ("<div autoFocus='true' />", None, None),
-        ("<div autoFocus='false' />", None, None),
-        ("<input autoFocus />", None, None),
-        ("<Foo autoFocus />", None, None),
-        ("<Button autoFocus />", None, None),
-        ("<Button autoFocus />", Some(config()), Some(settings())),
+        ("<div autoFocus />", None, None, None),
+        ("<div autoFocus={true} />", None, None, None),
+        ("<div autoFocus={false} />", None, None, None),
+        ("<div autoFocus={undefined} />", None, None, None),
+        ("<div autoFocus='true' />", None, None, None),
+        ("<div autoFocus='false' />", None, None, None),
+        ("<input autoFocus />", None, None, None),
+        ("<Foo autoFocus />", None, None, None),
+        ("<Button autoFocus />", None, None, None),
+        ("<Button autoFocus />", Some(config()), Some(settings()), None),
     ];
 
     Tester::new_with_settings(NoAutofocus::NAME, pass, fail).test_and_snapshot();
