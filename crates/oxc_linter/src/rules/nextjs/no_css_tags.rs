@@ -45,7 +45,7 @@ impl Rule for NoCssTags {
             return;
         }
 
-        // check fo `rel="stylesheet"` and `href` (href must not be a url
+        // check for `rel="stylesheet"` and `href` (href must not be a url
 
         let mut rel_attr = None;
         let mut href_attr = None;
