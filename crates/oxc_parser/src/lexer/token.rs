@@ -1,11 +1,10 @@
 //! Token
 
-use oxc_ast::ast::RegExpFlags;
 use oxc_span::Span;
 
 use super::kind::Kind;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Token<'a> {
     /// Token Kind
     pub kind: Kind,
@@ -27,9 +26,7 @@ pub struct Token<'a> {
 
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    use oxc_index::assert_eq_size;
-
-    assert_eq_size!(super::Token, [u8; 48]);
+    oxc_index::assert_eq_size!(super::Token, [u8; 32]);
 }
 
 impl<'a> Token<'a> {
@@ -38,19 +35,10 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum TokenValue<'a> {
     None,
-    Number(f64),
-    BigInt(num_bigint::BigInt),
     String(&'a str),
-    RegExp(RegExp<'a>),
-}
-
-#[derive(Debug, Clone)]
-pub struct RegExp<'a> {
-    pub pattern: &'a str,
-    pub flags: RegExpFlags,
 }
 
 impl<'a> Default for TokenValue<'a> {
@@ -60,31 +48,10 @@ impl<'a> Default for TokenValue<'a> {
 }
 
 impl<'a> TokenValue<'a> {
-    pub fn as_number(&self) -> f64 {
-        match self {
-            Self::Number(s) => *s,
-            _ => unreachable!("expected number!"),
-        }
-    }
-
-    pub fn as_bigint(&self) -> num_bigint::BigInt {
-        match self {
-            Self::BigInt(s) => s.clone(),
-            _ => unreachable!("expected bigint!"),
-        }
-    }
-
-    pub fn as_regex(&self) -> &RegExp<'a> {
-        match self {
-            Self::RegExp(regex) => regex,
-            _ => unreachable!("expected regex!"),
-        }
-    }
-
     pub fn get_string(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),
-            _ => None,
+            Self::None => None,
         }
     }
 }

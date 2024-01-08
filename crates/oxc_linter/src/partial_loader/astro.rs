@@ -2,11 +2,9 @@ use memchr::memmem::Finder;
 
 use oxc_span::{SourceType, Span};
 
-use super::JavaScriptSource;
+use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START};
 
 const ASTRO_SPLIT: &str = "---";
-const SCRIPT_START: &str = "<script";
-const SCRIPT_END: &str = "</script>";
 
 pub struct AstroPartialLoader<'a> {
     source_text: &'a str,
@@ -45,6 +43,7 @@ impl<'a> AstroPartialLoader<'a> {
         Some(JavaScriptSource::new(
             js_code,
             SourceType::default().with_typescript(true).with_module(true),
+            start as usize,
         ))
     }
 
@@ -83,6 +82,7 @@ impl<'a> AstroPartialLoader<'a> {
             results.push(JavaScriptSource::new(
                 &self.source_text[js_start..js_end],
                 SourceType::default().with_typescript(true).with_module(true),
+                js_start,
             ));
         }
         results

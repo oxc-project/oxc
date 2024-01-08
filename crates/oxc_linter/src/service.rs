@@ -159,20 +159,6 @@ impl Runtime {
         Some(Ok((source_type, source_text)))
     }
 
-    /// Extract js section of specifial files.
-    /// Returns `None` if the specifial file does not have a js section.
-    fn extract_js<'a>(
-        source_text: &'a str,
-        source_type: SourceType,
-        ext: &str,
-    ) -> Vec<JavaScriptSource<'a>> {
-        match ext {
-            "vue" => PartialLoader::Vue.build(source_text),
-            "astro" => PartialLoader::Astro.build(source_text),
-            _ => vec![JavaScriptSource::new(source_text, source_type)],
-        }
-    }
-
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
@@ -188,13 +174,15 @@ impl Runtime {
                 return;
             }
         };
-        let sources = Self::extract_js(&source_text, source_type, ext);
+
+        let sources = PartialLoader::parse(ext, &source_text)
+            .unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
             return;
         }
 
-        for JavaScriptSource { source_text, source_type } in sources {
+        for JavaScriptSource { source_text, source_type, .. } in sources {
             let allocator = Allocator::default();
             let mut messages =
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);

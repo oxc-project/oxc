@@ -39,6 +39,8 @@ impl Default for FilenameCase {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Enforce a case style for filenames.
+    ///
     /// ### Why is this bad?
     ///
     /// ### Example
@@ -49,33 +51,48 @@ declare_oxc_lint!(
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(case_type) = value.get("cases") else { return Self::default() };
+        let Some(case_type) = value.get(0) else {
+            return Self::default();
+        };
 
-        match case_type {
-            Value::String(s) => match s.as_str() {
+        if let Some(Value::String(s)) = case_type.get("case") {
+            return match s.as_str() {
                 "kebabCase" => Self { kebab_case: true, ..Self::default() },
                 "camelCase" => Self { camel_case: true, ..Self::default() },
                 "snakeCase" => Self { snake_case: true, ..Self::default() },
                 "pascalCase" => Self { pascal_case: true, ..Self::default() },
                 "underscoreCase" => Self { underscore_case: true, ..Self::default() },
                 _ => Self::default(),
-            },
-            Value::Object(map) => {
-                let mut filename_case = Self::default();
-                for (key, value) in map {
-                    match (key.as_str(), value) {
-                        ("kebabCase", Value::Bool(b)) => filename_case.kebab_case = *b,
-                        ("camelCase", Value::Bool(b)) => filename_case.camel_case = *b,
-                        ("snakeCase", Value::Bool(b)) => filename_case.snake_case = *b,
-                        ("pascalCase", Value::Bool(b)) => filename_case.pascal_case = *b,
-                        ("underscoreCase", Value::Bool(b)) => filename_case.underscore_case = *b,
-                        _ => (),
-                    }
-                }
-                filename_case
-            }
-            _ => Self::default(),
+            };
         }
+
+        if let Some(Value::String(s)) = case_type.get("case") {
+            return match s.as_str() {
+                "kebabCase" => Self { kebab_case: true, ..Self::default() },
+                "camelCase" => Self { camel_case: true, ..Self::default() },
+                "snakeCase" => Self { snake_case: true, ..Self::default() },
+                "pascalCase" => Self { pascal_case: true, ..Self::default() },
+                "underscoreCase" => Self { underscore_case: true, ..Self::default() },
+                _ => Self::default(),
+            };
+        }
+
+        if let Some(Value::Object(map)) = case_type.get("cases") {
+            let mut filename_case = Self::default();
+            for (key, value) in map {
+                match (key.as_str(), value) {
+                    ("kebabCase", Value::Bool(b)) => filename_case.kebab_case = *b,
+                    ("camelCase", Value::Bool(b)) => filename_case.camel_case = *b,
+                    ("snakeCase", Value::Bool(b)) => filename_case.snake_case = *b,
+                    ("pascalCase", Value::Bool(b)) => filename_case.pascal_case = *b,
+                    ("underscoreCase", Value::Bool(b)) => filename_case.underscore_case = *b,
+                    _ => (),
+                }
+            }
+            return filename_case;
+        }
+
+        Self::default()
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {

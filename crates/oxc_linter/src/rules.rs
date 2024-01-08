@@ -152,6 +152,7 @@ mod react {
     pub mod no_render_return_value;
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
+    pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
 }
 
@@ -266,6 +267,16 @@ mod oxc {
     pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
     pub mod only_used_in_recursion;
+}
+
+mod nextjs {
+    pub mod google_font_display;
+    pub mod google_font_preconnect;
+    pub mod inline_script_id;
+    pub mod next_script_for_ga;
+    pub mod no_assign_module_variable;
+    pub mod no_async_client_component;
+    pub mod no_css_tags;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -470,6 +481,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
+    react::no_unknown_property,
     import::default,
     import::named,
     import::no_cycle,
@@ -504,4 +516,11 @@ oxc_macros::declare_all_lint_rules! {
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
     oxc::only_used_in_recursion,
+    nextjs::google_font_display,
+    nextjs::google_font_preconnect,
+    nextjs::inline_script_id,
+    nextjs::next_script_for_ga,
+    nextjs::no_assign_module_variable,
+    nextjs::no_async_client_component,
+    nextjs::no_css_tags,
 }
