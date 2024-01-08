@@ -5,6 +5,7 @@ use crate::linter::{DiagnosticReport, ServerLinter};
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
+use oxc_linter::{LintOptions, Linter};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -13,7 +14,7 @@ use std::str::FromStr;
 
 use dashmap::DashMap;
 use futures::future::join_all;
-use tokio::sync::{Mutex, OnceCell, SetError};
+use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::{
     CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
@@ -30,7 +31,7 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
-    server_linter: ServerLinter,
+    server_linter: RwLock<ServerLinter>,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Option<Gitignore>>,
@@ -79,6 +80,7 @@ impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;
         self.init_ignore_glob().await;
+        self.init_linter_config().await;
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
@@ -164,10 +166,6 @@ impl LanguageServer for Backend {
 
     async fn initialized(&self, _params: InitializedParams) {
         debug!("oxc initialized.");
-
-        if let Some(Some(root_uri)) = self.root_uri.get() {
-            self.server_linter.make_plugin(root_uri);
-        }
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -323,10 +321,36 @@ impl Backend {
         .await;
     }
 
+    async fn init_linter_config(&self) {
+        let Some(Some(uri)) = self.root_uri.get() else {
+            return;
+        };
+        let Ok(root_path) = uri.to_file_path() else {
+            return;
+        };
+        let mut config_path = None;
+        let rc_config = root_path.join(".eslintrc");
+        if rc_config.exists() {
+            config_path = Some(rc_config);
+        }
+        let rc_json_config = root_path.join(".eslintrc.json");
+        if rc_json_config.exists() {
+            config_path = Some(rc_json_config);
+        }
+        if let Some(config_path) = config_path {
+            let mut linter = self.server_linter.write().await;
+            *linter = ServerLinter::new_with_linter(
+                Linter::from_options(
+                    LintOptions::default().with_fix(true).with_config_path(Some(config_path)),
+                )
+                .expect("should initialized linter with new options"),
+            );
+        }
+    }
+
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
-        if let Some(Some(root_uri)) = self.root_uri.get() {
-            self.server_linter.make_plugin(root_uri);
-            if let Some(diagnostics) = self.server_linter.run_single(root_uri, &uri, content) {
+        if let Some(Some(_root_uri)) = self.root_uri.get() {
+            if let Some(diagnostics) = self.server_linter.read().await.run_single(&uri, content) {
                 self.client
                     .publish_diagnostics(
                         uri.clone(),
@@ -374,7 +398,7 @@ async fn main() {
     let (service, socket) = LspService::build(|client| Backend {
         client,
         root_uri: OnceCell::new(),
-        server_linter,
+        server_linter: RwLock::new(server_linter),
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
         gitignore_glob: Mutex::new(None),
