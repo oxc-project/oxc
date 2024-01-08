@@ -3,10 +3,9 @@ use std::{
     fs,
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
-use crate::options::LintOptions;
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{miette, Error, Severity};
@@ -17,7 +16,6 @@ use oxc_linter::{
     },
     LintContext, LintSettings, Linter,
 };
-use oxc_linter_plugin::{make_relative_path_parts, LinterPlugin};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -155,20 +153,14 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-type Plugin = Arc<RwLock<Option<LinterPlugin>>>;
-
 #[derive(Debug)]
 pub struct IsolatedLintHandler {
-    #[allow(unused)]
-    options: Arc<LintOptions>,
     linter: Arc<Linter>,
-    #[allow(unused)]
-    plugin: Plugin,
 }
 
 impl IsolatedLintHandler {
-    pub fn new(options: Arc<LintOptions>, linter: Arc<Linter>, plugin: Plugin) -> Self {
-        Self { options, linter, plugin }
+    pub fn new(linter: Arc<Linter>) -> Self {
+        Self { linter }
     }
 
     pub fn run_single(
@@ -176,51 +168,47 @@ impl IsolatedLintHandler {
         path: &Path,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        debug!("run single {path:?}");
         if Self::is_wanted_ext(path) {
-            Some(Self::lint_path(&self.linter, path, &Arc::clone(&self.plugin), content).map_or(
-                vec![],
-                |(p, errors)| {
-                    let mut diagnostics: Vec<DiagnosticReport> =
-                        errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
-                    // a diagnostics connected from related_info to original diagnostic
-                    let mut inverted_diagnostics = vec![];
-                    for d in &diagnostics {
-                        let Some(ref related_info) = d.diagnostic.related_information else {
-                            continue;
-                        };
+            Some(Self::lint_path(&self.linter, path, content).map_or(vec![], |(p, errors)| {
+                let mut diagnostics: Vec<DiagnosticReport> =
+                    errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
+                // a diagnostics connected from related_info to original diagnostic
+                let mut inverted_diagnostics = vec![];
+                for d in &diagnostics {
+                    let Some(ref related_info) = d.diagnostic.related_information else {
+                        continue;
+                    };
 
-                        let related_information = Some(vec![DiagnosticRelatedInformation {
-                            location: lsp_types::Location {
-                                uri: lsp_types::Url::from_file_path(path).unwrap(),
-                                range: d.diagnostic.range,
-                            },
-                            message: "original diagnostic".to_string(),
-                        }]);
-                        for r in related_info {
-                            if r.location.range == d.diagnostic.range {
-                                continue;
-                            }
-                            inverted_diagnostics.push(DiagnosticReport {
-                                diagnostic: lsp_types::Diagnostic {
-                                    range: r.location.range,
-                                    severity: Some(DiagnosticSeverity::HINT),
-                                    code: None,
-                                    message: r.message.clone(),
-                                    source: Some("oxc".into()),
-                                    code_description: None,
-                                    related_information: related_information.clone(),
-                                    tags: None,
-                                    data: None,
-                                },
-                                fixed_content: None,
-                            });
+                    let related_information = Some(vec![DiagnosticRelatedInformation {
+                        location: lsp_types::Location {
+                            uri: lsp_types::Url::from_file_path(path).unwrap(),
+                            range: d.diagnostic.range,
+                        },
+                        message: "original diagnostic".to_string(),
+                    }]);
+                    for r in related_info {
+                        if r.location.range == d.diagnostic.range {
+                            continue;
                         }
+                        inverted_diagnostics.push(DiagnosticReport {
+                            diagnostic: lsp_types::Diagnostic {
+                                range: r.location.range,
+                                severity: Some(DiagnosticSeverity::HINT),
+                                code: None,
+                                message: r.message.clone(),
+                                source: Some("oxc".into()),
+                                code_description: None,
+                                related_information: related_information.clone(),
+                                tags: None,
+                                data: None,
+                            },
+                            fixed_content: None,
+                        });
                     }
-                    diagnostics.append(&mut inverted_diagnostics);
-                    diagnostics
-                },
-            ))
+                }
+                diagnostics.append(&mut inverted_diagnostics);
+                diagnostics
+            }))
         } else {
             None
         }
@@ -267,7 +255,6 @@ impl IsolatedLintHandler {
     fn lint_path(
         linter: &Linter,
         path: &Path,
-        plugin: &Plugin,
         source_text: Option<String>,
     ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
         let ext = path.extension().and_then(std::ffi::OsStr::to_str)?;
@@ -312,20 +299,11 @@ impl IsolatedLintHandler {
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
-            let mut lint_ctx = LintContext::new(
+            let lint_ctx = LintContext::new(
                 path.to_path_buf().into_boxed_path(),
                 &Rc::new(semantic_ret.semantic),
                 LintSettings::default(),
             );
-            {
-                if let Ok(guard) = plugin.read() {
-                    if let Some(plugin) = &*guard {
-                        plugin
-                            .lint_file(&mut lint_ctx, make_relative_path_parts(&path.into()))
-                            .unwrap();
-                    }
-                }
-            }
 
             let result = linter.run(lint_ctx);
 
@@ -401,45 +379,21 @@ fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
 #[derive(Debug)]
 pub struct ServerLinter {
     linter: Arc<Linter>,
-    plugin: Plugin,
 }
 
 impl ServerLinter {
     pub fn new() -> Self {
         let linter = Linter::new().with_fix(true);
-        Self { linter: Arc::new(linter), plugin: Arc::new(RwLock::new(None)) }
+        Self { linter: Arc::new(linter) }
     }
 
-    pub fn make_plugin(&self, root_uri: &Url) {
-        let mut path = root_uri.to_file_path().unwrap();
-        path.push(".oxc/");
-        path.push("plugins");
-        if path.exists() {
-            let mut plugin = self.plugin.write().unwrap();
-            plugin.replace(LinterPlugin::new(&path).unwrap());
-        }
+    pub fn new_with_linter(linter: Linter) -> Self {
+        Self { linter: Arc::new(linter) }
     }
 
-    pub fn run_single(
-        &self,
-        root_uri: &Url,
-        uri: &Url,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        let options = LintOptions {
-            paths: vec![root_uri.to_file_path().unwrap()],
-            ignore_path: "node_modules".into(),
-            ignore_pattern: vec!["!**/node_modules/**/*".into()],
-            fix: true,
-            ..LintOptions::default()
-        };
-
-        IsolatedLintHandler::new(
-            Arc::new(options),
-            Arc::clone(&self.linter),
-            Arc::clone(&self.plugin),
-        )
-        .run_single(&uri.to_file_path().unwrap(), content)
+    pub fn run_single(&self, uri: &Url, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        IsolatedLintHandler::new(Arc::clone(&self.linter))
+            .run_single(&uri.to_file_path().unwrap(), content)
     }
 }
 
