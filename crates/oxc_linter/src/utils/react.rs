@@ -63,7 +63,7 @@ pub fn get_prop_name(item: &JSXAttributeName) -> String {
     }
 }
 
-pub fn get_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
+pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
     get_prop_value(item).and_then(|v| {
         if let JSXAttributeValue::StringLiteral(s) = v {
             Some(s.value.as_str())
@@ -78,7 +78,7 @@ pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
     if let JSXElementName::Identifier(iden) = &node.name {
         if iden.name.as_str().to_uppercase() == "INPUT" {
             if let Some(item) = has_jsx_prop_lowercase(node, "type") {
-                let hidden = get_literal_prop_value(item);
+                let hidden = get_string_literal_prop_value(item);
 
                 if hidden.is_some_and(|val| val.to_uppercase() == "HIDDEN") {
                     return true;

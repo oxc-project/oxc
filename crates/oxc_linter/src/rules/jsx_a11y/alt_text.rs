@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::utils::{get_literal_prop_value, get_prop_value, has_jsx_prop_lowercase};
+use crate::utils::{get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
@@ -197,8 +197,9 @@ impl Rule for AltText {
         // <input type="image">
         if let Some(custom_tags) = &self.input_type_image {
             let has_input_with_type_image = name.to_lowercase() == "input"
-                && has_jsx_prop_lowercase(jsx_el, "type")
-                    .map_or(false, |v| get_literal_prop_value(v).map_or(false, |v| v == "image"));
+                && has_jsx_prop_lowercase(jsx_el, "type").map_or(false, |v| {
+                    get_string_literal_prop_value(v).map_or(false, |v| v == "image")
+                });
             if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
                 input_type_image_rule(jsx_el, ctx);
             }
@@ -218,7 +219,8 @@ fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
 }
 
 fn is_presentation_role<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
-    get_literal_prop_value(item).map_or(false, |value| value == "presentation" || value == "none")
+    get_string_literal_prop_value(item)
+        .map_or(false, |value| value == "presentation" || value == "none")
 }
 
 fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
@@ -299,7 +301,7 @@ fn object_rule<'a>(
         has_jsx_prop_lowercase(node, "aria-labelledby").map_or(false, aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     let has_title_attr = has_jsx_prop_lowercase(node, "title")
-        .and_then(get_literal_prop_value)
+        .and_then(get_string_literal_prop_value)
         .map_or(false, |v| !v.is_empty());
 
     if has_label || has_title_attr || object_has_accessible_child(parent) {
