@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{Declaration, ModuleDeclaration, Statement, TSModuleReference},
     AstKind,
@@ -11,13 +10,8 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
-
-static REFERENCE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"^\/\s*<reference\s*(types|path|lib)\s*=\s*["|'](.*)["|']"#).unwrap()
-});
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(triple-slash-reference): Do not use a triple slash reference for {0}, use `import` style instead.")]
@@ -120,10 +114,7 @@ impl Rule for TripleSlashReference {
 
         for (start, comment) in comments.range(0..comments_range_end) {
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
-            if let Some(captures) = REFERENCE_REGEX.captures(raw) {
-                let group1 = captures.get(1).map_or("", |m| m.as_str());
-                let group2 = captures.get(2).map_or("", |m| m.as_str());
-
+            if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
                     || (group1 == "lib" && self.lib == LibOption::Never)
@@ -173,6 +164,46 @@ impl Rule for TripleSlashReference {
             }
         }
     }
+}
+
+fn get_attr_key_and_value(raw: &str) -> Option<(String, String)> {
+    if !raw.starts_with('/') {
+        return None;
+    }
+
+    let reference_start = "<reference ";
+    let reference_end = "/>";
+
+    if let Some(start_idx) = raw.find(reference_start) {
+        // Check if the string contains '/>' after the start index
+        if let Some(end_idx) = raw[start_idx..].find(reference_end) {
+            let reference_str = &raw[start_idx + reference_start.len()..start_idx + end_idx];
+
+            // Split the string by whitespaces
+            let parts = reference_str.split_whitespace();
+
+            // Filter parts that start with attribute key pattern
+            let filtered_parts: Vec<&str> = parts
+                .into_iter()
+                .filter(|part| {
+                    part.starts_with("types=")
+                        || part.starts_with("path=")
+                        || part.starts_with("lib=")
+                })
+                .collect();
+
+            if let Some(attr) = filtered_parts.first() {
+                // Split the attribute by '=' to get key and value
+                let attr_parts: Vec<&str> = attr.split('=').collect();
+                if attr_parts.len() == 2 {
+                    let key = attr_parts[0].trim().trim_matches('"').to_string();
+                    let value = attr_parts[1].trim_matches('"').trim_end_matches('/').to_string();
+                    return Some((key, value));
+                }
+            }
+        }
+    }
+    None
 }
 
 #[test]
