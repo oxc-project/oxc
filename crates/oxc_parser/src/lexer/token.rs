@@ -1,6 +1,5 @@
 //! Token
 
-use oxc_ast::ast::RegExpFlags;
 use oxc_span::Span;
 
 use super::kind::Kind;
@@ -29,7 +28,7 @@ pub struct Token<'a> {
 mod size_asserts {
     use oxc_index::assert_eq_size;
 
-    assert_eq_size!(super::Token, [u8; 48]);
+    assert_eq_size!(super::Token, [u8; 40]);
 }
 
 impl<'a> Token<'a> {
@@ -43,13 +42,6 @@ pub enum TokenValue<'a> {
     None,
     Number(f64),
     String(&'a str),
-    RegExp(RegExp<'a>),
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct RegExp<'a> {
-    pub pattern: &'a str,
-    pub flags: RegExpFlags,
 }
 
 impl<'a> Default for TokenValue<'a> {
@@ -63,13 +55,6 @@ impl<'a> TokenValue<'a> {
         match self {
             Self::Number(s) => *s,
             _ => unreachable!("expected number!"),
-        }
-    }
-
-    pub fn as_regex(&self) -> &RegExp<'a> {
-        match self {
-            Self::RegExp(regex) => regex,
-            _ => unreachable!("expected regex!"),
         }
     }
 
