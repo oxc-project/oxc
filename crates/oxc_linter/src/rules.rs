@@ -273,6 +273,7 @@ mod nextjs {
     pub mod google_font_preconnect;
     pub mod inline_script_id;
     pub mod next_script_for_ga;
+    pub mod no_assign_module_variable;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -515,4 +516,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::google_font_preconnect,
     nextjs::inline_script_id,
     nextjs::next_script_for_ga,
+    nextjs::no_assign_module_variable,
 }
