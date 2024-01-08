@@ -1,10 +1,26 @@
 parser_misc Summary:
 AST Parsed     : 9/9 (100.00%)
 Positive Passed: 9/9 (100.00%)
-Negative Passed: 3/3 (100.00%)
+Negative Passed: 5/5 (100.00%)
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
+   ╰────
+
+  × Unexpected token
+   ╭─[fail/oxc-1942-1.ts:1:1]
+ 1 │ class Foo {
+ 2 │   get x: () => {
+   ·        ─
+ 3 │       return 5;
+   ╰────
+
+  × Unexpected token
+   ╭─[fail/oxc-1942-2.ts:1:1]
+ 1 │ class Foo {
+ 2 │   set x: (v: number) => {}
+   ·        ─
+ 3 │ }
    ╰────
 
   × Empty parenthesized expression

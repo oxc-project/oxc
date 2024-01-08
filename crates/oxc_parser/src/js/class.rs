@@ -294,6 +294,10 @@ impl<'a> Parser<'a> {
             }
             Ok(definition)
         } else {
+            // getter and setter has no ts type annotation
+            if !kind.is_method() {
+                return Err(self.unexpected());
+            }
             let definition = self.parse_class_property_definition(
                 span,
                 key,
