@@ -153,6 +153,7 @@ mod react {
     pub mod no_render_return_value;
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
+    pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
 }
 
@@ -471,6 +472,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
+    react::no_unknown_property,
     import::default,
     import::named,
     import::no_cycle,

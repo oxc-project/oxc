@@ -41,6 +41,9 @@ const REACT_TEST_PATH: &str =
 const JSX_A11Y_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules";
 
+const NEXT_JS_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/vercel/next.js/canary/test/unit/eslint-plugin-next";
+
 struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
@@ -418,6 +421,7 @@ pub enum RuleKind {
     JSXA11y,
     Oxc,
     DeepScan,
+    NextJS,
 }
 
 impl RuleKind {
@@ -430,6 +434,7 @@ impl RuleKind {
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
             "deepscan" => Self::DeepScan,
+            "nextjs" => Self::NextJS,
             _ => Self::ESLint,
         }
     }
@@ -446,6 +451,7 @@ impl Display for RuleKind {
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
             Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
+            Self::NextJS => write!(f, "eslint-plugin-next"),
         }
     }
 }
@@ -466,6 +472,7 @@ fn main() {
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
+        RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc | RuleKind::DeepScan => String::new(),
     };
 
