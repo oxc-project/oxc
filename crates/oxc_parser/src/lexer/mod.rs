@@ -26,12 +26,11 @@ use oxc_syntax::{
 };
 pub use token::{Token, TokenValue};
 
-pub use self::{kind::Kind, number::parse_big_int};
-use self::{
-    number::{parse_float, parse_int},
-    string_builder::AutoCow,
-    trivia_builder::TriviaBuilder,
+pub use self::{
+    kind::Kind,
+    number::{parse_big_int, parse_float, parse_int},
 };
+use self::{string_builder::AutoCow, trivia_builder::TriviaBuilder};
 use crate::{diagnostics, MAX_LEN};
 
 #[derive(Debug, Clone)]
@@ -296,34 +295,6 @@ impl<'a> Lexer<'a> {
             Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
             None => self.error(diagnostics::UnexpectedEnd(offset)),
         }
-    }
-
-    fn set_numeric_value(&mut self, kind: Kind, src: &'a str) {
-        let value = match kind {
-            Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                if src.ends_with('n') {
-                    // BigInt is parsed lazily in the parser
-                    return;
-                }
-                parse_int(src, kind).map(TokenValue::Number)
-            }
-            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
-                parse_float(src).map(TokenValue::Number)
-            }
-            Kind::Undetermined => Ok(TokenValue::Number(std::f64::NAN)),
-            _ => unreachable!("{kind}"),
-        };
-
-        match value {
-            Ok(value) => self.current.token.value = value,
-            Err(err) => {
-                self.error(diagnostics::InvalidNumber(
-                    err,
-                    Span::new(self.current.token.start, self.offset()),
-                ));
-                self.current.token.value = TokenValue::Number(std::f64::NAN);
-            }
-        };
     }
 
     /// Read each char and set the current token
@@ -1459,11 +1430,7 @@ const PRD: ByteHandler = |lexer| {
     let mut builder = AutoCow::new(lexer);
     let c = lexer.consume_char();
     builder.push_matching(c);
-    let kind = lexer.read_dot(&mut builder);
-    if kind.is_number() {
-        lexer.set_numeric_value(kind, builder.finish(lexer));
-    }
-    kind
+    lexer.read_dot(&mut builder)
 };
 
 // /
@@ -1494,9 +1461,7 @@ const ZER: ByteHandler = |lexer| {
     let mut builder = AutoCow::new(lexer);
     let c = lexer.consume_char();
     builder.push_matching(c);
-    let kind = lexer.read_zero(&mut builder);
-    lexer.set_numeric_value(kind, builder.finish(lexer));
-    kind
+    lexer.read_zero(&mut builder)
 };
 
 // 1 to 9
@@ -1504,9 +1469,7 @@ const DIG: ByteHandler = |lexer| {
     let mut builder = AutoCow::new(lexer);
     let c = lexer.consume_char();
     builder.push_matching(c);
-    let kind = lexer.decimal_literal_after_first_digit(&mut builder);
-    lexer.set_numeric_value(kind, builder.finish(lexer));
-    kind
+    lexer.decimal_literal_after_first_digit(&mut builder)
 };
 
 // :

@@ -2,13 +2,18 @@
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
 use num_bigint::BigInt;
+use std::borrow::Cow;
 
 use super::kind::Kind;
 
 // the string passed in has `_` removed from the lexer
 pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
+    if kind == Kind::Decimal {
+        return parse_float(s);
+    }
+    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = s.as_ref();
     match kind {
-        Kind::Decimal => parse_float(s),
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
             let s = if s.starts_with("0o") || s.starts_with("0O") {
@@ -24,6 +29,7 @@ pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
 }
 
 pub fn parse_float(s: &str) -> Result<f64, &'static str> {
+    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 

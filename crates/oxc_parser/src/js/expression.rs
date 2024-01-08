@@ -17,7 +17,7 @@ use super::{
 };
 use crate::{
     diagnostics,
-    lexer::parse_big_int,
+    lexer::{parse_big_int, parse_float, parse_int},
     lexer::{Kind, TokenValue},
     list::SeparatedList,
     Context, Parser,
@@ -98,7 +98,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let name = match std::mem::take(&mut self.token.value) {
             TokenValue::String(value) => value,
-            _ => "",
+            TokenValue::None => "",
         };
         self.bump_remap(kind);
         (self.end_span(span), Atom::from(name))
@@ -277,8 +277,15 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn parse_literal_number(&mut self) -> Result<NumberLiteral<'a>> {
         let span = self.start_span();
-        let value = self.cur_token().value.as_number();
-        let base = match self.cur_kind() {
+        let token = self.cur_token();
+        let src = self.cur_src();
+        let value = match token.kind {
+            Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => parse_int(src, token.kind),
+            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => parse_float(src),
+            _ => unreachable!(),
+        }
+        .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
+        let base = match token.kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -293,9 +300,8 @@ impl<'a> Parser<'a> {
             }
             _ => return Err(self.unexpected()),
         };
-        let raw = self.cur_src();
         self.bump_any();
-        Ok(NumberLiteral::new(self.end_span(span), value, raw, base))
+        Ok(NumberLiteral::new(self.end_span(span), value, src, base))
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral> {

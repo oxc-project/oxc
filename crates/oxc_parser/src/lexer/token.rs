@@ -26,9 +26,7 @@ pub struct Token<'a> {
 
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    use oxc_index::assert_eq_size;
-
-    assert_eq_size!(super::Token, [u8; 40]);
+    oxc_index::assert_eq_size!(super::Token, [u8; 32]);
 }
 
 impl<'a> Token<'a> {
@@ -40,7 +38,6 @@ impl<'a> Token<'a> {
 #[derive(Debug, Copy, Clone)]
 pub enum TokenValue<'a> {
     None,
-    Number(f64),
     String(&'a str),
 }
 
@@ -51,17 +48,10 @@ impl<'a> Default for TokenValue<'a> {
 }
 
 impl<'a> TokenValue<'a> {
-    pub fn as_number(&self) -> f64 {
-        match self {
-            Self::Number(s) => *s,
-            _ => unreachable!("expected number!"),
-        }
-    }
-
     pub fn get_string(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),
-            _ => None,
+            Self::None => None,
         }
     }
 }
