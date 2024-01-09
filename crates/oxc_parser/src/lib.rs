@@ -117,7 +117,7 @@ pub struct Parser<'a> {
     errors: Vec<Error>,
 
     /// The current parsing token
-    token: Token<'a>,
+    token: Token,
 
     /// The end range of the previous token
     prev_token_end: u32,

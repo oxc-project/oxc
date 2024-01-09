@@ -33,14 +33,14 @@ impl<'a> AutoCow<'a> {
     // and return the reference to it
     pub fn get_mut_string_without_current_ascii_char<'b>(
         &'b mut self,
-        lexer: &'_ Lexer<'a>,
+        lexer: &Lexer<'a>,
     ) -> &'b mut String<'a> {
         self.force_allocation_without_current_ascii_char(lexer);
         self.value.as_mut().unwrap()
     }
 
     // Force allocation of a String, excluding the current ASCII character.
-    pub fn force_allocation_without_current_ascii_char(&mut self, lexer: &'_ Lexer<'a>) {
+    pub fn force_allocation_without_current_ascii_char(&mut self, lexer: &Lexer<'a>) {
         if self.value.is_some() {
             return;
         }

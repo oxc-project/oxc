@@ -50,7 +50,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn at_async_no_new_line(&mut self) -> bool {
-        self.at(Kind::Async) && !self.cur_token().escaped && !self.peek_token().is_on_new_line
+        self.at(Kind::Async) && !self.cur_token().escaped() && !self.peek_token().is_on_new_line
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {

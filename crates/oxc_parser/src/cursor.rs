@@ -11,7 +11,7 @@ use crate::{
 
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
-    cur_token: Token<'a>,
+    cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
 }
@@ -29,8 +29,8 @@ impl<'a> Parser<'a> {
     }
 
     /// Get current token
-    pub(crate) fn cur_token(&self) -> &Token<'a> {
-        &self.token
+    pub(crate) fn cur_token(&self) -> Token {
+        self.token
     }
 
     /// Get current Kind
@@ -47,12 +47,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Get current string
-    pub(crate) fn cur_string(&self) -> Option<&str> {
-        self.cur_token().value.get_string()
+    pub(crate) fn cur_string(&self) -> &'a str {
+        self.lexer.get_string(self.token)
     }
 
     /// Peek next token, returns EOF for final peek
-    pub(crate) fn peek_token(&mut self) -> &Token {
+    pub(crate) fn peek_token(&mut self) -> Token {
         self.lexer.lookahead(1)
     }
 
@@ -67,7 +67,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Peek nth token
-    pub(crate) fn nth(&mut self, n: u8) -> &Token {
+    pub(crate) fn nth(&mut self, n: u8) -> Token {
         if n == 0 {
             return self.cur_token();
         }
@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
     /// whose code point sequence is the same as a `ReservedWord`.
     #[inline]
     fn test_escaped_keyword(&mut self, kind: Kind) {
-        if self.cur_token().escaped && kind.is_all_keyword() {
+        if self.cur_token().escaped() && kind.is_all_keyword() {
             let span = self.cur_token().span();
             self.error(diagnostics::EscapedKeyword(span));
         }

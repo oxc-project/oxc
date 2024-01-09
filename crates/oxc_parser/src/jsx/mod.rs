@@ -360,14 +360,15 @@ impl<'a> Parser<'a> {
         }
         // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
         self.re_lex_jsx_identifier();
-        let name = Atom::from(self.cur_string().unwrap());
         self.bump_any();
-        Ok(self.ast.jsx_identifier(self.end_span(span), name))
+        let span = self.end_span(span);
+        let name = span.source_text(self.source_text);
+        Ok(self.ast.jsx_identifier(span, name.into()))
     }
 
     fn parse_jsx_text(&mut self) -> JSXText {
         let span = self.start_span();
-        let value = Atom::from(self.cur_string().unwrap());
+        let value = Atom::from(self.cur_string());
         self.bump_any();
         self.ast.jsx_text(self.end_span(span), value)
     }

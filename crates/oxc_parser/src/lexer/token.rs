@@ -4,8 +4,10 @@ use oxc_span::Span;
 
 use super::kind::Kind;
 
+pub type EscapedStringId = std::num::NonZeroU32;
+
 #[derive(Debug, Clone, Copy, Default)]
-pub struct Token<'a> {
+pub struct Token {
     /// Token Kind
     pub kind: Kind,
 
@@ -18,40 +20,22 @@ pub struct Token<'a> {
     /// Indicates the token is on a newline
     pub is_on_new_line: bool,
 
-    /// Is the original string escaped?
-    pub escaped: bool,
-
-    pub value: TokenValue<'a>,
+    /// A index handle to `Lexer::escaped_strings`
+    /// See https://floooh.github.io/2018/06/17/handles-vs-pointers.html for some background reading
+    pub escaped_string_id: Option<EscapedStringId>,
 }
 
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    oxc_index::assert_eq_size!(super::Token, [u8; 32]);
+    oxc_index::assert_eq_size!(super::Token, [u8; 16]);
 }
 
-impl<'a> Token<'a> {
+impl Token {
     pub fn span(&self) -> Span {
         Span::new(self.start, self.end)
     }
-}
 
-#[derive(Debug, Copy, Clone)]
-pub enum TokenValue<'a> {
-    None,
-    String(&'a str),
-}
-
-impl<'a> Default for TokenValue<'a> {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-impl<'a> TokenValue<'a> {
-    pub fn get_string(&self) -> Option<&str> {
-        match self {
-            Self::String(s) => Some(s),
-            Self::None => None,
-        }
+    pub fn escaped(&self) -> bool {
+        self.escaped_string_id.is_some()
     }
 }
