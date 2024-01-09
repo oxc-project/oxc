@@ -21,7 +21,7 @@ doctest    = false
 default = ["console_error_panic_hook"]
 
 [dependencies]
-oxc = { workspace = true, features = ["serde", "semantic", "formatter", "transformer", "minifier", "codegen"] }
+oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minifier", "codegen"] }
 
 oxc_linter         = { workspace = true }
 oxc_prettier       = { workspace = true }

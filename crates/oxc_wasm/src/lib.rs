@@ -6,7 +6,6 @@ use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
     diagnostics::Error,
-    formatter::{Formatter, FormatterOptions},
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{Parser, ParserReturn},
     semantic::{ScopeId, Semantic, SemanticBuilder, SemanticBuilderReturn},
@@ -22,7 +21,7 @@ use trustfall::{execute_query, TransparentValue};
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
-    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
+    OxcCodegenOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
     OxcTypeCheckingOptions,
 };
 
@@ -182,7 +181,7 @@ impl Oxc {
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
-        formatter_options: &OxcFormatterOptions,
+        _codegen_options: &OxcCodegenOptions,
         minifier_options: &OxcMinifierOptions,
         _type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
@@ -224,15 +223,6 @@ impl Oxc {
             let linter_ret = Linter::new().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
-        }
-
-        if run_options.format() {
-            let formatter_options = FormatterOptions {
-                indentation: formatter_options.indentation,
-                ..Default::default()
-            };
-            let printed = Formatter::new(source_text.len(), formatter_options).build(program);
-            self.formatted_text = printed;
         }
 
         if run_options.prettier_format() {

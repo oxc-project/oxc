@@ -1530,7 +1530,6 @@ dependencies = [
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
- "oxc_formatter",
  "oxc_index",
  "oxc_minifier",
  "oxc_parser",
@@ -1666,17 +1665,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_formatter"
-version = "0.4.0"
-dependencies = [
- "oxc_allocator",
- "oxc_ast",
- "oxc_parser",
- "oxc_span",
- "oxc_syntax",
-]
-
-[[package]]
 name = "oxc_index"
 version = "0.4.0"
 dependencies = [
@@ -1706,7 +1694,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
- "oxc_linter_plugin",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1734,8 +1721,8 @@ dependencies = [
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_codegen",
  "oxc_diagnostics",
- "oxc_formatter",
  "oxc_index",
  "oxc_macros",
  "oxc_parser",

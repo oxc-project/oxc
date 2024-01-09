@@ -147,7 +147,7 @@ fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
 }
 
 fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
-    let mut formatter = ctx.formatter();
+    let mut formatter = ctx.codegen();
 
     if let Expression::Identifier(ident) = &expr.callee {
         formatter.print_str(ident.name.as_bytes());

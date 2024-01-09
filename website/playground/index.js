@@ -34,7 +34,7 @@ import initWasm, {
   OxcParserOptions,
   OxcLinterOptions,
   OxcMinifierOptions,
-  OxcFormatterOptions,
+  OxcCodegenOptions,
   OxcTypeCheckingOptions,
   graphql_schema_text,
 } from "@oxc/wasm-web";
@@ -87,7 +87,7 @@ class Playground {
 
   runOptions;
   parserOptions;
-  formatterOptions;
+  codegenOptions;
   linterOptions;
   minifierOptions;
 
@@ -118,7 +118,7 @@ class Playground {
     this.oxc = new Oxc();
     this.runOptions = new OxcRunOptions();
     this.parserOptions = new OxcParserOptions();
-    this.formatterOptions = new OxcFormatterOptions();
+    this.codegenOptions = new OxcCodegenOptions();
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
@@ -466,7 +466,7 @@ class Playground {
       this.runOptions,
       this.parserOptions,
       this.linterOptions,
-      this.formatterOptions,
+      this.codegenOptions,
       this.minifierOptions,
       this.typeCheckOptions
     );

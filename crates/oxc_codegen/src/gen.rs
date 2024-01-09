@@ -129,7 +129,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_indent();
         p.start_of_stmt = p.code_len();
-        self.expression.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.expression);
         if self.expression.is_specific_id("let") {
             p.print_semicolon();
         } else {
@@ -153,7 +153,7 @@ fn print_if<const MINIFY: bool>(
     p.print_str(b"if");
     p.print_soft_space();
     p.print(b'(');
-    if_stmt.test.gen_expr(p, Precedence::lowest(), Context::default());
+    p.print_expression(&if_stmt.test);
     p.print(b')');
     p.print_soft_space();
 
@@ -251,14 +251,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
         p.print_soft_space();
 
         if let Some(test) = self.test.as_ref() {
-            test.gen_expr(p, Precedence::lowest(), Context::default());
+            p.print_expression(test);
         }
 
         p.print_semicolon();
         p.print_soft_space();
 
         if let Some(update) = self.update.as_ref() {
-            update.gen_expr(p, Precedence::lowest(), Context::default());
+            p.print_expression(update);
         }
 
         p.print(b')');
@@ -277,7 +277,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForInStatement<'a> {
         p.print_space_before_identifier();
         p.print_str(b"in");
         p.print_hard_space();
-        self.right.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.right);
         p.print(b')');
         p.print_soft_space();
         self.body.gen(p, ctx);
@@ -320,7 +320,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WhileStatement<'a> {
         p.print_indent();
         p.print_str(b"while");
         p.print(b'(');
-        self.test.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.test);
         p.print(b')');
         self.body.gen(p, ctx);
     }
@@ -342,7 +342,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for DoWhileStatement<'a> {
         }
         p.print_str(b"while");
         p.print(b'(');
-        self.test.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.test);
         p.print(b')');
         p.print_semicolon_after_statement();
     }
@@ -384,7 +384,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchStatement<'a> {
         p.print_indent();
         p.print_str(b"switch");
         p.print(b'(');
-        self.discriminant.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.discriminant);
         p.print(b')');
         p.print_block_start();
         for case in &self.cases {
@@ -404,7 +404,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchCase<'a> {
             Some(test) => {
                 p.print_str(b"case");
                 p.print_hard_space();
-                test.gen_expr(p, Precedence::lowest(), Context::default());
+                p.print_expression(test);
             }
             None => p.print_str(b"default"),
         }
@@ -425,7 +425,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ReturnStatement<'a> {
         p.print_str(b"return");
         if let Some(arg) = &self.argument {
             p.print_hard_space();
-            arg.gen_expr(p, Precedence::lowest(), Context::default());
+            p.print_expression(arg);
         }
         p.print_semicolon_after_statement();
     }
@@ -465,7 +465,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ThrowStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_indent();
         p.print_str(b"throw ");
-        self.argument.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.argument);
         p.print_semicolon_after_statement();
     }
 }
@@ -475,7 +475,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithStatement<'a> {
         p.print_indent();
         p.print_str(b"with");
         p.print(b'(');
-        self.object.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.object);
         p.print(b')');
         self.body.gen(p, ctx);
     }
@@ -1645,7 +1645,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
 
             if let Some(expr) = expressions.next() {
                 p.print_str(b"${");
-                expr.gen_expr(p, Precedence::lowest(), Context::default());
+                p.print_expression(expr);
                 p.print(b'}');
             }
         }
@@ -1825,7 +1825,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for JSXEmptyExpression {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXExpression<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Expression(expr) => expr.gen_expr(p, Precedence::lowest(), Context::default()),
+            Self::Expression(expr) => p.print_expression(expr),
             Self::EmptyExpression(expr) => expr.gen(p, ctx),
         }
     }
@@ -1853,7 +1853,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(b"{...");
-        self.argument.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.argument);
         p.print(b'}');
     }
 }
@@ -1924,7 +1924,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for JSXText {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadChild<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(b"...");
-        self.expression.gen_expr(p, Precedence::lowest(), Context::default());
+        p.print_expression(&self.expression);
     }
 }
 
@@ -1933,9 +1933,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXChild<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p, ctx),
             Self::Element(el) => el.gen(p, ctx),
-            Self::Spread(spread) => {
-                spread.expression.gen_expr(p, Precedence::lowest(), Context::default());
-            }
+            Self::Spread(spread) => p.print_expression(&spread.expression),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
             Self::Text(text) => text.gen(p, ctx),
         }

@@ -24,7 +24,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-use self::{
+pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
     operator::Operator,
@@ -111,12 +111,12 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     /// Push a single character into the buffer
-    fn print(&mut self, ch: u8) {
+    pub fn print(&mut self, ch: u8) {
         self.code.push(ch);
     }
 
     /// Push a string into the buffer
-    fn print_str(&mut self, s: &[u8]) {
+    pub fn print_str(&mut self, s: &[u8]) {
         self.code.extend_from_slice(s);
     }
 
@@ -126,7 +126,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_hard_space(&mut self) {
+    pub fn print_hard_space(&mut self) {
         self.print(b' ');
     }
 
@@ -197,7 +197,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.print_str(b"...");
     }
 
-    fn print_colon(&mut self) {
+    pub fn print_colon(&mut self) {
         self.print(b':');
     }
 
@@ -254,6 +254,10 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             }
             item.gen(self, ctx);
         }
+    }
+
+    pub fn print_expression(&mut self, expr: &Expression<'_>) {
+        expr.gen_expr(self, Precedence::lowest(), Context::default());
     }
 
     fn print_expressions<T: GenExpr<MINIFY>>(

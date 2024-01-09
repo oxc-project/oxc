@@ -3,9 +3,8 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
@@ -64,9 +63,9 @@ impl Rule for NoUnnecessaryAwait {
                 ctx.diagnostic_with_fix(
                     NoUnnecessaryAwaitDiagnostic(Span::new(expr.span.start, expr.span.start + 5)),
                     || {
-                        let mut formatter = ctx.formatter();
-                        expr.argument.gen(&mut formatter);
-                        Fix::new(formatter.into_code(), expr.span)
+                        let mut codegen = String::new();
+                        codegen.push_str(expr.argument.span().source_text(ctx.source_text()));
+                        Fix::new(codegen, expr.span)
                     },
                 );
             };
@@ -158,8 +157,8 @@ fn test() {
     let fix = vec![
         ("await []", "[]", None),
         ("await (a == b)", "(a == b)", None),
-        ("+await -1", "+ -1", None),
-        ("-await +1", "- +1", None),
+        ("+await -1", "+-1", None),
+        ("-await +1", "-+1", None),
         ("await function() {}", "await function() {}", None), // no autofix
         ("await class {}", "await class {}", None),           // no autofix
         ("+await +1", "+await +1", None),                     // no autofix
