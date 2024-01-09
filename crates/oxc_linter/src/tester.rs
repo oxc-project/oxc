@@ -31,6 +31,7 @@ pub struct Tester {
     import_plugin: bool,
     jest_plugin: bool,
     jsx_a11y_plugin: bool,
+    nextjs_plugin: bool,
 }
 
 impl Tester {
@@ -73,6 +74,7 @@ impl Tester {
             import_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
+            nextjs_plugin: false,
         }
     }
 
@@ -118,6 +120,11 @@ impl Tester {
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
         self.jsx_a11y_plugin = yes;
+        self
+    }
+
+    pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
+        self.nextjs_plugin = yes;
         self
     }
 
@@ -187,7 +194,8 @@ impl Tester {
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
-            .with_jsx_a11y_plugin(self.jsx_a11y_plugin);
+            .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
+            .with_nextjs_plugin(self.nextjs_plugin);
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![rule])
