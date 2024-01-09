@@ -84,7 +84,7 @@ impl Rule for RoleSupportAriaProps {
                                         attr.span,
                                         name,
                                         role_value.to_string(),
-                                        el_type.clone(), // TODO: remove clone
+                                        el_type.clone(),
                                     )
                                 } else {
                                     RoleSupportAriaPropsDiagnostic::Default(
