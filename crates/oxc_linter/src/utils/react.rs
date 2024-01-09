@@ -90,6 +90,10 @@ pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
     has_jsx_prop_lowercase(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
         None => true,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
+        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+            expression: JSXExpression::Expression(expr),
+            ..
+        })) => expr.get_boolean_value().unwrap_or(false),
         _ => false,
     })
 }

@@ -219,6 +219,7 @@ fn test() {
         (r"<img alt={() => {}} />", None),
         (r"<img alt={function(e){}} />", None),
         (r"<img aria-hidden={false} alt='Doing cool things.' />", None),
+        (r"<img alt='photo of cool person' aria-hidden={true} />", None),
         (r"<UX.Layout>test</UX.Layout>", None),
         (r"<img alt />", None),
         (r"<img alt={imageAlt} />", None),
