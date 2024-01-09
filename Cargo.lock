@@ -1641,6 +1641,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
+ "phf",
  "pico-args",
  "project-root",
  "rayon",
@@ -3177,6 +3178,8 @@ dependencies = [
  "once_cell",
  "rustls",
  "rustls-webpki",
+ "serde",
+ "serde_json",
  "url",
  "webpki-roots",
 ]

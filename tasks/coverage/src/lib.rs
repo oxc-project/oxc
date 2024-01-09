@@ -1,5 +1,6 @@
 mod babel;
 mod codegen;
+mod codegen_runtime;
 mod minifier;
 mod misc;
 mod suite;
@@ -11,6 +12,7 @@ use std::path::PathBuf;
 use crate::{
     babel::{BabelCase, BabelSuite},
     codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
+    codegen_runtime::CodegenRuntimeTest262Case,
     minifier::{MinifierBabelCase, MinifierTest262Case},
     misc::{MiscCase, MiscSuite},
     suite::Suite,
@@ -40,6 +42,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
+        self.run_codegen_runtime();
         self.run_minifier();
     }
 
@@ -55,6 +58,10 @@ impl AppArgs {
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
+    }
+
+    pub fn run_codegen_runtime(&self) {
+        Test262Suite::<CodegenRuntimeTest262Case>::new().run("codegen_runtime_test262", self);
     }
 
     pub fn run_minifier(&self) {
