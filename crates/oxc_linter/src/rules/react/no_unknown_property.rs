@@ -19,7 +19,7 @@ use std::collections::hash_set::HashSet;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_name},
+    utils::{get_element_type, get_jsx_attribute_name},
     AstNode,
 };
 
@@ -482,7 +482,7 @@ impl Rule for NoUnknownProperty {
             })
             .for_each(|attr| {
                 let span = attr.name.span();
-                let actual_name = get_prop_name(&attr.name);
+                let actual_name = get_jsx_attribute_name(&attr.name);
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
                 };
