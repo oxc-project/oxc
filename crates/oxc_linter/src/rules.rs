@@ -254,7 +254,6 @@ mod jsx_a11y {
     pub mod no_autofocus;
     pub mod no_distracting_elements;
     pub mod prefer_tag_over_role;
-    pub mod role_support_aria_props;
     pub mod scope;
     pub mod tab_index_no_positive;
 }
@@ -513,7 +512,6 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::tab_index_no_positive,
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
-    jsx_a11y::role_support_aria_props,
     oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
