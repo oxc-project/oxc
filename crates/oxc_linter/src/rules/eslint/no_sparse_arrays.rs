@@ -1,7 +1,7 @@
 use miette::{miette, LabeledSpan};
 use oxc_ast::{ast::ArrayExpressionElement, AstKind};
 use oxc_diagnostics::{
-    miette::{self, Diagnostic},
+    miette::{self, Diagnostic, Severity},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
@@ -56,6 +56,7 @@ impl Rule for NoSparseArrays {
             if !violations.is_empty() {
                 if violations.len() < 10 {
                     ctx.diagnostic(miette!(
+                        severity = Severity::Warning,
                         labels = violations,
                         help = "remove the comma or insert `undefined`",
                         "eslint(no-sparse-arrays): Unexpected comma in middle of array"
@@ -71,6 +72,7 @@ impl Rule for NoSparseArrays {
                     };
 
                     ctx.diagnostic(miette!(
+                        severity = Severity::Warning,
                         labels = vec![span],
                         help = "remove the comma or insert `undefined`",
                         "eslint(no-sparse-arrays): {} unexpected commas in middle of array",
@@ -96,11 +98,11 @@ fn test() {
         "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];",
         "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , , hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,  2];",
         "var a = [ 1, , , , , , , , , , , , , , , , , , , , , , , , , ,
-        
-        
-        hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , 
-        
-        
+
+
+        hello, , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,
+
+
         , , , , , , , , , , , , , , , , , , ,  2];",
     ];
 
