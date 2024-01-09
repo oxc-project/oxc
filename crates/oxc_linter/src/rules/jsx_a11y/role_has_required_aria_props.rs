@@ -42,7 +42,7 @@ declare_oxc_lint!(
     ///
     /// // Good
     /// <div role="checkbox" aria-checked="false" />
-    /// ````
+    /// ```
     RoleHasRequiredAriaProps,
     correctness
 );
