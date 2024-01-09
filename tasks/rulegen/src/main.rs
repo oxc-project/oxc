@@ -45,7 +45,7 @@ const NEXT_JS_TEST_PATH: &str =
     "https://raw.githubusercontent.com/vercel/next.js/canary/test/unit/eslint-plugin-next";
 
 const JSDOC_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/test";
+    "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/test/rules/assertions";
 
 struct TestCase<'a> {
     source_text: String,
@@ -469,6 +469,7 @@ fn main() {
     let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
     let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
+    let camel_rule_name = rule_name.to_case(Case::Camel);
     let plugin_name = rule_kind.to_string();
 
     let rule_test_path = match rule_kind {
@@ -479,7 +480,7 @@ fn main() {
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{kebab_rule_name}.test.js"),
+        RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Oxc | RuleKind::DeepScan => String::new(),
     };
 
