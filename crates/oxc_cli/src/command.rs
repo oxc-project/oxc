@@ -98,6 +98,10 @@ pub struct EnablePlugins {
     /// Enable the JSX-a11y plugin and detect accessibility problems
     #[bpaf(switch, hide_usage)]
     pub jsx_a11y_plugin: bool,
+
+    /// Enable the Next.js plugin and detect Next.js problems
+    #[bpaf(switch, hide_usage)]
+    pub nextjs_plugin: bool,
 }
 
 #[derive(Debug, Clone, Bpaf)]

@@ -20,17 +20,20 @@ enum TestResult {
     Fixed(String),
 }
 
+type TestCase = (String, Option<Value>, Option<Value>, Option<PathBuf>);
+
 pub struct Tester {
     rule_name: &'static str,
     rule_path: PathBuf,
-    expect_pass: Vec<(String, Option<Value>, Option<Value>)>,
-    expect_fail: Vec<(String, Option<Value>, Option<Value>)>,
+    expect_pass: Vec<TestCase>,
+    expect_fail: Vec<TestCase>,
     expect_fix: Vec<(String, String, Option<Value>)>,
     snapshot: String,
     current_working_directory: Box<Path>,
     import_plugin: bool,
     jest_plugin: bool,
     jsx_a11y_plugin: bool,
+    nextjs_plugin: bool,
 }
 
 impl Tester {
@@ -40,25 +43,26 @@ impl Tester {
         expect_fail: Vec<(S, Option<Value>)>,
     ) -> Self {
         let expect_pass =
-            expect_pass.into_iter().map(|(s, r)| (s.into(), r, None)).collect::<Vec<_>>();
+            expect_pass.into_iter().map(|(s, r)| (s.into(), r, None, None)).collect::<Vec<_>>();
         let expect_fail =
-            expect_fail.into_iter().map(|(s, r)| (s.into(), r, None)).collect::<Vec<_>>();
+            expect_fail.into_iter().map(|(s, r)| (s.into(), r, None, None)).collect::<Vec<_>>();
         Self::new_with_settings(rule_name, expect_pass, expect_fail)
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn new_with_settings<S: Into<String>>(
         rule_name: &'static str,
-        expect_pass: Vec<(S, Option<Value>, Option<Value>)>,
-        expect_fail: Vec<(S, Option<Value>, Option<Value>)>,
+        expect_pass: Vec<(S, Option<Value>, Option<Value>, Option<PathBuf>)>,
+        expect_fail: Vec<(S, Option<Value>, Option<Value>, Option<PathBuf>)>,
     ) -> Self {
         let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
         let expect_pass = expect_pass
             .into_iter()
-            .map(|(s, r, settings)| (s.into(), r, settings))
+            .map(|(s, r, settings, p)| (s.into(), r, settings, p))
             .collect::<Vec<_>>();
         let expect_fail = expect_fail
             .into_iter()
-            .map(|(s, r, settings)| (s.into(), r, settings))
+            .map(|(s, r, settings, p)| (s.into(), r, settings, p))
             .collect::<Vec<_>>();
         let current_working_directory =
             env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
@@ -73,6 +77,7 @@ impl Tester {
             import_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
+            nextjs_plugin: false,
         }
     }
 
@@ -82,9 +87,9 @@ impl Tester {
         expect_fail: Vec<S>,
     ) -> Self {
         let expect_pass =
-            expect_pass.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+            expect_pass.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
         let expect_fail =
-            expect_fail.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+            expect_fail.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
         Self::new_with_settings(rule_name, expect_pass, expect_fail)
     }
 
@@ -94,9 +99,9 @@ impl Tester {
         expect_fail: Vec<S>,
     ) -> Self {
         self.expect_pass =
-            expect_pass.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+            expect_pass.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
         self.expect_fail =
-            expect_fail.into_iter().map(|s| (s.into(), None, None)).collect::<Vec<_>>();
+            expect_fail.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
         self
     }
 
@@ -118,6 +123,11 @@ impl Tester {
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
         self.jsx_a11y_plugin = yes;
+        self
+    }
+
+    pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
+        self.nextjs_plugin = yes;
         self
     }
 
@@ -146,16 +156,16 @@ impl Tester {
     }
 
     fn test_pass(&mut self) {
-        for (test, config, settings) in self.expect_pass.clone() {
-            let result = self.run(&test, config, false, &settings);
+        for (test, config, settings, path) in self.expect_pass.clone() {
+            let result = self.run(&test, config, false, &settings, &path);
             let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {test} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
-        for (test, config, settings) in self.expect_fail.clone() {
-            let result = self.run(&test, config, false, &settings);
+        for (test, config, settings, path) in self.expect_fail.clone() {
+            let result = self.run(&test, config, false, &settings, &path);
             let failed = result == TestResult::Failed;
             assert!(failed, "expect test to fail: {test}");
         }
@@ -163,7 +173,7 @@ impl Tester {
 
     fn test_fix(&mut self) {
         for (test, expected, config) in self.expect_fix.clone() {
-            let result = self.run(&test, config, true, &None);
+            let result = self.run(&test, config, true, &None, &None);
             if let TestResult::Fixed(fixed_str) = result {
                 assert_eq!(expected, fixed_str);
             } else {
@@ -178,6 +188,7 @@ impl Tester {
         config: Option<Value>,
         is_fix: bool,
         settings: &Option<Value>,
+        path: &Option<PathBuf>,
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
@@ -187,16 +198,21 @@ impl Tester {
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
-            .with_jsx_a11y_plugin(self.jsx_a11y_plugin);
+            .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
+            .with_nextjs_plugin(self.nextjs_plugin);
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![rule])
             .with_settings(lint_settings);
         let path_to_lint = if self.import_plugin {
+            assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
+        } else if let Some(path) = path {
+            self.current_working_directory.join(path)
         } else {
             self.rule_path.clone()
         };
+
         let lint_service = LintService::from_linter(
             self.current_working_directory.clone(),
             &[path_to_lint.into_boxed_path()],
@@ -221,6 +237,7 @@ impl Tester {
             &self.rule_path
         }
         .to_string_lossy();
+
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
