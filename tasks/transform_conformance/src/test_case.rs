@@ -279,6 +279,7 @@ impl TestCase for ConformanceTestCase {
                 println!("{output}\n");
                 println!("Transformed:\n");
                 println!("{transformed_code}");
+                println!("{actual_errors}");
                 if !passed {
                     println!("Diff:\n");
                     print_diff_in_terminal(&output, &transformed_code);

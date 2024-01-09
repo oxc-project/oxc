@@ -27,7 +27,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, VisitMut, AstKind};
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
@@ -136,6 +136,14 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn enter_node(&mut self, kind: oxc_ast::AstKind<'a>) {
+        self.es2015_new_target.as_mut().map(|t| t.enter_node(kind));
+    }
+
+    fn leave_node(&mut self, kind: oxc_ast::AstKind<'a>) {
+        self.es2015_new_target.as_mut().map(|t| t.leave_node(kind));
+    }
+
     fn visit_program(&mut self, program: &mut Program<'a>) {
         for directive in program.directives.iter_mut() {
             self.visit_directive(directive);
@@ -213,12 +221,14 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
         self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
 
+        let kind = AstKind::ObjectProperty(self.alloc(prop));
+        self.enter_node(kind);
         self.visit_property_key(&mut prop.key);
         self.visit_expression(&mut prop.value);
-
         if let Some(init) = &mut prop.init {
             self.visit_expression(init);
         }
+        self.leave_node(kind);
     }
 
     fn visit_class_body(&mut self, class_body: &mut ClassBody<'a>) {
