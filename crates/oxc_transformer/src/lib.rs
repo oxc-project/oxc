@@ -27,7 +27,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder, VisitMut, AstKind};
+use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;

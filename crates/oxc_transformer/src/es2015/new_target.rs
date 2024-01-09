@@ -60,20 +60,16 @@ impl<'a> NewTarget<'a> {
                 | MethodDefinitionKind::Method => Some(NewTargetKind::Method),
                 MethodDefinitionKind::Constructor => Some(NewTargetKind::Constructor),
             },
-            AstKind::ObjectProperty(property) => {
-                property.method.then_some(NewTargetKind::Method)
-            }
+            AstKind::ObjectProperty(property) => property.method.then_some(NewTargetKind::Method),
             AstKind::Function(function) => {
                 // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
                 if let Some(kind) = self.kinds.last() {
                     if !matches!(kind, NewTargetKind::Function(_)) {
-                       return None
-                    } 
+                        return None;
+                    }
                 }
-                function.id.as_ref().map(
-                    |id| NewTargetKind::Function(Some(id.name.clone())),
-                )
-            },
+                function.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
+            }
             _ => None,
         }
     }
@@ -101,16 +97,15 @@ impl<'a> NewTarget<'a> {
                         NewTargetKind::Function(name) => {
                             // TODO packages/babel-helper-create-class-features-plugin/src/fields.ts#L192 unshadow
                             // It will mutate previous ast node, it is difficult at now.
-                            let id = name.clone().unwrap_or_else(|| 
-                                self.ctx.scopes().generate_uid("target"),
-                            );
+                            let id = name
+                                .clone()
+                                .unwrap_or_else(|| self.ctx.scopes().generate_uid("target"));
                             let test = self.ast.binary_expression(
                                 SPAN,
                                 self.ast.this_expression(SPAN),
                                 BinaryOperator::Instanceof,
                                 self.ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN,
-                                    id,
+                                    SPAN, id,
                                 )),
                             );
                             let consequent = self.ast.static_member_expression(
