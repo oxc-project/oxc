@@ -186,14 +186,19 @@ impl ScopeTree {
         self.generate_uid(name)
     }
 
-    // <https://github.com/babel/babel/blob/main/packages/babel-traverse/src/scope/index.ts#L495>
+    // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L495>
     pub fn generate_uid(&self, name: &str) -> Atom {
         for i in 0.. {
-            let name = Atom::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") });
+            let name = Self::internal_generate_uid(name, i);
             if !self.has_binding(ScopeId::new(0), &name) {
                 return name;
             }
         }
         unreachable!()
+    }
+
+    // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L523>
+    fn internal_generate_uid(name: &str, i: i32) -> Atom {
+        Atom::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
     }
 }
