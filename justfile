@@ -102,6 +102,9 @@ new-oxc-rule name:
 new-nextjs-rule name:
   cargo run -p rulegen {{name}} nextjs
 
+new-jsdoc-rule name:
+  cargo run -p rulegen {{name}} jsdoc
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote
