@@ -3,17 +3,17 @@ source: crates/oxc_linter/src/config/mod.rs
 expression: rules
 ---
 [
-    (
-        "eslint",
-        "no-console",
-        Allow,
-        None,
-    ),
-    (
-        "eslint",
-        "no-bitwise",
-        Deny,
-        Some(
+    ESLintRuleConfig {
+        plugin_name: "eslint",
+        rule_name: "no-console",
+        severity: Allow,
+        config: None,
+    },
+    ESLintRuleConfig {
+        plugin_name: "eslint",
+        rule_name: "no-bitwise",
+        severity: Deny,
+        config: Some(
             Array [
                 Object {
                     "allow": Array [
@@ -22,12 +22,12 @@ expression: rules
                 },
             ],
         ),
-    ),
-    (
-        "eslint",
-        "eqeqeq",
-        Deny,
-        Some(
+    },
+    ESLintRuleConfig {
+        plugin_name: "eslint",
+        rule_name: "eqeqeq",
+        severity: Deny,
+        config: Some(
             Array [
                 String("always"),
                 Object {
@@ -35,17 +35,17 @@ expression: rules
                 },
             ],
         ),
-    ),
-    (
-        "typescript",
-        "ban-types",
-        Deny,
-        None,
-    ),
-    (
-        "jsx_a11y",
-        "alt-text",
-        Warn,
-        None,
-    ),
+    },
+    ESLintRuleConfig {
+        plugin_name: "typescript",
+        rule_name: "ban-types",
+        severity: Deny,
+        config: None,
+    },
+    ESLintRuleConfig {
+        plugin_name: "jsx_a11y",
+        rule_name: "alt-text",
+        severity: Warn,
+        config: None,
+    },
 ]

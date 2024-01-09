@@ -1,163 +1,119 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::path::Path;
 
 pub mod errors;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
-use phf::{phf_map, Map};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use crate::{
-    rules::{RuleEnum, RULES},
-    AllowWarnDeny, JsxA11y, LintSettings,
-};
+use crate::{rules::RuleEnum, AllowWarnDeny, JsxA11y, LintSettings};
 
 use self::errors::{
-    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
-    FailedToParseRuleValueError,
+    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseRuleValueError,
 };
 
 pub struct ESLintConfig {
-    rules: std::vec::Vec<RuleEnum>,
+    rules: Vec<ESLintRuleConfig>,
     settings: LintSettings,
 }
 
+#[derive(Debug)]
+pub struct ESLintRuleConfig {
+    plugin_name: String,
+    rule_name: String,
+    severity: AllowWarnDeny,
+    config: Option<serde_json::Value>,
+}
+
 impl ESLintConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, Report> {
+    pub fn new(path: &Path) -> Result<Self, Report> {
+        let json = Self::read_json(path)?;
+        let rules = parse_rules(&json)?;
+        let settings = parse_settings_from_root(&json);
+        Ok(Self { rules, settings })
+    }
+
+    pub fn settings(self) -> LintSettings {
+        self.settings
+    }
+
+    fn read_json(path: &Path) -> Result<serde_json::Value, Error> {
         let file = match std::fs::read_to_string(path) {
             Ok(file) => file,
             Err(e) => {
                 return Err(FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(
-                    path.clone(),
+                    path.to_path_buf(),
                     e,
                 ))])
                 .into());
             }
         };
 
-        let file = match serde_json::from_str::<serde_json::Value>(&file) {
-            Ok(file) => file,
-            Err(e) => {
-                let guess = mime_guess::from_path(path);
-                let err = match guess.first() {
-                    // syntax error
-                    Some(mime) if mime.subtype() == "json" => e.to_string(),
-                    Some(_) => "only json configuration is supported".to_string(),
-                    None => {
-                        format!(
-                            "{e}, if the configuration is not a json file, please use json instead."
-                        )
-                    }
-                };
-                return Err(FailedToParseConfigError(vec![Error::new(
-                    FailedToParseConfigJsonError(path.clone(), err),
-                )])
-                .into());
-            }
-        };
-
-        // See https://github.com/oxc-project/oxc/issues/1672
-        let extends_hm: HashSet<&str> = HashSet::new();
-
-        let roles_hm = match parse_rules(&file) {
-            Ok(roles_hm) => roles_hm
-                .into_iter()
-                .map(|(plugin_name, rule_name, allow_warn_deny, config)| {
-                    ((plugin_name, rule_name), (allow_warn_deny, config))
-                })
-                .collect::<std::collections::HashMap<_, _>>(),
-            Err(e) => {
-                return Err(e);
-            }
-        };
-
-        let settings = parse_settings_from_root(&file);
-
-        // `extends` provides the defaults
-        // `rules` provides the overrides
-        let rules = RULES.clone().into_iter().filter_map(|rule| {
-            // Check if the extends set is empty or contains the plugin name
-            let in_extends = extends_hm.contains(rule.plugin_name());
-
-            // Check if there's a custom rule that explicitly handles this rule
-            let (is_explicitly_handled, policy, config) =
-                if let Some((policy, config)) = roles_hm.get(&(rule.plugin_name(), rule.name())) {
-                    // Return true for handling, and also whether it's enabled or not
-                    (true, *policy, config)
-                } else {
-                    // Not explicitly handled
-                    (false, AllowWarnDeny::Allow, &None)
-                };
-
-            // The rule is included if it's in the extends set and not explicitly disabled,
-            // or if it's explicitly enabled
-            if (in_extends && !is_explicitly_handled) || policy.is_enabled() {
-                Some(rule.read_json(config.clone()))
-            } else {
-                None
-            }
-        });
-
-        Ok(Self { rules: rules.collect::<Vec<_>>(), settings })
-    }
-
-    pub fn into_rules(mut self) -> Self {
-        self.rules.sort_unstable_by_key(RuleEnum::name);
-        self
-    }
-
-    pub fn get_config(self) -> (std::vec::Vec<RuleEnum>, LintSettings) {
-        (self.rules, self.settings)
-    }
-}
-
-#[allow(unused)]
-fn parse_extends(root_json: &Value) -> Result<Option<Vec<&'static str>>, Report> {
-    let Some(extends) = root_json.get("extends") else {
-        return Ok(None);
-    };
-
-    let extends_obj = match extends {
-        Value::Array(v) => v,
-        _ => {
-            return Err(FailedToParseConfigPropertyError("extends", "Expected an array.").into());
-        }
-    };
-
-    let extends_rule_groups = extends_obj
-        .iter()
-        .filter_map(|v| {
-            let v = match v {
-                Value::String(s) => s,
-                _ => return None,
+        serde_json::from_str::<serde_json::Value>(&file).map_err(|err| {
+            let guess = mime_guess::from_path(path);
+            let err = match guess.first() {
+                // syntax error
+                Some(mime) if mime.subtype() == "json" => err.to_string(),
+                Some(_) => "only json configuration is supported".to_string(),
+                None => {
+                    format!(
+                        "{err}, if the configuration is not a json file, please use json instead."
+                    )
+                }
             };
-
-            if let Some(m) = EXTENDS_MAP.get(v.as_str()) {
-                return Some(*m);
-            }
-
-            None
+            FailedToParseConfigError(vec![Error::new(FailedToParseConfigJsonError(
+                path.to_path_buf(),
+                err,
+            ))])
+            .into()
         })
-        .collect::<Vec<_>>();
+    }
 
-    Ok(Some(extends_rule_groups))
+    pub fn override_rules(&self, rules_to_override: &mut FxHashSet<RuleEnum>) {
+        let mut rules_to_replace = vec![];
+        let mut rules_to_remove = vec![];
+        for rule in rules_to_override.iter() {
+            let plugin_name = rule.plugin_name();
+            let rule_name = rule.name();
+            if let Some(rule_to_configure) =
+                self.rules.iter().find(|r| r.plugin_name == plugin_name && r.rule_name == rule_name)
+            {
+                match rule_to_configure.severity {
+                    AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                        rules_to_replace.push(rule.read_json(rule_to_configure.config.clone()));
+                    }
+                    AllowWarnDeny::Allow => {
+                        rules_to_remove.push(rule.clone());
+                    }
+                }
+            }
+        }
+        for rule in rules_to_remove {
+            rules_to_override.remove(&rule);
+        }
+        for rule in rules_to_replace {
+            rules_to_override.replace(rule);
+        }
+    }
 }
 
-#[allow(clippy::type_complexity)]
-fn parse_rules(
-    root_json: &Value,
-) -> Result<Vec<(&str, &str, AllowWarnDeny, Option<Value>)>, Error> {
-    let Value::Object(rules_object) = root_json else { return Ok(vec![]) };
+fn parse_rules(root_json: &Value) -> Result<Vec<ESLintRuleConfig>, Error> {
+    let Value::Object(rules_object) = root_json else { return Ok(Vec::default()) };
 
-    let Some(Value::Object(rules_object)) = rules_object.get("rules") else { return Ok(vec![]) };
+    let Some(Value::Object(rules_object)) = rules_object.get("rules") else {
+        return Ok(Vec::default());
+    };
 
     rules_object
-        .iter()
+        .into_iter()
         .map(|(key, value)| {
-            let (plugin_name, name) = parse_rule_name(key);
-
-            let (rule_severity, rule_config) = resolve_rule_value(value)?;
-
-            Ok((plugin_name, name, rule_severity, rule_config))
+            let (plugin_name, rule_name) = parse_rule_name(key);
+            let (severity, config) = resolve_rule_value(value)?;
+            Ok(ESLintRuleConfig {
+                plugin_name: plugin_name.to_string(),
+                rule_name: rule_name.to_string(),
+                severity,
+                config,
+            })
         })
         .collect::<Result<Vec<_>, Error>>()
 }
@@ -197,15 +153,6 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
 
     LintSettings::default()
 }
-
-pub const EXTENDS_MAP: Map<&'static str, &'static str> = phf_map! {
-    "eslint:recommended" => "eslint",
-    "plugin:react/recommended" => "react",
-    "plugin:@typescript-eslint/recommended" => "typescript",
-    "plugin:react-hooks/recommended" => "react",
-    "plugin:unicorn/recommended" => "unicorn",
-    "plugin:jest/recommended" => "jest",
-};
 
 fn parse_rule_name(name: &str) -> (&str, &str) {
     if let Some((category, name)) = name.split_once('/') {
