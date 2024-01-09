@@ -277,6 +277,7 @@ mod nextjs {
     pub mod no_async_client_component;
     pub mod no_css_tags;
     pub mod no_img_element;
+    pub mod no_script_component_in_head;
     pub mod no_sync_scripts;
     pub mod no_title_in_document_head;
 }
@@ -525,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_async_client_component,
     nextjs::no_css_tags,
     nextjs::no_img_element,
+    nextjs::no_script_component_in_head,
     nextjs::no_sync_scripts,
     nextjs::no_title_in_document_head,
 }
