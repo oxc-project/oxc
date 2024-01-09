@@ -276,6 +276,7 @@ mod nextjs {
     pub mod no_assign_module_variable;
     pub mod no_async_client_component;
     pub mod no_css_tags;
+    pub mod no_img_element;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -521,4 +522,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_assign_module_variable,
     nextjs::no_async_client_component,
     nextjs::no_css_tags,
+    nextjs::no_img_element,
 }
