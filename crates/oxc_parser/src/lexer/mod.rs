@@ -24,13 +24,13 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
-pub use token::{Token, TokenValue};
 
 pub use self::{
     kind::Kind,
     number::{parse_big_int, parse_float, parse_int},
+    token::Token,
 };
-use self::{string_builder::AutoCow, trivia_builder::TriviaBuilder};
+use self::{string_builder::AutoCow, token::EscapedStringId, trivia_builder::TriviaBuilder};
 use crate::{diagnostics, MAX_LEN};
 
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ pub struct LexerCheckpoint<'a> {
     /// Remaining chars to be tokenized
     chars: Chars<'a>,
 
-    token: Token<'a>,
+    token: Token,
 
     errors_pos: usize,
 }
@@ -66,6 +66,9 @@ pub struct Lexer<'a> {
     context: LexerContext,
 
     pub(crate) trivia_builder: TriviaBuilder,
+
+    /// Data store for escaped strings, indexed by `Token.escaped_string_id`
+    escaped_strings: Vec<&'a str>,
 }
 
 #[allow(clippy::unused_self)]
@@ -91,6 +94,7 @@ impl<'a> Lexer<'a> {
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
+            escaped_strings: vec![],
         }
     }
 
@@ -117,12 +121,12 @@ impl<'a> Lexer<'a> {
     }
 
     /// Find the nth lookahead token lazily
-    pub fn lookahead(&mut self, n: u8) -> &Token<'a> {
+    pub fn lookahead(&mut self, n: u8) -> Token {
         let n = n as usize;
         debug_assert!(n > 0);
 
         if self.lookahead.len() > n - 1 {
-            return &self.lookahead[n - 1].token;
+            return self.lookahead[n - 1].token;
         }
 
         let checkpoint = self.checkpoint();
@@ -148,7 +152,7 @@ impl<'a> Lexer<'a> {
 
         self.current = checkpoint;
 
-        &self.lookahead[n - 1].token
+        self.lookahead[n - 1].token
     }
 
     /// Set context
@@ -157,7 +161,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Main entry point
-    pub fn next_token(&mut self) -> Token<'a> {
+    pub fn next_token(&mut self) -> Token {
         if let Some(checkpoint) = self.lookahead.pop_front() {
             self.current.chars = checkpoint.chars;
             self.current.errors_pos = checkpoint.errors_pos;
@@ -167,13 +171,13 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    pub fn next_jsx_child(&mut self) -> Token<'a> {
+    pub fn next_jsx_child(&mut self) -> Token {
         self.current.token.start = self.offset();
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
 
-    fn finish_next(&mut self, kind: Kind) -> Token<'a> {
+    fn finish_next(&mut self, kind: Kind) -> Token {
         self.current.token.kind = kind;
         self.current.token.end = self.offset();
         debug_assert!(self.current.token.start <= self.current.token.end);
@@ -188,7 +192,7 @@ impl<'a> Lexer<'a> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub fn next_regex(&mut self, kind: Kind) -> Token<'a> {
+    pub fn next_regex(&mut self, kind: Kind) -> Token {
         self.current.token.start = self.offset()
             - match kind {
                 Kind::Slash => 1,
@@ -200,7 +204,7 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    pub fn next_right_angle(&mut self) -> Token<'a> {
+    pub fn next_right_angle(&mut self) -> Token {
         let kind = self.read_right_angle();
         self.lookahead.clear();
         self.finish_next(kind)
@@ -208,7 +212,7 @@ impl<'a> Lexer<'a> {
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
-    pub fn next_template_substitution_tail(&mut self) -> Token<'a> {
+    pub fn next_template_substitution_tail(&mut self) -> Token {
         self.current.token.start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
@@ -216,14 +220,14 @@ impl<'a> Lexer<'a> {
     }
 
     /// Expand the current token for `JSXIdentifier`
-    pub fn next_jsx_identifier(&mut self, start_offset: u32) -> Token<'a> {
+    pub fn next_jsx_identifier(&mut self, start_offset: u32) -> Token {
         let kind = self.read_jsx_identifier(start_offset);
         self.lookahead.clear();
         self.finish_next(kind)
     }
 
     /// Re-tokenize '<<' or '<=' or '<<=' to '<'
-    pub fn re_lex_as_typescript_l_angle(&mut self, kind: Kind) -> Token<'a> {
+    pub fn re_lex_as_typescript_l_angle(&mut self, kind: Kind) -> Token {
         let offset = match kind {
             Kind::ShiftLeft | Kind::LtEq => 2,
             Kind::ShiftLeftEq => 3,
@@ -294,6 +298,44 @@ impl<'a> Lexer<'a> {
         match self.peek() {
             Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
             None => self.error(diagnostics::UnexpectedEnd(offset)),
+        }
+    }
+
+    /// Save the string if it is escaped
+    /// This reduces the overall memory consumption while keeping the `Token` size small
+    /// Strings without escaped values can be retrieved as is from the token span
+    #[allow(clippy::cast_possible_truncation)]
+    fn save_string(&mut self, has_escape: bool, s: &'a str) {
+        if !has_escape {
+            return;
+        }
+        self.escaped_strings.push(s);
+        let escaped_string_id = self.escaped_strings.len() as u32;
+        // SAFETY: escaped_string_id is the length of `self.escaped_strings` after an item is pushed, which can never be 0
+        let escaped_string_id = unsafe { EscapedStringId::new_unchecked(escaped_string_id) };
+        self.current.token.escaped_string_id.replace(escaped_string_id);
+    }
+
+    pub(crate) fn get_string(&self, token: Token) -> &'a str {
+        if let Some(escaped_string_id) = token.escaped_string_id {
+            return self.escaped_strings[escaped_string_id.get() as usize - 1];
+        }
+
+        let raw = &self.source[token.start as usize..token.end as usize];
+        match token.kind {
+            Kind::Str | Kind::NoSubstitutionTemplate => {
+                // omit surrounding quotes
+                &raw[1..raw.len() - 1]
+            }
+            Kind::TemplateHead => {
+                // omit leading "`${"
+                &raw[3..]
+            }
+            Kind::TemplateTail => {
+                // omit trailing "$`"
+                &raw[..raw.len() - 2]
+            }
+            _ => raw,
         }
     }
 
@@ -402,7 +444,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.7.1 Identifier Names
-    fn identifier_tail(&mut self, mut builder: AutoCow<'a>) -> (bool, &'a str) {
+    fn identifier_tail(&mut self, mut builder: AutoCow<'a>) -> &'a str {
         // ident tail
         while let Some(c) = self.peek() {
             if !is_identifier_part(c) {
@@ -418,14 +460,13 @@ impl<'a> Lexer<'a> {
             builder.push_matching(c);
         }
         let has_escape = builder.has_escape();
-        (has_escape, builder.finish(self))
+        let text = builder.finish(self);
+        self.save_string(has_escape, text);
+        text
     }
 
     fn identifier_name(&mut self, builder: AutoCow<'a>) -> &'a str {
-        let (has_escape, text) = self.identifier_tail(builder);
-        self.current.token.escaped = has_escape;
-        self.current.token.value = TokenValue::String(text);
-        text
+        self.identifier_tail(builder)
     }
 
     fn identifier_name_handler(&mut self) -> &'a str {
@@ -532,8 +573,7 @@ impl<'a> Lexer<'a> {
                 return Kind::Undetermined;
             }
         }
-        let (_, name) = self.identifier_tail(builder);
-        self.current.token.value = TokenValue::String(name);
+        self.identifier_tail(builder);
         Kind::PrivateIdentifier
     }
 
@@ -765,8 +805,7 @@ impl<'a> Lexer<'a> {
                 }
                 Some(c @ ('"' | '\'')) => {
                     if c == delimiter {
-                        self.current.token.value =
-                            TokenValue::String(builder.finish_without_push(self));
+                        self.save_string(builder.has_escape(), builder.finish_without_push(self));
                         return Kind::Str;
                     }
                     builder.push_matching(c);
@@ -850,16 +889,14 @@ impl<'a> Lexer<'a> {
             match c {
                 '$' if self.peek() == Some('{') => {
                     if is_valid_escape_sequence {
-                        self.current.token.value =
-                            TokenValue::String(builder.finish_without_push(self));
+                        self.save_string(true, builder.finish_without_push(self));
                     }
                     self.current.chars.next();
                     return substitute;
                 }
                 '`' => {
                     if is_valid_escape_sequence {
-                        self.current.token.value =
-                            TokenValue::String(builder.finish_without_push(self));
+                        self.save_string(true, builder.finish_without_push(self));
                     }
                     return tail;
                 }
@@ -872,6 +909,7 @@ impl<'a> Lexer<'a> {
                 '\\' => {
                     let text = builder.get_mut_string_without_current_ascii_char(self);
                     self.read_string_escape_sequence(text, true, &mut is_valid_escape_sequence);
+                    if !is_valid_escape_sequence {}
                 }
                 _ => builder.push_matching(c),
             }
@@ -884,18 +922,13 @@ impl<'a> Lexer<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn read_jsx_identifier(&mut self, start_offset: u32) -> Kind {
-        let prev_str = &self.source[start_offset as usize..self.offset() as usize];
-
-        let mut builder = AutoCow::new(self);
+    fn read_jsx_identifier(&mut self, _start_offset: u32) -> Kind {
         while let Some(c) = self.peek() {
             if c == '-' || is_identifier_start_all(c) {
                 self.current.chars.next();
-                builder.push_matching(c);
                 while let Some(c) = self.peek() {
                     if is_identifier_part(c) {
-                        let c = self.current.chars.next().unwrap();
-                        builder.push_matching(c);
+                        self.current.chars.next().unwrap();
                     } else {
                         break;
                     }
@@ -904,9 +937,6 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        let mut s = String::from_str_in(prev_str, self.allocator);
-        s.push_str(builder.finish(self));
-        self.current.token.value = TokenValue::String(s.into_bump_str());
         Kind::Ident
     }
 
@@ -941,7 +971,6 @@ impl<'a> Lexer<'a> {
                         break;
                     }
                 }
-                self.current.token.value = TokenValue::String(builder.finish(self));
                 Kind::JSXText
             }
             None => Kind::Eof,
@@ -964,8 +993,7 @@ impl<'a> Lexer<'a> {
             match self.current.chars.next() {
                 Some(c @ ('"' | '\'')) => {
                     if c == delimiter {
-                        self.current.token.value =
-                            TokenValue::String(builder.finish_without_push(self));
+                        self.save_string(builder.has_escape(), builder.finish_without_push(self));
                         return Kind::Str;
                     }
                     builder.push_matching(c);
