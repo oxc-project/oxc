@@ -211,9 +211,11 @@ fn parse_rule_name(name: &str) -> (&str, &str) {
     if let Some((category, name)) = name.split_once('/') {
         let category = category.trim_start_matches('@');
 
-        // if it matches typescript-eslint, map it to typescript
         let category = match category {
+            // if it matches typescript-eslint, map it to typescript
             "typescript-eslint" => "typescript",
+            // plugin name in RuleEnum is in snake_case
+            "jsx-a11y" => "jsx_a11y",
             _ => category,
         };
 
