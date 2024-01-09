@@ -209,5 +209,7 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new_without_config(NoAsyncClientComponent::NAME, pass, fail).test_and_snapshot();
+    Tester::new_without_config(NoAsyncClientComponent::NAME, pass, fail)
+        .with_nextjs_plugin(true)
+        .test_and_snapshot();
 }
