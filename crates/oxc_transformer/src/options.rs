@@ -32,6 +32,7 @@ pub struct TransformOptions {
     pub property_literals: bool,
     pub babel_8_breaking: Option<bool>,
     pub instanceof: bool,
+    pub new_target: bool,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>

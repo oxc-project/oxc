@@ -4,6 +4,7 @@ mod function_name;
 mod instanceof;
 mod shorthand_properties;
 mod template_literals;
+mod new_target;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use duplicate_keys::DuplicateKeys;
@@ -11,3 +12,4 @@ pub use function_name::FunctionName;
 pub use instanceof::Instanceof;
 pub use shorthand_properties::ShorthandProperties;
 pub use template_literals::TemplateLiterals;
+pub use new_target::NewTarget;

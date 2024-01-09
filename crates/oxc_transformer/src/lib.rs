@@ -69,6 +69,7 @@ pub struct Transformer<'a> {
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
     es2015_instanceof: Option<Instanceof<'a>>,
+    es2015_new_target: Option<NewTarget<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
 }
 
@@ -108,6 +109,7 @@ impl<'a> Transformer<'a> {
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
             es2015_instanceof: Instanceof::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2015_new_target: NewTarget::new(Rc::clone(&ast),ctx.clone(), &options),
             // other
             es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
             react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
@@ -184,6 +186,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2015_instanceof.as_mut().map(|t| t.transform_expression(expr));
         self.es2016_exponentiation_operator.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
+        self.es2015_new_target.as_mut().map(|t| t.transform_expression(expr));
 
         self.visit_expression_match(expr);
     }
