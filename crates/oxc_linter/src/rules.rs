@@ -154,6 +154,7 @@ mod react {
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
+    pub mod require_render_return;
 }
 
 mod unicorn {
@@ -488,6 +489,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_unescaped_entities,
     react::no_is_mounted,
     react::no_unknown_property,
+    react::require_render_return,
     import::default,
     import::named,
     import::no_cycle,
