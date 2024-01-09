@@ -947,7 +947,7 @@ fn need_space_before_dot<const MINIFY: bool>(bytes: &[u8], p: &mut Codegen<{ MIN
 impl<'a, const MINIFY: bool> Gen<MINIFY> for NumberLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        if MINIFY {
+        if MINIFY || self.raw.is_empty() {
             p.print_space_before_identifier();
             let abs_value = self.value.abs();
 
