@@ -120,3 +120,24 @@ impl Rule for FilenameCase {
         ctx.diagnostic(FilenameCaseDiagnostic(Span::default(), case_name));
     }
 }
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    let pass = vec![
+        // should pass - camel_case, pascal_case both allowed
+        ("", None, None, Some(PathBuf::from("foo/bar/baz/Que.tsx"))),
+        // should pass - camel_case, pascal_case both allowed
+        ("", None, None, Some(PathBuf::from("foo/bar/baz/QueAbc.tsx"))),
+    ];
+    let fail = vec![
+        // should pass - by default kebab_case is not allowed
+        ("import foo from 'bar'", None, None, Some(PathBuf::from("foo/bar/baz/aaa-bbb.tsx"))),
+        // should pass - by default snake_case is not allowed
+        ("baz;", None, None, Some(PathBuf::from("foo/bar/baz/foo_bar.tsx"))),
+    ];
+
+    Tester::new_with_settings(FilenameCase::NAME, pass, fail).test_and_snapshot();
+}
