@@ -18,7 +18,7 @@ mod rules;
 mod service;
 mod utils;
 
-use std::{self, fs, io::Write, rc::Rc, time::Duration};
+use std::{io::Write, rc::Rc, time::Duration};
 
 use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
@@ -166,14 +166,6 @@ impl Linter {
 
     pub fn get_settings(&self) -> LintSettings {
         self.settings.clone()
-    }
-    #[allow(unused)]
-    fn read_rules_configuration() -> Option<serde_json::Map<String, serde_json::Value>> {
-        fs::read_to_string(".eslintrc.json")
-            .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .and_then(|v: serde_json::Value| v.get("rules").cloned())
-            .and_then(|v| v.as_object().cloned())
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {
