@@ -147,6 +147,7 @@ mod react {
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
+    pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_render_return_value;
@@ -483,6 +484,7 @@ oxc_macros::declare_all_lint_rules! {
     react::react_in_jsx_scope,
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
+    react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
     react::no_string_refs,
