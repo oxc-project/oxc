@@ -36,4 +36,16 @@ expression: rules
             ],
         ),
     ),
+    (
+        "typescript",
+        "ban-types",
+        Deny,
+        None,
+    ),
+    (
+        "jsx_a11y",
+        "alt-text",
+        Warn,
+        None,
+    ),
 ]
