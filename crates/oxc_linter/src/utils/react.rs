@@ -54,10 +54,10 @@ pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXA
     }
 }
 
-pub fn get_prop_name(item: &JSXAttributeName) -> String {
-    match item {
+pub fn get_jsx_attribute_name(attr: &JSXAttributeName) -> String {
+    match attr {
         JSXAttributeName::NamespacedName(name) => {
-            format!("{}:{}", name.namespace.name.as_str(), name.property.name.as_str())
+            format!("{}:{}", name.namespace.name, name.property.name)
         }
         JSXAttributeName::Identifier(ident) => ident.name.to_string(),
     }

@@ -10,7 +10,7 @@ use phf::phf_set;
 use crate::{
     globals::RESERVED_HTML_TAG,
     rule::Rule,
-    utils::{get_attribute_name, get_element_type},
+    utils::{get_element_type, get_jsx_attribute_name},
     AstNode, LintContext,
 };
 
@@ -53,7 +53,7 @@ impl Rule for AriaUnsupportedElements {
                         JSXAttributeItem::Attribute(attr) => attr,
                         JSXAttributeItem::SpreadAttribute(_) => continue,
                     };
-                    let attr_name = get_attribute_name(&attr.name).to_lowercase();
+                    let attr_name = get_jsx_attribute_name(&attr.name).to_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {
                         ctx.diagnostic(AriaUnsupportedElementsDiagnostic(attr.span, attr_name));
                     }
