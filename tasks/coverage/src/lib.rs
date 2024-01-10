@@ -76,7 +76,7 @@ impl AppArgs {
             ])
             .spawn()
             .expect("Run runtime.js failed");
-        Test262Suite::<CodegenRuntimeTest262Case>::new().run("codegen_runtime_test262", self);
+        Test262Suite::<CodegenRuntimeTest262Case>::new().run_async("codegen_runtime_test262", self);
         let _ = runtime_process.kill();
     }
 
