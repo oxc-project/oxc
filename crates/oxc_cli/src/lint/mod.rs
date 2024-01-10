@@ -100,7 +100,8 @@ impl Runner for LintRunner {
             .with_timing(misc_options.timing)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
-            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin);
+            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
+            .with_nextjs_plugin(enable_plugins.nextjs_plugin);
 
         let linter = match Linter::from_options(lint_options) {
             Ok(lint_service) => lint_service,
@@ -319,7 +320,7 @@ mod test {
         let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
         assert_eq!(result.number_of_errors, 0);
     }
 

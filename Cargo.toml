@@ -66,7 +66,6 @@ oxc_allocator   = { version = "0.4.0", path = "crates/oxc_allocator" }
 oxc_ast         = { version = "0.4.0", path = "crates/oxc_ast" }
 oxc_codegen     = { version = "0.4.0", path = "crates/oxc_codegen" }
 oxc_diagnostics = { version = "0.4.0", path = "crates/oxc_diagnostics" }
-oxc_formatter   = { version = "0.4.0", path = "crates/oxc_formatter" }
 oxc_index       = { version = "0.4.0", path = "crates/oxc_index" }
 oxc_minifier    = { version = "0.4.0", path = "crates/oxc_minifier" }
 oxc_parser      = { version = "0.4.0", path = "crates/oxc_parser" }
@@ -122,7 +121,7 @@ thiserror                 = { version = "1.0.56" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
-ureq                      = { version = "2.9.1", default-features = false, features = ["tls"] }
+ureq                      = { version = "2.9.1", default-features = false, features = ["tls", "json"] }
 url                       = { version = "2.5.0" }
 walkdir                   = { version = "2.4.0" }
 indexmap                  = { version = "2.1.0" }

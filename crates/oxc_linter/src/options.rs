@@ -11,7 +11,7 @@ use crate::{
     rules::RULES,
     LintSettings, RuleCategory, RuleEnum,
 };
-use oxc_diagnostics::{Error, Report};
+use oxc_diagnostics::Error;
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
 
@@ -26,6 +26,7 @@ pub struct LintOptions {
     pub import_plugin: bool,
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
+    pub nextjs_plugin: bool,
 }
 
 impl Default for LintOptions {
@@ -38,6 +39,7 @@ impl Default for LintOptions {
             import_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
+            nextjs_plugin: false,
         }
     }
 }
@@ -84,6 +86,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
         self.jsx_a11y_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
+        self.nextjs_plugin = yes;
         self
     }
 }
@@ -141,18 +149,16 @@ impl TryFrom<&Number> for AllowWarnDeny {
 
 const JEST_PLUGIN_NAME: &str = "jest";
 const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
+const NEXTJS_PLUGIN_NAME: &str = "nextjs";
 
 impl LintOptions {
     /// # Errors
-    /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_settings(&self) -> Result<(Vec<RuleEnum>, LintSettings), Report> {
+    ///
+    /// * Returns `Err` if there are any errors parsing the configuration file.
+    pub fn derive_rules_and_settings(&self) -> Result<(Vec<RuleEnum>, LintSettings), Error> {
+        let config = self.config_path.as_ref().map(|path| ESLintConfig::new(path)).transpose()?;
+
         let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
-
-        if let Some(path) = &self.config_path {
-            let (rules, settings) = ESLintConfig::new(path)?.into_rules().get_config();
-            return Ok((rules, settings));
-        }
-
         let all_rules = self.get_filtered_rules();
 
         for (allow_warn_deny, name_or_category) in &self.filter {
@@ -192,10 +198,14 @@ impl LintOptions {
             }
         }
 
+        if let Some(config) = &config {
+            config.override_rules(&mut rules);
+        }
+
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
-        Ok((rules, LintSettings::default()))
+        Ok((rules, config.map(ESLintConfig::settings).unwrap_or_default()))
     }
 
     // get final filtered rules by reading `self.jest_plugin` and `self.jsx_a11y_plugin`
@@ -210,6 +220,7 @@ impl LintOptions {
 
         may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
 
         rules
     }

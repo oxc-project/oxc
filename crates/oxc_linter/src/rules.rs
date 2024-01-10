@@ -148,6 +148,7 @@ mod react {
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
     pub mod no_dangerously_set_inner_html;
+    pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_render_return_value;
@@ -155,6 +156,7 @@ mod react {
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
+    pub mod require_render_return;
 }
 
 mod unicorn {
@@ -243,6 +245,7 @@ mod jsx_a11y {
     pub mod aria_props;
     pub mod aria_role;
     pub mod aria_unsupported_elements;
+    pub mod autocomplete_valid;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -255,6 +258,8 @@ mod jsx_a11y {
     pub mod no_autofocus;
     pub mod no_distracting_elements;
     pub mod prefer_tag_over_role;
+    pub mod role_has_required_aria_props;
+    pub mod role_support_aria_props;
     pub mod scope;
     pub mod tab_index_no_positive;
 }
@@ -277,6 +282,11 @@ mod nextjs {
     pub mod no_assign_module_variable;
     pub mod no_async_client_component;
     pub mod no_css_tags;
+    pub mod no_head_import_in_document;
+    pub mod no_img_element;
+    pub mod no_script_component_in_head;
+    pub mod no_sync_scripts;
+    pub mod no_title_in_document_head;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -477,12 +487,14 @@ oxc_macros::declare_all_lint_rules! {
     react::react_in_jsx_scope,
     react::no_children_prop,
     react::no_dangerously_set_inner_html,
+    react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
     react::no_unknown_property,
+    react::require_render_return,
     import::default,
     import::named,
     import::no_cycle,
@@ -505,10 +517,13 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
     jsx_a11y::prefer_tag_over_role,
+    jsx_a11y::role_has_required_aria_props,
     jsx_a11y::scope,
     jsx_a11y::tab_index_no_positive,
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
+    jsx_a11y::role_support_aria_props,
+    jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
@@ -523,4 +538,9 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_assign_module_variable,
     nextjs::no_async_client_component,
     nextjs::no_css_tags,
+    nextjs::no_head_import_in_document,
+    nextjs::no_img_element,
+    nextjs::no_script_component_in_head,
+    nextjs::no_sync_scripts,
+    nextjs::no_title_in_document_head,
 }

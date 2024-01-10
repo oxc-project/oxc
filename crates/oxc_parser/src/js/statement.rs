@@ -127,7 +127,7 @@ impl<'a> Parser<'a> {
             Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
                 self.parse_variable_statement(stmt_ctx)
             }
-            Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
+            Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Await
                 if self.peek_kind() == Kind::Using && self.nth_kind(2).is_binding_identifier() =>
             {
@@ -276,7 +276,7 @@ impl<'a> Parser<'a> {
 
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
         let is_async_of =
-            self.at(Kind::Async) && !self.cur_token().escaped && self.peek_at(Kind::Of);
+            self.at(Kind::Async) && !self.cur_token().escaped() && self.peek_at(Kind::Of);
         let expr_span = self.start_span();
 
         if self.at(Kind::RParen) {

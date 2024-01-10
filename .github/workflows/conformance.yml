@@ -12,7 +12,6 @@ on:
       - 'website/**'
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
-      - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
       - 'crates/oxc_query/**'
       - 'crates/oxc_type_synthesis/**'
@@ -30,7 +29,6 @@ on:
       - 'website/**'
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
-      - 'crates/oxc_formatter/**'
       - 'crates/oxc_linter/**'
       - 'crates/oxc_query/**'
       - 'crates/oxc_type_synthesis/**'
@@ -54,6 +52,12 @@ jobs:
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
 
       - run: cargo coverage
       - run: cargo run --release -p oxc_transform_conformance -- --exec

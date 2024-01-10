@@ -64,7 +64,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                         RequireNumberToFixedDigitsArgumentDiagnostic(parenthesis_span),
                         || {
                             let modified_code = {
-                                let mut formatter = ctx.formatter();
+                                let mut formatter = ctx.codegen();
 
                                 let mut parenthesis_span_without_right_one = parenthesis_span;
                                 parenthesis_span_without_right_one.end -= 1;
