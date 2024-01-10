@@ -1,7 +1,4 @@
-use std::collections::{HashMap, HashSet};
-
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -12,6 +9,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::{phf_map, phf_set};
 #[derive(Debug, Error, Diagnostic)]
 #[error(
     "eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."
@@ -44,104 +42,90 @@ declare_oxc_lint!(
     correctness
 );
 
-static VALID_AUTOCOMPLETE_VALUES: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    [
-        "on",
-        "name",
-        "email",
-        "username",
-        "new-password",
-        "current-password",
-        "one-time-code",
-        "off",
-        "organization-title",
-        "organization",
-        "street-address",
-        "address-line1",
-        "address-line2",
-        "address-line3",
-        "address-level4",
-        "address-level3",
-        "address-level2",
-        "address-level1",
-        "country",
-        "country-name",
-        "postal-code",
-        "cc-name",
-        "cc-given-name",
-        "cc-additional-name",
-        "cc-family-name",
-        "cc-number",
-        "cc-exp",
-        "cc-exp-month",
-        "cc-exp-year",
-        "cc-csc",
-        "cc-type",
-        "transaction-currency",
-        "transaction-amount",
-        "language",
-        "bday",
-        "bday-day",
-        "bday-month",
-        "bday-year",
-        "sex",
-        "tel",
-        "tel-country-code",
-        "tel-national",
-        "tel-area-code",
-        "tel-local",
-        "tel-extension",
-        "impp",
-        "url",
-        "photo",
-        "webauthn",
-    ]
-    .iter()
-    .copied()
-    .collect()
-});
+static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf_set! {
+    "on",
+    "name",
+    "email",
+    "username",
+    "new-password",
+    "current-password",
+    "one-time-code",
+    "off",
+    "organization-title",
+    "organization",
+    "street-address",
+    "address-line1",
+    "address-line2",
+    "address-line3",
+    "address-level4",
+    "address-level3",
+    "address-level2",
+    "address-level1",
+    "country",
+    "country-name",
+    "postal-code",
+    "cc-name",
+    "cc-given-name",
+    "cc-additional-name",
+    "cc-family-name",
+    "cc-number",
+    "cc-exp",
+    "cc-exp-month",
+    "cc-exp-year",
+    "cc-csc",
+    "cc-type",
+    "transaction-currency",
+    "transaction-amount",
+    "language",
+    "bday",
+    "bday-day",
+    "bday-month",
+    "bday-year",
+    "sex",
+    "tel",
+    "tel-country-code",
+    "tel-national",
+    "tel-area-code",
+    "tel-local",
+    "tel-extension",
+    "impp",
+    "url",
+    "photo",
+    "webauthn",
+};
 
-static VALID_AUTOCOMPLETE_COMBINATIONS: Lazy<HashMap<&'static str, HashSet<&'static str>>> =
-    Lazy::new(|| {
-        let mut m = HashMap::new();
-        m.insert(
-            "billing",
-            vec![
-                "street-address",
-                "address-line1",
-                "address-line2",
-                "address-line3",
-                "address-level4",
-                "address-level3",
-                "address-level2",
-                "address-level1",
-                "country",
-                "country-name",
-                "postal-code",
-            ]
-            .into_iter()
-            .collect(),
-        );
-        m.insert(
-            "shipping",
-            vec![
-                "street-address",
-                "address-line1",
-                "address-line2",
-                "address-line3",
-                "address-level4",
-                "address-level3",
-                "address-level2",
-                "address-level1",
-                "country",
-                "country-name",
-                "postal-code",
-            ]
-            .into_iter()
-            .collect(),
-        );
-        m
-    });
+static BILLING: phf::Set<&'static str> = phf_set! {
+    "street-address",
+    "address-line1",
+    "address-line2",
+    "address-line3",
+    "address-level4",
+    "address-level3",
+    "address-level2",
+    "address-level1",
+    "country",
+    "country-name",
+    "postal-code",
+};
+
+static SHIPPING: phf::Set<&'static str> = phf_set! {
+    "street-address",
+    "address-line1",
+    "address-line2",
+    "address-line3",
+    "address-level4",
+    "address-level3",
+    "address-level2",
+    "address-level1",
+    "country",
+    "country-name",
+    "postal-code",
+};
+
+static VALID_AUTOCOMPLETE_COMBINATIONS: phf::Map<&'static str, &'static phf::Set<&'static str>> = phf_map! {
+    "billing" => &BILLING,
+    "shipping" => &SHIPPING,
+};
 
 fn is_valid_autocomplete_value(value: &str) -> bool {
     let parts: Vec<&str> = value.split_whitespace().collect();
