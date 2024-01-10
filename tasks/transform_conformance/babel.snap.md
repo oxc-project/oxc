@@ -1,4 +1,4 @@
-Passed: 295/1171
+Passed: 297/1179
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -823,6 +823,14 @@ Passed: 295/1171
 
 # babel-plugin-transform-duplicate-keys (7/8)
 * combination/dupes/input.js
+
+# babel-plugin-transform-new-target (2/8)
+* general/arrow/input.js
+* general/class-properties/input.js
+* general/class-properties-loose/input.js
+* general/function/input.js
+* general/function-duplicate-name/input.js
+* general/object/input.js
 
 # babel-plugin-transform-typescript (66/158)
 * class/abstract-class-decorated/input.ts

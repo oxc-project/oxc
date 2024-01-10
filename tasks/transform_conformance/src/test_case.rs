@@ -116,6 +116,7 @@ pub trait TestCase {
             template_literals: options.get_plugin("transform-template-literals").is_some(),
             property_literals: options.get_plugin("transform-property-literals").is_some(),
             duplicate_keys: options.get_plugin("transform-duplicate-keys").is_some(),
+            new_target: options.get_plugin("transform-new-target").is_some(),
         }
     }
 
