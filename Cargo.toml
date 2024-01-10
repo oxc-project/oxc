@@ -121,7 +121,7 @@ thiserror                 = { version = "1.0.56" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
-ureq                      = { version = "2.9.1", default-features = false, features = ["tls"] }
+ureq                      = { version = "2.9.1", default-features = false, features = ["tls", "json"] }
 url                       = { version = "2.5.0" }
 walkdir                   = { version = "2.4.0" }
 indexmap                  = { version = "2.1.0" }

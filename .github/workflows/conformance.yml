@@ -53,6 +53,12 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+
       - run: cargo coverage
       - run: cargo run --release -p oxc_transform_conformance -- --exec
       - run: cargo run --release -p oxc_prettier_conformance

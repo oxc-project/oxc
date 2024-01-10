@@ -40,6 +40,7 @@ pico-args    = { workspace = true }
 lazy_static  = { workspace = true }
 walkdir      = { workspace = true }
 regex        = { workspace = true }
+phf          = { workspace = true, features = ["macros"] }
 
 console        = "0.15.7"
 encoding_rs    = "0.8.33"

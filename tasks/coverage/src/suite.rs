@@ -31,6 +31,7 @@ pub enum TestResult {
     Mismatch(String, String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
+    RuntimeError(String),
 }
 
 pub struct CoverageReport<'a, T> {
@@ -342,6 +343,13 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
                     println!("Mismatch: {:?}", normalize_path(self.path()));
                 }
+            }
+            TestResult::RuntimeError(error) => {
+                writer.write_all(
+                    format!("Expect to run correctly: {:?}\n", normalize_path(self.path()))
+                        .as_bytes(),
+                )?;
+                writer.write_all(format!("But got a runtime error: {error}\n\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(

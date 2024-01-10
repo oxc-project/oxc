@@ -2,11 +2,15 @@ mod babel;
 mod codegen;
 mod minifier;
 mod misc;
+mod runtime;
 mod suite;
 mod test262;
 mod typescript;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
+
+use runtime::CodegenRuntimeTest262Case;
+use similar::DiffableStr;
 
 use crate::{
     babel::{BabelCase, BabelSuite},
@@ -40,6 +44,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
+        self.run_codegen_runtime();
         self.run_minifier();
     }
 
@@ -55,6 +60,24 @@ impl AppArgs {
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
+    }
+
+    /// # Panics
+    pub fn run_codegen_runtime(&self) {
+        // Run runtime.js to test codegen runtime
+        let mut runtime_process = Command::new("node")
+            .args([
+                "--experimental-vm-modules",
+                project_root()
+                    .join("tasks/coverage/src/runtime/runtime.js")
+                    .to_string_lossy()
+                    .as_str()
+                    .unwrap_or_default(),
+            ])
+            .spawn()
+            .expect("Run runtime.js failed");
+        Test262Suite::<CodegenRuntimeTest262Case>::new().run("codegen_runtime_test262", self);
+        let _ = runtime_process.kill();
     }
 
     pub fn run_minifier(&self) {
