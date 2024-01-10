@@ -349,7 +349,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     format!("Expect to run correctly: {:?}\n", normalize_path(self.path()))
                         .as_bytes(),
                 )?;
-                writer.write_all(format!("But got runtime error: {error}\n\n").as_bytes())?;
+                writer.write_all(format!("But got a runtime error: {error}\n\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(

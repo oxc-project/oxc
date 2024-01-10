@@ -4,7 +4,7 @@ import fs from "node:fs"
 import { createServer } from "node:http";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
-const harnessDir = path.join(__dirname, '..', 'test262', 'harness')
+const harnessDir = path.join(__dirname, '../..', 'test262', 'harness')
 
 
 const { Script, createContext, SourceTextModule, runInContext, SyntheticModule } = vm 
@@ -139,6 +139,4 @@ process.on('unhandledRejection', () => {
   // Don't exit when a test does this
 })
 
-server.listen(32055, () => {
-  console.log('Server is listening on port 32055');
-});
+server.listen(32055, () => {});
