@@ -47,88 +47,83 @@ impl Rule for NoTestReturnStatement {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                self.check_call_expression(call_expr, node, ctx);
+                check_call_expression(call_expr, node, ctx);
             }
             AstKind::Function(fn_decl) => {
-                let Some(func_body) = &fn_decl.body else { return; };
-                self.check_test_return_statement(func_body, ctx)
+                let Some(func_body) = &fn_decl.body else {
+                    return;
+                };
+                check_test_return_statement(func_body, ctx);
             }
-            _ => return,
+            _ => (),
         }
     }
 }
 
-impl NoTestReturnStatement {
-    fn check_call_expression<'a>(
-        &self,
-        call_expr: &'a CallExpression<'a>,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
+fn check_call_expression<'a>(
+    call_expr: &'a CallExpression<'a>,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    if !is_type_of_jest_fn_call(
+        call_expr,
+        &PossibleJestNode { node, original: None },
+        ctx,
+        &[JestFnKind::General(JestGeneralFnKind::Test)],
     ) {
-        if !is_type_of_jest_fn_call(
-            call_expr,
-            &PossibleJestNode { node, original: None },
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Test)],
-        ) {
-            return;
-        }
+        return;
+    }
 
-        for argument in &call_expr.arguments {
-            let Argument::Expression(arg_expr) = argument else {
-                continue;
-            };
-            match arg_expr {
-                Expression::ArrowExpression(arrow_expr) => {
-                    self.check_test_return_statement(&arrow_expr.body, ctx);
-                }
-                Expression::FunctionExpression(func_expr) => {
-                    let Some(func_body) = &func_expr.body else {
-                        continue;
-                    };
-                    self.check_test_return_statement(func_body, ctx);
-                }
-                _ => continue,
+    for argument in &call_expr.arguments {
+        let Argument::Expression(arg_expr) = argument else {
+            continue;
+        };
+        match arg_expr {
+            Expression::ArrowExpression(arrow_expr) => {
+                check_test_return_statement(&arrow_expr.body, ctx);
             }
+            Expression::FunctionExpression(func_expr) => {
+                let Some(func_body) = &func_expr.body else {
+                    continue;
+                };
+                check_test_return_statement(func_body, ctx);
+            }
+            _ => continue,
         }
     }
+}
 
-    fn check_test_return_statement<'a>(
-        &self,
-        func_body: &OBox<'_, FunctionBody<'a>>,
-        ctx: &LintContext<'a>,
-    ) {
-        let Some(return_stmt) =
-            func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
-        else {
-            return;
-        };
+fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+    let Some(return_stmt) =
+        func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
+    else {
+        return;
+    };
 
-        let Statement::ReturnStatement(stmt) = return_stmt else {
-            return;
-        };
-        let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
-            return;
-        };
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
-            return;
-        };
-        let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
-            return;
-        };
-        let Expression::Identifier(ident) = &mem_call_expr.callee else {
-            return;
-        };
+    let Statement::ReturnStatement(stmt) = return_stmt else {
+        return;
+    };
+    let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
+        return;
+    };
+    let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        return;
+    };
+    let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
+        return;
+    };
+    let Expression::Identifier(ident) = &mem_call_expr.callee else {
+        return;
+    };
 
-        if ident.name != "expect" {
-            return;
-        }
-
-        ctx.diagnostic(NoTestReturnStatementDiagnostic(Span {
-            start: return_stmt.span().start,
-            end: call_expr.span.start - 1,
-        }));
+    if ident.name != "expect" {
+        return;
     }
+
+    ctx.diagnostic(NoTestReturnStatementDiagnostic(Span {
+        start: return_stmt.span().start,
+        end: call_expr.span.start - 1,
+    }));
 }
 
 #[test]
@@ -188,7 +183,7 @@ fn test() {
                     return expect(1).toBe(1);
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -204,7 +199,7 @@ fn test() {
                     return expect(1).toBe(1);
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -237,8 +232,8 @@ fn test() {
                     return expect(1).toBe(1);
                 }
             ",
-            None
-        )
+            None,
+        ),
     ];
 
     Tester::new(NoTestReturnStatement::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
