@@ -1,4 +1,4 @@
-Passed: 379/445
+Passed: 386/454
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -97,4 +97,8 @@ Passed: 379/445
 
 # babel-plugin-transform-instanceof (0/1)
 * instanceof/instanceof/exec.js
+
+# babel-plugin-transform-new-target (7/9)
+* general/class-properties/exec.js
+* general/class-properties-loose/exec.js
 
