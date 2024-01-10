@@ -24,6 +24,7 @@ fn main() {
     match task {
         "parser" => args.run_parser(),
         "codegen" => args.run_codegen(),
+        "codegen-runtime" => args.run_codegen_runtime(),
         "minifier" => args.run_minifier(),
         _ => args.run_all(),
     };
