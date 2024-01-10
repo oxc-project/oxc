@@ -1,0 +1,159 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 144
+expression: no_direct_mutation_state
+---
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:4:1]
+ 4 │                     componentWillMount() {
+ 5 │                       this.state.foo = "Chicken, you're so beautiful"
+   ·                       ──────────────
+ 6 │                     },
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+    ╭─[no_direct_mutation_state.tsx:8:1]
+  8 │                           render: function() {
+  9 │                             this.state.foo = "Chicken, you're so beautiful"
+    ·                             ──────────────
+ 10 │                             return <div>Hello{this.props.name} <Hello2/></div>;
+    ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+    ╭─[no_direct_mutation_state.tsx:15:1]
+ 15 │                           render: () => {
+ 16 │                              this.state.foo = "Chicken, you're so beautiful"
+    ·                              ──────────────
+ 17 │                             return <div>Hello {this.props.name}</div>;
+    ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │                    render: function() {
+ 4 │                      this.state.foo++;
+   ·                      ────────────────
+ 5 │                      return <div>Hello {this.props.name}</div>;
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │           render: function() {
+ 4 │             this.state.person.name= "bar"
+   ·             ──────────────────────
+ 5 │             return <div>Hello {this.props.name}</div>;
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             render: function() {
+ 4 │               this.state.person.name.first = "bar"
+   ·               ────────────────────────────
+ 5 │               return <div>Hello</div>;
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             render: function() {
+ 4 │               this.state.person.name.first = "bar"
+   ·               ────────────────────────────
+ 5 │               this.state.person.name.last = "baz"
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:4:1]
+ 4 │               this.state.person.name.first = "bar"
+ 5 │               this.state.person.name.last = "baz"
+   ·               ───────────────────────────
+ 6 │               return <div>Hello</div>;
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:6:1]
+ 6 │             someFn() {
+ 7 │               this.state.foo = "bar"
+   ·               ──────────────
+ 8 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:5:1]
+ 5 │               doSomethingAsync(() => {
+ 6 │                 this.state = "bad";
+   ·                 ──────────
+ 7 │               });
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentWillMount() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentDidMount() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentWillReceiveProps() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             shouldComponentUpdate() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentWillUpdate() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentDidUpdate() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+  ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
+   ╭─[no_direct_mutation_state.tsx:3:1]
+ 3 │             componentWillUnmount() {
+ 4 │               this.state.foo = "bar"
+   ·               ──────────────
+ 5 │             }
+   ╰────
+  help: calling setState() afterwards may replace the mutation you made.
+
+
