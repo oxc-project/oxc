@@ -4,9 +4,8 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
@@ -46,11 +45,11 @@ impl Rule for NoInstanceofArray {
             Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(NoInstanceofArrayDiagnostic(expr.span), || {
                     let modified_code = {
-                        let mut formatter = ctx.formatter();
-                        formatter.print_str(b"Array.isArray(");
-                        expr.left.gen(&mut formatter);
-                        formatter.print(b')');
-                        formatter.into_code()
+                        let mut codegen = String::new();
+                        codegen.push_str("Array.isArray(");
+                        codegen.push_str(expr.left.span().source_text(ctx.source_text()));
+                        codegen.push(')');
+                        codegen
                     };
                     Fix::new(modified_code, expr.span)
                 });
@@ -90,7 +89,7 @@ fn test() {
     let fix = vec![
         ("arr instanceof Array", "Array.isArray(arr)", None),
         ("[] instanceof Array", "Array.isArray([])", None),
-        ("[1,2,3] instanceof Array === true", "Array.isArray([1, 2, 3]) === true", None),
+        ("[1,2,3] instanceof Array === true", "Array.isArray([1,2,3]) === true", None),
         ("fun.call(1, 2, 3) instanceof Array", "Array.isArray(fun.call(1, 2, 3))", None),
         ("obj.arr instanceof Array", "Array.isArray(obj.arr)", None),
         ("foo.bar[2] instanceof Array", "Array.isArray(foo.bar[2])", None),

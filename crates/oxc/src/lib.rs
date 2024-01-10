@@ -43,12 +43,6 @@ pub mod semantic {
     pub use oxc_semantic::*;
 }
 
-#[cfg(feature = "formatter")]
-pub mod formatter {
-    #[doc(inline)]
-    pub use oxc_formatter::*;
-}
-
 #[cfg(feature = "transformer")]
 pub mod transformer {
     #[doc(inline)]

@@ -66,7 +66,6 @@ oxc_allocator   = { version = "0.4.0", path = "crates/oxc_allocator" }
 oxc_ast         = { version = "0.4.0", path = "crates/oxc_ast" }
 oxc_codegen     = { version = "0.4.0", path = "crates/oxc_codegen" }
 oxc_diagnostics = { version = "0.4.0", path = "crates/oxc_diagnostics" }
-oxc_formatter   = { version = "0.4.0", path = "crates/oxc_formatter" }
 oxc_index       = { version = "0.4.0", path = "crates/oxc_index" }
 oxc_minifier    = { version = "0.4.0", path = "crates/oxc_minifier" }
 oxc_parser      = { version = "0.4.0", path = "crates/oxc_parser" }

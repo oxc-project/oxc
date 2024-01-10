@@ -141,12 +141,12 @@ impl OxcLinterOptions {
 
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
-pub struct OxcFormatterOptions {
+pub struct OxcCodegenOptions {
     pub indentation: u8,
 }
 
 #[wasm_bindgen]
-impl OxcFormatterOptions {
+impl OxcCodegenOptions {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self::default()

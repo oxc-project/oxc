@@ -6,7 +6,6 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
-use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
@@ -83,21 +82,22 @@ impl NoUnsafeNegation {
     /// Precondition:
     /// expr.left is `UnaryExpression` whose operator is '!'
     fn report_with_fix(expr: &BinaryExpression, ctx: &LintContext<'_>) {
+        use oxc_codegen::{Context, Gen};
         // Diagnostic points at the unexpected negation
         let diagnostic = NoUnsafeNegationDiagnostic(expr.operator.as_str(), expr.left.span());
 
         let fix_producer = || {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
-                let mut formatter = ctx.formatter();
-                formatter.print(b'!');
+                let mut codegen = ctx.codegen();
+                codegen.print(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                formatter.print(b'(');
-                left.argument.gen(&mut formatter);
-                expr.operator.gen(&mut formatter);
-                expr.right.gen(&mut formatter);
-                formatter.print(b')');
-                formatter.into_code()
+                codegen.print(b'(');
+                codegen.print_expression(&left.argument);
+                expr.operator.gen(&mut codegen, Context::default());
+                codegen.print_expression(&expr.right);
+                codegen.print(b')');
+                codegen.into_code()
             };
             Fix::new(modified_code, expr.span)
         };

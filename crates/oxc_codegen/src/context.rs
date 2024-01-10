@@ -21,6 +21,7 @@ impl Context {
     }
 
     #[inline]
+    #[must_use]
     pub fn and_in(self, include: bool) -> Self {
         self.and(Self::In, include)
     }
