@@ -15,7 +15,8 @@ use crate::{
     globals::{VALID_ARIA_PROPS, VALID_ARIA_ROLES},
     rule::Rule,
     utils::{
-        get_attribute_name, get_element_type, get_string_literal_prop_value, has_jsx_prop_lowercase,
+        get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
+        has_jsx_prop_lowercase,
     },
     AstNode,
 };
@@ -77,7 +78,7 @@ impl Rule for RoleSupportAriaProps {
                     let invalid_props = get_invalid_aria_props_for_role(role_value);
                     for attr in &jsx_el.attributes {
                         if let JSXAttributeItem::Attribute(attr) = attr {
-                            let name = get_attribute_name(&attr.name).to_lowercase();
+                            let name = get_jsx_attribute_name(&attr.name).to_lowercase();
                             if invalid_props.contains(&&name.as_str()) {
                                 ctx.diagnostic(if is_implicit {
                                     RoleSupportAriaPropsDiagnostic::IsImplicit(

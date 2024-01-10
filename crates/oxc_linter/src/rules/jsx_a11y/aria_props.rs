@@ -7,7 +7,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_attribute_name, AstNode,
+    context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_jsx_attribute_name,
+    AstNode,
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -41,7 +42,7 @@ declare_oxc_lint!(
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
-            let name = get_attribute_name(&attr.name).to_lowercase();
+            let name = get_jsx_attribute_name(&attr.name).to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
                 ctx.diagnostic(AriaPropsDiagnostic(attr.span, name));
             }
