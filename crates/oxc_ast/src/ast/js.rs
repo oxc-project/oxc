@@ -89,6 +89,22 @@ pub enum Expression<'a> {
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
 }
 
+impl<'a> BinaryExpression<'a> {
+    pub fn commutative_pair<F, G>(&self, check_a: F, check_b: G) -> Option<(&Expression<'a>, &Expression<'a>)>
+                                where F: Fn(&Expression) -> Option<&'a Expression<'a>>, G: Fn(&Expression) -> Option<&'a Expression<'a>> {
+        if let Some(a) = check_a(&self.left) {
+            if let Some(b) = check_b(&self.right) {
+                return Some((a, b))
+            }
+        } else if let Some(a) = check_a(&self.right) {
+            if let Some(b) = check_b(&self.left) {
+                return Some((b, a))
+            }
+        }
+        None
+    }
+}
+
 impl<'a> Expression<'a> {
     /// `PrimaryExpression`
     /// [tc39/ecma262#prod-PrimaryExpression](https://tc39.es/ecma262/#prod-PrimaryExpression)
