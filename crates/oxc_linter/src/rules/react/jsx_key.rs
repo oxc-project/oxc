@@ -83,7 +83,6 @@ fn is_in_array_or_iter<'a, 'b>(
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
-    let mut is_arrow_expr_statement = false;
 
     loop {
         let Some(parent) = ctx.nodes().parent_node(node.id()) else {
@@ -92,7 +91,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
         match parent.kind() {
             AstKind::ArrowExpression(arrow_expr) => {
-                is_arrow_expr_statement = matches!(
+                let is_arrow_expr_statement = matches!(
                     arrow_expr.body.statements.first(),
                     Some(Statement::ExpressionStatement(_))
                 );
@@ -126,7 +125,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
-                if is_arrow_expr_statement {
+                if is_outside_containing_function {
                     return None;
                 }
 
@@ -390,6 +389,14 @@ fn test() {
         r"
         MyStory.decorators = [
           (Component) => <div><Component /></div>
+        ];
+        ",
+        r" 
+        MyStory.decorators = [
+          (Component) => {
+            const store = useMyStore();
+            return <Provider store={store}><Component /></Provider>;
+          }
         ];
         ",
     ];
