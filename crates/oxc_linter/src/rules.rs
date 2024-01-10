@@ -244,6 +244,7 @@ mod jsx_a11y {
     pub mod aria_props;
     pub mod aria_role;
     pub mod aria_unsupported_elements;
+    pub mod autocomplete_valid;
     pub mod heading_has_content;
     pub mod html_has_lang;
     pub mod iframe_has_title;
@@ -520,6 +521,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
     jsx_a11y::role_support_aria_props,
+    jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
     oxc::const_comparisons,
     oxc::double_comparisons,
