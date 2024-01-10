@@ -102,11 +102,20 @@ impl Case for CodegenRuntimeTest262Case {
         let result = {
             let source_text = self.base.code();
             let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
+            let source_type = SourceType::default()
+                .with_module(is_module)
+                .with_always_strict(self.base.meta().flags.contains(&TestFlag::OnlyStrict));
             let allocator = Allocator::default();
             let program = Parser::new(&allocator, source_text, source_type).parse().program;
-            let codegen_source_text =
+            let mut codegen_source_text =
                 Codegen::<false>::new(source_text.len(), CodegenOptions).build(&program);
+            if is_only_strict {
+                codegen_source_text = format!("\"use strict\";\n{codegen_source_text}");
+            }
+            if is_module {
+                codegen_source_text = format!("{codegen_source_text}\n export {{}}");
+            }
 
             self.run_test_code(codegen_source_text.as_str())
         };
@@ -126,7 +135,7 @@ impl CodegenRuntimeTest262Case {
             .to_string();
         let result = agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(10))
             .send_json(&json!({
                 "code": codegen_text,
                 "includes": self.base.meta().includes,

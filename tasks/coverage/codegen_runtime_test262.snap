@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 34664/34664 (100.00%)
-Positive Passed: 33496/34664 (96.63%)
+Positive Passed: 33728/34664 (97.30%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -143,41 +143,14 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 Expect to run correctly: "annexB/language/global-code/switch-dflt-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "built-ins/Array/from/calling-from-valid-1-onlyStrict.js"
-But got a runtime error: Test262Error: The value of calls[0].thisArg is expected to equal undefined Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Array/from/iter-map-fn-this-strict.js"
-But got a runtime error: Test262Error: The value of thisVals[0] is expected to equal undefined Expected SameValue(«[object Object]», «undefined») to be true
-
 Expect to run correctly: "built-ins/Array/prototype/concat/Array.prototype.concat_spreadable-string-wrapper.js"
 But got a runtime error: Test262Error: Expected [y, u, c, k, \ud83d, \udca9] and [y, u, c, k, �, �] to have the same contents. ["y", "u", "c", "k", "uD83D", "uDCA9"] must return the same value returned by [].concat(str1)
 
 Expect to run correctly: "built-ins/Array/prototype/concat/arg-length-near-integer-limit.js"
 But got a runtime error: Test262Error: [].concat(spreadableHasPoisonedIndex) throws a Test262Error exception Expected a Test262Error to be thrown but no exception was thrown at all
 
-Expect to run correctly: "built-ins/Array/prototype/find/predicate-call-this-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Array/prototype/findIndex/predicate-call-this-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Array/prototype/findLast/predicate-call-this-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Array/prototype/findLastIndex/predicate-call-this-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Array/prototype/flatMap/thisArg-argument.js"
-But got a runtime error: Test262Error: Expected [TestString] and [TestString] to have the same contents. The value of actual is expected to be ["TestString"]
-
 Expect to run correctly: "built-ins/Array/prototype/push/set-length-zero-array-length-is-non-writable.js"
 But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Array/prototype/toLocaleString/primitive_this_value.js"
-But got a runtime error: Test262Error: Expected SameValue(«object,object», «boolean,boolean») to be true
-
-Expect to run correctly: "built-ins/Array/prototype/toLocaleString/primitive_this_value_getter.js"
-But got a runtime error: Test262Error: Expected SameValue(«object,object», «boolean,boolean») to be true
 
 Expect to run correctly: "built-ins/ArrayBuffer/prototype/byteLength/detached-buffer.js"
 But got a runtime error: ReferenceError: $262 is not defined
@@ -274,9 +247,6 @@ But got a runtime error: Error: broken promise
 
 Expect to run correctly: "built-ins/AsyncGeneratorPrototype/return/return-suspendedYield-broken-promise-try-catch.js"
 But got a runtime error: Error: broken promise
-
-Expect to run correctly: "built-ins/Boolean/prototype/S15.6.3.1_A3.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "built-ins/DataView/custom-proto-access-detaches-buffer.js"
 But got a runtime error: Test262Error: Expected a TypeError but got a ReferenceError
@@ -533,107 +503,11 @@ But got a runtime error: Test262Error: Expected SameValue(«undefined», «funct
 Expect to run correctly: "built-ins/FinalizationRegistry/prototype/unregister/unregister-cleaned-up-object-cell.js"
 But got a runtime error: ReferenceError: $262 is not defined
 
-Expect to run correctly: "built-ins/Function/15.3.5-1gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5-2gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-11gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-13gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-15gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-17gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-19gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-1gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-21gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-22gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-23gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-24gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-25gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-26gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-27gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-28gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-29gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-3gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-48gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-50gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-52gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-54gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-5gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-7gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/15.3.5.4_2-9gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/StrictFunction_restricted-properties.js"
-But got a runtime error: Test262Error: return func.caller throws a TypeError exception Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Function/prototype/apply/15.3.4.3-1-s.js"
-But got a runtime error: Test262Error: fun.apply("", Array) Expected SameValue(«true», «false») to be true
-
-Expect to run correctly: "built-ins/Function/prototype/apply/15.3.4.3-2-s.js"
-But got a runtime error: Test262Error: fun.apply(-12, Array) Expected SameValue(«true», «false») to be true
-
-Expect to run correctly: "built-ins/Function/prototype/apply/15.3.4.3-3-s.js"
-But got a runtime error: Test262Error: fun.apply(false, Array) Expected SameValue(«true», «false») to be true
-
 Expect to run correctly: "built-ins/Function/prototype/apply/S15.3.4.3_A8_T4.js"
 But got a runtime error: Test262Error: The result of evaluating (e instanceof TypeError) is expected to be true
 
 Expect to run correctly: "built-ins/Function/prototype/apply/S15.3.4.3_A8_T6.js"
 But got a runtime error: TypeError: Cannot read properties of undefined (reading 'p1')
-
-Expect to run correctly: "built-ins/Function/prototype/call/15.3.4.4-1-s.js"
-But got a runtime error: Test262Error: fun.call("") Expected SameValue(«true», «false») to be true
-
-Expect to run correctly: "built-ins/Function/prototype/call/15.3.4.4-2-s.js"
-But got a runtime error: Test262Error: fun.call(-12) Expected SameValue(«true», «false») to be true
-
-Expect to run correctly: "built-ins/Function/prototype/call/15.3.4.4-3-s.js"
-But got a runtime error: Test262Error: fun.call(false) Expected SameValue(«true», «false») to be true
 
 Expect to run correctly: "built-ins/Function/prototype/call/S15.3.4.4_A7_T4.js"
 But got a runtime error: Test262Error: The result of evaluating (e instanceof TypeError) is expected to be true
@@ -644,29 +518,11 @@ But got a runtime error: TypeError: Cannot read properties of undefined (reading
 Expect to run correctly: "built-ins/JSON/stringify/value-string-escape-unicode.js"
 But got a runtime error: Test262Error: JSON.stringify("\uD834") Expected SameValue(«"\\ud834"», «"\ud834"») to be true
 
-Expect to run correctly: "built-ins/Map/prototype/forEach/callback-this-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
 Expect to run correctly: "built-ins/Object/defineProperties/15.2.3.7-2-18.js"
 But got a runtime error: Test262Error: result !== true
 
 Expect to run correctly: "built-ins/Object/defineProperties/15.2.3.7-6-a-24.js"
 But got a runtime error: Test262Error: Expected obj[prop] to be enumerable, but was not.
-
-Expect to run correctly: "built-ins/Object/defineProperty/15.2.3.6-4-243-2.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Object/defineProperty/15.2.3.6-4-292-2.js"
-But got a runtime error: Test262Error: Expected a === 0, actually 20
-
-Expect to run correctly: "built-ins/Object/defineProperty/15.2.3.6-4-293-4.js"
-But got a runtime error: Test262Error: Expected "a === 0", actually 10
-
-Expect to run correctly: "built-ins/Object/defineProperty/symbol-data-property-default-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Object/freeze/frozen-object-contains-symbol-properties-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "built-ins/Object/internals/DefineOwnProperty/consistent-value-function-arguments.js"
 But got a runtime error: Test262Error: Expected SameValue(«null», «[object Arguments]») to be true
@@ -675,15 +531,6 @@ Expect to run correctly: "built-ins/Object/internals/DefineOwnProperty/consisten
 But got a runtime error: Test262Error: Expected SameValue(«null», «function g() {
 	return f();
 }») to be true
-
-Expect to run correctly: "built-ins/Object/preventExtensions/symbol-object-contains-symbol-properties-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Object/prototype/toLocaleString/primitive_this_value.js"
-But got a runtime error: Test262Error: Expected SameValue(«object», «boolean») to be true
-
-Expect to run correctly: "built-ins/Object/prototype/toLocaleString/primitive_this_value_getter.js"
-But got a runtime error: Test262Error: Expected SameValue(«object», «boolean») to be true
 
 Expect to run correctly: "built-ins/Object/seal/seal-arrowfunction.js"
 But got a runtime error: TypeError: Object.getPrototypeOf is not a constructor
@@ -699,18 +546,6 @@ But got a runtime error: TypeError: Object.getPrototypeOf is not a constructor
 
 Expect to run correctly: "built-ins/Object/seal/seal-generatorfunction.js"
 But got a runtime error: TypeError: Object.getPrototypeOf is not a constructor
-
-Expect to run correctly: "built-ins/Object/seal/symbol-object-contains-symbol-properties-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Promise/executor-call-context-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "built-ins/Promise/prototype/then/rxn-handler-fulfilled-invoke-strict.js"
-But got a runtime error: 'this' must be undefined, got [object Object]
-
-Expect to run correctly: "built-ins/Promise/prototype/then/rxn-handler-rejected-invoke-strict.js"
-But got a runtime error: 'this' must be undefined, got [object Object]
 
 Expect to run correctly: "built-ins/Promise/withResolvers/ctx-ctor.js"
 But got a runtime error: TypeError: Cannot read properties of undefined (reading 'call')
@@ -1123,9 +958,6 @@ But got a runtime error: SyntaxError: Invalid regular expression flags
 Expect to run correctly: "built-ins/RegExp/unicodeSets/generated/string-literal-union-string-literal.js"
 But got a runtime error: SyntaxError: Invalid regular expression flags
 
-Expect to run correctly: "built-ins/Set/prototype/forEach/this-strict.js"
-But got a runtime error: Test262Error: `this` is `undefined` in strict mode code Expected SameValue(«[object Object]», «undefined») to be true
-
 Expect to run correctly: "built-ins/String/prototype/at/returns-code-unit.js"
 But got a runtime error: Test262Error: s.at(2) must return "\uD800" Expected SameValue(«\», «\ud800») to be true
 
@@ -1168,23 +1000,8 @@ But got a runtime error: Test262Error: Expected SameValue(«💩�abc», «💩
 Expect to run correctly: "built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js"
 But got a runtime error: Test262Error: Surrogate pair `value` (between normal code points) Expected SameValue(«\», «\ud834\udf06») to be true
 
-Expect to run correctly: "built-ins/Symbol/auto-boxing-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/Symbol/prototype/toString/toString-default-attributes-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "built-ins/WeakRef/prototype/deref/gc-cleanup-not-prevented-with-wr-deref.js"
 But got a runtime error: ReferenceError: $262 is not defined
-
-Expect to run correctly: "built-ins/global/10.2.1.1.3-4-16-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/global/10.2.1.1.3-4-18-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "built-ins/undefined/15.1.1.3-2.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "intl402/Array/prototype/toLocaleString/invoke-element-tolocalestring.js"
 But got a runtime error: Test262Error: Expected [] and [undefined, undefined] to have the same contents. must invoke element toLocaleString with expected arguments when provided no arguments
@@ -1675,30 +1492,6 @@ But got a runtime error: TypeError: pr.selectRange is not a function
 Expect to run correctly: "intl402/Segmenter/prototype/segment/containing/unbreakable-input.js"
 But got a runtime error: Test262Error: Expected SameValue(«\ud800», «\») to be true
 
-Expect to run correctly: "language/arguments-object/10.5-1-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/arguments-object/10.5-7-b-1-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/arguments-object/10.6-10-c-ii-1-s.js"
-But got a runtime error: Test262Error: foo(10, "sss", 1) !== true
-
-Expect to run correctly: "language/arguments-object/10.6-13-c-1-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/arguments-object/10.6-13-c-3-s.js"
-But got a runtime error: Test262Error: desc.configurable Expected SameValue(«true», «false») to be true
-
-Expect to run correctly: "language/arguments-object/10.6-14-c-4-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/arguments-object/10.6-2gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/arguments-object/unmapped/via-strict.js"
-But got a runtime error: Test262Error: foo(10,"sss",1) !== true
-
 Expect to run correctly: "language/directive-prologue/14.1-4-s.js"
 But got a runtime error: Test262Error: Expected true but got false
 
@@ -1800,9 +1593,6 @@ But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but n
 
 Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
 But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/block-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
 
 Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
 But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
@@ -1984,14 +1774,8 @@ But got a runtime error: Test262Error: Expected true but got false
 Expect to run correctly: "language/eval-code/direct/non-definable-global-generator.js"
 But got a runtime error: Test262Error: Expected true but got false
 
-Expect to run correctly: "language/eval-code/direct/switch-case-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
-
-Expect to run correctly: "language/eval-code/direct/switch-dflt-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
-
-Expect to run correctly: "language/eval-code/direct/this-value-func-strict-caller.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
+Expect to run correctly: "language/eval-code/direct/strict-caller-global.js"
+But got a runtime error: SyntaxError: Unexpected strict mode reserved word
 
 Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
@@ -2002,19 +1786,7 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-update-non-configurable.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/eval-code/direct/var-env-func-strict-caller-2.js"
-But got a runtime error: Test262Error: Expected SameValue(«function», «undefined») to be true
-
-Expect to run correctly: "language/eval-code/direct/var-env-func-strict-caller.js"
-But got a runtime error: Test262Error: Expected SameValue(«function», «undefined») to be true
-
-Expect to run correctly: "language/eval-code/direct/var-env-gloabl-lex-strict-caller.js"
-But got a runtime error: SyntaxError: Identifier 'x' has already been declared
-
 Expect to run correctly: "language/eval-code/direct/var-env-global-lex-non-strict.js"
-But got a runtime error: SyntaxError: Identifier 'x' has already been declared
-
-Expect to run correctly: "language/eval-code/direct/var-env-lower-lex-strict-caller.js"
 But got a runtime error: SyntaxError: Identifier 'x' has already been declared
 
 Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-exstng.js"
@@ -2022,15 +1794,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 
 Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/direct/var-env-var-strict-caller-2.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/var-env-var-strict-caller-3.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/eval-code/direct/var-env-var-strict-caller.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
 
 Expect to run correctly: "language/eval-code/indirect/non-definable-function-with-function.js"
 But got a runtime error: Test262Error: declaration preceding Expected SameValue(«[object Object]», «undefined») to be true
@@ -2065,39 +1828,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 Expect to run correctly: "language/expressions/addition/S11.6.1_A4_T9.js"
 But got a runtime error: Test262Error: #2: (-Number.MAX_VALUE + Number.MAX_VALUE) + Number.MAX_VALUE === -Number.MAX_VALUE + (Number.MAX_VALUE + Number.MAX_VALUE). Actual: -1.7976931348623157e+3081.7976931348623157e+3081.7976931348623157e+308
 
-Expect to run correctly: "language/expressions/arrow-function/strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-1-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-2-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-3-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-14-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-27-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-28gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-29gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-3-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/11.13.1-4-6-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/8.14.4-8-b_2.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T1.js"
 But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
 
@@ -2124,9 +1854,6 @@ But got a runtime error: Test262Error: Expected [source, iterator, target, targe
 
 Expect to run correctly: "language/expressions/assignment/destructuring/keyed-destructuring-property-reference-target-evaluation-order.js"
 But got a runtime error: Test262Error: Expected [source, source-key, source-key-tostring, target, target-key, get, target-key-tostring, set] and [source, source-key, source-key-tostring, target, target-key, target-key-tostring, get, set] to have the same contents. 
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-elem-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-rtrn-close-err.js"
 But got a runtime error: TypeError: undefined is not a function
@@ -2176,50 +1903,20 @@ But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be tr
 Expect to run correctly: "language/expressions/assignment/dstr/array-rest-put-prop-ref.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/assignment/dstr/array-rest-yield-expr.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
 Expect to run correctly: "language/expressions/assignment/dstr/array-rest-yield-ident-valid.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
-Expect to run correctly: "language/expressions/assignment/dstr/obj-id-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/assignment/dstr/obj-prop-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/assignment/fn-name-lhs-cover.js"
 But got a runtime error: Test262Error: descriptor value should be ; object value should be 
-
-Expect to run correctly: "language/expressions/async-function/named-strict-error-reassign-fn-name-in-body-in-arrow.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/async-function/named-strict-error-reassign-fn-name-in-body-in-eval.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/async-function/named-strict-error-reassign-fn-name-in-body.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
 
 Expect to run correctly: "language/expressions/async-generator/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
-Expect to run correctly: "language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body-in-arrow.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body-in-eval.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/async-generator/named-strict-error-reassign-fn-name-in-body.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
 Expect to run correctly: "language/expressions/call/eval-spread.js"
 But got a runtime error: Test262Error: Expected SameValue(«local», «1») to be true
-
-Expect to run correctly: "language/expressions/call/eval-strictness-inherit-strict.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
@@ -2304,105 +2001,6 @@ But got a runtime error: TypeError: _eval is not a constructor
 
 Expect to run correctly: "language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval.js"
 But got a runtime error: TypeError: eval is not a constructor
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-23-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-24-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-25-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-26-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-27-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-28-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-29-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-30-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-31-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-32-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-33-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-34-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-35-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-36-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-37-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-38-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-39-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-40-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-41-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-42-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-43-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-44-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-45-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-46-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-47-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-48-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-49-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-50-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-51-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-52-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-53-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-54-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/compound-assignment/11.13.2-55-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.10_T1.js"
 But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
@@ -2602,27 +2200,6 @@ But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeE
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/delete/11.4.1-4-a-1-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.1-4-a-2-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.1-4.a-3-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.1-4.a-8-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.1-4.a-9-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.1-5-a-27-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/delete/11.4.4-4.a-3-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/division/S11.5.2_A4_T6.js"
 But got a runtime error: Test262Error: #1.2: 1 / -Infinity === - 0. Actual: +0
 
@@ -2659,30 +2236,6 @@ But got a runtime error: Test262Error: updated value, direct binding Expected Sa
 Expect to run correctly: "language/expressions/dynamic-import/indirect-resolution.js"
 But got a runtime error: Test262Error: default is Promise instance Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/namespace/await-ns-delete-exported-init-strict.js"
-But got a runtime error: Test262Error: delete: default Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/await-ns-delete-non-exported-strict.js"
-But got a runtime error: Test262Error: delete: Symbol.toStringTag Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/await-ns-set-same-values-strict.js"
-But got a runtime error: Test262Error: AssignmentExpression: local1 Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/await-ns-set-strict.js"
-But got a runtime error: Test262Error: AssignmentExpression: local1 Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/promise-then-ns-delete-exported-init-strict.js"
-But got a runtime error: Test262Error: delete: default Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/promise-then-ns-delete-non-exported-strict.js"
-But got a runtime error: Test262Error: delete: Symbol.toStringTag Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/promise-then-ns-set-same-values-strict.js"
-But got a runtime error: Test262Error: AssignmentExpression: local1 Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/dynamic-import/namespace/promise-then-ns-set-strict.js"
-But got a runtime error: Test262Error: AssignmentExpression: local1 Expected a TypeError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/dynamic-import/returns-promise.js"
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
 
@@ -2713,56 +2266,8 @@ But got a runtime error: SyntaxError: Cannot use new with import
 Expect to run correctly: "language/expressions/dynamic-import/usage-from-eval.js"
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
-Expect to run correctly: "language/expressions/function/named-strict-error-reassign-fn-name-in-body-in-arrow.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/function/named-strict-error-reassign-fn-name-in-body-in-eval.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/function/named-strict-error-reassign-fn-name-in-body.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/function/scope-name-var-open-strict.js"
-But got a runtime error: Test262Error: inner binding rejects modification (from parameters) Expected a TypeError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/expressions/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
-Expect to run correctly: "language/expressions/generators/named-strict-error-reassign-fn-name-in-body-in-arrow.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/generators/named-strict-error-reassign-fn-name-in-body-in-eval.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/generators/named-strict-error-reassign-fn-name-in-body.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/generators/scope-name-var-open-strict.js"
-But got a runtime error: Test262Error: inner binding rejects modification (from parameters) Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-and-assignment-operator-no-set-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-and-assignment-operator-non-writeable-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-nullish-assignment-operator-no-set-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-nullish-assignment-operator-non-extensible.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-nullish-assignment-operator-non-writeable-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-or-assignment-operator-no-set-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-or-assignment-operator-non-extensible.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/logical-assignment/lgcl-or-assignment-operator-non-writeable-put.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T2.js"
 But got a runtime error: Test262Error: #1.2: 1 % 1 === + 0. Actual: -0
@@ -2854,117 +2359,6 @@ But got a runtime error: Test262Error: Expected true but got false
 Expect to run correctly: "language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/super/prop-dot-obj-ref-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «object») to be true
-
-Expect to run correctly: "language/expressions/super/prop-expr-obj-ref-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «object») to be true
-
-Expect to run correctly: "language/expressions/tagged-template/call-expression-context-strict.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "language/expressions/tagged-template/template-object-frozen-strict.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/expressions/yield/formal-parameters-after-reassignment-strict.js"
-But got a runtime error: Test262Error: First result `value` Expected SameValue(«32», «23») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-104.js"
-But got a runtime error: Test262Error: (5).x === 5
-
-Expect to run correctly: "language/function-code/10.4.3-1-106.js"
-But got a runtime error: Test262Error: typeof (5).x Expected SameValue(«object», «number») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-11-s.js"
-But got a runtime error: Test262Error: Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-11gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-17-s.js"
-But got a runtime error: Test262Error: eval("typeof this") Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-27-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-27gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-28-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-28gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-29-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-29gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-30-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-30gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-31-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-31gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-32-s.js"
-But got a runtime error: Test262Error: f1() !== true
-
-Expect to run correctly: "language/function-code/10.4.3-1-32gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-33-s.js"
-But got a runtime error: Test262Error: f() Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-33gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-34-s.js"
-But got a runtime error: Test262Error: f() Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-34gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-35-s.js"
-But got a runtime error: Test262Error: Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-35gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-7-s.js"
-But got a runtime error: Test262Error: f() Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-7gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/10.4.3-1-9-s.js"
-But got a runtime error: Test262Error: f() Expected SameValue(«object», «undefined») to be true
-
-Expect to run correctly: "language/function-code/10.4.3-1-9gs.js"
-But got a runtime error: 'this' had incorrect value!
-
-Expect to run correctly: "language/function-code/S10.4.3_A1.js"
-But got a runtime error: Test262Error: #1: "this" leaked as: [object Object]
-
-Expect to run correctly: "language/function-code/block-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
-
-Expect to run correctly: "language/function-code/switch-case-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
-
-Expect to run correctly: "language/function-code/switch-dflt-decl-onlystrict.js"
-But got a runtime error: TypeError: Cannot read properties of undefined (reading 'constructor')
-
-Expect to run correctly: "language/global-code/block-decl-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/global-code/decl-func.js"
 But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
 
@@ -2973,12 +2367,6 @@ But got a runtime error: SyntaxError: Identifier 'undefined' has already been de
 
 Expect to run correctly: "language/global-code/decl-var.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/global-code/switch-case-decl-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/global-code/switch-dflt-decl-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/identifiers/start-unicode-10.0.0-escaped.js"
 But got a runtime error: SyntaxError: Invalid or unexpected token
@@ -3048,9 +2436,6 @@ But got a runtime error: Test262Error:
 
 Expect to run correctly: "language/line-terminators/comment-single-ps.js"
 But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/literals/numeric/7.8.3-3gs.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/module-code/eval-export-dflt-expr-err-eval.js"
 But got a runtime error: Test262Error: 
@@ -3265,9 +2650,6 @@ But got a runtime error: ReferenceError: Cannot access 'x' before initialization
 Expect to run correctly: "language/statements/const/global-use-before-initialization-in-prior-statement.js"
 But got a runtime error: ReferenceError: Cannot access 'x' before initialization
 
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-elem-put-unresolvable-strict.js"
-But got a runtime error: Promise incorrectly fulfilled.
-
 Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array-null.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
 
@@ -3298,9 +2680,6 @@ But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be tr
 Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-yield-ident-valid.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-elem-put-unresolvable-strict.js"
-But got a runtime error: Promise incorrectly fulfilled.
-
 Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-array-null.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
 
@@ -3330,9 +2709,6 @@ But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be tr
 
 Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-yield-expr.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-elem-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-rtrn-close-err.js"
 But got a runtime error: TypeError: undefined is not a function
@@ -3382,20 +2758,11 @@ But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be tr
 Expect to run correctly: "language/statements/for-of/dstr/array-rest-put-prop-ref.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/statements/for-of/dstr/array-rest-yield-expr.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
 
 Expect to run correctly: "language/statements/for-of/dstr/array-rest-yield-ident-valid.js"
 But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/obj-id-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/for-of/dstr/obj-prop-put-unresolvable-strict.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/statements/for-of/head-lhs-async-escaped.js"
 But got a runtime error: SyntaxError: The left-hand side of a for-of loop may not be 'async'.
@@ -3405,24 +2772,6 @@ But got a runtime error: SyntaxError: The left-hand side of a for-of loop may no
 
 Expect to run correctly: "language/statements/for-of/string-astral-truncated.js"
 But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true
-
-Expect to run correctly: "language/statements/function/13.0-8-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/function/13.1-2-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/function/13.1-4-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/function/13.2-19-b-3gs.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/function/13.2-2-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/function/13.2-4-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "language/statements/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
@@ -3454,53 +2803,8 @@ But got a runtime error: ReferenceError: x is not defined
 Expect to run correctly: "language/statements/switch/scope-lex-let.js"
 But got a runtime error: ReferenceError: f is not defined
 
-Expect to run correctly: "language/statements/try/catch-parameter-boundnames-restriction-arguments-eval-throws.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/try/catch-parameter-boundnames-restriction-eval-eval-throws.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-18-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-19-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-2-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-3-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-4-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-7-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/statements/variable/12.2.1-8-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
 Expect to run correctly: "language/statements/variable/binding-resolution.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true
-
-Expect to run correctly: "language/statements/with/12.10.1-10-s.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/types/reference/8.7.2-1-s.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/types/reference/8.7.2-3-a-1gs.js"
-But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/types/reference/8.7.2-3-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/types/reference/8.7.2-4-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/types/reference/8.7.2-5-s.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 Expect to run correctly: "staging/JSON/json-parse-with-source-snapshot.js"
 But got a runtime error: TypeError: Cannot destructure property 'source' of 'undefined' as it is undefined.
