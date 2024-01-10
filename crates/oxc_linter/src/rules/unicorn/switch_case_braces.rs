@@ -3,7 +3,6 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -76,20 +75,23 @@ impl Rule for SwitchCaseBraces {
                         };
 
                         ctx.diagnostic_with_fix(SwitchCaseBracesDiagnostic(case_body_span), || {
+                            use oxc_codegen::{Context, Gen};
                             let modified_code = {
-                                let mut formatter = ctx.formatter();
+                                let mut formatter = ctx.codegen();
 
                                 if let Some(case_test) = &case.test {
                                     formatter.print_str(b"case ");
-                                    case_test.gen(&mut formatter);
+                                    formatter.print_expression(case_test);
                                 } else {
                                     formatter.print_str(b"default");
                                 }
 
                                 formatter.print_colon();
-                                formatter.print_space();
+                                formatter.print_hard_space();
                                 formatter.print(b'{');
-                                case.consequent.iter().for_each(|x| x.gen(&mut formatter));
+                                case.consequent
+                                    .iter()
+                                    .for_each(|x| x.gen(&mut formatter, Context::default()));
                                 formatter.print(b'}');
 
                                 formatter.into_code()
@@ -140,7 +142,7 @@ fn test() {
         ),
         (
             "switch(something) { case 1: {} case 2: console.log('something'); break;}",
-            "switch(something) { case 1:  case 2: {console.log(\"something\");\nbreak;\n}}",
+            "switch(something) { case 1:  case 2: {console.log('something');\nbreak;\n}}",
             None,
         ),
         (

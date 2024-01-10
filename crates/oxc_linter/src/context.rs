@@ -1,7 +1,7 @@
 use std::{cell::RefCell, path::Path, rc::Rc};
 
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
-use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
@@ -119,8 +119,8 @@ impl<'a> LintContext<'a> {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn formatter(&self) -> Formatter {
-        Formatter::new(0, FormatterOptions::default())
+    pub fn codegen(&self) -> Codegen<false> {
+        Codegen::<false>::new(0, CodegenOptions)
     }
 
     /* JSDoc */

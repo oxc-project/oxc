@@ -28,7 +28,6 @@ oxc_parser      = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_semantic    = { workspace = true, optional = true }
-oxc_formatter   = { workspace = true, optional = true }
 oxc_transformer = { workspace = true, optional = true }
 oxc_minifier    = { workspace = true, optional = true }
 oxc_codegen     = { workspace = true, optional = true }
@@ -36,7 +35,6 @@ oxc_codegen     = { workspace = true, optional = true }
 [features]
 serde       = ["oxc_ast/serde", "oxc_semantic/serde"]
 semantic    = ["oxc_semantic"]
-formatter   = ["oxc_formatter"]
 transformer = ["oxc_transformer"]
 minifier    = ["oxc_minifier"]
 codegen     = ["oxc_codegen"]
