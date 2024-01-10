@@ -320,7 +320,7 @@ mod test {
         let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
         assert_eq!(result.number_of_errors, 0);
     }
 
