@@ -289,6 +289,7 @@ mod nextjs {
     pub mod no_script_component_in_head;
     pub mod no_sync_scripts;
     pub mod no_title_in_document_head;
+    pub mod no_typos;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -547,4 +548,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_script_component_in_head,
     nextjs::no_sync_scripts,
     nextjs::no_title_in_document_head,
+    nextjs::no_typos,
 }
