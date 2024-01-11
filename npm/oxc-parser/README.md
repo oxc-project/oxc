@@ -11,7 +11,8 @@ const oxc = require("oxc-parser");
 const assert = require('assert');
 
 function test(ret) {
-  assert(ret.program.body.length == 1);
+  const program = JSON.parse(ret.program);
+  assert(program.body.length == 1);
   assert(ret.errors.length == 0);
 }
 
@@ -31,7 +32,8 @@ import oxc from 'oxc-parser';
 import assert from 'assert';
 
 function test(ret) {
-  assert(ret.program.body.length == 1);
+  const program = JSON.parse(ret.program);
+  assert(program.body.length == 1);
   assert(ret.errors.length == 0);
 }
 
