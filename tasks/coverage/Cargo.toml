@@ -41,6 +41,8 @@ lazy_static  = { workspace = true }
 walkdir      = { workspace = true }
 regex        = { workspace = true }
 phf          = { workspace = true, features = ["macros"] }
+futures      = { workspace = true }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 console        = "0.15.7"
 encoding_rs    = "0.8.33"
