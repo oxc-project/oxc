@@ -25,17 +25,8 @@ enum NewTargetKind {
 }
 
 impl<'a> VisitMut<'a> for NewTarget<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let Some(kind) = self.get_kind(kind) {
-            self.kinds.push(kind);
-        }
-    }
-
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if self.get_kind(kind).is_some() {
-            self.kinds.pop();
-        }
-    }
+    fn enter_node(&mut self, _kind: AstKind<'a>) {}
+    fn leave_node(&mut self, kind: AstKind<'a>) {}
 }
 
 impl<'a> NewTarget<'a> {
@@ -44,12 +35,7 @@ impl<'a> NewTarget<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
-        let kinds = ast.new_vec();
-        (options.target < TransformTarget::ES2015 || options.new_target).then(|| Self {
-            ast,
-            ctx,
-            kinds,
-        })
+        (options.target < TransformTarget::ES2015 || options.new_target).then(|| Self { ast, ctx })
     }
 
     fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind> {
@@ -84,6 +70,10 @@ impl<'a> NewTarget<'a> {
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
+        // get last kind
+        let kind = self.ctx.nodes().kind(*self.ctx.current_node_id.borrow());
+
+        // If we change the expression, we need to update semantic info
         if let Expression::MetaProperty(meta) = expr {
             if meta.meta.name == "new" && meta.property.name == "target" {
                 if let Some(kind) = self.kinds.last() {

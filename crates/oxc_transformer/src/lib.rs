@@ -29,7 +29,7 @@ use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
 use oxc_diagnostics::Error;
-use oxc_semantic::Semantic;
+use oxc_semantic::{AstNode, AstNodeId, ScopeFlags, Semantic};
 use oxc_span::SourceType;
 
 use crate::{
@@ -48,6 +48,7 @@ pub use crate::{
 
 pub struct Transformer<'a> {
     ctx: TransformerCtx<'a>,
+    current_node_id: Rc<RefCell<AstNodeId>>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
@@ -82,13 +83,16 @@ impl<'a> Transformer<'a> {
         options: TransformOptions,
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
+        let current_node_id = Rc::new(RefCell::new(AstNodeId::new(0)));
         let ctx = TransformerCtx::new(
             Rc::clone(&ast),
             Rc::new(RefCell::new(semantic)),
+            Rc::clone(&current_node_id)
         );
 
         Self {
             ctx: ctx.clone(),
+            current_node_id,
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
@@ -137,6 +141,10 @@ impl<'a> Transformer<'a> {
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn enter_node(&mut self, kind: oxc_ast::AstKind<'a>) {
+        if !matches!(kind, AstKind::Program(_)) {
+            let next_ast_node_id = (*self.current_node_id.borrow() + 1).into();
+            *self.current_node_id.borrow_mut() = AstNodeId::new(next_ast_node_id);
+        }
         self.es2015_new_target.as_mut().map(|t| t.enter_node(kind));
     }
 
