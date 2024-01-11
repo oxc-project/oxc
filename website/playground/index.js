@@ -187,8 +187,8 @@ class Playground {
 
   updateDiagnostics() {
     const diagnostics = (this.oxc ? this.oxc.getDiagnostics() : []).map((d) => ({
-      from: d.start,
-      to: d.end,
+      from: convertToUtf8(this.sourceTextUtf8, d.start),
+      to: convertToUtf8(this.sourceTextUtf8, d.end),
       severity: d.severity.toLowerCase(),
       message: d.message,
     }));
