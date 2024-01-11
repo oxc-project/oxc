@@ -37,7 +37,7 @@ impl<'a> VuePartialLoader<'a> {
         *pointer += offset + SCRIPT_START.len();
 
         // find closing ">"
-        let offset = self.source_text[*pointer..].find('>')?;
+        let offset = self.find_script_closing_angle(*pointer)?;
 
         // get ts and jsx attribute
         let content = &self.source_text[*pointer..*pointer + offset];
@@ -56,6 +56,27 @@ impl<'a> VuePartialLoader<'a> {
         let source_type =
             SourceType::default().with_module(true).with_typescript(is_ts).with_jsx(is_jsx);
         Some(JavaScriptSource::new(source_text, source_type, js_start))
+    }
+
+    /// Find closing angle for situations where there is another `>` in between.
+    /// e.g. `<script generic="T extends Record<string, string>">`
+    fn find_script_closing_angle(&self, pointer: usize) -> Option<usize> {
+        let mut numbers_of_open_angle = 0;
+        for (offset, c) in self.source_text[pointer..].char_indices() {
+            match c {
+                '>' => {
+                    if numbers_of_open_angle == 0 {
+                        return Some(offset);
+                    }
+                    numbers_of_open_angle -= 1;
+                }
+                '<' => {
+                    numbers_of_open_angle += 1;
+                }
+                _ => {}
+            }
+        }
+        None
     }
 }
 
@@ -84,7 +105,7 @@ mod test {
     #[test]
     fn test_build_vue_with_ts_flag_1() {
         let source_text = r#"
-        <script lang="ts" setup>
+        <script lang="ts" setup generic="T extends Record<string, string>">
             1/1
         </script>
         "#;
