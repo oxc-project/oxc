@@ -136,76 +136,153 @@ fn min_distance(a: &str, b: &str) -> usize {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
 
     let pass = vec![
-        r"
-			      export default function Page() {
-			        return <div></div>;
-			      }
-			      export const getStaticPaths = async () => {};
-      			  export const getStaticProps = async () => {};
-			    ",
-        r"
-        	      export default function Page() {
-        	        return <div></div>;
-        	      }
-        	      export const getServerSideProps = async () => {};
-        	    ",
-        r"
-        	      export default function Page() {
-        	        return <div></div>;
-        	      }
-        	      export async function getStaticPaths() {};
-        	      export async function getStaticProps() {};
-        	    ",
-        r"
-        	      export default function Page() {
-        	        return <div></div>;
-        	      }
-        	      export async function getServerSideProps() {};
-        	    ",
-        r"
-        	      export default function Page() {
-        	        return <div></div>;
-        	      }
-        	      export async function getServerSidePropsss() {};
-        	    ",
-        r"
-        	      export default function Page() {
-        	        return <div></div>;
-        	      }
-        	      export async function getstatisPath() {};
-        	    ",
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export const getStaticPaths = async () => {};
+                export const getStaticProps = async () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export const getServerSideProps = async () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export async function getStaticPaths() {};
+                export async function getStaticProps() {};
+           	",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export async function getServerSideProps() {};
+        	",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export async function getServerSidePropsss() {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export async function getstatisPath() {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        // even though there is a typo match, this should not fail because a file is not inside pages directory
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export const getStaticpaths = async () => {};
+                export const getStaticProps = async () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.tsx")),
+        ),
+        // even though there is a typo match, this should not fail because a file is inside pages/api directory
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export const getStaticpaths = async () => {};
+                export const getStaticProps = async () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/api/test.tsx")),
+        ),
     ];
 
     let fail = vec![
-        r"
-        	        export default function Page() {
-        	          return <div></div>;
-        	        }
-        	        export const getStaticpaths = async () => {};
-        	        export const getStaticProps = async () => {};
-        	      ",
-        r"
-        	        export default function Page() {
-        	          return <div></div>;
-        	        }
-        	        export async function getStaticPathss(){};
-        	        export async function getStaticPropss(){};
-        	      ",
-        r"
-        	        export default function Page() {
-        	          return <div></div>;
-        	        }
-        	        export async function getServurSideProps(){};
-        	      ",
-        r"
-        	        export default function Page() {
-        	          return <div></div>;
-        	        }
-        	        export const getServurSideProps = () => {};
-        	      ",
+        (
+            r"
+                export default function Page() {
+                return <div></div>;
+                }
+                export const getStaticpaths = async () => {};
+                export const getStaticProps = async () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                    return <div></div>;
+                }
+                export async function getStaticPathss(){};
+                export async function getStaticPropss(){};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                    return <div></div>;
+                }
+                export async function getServurSideProps(){};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
+        (
+            r"
+                export default function Page() {
+                    return <div></div>;
+                }
+                export const getServurSideProps = () => {};
+            ",
+            None,
+            None,
+            Some(PathBuf::from("pages/test.tsx")),
+        ),
     ];
 
-    Tester::new_without_config(NoTypos::NAME, pass, fail).test_and_snapshot();
+    Tester::new_with_settings(NoTypos::NAME, pass, fail).test_and_snapshot();
 }
