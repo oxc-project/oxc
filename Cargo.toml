@@ -78,8 +78,6 @@ oxc_transformer = { version = "0.4.0", path = "crates/oxc_transformer" }
 oxc_macros         = { path = "crates/oxc_macros" }
 oxc_linter         = { path = "crates/oxc_linter" }
 oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
-oxc_query          = { path = "crates/oxc_query" }
-oxc_linter_plugin  = { path = "crates/oxc_linter_plugin" }
 oxc_prettier       = { path = "crates/oxc_prettier" }
 
 oxc_tasks_common    = { path = "tasks/common" }
@@ -130,7 +128,6 @@ static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }
 tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
-trustfall                 = { version = "0.6.1" }
 insta                     = { version = "1.34.0", features = ["glob"] }
 codspeed-criterion-compat = { version = "2.3.3", default-features = false }
 glob                      = { version = "0.3.1" }

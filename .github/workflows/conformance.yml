@@ -13,7 +13,6 @@ on:
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
       - 'crates/oxc_linter/**'
-      - 'crates/oxc_query/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
       - 'crates/oxc_prettier/**'
@@ -30,7 +29,6 @@ on:
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
       - 'crates/oxc_linter/**'
-      - 'crates/oxc_query/**'
       - 'crates/oxc_type_synthesis/**'
       - 'crates/oxc_wasm/**'
 
