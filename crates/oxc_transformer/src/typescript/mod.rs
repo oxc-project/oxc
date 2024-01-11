@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
@@ -33,81 +33,20 @@ impl<'a> TypeScript<'a> {
         Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
     }
 
-    /// ```TypeScript
-    /// enum Foo {
-    ///   X
-    /// }
-    /// ```
-    /// ```JavaScript
-    /// var Foo = ((Foo) => {
-    ///   const X = 0; Foo[Foo["X"] = X] = "X";
-    ///   return Foo;
-    /// })(Foo || {});
-    /// ```
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        let Declaration::TSEnumDeclaration(ts_enum_declaration) = decl else {
-            return;
-        };
-
-        if ts_enum_declaration.modifiers.contains(ModifierKind::Declare) {
-            return;
+        match decl {
+            Declaration::TSImportEqualsDeclaration(ts_import_equals)
+                if ts_import_equals.import_kind.is_value() =>
+            {
+                *decl = self.transform_ts_import_equals(ts_import_equals);
+            }
+            Declaration::TSEnumDeclaration(ts_enum_declaration) => {
+                if let Some(expr) = self.transform_ts_enum(ts_enum_declaration) {
+                    *decl = expr;
+                }
+            }
+            _ => {}
         }
-
-        let span = ts_enum_declaration.span;
-        let ident = ts_enum_declaration.id.clone();
-        let kind = self.ast.binding_pattern_identifier(ident);
-        let id = self.ast.binding_pattern(kind, None, false);
-
-        let mut params = self.ast.new_vec();
-
-        // ((Foo) => {
-        params.push(self.ast.formal_parameter(SPAN, id, None, false, self.ast.new_vec()));
-
-        let params = self.ast.formal_parameters(
-            SPAN,
-            FormalParameterKind::ArrowFormalParameters,
-            params,
-            None,
-        );
-
-        // Foo[Foo["X"] = 0] = "X";
-        let enum_name = ts_enum_declaration.id.name.clone();
-        let statements =
-            self.transform_ts_enum_members(&mut ts_enum_declaration.body.members, &enum_name);
-        let body =
-            self.ast.function_body(ts_enum_declaration.body.span, self.ast.new_vec(), statements);
-
-        let callee = self.ast.arrow_expression(SPAN, false, false, false, params, body, None, None);
-
-        // })(Foo || {});
-        let mut arguments = self.ast.new_vec();
-        let op = LogicalOperator::Or;
-        let left = self
-            .ast
-            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
-        let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
-        let expression = self.ast.logical_expression(SPAN, left, op, right);
-        arguments.push(Argument::Expression(expression));
-
-        let call_expression = self.ast.call_expression(SPAN, callee, arguments, false, None);
-
-        let kind = VariableDeclarationKind::Var;
-        let decls = {
-            let mut decls = self.ast.new_vec();
-
-            let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
-            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
-            let decl =
-                self.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
-
-            decls.push(decl);
-            decls
-        };
-        let variable_declaration =
-            self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
-
-        *decl = Declaration::VariableDeclaration(variable_declaration);
     }
 
     /// Remove `export` from merged declaration.
@@ -393,5 +332,137 @@ impl<'a> TypeScript<'a> {
         statements.push(return_stmt);
 
         statements
+    }
+
+    fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
+        match type_name {
+            TSTypeName::IdentifierReference(reference) => self.ast.identifier_reference_expression(
+                IdentifierReference::new(SPAN, reference.name.clone()),
+            ),
+            TSTypeName::QualifiedName(qualified_name) => self.ast.static_member_expression(
+                SPAN,
+                self.transform_ts_type_name(&mut qualified_name.left),
+                qualified_name.right.clone(),
+                false,
+            ),
+        }
+    }
+
+    /// ```TypeScript
+    /// import b = babel;
+    /// import AliasModule = LongNameModule;
+    ///
+    /// ```JavaScript
+    /// var b = babel;
+    /// var AliasModule = LongNameModule;
+    /// ```
+    fn transform_ts_import_equals(
+        &self,
+        decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
+    ) -> Declaration<'a> {
+        let kind = VariableDeclarationKind::Var;
+        let decls = {
+            let binding_identifier = BindingIdentifier::new(SPAN, decl.id.name.clone());
+            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
+            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+
+            let init = match &mut decl.module_reference.0 {
+                TSModuleReference::TypeName(type_name) => self.transform_ts_type_name(type_name),
+                TSModuleReference::ExternalModuleReference(reference) => {
+                    let callee = self.ast.identifier_reference_expression(
+                        IdentifierReference::new(SPAN, "require".into()),
+                    );
+                    let arguments = self.ast.new_vec_single(Argument::Expression(
+                        self.ast.literal_string_expression(reference.expression.clone()),
+                    ));
+                    self.ast.call_expression(SPAN, callee, arguments, false, None)
+                }
+            };
+            self.ast.new_vec_single(self.ast.variable_declarator(
+                SPAN,
+                kind,
+                binding,
+                Some(init),
+                false,
+            ))
+        };
+        let variable_declaration =
+            self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+
+        Declaration::VariableDeclaration(variable_declaration)
+    }
+
+    /// ```TypeScript
+    /// enum Foo {
+    ///   X
+    /// }
+    /// ```
+    /// ```JavaScript
+    /// var Foo = ((Foo) => {
+    ///   const X = 0; Foo[Foo["X"] = X] = "X";
+    ///   return Foo;
+    /// })(Foo || {});
+    /// ```
+    fn transform_ts_enum(
+        &self,
+        decl: &mut Box<'a, TSEnumDeclaration<'a>>,
+    ) -> Option<Declaration<'a>> {
+        if decl.modifiers.contains(ModifierKind::Declare) {
+            return None;
+        }
+
+        let span = decl.span;
+        let ident = decl.id.clone();
+        let kind = self.ast.binding_pattern_identifier(ident);
+        let id = self.ast.binding_pattern(kind, None, false);
+
+        let mut params = self.ast.new_vec();
+
+        // ((Foo) => {
+        params.push(self.ast.formal_parameter(SPAN, id, None, false, self.ast.new_vec()));
+
+        let params = self.ast.formal_parameters(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params,
+            None,
+        );
+
+        // Foo[Foo["X"] = 0] = "X";
+        let enum_name = decl.id.name.clone();
+        let statements = self.transform_ts_enum_members(&mut decl.body.members, &enum_name);
+        let body = self.ast.function_body(decl.body.span, self.ast.new_vec(), statements);
+
+        let callee = self.ast.arrow_expression(SPAN, false, false, false, params, body, None, None);
+
+        // })(Foo || {});
+        let mut arguments = self.ast.new_vec();
+        let op = LogicalOperator::Or;
+        let left = self
+            .ast
+            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
+        let expression = self.ast.logical_expression(SPAN, left, op, right);
+        arguments.push(Argument::Expression(expression));
+
+        let call_expression = self.ast.call_expression(SPAN, callee, arguments, false, None);
+
+        let kind = VariableDeclarationKind::Var;
+        let decls = {
+            let mut decls = self.ast.new_vec();
+
+            let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
+            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
+            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+            let decl =
+                self.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+
+            decls.push(decl);
+            decls
+        };
+        let variable_declaration =
+            self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+
+        Some(Declaration::VariableDeclaration(variable_declaration))
     }
 }
