@@ -113,12 +113,6 @@ impl DiagnosticService {
                     else if self.quiet {
                         continue;
                     }
-
-                    if let Some(max_warnings) = self.max_warnings {
-                        if self.warnings_count() > max_warnings {
-                            continue;
-                        }
-                    }
                 }
 
                 let mut err = String::new();
