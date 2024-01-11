@@ -364,6 +364,19 @@ mod test {
     }
 
     #[test]
+    fn typescript_eslint() {
+        let args = &[
+            "-c",
+            "fixtures/typescript_eslint/eslintrc.json",
+            "fixtures/typescript_eslint/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn lint_vue_file() {
         let args = &["fixtures/vue/debugger.vue"];
         let result = test(args);

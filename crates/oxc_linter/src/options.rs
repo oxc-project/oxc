@@ -104,8 +104,12 @@ pub enum AllowWarnDeny {
 }
 
 impl AllowWarnDeny {
-    pub fn is_enabled(self) -> bool {
+    pub fn is_warn_deny(self) -> bool {
         self != Self::Allow
+    }
+
+    pub fn is_allow(self) -> bool {
+        self == Self::Allow
     }
 }
 
