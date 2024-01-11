@@ -68,41 +68,66 @@ impl ESLintConfig {
         })
     }
 
+    #[allow(clippy::option_if_let_else)]
     pub fn override_rules(
         &self,
-        rules_to_override: &mut FxHashSet<RuleEnum>,
+        rules_for_override: &mut FxHashSet<RuleEnum>,
         all_rules: &[RuleEnum],
     ) {
+        use itertools::Itertools;
         let mut rules_to_replace = vec![];
         let mut rules_to_remove = vec![];
 
-        for rule_to_configure in &self.rules {
-            let (plugin_name, rule_name) =
-                (&rule_to_configure.plugin_name, &rule_to_configure.rule_name);
-            if let Some(rule) = rules_to_override
-                .iter()
-                .find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
-            {
-                match rule_to_configure.severity {
-                    AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
-                        rules_to_replace.push(rule.read_json(rule_to_configure.config.clone()));
-                    }
-                    AllowWarnDeny::Allow => {
-                        rules_to_remove.push(rule.clone());
+        // Rules can have the same name but different plugin names
+        let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
+
+        for (name, rule_configs) in &lookup {
+            match rule_configs.len() {
+                0 => unreachable!(),
+                1 => {
+                    let rule_config = &rule_configs[0];
+                    let rule_name = &rule_config.rule_name;
+                    let plugin_name = &rule_config.plugin_name;
+                    if let Some(rule) = rules_for_override.iter().find(|r| r.name() == rule_name) {
+                        match rule_config.severity {
+                            AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                                rules_to_replace.push(rule.read_json(rule_config.config.clone()));
+                            }
+                            AllowWarnDeny::Allow => {
+                                rules_to_remove.push(rule.clone());
+                            }
+                        }
+                    } else if let Some(rule) = all_rules
+                        .iter()
+                        .find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
+                    {
+                        rules_to_replace.push(rule.read_json(rule_config.config.clone()));
                     }
                 }
-            } else if let Some(rule) =
-                all_rules.iter().find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
-            {
-                rules_to_replace.push(rule.read_json(rule_to_configure.config.clone()));
+                _ => {
+                    // For overlapping rule names, use the "error" one
+                    // "no-loss-of-precision": "off",
+                    // "@typescript-eslint/no-loss-of-precision": "error"
+                    if let Some(rule_config) =
+                        rule_configs.iter().find(|r| r.severity.is_warn_deny())
+                    {
+                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
+                            rules_to_replace.push(rule.read_json(rule_config.config.clone()));
+                        }
+                    } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
+                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
+                            rules_to_remove.push(rule.clone());
+                        }
+                    }
+                }
             }
         }
 
         for rule in rules_to_remove {
-            rules_to_override.remove(&rule);
+            rules_for_override.remove(&rule);
         }
         for rule in rules_to_replace {
-            rules_to_override.replace(rule);
+            rules_for_override.replace(rule);
         }
     }
 }
