@@ -199,7 +199,7 @@ impl LintOptions {
         }
 
         if let Some(config) = &config {
-            config.override_rules(&mut rules);
+            config.override_rules(&mut rules, &all_rules);
         }
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();

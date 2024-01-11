@@ -68,14 +68,20 @@ impl ESLintConfig {
         })
     }
 
-    pub fn override_rules(&self, rules_to_override: &mut FxHashSet<RuleEnum>) {
+    pub fn override_rules(
+        &self,
+        rules_to_override: &mut FxHashSet<RuleEnum>,
+        all_rules: &[RuleEnum],
+    ) {
         let mut rules_to_replace = vec![];
         let mut rules_to_remove = vec![];
-        for rule in rules_to_override.iter() {
-            let plugin_name = rule.plugin_name();
-            let rule_name = rule.name();
-            if let Some(rule_to_configure) =
-                self.rules.iter().find(|r| r.plugin_name == plugin_name && r.rule_name == rule_name)
+
+        for rule_to_configure in &self.rules {
+            let (plugin_name, rule_name) =
+                (&rule_to_configure.plugin_name, &rule_to_configure.rule_name);
+            if let Some(rule) = rules_to_override
+                .iter()
+                .find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
             {
                 match rule_to_configure.severity {
                     AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
@@ -85,8 +91,13 @@ impl ESLintConfig {
                         rules_to_remove.push(rule.clone());
                     }
                 }
+            } else if let Some(rule) =
+                all_rules.iter().find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
+            {
+                rules_to_replace.push(rule.read_json(rule_to_configure.config.clone()));
             }
         }
+
         for rule in rules_to_remove {
             rules_to_override.remove(&rule);
         }
