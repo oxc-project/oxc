@@ -82,6 +82,7 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-template-literals",
     "babel-plugin-transform-duplicate-keys",
     "babel-plugin-transform-instanceof",
+    "babel-plugin-transform-new-target",
     // ES3
     "babel-plugin-transform-property-literals",
     // TypeScript
