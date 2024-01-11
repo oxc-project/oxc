@@ -1,23 +1,8 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 19665/19665 (100.00%)
-Positive Passed: 19186/19665 (97.56%)
+Positive Passed: 19220/19665 (97.74%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
-
-Expect to run correctly: "annexB/language/comments/multi-line-html-close.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "annexB/language/comments/single-line-html-close-asi.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "annexB/language/comments/single-line-html-close-unicode-separators.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "annexB/language/comments/single-line-html-close.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "annexB/language/comments/single-line-html-open.js"
-But got a runtime error: Test262Error: 
 
 Expect to run correctly: "annexB/language/eval-code/direct/global-block-decl-eval-global-existing-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
@@ -425,9 +410,6 @@ But got a runtime error: Test262Error: Expected true but got false
 Expect to run correctly: "language/eval-code/direct/non-definable-global-generator.js"
 But got a runtime error: Test262Error: Expected true but got false
 
-Expect to run correctly: "language/eval-code/direct/strict-caller-global.js"
-But got a runtime error: SyntaxError: Unexpected strict mode reserved word
-
 Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
@@ -436,9 +418,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 
 Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-update-non-configurable.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/direct/var-env-global-lex-non-strict.js"
-But got a runtime error: SyntaxError: Identifier 'x' has already been declared
 
 Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-exstng.js"
 But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
@@ -457,9 +436,6 @@ But got a runtime error: Test262Error: Expected a TypeError to be thrown but no 
 
 Expect to run correctly: "language/eval-code/indirect/non-definable-global-generator.js"
 But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/indirect/parse-failure-2.js"
-But got a runtime error: SyntaxError: Unexpected end of input
 
 Expect to run correctly: "language/eval-code/indirect/var-env-func-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
@@ -1013,9 +989,6 @@ But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeE
 Expect to run correctly: "language/global-code/decl-func.js"
 But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
 
-Expect to run correctly: "language/global-code/decl-lex-restricted-global.js"
-But got a runtime error: SyntaxError: Identifier 'undefined' has already been declared
-
 Expect to run correctly: "language/global-code/decl-var.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
@@ -1048,39 +1021,6 @@ But got a runtime error: SyntaxError: Unexpected token 'with'
 
 Expect to run correctly: "language/import/import-attributes/json-via-namespace.js"
 But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/line-terminators/comment-multi-lf.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-multi-ls.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-multi-ps.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-single-cr.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-single-lf.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-single-ls.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/line-terminators/comment-single-ps.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/module-code/eval-export-dflt-expr-err-eval.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/module-code/eval-export-dflt-expr-err-get-value.js"
-But got a runtime error: ReferenceError: unresolvable is not defined
-
-Expect to run correctly: "language/module-code/eval-rqstd-abrupt.js"
-But got a runtime error: TypeError
-
-Expect to run correctly: "language/module-code/eval-self-abrupt.js"
-But got a runtime error: Test262Error: 
 
 Expect to run correctly: "language/module-code/eval-self-once.js"
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
@@ -1156,18 +1096,6 @@ But got a runtime error: Test262Error: Expected a ReferenceError to be thrown bu
 
 Expect to run correctly: "language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js"
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/module-code/top-level-await/await-dynamic-import-rejection.js"
-But got a runtime error: TypeError: I reject this!
-
-Expect to run correctly: "language/module-code/top-level-await/module-import-rejection-body.js"
-But got a runtime error: TypeError: I reject this!
-
-Expect to run correctly: "language/module-code/top-level-await/module-import-rejection-tick.js"
-But got a runtime error: RangeError
-
-Expect to run correctly: "language/module-code/top-level-await/module-import-rejection.js"
-But got a runtime error: TypeError: error in the default export line
 
 Expect to run correctly: "language/module-code/verify-dfs.js"
 But got a runtime error: Test262Error: Expected SameValue(«B», «A») to be true
@@ -1276,12 +1204,6 @@ But got a runtime error: ReferenceError: Must call super constructor in derived 
 
 Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-for-of-arrow.js"
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
-
-Expect to run correctly: "language/statements/const/global-use-before-initialization-in-declaration-statement.js"
-But got a runtime error: ReferenceError: Cannot access 'x' before initialization
-
-Expect to run correctly: "language/statements/const/global-use-before-initialization-in-prior-statement.js"
-But got a runtime error: ReferenceError: Cannot access 'x' before initialization
 
 Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array-null.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
@@ -1409,32 +1331,8 @@ But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to 
 Expect to run correctly: "language/statements/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
-Expect to run correctly: "language/statements/let/global-use-before-initialization-in-declaration-statement.js"
-But got a runtime error: ReferenceError: Cannot access 'x' before initialization
-
-Expect to run correctly: "language/statements/let/global-use-before-initialization-in-prior-statement.js"
-But got a runtime error: ReferenceError: Cannot access 'x' before initialization
-
 Expect to run correctly: "language/statements/return/S12.9_A4.js"
 But got a runtime error: Test262Error: #1: return Expression yields to Return (return, GetValue(Evaluate Expression), empty)
-
-Expect to run correctly: "language/statements/switch/scope-lex-async-function.js"
-But got a runtime error: ReferenceError: x is not defined
-
-Expect to run correctly: "language/statements/switch/scope-lex-async-generator.js"
-But got a runtime error: ReferenceError: x is not defined
-
-Expect to run correctly: "language/statements/switch/scope-lex-class.js"
-But got a runtime error: ReferenceError: x is not defined
-
-Expect to run correctly: "language/statements/switch/scope-lex-const.js"
-But got a runtime error: ReferenceError: x is not defined
-
-Expect to run correctly: "language/statements/switch/scope-lex-generator.js"
-But got a runtime error: ReferenceError: x is not defined
-
-Expect to run correctly: "language/statements/switch/scope-lex-let.js"
-But got a runtime error: ReferenceError: f is not defined
 
 Expect to run correctly: "language/statements/variable/binding-resolution.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true

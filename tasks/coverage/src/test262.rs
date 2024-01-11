@@ -68,6 +68,12 @@ pub enum Phase {
     Runtime,
 }
 
+impl Phase {
+    pub fn is_runtime(self) -> bool {
+        matches!(self, Self::Runtime)
+    }
+}
+
 pub struct Test262Suite<T: Case> {
     test_root: PathBuf,
     test_cases: Vec<T>,
