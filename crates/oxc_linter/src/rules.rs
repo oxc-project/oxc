@@ -284,6 +284,7 @@ mod nextjs {
     pub mod no_assign_module_variable;
     pub mod no_async_client_component;
     pub mod no_css_tags;
+    pub mod no_document_import_in_page;
     pub mod no_head_element;
     pub mod no_head_import_in_document;
     pub mod no_img_element;
@@ -551,4 +552,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_sync_scripts,
     nextjs::no_title_in_document_head,
     nextjs::no_typos,
+    nextjs::no_document_import_in_page,
 }
