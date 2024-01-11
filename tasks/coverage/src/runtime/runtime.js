@@ -123,7 +123,7 @@ const server = createServer((req, res) => {
       try {
         result = await runCodeInHarness(options);
       } catch (err) {
-        res.end(err.toString());
+        return res.end(err.toString());
       }
   
       // res.setHeader('Content-Type', 'application/json');

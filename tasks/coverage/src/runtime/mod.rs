@@ -108,64 +108,78 @@ impl Case for CodegenRuntimeTest262Case {
             || self.base.code().contains("$DONOTEVALUATE()")
     }
 
-    fn run(&mut self) {
-        let result = {
-            let source_text = self.base.code();
-            let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-            let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
-            let source_type = SourceType::default()
-                .with_module(is_module)
-                .with_always_strict(self.base.meta().flags.contains(&TestFlag::OnlyStrict));
-            let allocator = Allocator::default();
-            let program = Parser::new(&allocator, source_text, source_type).parse().program;
-            let mut codegen_source_text =
-                Codegen::<false>::new(source_text.len(), CodegenOptions).build(&program);
-            if is_only_strict {
-                codegen_source_text = format!("\"use strict\";\n{codegen_source_text}");
-            }
-            if is_module {
-                codegen_source_text = format!("{codegen_source_text}\n export {{}}");
-            }
+    fn run(&mut self) {}
 
-            self.run_test_code(codegen_source_text.as_str())
-        };
+    async fn run_async(&mut self) {
+        let result = async {
+            let codegen_source_text = {
+                let source_text = self.base.code();
+                let is_module = self.base.meta().flags.contains(&TestFlag::Module);
+                let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
+                let source_type = SourceType::default().with_module(is_module);
+                let allocator = Allocator::default();
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let mut text =
+                    Codegen::<false>::new(source_text.len(), CodegenOptions).build(&program);
+                if is_only_strict {
+                    text = format!("\"use strict\";\n{text}");
+                }
+                if is_module {
+                    text = format!("{text}\n export {{}}");
+                }
+                text
+            };
+
+            self.run_test_code(codegen_source_text).await
+        }
+        .await;
         self.base.set_result(result);
     }
 }
 
 impl CodegenRuntimeTest262Case {
-    fn run_test_code(&self, codegen_text: &str) -> TestResult {
+    async fn run_test_code(&self, codegen_text: String) -> TestResult {
         let is_async = self.base.meta().flags.contains(&TestFlag::Async);
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
         let import_dir = self
             .test_root
-            .join(self.base.path().parent().map_or_else(|| unreachable!(), |p| p))
+            .join(self.base.path().parent().expect("Failed to get parent directory"))
             .to_string_lossy()
             .to_string();
-        let result = agent()
-            .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(10))
-            .send_json(&json!({
-                "code": codegen_text,
-                "includes": self.base.meta().includes,
-                "isAsync": is_async,
-                "isModule": is_module,
-                "isRaw": is_raw,
-                "importDir": import_dir
-            }))
-            .map(|res| res.into_string().unwrap_or_default());
 
-        if let Err(error) = result {
-            TestResult::RuntimeError(error.to_string())
-        } else if let Ok(output) = result {
-            if output.is_empty() {
-                TestResult::Passed
-            } else {
-                TestResult::RuntimeError(output)
+        let result = request_run_code(json!({
+            "code": codegen_text,
+            "includes": self.base.meta().includes,
+            "isAsync": is_async,
+            "isModule": is_module,
+            "isRaw": is_raw,
+            "importDir": import_dir
+        }))
+        .await;
+
+        match result {
+            Ok(output) => {
+                if output.is_empty() {
+                    TestResult::Passed
+                } else {
+                    TestResult::RuntimeError(output)
+                }
             }
-        } else {
-            unreachable!()
+            Err(error) => TestResult::RuntimeError(error),
         }
     }
+}
+
+async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Result<String, String> {
+    tokio::spawn(async move {
+        agent()
+            .post("http://localhost:32055/run")
+            .timeout(Duration::from_secs(10))
+            .send_json(json)
+            .map_err(|err| err.to_string())
+            .and_then(|res| res.into_string().map_err(|err| err.to_string()))
+    })
+    .await
+    .map_err(|err| err.to_string())?
 }
