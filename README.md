@@ -155,13 +155,6 @@ this lets you run the linter without a Node.js installation in your CI.
   </ul>
 </details>
 
-#### Linter Plugin
-
-We are currently developing a DSL-based plugin system.
-The plugin system uses [trustfall] as its query engine and a subset of GraphQL as its query language.
-
-You will not need to use JavaScript or Rust to write a plugin, this is useful for QAs and security researchers.
-
 ### 🔸 Resolver
 
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
@@ -254,7 +247,6 @@ And also
 
 - [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](#-ezno-type-checker)
 - [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
-- [@u9g](https://github.com/u9g) for the work in progress [oxc_linter_plugin](./crates/oxc_linter_plugin)
 
 ## 📖 License
 
@@ -328,6 +320,5 @@ Oxc partially copies code from the following projects, their licenses are listed
 [swc]: https://swc.rs
 [tdewolff-minify]: https://github.com/tdewolff/minify
 [terser]: https://terser.org
-[trustfall]: https://github.com/obi1kenobi/trustfall
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io

@@ -22,7 +22,5 @@ ignore:
   - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_diagnostics"
   - "crates/oxc_type_synthesis"
-  - "crates/oxc_query" # Not aiming for test coverage right now with @u9g
-  - "crates/oxc_linter_plugin"
   - "crates/oxc_transformer" # not ready
   - "crates/oxc_js_regex" # not ready
