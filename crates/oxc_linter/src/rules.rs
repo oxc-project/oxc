@@ -111,6 +111,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
+    pub mod triple_slash_reference;
 }
 
 mod jest {
@@ -378,6 +379,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_var_requires,
     typescript::prefer_as_const,
+    typescript::triple_slash_reference,
     jest::expect_expect,
     jest::max_expects,
     jest::no_alias_methods,

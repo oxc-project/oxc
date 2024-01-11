@@ -1,0 +1,44 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: triple_slash_reference
+---
+  ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
+   ╭─[triple_slash_reference.tsx:1:1]
+ 1 │ 
+ 2 │             /// <reference types="foo" />
+   ·             ─────────────────────────────
+ 3 │             import * as foo from 'foo';
+   ╰────
+  help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
+
+  ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
+   ╭─[triple_slash_reference.tsx:1:1]
+ 1 │ 
+ 2 │             /// <reference types="foo" />
+   ·             ─────────────────────────────
+ 3 │             import foo = require('foo');
+   ╰────
+  help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
+
+  ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
+   ╭─[triple_slash_reference.tsx:1:1]
+ 1 │ /// <reference path="foo" />
+   · ────────────────────────────
+   ╰────
+  help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
+
+  ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
+   ╭─[triple_slash_reference.tsx:1:1]
+ 1 │ /// <reference types="foo" />
+   · ─────────────────────────────
+   ╰────
+  help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
+
+  ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
+   ╭─[triple_slash_reference.tsx:1:1]
+ 1 │ /// <reference lib="foo" />
+   · ───────────────────────────
+   ╰────
+  help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
+
+
