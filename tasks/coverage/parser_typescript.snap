@@ -8624,6 +8624,38 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  16 │ 
     ╰────
 
+  × The keyword 'public' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:16:1]
+ 16 │ 
+ 17 │     var b: public.bar;
+    ·            ──────
+ 18 │ 
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:18:1]
+ 18 │ 
+ 19 │     function foo(x: private.x) { }
+    ·                     ───────
+ 20 │     function foo1(x: private.package.x) { }
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:19:1]
+ 19 │     function foo(x: private.x) { }
+ 20 │     function foo1(x: private.package.x) { }
+    ·                      ───────
+ 21 │     function foo2(x: private.package.protected) { }
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:20:1]
+ 20 │     function foo1(x: private.package.x) { }
+ 21 │     function foo2(x: private.package.protected) { }
+    ·                      ───────
+ 22 │     let b: interface.package.implements.B;
+    ╰────
+
   × Identifier `b` has already been declared
     ╭─[compiler/strictModeReservedWord.ts:16:1]
  16 │ 
@@ -8637,6 +8669,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  22 │     let b: interface.package.implements.B;
     ·         ┬
     ·         ╰── It can not be redeclared here
+ 23 │     ublic();
+    ╰────
+
+  × The keyword 'interface' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:21:1]
+ 21 │     function foo2(x: private.package.protected) { }
+ 22 │     let b: interface.package.implements.B;
+    ·            ─────────
  23 │     ublic();
     ╰────
 

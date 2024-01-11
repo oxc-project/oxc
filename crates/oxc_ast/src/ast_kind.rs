@@ -152,6 +152,10 @@ pub enum AstKind<'a> {
     TSEnumBody(&'a TSEnumBody<'a>),
 
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
+    TSTypeName(&'a TSTypeName<'a>),
+    TSExternalModuleReference(&'a TSExternalModuleReference),
+    TSQualifiedName(&'a TSQualifiedName<'a>),
+
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>),
     TSTypeAliasDeclaration(&'a TSTypeAliasDeclaration<'a>),
@@ -456,6 +460,9 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSEnumBody(x) => x.span,
 
             Self::TSImportEqualsDeclaration(x) => x.span,
+            Self::TSTypeName(x) => x.span(),
+            Self::TSExternalModuleReference(x) => x.span,
+            Self::TSQualifiedName(x) => x.span,
             Self::TSInterfaceDeclaration(x) => x.span,
             Self::TSModuleDeclaration(x) => x.span,
             Self::TSTypeAliasDeclaration(x) => x.span,
@@ -633,6 +640,9 @@ impl<'a> AstKind<'a> {
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
+            Self::TSTypeName(_) => "TSTypeName".into(),
+            Self::TSExternalModuleReference(_) => "TSExternalModuleReference".into(),
+            Self::TSQualifiedName(_) => "TSQualifiedName".into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),

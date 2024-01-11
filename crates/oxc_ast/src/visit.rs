@@ -1451,6 +1451,41 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::TSImportEqualsDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
+        self.visit_ts_module_reference(&decl.module_reference);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_module_reference(&mut self, reference: &TSModuleReference<'a>) {
+        match reference {
+            TSModuleReference::TypeName(name) => self.visit_ts_type_name(name),
+            TSModuleReference::ExternalModuleReference(reference) => {
+                self.visit_ts_external_module_reference(reference);
+            }
+        }
+    }
+
+    fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
+        let kind = AstKind::TSTypeName(self.alloc(name));
+        self.enter_node(kind);
+        match &name {
+            TSTypeName::IdentifierReference(ident) => self.visit_identifier_reference(ident),
+            TSTypeName::QualifiedName(name) => self.visit_ts_qualified_name(name),
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_external_module_reference(&mut self, reference: &TSExternalModuleReference) {
+        let kind = AstKind::TSExternalModuleReference(self.alloc(reference));
+        self.enter_node(kind);
+        self.visit_string_literal(&reference.expression);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_qualified_name(&mut self, name: &TSQualifiedName<'a>) {
+        let kind = AstKind::TSQualifiedName(self.alloc(name));
+        self.enter_node(kind);
+        self.visit_ts_type_name(&name.left);
+        self.visit_identifier_name(&name.right);
         self.leave_node(kind);
     }
 
@@ -1679,13 +1714,6 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_array_type(&mut self, ty: &TSArrayType<'a>) {
         self.visit_ts_type(&ty.element_type);
-    }
-
-    fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
-        match &name {
-            TSTypeName::IdentifierReference(ident) => self.visit_identifier_reference(ident),
-            TSTypeName::QualifiedName(_) => {}
-        }
     }
 
     fn visit_ts_null_keyword(&mut self, ty: &TSNullKeyword) {

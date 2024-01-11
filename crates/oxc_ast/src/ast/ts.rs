@@ -4,7 +4,7 @@
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -413,6 +413,15 @@ impl<'a> TSTypeName<'a> {
 
     pub fn is_qualified_name(&self) -> bool {
         matches!(self, Self::QualifiedName(_))
+    }
+}
+
+impl GetSpan for TSTypeName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            TSTypeName::IdentifierReference(ident) => ident.span,
+            TSTypeName::QualifiedName(name) => name.span,
+        }
     }
 }
 
