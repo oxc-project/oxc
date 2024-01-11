@@ -35,7 +35,9 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         match decl {
-            Declaration::TSImportEqualsDeclaration(ts_import_equals) => {
+            Declaration::TSImportEqualsDeclaration(ts_import_equals)
+                if ts_import_equals.import_kind.is_value() =>
+            {
                 *decl = self.transform_ts_import_equals(ts_import_equals);
             }
             Declaration::TSEnumDeclaration(ts_enum_declaration) => {
