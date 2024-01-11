@@ -62,10 +62,10 @@ impl Rule for NoTypos {
                     Declaration::VariableDeclaration(decl) => {
                         for decl in &decl.declarations {
                             let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
-                                return;
+                                continue;
                             };
                             let Some(potential_typo) = get_potential_typo(&id.name) else {
-                                return;
+                                continue;
                             };
                             ctx.diagnostic(NoTyposDiagnostic(
                                 id.name.to_string(),
