@@ -6,6 +6,6 @@
     debugger
 </script>
 
-<script setup>
+<script setup lang="ts" generic="T extends Record<string, string>">
     debugger
 </script>
