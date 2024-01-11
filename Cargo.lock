@@ -1550,6 +1550,7 @@ dependencies = [
  "console",
  "encoding_rs",
  "encoding_rs_io",
+ "futures",
  "jemallocator",
  "lazy_static",
  "miette",
@@ -1572,6 +1573,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "similar",
+ "tokio",
  "walkdir",
 ]
 

@@ -10,6 +10,7 @@ use std::{
 use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
+use futures::future::join_all;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
@@ -18,6 +19,7 @@ use oxc_span::SourceType;
 use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
+use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
@@ -48,6 +50,27 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
+        let cases = self.get_test_cases_mut();
+        for case in cases {
+            case.run();
+        }
+        self.run_coverage(name, args);
+    }
+
+    fn run_async(&mut self, name: &str, args: &AppArgs) {
+        let rt = Runtime::new().unwrap();
+        self.read_test_cases(name, args);
+
+        let cases = self.get_test_cases_mut();
+
+        rt.block_on(async {
+            join_all(cases.iter_mut().map(T::run_async)).await;
+        });
+
+        self.run_coverage(name, args);
+    }
+
+    fn run_coverage(&self, name: &str, args: &AppArgs) {
         let report = self.coverage_report();
 
         let mut out = stdout();
@@ -122,15 +145,12 @@ pub trait Suite<T: Case> {
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())
-            .map(|mut case| {
-                case.run();
-                case
-            })
             .collect::<Vec<_>>();
 
         self.save_test_cases(cases);
     }
 
+    fn get_test_cases_mut(&mut self) -> &mut Vec<T>;
     fn get_test_cases(&self) -> &Vec<T>;
 
     fn coverage_report(&self) -> CoverageReport<T> {
@@ -281,6 +301,10 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     /// Run a single test case, this is responsible for saving the test result
     fn run(&mut self);
+
+    /// Async version of run
+    #[allow(clippy::unused_async)]
+    async fn run_async(&mut self) {}
 
     /// Execute the parser once and get the test result
     fn execute(&mut self, source_type: SourceType) -> TestResult {
