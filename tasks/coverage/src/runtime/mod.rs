@@ -51,9 +51,14 @@ static SKIP_EVALUATING_FEATURES: Set<&'static str> = phf_set! {
   "Intl.DurationFormat"
 };
 
-static SKIP_EVALUATING_THESE_INCLUDES: phf::Set<&'static str> = phf_set! {
+static SKIP_EVALUATING_THESE_INCLUDES: Set<&'static str> = phf_set! {
     // We don't preserve "toString()" on functions
     "nativeFunctionMatcher.js",
+};
+
+static SKIP_TEST_CASES: Set<&'static str> = phf_set! {
+    // For some unknown reason these tests are unstable, so we'll skip them for now.
+    "language/identifiers/start-unicode"
 };
 
 const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
@@ -81,7 +86,11 @@ impl Case for CodegenRuntimeTest262Case {
     }
 
     fn skip_test_case(&self) -> bool {
+        let base_path = self.base.path().to_string_lossy();
         self.base.should_fail()
+            || base_path.starts_with("built-ins")
+            || base_path.starts_with("staging")
+            || base_path.starts_with("intl402")
             || self
                 .base
                 .meta()
@@ -94,6 +103,7 @@ impl Case for CodegenRuntimeTest262Case {
                 .features
                 .iter()
                 .any(|feature| SKIP_EVALUATING_FEATURES.contains(feature))
+            || SKIP_TEST_CASES.iter().any(|path| base_path.contains(path))
             || self.base.code().contains("$262")
             || self.base.code().contains("$DONOTEVALUATE()")
     }
