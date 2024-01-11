@@ -1,5 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
+use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -200,8 +201,10 @@ impl<'a> Parser<'a> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) {
-        self.token = self.lexer.next_regex(self.cur_kind());
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
+        self.token = token;
+        (pattern_end, flags)
     }
 
     /// Tell lexer to read a template substitution tail
