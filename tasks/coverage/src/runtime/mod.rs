@@ -163,6 +163,13 @@ impl CodegenRuntimeTest262Case {
                 if output.is_empty() {
                     TestResult::Passed
                 } else {
+                    if let Some(negative) = &self.base.meta().negative {
+                        if negative.phase.is_runtime()
+                            && output.starts_with(&negative.error_type.to_string())
+                        {
+                            return TestResult::Passed;
+                        }
+                    }
                     TestResult::RuntimeError(output)
                 }
             }
