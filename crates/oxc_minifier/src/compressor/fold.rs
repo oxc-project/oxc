@@ -838,37 +838,36 @@ impl<'a> Compressor<'a> {
                     let pair = comp.commutative_pair(|a| {
                         if let Expression::UnaryExpression(op) = a {
                             if !op.may_have_side_effects() && op.operator == UnaryOperator::Void {
-                                return Some(&op.argument)
+                                return Some(&());
                             }
                         }
                         None
-                    }, |b| Some(b));
-                    if let Some((void_exp, ref_exp)) = pair {
-                        if let Expression::Identifier(a) = void_exp {
-                            if let Expression::Identifier(b) = ref_exp {
-                                if a.name == b.name {
-                                    let span = expr.span();
-                                    let zero = self.ast.number_literal(
-                                        span,
-                                        0.0,
-                                        "0",
-                                        NumberBase::Decimal
-                                    );
-                                    let void_0 = self.ast.unary_expression(
-                                        span,
-                                        UnaryOperator::Void,
-                                        self.ast.literal_number_expression(zero)
-                                    );
-                                    let mut cmp = self.ast.binary_expression(
-                                        span,
-                                        void_0,
-                                        BinaryOperator::StrictEquality,
-                                        self.ast.identifier_reference_expression((*b).clone())
-                                    );
-                                    return Some(self.move_out_expression(&mut cmp))
-                                }
-                            }
+                    }, |b| {
+                        if let Expression::Identifier(id) = b {
+                            return Some(id)
                         }
+                        None
+                    });
+                    if let Some((_void_exp, id_ref)) = pair {
+                        let span = expr.span();
+                        let zero = self.ast.number_literal(
+                            span,
+                            0.0,
+                            "0",
+                            NumberBase::Decimal
+                        );
+                        let void_0 = self.ast.unary_expression(
+                            span,
+                            UnaryOperator::Void,
+                            self.ast.literal_number_expression(zero)
+                        );
+                        let mut cmp = self.ast.binary_expression(
+                            span,
+                            void_0,
+                            BinaryOperator::StrictEquality,
+                            self.ast.identifier_reference_expression((*id_ref).clone())
+                        );
+                        return Some(self.move_out_expression(&mut cmp))
                     }
 
                 }

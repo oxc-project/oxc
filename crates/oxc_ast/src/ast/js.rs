@@ -90,15 +90,15 @@ pub enum Expression<'a> {
 }
 
 impl<'a> BinaryExpression<'a> {
-    pub fn commutative_pair<F, G>(&self, check_a: F, check_b: G) -> Option<(&Expression<'a>, &Expression<'a>)>
-                                where F: Fn(&Expression) -> Option<&'a Expression<'a>>, G: Fn(&Expression) -> Option<&'a Expression<'a>> {
+    pub fn commutative_pair<F, G, RetF: 'a, RetG: 'a>(&self, check_a: F, check_b: G) -> Option<(&RetF, &RetG)>
+                                where F: Fn(&Expression) -> Option<&'a RetF>, G: Fn(&Expression) -> Option<&'a RetG> {
         if let Some(a) = check_a(&self.left) {
             if let Some(b) = check_b(&self.right) {
                 return Some((a, b))
             }
         } else if let Some(a) = check_a(&self.right) {
             if let Some(b) = check_b(&self.left) {
-                return Some((b, a))
+                return Some((a, b))
             }
         }
         None
