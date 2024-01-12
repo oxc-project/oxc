@@ -477,15 +477,14 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.8 Punctuators
-    fn read_dot(&mut self, builder: &mut AutoCow<'a>) -> Kind {
+    fn read_dot(&mut self) -> Kind {
         if self.peek() == Some('.') && self.peek2() == Some('.') {
             self.current.chars.next();
             self.current.chars.next();
             return Kind::Dot3;
         }
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-            builder.push_matching('.');
-            self.decimal_literal_after_decimal_point(builder)
+            self.decimal_literal_after_decimal_point()
         } else {
             Kind::Dot
         }
@@ -579,38 +578,33 @@ impl<'a> Lexer<'a> {
     }
 
     /// 12.9.3 Numeric Literals with `0` prefix
-    fn read_zero(&mut self, builder: &mut AutoCow<'a>) -> Kind {
+    fn read_zero(&mut self) -> Kind {
         match self.peek() {
-            Some('b' | 'B') => self.read_non_decimal(Kind::Binary, builder),
-            Some('o' | 'O') => self.read_non_decimal(Kind::Octal, builder),
-            Some('x' | 'X') => self.read_non_decimal(Kind::Hex, builder),
-            Some(c @ ('e' | 'E')) => {
+            Some('b' | 'B') => self.read_non_decimal(Kind::Binary),
+            Some('o' | 'O') => self.read_non_decimal(Kind::Octal),
+            Some('x' | 'X') => self.read_non_decimal(Kind::Hex),
+            Some('e' | 'E') => {
                 self.current.chars.next();
-                builder.push_matching(c);
-                self.read_decimal_exponent(builder)
+                self.read_decimal_exponent()
             }
             Some('.') => {
                 self.current.chars.next();
-                builder.push_matching('.');
-                self.decimal_literal_after_decimal_point_after_digits(builder)
+                self.decimal_literal_after_decimal_point_after_digits()
             }
             Some('n') => {
                 self.current.chars.next();
-                builder.push_matching('n');
                 self.check_after_numeric_literal(Kind::Decimal)
             }
-            Some(n) if n.is_ascii_digit() => self.read_legacy_octal(builder),
+            Some(n) if n.is_ascii_digit() => self.read_legacy_octal(),
             _ => self.check_after_numeric_literal(Kind::Decimal),
         }
     }
 
-    fn read_non_decimal(&mut self, kind: Kind, builder: &mut AutoCow<'a>) -> Kind {
-        let c = self.current.chars.next().unwrap();
-        builder.push_matching(c);
+    fn read_non_decimal(&mut self, kind: Kind) -> Kind {
+        self.current.chars.next();
 
         if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
-            let c = self.current.chars.next().unwrap();
-            builder.push_matching(c);
+            self.current.chars.next();
         } else {
             self.unexpected_err();
             return Kind::Undetermined;
@@ -620,10 +614,8 @@ impl<'a> Lexer<'a> {
             match c {
                 '_' => {
                     self.current.chars.next();
-                    builder.force_allocation_without_current_ascii_char(self);
                     if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
-                        let c = self.current.chars.next().unwrap();
-                        builder.push_matching(c);
+                        self.current.chars.next();
                     } else {
                         self.unexpected_err();
                         return Kind::Undetermined;
@@ -631,19 +623,17 @@ impl<'a> Lexer<'a> {
                 }
                 c if kind.matches_number_char(c) => {
                     self.current.chars.next();
-                    builder.push_matching(c);
                 }
                 _ => break,
             }
         }
         if self.peek() == Some('n') {
             self.current.chars.next();
-            builder.push_matching('n');
         }
         self.check_after_numeric_literal(kind)
     }
 
-    fn read_legacy_octal(&mut self, builder: &mut AutoCow<'a>) -> Kind {
+    fn read_legacy_octal(&mut self) -> Kind {
         let mut kind = Kind::Octal;
         loop {
             match self.peek() {
@@ -662,116 +652,101 @@ impl<'a> Lexer<'a> {
             // allow 08.5 and 09.5
             Some('.') if kind == Kind::Decimal => {
                 self.current.chars.next();
-                builder.push_matching('.');
-                self.decimal_literal_after_decimal_point_after_digits(builder)
+                self.decimal_literal_after_decimal_point_after_digits()
             }
             // allow 08e1 and 09e1
             Some('e') if kind == Kind::Decimal => {
                 self.current.chars.next();
-                builder.push_matching('e');
-                self.read_decimal_exponent(builder)
+                self.read_decimal_exponent()
             }
             _ => self.check_after_numeric_literal(kind),
         }
     }
 
-    fn decimal_literal_after_first_digit(&mut self, builder: &mut AutoCow<'a>) -> Kind {
-        self.read_decimal_digits_after_first_digit(builder);
+    fn decimal_literal_after_first_digit(&mut self) -> Kind {
+        self.read_decimal_digits_after_first_digit();
         if self.next_eq('.') {
-            builder.push_matching('.');
-            return self.decimal_literal_after_decimal_point_after_digits(builder);
+            return self.decimal_literal_after_decimal_point_after_digits();
         } else if self.next_eq('n') {
-            builder.push_matching('n');
             return self.check_after_numeric_literal(Kind::Decimal);
         }
 
-        let kind = self.optional_exponent(builder).map_or(Kind::Decimal, |kind| kind);
+        let kind = self.optional_exponent().map_or(Kind::Decimal, |kind| kind);
         self.check_after_numeric_literal(kind)
     }
 
-    fn read_decimal_exponent(&mut self, builder: &mut AutoCow<'a>) -> Kind {
+    fn read_decimal_exponent(&mut self) -> Kind {
         let kind = match self.peek() {
             Some('-') => {
                 self.current.chars.next();
-                builder.push_matching('-');
                 Kind::NegativeExponential
             }
             Some('+') => {
                 self.current.chars.next();
-                builder.push_matching('+');
                 Kind::PositiveExponential
             }
             _ => Kind::PositiveExponential,
         };
-        self.read_decimal_digits(builder);
+        self.read_decimal_digits();
         kind
     }
 
-    fn read_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
+    fn read_decimal_digits(&mut self) {
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-            let c = self.current.chars.next().unwrap();
-            builder.push_matching(c);
+            self.current.chars.next();
         } else {
             self.unexpected_err();
             return;
         }
 
-        self.read_decimal_digits_after_first_digit(builder);
+        self.read_decimal_digits_after_first_digit();
     }
 
-    fn read_decimal_digits_after_first_digit(&mut self, builder: &mut AutoCow<'a>) {
+    fn read_decimal_digits_after_first_digit(&mut self) {
         while let Some(c) = self.peek() {
             match c {
                 '_' => {
                     self.current.chars.next();
-                    builder.force_allocation_without_current_ascii_char(self);
                     if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-                        let c = self.current.chars.next().unwrap();
-                        builder.push_matching(c);
+                        self.current.chars.next();
                     } else {
                         self.unexpected_err();
                         return;
                     }
                 }
-                c @ '0'..='9' => {
+                '0'..='9' => {
                     self.current.chars.next();
-                    builder.push_matching(c);
                 }
                 _ => break,
             }
         }
     }
 
-    fn decimal_literal_after_decimal_point(&mut self, builder: &mut AutoCow<'a>) -> Kind {
-        self.read_decimal_digits(builder);
-        self.optional_exponent(builder);
+    fn decimal_literal_after_decimal_point(&mut self) -> Kind {
+        self.read_decimal_digits();
+        self.optional_exponent();
         self.check_after_numeric_literal(Kind::Float)
     }
 
-    fn decimal_literal_after_decimal_point_after_digits(
-        &mut self,
-        builder: &mut AutoCow<'a>,
-    ) -> Kind {
-        self.optional_decimal_digits(builder);
-        self.optional_exponent(builder);
+    fn decimal_literal_after_decimal_point_after_digits(&mut self) -> Kind {
+        self.optional_decimal_digits();
+        self.optional_exponent();
         self.check_after_numeric_literal(Kind::Float)
     }
 
-    fn optional_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
+    fn optional_decimal_digits(&mut self) {
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-            let c = self.current.chars.next().unwrap();
-            builder.push_matching(c);
+            self.current.chars.next();
         } else {
             return;
         }
-        self.read_decimal_digits_after_first_digit(builder);
+        self.read_decimal_digits_after_first_digit();
     }
 
-    fn optional_exponent(&mut self, builder: &mut AutoCow<'a>) -> Option<Kind> {
+    fn optional_exponent(&mut self) -> Option<Kind> {
         if matches!(self.peek(), Some('e' | 'E')) {
-            let c = self.current.chars.next().unwrap();
-            builder.push_matching(c);
-            return Some(self.read_decimal_exponent(builder));
+            self.current.chars.next();
+            return Some(self.read_decimal_exponent());
         }
         None
     }
@@ -932,7 +907,7 @@ impl<'a> Lexer<'a> {
                 self.current.chars.next();
                 while let Some(c) = self.peek() {
                     if is_identifier_part(c) {
-                        self.current.chars.next().unwrap();
+                        self.current.chars.next();
                     } else {
                         break;
                     }
@@ -1249,16 +1224,16 @@ impl<'a> Lexer<'a> {
                     match a {
                         '4'..='7' => {
                             if matches!(self.peek(), Some('0'..='7')) {
-                                let b = self.current.chars.next().unwrap();
+                                let b = self.consume_char();
                                 num.push(b);
                             }
                         }
                         '0'..='3' => {
                             if matches!(self.peek(), Some('0'..='7')) {
-                                let b = self.current.chars.next().unwrap();
+                                let b = self.consume_char();
                                 num.push(b);
                                 if matches!(self.peek(), Some('0'..='7')) {
-                                    let c = self.current.chars.next().unwrap();
+                                    let c = self.consume_char();
                                     num.push(c);
                                 }
                             }
@@ -1459,10 +1434,8 @@ const MIN: ByteHandler = |lexer| {
 
 // .
 const PRD: ByteHandler = |lexer| {
-    let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
-    lexer.read_dot(&mut builder)
+    lexer.consume_char();
+    lexer.read_dot()
 };
 
 // /
@@ -1490,18 +1463,14 @@ const SLH: ByteHandler = |lexer| {
 
 // 0
 const ZER: ByteHandler = |lexer| {
-    let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
-    lexer.read_zero(&mut builder)
+    lexer.consume_char();
+    lexer.read_zero()
 };
 
 // 1 to 9
 const DIG: ByteHandler = |lexer| {
-    let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
-    lexer.decimal_literal_after_first_digit(&mut builder)
+    lexer.consume_char();
+    lexer.decimal_literal_after_first_digit()
 };
 
 // :
