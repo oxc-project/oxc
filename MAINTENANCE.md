@@ -59,8 +59,8 @@ cargo publish -p oxc_ast
 cargo publish -p oxc_diagnostics
 cargo publish -p oxc_parser
 cargo publish -p oxc_semantic
-cargo publish -p oxc_transformer
 cargo publish -p oxc_codegen
+cargo publish -p oxc_transformer
 cargo publish -p oxc_minifier
 cargo publish -p oxc
 ```
