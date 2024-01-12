@@ -63,12 +63,12 @@ declare_oxc_lint!(
     ///  // Unknown properties
     ///  const Hello = <div class="hello">Hello World</div>;
     ///  const Alphabet = <div abc="something">Alphabet</div>;
-    ///  
+    ///
     ///  // Invalid aria-* attribute
     ///  const IconButton = <div aria-foo="bar" />;
     /// ```
     NoUnknownProperty,
-    correctness
+    restriction
 );
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "abbr" => phf_set! {"th", "td"},
