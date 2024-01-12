@@ -872,17 +872,17 @@ impl<'a> Lexer<'a> {
             self.current.chars.next();
             if !ch.is_ascii_lowercase() {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                break;
+                continue;
             }
             let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
                 flag
             } else {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                break;
+                continue;
             };
             if flags.contains(flag) {
                 self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
-                break;
+                continue;
             }
             flags |= flag;
         }
