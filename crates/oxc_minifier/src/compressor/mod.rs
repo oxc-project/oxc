@@ -203,20 +203,77 @@ impl<'a> Compressor<'a> {
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
     fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
-        if expr.operator.is_equality() && self.options.typeofs {
-            if let Expression::UnaryExpression(unary_expr) = &expr.left {
-                if unary_expr.operator == UnaryOperator::Typeof {
-                    if let Expression::Identifier(ident) = &unary_expr.argument {
-                        if expr.right.is_specific_string_literal("undefined") {
-                            let left = self.ast.identifier_reference_expression((*ident).clone());
-                            let right = self.ast.void_0();
-                            let operator = BinaryOperator::StrictEquality;
-                            *expr = BinaryExpression { span: SPAN, left, operator, right };
+        // if expr.operator.is_equality() && self.options.typeofs {
+        //     if let Expression::UnaryExpression(unary_expr) = &expr.left {
+        //         if unary_expr.operator == UnaryOperator::Typeof {
+        //             if let Expression::Identifier(ident) = &unary_expr.argument {
+        //                 if expr.right.is_specific_string_literal("undefined") {
+        //                     let left = self.ast.identifier_reference_expression((*ident).clone());
+        //                     let right = self.ast.void_0();
+        //                     let operator = BinaryOperator::StrictEquality;
+        //                     *expr = BinaryExpression { span: SPAN, left, operator, right };
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // return
+        if !self.options.typeofs {
+            return
+        }
+        // return None;
+        match expr.operator {
+            BinaryOperator::Equality | BinaryOperator::StrictEquality => {
+                let pair = self.commutative_pair((&expr.left, &expr.right),|a| {
+                    if a.is_specific_string_literal("undefined") {
+                        return Some(())
+                    }
+                    None
+                }, |b| {
+                    if let Expression::UnaryExpression(op) = b {
+                        if op.operator == UnaryOperator::Typeof {
+                            if let Expression::Identifier(id) = &op.argument {
+                                return Some((*id).clone())
+                            }
                         }
                     }
+                    None
+                });
+                if let Some((_void_exp, id_ref)) = pair {
+                    let span = expr.span;
+                    let left = self.ast.void_0();
+                    let operator = BinaryOperator::StrictEquality;
+                    let right = self.ast.identifier_reference_expression(id_ref);
+                    let cmp = BinaryExpression {
+                        span,
+                        left,
+                        operator,
+                        right
+                    };
+                    *expr = cmp;
                 }
+
+            }
+            _ => {}
+        };
+    }
+
+    pub fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
+        &self,
+        pair: (&A, &A),
+        check_a: F,
+        check_b: G,
+    ) -> Option<(RetF, RetG)> where F: Fn(&A) -> Option<RetF>, G: Fn(&A) -> Option<RetG> {
+        if let Some(a) = check_a(&pair.0) {
+            if let Some(b) = check_b(&pair.1) {
+                return Some((a, b))
+            }
+        } else if let Some(a) = check_a(&pair.1) {
+            if let Some(b) = check_b(&pair.0) {
+                return Some((a, b))
             }
         }
+        None
     }
 
     /// Removes redundant argument of `ReturnStatement`

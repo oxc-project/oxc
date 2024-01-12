@@ -178,7 +178,6 @@ impl<'a> From<&Expression<'a>> for Ty {
 
 impl<'a> Compressor<'a> {
     pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
-        self.fold_undefined_check_of(expr);
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
                 BinaryOperator::Equality
@@ -826,55 +825,6 @@ impl<'a> Compressor<'a> {
         }
 
         None
-    }
-
-    fn fold_undefined_check_of(
-        &mut self,
-        expr: &mut Expression<'a>
-    ) -> Option<Expression<'a>> {
-        if let Expression::BinaryExpression(comp) = &expr {
-            match comp.operator {
-                BinaryOperator::Equality | BinaryOperator::StrictEquality => {
-                    let pair = comp.commutative_pair(|a| {
-                        if let Expression::UnaryExpression(op) = a {
-                            if !op.may_have_side_effects() && op.operator == UnaryOperator::Void {
-                                return Some(&());
-                            }
-                        }
-                        None
-                    }, |b| {
-                        if let Expression::Identifier(id) = b {
-                            return Some(id)
-                        }
-                        None
-                    });
-                    if let Some((_void_exp, id_ref)) = pair {
-                        let span = expr.span();
-                        let zero = self.ast.number_literal(
-                            span,
-                            0.0,
-                            "0",
-                            NumberBase::Decimal
-                        );
-                        let void_0 = self.ast.unary_expression(
-                            span,
-                            UnaryOperator::Void,
-                            self.ast.literal_number_expression(zero)
-                        );
-                        let mut cmp = self.ast.binary_expression(
-                            span,
-                            void_0,
-                            BinaryOperator::StrictEquality,
-                            self.ast.identifier_reference_expression((*id_ref).clone())
-                        );
-                        return Some(self.move_out_expression(&mut cmp))
-                    }
-
-                }
-                _ => {}
-            };
-        }
-        return None
     }
 
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)

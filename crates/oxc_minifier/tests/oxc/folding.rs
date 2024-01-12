@@ -9,6 +9,11 @@ fn addition_folding() {
 }
 
 #[test]
+fn typeof_folding() {
+    test("typeof x === 'undefined'", "void 0===x;");
+}
+
+#[test]
 fn addition_folding_snapshots() {
     test_snapshot(
         "addition_folding",
