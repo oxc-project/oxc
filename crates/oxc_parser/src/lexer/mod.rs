@@ -30,7 +30,7 @@ pub use self::{
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use self::{string_builder::AutoCow, token::EscapedStringId, trivia_builder::TriviaBuilder};
+use self::{string_builder::AutoCow, token::EscapedId, trivia_builder::TriviaBuilder};
 use crate::{diagnostics, MAX_LEN};
 
 #[derive(Debug, Clone)]
@@ -69,6 +69,9 @@ pub struct Lexer<'a> {
 
     /// Data store for escaped strings, indexed by `Token.escaped_string_id`
     escaped_strings: Vec<&'a str>,
+    /// Data store for escaped templates, indexed by `Token.escaped_string_id`
+    /// `None` is saved when the string contains an invalid escape sequence.
+    escaped_templates: Vec<Option<&'a str>>,
 }
 
 #[allow(clippy::unused_self)]
@@ -95,6 +98,7 @@ impl<'a> Lexer<'a> {
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: vec![],
+            escaped_templates: vec![],
         }
     }
 
@@ -313,31 +317,57 @@ impl<'a> Lexer<'a> {
         self.escaped_strings.push(s);
         let escaped_string_id = self.escaped_strings.len() as u32;
         // SAFETY: escaped_string_id is the length of `self.escaped_strings` after an item is pushed, which can never be 0
-        let escaped_string_id = unsafe { EscapedStringId::new_unchecked(escaped_string_id) };
-        self.current.token.escaped_string_id.replace(escaped_string_id);
+        let escaped_string_id = unsafe { EscapedId::new_unchecked(escaped_string_id) };
+        self.current.token.escaped_id.replace(escaped_string_id);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
-        if let Some(escaped_string_id) = token.escaped_string_id {
-            return self.escaped_strings[escaped_string_id.get() as usize - 1];
+        if let Some(escaped_id) = token.escaped_id {
+            return self.escaped_strings[escaped_id.get() as usize - 1];
         }
 
         let raw = &self.source[token.start as usize..token.end as usize];
         match token.kind {
-            Kind::Str | Kind::NoSubstitutionTemplate => {
-                // omit surrounding quotes
-                &raw[1..raw.len() - 1]
-            }
-            Kind::TemplateHead => {
-                // omit leading "`${"
-                &raw[3..]
-            }
-            Kind::TemplateTail => {
-                // omit trailing "$`"
-                &raw[..raw.len() - 2]
+            Kind::Str => {
+                &raw[1..raw.len() - 1] // omit surrounding quotes
             }
             _ => raw,
         }
+    }
+
+    /// Save the template if it is escaped
+    #[allow(clippy::cast_possible_truncation)]
+    fn save_template_string(
+        &mut self,
+        is_valid_escape_sequence: bool,
+        has_escape: bool,
+        s: &'a str,
+    ) {
+        if !has_escape {
+            return;
+        }
+        self.escaped_templates.push(is_valid_escape_sequence.then(|| s));
+        let escaped_template_id = self.escaped_templates.len() as u32;
+        // SAFETY: escaped_string_id is the length of `self.escaped_strings` after an item is pushed, which can never be 0
+        let escaped_template_id = unsafe { EscapedId::new_unchecked(escaped_template_id) };
+        self.current.token.escaped_id.replace(escaped_template_id);
+    }
+
+    pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
+        if let Some(escaped_id) = token.escaped_id {
+            return self.escaped_templates[escaped_id.get() as usize - 1];
+        }
+
+        let raw = &self.source[token.start as usize..token.end as usize];
+        Some(match token.kind {
+            Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
+                &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
+            }
+            Kind::TemplateHead | Kind::TemplateMiddle => {
+                &raw[1..raw.len() - 2] // omit leading "`" or "}" and trailing "${"
+            }
+            _ => raw,
+        })
     }
 
     /// Read each char and set the current token
@@ -867,16 +897,20 @@ impl<'a> Lexer<'a> {
         while let Some(c) = self.current.chars.next() {
             match c {
                 '$' if self.peek() == Some('{') => {
-                    if is_valid_escape_sequence {
-                        self.save_string(true, builder.finish_without_push(self));
-                    }
+                    self.save_template_string(
+                        is_valid_escape_sequence,
+                        builder.has_escape(),
+                        builder.finish_without_push(self),
+                    );
                     self.current.chars.next();
                     return substitute;
                 }
                 '`' => {
-                    if is_valid_escape_sequence {
-                        self.save_string(true, builder.finish_without_push(self));
-                    }
+                    self.save_template_string(
+                        is_valid_escape_sequence,
+                        builder.has_escape(),
+                        builder.finish_without_push(self),
+                    );
                     return tail;
                 }
                 CR => {
@@ -888,7 +922,6 @@ impl<'a> Lexer<'a> {
                 '\\' => {
                     let text = builder.get_mut_string_without_current_ascii_char(self);
                     self.read_string_escape_sequence(text, true, &mut is_valid_escape_sequence);
-                    if !is_valid_escape_sequence {}
                 }
                 _ => builder.push_matching(c),
             }
