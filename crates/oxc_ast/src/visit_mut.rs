@@ -804,6 +804,9 @@ pub trait VisitMut<'a>: Sized {
         self.enter_node(kind);
         self.visit_property_key(&mut prop.key);
         self.visit_expression(&mut prop.value);
+        if let Some(init) = &mut prop.init {
+            self.visit_expression(init);
+        }
         self.leave_node(kind);
     }
 
