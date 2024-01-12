@@ -250,12 +250,12 @@ impl<'a> Compressor<'a> {
         F: Fn(&A) -> Option<RetF>,
         G: Fn(&A) -> Option<RetG>,
     {
-        if let Some(a) = check_a(&pair.0) {
-            if let Some(b) = check_b(&pair.1) {
+        if let Some(a) = check_a(pair.0) {
+            if let Some(b) = check_b(pair.1) {
                 return Some((a, b));
             }
-        } else if let Some(a) = check_a(&pair.1) {
-            if let Some(b) = check_b(&pair.0) {
+        } else if let Some(a) = check_a(pair.1) {
+            if let Some(b) = check_b(pair.0) {
                 return Some((a, b));
             }
         }
