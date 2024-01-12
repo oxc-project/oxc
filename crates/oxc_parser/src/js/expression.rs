@@ -180,7 +180,6 @@ impl<'a> Parser<'a> {
             }
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => {
-                self.read_regex();
                 let literal = self.parse_literal_regexp();
                 Ok(self.ast.literal_regexp_expression(literal))
             }
@@ -320,22 +319,10 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral {
         let span = self.start_span();
 
-        // split out the flag part of `/regex/flag` by looking for `/` from the end
-        let regex_src = self.cur_src();
-        let mut flags = RegExpFlags::empty();
-
-        let mut split_index = None;
-        for (i, c) in regex_src.char_indices().rev() {
-            if let Ok(flag) = RegExpFlags::try_from(c) {
-                flags |= flag;
-            } else {
-                split_index.replace(i);
-                break;
-            }
-        }
-
-        // `/` are omitted from the pattern
-        let pattern = split_index.map_or(regex_src, |i| regex_src.get(1..i).unwrap_or(""));
+        // split out pattern
+        let (pattern_end, flags) = self.read_regex();
+        let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
+        let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
 
         self.bump_any();
         self.ast.reg_exp_literal(self.end_span(span), pattern, flags)
