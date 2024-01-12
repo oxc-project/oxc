@@ -70,6 +70,8 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub namespace_stack: Vec<SymbolId>,
+    /// If true, the current node is in the type definition
+    in_type_definition: bool,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -107,6 +109,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
+            in_type_definition: false,
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
@@ -459,17 +462,24 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.in_type_definition = true;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
+                self.in_type_definition = true;
             }
             AstKind::TSInterfaceDeclaration(interface_declaration) => {
                 interface_declaration.bind(self);
+                self.in_type_definition = true;
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
                 self.make_all_namespaces_valuelike();
+                self.in_type_definition = true;
+            }
+            AstKind::TSTypeAnnotation(_) => {
+                self.in_type_definition = true;
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
@@ -539,6 +549,13 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
+            AstKind::TSEnumDeclaration(_)
+            | AstKind::TSTypeAliasDeclaration(_)
+            | AstKind::TSInterfaceDeclaration(_)
+            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSTypeAnnotation(_) => {
+                self.in_type_definition = false;
+            }
             _ => {}
         }
     }
@@ -566,6 +583,10 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
+        if self.in_type_definition {
+            return ReferenceFlag::Type;
+        }
+
         let mut flags = ReferenceFlag::None;
 
         if self.nodes.parent_id(self.current_node_id).is_none() {

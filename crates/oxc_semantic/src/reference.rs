@@ -55,4 +55,8 @@ impl Reference {
     pub fn is_write(&self) -> bool {
         self.flag.is_write()
     }
+
+    pub fn is_type(&self) -> bool {
+        self.flag.is_type()
+    }
 }
