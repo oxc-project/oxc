@@ -206,7 +206,6 @@ impl<'a> Compressor<'a> {
         if !self.options.typeofs {
             return
         }
-        // return None;
         match expr.operator {
             BinaryOperator::Equality | BinaryOperator::StrictEquality => {
                 let pair = self.commutative_pair((&expr.left, &expr.right),|a| {
