@@ -11,6 +11,7 @@ fn addition_folding() {
 #[test]
 fn typeof_folding() {
     test("typeof x === 'undefined'", "void 0===x;");
+    test("'undefined' === typeof x", "void 0===x;");
 }
 
 #[test]
