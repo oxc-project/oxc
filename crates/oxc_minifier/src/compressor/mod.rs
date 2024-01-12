@@ -203,21 +203,6 @@ impl<'a> Compressor<'a> {
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
     fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
-        // if expr.operator.is_equality() && self.options.typeofs {
-        //     if let Expression::UnaryExpression(unary_expr) = &expr.left {
-        //         if unary_expr.operator == UnaryOperator::Typeof {
-        //             if let Expression::Identifier(ident) = &unary_expr.argument {
-        //                 if expr.right.is_specific_string_literal("undefined") {
-        //                     let left = self.ast.identifier_reference_expression((*ident).clone());
-        //                     let right = self.ast.void_0();
-        //                     let operator = BinaryOperator::StrictEquality;
-        //                     *expr = BinaryExpression { span: SPAN, left, operator, right };
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // return
         if !self.options.typeofs {
             return
         }
