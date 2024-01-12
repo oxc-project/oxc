@@ -437,9 +437,10 @@ impl<'a> Parser<'a> {
 
         // `cooked = None` when template literal has invalid escape sequence
         // This is matched by `is_valid_escape_sequence` in `Lexer::read_template_literal`
-        let cooked = self.cur_token().escaped_string_id.map(|_| self.cur_string());
+        let cooked = self.cur_template_string();
 
-        let raw = &self.cur_src()[1..self.cur_src().len() - end_offset as usize];
+        let cur_src = self.cur_src();
+        let raw = &cur_src[1..cur_src.len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
             self.ast.new_str(raw.replace("\r\n", "\n").replace('\r', "\n").as_str())
         } else {

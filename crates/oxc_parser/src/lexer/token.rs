@@ -4,7 +4,7 @@ use oxc_span::Span;
 
 use super::kind::Kind;
 
-pub type EscapedStringId = std::num::NonZeroU32;
+pub type EscapedId = std::num::NonZeroU32;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Token {
@@ -20,9 +20,9 @@ pub struct Token {
     /// Indicates the token is on a newline
     pub is_on_new_line: bool,
 
-    /// A index handle to `Lexer::escaped_strings`
+    /// A index handle to `Lexer::escaped_strings` or `Lexer::escaped_templates`
     /// See https://floooh.github.io/2018/06/17/handles-vs-pointers.html for some background reading
-    pub escaped_string_id: Option<EscapedStringId>,
+    pub escaped_id: Option<EscapedId>,
 }
 
 #[cfg(target_pointer_width = "64")]
@@ -36,6 +36,6 @@ impl Token {
     }
 
     pub fn escaped(&self) -> bool {
-        self.escaped_string_id.is_some()
+        self.escaped_id.is_some()
     }
 }
