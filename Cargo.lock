@@ -1492,8 +1492,6 @@ version = "0.0.0"
 dependencies = [
  "codspeed-criterion-compat",
  "criterion",
- "jemallocator",
- "mimalloc",
  "oxc_allocator",
  "oxc_linter",
  "oxc_minifier",
