@@ -52,6 +52,11 @@ impl<'a> Parser<'a> {
         self.lexer.get_string(self.token)
     }
 
+    /// Get current template string
+    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+        self.lexer.get_template_string(self.token)
+    }
+
     /// Peek next token, returns EOF for final peek
     pub(crate) fn peek_token(&mut self) -> Token {
         self.lexer.lookahead(1)
