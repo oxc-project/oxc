@@ -243,7 +243,7 @@ impl<'a> Compressor<'a> {
         };
     }
 
-    pub fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
+   fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
         &self,
         pair: (&A, &A),
         check_a: F,
