@@ -70,7 +70,7 @@ impl Rule for NoTypos {
                             ctx.diagnostic(NoTyposDiagnostic(
                                 id.name.to_string(),
                                 potential_typo.to_string(),
-                                en_decl.span,
+                                id.span,
                             ));
                         }
                     }
@@ -80,7 +80,7 @@ impl Rule for NoTypos {
                         ctx.diagnostic(NoTyposDiagnostic(
                             id.name.to_string(),
                             potential_typo.to_string(),
-                            en_decl.span,
+                            id.span,
                         ));
                     }
                     _ => {}
