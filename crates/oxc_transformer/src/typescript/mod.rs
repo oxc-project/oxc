@@ -199,10 +199,7 @@ impl<'a> TypeScript<'a> {
             .scopes()
             .get_binding(root_scope_id, name)
             .map(|symbol_id| {
-                self.ctx
-                    .symbols()
-                    .get_resolved_references(symbol_id)
-                    .any(|x| x.is_read() || x.is_write())
+                self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
             })
             .unwrap_or_default()
     }
