@@ -284,5 +284,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_with_settings(NoTypos::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoTypos::NAME, pass, fail).test_and_snapshot();
 }
