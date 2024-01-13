@@ -14,6 +14,8 @@ bitflags! {
         const None = 0;
         const Read = 1 << 0;
         const Write = 1 << 1;
+        // Used in type definitions.
+        const Type = 1 << 2;
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
@@ -54,5 +56,10 @@ impl ReferenceFlag {
     /// The identifier is both read from and written to, e.g `a += 1`.
     pub const fn is_read_write(&self) -> bool {
         self.contains(Self::ReadWrite)
+    }
+
+    /// The identifier is used in a type definition.
+    pub const fn is_type(&self) -> bool {
+        self.contains(Self::Type)
     }
 }

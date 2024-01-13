@@ -1,4 +1,4 @@
-Passed: 298/1179
+Passed: 304/1179
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -832,7 +832,7 @@ Passed: 298/1179
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (67/158)
+# babel-plugin-transform-typescript (73/158)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -862,12 +862,7 @@ Passed: 298/1179
 * function/overloads-exports/input.mjs
 * imports/elide-injected/input.ts
 * imports/elide-no-import-specifiers/input.ts
-* imports/elide-preact/input.ts
-* imports/elide-react/input.ts
-* imports/elision/input.ts
 * imports/elision-locations/input.ts
-* imports/elision-qualifiedname/input.ts
-* imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
 * imports/import-named-type/input.ts
@@ -877,7 +872,6 @@ Passed: 298/1179
 * imports/import=-module-to-cjs/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
-* imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
