@@ -215,5 +215,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_with_settings(NoDocumentImportInPage::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDocumentImportInPage::NAME, pass, fail).test_and_snapshot();
 }
