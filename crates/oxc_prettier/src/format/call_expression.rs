@@ -168,6 +168,11 @@ fn print_call_expression_arguments<'a>(
             return all_args_broken_out(p);
         }
 
+        if !printed_arguments.is_empty() {
+            printed_arguments.push(ss!(","));
+            printed_arguments.push(line!());
+        }
+
         let get_last_doc = |p: &mut Prettier<'a>| {
             p.args.expand_last_arg = true;
             let last_doc = arguments.last().unwrap().format(p);
