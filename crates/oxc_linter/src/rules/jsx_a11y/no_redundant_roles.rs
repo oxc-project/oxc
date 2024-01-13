@@ -118,5 +118,5 @@ fn test() {
         ("<Button role='button' />", None, Some(settings()), None),
     ];
 
-    Tester::new_with_settings(NoRedundantRoles::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRedundantRoles::NAME, pass, fail).test_and_snapshot();
 }
