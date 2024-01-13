@@ -1062,14 +1062,16 @@ impl<'a> Format<'a> for ImportAttribute {
 impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(module::print_module_specifiers(
-            p,
-            &self.specifiers,
-            /* include_default */ false,
-            /* include_namespace */ false,
-        ));
         if let Some(decl) = &self.declaration {
+            parts.push(ss!(" "));
             parts.push(decl.format(p));
+        } else {
+            parts.push(module::print_module_specifiers(
+                p,
+                &self.specifiers,
+                /* include_default */ false,
+                /* include_namespace */ false,
+            ));
         }
         Doc::Array(parts)
     }
