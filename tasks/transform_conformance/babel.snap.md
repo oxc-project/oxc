@@ -1,4 +1,4 @@
-Passed: 304/1179
+Passed: 306/1179
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -832,7 +832,7 @@ Passed: 304/1179
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (73/158)
+# babel-plugin-transform-typescript (75/158)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -872,9 +872,7 @@ Passed: 304/1179
 * imports/import=-module-to-cjs/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
-* imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* imports/type-only-import-specifier-3/input.ts
 * imports/type-only-import-specifier-4/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts

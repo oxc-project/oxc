@@ -20,7 +20,8 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
-
+    /// type imports names
+    import_type_name_set: FxHashSet<Atom>,
     export_name_set: FxHashSet<Atom>,
 }
 
@@ -30,7 +31,13 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
+        Self {
+            ast,
+            ctx,
+            verbatim_module_syntax,
+            import_type_name_set: FxHashSet::default(),
+            export_name_set: FxHashSet::default(),
+        }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -101,7 +108,7 @@ impl<'a> TypeScript<'a> {
     /// * Remove the top level import / export statements that are types
     /// * Adds `export {}` if all import / export statements are removed, this is used to tell
     /// downstream tools that this file is in ESM.
-    pub fn transform_program(&self, program: &mut Program<'a>) {
+    pub fn transform_program(&mut self, program: &mut Program<'a>) {
         let mut needs_explicit_esm = false;
 
         for stmt in program.body.iter_mut() {
@@ -109,13 +116,17 @@ impl<'a> TypeScript<'a> {
                 needs_explicit_esm = true;
                 match &mut **module_decl {
                     ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                        decl.specifiers.retain(|specifier| specifier.export_kind.is_value());
+                        decl.specifiers.retain(|specifier| {
+                            !(specifier.export_kind.is_type()
+                                || self.import_type_name_set.contains(specifier.exported.name()))
+                        });
                     }
                     ModuleDeclaration::ImportDeclaration(decl) if decl.import_kind.is_value() => {
                         if let Some(specifiers) = &mut decl.specifiers {
                             specifiers.retain(|specifier| match specifier {
                                 ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                     if s.import_kind.is_type() {
+                                        self.import_type_name_set.insert(s.local.name.clone());
                                         return false;
                                     }
 
