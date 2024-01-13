@@ -1595,6 +1595,7 @@ pub trait VisitMut<'a>: Sized {
             TSType::TSTypePredicate(ty) => self.visit_ts_type_predicate(ty),
             TSType::TSTypeLiteral(ty) => self.visit_ts_type_literal(ty),
             TSType::TSIndexedAccessType(ty) => self.visit_ts_indexed_access_type(ty),
+            TSType::TSTypeQuery(ty) => self.visit_ts_type_query(ty),
             _ => {}
         }
     }
@@ -1847,5 +1848,15 @@ pub trait VisitMut<'a>: Sized {
         if let Some(annotation) = &mut signature.return_type {
             self.visit_ts_type_annotation(annotation);
         }
+    }
+
+    fn visit_ts_type_query(&mut self, ty: &mut TSTypeQuery<'a>) {
+        let kind = AstKind::TSTypeQuery(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_ts_type_name(&mut ty.expr_name);
+        if let Some(type_parameters) = &mut ty.type_parameters {
+            self.visit_ts_type_parameter_instantiation(type_parameters);
+        }
+        self.leave_node(kind);
     }
 }
