@@ -55,8 +55,6 @@ static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, phf::Set<&'static str>> =
     "body" => phf_set!{"document"},
 };
 
-static EMPTY_SET: phf::Set<&'static str> = phf_set! {};
-
 impl Rule for NoRedundantRoles {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let components: HashMap<String, String> = ctx
@@ -87,8 +85,9 @@ impl Rule for NoRedundantRoles {
                         .map(std::string::ToString::to_string)
                         .collect();
                     for role in &roles {
-                        let exceptions =
-                            DEFAULT_ROLE_EXCEPTIONS.get(component).unwrap_or(&EMPTY_SET);
+                        let Some(exceptions) = DEFAULT_ROLE_EXCEPTIONS.get(component) else {
+                            continue;
+                        };
                         if exceptions.contains(role) {
                             ctx.diagnostic(NoRedundantRolesDiagnostic {
                                 span: attr.span,
