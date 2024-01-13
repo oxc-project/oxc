@@ -401,5 +401,5 @@ fn test() {
         "status_code < 500 && response && status_code <= 500;",
     ];
 
-    Tester::new_without_config(ConstComparisons::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConstComparisons::NAME, pass, fail).test_and_snapshot();
 }

@@ -142,5 +142,5 @@ fn test() {
         r"(!!a) ? b() : c();",
     ];
 
-    Tester::new_without_config(NoNegatedCondition::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNegatedCondition::NAME, pass, fail).test_and_snapshot();
 }

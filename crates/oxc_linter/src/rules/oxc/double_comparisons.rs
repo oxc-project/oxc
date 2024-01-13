@@ -130,5 +130,5 @@ fn test() {
         "x > y || x === y",
     ];
 
-    Tester::new_without_config(DoubleComparisons::NAME, pass, fail).test_and_snapshot();
+    Tester::new(DoubleComparisons::NAME, pass, fail).test_and_snapshot();
 }

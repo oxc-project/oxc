@@ -137,5 +137,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(NoAbusiveEslintDisable::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAbusiveEslintDisable::NAME, pass, fail).test_and_snapshot();
 }

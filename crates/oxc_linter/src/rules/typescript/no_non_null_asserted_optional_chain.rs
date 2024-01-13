@@ -131,6 +131,5 @@ fn test() {
         "(foo?.bar!)()",
     ];
 
-    Tester::new_without_config(NoNonNullAssertedOptionalChain::NAME, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoNonNullAssertedOptionalChain::NAME, pass, fail).test_and_snapshot();
 }

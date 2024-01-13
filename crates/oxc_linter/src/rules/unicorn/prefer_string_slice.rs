@@ -123,5 +123,5 @@ fn test() {
         r"foo.substring((10, bar))",
     ];
 
-    Tester::new_without_config(PreferStringSlice::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferStringSlice::NAME, pass, fail).test_and_snapshot();
 }

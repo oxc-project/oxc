@@ -183,5 +183,5 @@ fn test() {
         r#"<script>测试 " 测试</script>"#,
     ];
 
-    Tester::new_without_config(NoUnescapedEntities::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnescapedEntities::NAME, pass, fail).test_and_snapshot();
 }

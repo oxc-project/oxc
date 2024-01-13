@@ -239,5 +239,5 @@ fn test() {
         	      ",
     ];
 
-    Tester::new_without_config(RequireRenderReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireRenderReturn::NAME, pass, fail).test_and_snapshot();
 }

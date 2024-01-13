@@ -292,5 +292,5 @@ fn test() {
         "array.length === 0 || array.every(Boolean) || array.length === 0",
     ];
 
-    Tester::new_without_config(NoUselessLengthCheck::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessLengthCheck::NAME, pass, fail).test_and_snapshot();
 }

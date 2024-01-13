@@ -92,5 +92,5 @@ fn test() {
         "let sqrt2 = 1.414213",  // SQRT2
     ];
 
-    Tester::new_without_config(ApproxConstant::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ApproxConstant::NAME, pass, fail).test_and_snapshot();
 }

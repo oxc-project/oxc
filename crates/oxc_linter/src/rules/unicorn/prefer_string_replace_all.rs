@@ -205,5 +205,5 @@ fn test() {
         r#""Hello world".replaceAll(/world/g, 'world!');"#,
     ];
 
-    Tester::new_without_config(PreferStringReplaceAll::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferStringReplaceAll::NAME, pass, fail).test_and_snapshot();
 }

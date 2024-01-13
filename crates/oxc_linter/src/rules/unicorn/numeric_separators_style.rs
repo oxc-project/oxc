@@ -355,7 +355,7 @@ fn test_with_snapshot() {
         "const foo = -100000_1",
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, vec![], fail).test_and_snapshot();
+    Tester::new(NumericSeparatorsStyle::NAME, vec![], fail).test_and_snapshot();
 }
 
 #[test]
@@ -384,7 +384,7 @@ fn test_number_binary() {
         ("const foo = 0B10101010101010", "const foo = 0B10_1010_1010_1010", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -410,7 +410,7 @@ fn test_number_hexadecimal() {
 
     let fix = vec![("const foo = 0xA_B_CDE_F0", "const foo = 0xA_BC_DE_F0", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -437,7 +437,7 @@ fn test_number_octal() {
 
     let fix = vec![("const foo = 0o12_34_5670", "const foo = 0o1234_5670", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -466,7 +466,7 @@ fn test_bigint_binary() {
         ("const foo = 0B10101010101010n", "const foo = 0B10_1010_1010_1010n", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -491,7 +491,7 @@ fn test_bigint() {
 
     let fix = vec![("const foo = 1_9_223n", "const foo = 19_223n", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -533,7 +533,7 @@ fn test_number_decimal_exponential() {
         ("const foo = 3.65432E12000", "const foo = 3.654_32E12_000", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -560,7 +560,7 @@ fn test_number_decimal_float() {
 
     let fix = vec![("const foo = 9807.1234567", "const foo = 9807.123_456_7", None)];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -596,7 +596,7 @@ fn test_number_decimal_integer() {
         ("const foo = -100000_1", "const foo = -1_000_001", None),
     ];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
@@ -644,7 +644,7 @@ fn test_misc() {
 
     let fail = vec![];
 
-    Tester::new_without_config(NumericSeparatorsStyle::NAME, pass, fail).test();
+    Tester::new(NumericSeparatorsStyle::NAME, pass, fail).test();
 }
 
 #[cfg(test)]

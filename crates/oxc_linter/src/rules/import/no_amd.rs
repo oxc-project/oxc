@@ -101,7 +101,7 @@ fn test() {
         r#"require(["a"], function(a) { console.log(a); })"#,
     ];
 
-    Tester::new_without_config(NoAmd::NAME, pass, fail)
+    Tester::new(NoAmd::NAME, pass, fail)
         .change_rule_path("no-amd.js")
         .with_import_plugin(true)
         .test_and_snapshot();

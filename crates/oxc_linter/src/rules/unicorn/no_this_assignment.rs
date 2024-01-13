@@ -143,5 +143,5 @@ fn test() {
         r"var foo = (bar), baz = (this);",
     ];
 
-    Tester::new_without_config(NoThisAssignment::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoThisAssignment::NAME, pass, fail).test_and_snapshot();
 }

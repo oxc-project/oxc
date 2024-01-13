@@ -146,5 +146,5 @@ fn test() {
         ("<Box as='html' lang='foo' />", None, Some(settings()), None),
     ];
 
-    Tester::new_with_settings(Lang::NAME, pass, fail).test_and_snapshot();
+    Tester::new(Lang::NAME, pass, fail).test_and_snapshot();
 }

@@ -152,7 +152,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_without_config(SwitchCaseBraces::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(SwitchCaseBraces::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

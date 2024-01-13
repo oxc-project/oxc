@@ -214,5 +214,5 @@ fn test() {
         //~^ ERROR: variable appears on both sides of an assignment operation
     ];
 
-    Tester::new_without_config(MisrefactoredAssignOp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(MisrefactoredAssignOp::NAME, pass, fail).test_and_snapshot();
 }

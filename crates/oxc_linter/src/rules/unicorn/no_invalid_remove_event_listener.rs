@@ -201,5 +201,5 @@ fn test() {
         "#,
     ];
 
-    Tester::new_without_config(NoInvalidRemoveEventListener::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoInvalidRemoveEventListener::NAME, pass, fail).test_and_snapshot();
 }

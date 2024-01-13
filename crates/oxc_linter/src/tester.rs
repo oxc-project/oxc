@@ -20,7 +20,39 @@ enum TestResult {
     Fixed(String),
 }
 
-type TestCase = (String, Option<Value>, Option<Value>, Option<PathBuf>);
+#[derive(Debug, Clone, Default)]
+pub struct TestCase {
+    source: String,
+    config: Option<Value>,
+    settings: Option<Value>,
+    path: Option<PathBuf>,
+}
+
+impl From<&str> for TestCase {
+    fn from(source: &str) -> Self {
+        Self { source: source.to_string(), ..Self::default() }
+    }
+}
+
+impl From<(&str, Option<Value>)> for TestCase {
+    fn from((source, config): (&str, Option<Value>)) -> Self {
+        Self { source: source.to_string(), config, ..Self::default() }
+    }
+}
+
+impl From<(&str, Option<Value>, Option<Value>)> for TestCase {
+    fn from((source, config, settings): (&str, Option<Value>, Option<Value>)) -> Self {
+        Self { source: source.to_string(), config, settings, ..Self::default() }
+    }
+}
+
+impl From<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> for TestCase {
+    fn from(
+        (source, config, settings, path): (&str, Option<Value>, Option<Value>, Option<PathBuf>),
+    ) -> Self {
+        Self { source: source.to_string(), config, settings, path }
+    }
+}
 
 pub struct Tester {
     rule_name: &'static str,
@@ -37,33 +69,14 @@ pub struct Tester {
 }
 
 impl Tester {
-    pub fn new<S: Into<String>>(
+    pub fn new<T: Into<TestCase>>(
         rule_name: &'static str,
-        expect_pass: Vec<(S, Option<Value>)>,
-        expect_fail: Vec<(S, Option<Value>)>,
-    ) -> Self {
-        let expect_pass =
-            expect_pass.into_iter().map(|(s, r)| (s.into(), r, None, None)).collect::<Vec<_>>();
-        let expect_fail =
-            expect_fail.into_iter().map(|(s, r)| (s.into(), r, None, None)).collect::<Vec<_>>();
-        Self::new_with_settings(rule_name, expect_pass, expect_fail)
-    }
-
-    #[allow(clippy::type_complexity)]
-    pub fn new_with_settings<S: Into<String>>(
-        rule_name: &'static str,
-        expect_pass: Vec<(S, Option<Value>, Option<Value>, Option<PathBuf>)>,
-        expect_fail: Vec<(S, Option<Value>, Option<Value>, Option<PathBuf>)>,
+        expect_pass: Vec<T>,
+        expect_fail: Vec<T>,
     ) -> Self {
         let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
-        let expect_pass = expect_pass
-            .into_iter()
-            .map(|(s, r, settings, p)| (s.into(), r, settings, p))
-            .collect::<Vec<_>>();
-        let expect_fail = expect_fail
-            .into_iter()
-            .map(|(s, r, settings, p)| (s.into(), r, settings, p))
-            .collect::<Vec<_>>();
+        let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
+        let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
         let current_working_directory =
             env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
         Self {
@@ -79,30 +92,6 @@ impl Tester {
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
         }
-    }
-
-    pub fn new_without_config<S: Into<String>>(
-        rule_name: &'static str,
-        expect_pass: Vec<S>,
-        expect_fail: Vec<S>,
-    ) -> Self {
-        let expect_pass =
-            expect_pass.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
-        let expect_fail =
-            expect_fail.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
-        Self::new_with_settings(rule_name, expect_pass, expect_fail)
-    }
-
-    pub fn update_expect_pass_fail<S: Into<String>>(
-        mut self,
-        expect_pass: Vec<S>,
-        expect_fail: Vec<S>,
-    ) -> Self {
-        self.expect_pass =
-            expect_pass.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
-        self.expect_fail =
-            expect_fail.into_iter().map(|s| (s.into(), None, None, None)).collect::<Vec<_>>();
-        self
     }
 
     /// Change the path
@@ -156,18 +145,18 @@ impl Tester {
     }
 
     fn test_pass(&mut self) {
-        for (test, config, settings, path) in self.expect_pass.clone() {
-            let result = self.run(&test, config, false, &settings, &path);
+        for TestCase { source, config, settings, path } in self.expect_pass.clone() {
+            let result = self.run(&source, config, false, &settings, &path);
             let passed = result == TestResult::Passed;
-            assert!(passed, "expect test to pass: {test} {}", self.snapshot);
+            assert!(passed, "expect test to pass: {source} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
-        for (test, config, settings, path) in self.expect_fail.clone() {
-            let result = self.run(&test, config, false, &settings, &path);
+        for TestCase { source, config, settings, path } in self.expect_fail.clone() {
+            let result = self.run(&source, config, false, &settings, &path);
             let failed = result == TestResult::Failed;
-            assert!(failed, "expect test to fail: {test}");
+            assert!(failed, "expect test to fail: {source}");
         }
     }
 

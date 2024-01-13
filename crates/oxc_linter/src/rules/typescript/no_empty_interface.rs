@@ -87,5 +87,5 @@ fn test() {
         "declare module FooBar { type Baz = typeof baz; export interface Bar extends Baz {} }",
     ];
 
-    Tester::new_without_config(NoEmptyInterface::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyInterface::NAME, pass, fail).test_and_snapshot();
 }

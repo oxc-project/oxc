@@ -96,5 +96,5 @@ fn test() {
         r"(( (( String )).fromCharCode( ((code)), ) ))",
     ];
 
-    Tester::new_without_config(PreferCodePoint::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferCodePoint::NAME, pass, fail).test_and_snapshot();
 }

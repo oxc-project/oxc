@@ -253,7 +253,7 @@ mod tests {
 
     #[test]
     fn test_hex_literals() {
-        Tester::new_without_config(
+        Tester::new(
             NoControlRegex::NAME,
             vec![
                 "x1f",                 // not a control sequence
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn test_unicode_literals() {
-        Tester::new_without_config(
+        Tester::new(
             NoControlRegex::NAME,
             vec![
                 r"u00",    // not a control sequence
@@ -300,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_unicode_brackets() {
-        Tester::new_without_config(
+        Tester::new(
             NoControlRegex::NAME,
             vec![
                 r"let r = /\u{0}/", // no unicode flag, this is valid
@@ -322,7 +322,7 @@ mod tests {
     fn test() {
         // test cases taken from eslint. See:
         // https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-control-regex.js
-        Tester::new_without_config(
+        Tester::new(
             NoControlRegex::NAME,
             vec![
                 "var regex = /x1f/;",

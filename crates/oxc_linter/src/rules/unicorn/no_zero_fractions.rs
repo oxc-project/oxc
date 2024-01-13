@@ -133,5 +133,5 @@ fn test() {
         r"function foo(){return.0+.1}",
     ];
 
-    Tester::new_without_config(NoZeroFractions::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoZeroFractions::NAME, pass, fail).test_and_snapshot();
 }

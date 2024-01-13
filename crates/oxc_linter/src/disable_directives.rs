@@ -354,5 +354,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config("no-debugger", pass, fail).test();
+    Tester::new("no-debugger", pass, fail).test();
 }

@@ -137,7 +137,7 @@ fn test() {
         "import { foo } from './ignore'",
     ];
 
-    Tester::new_without_config(NoCycle::NAME, pass, fail)
+    Tester::new(NoCycle::NAME, pass, fail)
         .change_rule_path("cycles/depth-zero.js")
         .with_import_plugin(true)
         .test_and_snapshot();

@@ -111,5 +111,5 @@ fn test() {
         r"foo?.trimLeft()",
     ];
 
-    Tester::new_without_config(PreferStringTrimStartEnd::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferStringTrimStartEnd::NAME, pass, fail).test_and_snapshot();
 }

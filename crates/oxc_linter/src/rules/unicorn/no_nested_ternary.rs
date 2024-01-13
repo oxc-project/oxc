@@ -180,7 +180,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_without_config(NoNestedTernary::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(NoNestedTernary::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

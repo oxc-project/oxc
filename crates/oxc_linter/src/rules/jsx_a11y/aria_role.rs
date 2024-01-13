@@ -237,5 +237,5 @@ fn test() {
         ("<Box asChild='div' role='Button' />", None, None, None),
     ];
 
-    Tester::new_with_settings(AriaRole::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AriaRole::NAME, pass, fail).test_and_snapshot();
 }

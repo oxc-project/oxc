@@ -155,5 +155,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(BadReplaceAllArg::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadReplaceAllArg::NAME, pass, fail).test_and_snapshot();
 }

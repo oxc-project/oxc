@@ -445,5 +445,5 @@ fn test() {
 			}",
     ];
 
-    Tester::new_without_config(NoUnusedPrivateClassMembers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnusedPrivateClassMembers::NAME, pass, fail).test_and_snapshot();
 }

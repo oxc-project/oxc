@@ -259,5 +259,5 @@ fn test() {
         r#"element.getAttribute("data-unicorn").toString()"#,
     ];
 
-    Tester::new_without_config(PreferDomNodeDataset::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferDomNodeDataset::NAME, pass, fail).test_and_snapshot();
 }

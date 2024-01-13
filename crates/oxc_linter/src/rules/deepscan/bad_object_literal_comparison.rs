@@ -134,5 +134,5 @@ fn test() {
         r"if (config != []) { }",
     ];
 
-    Tester::new_without_config(BadObjectLiteralComparison::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadObjectLiteralComparison::NAME, pass, fail).test_and_snapshot();
 }

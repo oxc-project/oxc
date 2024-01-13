@@ -116,8 +116,6 @@ fn walk_exported_recursive(
 #[test]
 fn test() {
     use crate::tester::Tester;
-    let mut tester =
-        Tester::new_without_config::<String>(Export::NAME, vec![], vec![]).with_import_plugin(true);
 
     {
         let pass = vec![
@@ -198,7 +196,7 @@ fn test() {
                 }
                 }
             "),
-            (" 
+            ("
                 export class Foo { }
                 export namespace Foo { }
                 export namespace Foo {
@@ -251,7 +249,7 @@ fn test() {
             // (r#"export * from "./malformed.js""#),
             (r#"export * from "./default-export""#),
             (r#"let foo; export { foo as "foo" }; export * from "./export-all""#),
-            (" 
+            ("
                 export type Foo = string;
                 export type Foo = number;
             "),
@@ -269,7 +267,7 @@ fn test() {
                     export default Foo;
                 }
             "),
-            (" 
+            ("
                 export namespace Foo {
                     export namespace Bar {
                         export const Foo = 1;
@@ -278,7 +276,7 @@ fn test() {
                     export namespace Baz {
                         export const Bar = 3;
                         export const Bar = 4;
-                    } 
+                    }
                 }
             "),
             ("
@@ -327,15 +325,18 @@ fn test() {
             "#),
         ];
 
-        tester = tester.change_rule_path("index.js").update_expect_pass_fail(pass, fail);
-        tester.test();
+        Tester::new(Export::NAME, pass, fail)
+            .with_import_plugin(true)
+            .change_rule_path("index.js")
+            .test();
     }
 
     {
         let pass = vec!["export * from './module'"];
         let fail = vec![];
-        tester =
-            tester.change_rule_path("export-star-4/index.js").update_expect_pass_fail(pass, fail);
-        tester.test_and_snapshot();
+        Tester::new(Export::NAME, pass, fail)
+            .with_import_plugin(true)
+            .change_rule_path("export-star-4/index.js")
+            .test();
     }
 }

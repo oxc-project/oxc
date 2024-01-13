@@ -7,7 +7,7 @@ expression: no_head_import_in_document
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
- 4 │             
+ 4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
@@ -16,7 +16,7 @@ expression: no_head_import_in_document
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
- 4 │             
+ 4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
@@ -25,7 +25,7 @@ expression: no_head_import_in_document
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
- 4 │             
+ 4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
@@ -34,7 +34,7 @@ expression: no_head_import_in_document
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
- 4 │             
+ 4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
@@ -43,7 +43,7 @@ expression: no_head_import_in_document
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
- 4 │             
+ 4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 

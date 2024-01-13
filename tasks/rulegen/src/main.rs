@@ -223,17 +223,10 @@ pub struct Context {
     snake_rule_name: String,
     pass_cases: String,
     fail_cases: String,
-    test_method: String,
 }
 
 impl Context {
-    fn new(
-        plugin_name: String,
-        rule_name: &str,
-        pass_cases: String,
-        fail_cases: String,
-        test_method: String,
-    ) -> Self {
+    fn new(plugin_name: String, rule_name: &str, pass_cases: String, fail_cases: String) -> Self {
         let pascal_rule_name = rule_name.to_case(Case::Pascal);
         let kebab_rule_name = rule_name.to_case(Case::Kebab);
         let underscore_rule_name = rule_name.to_case(Case::Snake);
@@ -244,7 +237,6 @@ impl Context {
             snake_rule_name: underscore_rule_name,
             pass_cases,
             fail_cases,
-            test_method,
         }
     }
 }
@@ -519,17 +511,15 @@ fn main() {
                 .collect::<Vec<_>>()
                 .join(",\n");
 
-            let method = if has_config { "new" } else { "new_without_config" }.to_string();
-
-            Context::new(plugin_name, &rule_name, pass_cases, fail_cases, method)
+            Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
         }
         Err(_err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
-            Context::new(plugin_name, &rule_name, String::new(), String::new(), "new".into())
+            Context::new(plugin_name, &rule_name, String::new(), String::new())
         }
         Ok(Err(err)) => {
             println!("Failed to convert rule source code to string: {err}, use empty template");
-            Context::new(plugin_name, &rule_name, String::new(), String::new(), "new".into())
+            Context::new(plugin_name, &rule_name, String::new(), String::new())
         }
     };
 

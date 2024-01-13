@@ -115,5 +115,5 @@ fn test() {
         r"try {} catch ({cause: {message}}) {}",
     ];
 
-    Tester::new_without_config(PreferOptionalCatchBinding::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferOptionalCatchBinding::NAME, pass, fail).test_and_snapshot();
 }

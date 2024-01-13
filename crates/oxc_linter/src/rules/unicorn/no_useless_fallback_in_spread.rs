@@ -124,5 +124,5 @@ fn test() {
         r"const object = {...(document.all || {})}",
     ];
 
-    Tester::new_without_config(NoUselessFallbackInSpread::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessFallbackInSpread::NAME, pass, fail).test_and_snapshot();
 }

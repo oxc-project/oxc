@@ -262,5 +262,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(NoUselessSwitchCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessSwitchCase::NAME, pass, fail).test_and_snapshot();
 }
