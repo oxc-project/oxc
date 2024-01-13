@@ -11,13 +11,13 @@ expression: no_head_element
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-element
 
-  × Expected `,` but found `Identifier`
-   ╭─[no_head_element.tsx:7:1]
+  ⚠ eslint-plugin-next(no-head-element): Do not use `<head>` element. Use `<Head />` from `next/head` instead.
+   ╭─[no_head_element.tsx:6:1]
+ 6 │                         <div>
  7 │                           <head>
+   ·                           ──────
  8 │                             <title>My page title</title>
-   ·                                       ──┬─
-   ·                                         ╰── `,` expected
- 9 │                           </head>
    ╰────
+  help: See https://nextjs.org/docs/messages/no-head-element
 
 

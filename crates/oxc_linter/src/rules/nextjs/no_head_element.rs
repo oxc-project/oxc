@@ -163,9 +163,9 @@ fn test() {
         	}",
             None,
             None,
-            Some(PathBuf::from("pages/index.ts")),
+            Some(PathBuf::from("pages/index.tsx")),
         ),
     ];
 
-    Tester::new_with_settings(NoHeadElement::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoHeadElement::NAME, pass, fail).test_and_snapshot();
 }
