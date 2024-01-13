@@ -435,7 +435,5 @@ fn test() {
         (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
     ];
 
-    Tester::new_without_config(PreferSpread::NAME, pass, fail)
-        .expect_fix(expect_fix)
-        .test_and_snapshot();
+    Tester::new(PreferSpread::NAME, pass, fail).expect_fix(expect_fix).test_and_snapshot();
 }

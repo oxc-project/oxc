@@ -230,5 +230,5 @@ fn test() {
         r"!/a/v.exec(foo)",
     ];
 
-    Tester::new_without_config(PreferRegexpTest::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferRegexpTest::NAME, pass, fail).test_and_snapshot();
 }

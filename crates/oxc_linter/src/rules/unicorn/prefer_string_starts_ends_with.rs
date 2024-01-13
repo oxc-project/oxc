@@ -198,5 +198,5 @@ fn test() {
         r"const a = /^你/.test('a');",
     ];
 
-    Tester::new_without_config(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();
 }

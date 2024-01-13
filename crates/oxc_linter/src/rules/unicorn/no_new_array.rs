@@ -130,5 +130,5 @@ fn test() {
         r"const array = new Array(length)",
     ];
 
-    Tester::new_without_config(NoNewArray::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewArray::NAME, pass, fail).test_and_snapshot();
 }

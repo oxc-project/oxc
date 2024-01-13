@@ -163,5 +163,5 @@ fn test() {
         r#"<META CHARSET="ASCII" />"#,
     ];
 
-    Tester::new_without_config(TextEncodingIdentifierCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).test_and_snapshot();
 }

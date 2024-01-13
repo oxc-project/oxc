@@ -179,5 +179,5 @@ fn test() {
         r"const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);",
     ];
 
-    Tester::new_without_config(PreferMathTrunc::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferMathTrunc::NAME, pass, fail).test_and_snapshot();
 }

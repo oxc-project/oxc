@@ -142,5 +142,5 @@ fn test() {
 			      }"#,
     ];
 
-    Tester::new_without_config(NoTitleInDocumentHead::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoTitleInDocumentHead::NAME, pass, fail).test_and_snapshot();
 }

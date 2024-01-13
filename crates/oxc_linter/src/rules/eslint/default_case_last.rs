@@ -118,5 +118,5 @@ fn test() {
         r"switch (foo) { case 1: default: case 2: }",
     ];
 
-    Tester::new_without_config(DefaultCaseLast::NAME, pass, fail).test_and_snapshot();
+    Tester::new(DefaultCaseLast::NAME, pass, fail).test_and_snapshot();
 }

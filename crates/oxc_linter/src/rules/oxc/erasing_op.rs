@@ -94,5 +94,5 @@ fn test() {
 
     let fail = vec!["x * 0;", "0 * x;", "0 & x;", "0 / x;"];
 
-    Tester::new_without_config(ErasingOp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ErasingOp::NAME, pass, fail).test_and_snapshot();
 }

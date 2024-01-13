@@ -113,5 +113,5 @@ fn test() {
         r"() => node?.appendChild(child)",
     ];
 
-    Tester::new_without_config(PreferDomNodeAppend::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferDomNodeAppend::NAME, pass, fail).test_and_snapshot();
 }

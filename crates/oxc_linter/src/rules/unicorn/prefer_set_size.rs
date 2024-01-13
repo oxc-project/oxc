@@ -157,5 +157,5 @@ fn test() {
         r"[...new /* comment */ Set(array)].length",
     ];
 
-    Tester::new_without_config(PreferSetSize::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferSetSize::NAME, pass, fail).test_and_snapshot();
 }

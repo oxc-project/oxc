@@ -413,5 +413,5 @@ fn test() {
 		",
     ];
 
-    Tester::new_without_config(PreferModernMathApis::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferModernMathApis::NAME, pass, fail).test_and_snapshot();
 }

@@ -139,5 +139,5 @@ fn test() {
         ("baz;", None, None, Some(PathBuf::from("foo/bar/baz/foo_bar.tsx"))),
     ];
 
-    Tester::new_with_settings(FilenameCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(FilenameCase::NAME, pass, fail).test_and_snapshot();
 }

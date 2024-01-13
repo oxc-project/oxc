@@ -72,5 +72,5 @@ fn test() {
         "class Foo { static { bar(); } static {} }",
     ];
 
-    Tester::new_without_config(NoEmptyStaticBlock::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyStaticBlock::NAME, pass, fail).test_and_snapshot();
 }

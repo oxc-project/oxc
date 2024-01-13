@@ -279,5 +279,5 @@ fn test() {
         "foo.reduceRight((acc, bar) => {return {...acc, ...bar};}, {})",
     ];
 
-    Tester::new_without_config(NoAccumulatingSpread::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAccumulatingSpread::NAME, pass, fail).test_and_snapshot();
 }

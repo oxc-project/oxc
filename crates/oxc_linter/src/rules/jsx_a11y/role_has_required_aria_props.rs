@@ -132,5 +132,5 @@ fn test() {
         ("<MyComponent role='combobox' />", None, Some(settings()), None),
     ];
 
-    Tester::new_with_settings(RoleHasRequiredAriaProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RoleHasRequiredAriaProps::NAME, pass, fail).test_and_snapshot();
 }

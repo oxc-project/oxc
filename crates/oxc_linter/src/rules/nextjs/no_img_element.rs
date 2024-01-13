@@ -143,5 +143,5 @@ fn test() {
 			      }"#,
     ];
 
-    Tester::new_without_config(NoImgElement::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoImgElement::NAME, pass, fail).test_and_snapshot();
 }

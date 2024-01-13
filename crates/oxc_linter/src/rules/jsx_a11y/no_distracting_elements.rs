@@ -106,5 +106,5 @@ fn test() {
         (r"<Marquee />", Some(config()), Some(settings()), None),
     ];
 
-    Tester::new_with_settings(NoDistractingElements::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDistractingElements::NAME, pass, fail).test_and_snapshot();
 }

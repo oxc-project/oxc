@@ -448,5 +448,5 @@ fn test() {
         r"promise.then(() => {}, async () => { return Promise.reject(bar); })",
     ];
 
-    Tester::new_without_config(NoUselessPromiseResolveReject::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessPromiseResolveReject::NAME, pass, fail).test_and_snapshot();
 }

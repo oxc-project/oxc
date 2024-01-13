@@ -214,5 +214,5 @@ fn test() {
       ",
     ];
 
-    Tester::new_without_config(NoUselessCatch::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessCatch::NAME, pass, fail).test_and_snapshot();
 }

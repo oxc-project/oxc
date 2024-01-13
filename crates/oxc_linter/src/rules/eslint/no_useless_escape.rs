@@ -418,7 +418,5 @@ fn test() {
         ("var foo = `\\$\\{{${foo}`;", "var foo = `$\\{{${foo}`;", None),
     ];
 
-    Tester::new_without_config(NoUselessEscape::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(NoUselessEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

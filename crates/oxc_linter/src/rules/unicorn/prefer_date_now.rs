@@ -221,5 +221,5 @@ fn test() {
         r"function foo(){return-new Date}",
     ];
 
-    Tester::new_without_config(PreferDateNow::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferDateNow::NAME, pass, fail).test_and_snapshot();
 }

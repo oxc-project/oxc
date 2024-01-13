@@ -135,5 +135,5 @@ fn test() {
         r#""use strict";"#,
     ];
 
-    Tester::new_without_config(NoEmptyFile::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyFile::NAME, pass, fail).test_and_snapshot();
 }
