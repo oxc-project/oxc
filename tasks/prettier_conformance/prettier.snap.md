@@ -1,4 +1,4 @@
-Compatibility: 232/550 (42.18%)
+Compatibility: 235/550 (42.73%)
 
 # Failed
 
@@ -233,10 +233,8 @@ Compatibility: 232/550 (42.18%)
 
 ### functional-composition
 * functional-composition/functional_compose.js
-* functional-composition/gobject_connect.js
 * functional-composition/lodash_flow.js
 * functional-composition/lodash_flow_right.js
-* functional-composition/mongo_connect.js
 * functional-composition/pipe-function-calls-with-comments.js
 * functional-composition/pipe-function-calls.js
 * functional-composition/ramda_compose.js
@@ -462,9 +460,6 @@ Compatibility: 232/550 (42.18%)
 ### unicode
 * unicode/combining-characters.js
 * unicode/nbsp-jsx.js
-
-### variable_declarator
-* variable_declarator/multiple.js
 
 ### yield
 * yield/jsx-without-parenthesis.js
