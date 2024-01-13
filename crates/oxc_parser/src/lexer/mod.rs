@@ -870,10 +870,6 @@ impl<'a> Lexer<'a> {
 
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.current.chars.next();
-            if !ch.is_ascii_lowercase() {
-                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
-                continue;
-            }
             let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
                 flag
             } else {
