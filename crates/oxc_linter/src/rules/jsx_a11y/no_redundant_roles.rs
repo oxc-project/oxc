@@ -1,6 +1,11 @@
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -10,7 +15,6 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
-use std::collections::HashMap;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -57,43 +61,26 @@ static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, phf::Set<&'static str>> =
 
 impl Rule for NoRedundantRoles {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let components: HashMap<String, String> = ctx
-            .settings()
-            .jsx_a11y
-            .components
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.clone()))
-            .collect();
-
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let element = match &jsx_el.name {
-                JSXElementName::Identifier(identifier) => identifier.name.to_string(),
-                JSXElementName::NamespacedName(namespaced_name) => {
-                    namespaced_name.property.name.to_string()
-                }
-                JSXElementName::MemberExpression(_) => return,
-            };
-
-            let component = components.get(&element).unwrap_or(&element);
-
-            if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(jsx_el, "role")
-            {
-                if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
-                    let roles: Vec<String> = role_values
-                        .value
-                        .split_whitespace()
-                        .map(std::string::ToString::to_string)
-                        .collect();
-                    for role in &roles {
-                        let Some(exceptions) = DEFAULT_ROLE_EXCEPTIONS.get(component) else {
-                            continue;
-                        };
-                        if exceptions.contains(role) {
-                            ctx.diagnostic(NoRedundantRolesDiagnostic {
-                                span: attr.span,
-                                element: component.clone(),
-                                role: role.to_string(),
-                            });
+            if let Some(component) = get_element_type(ctx, jsx_el) {
+                if let Some(JSXAttributeItem::Attribute(attr)) =
+                    has_jsx_prop_lowercase(jsx_el, "role")
+                {
+                    if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
+                        let roles: Vec<String> = role_values
+                            .value
+                            .split_whitespace()
+                            .map(std::string::ToString::to_string)
+                            .collect();
+                        for role in &roles {
+                            let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
+                            if exceptions.map_or(false, |set| set.contains(role)) {
+                                ctx.diagnostic(NoRedundantRolesDiagnostic {
+                                    span: attr.span,
+                                    element: component.clone(),
+                                    role: role.to_string(),
+                                });
+                            }
                         }
                     }
                 }
@@ -101,6 +88,7 @@ impl Rule for NoRedundantRoles {
         }
     }
 }
+
 #[test]
 fn test() {
     use crate::rules::NoRedundantRoles;
