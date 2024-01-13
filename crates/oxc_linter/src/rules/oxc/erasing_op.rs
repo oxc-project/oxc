@@ -58,6 +58,9 @@ impl Rule for ErasingOp {
                 check_op(binary_expression, &binary_expression.right, ctx);
             }
             BinaryOperator::Division => {
+                if is_number_value(&binary_expression.right, 0.0) {
+                    return;
+                }
                 check_op(binary_expression, &binary_expression.left, ctx);
             }
             _ => (),
@@ -66,7 +69,7 @@ impl Rule for ErasingOp {
 }
 
 fn is_number_value(expr: &Expression, value: f64) -> bool {
-    if let Expression::NumberLiteral(number_literal) = expr {
+    if let Expression::NumberLiteral(number_literal) = expr.without_parenthesized() {
         (number_literal.value - value).abs() < f64::EPSILON
     } else {
         false
@@ -87,7 +90,7 @@ fn check_op<'a, 'b>(
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["x * 1;", "1 * x;", "5 & x;", "x / 1;", "1 / x;"];
+    let pass = vec!["x * 1;", "1 * x;", "5 & x;", "x / 1;", "1 / x;", "0 / 0"];
 
     let fail = vec!["x * 0;", "0 * x;", "0 & x;", "0 / x;"];
 
