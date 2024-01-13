@@ -146,5 +146,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_with_settings(ClickEventsHaveKeyEvents::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ClickEventsHaveKeyEvents::NAME, pass, fail).test_and_snapshot();
 }
