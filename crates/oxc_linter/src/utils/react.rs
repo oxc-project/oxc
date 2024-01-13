@@ -112,6 +112,48 @@ pub fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
         || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
 }
 
+pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
+    let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
+        return false;
+    };
+    let Some("presentation" | "none") = get_string_literal_prop_value(role) else {
+        return false;
+    };
+
+    true
+}
+
+// TODO: Should re-implement
+// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
+// with `oxc-project/aria-query` which is currently W.I.P.
+//
+// Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
+pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+    // Interactive contents are...
+    // - button, details, embed, iframe, label, select, textarea
+    // - input (if the `type` attribute is not in the Hidden state)
+    // - a (if the `href` attribute is present)
+    // - audio, video (if the `controls` attribute is present)
+    // - img (if the `usemap` attribute is present)
+    match element_type {
+        "button" | "details" | "embed" | "iframe" | "label" | "select" | "textarea" => true,
+        "input" => {
+            if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type") {
+                if get_string_literal_prop_value(input_type)
+                    .is_some_and(|val| val.to_uppercase() == "HIDDEN")
+                {
+                    return false;
+                }
+            }
+            true
+        }
+        "a" => has_jsx_prop(jsx_opening_el, "href").is_some(),
+        "audio" | "video" => has_jsx_prop(jsx_opening_el, "controls").is_some(),
+        "img" => has_jsx_prop(jsx_opening_el, "usemap").is_some(),
+        _ => false,
+    }
+}
+
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 
