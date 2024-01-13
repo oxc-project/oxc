@@ -177,7 +177,7 @@ fn test() {
         (r"const foo = `\xb1${foo}\xb1${foo}`", r"const foo = `\u00b1${foo}\u00b1${foo}`", None),
     ];
 
-    Tester::new_without_config(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
 
 #[test]

@@ -80,12 +80,12 @@ fn test() {
     let pass = vec![
         (
             r"import Document, { Html, Head, Main, NextScript } from 'next/document'
-			
+
 			      class MyDocument extends Document {
 			        static async getInitialProps(ctx) {
 			          //...
 			        }
-			
+
 			        render() {
 			          return (
 			            <Html>
@@ -95,7 +95,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			    ",
             None,
@@ -104,7 +104,7 @@ fn test() {
         ),
         (
             r#"import Head from "next/head";
-			
+
 			      export default function IndexPage() {
 			        return (
 			          <Head>
@@ -125,7 +125,7 @@ fn test() {
             r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
-			
+
 			      class MyDocument extends Document {
 			        render() {
 			          return (
@@ -139,7 +139,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			      ",
             None,
@@ -150,7 +150,7 @@ fn test() {
             r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
-			
+
 			      class MyDocument extends Document {
 			        render() {
 			          return (
@@ -164,7 +164,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			      ",
             None,
@@ -175,7 +175,7 @@ fn test() {
             r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
-			
+
 			      class MyDocument extends Document {
 			        render() {
 			          return (
@@ -189,7 +189,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			      ",
             None,
@@ -200,7 +200,7 @@ fn test() {
             r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
-			
+
 			      class MyDocument extends Document {
 			        render() {
 			          return (
@@ -214,7 +214,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			      ",
             None,
@@ -225,7 +225,7 @@ fn test() {
             r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
-			
+
 			      class MyDocument extends Document {
 			        render() {
 			          return (
@@ -239,7 +239,7 @@ fn test() {
 			          )
 			        }
 			      }
-			
+
 			      export default MyDocument
 			      ",
             None,
@@ -248,5 +248,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_with_settings(NoHeadImportInDocument::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoHeadImportInDocument::NAME, pass, fail).test_and_snapshot();
 }

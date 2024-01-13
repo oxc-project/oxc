@@ -208,5 +208,5 @@ fn test() {
         ("<Input type='text' autocomplete='baz' />;", None, Some(settings()), None),
     ];
 
-    Tester::new_with_settings(AutocompleteValid::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AutocompleteValid::NAME, pass, fail).test_and_snapshot();
 }

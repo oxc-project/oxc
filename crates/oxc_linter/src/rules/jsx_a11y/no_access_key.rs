@@ -83,5 +83,5 @@ fn test() {
         r"<div accessKey={`${undefined}${undefined}`} />",
     ];
 
-    Tester::new_without_config(NoAccessKey::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAccessKey::NAME, pass, fail).test_and_snapshot();
 }

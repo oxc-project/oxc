@@ -129,5 +129,5 @@ fn test() {
         r#"<other role="checkbox" />"#,
         r#"<div role="banner" />"#,
     ];
-    Tester::new_without_config(PreferTagOverRole::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferTagOverRole::NAME, pass, fail).test_and_snapshot();
 }

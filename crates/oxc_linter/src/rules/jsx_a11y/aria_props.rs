@@ -71,5 +71,5 @@ fn test() {
         r#"<div aria-skldjfaria-klajsd="foobar" />"#,
     ];
 
-    Tester::new_without_config(AriaProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AriaProps::NAME, pass, fail).test_and_snapshot();
 }

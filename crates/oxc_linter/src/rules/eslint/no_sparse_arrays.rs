@@ -106,5 +106,5 @@ fn test() {
         , , , , , , , , , , , , , , , , , , ,  2];",
     ];
 
-    Tester::new_without_config(NoSparseArrays::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSparseArrays::NAME, pass, fail).test_and_snapshot();
 }

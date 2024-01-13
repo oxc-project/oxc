@@ -152,5 +152,5 @@ fn test() {
         r#"window.document.cookie = "foo=bar""#,
     ];
 
-    Tester::new_without_config(NoDocumentCookie::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDocumentCookie::NAME, pass, fail).test_and_snapshot();
 }

@@ -116,5 +116,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(NoVarRequires::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoVarRequires::NAME, pass, fail).test_and_snapshot();
 }

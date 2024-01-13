@@ -156,5 +156,5 @@ fn test() {
         ("<Button autoFocus />", Some(config()), Some(settings()), None),
     ];
 
-    Tester::new_with_settings(NoAutofocus::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAutofocus::NAME, pass, fail).test_and_snapshot();
 }

@@ -131,5 +131,5 @@ fn test() {
         r"await import('assert/strict')",
     ];
 
-    Tester::new_without_config(PreferNodeProtocol::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferNodeProtocol::NAME, pass, fail).test_and_snapshot();
 }

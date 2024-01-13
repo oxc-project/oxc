@@ -208,5 +208,5 @@ fn test() {
     ",
     ];
 
-    Tester::new_without_config(NoLonelyIf::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoLonelyIf::NAME, pass, fail).test_and_snapshot();
 }

@@ -455,5 +455,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(PreferTypeError::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferTypeError::NAME, pass, fail).test_and_snapshot();
 }

@@ -246,7 +246,5 @@ fn test() {
         ),
     ];
 
-    Tester::new_without_config(NumberLiteralCase::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(NumberLiteralCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

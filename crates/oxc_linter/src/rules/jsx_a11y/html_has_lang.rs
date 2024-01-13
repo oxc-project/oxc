@@ -128,7 +128,5 @@ fn test() {
         ("<HTMLTop />", None, Some(settings()), None),
     ];
 
-    Tester::new_with_settings(HtmlHasLang::NAME, pass, fail)
-        .with_jsx_a11y_plugin(true)
-        .test_and_snapshot();
+    Tester::new(HtmlHasLang::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
 }

@@ -141,5 +141,5 @@ fn test() {
         r"foo.indexOf(bar, 1) !== -1",
     ];
 
-    Tester::new_without_config(PreferIncludes::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferIncludes::NAME, pass, fail).test_and_snapshot();
 }

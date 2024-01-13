@@ -52,9 +52,6 @@ impl Rule for NoSelfImport {
 fn test() {
     use crate::tester::Tester;
 
-    let mut tester = Tester::new_without_config::<String>(NoSelfImport::NAME, vec![], vec![])
-        .with_import_plugin(true);
-
     {
         let pass = vec![
             "import _ from 'lodash'",
@@ -80,16 +77,20 @@ fn test() {
             "var bar = require('./no-self-import.js')",
         ];
 
-        tester = tester.change_rule_path("no-self-import.js").update_expect_pass_fail(pass, fail);
-        tester.test();
+        Tester::new(NoSelfImport::NAME, pass, fail)
+            .with_import_plugin(true)
+            .change_rule_path("no-self-import.js")
+            .test();
     }
 
     {
         let pass = vec!["var bar = require('./bar')"];
         let fail = vec![];
 
-        tester = tester.change_rule_path("bar/index.js").update_expect_pass_fail(pass, fail);
-        tester.test();
+        Tester::new(NoSelfImport::NAME, pass, fail)
+            .with_import_plugin(true)
+            .change_rule_path("bar/index.js")
+            .test();
     }
 
     {
@@ -100,17 +101,19 @@ fn test() {
             "var bar = require('././././')",
         ];
 
-        tester = tester.change_rule_path("index.js").update_expect_pass_fail(pass, fail);
-        tester.test();
+        Tester::new(NoSelfImport::NAME, pass, fail)
+            .with_import_plugin(true)
+            .change_rule_path("index.js")
+            .test();
     }
 
     {
         let pass = vec![];
         let fail = vec!["var bar = require('../no-self-import-folder')"];
 
-        tester = tester
+        Tester::new(NoSelfImport::NAME, pass, fail)
+            .with_import_plugin(true)
             .change_rule_path("no-self-import-folder/index.js")
-            .update_expect_pass_fail(pass, fail);
-        tester.test_and_snapshot();
+            .test();
     }
 }

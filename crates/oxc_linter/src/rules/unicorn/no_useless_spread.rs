@@ -571,5 +571,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(NoUselessSpread::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessSpread::NAME, pass, fail).test_and_snapshot();
 }

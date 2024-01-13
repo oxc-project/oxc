@@ -758,5 +758,5 @@ fn test() {
       }",
     ];
 
-    Tester::new_without_config(AdjacentOverloadSignatures::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AdjacentOverloadSignatures::NAME, pass, fail).test_and_snapshot();
 }

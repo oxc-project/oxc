@@ -221,5 +221,5 @@ fn test() {
         "class A { foo;  foo() {}}",
     ];
 
-    Tester::new_without_config(NoDupeClassMembers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeClassMembers::NAME, pass, fail).test_and_snapshot();
 }

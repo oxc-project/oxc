@@ -107,5 +107,5 @@ fn test() {
         r"for (const EventEmitter of []) {new EventEmitter}",
     ];
 
-    Tester::new_without_config(PreferEventTarget::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferEventTarget::NAME, pass, fail).test_and_snapshot();
 }

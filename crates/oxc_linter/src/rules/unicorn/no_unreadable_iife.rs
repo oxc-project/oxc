@@ -123,5 +123,5 @@ fn test() {
         "(async () => (( {bar} )))();",
     ];
 
-    Tester::new_without_config(NoUnreadableIife::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnreadableIife::NAME, pass, fail).test_and_snapshot();
 }

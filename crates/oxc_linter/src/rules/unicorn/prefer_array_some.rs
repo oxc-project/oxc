@@ -260,5 +260,5 @@ fn test() {
         r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
     ];
 
-    Tester::new_without_config(PreferArraySome::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferArraySome::NAME, pass, fail).test_and_snapshot();
 }

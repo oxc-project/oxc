@@ -127,7 +127,7 @@ fn test() {
         ),
     ];
 
-    Tester::new_without_config(RequireNumberToFixedDigitsArgument::NAME, pass, fail)
+    Tester::new(RequireNumberToFixedDigitsArgument::NAME, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

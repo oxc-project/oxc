@@ -152,5 +152,5 @@ fn test() {
         r"class A { static a() {} }",
     ];
 
-    Tester::new_without_config(NoStaticOnlyClass::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoStaticOnlyClass::NAME, pass, fail).test_and_snapshot();
 }

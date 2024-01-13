@@ -412,5 +412,5 @@ fn test() {
         r"[/**/].concat(some.array)",
     ];
 
-    Tester::new_without_config(PreferArrayFlat::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferArrayFlat::NAME, pass, fail).test_and_snapshot();
 }

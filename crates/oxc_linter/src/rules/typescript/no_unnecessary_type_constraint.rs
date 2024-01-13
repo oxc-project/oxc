@@ -113,5 +113,5 @@ fn test() {
         "type Data<T extends unknown> = {};",
     ];
 
-    Tester::new_without_config(NoUnnecessaryTypeConstraint::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnnecessaryTypeConstraint::NAME, pass, fail).test_and_snapshot();
 }

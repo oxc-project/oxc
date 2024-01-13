@@ -132,7 +132,7 @@ mod tests {
     fn test_simple() {
         let pass = vec!["let x: number = 1"];
         let fail = vec!["let x: any = 1"];
-        Tester::new_without_config(NoExplicitAny::NAME, pass, fail).test();
+        Tester::new(NoExplicitAny::NAME, pass, fail).test();
     }
 
     #[test]

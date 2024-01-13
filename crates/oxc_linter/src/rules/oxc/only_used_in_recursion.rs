@@ -273,5 +273,5 @@ fn test() {
         ",
     ];
 
-    Tester::new_without_config(OnlyUsedInRecursion::NAME, pass, fail).test_and_snapshot();
+    Tester::new(OnlyUsedInRecursion::NAME, pass, fail).test_and_snapshot();
 }

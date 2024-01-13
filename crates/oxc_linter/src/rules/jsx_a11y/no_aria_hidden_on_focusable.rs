@@ -128,5 +128,5 @@ fn test() {
         r#"<p tabIndex="0" aria-hidden="true">text</p>;"#,
     ];
 
-    Tester::new_without_config(NoAriaHiddenOnFocusable::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAriaHiddenOnFocusable::NAME, pass, fail).test_and_snapshot();
 }
