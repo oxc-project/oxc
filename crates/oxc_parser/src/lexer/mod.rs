@@ -11,6 +11,7 @@ mod string_builder;
 mod token;
 mod trivia_builder;
 
+use rustc_hash::FxHashMap;
 use std::{collections::VecDeque, str::Chars};
 
 use oxc_allocator::{Allocator, String};
@@ -30,7 +31,7 @@ pub use self::{
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use self::{string_builder::AutoCow, token::EscapedId, trivia_builder::TriviaBuilder};
+use self::{string_builder::AutoCow, trivia_builder::TriviaBuilder};
 use crate::{diagnostics, MAX_LEN};
 
 #[derive(Debug, Clone)]
@@ -67,11 +68,12 @@ pub struct Lexer<'a> {
 
     pub(crate) trivia_builder: TriviaBuilder,
 
-    /// Data store for escaped strings, indexed by `Token.escaped_string_id`
-    escaped_strings: Vec<&'a str>,
-    /// Data store for escaped templates, indexed by `Token.escaped_string_id`
+    /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
+    pub escaped_strings: FxHashMap<u32, &'a str>,
+
+    /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
-    escaped_templates: Vec<Option<&'a str>>,
+    pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
 }
 
 #[allow(clippy::unused_self)]
@@ -97,8 +99,8 @@ impl<'a> Lexer<'a> {
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
-            escaped_strings: vec![],
-            escaped_templates: vec![],
+            escaped_strings: FxHashMap::default(),
+            escaped_templates: FxHashMap::default(),
         }
     }
 
@@ -309,21 +311,17 @@ impl<'a> Lexer<'a> {
     /// Save the string if it is escaped
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
-    #[allow(clippy::cast_possible_truncation)]
     fn save_string(&mut self, has_escape: bool, s: &'a str) {
         if !has_escape {
             return;
         }
-        self.escaped_strings.push(s);
-        let escaped_string_id = self.escaped_strings.len() as u32;
-        // SAFETY: escaped_string_id is the length of `self.escaped_strings` after an item is pushed, which can never be 0
-        let escaped_string_id = unsafe { EscapedId::new_unchecked(escaped_string_id) };
-        self.current.token.escaped_id.replace(escaped_string_id);
+        self.escaped_strings.insert(self.current.token.start, s);
+        self.current.token.escaped = true;
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
-        if let Some(escaped_id) = token.escaped_id {
-            return self.escaped_strings[escaped_id.get() as usize - 1];
+        if token.escaped {
+            return self.escaped_strings[&token.start];
         }
 
         let raw = &self.source[token.start as usize..token.end as usize];
@@ -331,12 +329,14 @@ impl<'a> Lexer<'a> {
             Kind::Str => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes
             }
+            Kind::PrivateIdentifier => {
+                &raw[1..] // omit leading `#`
+            }
             _ => raw,
         }
     }
 
     /// Save the template if it is escaped
-    #[allow(clippy::cast_possible_truncation)]
     fn save_template_string(
         &mut self,
         is_valid_escape_sequence: bool,
@@ -346,18 +346,15 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_templates.push(is_valid_escape_sequence.then(|| s));
-        let escaped_template_id = self.escaped_templates.len() as u32;
-        // SAFETY: escaped_string_id is the length of `self.escaped_strings` after an item is pushed, which can never be 0
-        let escaped_template_id = unsafe { EscapedId::new_unchecked(escaped_template_id) };
-        self.current.token.escaped_id.replace(escaped_template_id);
+        self.escaped_templates
+            .insert(self.current.token.start, is_valid_escape_sequence.then(|| s));
+        self.current.token.escaped = true;
     }
 
     pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
-        if let Some(escaped_id) = token.escaped_id {
-            return self.escaped_templates[escaped_id.get() as usize - 1];
+        if token.escaped {
+            return self.escaped_templates[&token.start];
         }
-
         let raw = &self.source[token.start as usize..token.end as usize];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
@@ -580,7 +577,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn private_identifier(&mut self, mut builder: AutoCow<'a>) -> Kind {
+    fn private_identifier(&mut self) -> Kind {
+        let mut builder = AutoCow::new(self);
         let start = self.offset();
         match self.current.chars.next() {
             Some(c) if is_identifier_start_all(c) => {
@@ -1365,16 +1363,13 @@ const QOT: ByteHandler = |lexer| {
 
 // #
 const HAS: ByteHandler = |lexer| {
-    let mut builder = AutoCow::new(lexer);
-    let c = lexer.consume_char();
-    builder.push_matching(c);
+    lexer.consume_char();
     // HashbangComment ::
     //     `#!` SingleLineCommentChars?
     if lexer.current.token.start == 0 && lexer.next_eq('!') {
         lexer.read_hashbang_comment()
     } else {
-        builder.get_mut_string_without_current_ascii_char(lexer);
-        lexer.private_identifier(builder)
+        lexer.private_identifier()
     }
 };
 
