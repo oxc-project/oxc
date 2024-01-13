@@ -76,7 +76,7 @@ fn test() {
 			"#,
             None,
             None,
-            Some(PathBuf::from("pages/_document.tsx")),
+            Some(PathBuf::from("pages/_document.js")),
         ),
         (
             r#"import Document from "next/document"
@@ -92,7 +92,7 @@ fn test() {
 			"#,
             None,
             None,
-            Some(PathBuf::from("pages/_document.tsx")),
+            Some(PathBuf::from("pages/_document.js")),
         ),
         (
             r#"import NextDocument from "next/document"
@@ -113,50 +113,50 @@ fn test() {
         (
             r#"import Document from "next/document"
 
-        	    export default class MyDocument extends Document {
-        	      render() {
-        	        return (
-        	          <Html>
-        	          </Html>
-        	        );
-        	      }
-        	    }
+            export default class MyDocument extends Document {
+              render() {
+                return (
+                  <Html>
+                  </Html>
+                );
+              }
+            }
         	"#,
             None,
             None,
-            Some(PathBuf::from("pages/_document.tsx")),
+            Some(PathBuf::from("pages/_document.page.tsx")),
         ),
         (
             r#"import NDocument from "next/document"
 
-        	    export default class Document extends NDocument {
-        	      render() {
-        	        return (
-        	          <Html>
-        	          </Html>
-        	        );
-        	      }
-        	    }
+            export default class Document extends NDocument {
+              render() {
+                return (
+                  <Html>
+                  </Html>
+                );
+              }
+            }
         	"#,
             None,
             None,
-            Some(PathBuf::from("pages/_document.tsx")),
+            Some(PathBuf::from("pages/_document/index.js")),
         ),
         (
             r#"import NDocument from "next/document"
 
-        	    export default class Document extends NDocument {
-        	      render() {
-        	        return (
-        	          <Html>
-        	          </Html>
-        	        );
-        	      }
-        	    }
+            export default class Document extends NDocument {
+              render() {
+                return (
+                  <Html>
+                  </Html>
+                );
+              }
+            }
         	"#,
             None,
             None,
-            Some(PathBuf::from("pages/_document.tsx")),
+            Some(PathBuf::from("pages/_document/index.tsx")),
         ),
         (
             r#"import Document from "next/document"
@@ -172,7 +172,7 @@ fn test() {
         	"#,
             None,
             None,
-            Some(PathBuf::from("src/pages/_document.tsx")),
+            Some(PathBuf::from("pagesapp/src/pages/_document.js")),
         ),
     ];
 
@@ -184,7 +184,7 @@ fn test() {
 			"#,
             None,
             None,
-            Some(PathBuf::from("pages/test.tsx")),
+            Some(PathBuf::from("components/test.js")),
         ),
         (
             r#"import Document from "next/document"
@@ -193,7 +193,7 @@ fn test() {
         	"#,
             None,
             None,
-            Some(PathBuf::from("pages/test.tsx")),
+            Some(PathBuf::from("pages/test.js")),
         ),
         (
             r#"import Document from "next/document"
