@@ -9,9 +9,8 @@ use oxc_diagnostics::Error;
 use oxc_span::Span;
 
 use crate::ast::{
-    Alternative, Assertion, BoundaryAssertion, Branch, Character, EdgeAssertion, EdgeAssertionKind,
-    Element, LookaheadAssertion, LookaroundAssertion, LookbehindAssertion, Pattern,
-    QuantifiableElement, Quantifier, RegExpLiteral, WordBoundaryAssertion,
+    Alternative, Assertion, BoundaryAssertion, Branch, Character, EdgeAssertion, Element, Pattern,
+    QuantifiableElement, Quantifier, RegExpLiteral,
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
@@ -87,15 +86,6 @@ impl<'a> Parser<'a> {
     pub fn eat(&mut self, ch: char) -> bool {
         if self.is(ch) {
             self.index += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn eat2(&mut self, first: char, second: char) -> bool {
-        if self.is(first) && self.nth(1) == Some(&second) {
-            self.index += 2;
             true
         } else {
             false
@@ -192,7 +182,7 @@ fn parse_disjunction<'a>(parser: &mut Parser<'a>) -> oxc_allocator::Vec<'a, Alte
     let start = parser.index;
     let mut alternatives = parser.builder.new_vec();
     loop {
-        alternatives.push(parse_alternative(parser));
+        alternatives.push(parser_alternative(parser));
         if !parser.eat('|') {
             break;
         }
@@ -213,7 +203,7 @@ fn parse_disjunction<'a>(parser: &mut Parser<'a>) -> oxc_allocator::Vec<'a, Alte
 ///      [empty]
 ///  Alternative[?UnicodeMode, ?UnicodeSetsMode, ?N] Term[?UnicodeMode, ?UnicodeSetsMode, ?N]
 /// ```
-fn parse_alternative<'a>(parser: &mut Parser<'a>) -> Alternative<'a> {
+fn parser_alternative<'a>(parser: &mut Parser<'a>) -> Alternative<'a> {
     let start = parser.index;
     let mut elements = parser.builder.new_vec();
     while !parser.eof() {
@@ -240,82 +230,15 @@ fn parse_assertion<'a>(parser: &mut Parser<'a>) -> (bool, Option<Assertion<'a>>)
     if parser.eat('^') {
         return (
             true,
-            Some(Assertion::BoundaryAssertion(parser.builder.alloc(
-                BoundaryAssertion::EdgeAssertion(parser.builder.alloc(EdgeAssertion {
+            Some(Assertion::BoundaryAssertion(parser.builder.alloc(BoundaryAssertion::EdgeAssertion(
+                parser.builder.alloc(EdgeAssertion {
                     span: Span::new(start as u32, parser.index as u32),
-                    kind: EdgeAssertionKind::Start,
-                })),
+                    kind: todo!(),
+                }),
             ))),
         );
     }
-
-    if parser.eat('$') {
-        return (
-            true,
-            Some(Assertion::BoundaryAssertion(parser.builder.alloc(
-                BoundaryAssertion::EdgeAssertion(parser.builder.alloc(EdgeAssertion {
-                    span: Span::new(start as u32, parser.index as u32),
-                    kind: EdgeAssertionKind::End,
-                })),
-            ))),
-        );
-    }
-
-    if parser.eat2('\\', 'B') {
-        return (
-            true,
-            Some(Assertion::BoundaryAssertion(parser.builder.alloc(
-                BoundaryAssertion::WordBoundaryAssertion(parser.builder.alloc(
-                    WordBoundaryAssertion {
-                        span: Span::new(start as u32, parser.index as u32),
-                        negate: true,
-                    },
-                )),
-            ))),
-        );
-    }
-
-    if parser.eat2('\\', 'b') {
-        return (
-            true,
-            Some(Assertion::BoundaryAssertion(parser.builder.alloc(
-                BoundaryAssertion::WordBoundaryAssertion(parser.builder.alloc(
-                    WordBoundaryAssertion {
-                        span: Span::new(start as u32, parser.index as u32),
-                        negate: false,
-                    },
-                )),
-            ))),
-        );
-    }
-
-    // Lookahead / Lookbehind
-    if parser.eat2('(', '?') {
-        let lookbeind = parser.context.ecma_version >= EcmaVersion::V2018 && parser.eat('<');
-        let mut eq_sign = parser.eat('=');
-        let mut negate = if eq_sign { false } else { parser.eat('!') };
-        if eq_sign || negate {
-            let span = Span::new(start as u32, parser.index as u32);
-            let alternatives = parse_disjunction(parser);
-            let look_around_assertion =
-                if lookbeind {
-                    LookaroundAssertion::LookbehindAssertion(
-                        parser.builder.alloc(LookbehindAssertion { span, negate, alternatives }),
-                    )
-                } else {
-                    LookaroundAssertion::LookaheadAssertion(
-                        parser.builder.alloc(LookaheadAssertion { span, negate, alternatives }),
-                    )
-                };
-            let node = Assertion::LookaroundAssertion(parser.builder.alloc(look_around_assertion));
-            if !parser.eat(')') {
-                panic!("Unterminated group")
-            }
-            parser.last_assertion_is_quantifiable = !lookbeind && !parser.context.strict;
-        }
-        parser.rewind(start);
-    }
-    (false, None)
+    todo!()
 }
 
 /// Validate the next characters as a RegExp `Quantifier` production if possible.
