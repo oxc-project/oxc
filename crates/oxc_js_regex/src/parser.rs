@@ -178,10 +178,23 @@ fn parse_pattern_internal<'a>(parser: &mut Parser<'a>) -> Option<Pattern<'a>> {
     todo!()
 }
 
-fn parse_disjunction<'a>(parser: &mut Parser<'a>) {
+fn parse_disjunction<'a>(parser: &mut Parser<'a>) -> oxc_allocator::Vec<'a, Alternative<'a>> {
     let start = parser.index;
-    let mut i = 0;
-    loop {}
+    let mut ret = parser.builder.new_vec();
+    loop {
+        ret.push(parser_alternative(parser));
+        if !parser.eat('|') {
+            break;
+        }
+    }
+    // Only consume the ast when `no_consume` is false
+    if parse_quantifier(parser, Some(true)).0 {
+        panic!("Nothing to repeat");
+    }
+    if parser.eat('{') {
+        panic!("Lone quantifier brackets")
+    }
+    ret
 }
 
 /// Validate the next characters as a RegExp `Alternative` production.
