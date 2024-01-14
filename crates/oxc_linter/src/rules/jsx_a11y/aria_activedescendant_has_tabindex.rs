@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttribute, JSXAttributeItem},
+    ast::{JSXAttribute, JSXAttributeItem, JSXElementName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -87,7 +87,11 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         }
 
-        ctx.diagnostic(AriaActivedescendantHasTabindexDiagnostic(jsx_opening_el.span));
+        let JSXElementName::Identifier(identifier) = &jsx_opening_el.name else {
+            return;
+        };
+
+        ctx.diagnostic(AriaActivedescendantHasTabindexDiagnostic(identifier.span));
     }
 }
 
