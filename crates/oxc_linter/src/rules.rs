@@ -260,6 +260,7 @@ mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_redundant_roles;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
     pub mod role_support_aria_props;
@@ -525,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
+    jsx_a11y::no_redundant_roles,
     jsx_a11y::prefer_tag_over_role,
     jsx_a11y::role_has_required_aria_props,
     jsx_a11y::scope,
