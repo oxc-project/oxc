@@ -194,7 +194,13 @@ fn parser_alternative<'a>(parser: &mut Parser<'a>) -> Alternative<'a> {
     let start = parser.index;
     let mut elements = parser.builder.new_vec();
     while !parser.eof() {
-        let term = parse_term(parser);
+        let (flag, node) = parse_term(parser);
+        if let Some(node) = node {
+            elements.push(node);
+        }
+        if !flag {
+            break;
+        }
     }
     Alternative { span: Span::new(start as u32, parser.index as u32), elements }
 }
