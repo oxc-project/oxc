@@ -7,6 +7,7 @@ use std::str::{CharIndices, Chars, Matches};
 
 use oxc_diagnostics::Error;
 use oxc_span::Span;
+use oxc_syntax::unicode_id_start::is_id_continue;
 
 use crate::ast::{
     Alternative, Assertion, Backreference, BackreferenceRef, BoundaryAssertion, Branch,
@@ -16,6 +17,7 @@ use crate::ast::{
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
+use crate::util::is_syntax_character;
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -873,7 +875,7 @@ fn consume_class_union_right<'a>(
     //     1. If MayContainStrings of the ClassSetOperand is true, return true.
     //     2. If ClassUnion is present, return MayContainStrings of the ClassUnion.
     //     3. Return false.
-    return UnicodeSetsConsumeResult { may_contain_strings };
+    return UnicodeSetsConsumeResult { may_contain_strings: Some(may_contain_strings) };
 }
 
 fn eat_decimal_digits<'a>(parser: &mut Parser<'a>) -> bool {
@@ -886,6 +888,22 @@ fn eat_decimal_digits<'a>(parser: &mut Parser<'a>) -> bool {
         parser.last_int_value = 10 * parser.last_int_value + d as usize;
         parser.advance();
     }
+    parser.index != start
+}
+
+fn eat_hex_digits(parser: &mut Parser<'a>) -> bool {
+    let start = parser.index;
+    parser.last_int_value = 0;
+
+    while let Some(ch) = parser.current() {
+        if !ch.is_ascii_hexdigit() {
+            break;
+        }
+        parser.last_int_value =
+            16 * parser.last_int_value + ch.to_digit(16).expect("should convert successfully");
+        parser.advance();
+    }
+
     parser.index != start
 }
 
@@ -1347,48 +1365,6 @@ fn eat_reg_exp_unicode_code_point_escape(parser: &mut Parser<'a>) -> bool {
 }
 
 /**
- * Eat the next characters as a RegExp `IdentityEscape` production if
- * possible.
- * Set `self._last_int_value` if it ate the next characters successfully.
- * ```
- * IdentityEscape[UnicodeMode, N]::
- *      [+UnicodeMode] SyntaxCharacter
- *      [+UnicodeMode] `/`
- *      [strict][~UnicodeMode] SourceCharacter but not UnicodeIDContinue
- *      [annexB][~UnicodeMode] SourceCharacterIdentityEscape[?N]
- * SourceCharacterIdentityEscape[N]::
- *      [~N] SourceCharacter but not c
- *      [+N] SourceCharacter but not one of c k
- * ```
- * @returns `true` if it ate the next characters successfully.
- */
-fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let cp = self.current_code_point;
-    if self.is_valid_identity_escape(cp) {
-        self._last_int_value = cp;
-        self.advance();
-        return true;
-    }
-    false
-}
-
-fn is_valid_identity_escape<'a>(parser: &mut Parser<'a>, cp: i32) -> bool {
-    if cp == -1 {
-        return false;
-    }
-    if self._unicode_mode {
-        return is_syntax_character(cp) || cp == SOLIDUS;
-    }
-    if self.strict {
-        return !is_id_continue(cp);
-    }
-    if self._n_flag {
-        return !(cp == LATIN_SMALL_LETTER_C || cp == LATIN_SMALL_LETTER_K);
-    }
-    cp != LATIN_SMALL_LETTER_C
-}
-
-/**
  * Eat the next characters as a RegExp `DecimalEscape` production if
  * possible.
  * Set `self._last_int_value` if it ate the next characters successfully.
@@ -1423,14 +1399,14 @@ fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
-    let cp = parser.current();
-    if is_latin_letter(cp) {
+fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    let cp = parser.current()?;
+    if cp.is_ascii_alphabetic() {
         parser.advance();
-        parser.last_int_value = cp % 0x20;
-        return true;
+        parser.last_int_value = (cp as usize) % 0x20;
+        return Some(());
     }
-    false
+    None
 }
 
 /**
@@ -1508,17 +1484,17 @@ fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> boo
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
+    let start = parser.index;
 
-    if self.eat(LEFT_CURLY_BRACKET)
-        && self.eat_hex_digits()
-        && self.eat(RIGHT_CURLY_BRACKET)
-        && is_valid_unicode(self._last_int_value)
+    if parser.eat('{')
+        && eat_hex_digits(parser)
+        && parser.eat('}')
+        && is_valid_unicode(parser.last_int_value)
     {
         return true;
     }
 
-    self.rewind(start);
+    parser.rewind(start);
     false
 }
 
@@ -1538,30 +1514,31 @@ fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let cp = self.current_code_point;
-    if self.is_valid_identity_escape(cp) {
-        self._last_int_value = cp;
-        self.advance();
+fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    let cp = parser.current();
+    if parser.is_valid_identity_escape(cp.cloned()) {
+        parser.last_int_value = cp.unwrap() as usize;
+        parser.advance();
         return true;
     }
-    false
+    None
 }
 
-fn is_valid_identity_escape(&self, cp: i32) -> bool {
-    if cp == -1 {
+fn is_valid_identity_escape(parser: &mut Parser<'a>, cp: Option<char>) -> bool {
+    if cp.is_none() {
         return false;
     }
-    if self._unicode_mode {
-        return is_syntax_character(cp) || cp == SOLIDUS;
+    let cp = cp.unwrap();
+    if parser.context.unicode_mode {
+        return is_syntax_character(cp) || cp == '/';
     }
-    if self.strict {
+    if parser.context.strict {
         return !is_id_continue(cp);
     }
-    if self._n_flag {
-        return !(cp == LATIN_SMALL_LETTER_C || cp == LATIN_SMALL_LETTER_K);
+    if parser.context.nflag {
+        return !(cp == 'c' || cp == 'k');
     }
-    cp != LATIN_SMALL_LETTER_C
+    cp != 'c'
 }
 
 /**
@@ -1574,18 +1551,21 @@ fn is_valid_identity_escape(&self, cp: i32) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    self._last_int_value = 0;
-    let mut cp = self.current_code_point;
-    if cp >= DIGIT_ONE && cp <= DIGIT_NINE {
-        while cp >= DIGIT_ZERO && cp <= DIGIT_NINE {
-            self._last_int_value = 10 * self._last_int_value + (cp - DIGIT_ZERO);
-            self.advance();
-            cp = self.current_code_point;
+fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    parser.last_int_value = 0;
+    let mut cp = parser.current()?;
+    if cp.is_ascii_digit() {
+        while cp.is_ascii_digit() {
+            parser.last_int_value = 10 * parser.last_int_value + cp.to_digit(10)?;
+            parser.advance();
+            cp = match parser.current() {
+                Some(char) => char,
+                None => break,
+            };
         }
-        return true;
+        return Some(());
     }
-    false
+    None
 }
 
 /**
@@ -1601,7 +1581,7 @@ fn eat_octal_digit<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let cp = parser.current()?;
     if cp.is_digit(8) {
         parser.advance();
-        parser.last_int_value = cp.to_digit(8)?;
+        parser.last_int_value = cp.to_digit(8)? as usize;
         Some(())
     } else {
         parser.last_int_value = 0;
@@ -1632,4 +1612,11 @@ fn eat_fixed_hex_digits<'a>(parser: &mut Parser<'a>, length: usize) -> Option<()
         parser.advance();
     }
     Some(())
+}
+
+const MIN_CODE_POINT: u32 = 0;
+const MAX_CODE_POINT: u32 = 0x10FFFF;
+
+fn is_valid_unicode(code: u32) -> bool {
+    code >= MIN_CODE_POINT && code <= MAX_CODE_POINT
 }
