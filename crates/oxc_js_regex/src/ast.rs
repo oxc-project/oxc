@@ -46,7 +46,7 @@ pub enum Leaf<'a> {
 pub enum Element<'a> {
     Assertion(Assertion<'a>),
     QuantifiableElement(QuantifiableElement<'a>),
-    Quantifier(Quantifier<'a>),
+    Quantifier(Box<'a, Quantifier<'a>>),
 }
 
 /// The type which includes all atom nodes that Quantifier node can have as children.

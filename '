@@ -5,6 +5,7 @@ use std::os::unix::fs::OpenOptionsExt;
 use std::panic;
 use std::str::{CharIndices, Chars, Matches};
 
+use oxc_allocator::Allocator;
 use oxc_diagnostics::Error;
 use oxc_span::Span;
 
@@ -12,10 +13,11 @@ use crate::ast::{
     Alternative, Assertion, Branch, Character, Element, Pattern, QuantifiableElement, Quantifier,
     RegExpLiteral,
 };
-use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
 
 pub struct Lexer<'a> {
+    allocator: &'a Allocator,
+
     source: &'a str,
     /// Regex usually, use a collected `Vec` could reduce lookahead and other util function implementation complexity
     chars: Vec<char>,
@@ -25,14 +27,13 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str) -> Self {
-        Self { source, errors: vec![], chars: source.chars().collect::<Vec<_>>() }
+    pub fn new(allocator: &'a Allocator, source: &'a str) -> Self {
+        Self { source, allocator, errors: vec![], chars: source.chars().collect::<Vec<_>>() }
     }
 }
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: AstBuilder<'a>,
 
     /// Source Code
     source_text: &'a str,
@@ -62,9 +63,9 @@ struct ParserContext {
 
 impl<'a> Parser<'a> {
     /// Create a new parser
-    pub fn new(allocator: &'a oxc_allocator::Allocator, source_text: &'a str) -> Self {
+    pub fn new(allocator: &'a Allocator, source_text: &'a str) -> Self {
         Self {
-            lexer: Lexer::new(source_text),
+            lexer: Lexer::new(allocator, source_text),
             source_text,
             errors: vec![],
             context: ParserContext::default(),
@@ -75,10 +76,17 @@ impl<'a> Parser<'a> {
             last_int_value: 0,
             last_range: 0..0,
             last_assertion_is_quantifiable: false,
-            builder: AstBuilder::new(allocator),
         }
     }
 
+    // fn alloc<T>(&self, val: T) -> T {
+    //     self.lexer.allocator.alloc(val)
+    // }
+
+    #[inline]
+    pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
+        Box(self.lexer.allocator.alloc(value))
+    }
     pub fn is(&self, ch: char) -> bool {
         self.lexer.chars.get(self.index) == Some(&ch)
     }
@@ -192,11 +200,11 @@ fn parse_disjunction<'a>(parser: &mut Parser<'a>) {
 /// ```
 fn parser_alternative<'a>(parser: &mut Parser<'a>) -> Alternative<'a> {
     let start = parser.index;
-    let mut elements = parser.builder.new_vec();
+    let mut elements = vec![];
     while !parser.eof() {
-        let term = parse_term(parser);
+        let term = parse_term(p);
     }
-    Alternative { span: Span::new(start as u32, parser.index as u32), elements }
+    Alternative { span: Span::new(start, parser.index), elements }
 }
 
 fn parse_term<'a>(parser: &mut Parser<'a>) -> (bool, Option<Element<'a>>) {
@@ -262,7 +270,7 @@ fn parse_quantifier<'a>(
     greedy = !parser.eat('?');
 
     if !no_consume {
-        let quantifier = parser.builder.alloc(Quantifier {
+        let quantifier = parser.alloc(Quantifier {
             span: Span { start: start as u32, end: parser.index as u32 },
             min,
             max,
