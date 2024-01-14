@@ -9,9 +9,10 @@ use oxc_diagnostics::Error;
 use oxc_span::Span;
 
 use crate::ast::{
-    Alternative, Assertion, BoundaryAssertion, Branch, Character, EdgeAssertion, EdgeAssertionKind,
-    Element, LookaheadAssertion, LookaroundAssertion, LookbehindAssertion, Pattern,
-    QuantifiableElement, Quantifier, RegExpLiteral, WordBoundaryAssertion,
+    Alternative, Assertion, Backreference, BackreferenceRef, BoundaryAssertion, Branch,
+    CapturingGroup, Character, EdgeAssertion, EdgeAssertionKind, Element, LookaheadAssertion,
+    LookaroundAssertion, LookbehindAssertion, Pattern, QuantifiableElement, Quantifier,
+    RegExpLiteral, WordBoundaryAssertion,
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
@@ -49,6 +50,7 @@ pub struct Parser<'a> {
     back_reference_names: HashSet<String>,
     last_assertion_is_quantifiable: bool,
     last_range: Range<usize>,
+    last_str_value: Stirng,
 }
 
 #[derive(Default, Copy, Clone)]
@@ -77,6 +79,7 @@ impl<'a> Parser<'a> {
             last_range: 0..0,
             last_assertion_is_quantifiable: false,
             builder: AstBuilder::new(allocator),
+            last_str_value: String::default(),
         }
     }
 
@@ -91,6 +94,9 @@ impl<'a> Parser<'a> {
         } else {
             false
         }
+    }
+    pub fn span_with_start(&self, start: u32) -> Span {
+        Span::new(start, self.index as u32)
     }
 
     pub fn eat2(&mut self, first: char, second: char) -> bool {
@@ -455,23 +461,31 @@ fn parse_atom_escape<'a>(parser: &mut Parser<'a>) -> bool {
     }
 }
 
-fn parse_backreference<'a>(parser: &mut Parser<'a>) -> bool {
+/// TODO: resolve when pattern leave
+fn parse_backreference<'a>(parser: &mut Parser<'a>) -> Option<Backreference<'a>> {
     let start = parser.index;
     if parser.eat_decimal_escape() {
         let n = parser.last_int_value;
         if n <= parser.num_capturing_parens {
-            parser.on_backreference(start - 1, parser.index, n);
-            true
+            Some(Backreference {
+                span: Span::new(start as u32, parser.index as u32),
+                reference: BackreferenceRef::Number(n as usize),
+                resolved: CapturingGroup::default(),
+            })
         } else {
             if parser.context.strict || parser.context.unicode_mode {
                 panic!("Invalid escape");
             }
             parser.rewind(start);
-            true
+            None
         }
     } else {
-        false
+        None
     }
+}
+
+struct UnicodeSetsConsumeResult {
+    may_contain_strings: Option<bool>,
 }
 
 fn consume_character_class_escape<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsConsumeResult> {
@@ -480,37 +494,37 @@ fn consume_character_class_escape<'a>(parser: &mut Parser<'a>) -> Option<Unicode
     if parser.eat(LATIN_SMALL_LETTER_D) {
         parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "digit", false);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     if parser.eat(LATIN_CAPITAL_LETTER_D) {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "digit", true);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     if parser.eat(LATIN_SMALL_LETTER_S) {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "space", false);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     if parser.eat(LATIN_CAPITAL_LETTER_S) {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "space", true);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     if parser.eat(LATIN_SMALL_LETTER_W) {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "word", false);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     if parser.eat(LATIN_CAPITAL_LETTER_W) {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         parser.on_escape_character_set(start - 1, parser.index, "word", true);
-        return Some(UnicodeSetsConsumeResult { may_contain_strings: false });
+        return Some(UnicodeSetsConsumeResult { may_contain_strings: None });
     }
 
     let mut negate = false;
@@ -518,7 +532,7 @@ fn consume_character_class_escape<'a>(parser: &mut Parser<'a>) -> Option<Unicode
         && parser.ecma_version >= 2018
         && (parser.eat(LATIN_SMALL_LETTER_P) || (negate = parser.eat(LATIN_CAPITAL_LETTER_P)))
     {
-        parser._last_int_value = -1;
+        parser.last_int_value = -1;
         if parser.eat(LEFT_CURLY_BRACKET) {
             if let Some(result) = parser.eat_unicode_property_value_expression() {
                 if parser.eat(RIGHT_CURLY_BRACKET) {
@@ -548,20 +562,24 @@ fn consume_character_class_escape<'a>(parser: &mut Parser<'a>) -> Option<Unicode
     None
 }
 
-fn consume_k_group_name<'a>(parser: &mut Parser<'a>) -> bool {
+fn consume_k_group_name<'a>(parser: &mut Parser<'a>) -> Option<Backreference<'a>> {
     let start = parser.index;
 
-    if parser.eat(LATIN_SMALL_LETTER_K) {
+    if parser.eat('k') {
         if parser.eat_group_name() {
-            let group_name = parser._last_str_value.clone();
-            parser._backreference_names.insert(group_name.clone());
-            parser.on_backreference(start - 1, parser.index, group_name);
-            return true;
+            let group_name: String = parser.last_str_value.clone();
+            parser.back_reference_names.insert(group_name.clone());
+            return Some(Backreference {
+                span: parser.span_with_start(start),
+                reference: BackreferenceRef::Atom(group_name.as_str().into()),
+                // dummy resolved
+                resolved: CapturingGroup::default(),
+            });
         }
-        parser.raise("Invalid named reference");
+        panic!("Invalid named reference");
     }
 
-    false
+    None
 }
 
 fn consume_character_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsConsumeResult> {
@@ -570,7 +588,7 @@ fn consume_character_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsCon
     if parser.eat(LEFT_SQUARE_BRACKET) {
         let negate = parser.eat(CIRCUMFLEX_ACCENT);
         parser.on_character_class_enter(start, negate, parser._unicode_sets_mode);
-        let result = parser.consume_class_contents()?;
+        let result = consume_class_contents(parser);
         if !parser.eat(RIGHT_SQUARE_BRACKET) {
             if parser.current_code_point == -1 {
                 parser.raise("Unterminated character class");
@@ -608,7 +626,7 @@ fn consume_class_contents<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResu
             // ClassContents[UnicodeMode, UnicodeSetsMode] ::
             //         [empty]
             //     1. Return false.
-            return UnicodeSetsConsumeResult { may_contain_strings: false };
+            return UnicodeSetsConsumeResult { may_contain_strings: None };
         }
         let result = self.consume_class_set_expression();
 

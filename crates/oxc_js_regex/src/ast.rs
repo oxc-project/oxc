@@ -119,7 +119,7 @@ pub struct Group<'a> {
 
 /// The capturing group.
 /// E.g. `(ab)`, `(?<name>ab)`
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CapturingGroup<'a> {
     pub span: Span,
     pub name: Option<Atom>,
