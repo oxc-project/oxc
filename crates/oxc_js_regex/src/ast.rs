@@ -358,7 +358,7 @@ pub struct StringAlternative<'a> {
 #[derive(Debug)]
 pub struct Character {
     pub span: Span,
-    pub value: u16, // UTF-16 code point
+    pub value: char, // UTF-16 code point
 }
 
 #[derive(Debug)]
