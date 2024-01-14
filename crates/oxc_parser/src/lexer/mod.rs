@@ -443,11 +443,6 @@ impl<'a> Lexer<'a> {
         Kind::Comment
     }
 
-    /// Section 12.1 Irregular White Space
-    fn skip_irregular_whitespace(&mut self) -> Kind {
-        Kind::WhiteSpace
-    }
-
     /// Section 12.4 Multi Line Comment
     fn skip_multi_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next() {
@@ -1328,7 +1323,6 @@ const ERR: ByteHandler = |lexer| {
 
 // <TAB> <VT> <FF>
 const SPS: ByteHandler = |lexer| {
-    lexer.skip_irregular_whitespace();
     lexer.consume_char();
     Kind::WhiteSpace
 };
