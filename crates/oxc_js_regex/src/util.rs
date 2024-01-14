@@ -6,7 +6,7 @@ pub fn is_syntax_character(cp: char) -> bool {
     SYNTAX_CHARACTERS.contains(&cp)
 }
 
-pub fn is_lead_surrogate(code: char) -> bool {
+pub fn is_lead_surrogate(code: u32) -> bool {
     code >= 0xd800 && code <= 0xdbff
 }
 

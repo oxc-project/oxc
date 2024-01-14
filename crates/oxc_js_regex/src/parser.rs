@@ -7,6 +7,7 @@ use std::str::{CharIndices, Chars, Matches};
 
 use oxc_diagnostics::Error;
 use oxc_span::Span;
+use oxc_syntax::identifier::is_identifier_part;
 use oxc_syntax::unicode_id_start::is_id_continue;
 
 use crate::ast::{
@@ -130,8 +131,8 @@ impl<'a> Parser<'a> {
         self.lexer.chars.get(self.index + range.start..(self.index + range.end))
     }
 
-    pub fn current(&self) -> Option<&char> {
-        self.lexer.chars.get(self.index)
+    pub fn current(&self) -> Option<char> {
+        self.lexer.chars.get(self.index).copied()
     }
 
     pub fn advance(&mut self) -> bool {
@@ -143,7 +144,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn rewind<'a>(parser: &mut Parser<'a>, start: usize) {
+    pub fn rewind<'a>(&mut self, start: usize) {
         self.index = start;
     }
 }
@@ -1127,26 +1128,28 @@ fn eat_reg_exp_identifier_name<'a>(parser: &mut Parser<'a>) -> bool {
  * Set `self._last_int_value` if the identifier start existed.
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_identifier_start<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
-    let force_u_flag = !self._unicode_mode && self.ecma_version >= 2020;
-    let mut cp = self.current_code_point;
-    self.advance();
+fn eat_reg_exp_identifier_start<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    let start = parser.index;
+    let force_u_flag =
+        !parser.context.unicode_mode && parser.context.ecma_version >= EcmaVersion::V2020;
+    let mut cp = *parser.current()?;
+    parser.advance();
 
-    if cp == REVERSE_SOLIDUS && self.eat_reg_exp_unicode_escape_sequence(force_u_flag) {
-        cp = self._last_int_value;
-    } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(self.current_code_point) {
-        cp = combine_surrogate_pair(cp, self.current_code_point);
-        self.advance();
+    if cp == '\\' && eat_reg_exp_unicode_escape_sequence(parser, force_u_flag) {
+        cp = parser.last_int_value as u32 as char;
+    } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(parser.current()? as u32)
+    {
+        cp = combine_surrogate_pair(cp, parser.current() as u32);
+        parser.advance();
     }
 
     if is_identifier_start_char(cp) {
-        self._last_int_value = cp;
+        parser.last_int_value = cp;
         return true;
     }
 
-    if self.index != start {
-        self.rewind(start);
+    if parser.index != start {
+        parser.rewind(start);
     }
     false
 }
@@ -1162,28 +1165,30 @@ fn eat_reg_exp_identifier_start<'a>(parser: &mut Parser<'a>) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_identifier_part<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
-    let force_u_flag = !self._unicode_mode && self.ecma_version >= 2020;
-    let mut cp = self.current_code_point;
-    self.advance();
+fn eat_reg_exp_identifier_part<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    let start = parser.index;
+    let force_u_flag =
+        !parser.context.unicode_mode && parser.context.ecma_version >= EcmaVersion::V2020;
+    let mut cp = *parser.current()?;
+    parser.advance();
 
-    if cp == REVERSE_SOLIDUS && self.eat_reg_exp_unicode_escape_sequence(force_u_flag) {
-        cp = self._last_int_value;
-    } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(self.current_code_point) {
-        cp = combine_surrogate_pair(cp, self.current_code_point);
-        self.advance();
+    if cp == '\\' && eat_reg_exp_unicode_escape_sequence(parser, force_u_flag) {
+        cp = parser.last_int_value as u32 as char;
+    } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(parser.current()? as u32)
+    {
+        cp = combine_surrogate_pair(cp, parser.current()? as u32);
+        parser.advance();
     }
 
-    if is_identifier_part_char(cp) {
-        self._last_int_value = cp;
-        return true;
+    if is_identifier_part(cp) {
+        parser.last_int_value = cp as usize;
+        return Some(());
     }
 
-    if self.index != start {
-        self.rewind(start);
+    if parser.index != start {
+        parser.rewind(start);
     }
-    false
+    None
 }
 
 /**
@@ -1195,12 +1200,12 @@ fn eat_reg_exp_identifier_part<'a>(parser: &mut Parser<'a>) -> bool {
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_c_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
-    if self.eat(LATIN_SMALL_LETTER_C) {
-        if self.eat_control_letter() {
+    let start = parser.index;
+    if parser.eat('c') {
+        if eat_control_letter(parser).is_some() {
             return true;
         }
-        self.rewind(start);
+        parser.rewind(start);
     }
     false
 }
@@ -1213,13 +1218,13 @@ fn eat_c_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_zero<'a>(parser: &mut Parser<'a>) -> bool {
-    if self.current_code_point == DIGIT_ZERO && !is_decimal_digit(self.next_code_point) {
-        self._last_int_value = 0;
-        self.advance();
-        return true;
+fn eat_zero<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    if parser.current()? == '0' && parser.nth(1).map(|ch| ch.is_ascii_digit()) == Some(false) {
+        parser.last_int_value = 0;
+        parser.advance();
+        return Some(());
     }
-    false
+    None
 }
 
 /**
