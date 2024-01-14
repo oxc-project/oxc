@@ -1233,113 +1233,26 @@ fn eat_zero<'a>(parser: &mut Parser<'a>) -> bool {
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_control_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    if self.eat(LATIN_SMALL_LETTER_F) {
-        self._last_int_value = FORM_FEED;
+    if parser.eat('f') {
+        parser.last_int_value = 12;
         return true;
     }
-    if self.eat(LATIN_SMALL_LETTER_N) {
-        self._last_int_value = LINE_FEED;
+    if parser.eat('n') {
+        parser.last_int_value = 10;
         return true;
     }
-    if self.eat(LATIN_SMALL_LETTER_R) {
-        self._last_int_value = CARRIAGE_RETURN;
+    if parser.eat('r') {
+        parser.last_int_value = 13;
         return true;
     }
-    if self.eat(LATIN_SMALL_LETTER_T) {
-        self._last_int_value = CHARACTER_TABULATION;
+    if parser.eat('t') {
+        parser.last_int_value = 9;
         return true;
     }
-    if self.eat(LATIN_SMALL_LETTER_V) {
-        self._last_int_value = LINE_TABULATION;
+    if parser.eat('v') {
+        parser.last_int_value = 11;
         return true;
     }
-    false
-}
-
-/**
- * Eat the next characters as a RegExp `ControlLetter` production if
- * possible.
- * Set `self._last_int_value` if it ate the next characters successfully.
- * ```
- * ControlLetter:: one of
- *      a b c d e f g h i j k l m n o p q r s t u v w x y z
- *      A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
- * ```
- * @returns `true` if it ate the next characters successfully.
- */
-fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
-    let cp = self.current_code_point;
-    if is_latin_letter(cp) {
-        self.advance();
-        self._last_int_value = cp % 0x20;
-        return true;
-    }
-    false
-}
-
-/**
- * Eat the next characters as a RegExp `RegExpUnicodeEscapeSequence`
- * production if possible.
- * Set `self._last_int_value` if it ate the next characters successfully.
- * ```
- * RegExpUnicodeEscapeSequence[UnicodeMode]::
- *      [+UnicodeMode] `u` HexLeadSurrogate `\u` HexTrailSurrogate
- *      [+UnicodeMode] `u` HexLeadSurrogate
- *      [+UnicodeMode] `u` HexTrailSurrogate
- *      [+UnicodeMode] `u` HexNonSurrogate
- *      [~UnicodeMode] `u` Hex4Digits
- *      [+UnicodeMode] `u{` CodePoint `}`
- * ```
- * @returns `true` if it ate the next characters successfully.
- */
-fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag: bool) -> bool {
-    let start = self.index;
-    let u_flag = force_u_flag || self._unicode_mode;
-
-    if self.eat(LATIN_SMALL_LETTER_U) {
-        if (u_flag && self.eat_reg_exp_unicode_surrogate_pair_escape())
-            || self.eat_fixed_hex_digits(4)
-            || (u_flag && self.eat_reg_exp_unicode_code_point_escape())
-        {
-            return true;
-        }
-        if self.strict || u_flag {
-            self.raise("Invalid unicode escape");
-        }
-        self.rewind(start);
-    }
-
-    false
-}
-
-/**
- * Eat the next characters as the following alternatives if possible.
- * Set `self._last_int_value` if it ate the next characters successfully.
- * ```
- *      HexLeadSurrogate `\u` HexTrailSurrogate
- * ```
- * @returns `true` if it ate the next characters successfully.
- */
-fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
-
-    if self.eat_fixed_hex_digits(4) {
-        let lead = self._last_int_value;
-        if is_lead_surrogate(lead)
-            && self.eat(REVERSE_SOLIDUS)
-            && self.eat(LATIN_SMALL_LETTER_U)
-            && self.eat_fixed_hex_digits(4)
-        {
-            let trail = self._last_int_value;
-            if is_trail_surrogate(trail) {
-                self._last_int_value = combine_surrogate_pair(lead, trail);
-                return true;
-            }
-        }
-
-        self.rewind(start);
-    }
-
     false
 }
 
@@ -1351,18 +1264,18 @@ fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> boo
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_code_point_escape(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
+fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
+    let start = parser.index;
 
-    if self.eat(LEFT_CURLY_BRACKET)
-        && self.eat_hex_digits()
-        && self.eat(RIGHT_CURLY_BRACKET)
-        && is_valid_unicode(self._last_int_value)
+    if parser.eat('{')
+        && eat_hex_digits(parser)
+        && parser.eat('}')
+        && is_valid_unicode(parser.last_int_value as u32)
     {
         return true;
     }
 
-    self.rewind(start);
+    parser.rewind(start);
     false
 }
 
@@ -1478,29 +1391,6 @@ fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> boo
         parser.rewind(start);
     }
 
-    false
-}
-
-/**
- * Eat the next characters as the following alternatives if possible.
- * Set `self._last_int_value` if it ate the next characters successfully.
- * ```
- *      `{` CodePoint `}`
- * ```
- * @returns `true` if it ate the next characters successfully.
- */
-fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = parser.index;
-
-    if parser.eat('{')
-        && eat_hex_digits(parser)
-        && parser.eat('}')
-        && is_valid_unicode(parser.last_int_value)
-    {
-        return true;
-    }
-
-    parser.rewind(start);
     false
 }
 
