@@ -374,28 +374,31 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.current.token.start = offset;
 
-            if let Some(c) = self.current.chars.clone().next() {
-                let kind = self.match_char(c);
-                if !matches!(
-                    kind,
-                    Kind::WhiteSpace | Kind::NewLine | Kind::Comment | Kind::MultiLineComment
-                ) {
-                    return kind;
-                }
-            } else {
+            let remaining = self.current.chars.as_str();
+            if remaining.is_empty() {
                 return Kind::Eof;
+            }
+
+            let byte = remaining.as_bytes()[0];
+            let kind = if byte < 128 {
+                BYTE_HANDLERS[byte as usize](self)
+            } else {
+                self.match_unicode_char()
+            };
+
+            if !matches!(
+                kind,
+                Kind::WhiteSpace | Kind::NewLine | Kind::Comment | Kind::MultiLineComment
+            ) {
+                return kind;
             }
         }
     }
 
-    #[inline]
-    fn match_char(&mut self, c: char) -> Kind {
-        let size = c as usize;
-
-        if size < 128 {
-            return BYTE_HANDLERS[size](self);
-        }
-
+    // `#[cold]` to hint to branch predictor that unicode identifiers and irregular whitespace are rare
+    #[cold]
+    fn match_unicode_char(&mut self) -> Kind {
+        let c = self.current.chars.clone().next().unwrap();
         match c {
             c if is_id_start_unicode(c) => {
                 let mut builder = AutoCow::new(self);
