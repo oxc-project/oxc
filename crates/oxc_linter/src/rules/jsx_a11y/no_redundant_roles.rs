@@ -14,7 +14,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_map, phf_set};
+use phf::phf_map;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -53,10 +53,10 @@ declare_oxc_lint!(
     correctness
 );
 
-static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
-    "nav" => phf_set!{"navigation"},
-    "button" => phf_set!{"button"},
-    "body" => phf_set!{"document"},
+static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, &'static str> = phf_map! {
+    "nav" =>"navigation",
+    "button" => "button",
+    "body" => "document",
 };
 
 impl Rule for NoRedundantRoles {
