@@ -1587,3 +1587,49 @@ fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
     }
     false
 }
+
+/**
+ * Eat the next characters as a `OctalDigit` production if possible.
+ * Set `self._last_int_value` if it ate the next characters successfully.
+ * ```
+ * OctalDigit:: one of
+ *      0 1 2 3 4 5 6 7
+ * ```
+ * @returns `true` if it ate the next characters successfully.
+ */
+fn eat_octal_digit<'a>(parser: &mut Parser<'a>) -> Option<()> {
+    let cp = parser.current()?;
+    if cp.is_digit(8) {
+        parser.advance();
+        parser.last_int_value = cp.to_digit(8)?;
+        Some(())
+    } else {
+        parser.last_int_value = 0;
+        None
+    }
+}
+
+/**
+ * Eat the next characters as the given number of `HexDigit` productions if
+ * possible.
+ * Set `self._last_int_value` if it ate the next characters successfully.
+ * ```
+ * HexDigit:: one of
+ *      0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
+ * ```
+ * @returns `true` if it ate the next characters successfully.
+ */
+fn eat_fixed_hex_digits<'a>(parser: &mut Parser<'a>, length: usize) -> Option<()> {
+    let start = parser.index;
+    parser.last_int_value = 0;
+    for _ in 0..length {
+        let cp = parser.current()?;
+        if !cp.is_ascii_hexdigit() {
+            parser.rewind(start);
+            return None;
+        }
+        parser.last_int_value = 16 * parser.last_int_value + cp.to_digit(16)? as usize;
+        parser.advance();
+    }
+    Some(())
+}
