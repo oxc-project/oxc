@@ -17,7 +17,9 @@ use crate::ast::{
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
-use crate::util::is_syntax_character;
+use crate::util::{
+    combine_surrogate_pair, is_lead_surrogate, is_syntax_character, is_trail_surrogate,
+};
 
 pub struct Lexer<'a> {
     source: &'a str,
@@ -1453,23 +1455,23 @@ fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
+    let start = parser.index;
 
-    if self.eat_fixed_hex_digits(4) {
-        let lead = self._last_int_value;
-        if is_lead_surrogate(lead)
-            && self.eat(REVERSE_SOLIDUS)
-            && self.eat(LATIN_SMALL_LETTER_U)
-            && self.eat_fixed_hex_digits(4)
+    if parser.eat_fixed_hex_digits(4) {
+        let lead = parser.last_int_value;
+        if is_lead_surrogate(lead as u32)
+            && parser.eat('\\')
+            && parser.eat('u')
+            && parser.eat_fixed_hex_digits(4)
         {
-            let trail = self._last_int_value;
-            if is_trail_surrogate(trail) {
-                self._last_int_value = combine_surrogate_pair(lead, trail);
+            let trail = parser.last_int_value;
+            if is_trail_surrogate(trail as u32) {
+                parser.last_int_value = combine_surrogate_pair(lead, trail) as usize;
                 return true;
             }
         }
 
-        self.rewind(start);
+        parser.rewind(start);
     }
 
     false
