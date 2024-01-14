@@ -75,10 +75,10 @@ pub fn is_class_set_reserved_double_punctuator_character(cp: char) -> bool {
     CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR_CHARACTER.contains(&cp)
 }
 
-pub fn is_class_set_syntax_character(cp: u32) -> bool {
+pub fn is_class_set_syntax_character(cp: char) -> bool {
     CLASS_SET_SYNTAX_CHARACTER.contains(&cp)
 }
 
-pub fn is_class_set_reserved_punctuator(cp: u32) -> bool {
+pub fn is_class_set_reserved_punctuator(cp: char) -> bool {
     CLASS_SET_RESERVED_PUNCTUATOR.contains(&cp)
 }

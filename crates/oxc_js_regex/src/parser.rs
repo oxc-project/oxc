@@ -14,7 +14,7 @@ use crate::ast::{
     Alternative, Assertion, Backreference, BackreferenceRef, BoundaryAssertion, Branch,
     CapturingGroup, Character, EdgeAssertion, EdgeAssertionKind, Element, LookaheadAssertion,
     LookaroundAssertion, LookbehindAssertion, Pattern, QuantifiableElement, Quantifier,
-    RegExpLiteral, WordBoundaryAssertion,
+    RegExpLiteral, StringAlternative, WordBoundaryAssertion,
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
@@ -1026,17 +1026,22 @@ fn consume_class_string_disjunction<'a>(
  * @param i - The index of the string alternative.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_string<'a>(parser: &mut Parser<'a>, i: usize) -> UnicodeSetsConsumeResult {
-    let start = self.index;
+fn consume_class_string<'a>(
+    parser: &mut Parser<'a>,
+    i: usize,
+) -> (UnicodeSetsConsumeResult, Option<StringAlternative<'a>>) {
+    let start = parser.index;
 
     let mut count = 0;
-    self.on_string_alternative_enter(start, i);
-
-    while self.current_code_point != -1 && self.consume_class_set_character() {
-        count += 1;
+    let mut arr = parser.builder.new_vec();
+    while !parser.eof() {
+        if let Some(character) = consume_class_set_character(parser) {
+            arr.push(character);
+            count += 1;
+        } else {
+            break;
+        }
     }
-
-    self.on_string_alternative_leave(start, self.index, i);
 
     // * Static Semantics: MayContainStrings
     // ClassString :: [empty]
@@ -1046,7 +1051,10 @@ fn consume_class_string<'a>(parser: &mut Parser<'a>, i: usize) -> UnicodeSetsCon
     // NonEmptyClassString :: ClassSetCharacter NonEmptyClassString(opt)
     //     1. If NonEmptyClassString is present, return true.
     //     2. Return false.
-    return UnicodeSetsConsumeResult { may_contain_strings: Some(count != 1) };
+    (
+        UnicodeSetsConsumeResult { may_contain_strings: Some(count != 1) },
+        Some(StringAlternative { span: parser.span_with_start(start), elements: arr }),
+    )
 }
 
 /**
@@ -1067,13 +1075,13 @@ fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> Option<Character>
     }
 
     if parser.eat('\\') {
-        if consume_character_escape() {
+        if consume_character_escape(parser) {
             return true;
         }
         if let Some(ch) = parser.current()
             && is_class_set_reserved_punctuator(ch)
         {
-            parser.last_int_value = parser.current()?;
+            parser.last_int_value = parser.current()? as u32;
             parser.advance();
 
             Some(Character {
@@ -1092,6 +1100,58 @@ fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> Option<Character>
     }
 
     None
+}
+
+fn consume_character_escape<'a>(parser: &mut Parser<'a>) -> Option<Character> {
+    let start = parser.index;
+    if eat_control_escape(parser)
+        || eat_c_control_letter(parser)
+        || eat_zero(parser).is_some()
+        || eat_hex_escape_sequence(parser)
+        || eat_reg_exp_unicode_escape_sequence(parser, false)
+        || (!parser.context.strict
+            && !parser.context.unicode_mode
+            && eat_legacy_octal_escape_sequence(parser))
+        || eat_identity_escape(parser).is_some()
+    {
+        Some(Character {
+            span: parser.span_with_start(start - 1),
+            value: parser.last_int_value as char,
+        })
+    }
+    None
+}
+
+fn eat_hex_escape_sequence<'a>(parser: &mut Parser<'a>) -> bool {
+    let start = parser.index;
+    if parser.eat('x') {
+        if eat_fixed_hex_digits(parser, 2) {
+            return true;
+        }
+        if parser.context.unicode_mode || parser.context.strict {
+            panic!("Invalid escape");
+        }
+        parser.rewind(start);
+    }
+    false
+}
+
+fn eat_legacy_octal_escape_sequence<'a>(parser: &mut Parser<'a>) -> bool {
+    if eat_octal_digit(parser).is_some() {
+        let n1 = parser.last_int_value;
+        if eat_octal_digit(parser).is_some() {
+            let n2 = parser.last_int_value;
+            if n1 <= 3 && eat_octal_digit(parser).is_some() {
+                parser.last_int_value = n1 * 64 + n2 * 8 + parser.last_int_value;
+            } else {
+                parser.last_int_value = n1 * 8 + n2;
+            }
+        } else {
+            parser.last_int_value = n1;
+        }
+        return true;
+    }
+    false
 }
 
 /**
