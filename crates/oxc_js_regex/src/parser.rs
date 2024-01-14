@@ -19,7 +19,9 @@ use crate::ast::{
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
 use crate::util::{
-    combine_surrogate_pair, is_lead_surrogate, is_syntax_character, is_trail_surrogate,
+    combine_surrogate_pair, is_class_set_reserved_double_punctuator_character,
+    is_class_set_reserved_punctuator, is_class_set_syntax_character, is_lead_surrogate,
+    is_syntax_character, is_trail_surrogate,
 };
 
 pub struct Lexer<'a> {
@@ -51,7 +53,7 @@ pub struct Parser<'a> {
     index: usize,
     group_names: HashSet<String>,
     num_capturing_parens: usize,
-    last_int_value: usize,
+    last_int_value: u32,
     back_reference_names: HashSet<String>,
     last_assertion_is_quantifiable: bool,
     last_range: Range<usize>,
@@ -123,7 +125,7 @@ impl<'a> Parser<'a> {
 
     /// by default next means `nth(1)`
     pub fn next(&self) -> Option<&char> {
-        self.lexer.chars.get(self.index + 1)
+        self.lexer.chars.get(self.index + 1).copied()
     }
 
     /// get a range chars relative from current cursor
@@ -1052,40 +1054,44 @@ fn consume_class_string<'a>(parser: &mut Parser<'a>, i: usize) -> UnicodeSetsCon
  * Set `self._last_int_value` if it consumed the next characters successfully.
  * @returns `true` if it ate the next characters successfully.
  */
-fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> bool {
-    let start = self.index;
-    let cp = self.current_code_point;
+fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> Option<Character> {
+    let start = parser.index;
+    let cp = parser.current()?;
 
-    if cp != -1 && cp != self.next_code_point
-        || !is_class_set_reserved_double_punctuator_character(cp)
-    {
-        if cp != -1 && !is_class_set_syntax_character(cp) {
-            self._last_int_value = cp;
-            self.advance();
-            self.on_character(start, self.index, self._last_int_value);
-            return true;
+    if Some(cp) != parser.next() || !is_class_set_reserved_double_punctuator_character(cp) {
+        if !is_class_set_syntax_character(cp) {
+            parser.last_int_value = cp as u32;
+            parser.advance();
+            Some(Character { span: parser.span_with_start(start), value: cp })
         }
     }
 
-    if self.eat(REVERSE_SOLIDUS) {
-        if self.consume_character_escape() {
+    if parser.eat('\\') {
+        if consume_character_escape() {
             return true;
         }
-        if is_class_set_reserved_punctuator(self.current_code_point) {
-            self._last_int_value = self.current_code_point;
-            self.advance();
-            self.on_character(start, self.index, self._last_int_value);
-            return true;
+        if let Some(ch) = parser.current()
+            && is_class_set_reserved_punctuator(ch)
+        {
+            parser.last_int_value = parser.current()?;
+            parser.advance();
+
+            Some(Character {
+                span: parser.span_with_start(start),
+                value: parser.last_int_value as char,
+            })
         }
-        if self.eat(LATIN_SMALL_LETTER_B) {
-            self._last_int_value = BACKSPACE;
-            self.on_character(start, self.index, self._last_int_value);
-            return true;
+        if parser.eat('b') {
+            parser.last_int_value = 8;
+            Some(Character {
+                span: parser.span_with_start(start),
+                value: parser.last_int_value as char,
+            })
         }
-        self.rewind(start);
+        parser.rewind(start);
     }
 
-    false
+    None
 }
 
 /**
@@ -1094,11 +1100,11 @@ fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> bool {
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_group_name<'a>(parser: &mut Parser<'a>) -> bool {
-    if self.eat(LESS_THAN_SIGN) {
-        if self.eat_reg_exp_identifier_name() && self.eat(GREATER_THAN_SIGN) {
+    if parser.eat('<') {
+        if eat_reg_exp_identifier_name(parser) && parser.eat('>') {
             return true;
         }
-        self.raise("Invalid capture group name");
+        panic!("Invalid capture group name");
     }
     false
 }
@@ -1110,11 +1116,11 @@ fn eat_group_name<'a>(parser: &mut Parser<'a>) -> bool {
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_reg_exp_identifier_name<'a>(parser: &mut Parser<'a>) -> bool {
-    if self.eat_reg_exp_identifier_start() {
-        self._last_str_value = self._last_int_value.to_string();
+    if eat_reg_exp_identifier_start(parser).is_some() {
+        parser.last_str_value = (parser.last_int_value as char).to_string();
 
-        while self.eat_reg_exp_identifier_part() {
-            self._last_str_value.push_str(&self._last_int_value.to_string());
+        while eat_reg_exp_identifier_part(parser) {
+            parser.last_str_value.push(parser.last_int_value as char);
         }
 
         return true;
