@@ -12,9 +12,10 @@ use oxc_syntax::unicode_id_start::is_id_continue;
 
 use crate::ast::{
     Alternative, Assertion, Backreference, BackreferenceRef, BoundaryAssertion, Branch,
-    CapturingGroup, Character, EdgeAssertion, EdgeAssertionKind, Element, LookaheadAssertion,
-    LookaroundAssertion, LookbehindAssertion, Pattern, QuantifiableElement, Quantifier,
-    RegExpLiteral, StringAlternative, WordBoundaryAssertion,
+    CapturingGroup, Character, CharacterClass, ClassStringDisjunction, EdgeAssertion,
+    EdgeAssertionKind, Element, LookaheadAssertion, LookaroundAssertion, LookbehindAssertion,
+    Pattern, QuantifiableElement, Quantifier, RegExpLiteral, StringAlternative,
+    WordBoundaryAssertion,
 };
 use crate::ast_builder::AstBuilder;
 use crate::ecma_version::EcmaVersion;
@@ -148,6 +149,15 @@ impl<'a> Parser<'a> {
 
     pub fn rewind<'a>(&mut self, start: usize) {
         self.index = start;
+    }
+
+    fn eat3(&self, first: char, second: char, third: char) -> bool {
+        if self.is(first) && self.nth(1) == Some(&second) && self.nth(2) == Some(&third) {
+            self.index += 3;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -620,13 +630,11 @@ fn consume_character_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsCon
     }
 }
 
-/**
- * Consume ClassContents in a character class.
- * @returns `UnicodeSetsConsumeResult`.
- */
+/// * Consume ClassContents in a character class.
+///  * @returns `UnicodeSetsConsumeResult`.
 fn consume_class_contents<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResult {
-    if self._unicode_sets_mode {
-        if self.current_code_point == RIGHT_SQUARE_BRACKET {
+    if parser._unicode_sets_mode {
+        if parser.current_code_point == RIGHT_SQUARE_BRACKET {
             // [empty]
 
             // * Static Semantics: MayContainStrings
@@ -635,7 +643,7 @@ fn consume_class_contents<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResu
             //     1. Return false.
             return UnicodeSetsConsumeResult { may_contain_strings: None };
         }
-        let result = self.consume_class_set_expression();
+        let result = parser.consume_class_set_expression();
 
         // * Static Semantics: MayContainStrings
         // ClassContents :: ClassSetExpression
@@ -643,39 +651,39 @@ fn consume_class_contents<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResu
         return result;
     }
 
-    let strict = self.strict || self._unicode_mode;
+    let strict = parser.strict || parser._unicode_mode;
     loop {
         // Consume the first ClassAtom
-        let range_start = self.index;
-        if !self.consume_class_atom() {
+        let range_start = parser.index;
+        if !parser.consume_class_atom() {
             break;
         }
-        let min = self._last_int_value;
+        let min = parser._last_int_value;
 
         // Consume `-`
-        if !self.eat(HYPHEN_MINUS) {
+        if !parser.eat(HYPHEN_MINUS) {
             continue;
         }
-        self.on_character(range_start - 1, self.index, HYPHEN_MINUS);
+        parser.on_character(range_start - 1, parser.index, HYPHEN_MINUS);
 
         // Consume the second ClassAtom
-        if !self.consume_class_atom() {
+        if !parser.consume_class_atom() {
             break;
         }
-        let max = self._last_int_value;
+        let max = parser._last_int_value;
 
         // Validate
         if min == -1 || max == -1 {
             if strict {
-                self.raise("Invalid character class");
+                parser.raise("Invalid character class");
             }
             continue;
         }
         if min > max {
-            self.raise("Range out of order in character class");
+            parser.raise("Range out of order in character class");
         }
 
-        self.on_character_class_range(range_start, self.index, min, max);
+        parser.on_character_class_range(range_start, self.index, min, max);
     }
 
     // * Static Semantics: MayContainStrings
@@ -701,7 +709,7 @@ fn consume_class_atom<'a>(parser: &mut Parser<'a>) -> bool {
     }
 
     if self.eat(REVERSE_SOLIDUS) {
-        if self.consume_class_escape() {
+        if consume_class_escape(parser) {
             return true;
         }
         if !self.strict && self.current_code_point == LATIN_SMALL_LETTER_C {
@@ -753,7 +761,7 @@ fn consume_class_escape<'a>(parser: &mut Parser<'a>) -> bool {
         return true;
     }
 
-    return self.consume_character_class_escape() || self.consume_character_escape();
+    return consume_character_class_escape(parser) || consume_character_escape(parser);
 }
 
 /**
@@ -890,7 +898,7 @@ fn eat_decimal_digits<'a>(parser: &mut Parser<'a>) -> bool {
         let Some(d) = ch.to_digit(10) else {
             break;
         };
-        parser.last_int_value = 10 * parser.last_int_value + d as usize;
+        parser.last_int_value = 10 * parser.last_int_value + d;
         parser.advance();
     }
     parser.index != start
@@ -944,16 +952,15 @@ fn count_capturing_parens<'a>(parser: &mut Parser<'a>) -> usize {
     count
 }
 
-/**
- * Consume NestedClass in a character class.
- * @returns `UnicodeSetsConsumeResult`.
- */
-fn consume_nested_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsConsumeResult> {
+/// * Consume NestedClass in a character class.
+///  * @returns `UnicodeSetsConsumeResult`.
+///  TODO:
+fn consume_nested_class<'a>(parser: &mut Parser<'a>) -> Option<CharacterClass> {
     let start = self.index;
     if self.eat(LEFT_SQUARE_BRACKET) {
         let negate = self.eat(CIRCUMFLEX_ACCENT);
         self.on_character_class_enter(start, negate, true);
-        let result = self.consume_class_contents();
+        let result = consume_class_contents(parser);
         if !self.eat(RIGHT_SQUARE_BRACKET) {
             self.raise("Unterminated character class");
         }
@@ -988,24 +995,27 @@ fn consume_nested_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsConsum
  */
 fn consume_class_string_disjunction<'a>(
     parser: &mut Parser<'a>,
-) -> Option<UnicodeSetsConsumeResult> {
-    let start = self.index;
-    if self.eat3(REVERSE_SOLIDUS, LATIN_SMALL_LETTER_Q, LEFT_CURLY_BRACKET) {
-        self.on_class_string_disjunction_enter(start);
-
+) -> (Option<UnicodeSetsConsumeResult>, Option<ClassStringDisjunction<'a>>) {
+    let start = parser.index;
+    if parser.eat3('\\', 'q', '{') {
         let mut i = 0;
         let mut may_contain_strings = false;
-        while self.consume_class_string(i).may_contain_strings.unwrap_or(false) {
-            may_contain_strings = true;
+        let mut alternatives = parser.builder.new_vec();
+        loop {
+            let (consume_res, node) = consume_class_string(parser, i);
+            if consume_res.may_contain_strings.unwrap_or_default() {
+                may_contain_strings = true;
+            }
+            if let Some(node) = node {
+                alternatives.push(node);
+            }
             i += 1;
-            if !self.eat(VERTICAL_LINE) {
+            if !parser.eat('|') {
                 break;
             }
         }
 
-        if self.eat(RIGHT_CURLY_BRACKET) {
-            self.on_class_string_disjunction_leave(start, self.index);
-
+        if parser.eat('}') {
             // * Static Semantics: MayContainStrings
             // ClassStringDisjunction :: \q{ ClassStringDisjunctionContents }
             //     1. Return MayContainStrings of the ClassStringDisjunctionContents.
@@ -1014,9 +1024,12 @@ fn consume_class_string_disjunction<'a>(
             // ClassStringDisjunctionContents :: ClassString | ClassStringDisjunctionContents
             //     1. If MayContainStrings of the ClassString is true, return true.
             //     2. Return MayContainStrings of the ClassStringDisjunctionContents.
-            return Some(UnicodeSetsConsumeResult { may_contain_strings });
+            return (
+                Some(UnicodeSetsConsumeResult { may_contain_strings: Some(may_contain_strings) }),
+                Some(ClassStringDisjunction { span: parser.span_with_start(start), alternatives }),
+            );
         }
-        self.raise("Unterminated class string disjunction");
+        panic!("Unterminated class string disjunction");
     }
     None
 }
@@ -1198,20 +1211,20 @@ fn eat_reg_exp_identifier_start<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let start = parser.index;
     let force_u_flag =
         !parser.context.unicode_mode && parser.context.ecma_version >= EcmaVersion::V2020;
-    let mut cp = *parser.current()?;
+    let mut cp = parser.current()?;
     parser.advance();
 
     if cp == '\\' && eat_reg_exp_unicode_escape_sequence(parser, force_u_flag) {
-        cp = parser.last_int_value as u32 as char;
+        cp = char::from_u32(parser.last_int_value).expect("should convert to char");
     } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(parser.current()? as u32)
     {
-        cp = combine_surrogate_pair(cp, parser.current() as u32);
+        cp = combine_surrogate_pair(cp, parser.current().expect("should convert to u32") as u32);
         parser.advance();
     }
 
     if is_identifier_start_char(cp) {
-        parser.last_int_value = cp;
-        return true;
+        parser.last_int_value = cp as u32;
+        return Some(());
     }
 
     if parser.index != start {
@@ -1235,19 +1248,21 @@ fn eat_reg_exp_identifier_part<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let start = parser.index;
     let force_u_flag =
         !parser.context.unicode_mode && parser.context.ecma_version >= EcmaVersion::V2020;
-    let mut cp = *parser.current()?;
+    let mut cp = parser.current()?;
     parser.advance();
 
     if cp == '\\' && eat_reg_exp_unicode_escape_sequence(parser, force_u_flag) {
-        cp = parser.last_int_value as u32 as char;
-    } else if force_u_flag && is_lead_surrogate(cp) && is_trail_surrogate(parser.current()? as u32)
+        cp = char::from_u32(parser.last_int_value).expect("should convert to char");
+    } else if force_u_flag
+        && is_lead_surrogate(cp as u32)
+        && is_trail_surrogate(parser.current()? as u32)
     {
-        cp = combine_surrogate_pair(cp, parser.current()? as u32);
+        cp = combine_surrogate_pair(cp as u32, parser.current()? as u32);
         parser.advance();
     }
 
     if is_identifier_part(cp) {
-        parser.last_int_value = cp as usize;
+        parser.last_int_value = cp as u32;
         return Some(());
     }
 
@@ -1363,10 +1378,10 @@ fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
 fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> Option<()> {
     parser.last_int_value = 0;
     let mut cp = parser.current()?;
-    if cp >= &'1' && cp <= &'9' {
-        while cp >= &'1' && cp <= &'9' {
-            parser.last_int_value = 10 * parser.last_int_value
-                + cp.to_digit(10).expect("should convert successfully") as usize;
+    if cp >= '1' && cp <= '9' {
+        while cp >= '1' && cp <= '9' {
+            parser.last_int_value =
+                10 * parser.last_int_value + cp.to_digit(10).expect("should convert successfully");
             parser.advance();
             cp = match parser.current() {
                 Some(ch) => ch,
@@ -1393,7 +1408,7 @@ fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let cp = parser.current()?;
     if cp.is_ascii_alphabetic() {
         parser.advance();
-        parser.last_int_value = (cp as usize) % 0x20;
+        parser.last_int_value = (cp as u32) % 0x20;
         return Some(());
     }
     None
@@ -1445,16 +1460,16 @@ fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag
 fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let start = parser.index;
 
-    if parser.eat_fixed_hex_digits(4) {
+    if eat_fixed_hex_digits(parser, 4).is_some() {
         let lead = parser.last_int_value;
-        if is_lead_surrogate(lead as u32)
+        if is_lead_surrogate(lead)
             && parser.eat('\\')
             && parser.eat('u')
-            && parser.eat_fixed_hex_digits(4)
+            && eat_fixed_hex_digits(parser, 4).is_some()
         {
             let trail = parser.last_int_value;
-            if is_trail_surrogate(trail as u32) {
-                parser.last_int_value = combine_surrogate_pair(lead, trail) as usize;
+            if is_trail_surrogate(trail) {
+                parser.last_int_value = combine_surrogate_pair(lead, trail);
                 return true;
             }
         }
@@ -1483,10 +1498,10 @@ fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> boo
  */
 fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let cp = parser.current();
-    if parser.is_valid_identity_escape(cp.cloned()) {
-        parser.last_int_value = cp.unwrap() as usize;
+    if is_valid_identity_escape(parser, cp) {
+        parser.last_int_value = cp.unwrap() as u32;
         parser.advance();
-        return true;
+        return Some(());
     }
     None
 }
@@ -1548,7 +1563,7 @@ fn eat_octal_digit<'a>(parser: &mut Parser<'a>) -> Option<()> {
     let cp = parser.current()?;
     if cp.is_digit(8) {
         parser.advance();
-        parser.last_int_value = cp.to_digit(8)? as usize;
+        parser.last_int_value = cp.to_digit(8)?;
         Some(())
     } else {
         parser.last_int_value = 0;
@@ -1575,7 +1590,7 @@ fn eat_fixed_hex_digits<'a>(parser: &mut Parser<'a>, length: usize) -> Option<()
             parser.rewind(start);
             return None;
         }
-        parser.last_int_value = 16 * parser.last_int_value + cp.to_digit(16)? as usize;
+        parser.last_int_value = 16 * parser.last_int_value + cp.to_digit(16)?;
         parser.advance();
     }
     Some(())
