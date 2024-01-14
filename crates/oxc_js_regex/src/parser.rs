@@ -1376,18 +1376,22 @@ fn eat_reg_exp_unicode_code_point_escape(parser: &mut Parser<'a>) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
+fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> Option<()> {
     parser.last_int_value = 0;
-    let mut cp = parser.current();
-    if cp >= Some(&'1') && cp <= Some(&'9') {
-        while cp >= Some(&'1') && cp <= Some(&'9') {
-            parser.last_int_value = 10 * parser.last_int_value + (cp - DIGIT_ZERO);
+    let mut cp = parser.current()?;
+    if cp >= &'1' && cp <= &'9' {
+        while cp >= &'1' && cp <= &'9' {
+            parser.last_int_value = 10 * parser.last_int_value
+                + cp.to_digit(10).expect("should convert successfully") as usize;
             parser.advance();
-            cp = parser.current();
+            cp = match parser.current() {
+                Some(ch) => ch,
+                None => break,
+            };
         }
-        return true;
+        return Some(());
     }
-    false
+    None
 }
 
 /**
@@ -1427,20 +1431,20 @@ fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> Option<()> {
  * @returns `true` if it ate the next characters successfully.
  */
 fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag: bool) -> bool {
-    let start = self.index;
-    let u_flag = force_u_flag || self._unicode_mode;
+    let start = parser.index;
+    let u_flag = force_u_flag || parser.context.unicode_mode;
 
-    if self.eat(LATIN_SMALL_LETTER_U) {
-        if (u_flag && self.eat_reg_exp_unicode_surrogate_pair_escape())
-            || self.eat_fixed_hex_digits(4)
-            || (u_flag && self.eat_reg_exp_unicode_code_point_escape())
+    if parser.eat('u') {
+        if (u_flag && eat_reg_exp_unicode_surrogate_pair_escape(parser))
+            || eat_fixed_hex_digits(parser, 4).is_some()
+            || (u_flag && eat_reg_exp_unicode_code_point_escape(parser))
         {
             return true;
         }
-        if self.strict || u_flag {
-            self.raise("Invalid unicode escape");
+        if parser.context.strict || u_flag {
+            panic!("Invalid unicode escape");
         }
-        self.rewind(start);
+        parser.rewind(start);
     }
 
     false
