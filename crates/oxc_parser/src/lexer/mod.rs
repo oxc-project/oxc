@@ -376,7 +376,13 @@ impl<'a> Lexer<'a> {
 
             let remaining = self.current.chars.as_str();
             if remaining.is_empty() {
-                return Kind::Eof;
+                // Hint to branch predictor that we only reach the end of file once
+                #[cold]
+                #[inline]
+                fn at_end() -> Kind {
+                    Kind::Eof
+                }
+                return at_end();
             }
 
             let byte = remaining.as_bytes()[0];
