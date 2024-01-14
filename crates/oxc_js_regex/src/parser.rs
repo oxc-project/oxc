@@ -133,7 +133,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn rewind(&mut self, start: usize) {
+    pub fn rewind<'a>(parser: &mut Parser<'a>, start: usize) {
         self.index = start;
     }
 }
@@ -444,7 +444,7 @@ fn parse_atom_escape<'a>(parser: &mut Parser<'a>) -> bool {
     if parse_backreference(parser)
         || parser.consume_character_class_escape()
         || parser.consume_character_escape()
-        || (parser._n_flag && parser.consume_k_group_name())
+        || (parser.context.nflag && parser.consume_k_group_name())
     {
         true
     } else {
@@ -467,6 +467,7 @@ fn parse_backreference<'a>(parser: &mut Parser<'a>) -> bool {
                 panic!("Invalid escape");
             }
             parser.rewind(start);
+            true
         }
     } else {
         false
@@ -598,7 +599,7 @@ fn consume_character_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsCon
  * Consume ClassContents in a character class.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_contents(&mut self) -> UnicodeSetsConsumeResult {
+fn consume_class_contents<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResult {
     if self._unicode_sets_mode {
         if self.current_code_point == RIGHT_SQUARE_BRACKET {
             // [empty]
@@ -663,7 +664,7 @@ fn consume_class_contents(&mut self) -> UnicodeSetsConsumeResult {
  * Consume ClassAtom in a character class.
  * @returns `true` if it consumed the next characters successfully.
  */
-fn consume_class_atom(&mut self) -> bool {
+fn consume_class_atom<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
     let cp = self.current_code_point;
 
@@ -696,7 +697,7 @@ fn consume_class_atom(&mut self) -> bool {
  * Consume ClassEscape in a character class.
  * @returns `true` if it consumed the next characters successfully.
  */
-fn consume_class_escape(&mut self) -> bool {
+fn consume_class_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
 
     // `b`
@@ -734,7 +735,7 @@ fn consume_class_escape(&mut self) -> bool {
  * Consume ClassSetExpression in a character class.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_set_expression(&mut self) -> UnicodeSetsConsumeResult {
+fn consume_class_set_expression<'a>(parser: &mut Parser<'a>) -> UnicodeSetsConsumeResult {
     let start = self.index;
     let mut may_contain_strings: Option<bool> = None;
     let mut result: Option<UnicodeSetsConsumeResult> = None;
@@ -823,8 +824,8 @@ fn consume_class_set_expression(&mut self) -> UnicodeSetsConsumeResult {
  * @param left_result The result information for the left ClassSetRange or ClassSetOperand.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_union_right(
-    &mut self,
+fn consume_class_union_right<'a>(
+    parser: &mut Parser<'a>,
     left_result: UnicodeSetsConsumeResult,
 ) -> UnicodeSetsConsumeResult {
     // ClassUnion
@@ -906,7 +907,7 @@ fn count_capturing_parens<'a>(parser: &mut Parser<'a>) -> usize {
  * Consume NestedClass in a character class.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_nested_class(&mut self) -> Option<UnicodeSetsConsumeResult> {
+fn consume_nested_class<'a>(parser: &mut Parser<'a>) -> Option<UnicodeSetsConsumeResult> {
     let start = self.index;
     if self.eat(LEFT_SQUARE_BRACKET) {
         let negate = self.eat(CIRCUMFLEX_ACCENT);
@@ -944,7 +945,9 @@ fn consume_nested_class(&mut self) -> Option<UnicodeSetsConsumeResult> {
  * Consume ClassStringDisjunction in a character class.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_string_disjunction(&mut self) -> Option<UnicodeSetsConsumeResult> {
+fn consume_class_string_disjunction<'a>(
+    parser: &mut Parser<'a>,
+) -> Option<UnicodeSetsConsumeResult> {
     let start = self.index;
     if self.eat3(REVERSE_SOLIDUS, LATIN_SMALL_LETTER_Q, LEFT_CURLY_BRACKET) {
         self.on_class_string_disjunction_enter(start);
@@ -982,7 +985,7 @@ fn consume_class_string_disjunction(&mut self) -> Option<UnicodeSetsConsumeResul
  * @param i - The index of the string alternative.
  * @returns `UnicodeSetsConsumeResult`.
  */
-fn consume_class_string(&mut self, i: usize) -> UnicodeSetsConsumeResult {
+fn consume_class_string<'a>(parser: &mut Parser<'a>, i: usize) -> UnicodeSetsConsumeResult {
     let start = self.index;
 
     let mut count = 0;
@@ -1010,7 +1013,7 @@ fn consume_class_string(&mut self, i: usize) -> UnicodeSetsConsumeResult {
  * Set `self._last_int_value` if it consumed the next characters successfully.
  * @returns `true` if it ate the next characters successfully.
  */
-fn consume_class_set_character(&mut self) -> bool {
+fn consume_class_set_character<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
     let cp = self.current_code_point;
 
@@ -1051,7 +1054,7 @@ fn consume_class_set_character(&mut self) -> bool {
  * Set `self._last_str_value` if the group name existed.
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_group_name(&mut self) -> bool {
+fn eat_group_name<'a>(parser: &mut Parser<'a>) -> bool {
     if self.eat(LESS_THAN_SIGN) {
         if self.eat_reg_exp_identifier_name() && self.eat(GREATER_THAN_SIGN) {
             return true;
@@ -1067,7 +1070,7 @@ fn eat_group_name(&mut self) -> bool {
  * Set `self._last_str_value` if the identifier name existed.
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_identifier_name(&mut self) -> bool {
+fn eat_reg_exp_identifier_name<'a>(parser: &mut Parser<'a>) -> bool {
     if self.eat_reg_exp_identifier_start() {
         self._last_str_value = self._last_int_value.to_string();
 
@@ -1086,7 +1089,7 @@ fn eat_reg_exp_identifier_name(&mut self) -> bool {
  * Set `self._last_int_value` if the identifier start existed.
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_identifier_start(&mut self) -> bool {
+fn eat_reg_exp_identifier_start<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
     let force_u_flag = !self._unicode_mode && self.ecma_version >= 2020;
     let mut cp = self.current_code_point;
@@ -1121,7 +1124,7 @@ fn eat_reg_exp_identifier_start(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_identifier_part(&mut self) -> bool {
+fn eat_reg_exp_identifier_part<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
     let force_u_flag = !self._unicode_mode && self.ecma_version >= 2020;
     let mut cp = self.current_code_point;
@@ -1153,7 +1156,7 @@ fn eat_reg_exp_identifier_part(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_c_control_letter(&mut self) -> bool {
+fn eat_c_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
     if self.eat(LATIN_SMALL_LETTER_C) {
         if self.eat_control_letter() {
@@ -1172,7 +1175,7 @@ fn eat_c_control_letter(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_zero(&mut self) -> bool {
+fn eat_zero<'a>(parser: &mut Parser<'a>) -> bool {
     if self.current_code_point == DIGIT_ZERO && !is_decimal_digit(self.next_code_point) {
         self._last_int_value = 0;
         self.advance();
@@ -1191,7 +1194,7 @@ fn eat_zero(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_control_escape(&mut self) -> bool {
+fn eat_control_escape<'a>(parser: &mut Parser<'a>) -> bool {
     if self.eat(LATIN_SMALL_LETTER_F) {
         self._last_int_value = FORM_FEED;
         return true;
@@ -1226,7 +1229,7 @@ fn eat_control_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_control_letter(&mut self) -> bool {
+fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
     let cp = self.current_code_point;
     if is_latin_letter(cp) {
         self.advance();
@@ -1251,7 +1254,7 @@ fn eat_control_letter(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_escape_sequence(&mut self, force_u_flag: bool) -> bool {
+fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag: bool) -> bool {
     let start = self.index;
     let u_flag = force_u_flag || self._unicode_mode;
 
@@ -1279,7 +1282,7 @@ fn eat_reg_exp_unicode_escape_sequence(&mut self, force_u_flag: bool) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_surrogate_pair_escape(&mut self) -> bool {
+fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
 
     if self.eat_fixed_hex_digits(4) {
@@ -1310,7 +1313,7 @@ fn eat_reg_exp_unicode_surrogate_pair_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_code_point_escape(&mut self) -> bool {
+fn eat_reg_exp_unicode_code_point_escape(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
 
     if self.eat(LEFT_CURLY_BRACKET)
@@ -1341,7 +1344,7 @@ fn eat_reg_exp_unicode_code_point_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_identity_escape(&mut self) -> bool {
+fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let cp = self.current_code_point;
     if self.is_valid_identity_escape(cp) {
         self._last_int_value = cp;
@@ -1351,7 +1354,7 @@ fn eat_identity_escape(&mut self) -> bool {
     false
 }
 
-fn is_valid_identity_escape(&self, cp: i32) -> bool {
+fn is_valid_identity_escape<'a>(parser: &mut Parser<'a>, cp: i32) -> bool {
     if cp == -1 {
         return false;
     }
@@ -1377,14 +1380,14 @@ fn is_valid_identity_escape(&self, cp: i32) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_decimal_escape(&mut self) -> bool {
-    self._last_int_value = 0;
-    let mut cp = self.current_code_point;
-    if cp >= DIGIT_ONE && cp <= DIGIT_NINE {
-        while cp >= DIGIT_ZERO && cp <= DIGIT_NINE {
-            self._last_int_value = 10 * self._last_int_value + (cp - DIGIT_ZERO);
-            self.advance();
-            cp = self.current_code_point;
+fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
+    parser.last_int_value = 0;
+    let mut cp = parser.current();
+    if cp >= Some(&'1') && cp <= Some(&'9') {
+        while cp >= Some(&'1') && cp <= Some(&'9') {
+            parser.last_int_value = 10 * parser.last_int_value + (cp - DIGIT_ZERO);
+            parser.advance();
+            cp = parser.current();
         }
         return true;
     }
@@ -1402,11 +1405,11 @@ fn eat_decimal_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_control_letter(&mut self) -> bool {
-    let cp = self.current_code_point;
+fn eat_control_letter<'a>(parser: &mut Parser<'a>) -> bool {
+    let cp = parser.current();
     if is_latin_letter(cp) {
-        self.advance();
-        self._last_int_value = cp % 0x20;
+        parser.advance();
+        parser.last_int_value = cp % 0x20;
         return true;
     }
     false
@@ -1427,7 +1430,7 @@ fn eat_control_letter(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_escape_sequence(&mut self, force_u_flag: bool) -> bool {
+fn eat_reg_exp_unicode_escape_sequence<'a>(parser: &mut Parser<'a>, force_u_flag: bool) -> bool {
     let start = self.index;
     let u_flag = force_u_flag || self._unicode_mode;
 
@@ -1455,7 +1458,7 @@ fn eat_reg_exp_unicode_escape_sequence(&mut self, force_u_flag: bool) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_surrogate_pair_escape(&mut self) -> bool {
+fn eat_reg_exp_unicode_surrogate_pair_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
 
     if self.eat_fixed_hex_digits(4) {
@@ -1486,7 +1489,7 @@ fn eat_reg_exp_unicode_surrogate_pair_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_reg_exp_unicode_code_point_escape(&mut self) -> bool {
+fn eat_reg_exp_unicode_code_point_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let start = self.index;
 
     if self.eat(LEFT_CURLY_BRACKET)
@@ -1517,7 +1520,7 @@ fn eat_reg_exp_unicode_code_point_escape(&mut self) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_identity_escape(&mut self) -> bool {
+fn eat_identity_escape<'a>(parser: &mut Parser<'a>) -> bool {
     let cp = self.current_code_point;
     if self.is_valid_identity_escape(cp) {
         self._last_int_value = cp;
@@ -1553,7 +1556,7 @@ fn is_valid_identity_escape(&self, cp: i32) -> bool {
  * ```
  * @returns `true` if it ate the next characters successfully.
  */
-fn eat_decimal_escape(&mut self) -> bool {
+fn eat_decimal_escape<'a>(parser: &mut Parser<'a>) -> bool {
     self._last_int_value = 0;
     let mut cp = self.current_code_point;
     if cp >= DIGIT_ONE && cp <= DIGIT_NINE {
