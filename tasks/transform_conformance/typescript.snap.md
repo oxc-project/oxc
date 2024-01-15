@@ -602,6 +602,45 @@ var E = (E => {
 
 ```
 
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/enum-merging-inner-references/input.ts
+```typescript
+var Animals = (Animals => {
+	const Cat = 1;
+	Animals[Animals['Cat'] = Cat] = 'Cat';
+	const Dog = 2;
+	Animals[Animals['Dog'] = Dog] = 'Dog';
+	return Animals;
+})(Animals || {});
+var Animals = (Animals => {
+	const CatDog = Cat - Dog;
+	Animals[Animals['CatDog'] = CatDog] = 'CatDog';
+	return Animals;
+})(Animals || {});
+
+```
+
+# babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/enum-merging-inner-references-shadow/input.ts
+```typescript
+const Cat = 10;
+const Dog = 20;
+var Animals = (Animals => {
+	const Cat = 1;
+	Animals[Animals['Cat'] = Cat] = 'Cat';
+	return Animals;
+})(Animals || {});
+var Animals = (Animals => {
+	const Dog = 2;
+	Animals[Animals['Dog'] = Dog] = 'Dog';
+	return Animals;
+})(Animals || {});
+var Animals = (Animals => {
+	const CatDog = Cat | Dog;
+	Animals[Animals['CatDog'] = CatDog] = 'CatDog';
+	return Animals;
+})(Animals || {});
+
+```
+
 # babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/export/input.ts
 ```typescript
 export var E = (E => {

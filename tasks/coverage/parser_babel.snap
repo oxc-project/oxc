@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
 Positive Passed: 2088/2096 (99.62%)
-Negative Passed: 1350/1499 (90.06%)
+Negative Passed: 1351/1500 (90.07%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -9892,6 +9892,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·  ─
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[typescript/interface/property-initializer/input.ts:1:1]
+ 1 │ interface I { x: number = 1;}
+   ·                         ─
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/module-declare-new-line/input.ts:5:1]

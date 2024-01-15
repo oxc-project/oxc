@@ -1,4 +1,4 @@
-Compatibility: 235/550 (42.73%)
+Compatibility: 238/562 (42.35%)
 
 # Failed
 
@@ -88,6 +88,11 @@ Compatibility: 235/550 (42.73%)
 * call/first-argument-expansion/test.js
 
 ### chain-expression
+* chain-expression/issue-15785-1.js
+* chain-expression/issue-15785-2.js
+* chain-expression/issue-15785-3.js
+* chain-expression/issue-15916.js
+* chain-expression/test-3.js
 * chain-expression/test.js
 
 ### class-comment
@@ -249,10 +254,13 @@ Compatibility: 235/550 (42.73%)
 * if/comment_before_else.js
 * if/expr_and_same_line_comments.js
 * if/if_comments.js
+* if/issue-15168.js
+* if/non-block.js
 * if/trailing_comment.js
 
 ### import
 * import/comments.js
+* import/empty-import.js
 
 ### label
 * label/comment.js
@@ -429,6 +437,9 @@ Compatibility: 235/550 (42.73%)
 * ternaries/nested.js
 * ternaries/parenthesis.js
 * ternaries/test.js
+
+### ternaries/parenthesis
+* ternaries/parenthesis/await-expression.js
 
 ### test-declarations
 * test-declarations/angular_async.js
