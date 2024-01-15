@@ -316,6 +316,17 @@ mod test {
         }
     }
 
+    #[test]
+    fn memory_leak() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let sources = ["2n", ";'1234567890123456789012345678901234567890'"];
+        for source in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(!ret.program.body.is_empty());
+        }
+    }
+
     // Source with length u32::MAX + 1 fails to parse
     #[test]
     fn overlong_source() {
