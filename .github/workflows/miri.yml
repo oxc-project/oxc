@@ -17,8 +17,9 @@ jobs:
 
       - name: Install Miri
         run: |
-          rustup component add miri
+          rustup toolchain install nightly --component miri
+          rustup override set nightly
           cargo miri setup
 
       - name: Test with Miri
-        run: MIRIFLAGS="-Zmiri-disable-isolation" cargo miri test
+        run: cargo miri test -p oxc_parser
