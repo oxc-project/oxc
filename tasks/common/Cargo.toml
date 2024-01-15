@@ -13,7 +13,7 @@ test    = false
 doctest = false
 
 [dependencies]
-console    = "0.15.7"
+console    = "0.15.8"
 oxc_syntax = { workspace = true, features = ["serde"] }
 
 project-root = { workspace = true }
