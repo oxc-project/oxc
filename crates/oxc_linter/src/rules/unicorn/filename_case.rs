@@ -98,7 +98,7 @@ impl Rule for FilenameCase {
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
         let Some(filename) = ctx.file_path().file_stem().and_then(|s| s.to_str()) else { return };
 
-        let mut case_name = "";
+        let mut case_name = None;
 
         let cases = [
             (Case::Kebab, "kebab", self.kebab_case),
@@ -113,11 +113,13 @@ impl Rule for FilenameCase {
                 if condition {
                     return;
                 }
-                case_name = name;
+                case_name.replace(name);
             }
         }
 
-        ctx.diagnostic(FilenameCaseDiagnostic(Span::default(), case_name));
+        if let Some(case_name) = case_name {
+            ctx.diagnostic(FilenameCaseDiagnostic(Span::default(), case_name));
+        }
     }
 }
 
@@ -131,6 +133,7 @@ fn test() {
         ("", None, None, Some(PathBuf::from("foo/bar/baz/Que.tsx"))),
         // should pass - camel_case, pascal_case both allowed
         ("", None, None, Some(PathBuf::from("foo/bar/baz/QueAbc.tsx"))),
+        ("", None, None, Some(PathBuf::from("ansiHTML.tsx"))),
     ];
     let fail = vec![
         // should pass - by default kebab_case is not allowed
