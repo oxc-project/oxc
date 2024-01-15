@@ -44,7 +44,7 @@ phf          = { workspace = true, features = ["macros"] }
 futures      = { workspace = true }
 tokio        = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
-console        = "0.15.7"
+console        = "0.15.8"
 encoding_rs    = "0.8.33"
 encoding_rs_io = "0.1.7"
 serde_yaml     = "0.9.30"
