@@ -88,20 +88,23 @@ impl ESLintConfig {
                     let rule_config = &rule_configs[0];
                     let rule_name = &rule_config.rule_name;
                     let plugin_name = &rule_config.plugin_name;
-                    if let Some(rule) = rules_for_override.iter().find(|r| r.name() == rule_name) {
-                        match rule_config.severity {
-                            AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                    match rule_config.severity {
+                        AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                            if let Some(rule) = all_rules
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
                                 rules_to_replace.push(rule.read_json(rule_config.config.clone()));
                             }
-                            AllowWarnDeny::Allow => {
+                        }
+                        AllowWarnDeny::Allow => {
+                            if let Some(rule) = rules_for_override
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
                                 rules_to_remove.push(rule.clone());
                             }
                         }
-                    } else if let Some(rule) = all_rules
-                        .iter()
-                        .find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
-                    {
-                        rules_to_replace.push(rule.read_json(rule_config.config.clone()));
                     }
                 }
                 _ => {
