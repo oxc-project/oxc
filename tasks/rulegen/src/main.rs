@@ -47,6 +47,9 @@ const NEXT_JS_TEST_PATH: &str =
 const JSDOC_TEST_PATH: &str =
     "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/test/rules/assertions";
 
+const REACT_PERF_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/main/tests/lib/rules";
+
 struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
@@ -413,6 +416,7 @@ pub enum RuleKind {
     Typescript,
     Unicorn,
     React,
+    ReactPerf,
     JSXA11y,
     Oxc,
     DeepScan,
@@ -427,6 +431,7 @@ impl RuleKind {
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
             "react" => Self::React,
+            "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
             "deepscan" => Self::DeepScan,
@@ -445,6 +450,7 @@ impl Display for RuleKind {
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
             Self::React => write!(f, "eslint-plugin-react"),
+            Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
             Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
@@ -470,6 +476,7 @@ fn main() {
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
