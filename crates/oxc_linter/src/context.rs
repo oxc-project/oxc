@@ -1,4 +1,4 @@
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
@@ -25,11 +25,11 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
-    settings: LintSettings,
+    settings: Arc<LintSettings>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>, settings: LintSettings) -> Self {
+    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -39,13 +39,19 @@ impl<'a> LintContext<'a> {
             fix: false,
             current_rule_name: "",
             file_path,
-            settings,
+            settings: Arc::new(LintSettings::default()),
         }
     }
 
     #[must_use]
     pub fn with_fix(mut self, fix: bool) -> Self {
         self.fix = fix;
+        self
+    }
+
+    #[must_use]
+    pub fn with_settings(mut self, settings: &Arc<LintSettings>) -> Self {
+        self.settings = Arc::clone(settings);
         self
     }
 
@@ -57,8 +63,8 @@ impl<'a> LintContext<'a> {
         &self.disable_directives
     }
 
-    pub fn settings(&self) -> LintSettings {
-        self.settings.clone()
+    pub fn settings(&self) -> &LintSettings {
+        &self.settings
     }
 
     pub fn source_text(&self) -> &'a str {

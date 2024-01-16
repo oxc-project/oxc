@@ -228,7 +228,7 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
     let JsxA11y { polymorphic_prop_name, components } = jsx_a11y;
 
     if let Some(polymorphic_prop_name_value) = polymorphic_prop_name {
-        if let Some(as_tag) = has_jsx_prop_lowercase(element, &polymorphic_prop_name_value) {
+        if let Some(as_tag) = has_jsx_prop_lowercase(element, polymorphic_prop_name_value) {
             if let Some(JSXAttributeValue::StringLiteral(str)) = get_prop_value(as_tag) {
                 return Some(String::from(str.value.as_str()));
             }

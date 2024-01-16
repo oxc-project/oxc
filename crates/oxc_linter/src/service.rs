@@ -267,11 +267,8 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let lint_ctx = LintContext::new(
-            path.to_path_buf().into_boxed_path(),
-            &Rc::new(semantic_ret.semantic),
-            self.linter.get_settings(),
-        );
+        let lint_ctx =
+            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
         self.linter.run(lint_ctx)
     }
 
