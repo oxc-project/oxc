@@ -66,10 +66,6 @@ impl FormatCommand {
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
-    /// Display the execution time of each lint rule
-    #[bpaf(switch, env("TIMING"), hide_usage)]
-    pub timing: bool,
-
     /// list all the rules that are currently registered
     #[bpaf(switch, hide_usage)]
     pub rules: bool,
@@ -262,15 +258,8 @@ mod misc_options {
     #[test]
     fn default() {
         let options = get_misc_options(".");
-        assert!(!options.timing);
         assert!(!options.rules);
         assert!(options.threads.is_none());
-    }
-
-    #[test]
-    fn timing() {
-        let options = get_misc_options("--timing .");
-        assert!(options.timing);
     }
 
     #[test]

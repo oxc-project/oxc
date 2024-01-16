@@ -13,12 +13,11 @@ mod globals;
 mod options;
 pub mod partial_loader;
 pub mod rule;
-mod rule_timer;
 mod rules;
 mod service;
 mod utils;
 
-use std::{io::Write, rc::Rc, time::Duration};
+use std::{io::Write, rc::Rc};
 
 use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
@@ -131,33 +130,26 @@ impl Linter {
         self
     }
 
-    #[must_use]
-    pub fn with_print_execution_times(mut self, yes: bool) -> Self {
-        self.options.timing = yes;
-        self
-    }
-
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
-        let timing = self.options.timing;
         let semantic = Rc::clone(ctx.semantic());
         let mut ctx = ctx.with_fix(self.options.fix);
 
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);
-            rule.run_once(&ctx, timing);
+            rule.run_once(&ctx);
         }
 
         for symbol in semantic.symbols().iter() {
             for (rule_name, rule) in &self.rules {
                 ctx.with_rule_name(rule_name);
-                rule.run_on_symbol(symbol, &ctx, timing);
+                rule.run_on_symbol(symbol, &ctx);
             }
         }
 
         for node in semantic.nodes().iter() {
             for (rule_name, rule) in &self.rules {
                 ctx.with_rule_name(rule_name);
-                rule.run(node, &ctx, timing);
+                rule.run(node, &ctx);
             }
         }
 
@@ -186,30 +178,6 @@ impl Linter {
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
-    }
-
-    #[allow(clippy::print_stdout)]
-    pub fn print_execution_times_if_enable(&self) {
-        if !self.options.timing {
-            return;
-        }
-        let mut timings = self
-            .rules
-            .iter()
-            .map(|(rule_name, rule)| (rule_name, rule.execute_time()))
-            .collect::<Vec<_>>();
-
-        timings.sort_by_key(|x| x.1);
-        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
-
-        println!("Rule timings in milliseconds:");
-        println!("Total: {:.2}ms", total * 1000.0);
-        println!("{:>7} | {:>5} | Rule", "Time", "%");
-        for (name, duration) in timings.iter().rev() {
-            let millis = duration.as_secs_f64() * 1000.0;
-            let relative = duration.as_secs_f64() / total * 100.0;
-            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
-        }
     }
 }
 

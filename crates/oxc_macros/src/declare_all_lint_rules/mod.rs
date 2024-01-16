@@ -66,8 +66,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     quote! {
         #(#use_stmts)*
 
-        use std::time::{Instant, Duration};
-        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, rule_timer:: RuleTimer, AstNode};
+        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -109,41 +108,22 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, print_execution_times: bool) {
-                let start = print_execution_times.then(|| Instant::now());
-                let result = match self {
+            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+                match self {
                     #(Self::#struct_names(rule) => rule.run(node, ctx)),*
-                };
-                if let Some(start) = start {
-                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
-                result
             }
 
-            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>, print_execution_times: bool) {
-                let start = print_execution_times.then(|| Instant::now());
-                let result = match self {
+            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
+                match self {
                     #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
-                };
-                if let Some(start) = start {
-                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
-                result
             }
 
-            pub fn run_once<'a>(&self, ctx: &LintContext<'a>, print_execution_times: bool) {
-                let start = print_execution_times.then(|| Instant::now());
-                let result = match self {
+            pub fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+                match self {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*
-                };
-                if let Some(start) = start {
-                    RULE_TIMERS.get(self.name()).unwrap().update(&start.elapsed());
                 }
-                result
-            }
-
-            pub fn execute_time(&self) -> Duration {
-                RULE_TIMERS.get(self.name()).unwrap().duration()
             }
         }
 
@@ -172,14 +152,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 Some(self.cmp(&other))
             }
         }
-
-        use once_cell::sync::Lazy;
-        use std::collections::HashMap;
-        pub static RULE_TIMERS: Lazy<HashMap<&'static str, RuleTimer>> = Lazy::new(|| {
-            let mut m = HashMap::new();
-            #(m.insert(#struct_names::NAME, RuleTimer::new());)*
-            m
-        });
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![

@@ -36,10 +36,10 @@ impl Runner for LintRunner {
             warning_options,
             ignore_options,
             fix_options,
-            misc_options,
             codeowner_options,
             enable_plugins,
             config,
+            ..
         } = self.options;
 
         let mut paths = paths;
@@ -97,7 +97,6 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_config_path(config)
             .with_fix(fix_options.fix)
-            .with_timing(misc_options.timing)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
@@ -131,8 +130,6 @@ impl Runner for LintRunner {
             }
         });
         diagnostic_service.run();
-
-        lint_service.linter().print_execution_times_if_enable();
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
@@ -206,13 +203,6 @@ mod test {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
-    }
-
-    #[test]
-    fn timing() {
-        let args = &["--timing", "fixtures"];
-        // make sure this doesn't crash
-        test(args);
     }
 
     #[test]
