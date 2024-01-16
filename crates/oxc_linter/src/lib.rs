@@ -15,13 +15,13 @@ pub mod partial_loader;
 pub mod rule;
 mod rules;
 mod service;
+mod settings;
 mod utils;
 
+use rustc_hash::FxHashMap;
 use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Report;
-pub(crate) use oxc_semantic::AstNode;
-use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
@@ -30,8 +30,13 @@ pub use crate::{
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
     service::LintService,
+    settings::LintSettings,
 };
-pub(crate) use rules::{RuleEnum, RULES};
+pub(crate) use crate::{
+    rules::{RuleEnum, RULES},
+    settings::JsxA11y,
+};
+pub(crate) use oxc_semantic::AstNode;
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -42,33 +47,6 @@ fn size_asserts() {
     // A reduction from 168 bytes to 16 results 15% performance improvement.
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
     assert_eq_size!(RuleEnum, [u8; 16]);
-}
-
-#[derive(Debug, Clone)]
-pub struct LintSettings {
-    jsx_a11y: JsxA11y,
-}
-
-impl Default for LintSettings {
-    fn default() -> Self {
-        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() } }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct JsxA11y {
-    polymorphic_prop_name: Option<String>,
-    components: FxHashMap<String, String>,
-}
-
-impl JsxA11y {
-    pub fn set_components(&mut self, components: FxHashMap<String, String>) {
-        self.components = components;
-    }
-
-    pub fn set_polymorphic_prop_name(&mut self, name: Option<String>) {
-        self.polymorphic_prop_name = name;
-    }
 }
 
 #[derive(Debug)]
