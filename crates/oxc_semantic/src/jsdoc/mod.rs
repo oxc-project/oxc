@@ -17,7 +17,7 @@ pub struct JSDoc<'a> {
     docs: BTreeMap<Span, JSDocComment<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JSDocComment<'a> {
     comment: &'a str,
     /// Cached JSDocTags

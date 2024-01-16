@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, rc::Rc};
 
 use oxc_ast::{AstKind, TriviasMap};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, SPAN};
 
 use super::{JSDoc, JSDocComment};
 
@@ -11,11 +11,17 @@ pub struct JSDocBuilder<'a> {
     trivias: Rc<TriviasMap>,
 
     docs: BTreeMap<Span, JSDocComment<'a>>,
+    last_span: Option<Span>,
 }
 
 impl<'a> JSDocBuilder<'a> {
     pub fn new(source_text: &'a str, trivias: &Rc<TriviasMap>) -> Self {
-        Self { source_text, trivias: Rc::clone(trivias), docs: BTreeMap::default() }
+        Self {
+            source_text,
+            trivias: Rc::clone(trivias),
+            docs: BTreeMap::default(),
+            last_span: None,
+        }
     }
 
     pub fn build(self) -> JSDoc<'a> {
@@ -24,44 +30,49 @@ impl<'a> JSDocBuilder<'a> {
 
     /// Save the span if the given kind has a jsdoc comment attached
     pub fn retrieve_jsdoc_comment(&mut self, kind: AstKind<'a>) -> bool {
-        if !kind.is_declaration() {
+        if let AstKind::Program(_) = kind {
             return false;
         }
+
         let span = kind.span();
-        let comment_text = self.find_jsdoc_comment(span);
+
+        if !kind.is_declaration() {
+            self.last_span = Some(span);
+            return false;
+        }
+
+        let comment_text = self.find_jsdoc_comment(span, self.last_span.unwrap_or(SPAN));
         if let Some(comment_text) = comment_text {
             self.docs.insert(span, JSDocComment::new(comment_text));
         }
+
+        self.last_span = Some(span);
         comment_text.is_some()
     }
 
-    /// Find the jsdoc doc in front of this span, a.k.a leading comment
-    fn find_jsdoc_comment(&self, span: Span) -> Option<&'a str> {
-        let (start, comment) = self.trivias.comments().range(..span.start).next()?;
+    /// Find the nearest jsdoc doc in front of this span, a.k.a leading comment
+    fn find_jsdoc_comment(&self, span: Span, last_span: Span) -> Option<&'a str> {
+        // Between the last span and the current span, reverse for early return
+        for (start, comment) in self.trivias.comments().range(last_span.end..span.start).rev() {
+            if comment.kind().is_single_line() {
+                continue;
+            }
 
-        if comment.kind().is_single_line() {
-            return None;
+            let comment_text = Span::new(*start, comment.end()).source_text(self.source_text);
+
+            // Comments beginning with /*, /***, or more than 3 stars will be ignored.
+            let mut chars = comment_text.chars();
+            if chars.next() != Some('*') {
+                continue;
+            }
+            if chars.next() == Some('*') {
+                continue;
+            }
+
+            return Some(comment_text);
         }
 
-        let comment_text = Span::new(*start, comment.end()).source_text(self.source_text);
-
-        // Comments beginning with /*, /***, or more than 3 stars will be ignored.
-        let mut chars = comment_text.chars();
-        if chars.next() != Some('*') {
-            return None;
-        }
-        if chars.next() == Some('*') {
-            return None;
-        }
-
-        // The comment is the leading comment of this span if there is nothing in between.
-        // +2 to skip `*/` ending
-        let text_between = Span::new(comment.end() + 2, span.start).source_text(self.source_text);
-        if text_between.chars().any(|c| !c.is_whitespace()) {
-            return None;
-        }
-
-        Some(comment_text)
+        None
     }
 }
 
@@ -141,6 +152,42 @@ mod test {
         ];
         for source_text in source_texts {
             test_jsdoc(source_text, "function foo() {}", None);
+        }
+    }
+
+    #[test]
+    fn found_with_nearest() {
+        let source_texts = [
+            "
+            /** @type {number} */
+            /** @type {string} */
+            let str;
+            ",
+            "
+            /** @type {number} */
+            let num;
+            /** @type {string} */
+            let str;
+            ",
+            "
+            /** @type {string} */
+            // ignore me
+            let str;
+            ",
+            "
+            /** @type {string} */
+            /* ignore me */
+            let str;
+            ",
+        ];
+        for source_text in source_texts {
+            let allocator = Allocator::default();
+            let symbol = "let str;";
+            assert_eq!(
+                get_jsdoc(&allocator, source_text, symbol, None),
+                Some(JSDocComment::new("* @type {string} ")),
+                "`{symbol}` not associated with the nearest jsdoc comment in {source_text}"
+            );
         }
     }
 
