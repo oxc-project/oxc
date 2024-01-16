@@ -1,7 +1,9 @@
-use oxc_ast::TriviasMap;
-use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
+
+use oxc_ast::TriviasMap;
+use oxc_semantic::Semantic;
+use oxc_span::Span;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum DisabledRule<'a> {
@@ -24,6 +26,16 @@ pub struct DisableDirectives<'a> {
     disable_all_comments: Vec<Span>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment<'a>>,
+}
+
+impl<'a> Default for DisableDirectives<'a> {
+    fn default() -> Self {
+        Self {
+            intervals: Lapper::new(vec![]),
+            disable_all_comments: vec![],
+            disable_rule_comments: vec![],
+        }
+    }
 }
 
 impl<'a> DisableDirectives<'a> {
@@ -62,10 +74,10 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
-    pub fn new(source_text: &'a str, trivias: &'b TriviasMap) -> Self {
+    pub fn from_semantic(semantic: &'b Semantic<'a>) -> Self {
         Self {
-            source_text,
-            trivias,
+            source_text: semantic.source_text(),
+            trivias: semantic.trivias(),
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),

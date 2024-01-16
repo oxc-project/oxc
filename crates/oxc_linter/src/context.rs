@@ -6,7 +6,7 @@ use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
+    disable_directives::DisableDirectives,
     fixer::{Fix, Message},
     AstNode, LintSettings,
 };
@@ -14,9 +14,7 @@ use crate::{
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
 
-    diagnostics: RefCell<Vec<Message<'a>>>,
-
-    disable_directives: DisableDirectives<'a>,
+    disable_directives: Rc<DisableDirectives<'a>>,
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
@@ -26,21 +24,40 @@ pub struct LintContext<'a> {
     file_path: Box<Path>,
 
     settings: Arc<LintSettings>,
+
+    diagnostics: RefCell<Vec<Message<'a>>>,
 }
 
 impl<'a> LintContext<'a> {
     pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
-        let disable_directives =
-            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
             semantic: Rc::clone(semantic),
-            diagnostics: RefCell::new(vec![]),
-            disable_directives,
+            disable_directives: Rc::new(DisableDirectives::default()),
             fix: false,
             current_rule_name: "",
             file_path,
             settings: Arc::new(LintSettings::default()),
+            diagnostics: RefCell::new(vec![]),
         }
+    }
+
+    #[must_use]
+    pub fn clone_without_diagnostics(&self) -> Self {
+        Self {
+            semantic: Rc::clone(&self.semantic),
+            disable_directives: Rc::clone(&self.disable_directives),
+            fix: self.fix,
+            current_rule_name: "",
+            file_path: self.file_path.clone(),
+            settings: Arc::clone(&self.settings),
+            diagnostics: RefCell::new(vec![]),
+        }
+    }
+
+    #[must_use]
+    pub fn with_disable_directives(mut self, directives: &Rc<DisableDirectives<'a>>) -> Self {
+        self.disable_directives = Rc::clone(directives);
+        self
     }
 
     #[must_use]
@@ -52,6 +69,12 @@ impl<'a> LintContext<'a> {
     #[must_use]
     pub fn with_settings(mut self, settings: &Arc<LintSettings>) -> Self {
         self.settings = Arc::clone(settings);
+        self
+    }
+
+    #[must_use]
+    pub fn with_rule_name(mut self, name: &'static str) -> Self {
+        self.current_rule_name = name;
         self
     }
 
@@ -77,11 +100,6 @@ impl<'a> LintContext<'a> {
 
     pub fn file_path(&self) -> &Path {
         &self.file_path
-    }
-
-    #[inline]
-    pub fn with_rule_name(&mut self, name: &'static str) {
-        self.current_rule_name = name;
     }
 
     /* Diagnostics */

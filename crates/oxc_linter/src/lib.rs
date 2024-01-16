@@ -18,6 +18,7 @@ mod service;
 mod settings;
 mod utils;
 
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::{io::Write, rc::Rc, sync::Arc};
 
@@ -25,6 +26,7 @@ use oxc_diagnostics::Report;
 
 pub use crate::{
     context::LintContext,
+    disable_directives::DisableDirectivesBuilder,
     fixer::Fix,
     fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
@@ -49,9 +51,8 @@ fn size_asserts() {
     assert_eq_size!(RuleEnum, [u8; 16]);
 }
 
-#[derive(Debug)]
 pub struct Linter {
-    rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
+    rules: Vec<RuleEnum>,
     options: LintOptions,
     settings: Arc<LintSettings>,
 }
@@ -68,13 +69,12 @@ impl Linter {
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
         let (rules, settings) = options.derive_rules_and_settings()?;
-        let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
         Ok(Self { rules, options, settings: Arc::new(settings) })
     }
 
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
-        self.rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
+        self.rules = rules;
         self
     }
 
@@ -99,29 +99,40 @@ impl Linter {
     }
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
-        let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.options.fix).with_settings(&self.settings);
+        let disable_directives =
+            Rc::new(DisableDirectivesBuilder::from_semantic(ctx.semantic()).build());
 
-        for (rule_name, rule) in &self.rules {
-            ctx.with_rule_name(rule_name);
-            rule.run_once(&ctx);
+        // Initialize context for each rule to avoid mutations inside all the hot loops below
+        let ctx = ctx.with_fix(self.options.fix).with_settings(&self.settings);
+        let rules = self
+            .rules
+            .iter()
+            .map(|rule| {
+                let ctx = ctx
+                    .clone_without_diagnostics()
+                    .with_disable_directives(&disable_directives)
+                    .with_rule_name(rule.name());
+                (ctx, rule)
+            })
+            .collect::<Vec<_>>();
+
+        for (ctx, rule) in &rules {
+            rule.run_once(ctx);
         }
 
-        for symbol in semantic.symbols().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
-                rule.run_on_symbol(symbol, &ctx);
+        for symbol in ctx.semantic().symbols().iter() {
+            for (ctx, rule) in &rules {
+                rule.run_on_symbol(symbol, ctx);
             }
         }
 
-        for node in semantic.nodes().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
-                rule.run(node, &ctx);
+        for node in ctx.semantic().nodes().iter() {
+            for (ctx, rule) in &rules {
+                rule.run(node, ctx);
             }
         }
 
-        ctx.into_message()
+        rules.into_iter().map(|(ctx, _)| ctx.into_message()).concat()
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {
