@@ -25,7 +25,6 @@ oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minif
 
 oxc_linter         = { workspace = true }
 oxc_prettier       = { workspace = true }
-oxc_type_synthesis = { workspace = true }
 serde              = { workspace = true }
 
 wasm-bindgen       = { version = "0.2" }

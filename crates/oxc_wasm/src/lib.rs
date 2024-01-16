@@ -14,13 +14,11 @@ use oxc::{
 };
 use oxc_linter::{LintContext, LintSettings, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
-use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
     OxcCodegenOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
-    OxcTypeCheckingOptions,
 };
 
 #[wasm_bindgen(start)]
@@ -45,8 +43,6 @@ pub struct Oxc {
     prettier_ir_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
-
-    type_check_diagnostics: RefCell<Vec<TypeCheckDiagnostic>>,
 
     serializer: serde_wasm_bindgen::Serializer,
 }
@@ -142,27 +138,6 @@ impl Oxc {
                     })
                     .collect::<Vec<_>>()
             })
-            .chain(self.type_check_diagnostics.borrow().iter().filter_map(|diagnostic| {
-                match diagnostic {
-                    TypeCheckDiagnostic::Global { .. } => None,
-                    TypeCheckDiagnostic::PositionWithAdditionLabels {
-                        reason,
-                        position,
-                        kind,
-                        labels: _,
-                    }
-                    | TypeCheckDiagnostic::Position { reason, position, kind } => Some(
-                        OxcDiagnostic {
-                            start: position.start as usize,
-                            end: position.end as usize,
-                            severity: format!("{kind:?}"),
-                            message: reason.to_string(),
-                        }
-                        .serialize(&self.serializer)
-                        .unwrap(),
-                    ),
-                }
-            }))
             .collect::<Vec<_>>())
     }
 
@@ -176,7 +151,6 @@ impl Oxc {
         _linter_options: &OxcLinterOptions,
         _codegen_options: &OxcCodegenOptions,
         minifier_options: &OxcMinifierOptions,
-        _type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
 
@@ -243,11 +217,6 @@ impl Oxc {
                 Prettier::new(&allocator, &prettier_doc, ret.trivias, PrettierOptions::default())
                     .build(&ret.program)
             };
-        }
-
-        if run_options.type_check() {
-            let (diagnostics, ..) = synthesize_program(program, |_: &std::path::Path| None);
-            *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }
 
         if run_options.transform() {

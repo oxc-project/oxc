@@ -33,7 +33,6 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcCodegenOptions,
-  OxcTypeCheckingOptions,
 } from "@oxc/wasm-web";
 import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 
@@ -110,7 +109,6 @@ class Playground {
     this.codegenOptions = new OxcCodegenOptions();
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
-    this.typeCheckOptions = new OxcTypeCheckingOptions();
 
     this.runOptions.syntax = true;
     this.runOptions.lint = true;
@@ -293,7 +291,6 @@ class Playground {
       this.linterOptions,
       this.codegenOptions,
       this.minifierOptions,
-      this.typeCheckOptions
     );
     const elapsed = new Date() - start;
     document.getElementById("duration").innerText = `${elapsed}ms`;
@@ -635,12 +632,6 @@ async function main() {
     playground.updateEditorText(playground.editor, "");
     playground.updateView();
     playground.updateEditorText(playground.editor, sourceText);
-  };
-
-  document.getElementById("type-check").onchange = function () {
-    const checked = document.getElementById("type-check-checkbox").checked;
-    playground.runOptions.type_check = checked;
-    playground.updateView();
   };
 }
 
