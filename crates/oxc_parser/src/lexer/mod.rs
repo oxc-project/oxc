@@ -395,11 +395,7 @@ impl<'a> Lexer<'a> {
             }
 
             let byte = remaining.as_bytes()[0];
-            let kind = if byte < 128 {
-                BYTE_HANDLERS[byte as usize](self)
-            } else {
-                self.match_unicode_char()
-            };
+            let kind = BYTE_HANDLERS[byte as usize](self);
 
             if !matches!(
                 kind,
@@ -410,9 +406,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // `#[cold]` to hint to branch predictor that unicode identifiers and irregular whitespace are rare
-    #[cold]
-    fn match_unicode_char(&mut self) -> Kind {
+    fn unicode_char_handler(&mut self) -> Kind {
         let c = self.current.chars.clone().next().unwrap();
         match c {
             c if is_id_start_unicode(c) => {
@@ -1318,7 +1312,7 @@ type ByteHandler = fn(&mut Lexer<'_>) -> Kind;
 /// Lookup table mapping any incoming byte to a handler function defined below.
 /// <https://github.com/ratel-rust/ratel-core/blob/master/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
-static BYTE_HANDLERS: [ByteHandler; 128] = [
+static BYTE_HANDLERS: [ByteHandler; 256] = [
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, SPS, SPS, LIN, ERR, ERR, // 0
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
@@ -1328,6 +1322,14 @@ static BYTE_HANDLERS: [ByteHandler; 128] = [
     IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
     TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
     L_P, IDT, L_R, L_S, L_T, L_U, L_V, L_W, IDT, L_Y, IDT, BEO, PIP, BEC, TLD, ERR, // 7
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // 8
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // 9
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // A
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // B
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // F
 ];
 
 // `\0` `\1` etc
@@ -1856,3 +1858,7 @@ const L_Y: ByteHandler = |lexer| match &lexer.identifier_name_handler()[1..] {
     "ield" => Kind::Yield,
     _ => Kind::Ident,
 };
+
+// Non-ASCII characters
+#[allow(clippy::redundant_closure_for_method_calls)]
+const UNI: ByteHandler = |lexer| lexer.unicode_char_handler();
