@@ -89,7 +89,6 @@ where warm runs complete in 5 minutes.
 - [Minifier](#-minifier)
 - [Formatter](#-formatter)
 - [Transpiler](#-transpiler)
-- [Ezno Type Checker](#-ezno-type-checker)
 
 ### 🔸 AST and Parser
 
@@ -188,13 +187,6 @@ With the Oxc minifier, you can expect faster minification times without sacrific
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
 Unfortunately we are currently lacking the resources to do so.
 
-### 🔸 Ezno Type Checker
-
-Developed by @kaleidawave, [ezno] is a TypeScript checker written in Rust with a focus on static analysis and runtime performance.
-You may read the [announcement blog post](https://kaleidawave.github.io/posts/introducing-ezno/) for more information.
-
-The type checker is available via `npx oxidation-compiler@latest check path` and the [playground][playground-url].
-
 ---
 
 ## ✍️ Contribute
@@ -245,7 +237,7 @@ Special thanks go to
 
 And also
 
-- [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](#-ezno-type-checker)
+- [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](https://github.com/kaleidawave/ezno)
 - [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
 
 ## 📖 License
@@ -308,7 +300,6 @@ Oxc partially copies code from the following projects, their licenses are listed
 [eslint-plugin-import]: https://www.npmjs.com/package/eslint-plugin-import
 [eslint-plugin-jest]: https://www.npmjs.com/package/eslint-plugin-jest
 [estree]: https://github.com/estree/estree
-[ezno]: https://github.com/kaleidawave/ezno
 [google-closure-compiler]: https://github.com/google/closure-compiler
 [minification-benchmarks]: https://github.com/privatenumber/minification-benchmarks
 [npm-napi]: https://www.npmjs.com/package/oxc-parser
