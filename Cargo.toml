@@ -83,6 +83,7 @@ oxc_prettier       = { path = "crates/oxc_prettier" }
 oxc_tasks_common    = { path = "tasks/common" }
 oxc_language_server = { path = "crates/oxc_language_server" }
 
+assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.8" }
 bitflags                  = { version = "2.4.1" }
 bumpalo                   = { version = "3.14.0" }
