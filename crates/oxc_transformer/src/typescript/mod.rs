@@ -181,6 +181,9 @@ impl<'a> TypeScript<'a> {
                     }
                     ModuleDeclaration::ImportDeclaration(decl) => {
                         let is_type = decl.import_kind.is_type();
+                        let is_specifiers_empty =
+                            decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
+
                         if let Some(specifiers) = &mut decl.specifiers {
                             specifiers.retain(|specifier| match specifier {
                                 ImportDeclarationSpecifier::ImportSpecifier(s) => {
@@ -225,10 +228,11 @@ impl<'a> TypeScript<'a> {
                         }
 
                         if decl.import_kind.is_type()
-                            || decl
-                                .specifiers
-                                .as_ref()
-                                .is_some_and(|specifiers| specifiers.is_empty())
+                            || (!is_specifiers_empty
+                                && decl
+                                    .specifiers
+                                    .as_ref()
+                                    .is_some_and(|specifiers| specifiers.is_empty()))
                         {
                             delete_indexes.push(index);
                         }
