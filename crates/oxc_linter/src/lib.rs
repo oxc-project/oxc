@@ -17,7 +17,7 @@ mod rules;
 mod service;
 mod utils;
 
-use std::{io::Write, rc::Rc};
+use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Report;
 pub(crate) use oxc_semantic::AstNode;
@@ -75,33 +75,23 @@ impl JsxA11y {
 pub struct Linter {
     rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
-    settings: LintSettings,
+    settings: Arc<LintSettings>,
 }
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::new()
+        Self::from_options(LintOptions::default()).unwrap()
     }
 }
 
 impl Linter {
-    pub fn new() -> Self {
-        let rules = RULES
-            .iter()
-            .filter(|&rule| rule.category() == RuleCategory::Correctness)
-            .cloned()
-            .map(|rule| (rule.name(), rule))
-            .collect::<Vec<_>>();
-        Self { rules, options: LintOptions::default(), settings: LintSettings::default() }
-    }
-
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
         let (rules, settings) = options.derive_rules_and_settings()?;
         let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
-        Ok(Self { rules, options, settings })
+        Ok(Self { rules, options, settings: Arc::new(settings) })
     }
 
     #[must_use]
@@ -112,7 +102,7 @@ impl Linter {
 
     #[must_use]
     pub fn with_settings(mut self, settings: LintSettings) -> Self {
-        self.settings = settings;
+        self.settings = Arc::new(settings);
         self
     }
 
@@ -132,7 +122,7 @@ impl Linter {
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.options.fix);
+        let mut ctx = ctx.with_fix(self.options.fix).with_settings(&self.settings);
 
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);
@@ -154,10 +144,6 @@ impl Linter {
         }
 
         ctx.into_message()
-    }
-
-    pub fn get_settings(&self) -> LintSettings {
-        self.settings.clone()
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {

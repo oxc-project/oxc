@@ -14,7 +14,7 @@ use oxc_linter::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
         LINT_PARTIAL_LOADER_EXT,
     },
-    LintContext, LintSettings, Linter,
+    LintContext, Linter,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -302,7 +302,6 @@ impl IsolatedLintHandler {
             let lint_ctx = LintContext::new(
                 path.to_path_buf().into_boxed_path(),
                 &Rc::new(semantic_ret.semantic),
-                LintSettings::default(),
             );
 
             let result = linter.run(lint_ctx);
@@ -383,7 +382,7 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new() -> Self {
-        let linter = Linter::new().with_fix(true);
+        let linter = Linter::default().with_fix(true);
         Self { linter: Arc::new(linter) }
     }
 
