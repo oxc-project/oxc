@@ -23,7 +23,9 @@
       .left-container { padding: .8em 1em; display: flex; align-items: center; justify-content: space-between; }
       .controls { padding: .6em; }
       .controls > div { padding: .2em 1em; display: flex; align-items: center; }
-      .controls > div > button { margin-right: 4px; }
+      .controls > div > button { margin-right: 4px; padding: 8px 16px; background-color: #2c3136; color: white; border: 1px solid #444; transition: background-color 0.3s;}
+      .controls > div > button:hover { background-color: #444; }
+      .controls > div > button.active { background-color: #555; }
       .controls > div > label { margin-right: 8px; }
       .controls label { font-size: 14px; }
       #duration { margin-left: auto; }
@@ -31,7 +33,7 @@
       #divider { width: 4px; background: #444; }
       #divider:hover { background: #666; cursor: col-resize; }
     </style>
-    <script type="module" crossorigin src="https://oxc-project.github.io/oxc/assets/playground-9fd01218.js"></script>
+    <script type="module" crossorigin src="https://oxc-project.github.io/oxc/assets/playground-59e291c2.js"></script>
     <link rel="modulepreload" crossorigin href="https://oxc-project.github.io/oxc/assets/modulepreload-polyfill-3cfb730f.js">
   </head>
   <body>
@@ -46,7 +48,6 @@
             <span>Oxc</span>
           </a>
           <div>
-            <label id="type-check">Type Check (experimental)<input id="type-check-checkbox" type="checkbox"></label>
             <label id="syntax">Syntax Check<input id="syntax-checkbox" type="checkbox" checked></label>
             <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
           </div>
@@ -68,7 +69,6 @@
             <button type="button" id="ir-copy">Copy IR to clipboard</button>
           </div>
           <div>
-            <!-- Format is experimental <button type="button" id="format">Format</button> -->
             <label id="transform">Transform<input id="transform-checkbox" type="checkbox"></label>
             <label>| Minify: </label>
             <label id="whitespace">whitespace<input id="whitespace-checkbox" type="checkbox"></label>
