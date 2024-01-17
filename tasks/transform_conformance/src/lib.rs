@@ -124,6 +124,7 @@ impl TestRunner {
                 fs::create_dir(&fixture_root).unwrap();
             }
             self.generate_snapshot(SnapshotOption::new(exec_files, EXEC_SNAPSHOT));
+            let _ = fs::remove_dir_all(fixture_root);
         }
     }
 
