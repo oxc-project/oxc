@@ -2,7 +2,7 @@ use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, LintSettings, Linter};
+use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -30,11 +30,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
-                    linter.run(LintContext::new(
-                        PathBuf::from("").into_boxed_path(),
-                        &semantic,
-                        LintSettings::default(),
-                    ))
+                    linter.run(LintContext::new(PathBuf::from("").into_boxed_path(), &semantic))
                 });
             },
         );

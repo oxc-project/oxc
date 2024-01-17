@@ -13,16 +13,15 @@ mod globals;
 mod options;
 pub mod partial_loader;
 pub mod rule;
-mod rule_timer;
 mod rules;
 mod service;
+mod settings;
 mod utils;
 
-use std::{io::Write, rc::Rc, time::Duration};
+use rustc_hash::FxHashMap;
+use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Report;
-pub(crate) use oxc_semantic::AstNode;
-use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::LintContext,
@@ -31,8 +30,13 @@ pub use crate::{
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
     service::LintService,
+    settings::LintSettings,
 };
-pub(crate) use rules::{RuleEnum, RULES};
+pub(crate) use crate::{
+    rules::{RuleEnum, RULES},
+    settings::JsxA11y,
+};
+pub(crate) use oxc_semantic::AstNode;
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -45,64 +49,27 @@ fn size_asserts() {
     assert_eq_size!(RuleEnum, [u8; 16]);
 }
 
-#[derive(Debug, Clone)]
-pub struct LintSettings {
-    jsx_a11y: JsxA11y,
-}
-
-impl Default for LintSettings {
-    fn default() -> Self {
-        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() } }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct JsxA11y {
-    polymorphic_prop_name: Option<String>,
-    components: FxHashMap<String, String>,
-}
-
-impl JsxA11y {
-    pub fn set_components(&mut self, components: FxHashMap<String, String>) {
-        self.components = components;
-    }
-
-    pub fn set_polymorphic_prop_name(&mut self, name: Option<String>) {
-        self.polymorphic_prop_name = name;
-    }
-}
-
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
-    settings: LintSettings,
+    settings: Arc<LintSettings>,
 }
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::new()
+        Self::from_options(LintOptions::default()).unwrap()
     }
 }
 
 impl Linter {
-    pub fn new() -> Self {
-        let rules = RULES
-            .iter()
-            .filter(|&rule| rule.category() == RuleCategory::Correctness)
-            .cloned()
-            .map(|rule| (rule.name(), rule))
-            .collect::<Vec<_>>();
-        Self { rules, options: LintOptions::default(), settings: LintSettings::default() }
-    }
-
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
         let (rules, settings) = options.derive_rules_and_settings()?;
         let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
-        Ok(Self { rules, options, settings })
+        Ok(Self { rules, options, settings: Arc::new(settings) })
     }
 
     #[must_use]
@@ -113,7 +80,7 @@ impl Linter {
 
     #[must_use]
     pub fn with_settings(mut self, settings: LintSettings) -> Self {
-        self.settings = settings;
+        self.settings = Arc::new(settings);
         self
     }
 
@@ -131,41 +98,30 @@ impl Linter {
         self
     }
 
-    #[must_use]
-    pub fn with_print_execution_times(mut self, yes: bool) -> Self {
-        self.options.timing = yes;
-        self
-    }
-
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
-        let timing = self.options.timing;
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.options.fix);
+        let mut ctx = ctx.with_fix(self.options.fix).with_settings(&self.settings);
 
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);
-            rule.run_once(&ctx, timing);
+            rule.run_once(&ctx);
         }
 
         for symbol in semantic.symbols().iter() {
             for (rule_name, rule) in &self.rules {
                 ctx.with_rule_name(rule_name);
-                rule.run_on_symbol(symbol, &ctx, timing);
+                rule.run_on_symbol(symbol, &ctx);
             }
         }
 
         for node in semantic.nodes().iter() {
             for (rule_name, rule) in &self.rules {
                 ctx.with_rule_name(rule_name);
-                rule.run(node, &ctx, timing);
+                rule.run(node, &ctx);
             }
         }
 
         ctx.into_message()
-    }
-
-    pub fn get_settings(&self) -> LintSettings {
-        self.settings.clone()
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {
@@ -186,30 +142,6 @@ impl Linter {
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
-    }
-
-    #[allow(clippy::print_stdout)]
-    pub fn print_execution_times_if_enable(&self) {
-        if !self.options.timing {
-            return;
-        }
-        let mut timings = self
-            .rules
-            .iter()
-            .map(|(rule_name, rule)| (rule_name, rule.execute_time()))
-            .collect::<Vec<_>>();
-
-        timings.sort_by_key(|x| x.1);
-        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
-
-        println!("Rule timings in milliseconds:");
-        println!("Total: {:.2}ms", total * 1000.0);
-        println!("{:>7} | {:>5} | Rule", "Time", "%");
-        for (name, duration) in timings.iter().rev() {
-            let millis = duration.as_secs_f64() * 1000.0;
-            let relative = duration.as_secs_f64() / total * 100.0;
-            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
-        }
     }
 }
 

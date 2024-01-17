@@ -33,7 +33,6 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcCodegenOptions,
-  OxcTypeCheckingOptions,
 } from "@oxc/wasm-web";
 import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 
@@ -59,6 +58,7 @@ export default DummyComponent
 `.trim();
 
 const STORAGE_KEY_CODE = "playground.code";
+const ACTIVE_TAB_STORAGE_KEY_CODE = "playground.activeTab";
 
 const getStringFromStorage = (whatToGet) => {
   try {
@@ -75,6 +75,39 @@ const setStringToStorage = (whatToSet, value) => {
     return;
   }
 };
+
+const tabBtnsBindClick = (callback) => {
+  const buttons = document.querySelectorAll('.header.controls button');
+  buttons.forEach(btn => {
+    btn.onclick = (e) => {
+      callback(e?.target?.id);
+    };
+  });
+}
+
+const switchActiveTab = (tab) => {
+  const buttons = document.querySelectorAll('.header.controls button');
+  let targetBtn = null;
+  buttons.forEach(btn => {
+    btn.classList.remove('active')
+    if (tab === btn.id) {
+      targetBtn = btn;
+    }
+  });
+  targetBtn?.classList.add('active');
+}
+
+const initActiveTab = () => {
+  const activeTab = getStringFromStorage(ACTIVE_TAB_STORAGE_KEY_CODE);
+  if (!activeTab) {
+    return;
+  }
+  const btn = document.getElementById(activeTab);
+  if (!btn?.classList) {
+    return;
+  }
+  btn.classList.add('active');
+}
 
 class Playground {
   oxc;
@@ -100,7 +133,7 @@ class Playground {
     this.linterConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
-
+    this.currentView = getStringFromStorage(ACTIVE_TAB_STORAGE_KEY_CODE) || "ast";
   }
 
   initOxc() {
@@ -110,7 +143,6 @@ class Playground {
     this.codegenOptions = new OxcCodegenOptions();
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
-    this.typeCheckOptions = new OxcTypeCheckingOptions();
 
     this.runOptions.syntax = true;
     this.runOptions.lint = true;
@@ -293,7 +325,6 @@ class Playground {
       this.linterOptions,
       this.codegenOptions,
       this.minifierOptions,
-      this.typeCheckOptions
     );
     const elapsed = new Date() - start;
     document.getElementById("duration").innerText = `${elapsed}ms`;
@@ -556,37 +587,16 @@ async function main() {
 
   addHorizontalResize()
 
-  document.getElementById("ast").onclick = () => {
-    playground.updateView("ast");
-  };
-
-  document.getElementById("scope").onclick = () => {
-    playground.updateView("scope");
-  };
-
-  document.getElementById("symbol").onclick = () => {
-    playground.updateView("symbol");
-  };
-
-  document.getElementById("codegen").onclick = () => {
-    playground.updateView("codegen");
-  };
-
-  document.getElementById("ir").onclick = () => {
-    playground.updateView("ir");
-  };
-
-  document.getElementById("prettier-ir").onclick = () => {
-    playground.updateView("prettier-ir")
-  };
-
-  document.getElementById("prettier").onclick = () => {
-    playground.updateView("prettier")
-  };
-
-  document.getElementById("ir-copy").onclick = () => {
-    navigator.clipboard.writeText(playground.oxc.ir);
-  };
+  initActiveTab();
+  tabBtnsBindClick((tab) => {
+    if (tab === 'ir-copy') {
+      navigator.clipboard.writeText(playground.oxc.ir);
+      return;
+    }
+    playground.updateView(tab);
+    switchActiveTab(tab);
+    setStringToStorage(ACTIVE_TAB_STORAGE_KEY_CODE, tab);
+  });
 
   // document.getElementById("format").onclick = () => {
   // playground.updateView("format");
@@ -635,12 +645,6 @@ async function main() {
     playground.updateEditorText(playground.editor, "");
     playground.updateView();
     playground.updateEditorText(playground.editor, sourceText);
-  };
-
-  document.getElementById("type-check").onchange = function () {
-    const checked = document.getElementById("type-check-checkbox").checked;
-    playground.runOptions.type_check = checked;
-    playground.updateView();
   };
 }
 
