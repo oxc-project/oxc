@@ -1,9 +1,9 @@
-use std::{fs::read_dir, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::ObjectPropertyKind, syntax_directed_operations::PropName, AstKind};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use std::{fs::read_dir, path::Path};
 use ureq::Response;
 
 // TODOs:
@@ -92,4 +92,3 @@ fn list_implemented_rules(path: &Path) -> Vec<String> {
 
     rules
 }
-
