@@ -102,7 +102,7 @@ impl Rule for NoNamedAsDefaultMember {
                 return;
             };
             if let Some(module_name) =
-                get_external_module_name_if_has_entry(&ident, &Atom::new_inline(prop_str))
+                get_external_module_name_if_has_entry(ident, &Atom::new_inline(prop_str))
             {
                 ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                     match member_expr {
@@ -133,7 +133,7 @@ impl Rule for NoNamedAsDefaultMember {
                             continue;
                         };
                         if let Some(module_name) =
-                            get_external_module_name_if_has_entry(&ident, &name)
+                            get_external_module_name_if_has_entry(ident, &name)
                         {
                             ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                                 decl.span,
