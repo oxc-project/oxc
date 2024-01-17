@@ -13,7 +13,8 @@ use ureq::Response;
 // - Support other rules
 // - Better AST traversal... :(
 
-const ORIGINAL: &str = "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-recommended.js";
+const ORIGINAL: &str =
+    "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
 const OURS_DIR: &str = "crates/oxc_linter/src/rules/eslint";
 
 fn main() {
@@ -55,12 +56,15 @@ fn find_to_be_implemented_rules(source_text: &str) -> Vec<String> {
     let mut rules = vec![];
     let mut is_rules = false;
     for node in semantic_ret.semantic.nodes().iter() {
-        if let AstKind::IdentifierName(kind) = node.kind() {
-            if kind.name == "rules" {
-                is_rules = true;
-                continue;
+        if let AstKind::ObjectProperty(prop) = node.kind() {
+            if let Some((name, _)) = prop.key.prop_name() {
+                if name == "rules" {
+                    is_rules = true;
+                    continue;
+                }
             }
         }
+
         if is_rules {
             if let AstKind::ObjectExpression(obj) = node.kind() {
                 for prop in &obj.properties {
