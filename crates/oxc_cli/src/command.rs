@@ -12,10 +12,6 @@ pub enum CliCommand {
     /// Format this repository
     #[bpaf(command)]
     Format(#[bpaf(external(format_options))] FormatOptions),
-
-    /// Use Ezno to type check source code (experimental and work in progress)
-    #[bpaf(command)]
-    Check(#[bpaf(external(check_options))] CheckOptions),
 }
 
 impl CliCommand {
@@ -27,7 +23,6 @@ impl CliCommand {
             Self::Format(options) => {
                 Self::set_rayon_threads(options.misc_options.threads);
             }
-            Self::Check(_) => {}
         }
     }
 
@@ -71,10 +66,6 @@ impl FormatCommand {
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
-    /// Display the execution time of each lint rule
-    #[bpaf(switch, env("TIMING"), hide_usage)]
-    pub timing: bool,
-
     /// list all the rules that are currently registered
     #[bpaf(switch, hide_usage)]
     pub rules: bool,
@@ -255,21 +246,6 @@ pub struct WarningOptions {
     pub max_warnings: Option<usize>,
 }
 
-#[derive(Debug, Clone, Bpaf)]
-pub struct CheckOptions {
-    /// Print called functions
-    #[bpaf(switch, hide_usage)]
-    pub print_called_functions: bool,
-
-    /// Print types of expressions
-    #[bpaf(switch, hide_usage)]
-    pub print_expression_mappings: bool,
-
-    /// File to type check
-    #[bpaf(positional("PATH"))]
-    pub path: PathBuf,
-}
-
 #[cfg(test)]
 mod misc_options {
     use super::{lint_command, MiscOptions};
@@ -282,15 +258,8 @@ mod misc_options {
     #[test]
     fn default() {
         let options = get_misc_options(".");
-        assert!(!options.timing);
         assert!(!options.rules);
         assert!(options.threads.is_none());
-    }
-
-    #[test]
-    fn timing() {
-        let options = get_misc_options("--timing .");
-        assert!(options.timing);
     }
 
     #[test]

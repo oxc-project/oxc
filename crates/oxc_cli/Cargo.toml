@@ -40,13 +40,9 @@ oxc_linter         = { workspace = true }
 oxc_parser         = { workspace = true }
 oxc_prettier       = { workspace = true }
 oxc_span           = { workspace = true }
-oxc_type_synthesis = { workspace = true }
 glob               = { workspace = true }
 lazy_static        = { workspace = true }
 regex              = { workspace = true }
-
-# TODO temp, for type check output, replace with Miette
-codespan-reporting = "0.11.1"
 
 ignore             = { workspace = true, features = ["simd-accel"] }
 miette             = { workspace = true }
