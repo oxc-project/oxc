@@ -1,5 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
@@ -20,8 +21,6 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
-    /// type imports names
-    import_type_name_set: FxHashSet<Atom>,
     export_name_set: FxHashSet<Atom>,
 }
 
@@ -31,13 +30,7 @@ impl<'a> TypeScript<'a> {
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
     ) -> Self {
-        Self {
-            ast,
-            ctx,
-            verbatim_module_syntax,
-            import_type_name_set: FxHashSet::default(),
-            export_name_set: FxHashSet::default(),
-        }
+        Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -109,24 +102,84 @@ impl<'a> TypeScript<'a> {
     /// * Adds `export {}` if all import / export statements are removed, this is used to tell
     /// downstream tools that this file is in ESM.
     pub fn transform_program(&mut self, program: &mut Program<'a>) {
-        let mut needs_explicit_esm = false;
+        let mut export_type_names = FxHashSet::default();
+        let mut export_names = FxHashSet::default();
 
-        for stmt in program.body.iter_mut() {
+        // Collect export names
+        program.body.iter().for_each(|stmt| {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
-                needs_explicit_esm = true;
+                match &**module_decl {
+                    ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                        decl.specifiers.iter().for_each(|specifier| {
+                            let name = specifier.exported.name();
+                            if self.is_import_binding_only(name) {
+                                let is_value =
+                                    decl.export_kind.is_value() && specifier.export_kind.is_value();
+                                if is_value {
+                                    export_names.insert(name.clone());
+                                } else {
+                                    export_type_names.insert(name.clone());
+                                }
+                            }
+                        });
+                    }
+                    ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+                        let name = decl.exported.name();
+                        if self.is_import_binding_only(name) {
+                            export_names.insert(decl.exported.name().clone());
+                        }
+                    }
+                    ModuleDeclaration::ExportAllDeclaration(decl) => {
+                        if let Some(exported) = &decl.exported {
+                            let name = exported.name();
+                            if self.is_import_binding_only(name) {
+                                let is_value =
+                                    decl.export_kind.is_value() && decl.export_kind.is_value();
+                                if is_value {
+                                    export_names.insert(name.clone());
+                                } else {
+                                    export_type_names.insert(name.clone());
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        });
+
+        let mut import_type_names = FxHashSet::default();
+        let mut delete_indexes = vec![];
+        let mut import_len = 0;
+
+        for (index, stmt) in program.body.iter_mut().enumerate() {
+            if let Statement::ModuleDeclaration(module_decl) = stmt {
+                import_len += 1;
                 match &mut **module_decl {
                     ModuleDeclaration::ExportNamedDeclaration(decl) => {
                         decl.specifiers.retain(|specifier| {
                             !(specifier.export_kind.is_type()
-                                || self.import_type_name_set.contains(specifier.exported.name()))
+                                || import_type_names.contains(specifier.exported.name()))
                         });
+
+                        if decl.export_kind.is_type()
+                            || self.verbatim_module_syntax
+                            || (decl.declaration.is_none() && decl.specifiers.is_empty())
+                        {
+                            delete_indexes.push(index);
+                        }
                     }
-                    ModuleDeclaration::ImportDeclaration(decl) if decl.import_kind.is_value() => {
+                    ModuleDeclaration::ImportDeclaration(decl) => {
+                        let is_type = decl.import_kind.is_type();
                         if let Some(specifiers) = &mut decl.specifiers {
                             specifiers.retain(|specifier| match specifier {
                                 ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                    if s.import_kind.is_type() {
-                                        self.import_type_name_set.insert(s.local.name.clone());
+                                    if is_type || s.import_kind.is_type() {
+                                        import_type_names.insert(s.local.name.clone());
+                                        return false;
+                                    }
+
+                                    if export_type_names.contains(&s.local.name) {
                                         return false;
                                     }
 
@@ -135,19 +188,39 @@ impl<'a> TypeScript<'a> {
                                     }
 
                                     self.has_value_references(&s.local.name)
+                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportDefaultSpecifier(s)
                                     if !self.verbatim_module_syntax =>
                                 {
+                                    if is_type {
+                                        import_type_names.insert(s.local.name.clone());
+                                    }
+
                                     self.has_value_references(&s.local.name)
+                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(s)
                                     if !self.verbatim_module_syntax =>
                                 {
+                                    if is_type {
+                                        import_type_names.insert(s.local.name.clone());
+                                    }
+
                                     self.has_value_references(&s.local.name)
+                                        || export_names.contains(&s.local.name)
                                 }
                                 _ => true,
                             });
+                        }
+
+                        if decl.import_kind.is_type()
+                            || decl
+                                .specifiers
+                                .as_ref()
+                                .is_some_and(|specifiers| specifiers.is_empty())
+                        {
+                            delete_indexes.push(index);
                         }
                     }
                     _ => {}
@@ -155,42 +228,15 @@ impl<'a> TypeScript<'a> {
             }
         }
 
-        program.body.retain(|stmt| match stmt {
-            Statement::ModuleDeclaration(module_decl) => match &**module_decl {
-                ModuleDeclaration::ImportDeclaration(decl) => {
-                    if decl.import_kind.is_type() {
-                        return false;
-                    }
+        let delete_indexes_len = delete_indexes.len();
 
-                    if self.verbatim_module_syntax {
-                        return true;
-                    }
+        // remove empty imports/exports
+        for index in delete_indexes.into_iter().rev() {
+            program.body.remove(index);
+        }
 
-                    !decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.is_empty())
-                }
-                ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                    if decl.export_kind.is_type() {
-                        return false;
-                    }
-
-                    if self.verbatim_module_syntax {
-                        return true;
-                    }
-
-                    if decl.declaration.is_none() && decl.specifiers.is_empty() {
-                        return false;
-                    }
-
-                    true
-                }
-                _ => true,
-            },
-            _ => true,
-        });
-
-        if needs_explicit_esm
-            && !program.body.iter().any(|s| matches!(s, Statement::ModuleDeclaration(_)))
-        {
+        // explicit esm
+        if import_len > 0 && import_len == delete_indexes_len {
             let empty_export = self.ast.export_named_declaration(
                 SPAN,
                 None,
@@ -201,6 +247,23 @@ impl<'a> TypeScript<'a> {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(empty_export);
             program.body.push(self.ast.module_declaration(export_decl));
         }
+    }
+
+    /// ```ts
+    /// import foo from "foo"; // is import binding only
+    /// import bar from "bar"; // SymbolFlags::ImportBinding | SymbolFlags::BlockScopedVariable
+    /// let bar = "xx";
+    /// ```
+    fn is_import_binding_only(&self, name: &Atom) -> bool {
+        let root_scope_id = self.ctx.scopes().root_scope_id();
+
+        self.ctx.scopes().get_binding(root_scope_id, name).is_some_and(|symbol_id| {
+            let flag = self.ctx.symbols().get_flag(symbol_id);
+            flag.is_import_binding()
+                && !flag.intersects(
+                    SymbolFlags::FunctionScopedVariable | SymbolFlags::BlockScopedVariable,
+                )
+        })
     }
 
     fn has_value_references(&self, name: &Atom) -> bool {
