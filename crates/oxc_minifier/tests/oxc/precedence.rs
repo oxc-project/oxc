@@ -110,7 +110,7 @@ fn logical_and() {
 fn bitwise_or() {
     test("a | b | c", "a|b|c;");
     test("(a | b) | c", "a|b|c;");
-    test("a | (b | c)", "a|b|c;");
+    test("a | (b | c)", "a|(b|c);");
     test("a | b ^ c", "a|b^c;");
     test("a | (b ^ c)", "a|b^c;");
     test("a | (b && c)", "a|(b&&c);");
@@ -124,7 +124,7 @@ fn bitwise_or() {
 fn bitwise_xor() {
     test("a ^ b ^ c", "a^b^c;");
     test("(a ^ b) ^ c", "a^b^c;");
-    test("a ^ (b ^ c)", "a^b^c;");
+    test("a ^ (b ^ c)", "a^(b^c);");
     test("a | b & c", "a|b&c;");
     test("a | (b & c)", "a|b&c;");
     test("a | (b || c)", "a|(b||c);");
@@ -138,7 +138,7 @@ fn bitwise_xor() {
 fn bitwise_and() {
     test("a & b & c", "a&b&c;");
     test("((a & b) & c) & d", "a&b&c&d;");
-    test("a & (b & (c & d))", "a&b&c&d;");
+    test("a & (b & (c & d))", "a&(b&(c&d));");
     test("a & b == c", "a&b==c;");
     test("a & (b == c)", "a&b==c;");
     test("a == b & c", "a==b&c;");
@@ -152,7 +152,7 @@ fn bitwise_and() {
 #[test]
 fn equality() {
     test("a == b != c === d !== e", "a==b!=c===d!==e;");
-    test("a == (b != (c === (d !== e)))", "a==b!=c===d!==e;");
+    test("a == (b != (c === (d !== e)))", "a==(b!=(c===(d!==e)));");
     test("(((a == b) != c) === d) !== e", "a==b!=c===d!==e;");
     test("a > b == c < d", "a>b==c<d;");
     test("(a > b) == (c < d)", "a>b==c<d;");
