@@ -13,7 +13,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(consistent-type-export): Consistent type exports")]
+#[error("typescript-eslint(consistent-type-exports): Consistent type exports")]
 #[diagnostic(severity(warning), help("Consistent type export"))]
 struct ConsistentTypeExportDiagnostic(#[label] pub Span);
 
