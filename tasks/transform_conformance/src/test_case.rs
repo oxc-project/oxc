@@ -345,7 +345,6 @@ impl TestCase for ExecTestCase {
         let passed = Self::run_test(&target_path);
         if filtered {
             println!("input_path: {:?}", &self.path);
-            println!("target_path: {:?}", &target_path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
             println!("Transformed:\n{result}\n");
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));

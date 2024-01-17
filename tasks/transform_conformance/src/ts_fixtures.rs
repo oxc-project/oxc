@@ -63,7 +63,9 @@ impl TypeScriptFixtures {
             }
         }
 
-        fs::write(snap_root().join(CONFORMANCE_SNAPSHOT), snapshot).unwrap();
+        if self.options.filter.is_none() {
+            fs::write(snap_root().join(CONFORMANCE_SNAPSHOT), snapshot).unwrap();
+        }
     }
 }
 
