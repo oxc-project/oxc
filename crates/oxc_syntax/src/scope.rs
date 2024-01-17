@@ -26,6 +26,7 @@ bitflags! {
         const Constructor      = 1 << 6;
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;
+        const TypeBlock        = 1 << 9;
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
         const Modifiers = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
     }

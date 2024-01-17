@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_diagnostics::{miette::miette, Error};
-use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
+use oxc_semantic::{Reference, ScopeFlags, ScopeId, Semantic, SymbolFlags, SymbolId};
 use oxc_span::Atom;
 
 use super::{Expect, SemanticTester};
@@ -46,6 +46,27 @@ impl<'a> SymbolTester<'a> {
             1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).next().unwrap()),
             n if n > 1 => Err(miette!("Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source.")),
             _ => unreachable!()
+        };
+
+        SymbolTester {
+            parent,
+            semantic: Rc::new(semantic),
+            target_symbol_name: target.to_string(),
+            test_result: data,
+        }
+    }
+
+    pub(super) fn new_first_binding(
+        parent: &'a SemanticTester,
+        semantic: Semantic<'a>,
+        target: &str,
+    ) -> Self {
+        let symbols_with_target_name: Option<(ScopeId, SymbolId, Atom)> =
+            semantic.scopes().iter_bindings().find(|(_, _, name)| name == &target);
+
+        let data = match symbols_with_target_name {
+            Some((_, symbol_id, _)) => Ok(symbol_id),
+            None => Err(miette!("Could not find declaration for {target}")),
         };
 
         SymbolTester {

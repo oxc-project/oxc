@@ -437,12 +437,12 @@ pub trait Visit<'a>: Sized {
             // E.g., `let c = class A { foo() { console.log(A) } }`
             self.enter_scope(ScopeFlags::empty());
         }
-
         self.enter_node(kind);
 
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
+        self.enter_scope(ScopeFlags::TypeBlock);
         if let Some(parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
@@ -455,6 +455,7 @@ pub trait Visit<'a>: Sized {
         }
         self.visit_class_body(&class.body);
         self.leave_node(kind);
+        self.leave_scope();
         if is_class_expr {
             self.leave_scope();
         }
@@ -1541,17 +1542,20 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::TypeBlock);
         if let Some(parameters) = &decl.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
         self.visit_ts_type(&decl.type_annotation);
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
         let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::TypeBlock);
         if let Some(parameters) = &decl.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
@@ -1559,6 +1563,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_signature(signature);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_as_expression(&mut self, expr: &TSAsExpression<'a>) {
@@ -1690,7 +1695,6 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             self.visit_ts_type(constraint);
@@ -1700,7 +1704,6 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type(default);
         }
         self.leave_node(kind);
-        self.leave_scope();
     }
 
     fn visit_ts_type_parameter_instantiation(&mut self, ty: &TSTypeParameterInstantiation<'a>) {
@@ -1820,6 +1823,7 @@ pub trait Visit<'a>: Sized {
         &mut self,
         signature: &TSConstructSignatureDeclaration<'a>,
     ) {
+        self.enter_scope(ScopeFlags::TypeBlock);
         self.visit_formal_parameters(&signature.params);
         if let Some(parameters) = &signature.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
@@ -1827,10 +1831,12 @@ pub trait Visit<'a>: Sized {
         if let Some(annotation) = &signature.return_type {
             self.visit_ts_type_annotation(annotation);
         }
+        self.leave_scope();
     }
 
     fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(self.alloc(signature));
+        self.enter_scope(ScopeFlags::TypeBlock);
         self.enter_node(kind);
         self.visit_formal_parameters(&signature.params);
         if let Some(parameters) = &signature.type_parameters {
@@ -1840,6 +1846,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type_annotation(annotation);
         }
         self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_ts_index_signature_name(&mut self, name: &TSIndexSignatureName<'a>) {
