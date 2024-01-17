@@ -478,7 +478,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.make_all_namespaces_valuelike();
                 self.in_type_definition = true;
             }
-            AstKind::TSTypeAnnotation(_) => {
+            AstKind::TSTypeParameterInstantiation(_) | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = true;
             }
             AstKind::TSEnumMember(enum_member) => {
@@ -553,6 +553,7 @@ impl<'a> SemanticBuilder<'a> {
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSInterfaceDeclaration(_)
             | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSTypeParameterInstantiation(_)
             | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = false;
             }
