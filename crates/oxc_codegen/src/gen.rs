@@ -1393,15 +1393,25 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let wrap_in = self.operator == BinaryOperator::In && !ctx.has_in();
-        let wrap = precedence > self.precedence() || wrap_in;
+        let wrap = precedence >= self.precedence() || wrap_in;
         p.wrap(wrap, |p| {
-            self.left.gen_expr(p, self.precedence(), ctx);
+            let left_precedence = if self.precedence().is_right_associative() {
+                self.precedence()
+            } else {
+                self.operator.lower_precedence()
+            };
+            self.left.gen_expr(p, left_precedence, ctx);
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
             }
             self.operator.gen(p, ctx);
             p.print_soft_space();
-            self.right.gen_expr(p, self.precedence(), ctx.union_in_if(wrap));
+            let right_precedence = if self.precedence().is_left_associative() {
+                self.precedence()
+            } else {
+                self.operator.lower_precedence()
+            };
+            self.right.gen_expr(p, right_precedence, ctx.union_in_if(wrap));
         });
     }
 }

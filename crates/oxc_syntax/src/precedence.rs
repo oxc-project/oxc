@@ -44,6 +44,25 @@ impl Precedence {
     }
 
     pub fn is_right_associative(&self) -> bool {
-        matches!(self, Self::Exponential)
+        matches!(self, Self::Exponential | Self::Conditional | Self::Arrow | Self::Assign)
+    }
+
+    pub fn is_left_associative(&self) -> bool {
+        matches!(
+            self,
+            Self::Member
+                | Self::Multiply
+                | Self::Add
+                | Self::Shift
+                | Self::Relational
+                | Self::Equality
+                | Self::BitwiseAnd
+                | Self::BitwiseXor
+                | Self::BitwiseOr
+                | Self::LogicalAnd
+                | Self::LogicalOr
+                | Self::Coalesce
+                | Self::Comma
+        )
     }
 }

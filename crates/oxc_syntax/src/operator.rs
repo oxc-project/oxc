@@ -222,6 +222,26 @@ impl BinaryOperator {
             Self::Exponential => "**",
         }
     }
+    pub fn lower_precedence(&self) -> Precedence {
+        match self {
+            Self::BitwiseOR => Precedence::LogicalAnd,
+            Self::BitwiseXOR => Precedence::BitwiseOr,
+            Self::BitwiseAnd => Precedence::BitwiseXor,
+            Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality => {
+                Precedence::BitwiseAnd
+            }
+            Self::LessThan
+            | Self::LessEqualThan
+            | Self::GreaterThan
+            | Self::GreaterEqualThan
+            | Self::Instanceof
+            | Self::In => Precedence::Equality,
+            Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill => Precedence::Relational,
+            Self::Addition | Self::Subtraction => Precedence::Shift,
+            Self::Multiplication | Self::Remainder | Self::Division => Precedence::Add,
+            Self::Exponential => Precedence::Multiply,
+        }
+    }
 }
 
 impl GetPrecedence for BinaryOperator {
