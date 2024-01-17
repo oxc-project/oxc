@@ -108,19 +108,17 @@ impl Rule for NoNamedAsDefaultMember {
             match item.kind() {
                 AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
                 AstKind::VariableDeclarator(decl) => {
-                    if let Some(Expression::MemberExpression(member_expr)) = &decl.init {
-                        process_member_expr(member_expr);
-                        return;
-                    }
                     let Some(Expression::Identifier(ident)) = &decl.init else {
-                        return;
+                        continue;
                     };
                     let BindingPatternKind::ObjectPattern(object_pattern) = &decl.id.kind else {
-                        return;
+                        continue;
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else { return };
+                        let Some(name) = prop.key.static_name() else {
+                            continue;
+                        };
                         if let Some(module_name) =
                             get_external_module_name_if_has_entry(&ident.name, &name)
                         {
