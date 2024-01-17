@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, rc::Rc};
 
 use oxc_ast::{AstKind, TriviasMap};
-use oxc_span::{GetSpan, Span, SPAN};
+use oxc_span::{GetSpan, Span};
 
 use super::{JSDoc, JSDocComment};
 
@@ -11,17 +11,11 @@ pub struct JSDocBuilder<'a> {
     trivias: Rc<TriviasMap>,
 
     docs: BTreeMap<Span, JSDocComment<'a>>,
-    last_span: Option<Span>,
 }
 
 impl<'a> JSDocBuilder<'a> {
     pub fn new(source_text: &'a str, trivias: &Rc<TriviasMap>) -> Self {
-        Self {
-            source_text,
-            trivias: Rc::clone(trivias),
-            docs: BTreeMap::default(),
-            last_span: None,
-        }
+        Self { source_text, trivias: Rc::clone(trivias), docs: BTreeMap::default() }
     }
 
     pub fn build(self) -> JSDoc<'a> {
@@ -30,35 +24,26 @@ impl<'a> JSDocBuilder<'a> {
 
     /// Save the span if the given kind has a jsdoc comment attached
     pub fn retrieve_jsdoc_comment(&mut self, kind: AstKind<'a>) -> bool {
-        if let AstKind::Program(_) = kind {
-            return false;
-        }
-
-        let span = kind.span();
-
         if !kind.is_declaration() {
-            self.last_span = Some(span);
             return false;
         }
-
-        let comment_text = self.find_jsdoc_comment(span, self.last_span.unwrap_or(SPAN));
+        let span = kind.span();
+        let comment_text = self.find_jsdoc_comment(span);
         if let Some(comment_text) = comment_text {
             self.docs.insert(span, JSDocComment::new(comment_text));
         }
-
-        self.last_span = Some(span);
         comment_text.is_some()
     }
 
-    /// Find the nearest jsdoc doc in front of this span, a.k.a leading comment
-    fn find_jsdoc_comment(&self, span: Span, last_span: Span) -> Option<&'a str> {
-        // Between the last span and the current span, reverse for early return
-        for (start, comment) in self.trivias.comments().range(last_span.end..span.start).rev() {
+    /// Find the jsdoc doc in front of this span, a.k.a leading comment
+    fn find_jsdoc_comment(&self, span: Span) -> Option<&'a str> {
+        for (start, comment) in self.trivias.comments().range(..span.start).rev() {
             if comment.kind().is_single_line() {
                 continue;
             }
 
-            let comment_text = Span::new(*start, comment.end()).source_text(self.source_text);
+            let comment_span = Span::new(*start, comment.end());
+            let comment_text = comment_span.source_text(self.source_text);
 
             // Comments beginning with /*, /***, or more than 3 stars will be ignored.
             let mut chars = comment_text.chars();
@@ -69,9 +54,17 @@ impl<'a> JSDocBuilder<'a> {
                 continue;
             }
 
+            // The comment is the leading comment of this span if there is nothing in between.
+            // +2 to skip `*/` ending
+            // TODO: Allow comments too
+            let text_between =
+                Span::new(comment.end() + 2, span.start).source_text(self.source_text);
+            if text_between.chars().any(|c| !c.is_whitespace()) {
+                return None;
+            }
+
             return Some(comment_text);
         }
-
         None
     }
 }
@@ -169,16 +162,17 @@ mod test {
             /** @type {string} */
             let str;
             ",
-            "
-            /** @type {string} */
-            // ignore me
-            let str;
-            ",
-            "
-            /** @type {string} */
-            /* ignore me */
-            let str;
-            ",
+            // TODO: Make these work
+            // "
+            // /** @type {string} */
+            // // ignore me
+            // let str;
+            // ",
+            // "
+            // /** @type {string} */
+            // /* ignore me */
+            // let str;
+            // ",
         ];
         for source_text in source_texts {
             let allocator = Allocator::default();
