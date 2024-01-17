@@ -1110,6 +1110,18 @@ impl<'a> Declaration<'a> {
             _ => true,
         }
     }
+    pub fn modifiers(&self) -> Option<&Modifiers<'a>> {
+        match self {
+            Declaration::VariableDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::FunctionDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::ClassDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::TSEnumDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::TSModuleDeclaration(decl) => Some(&decl.modifiers),
+            Declaration::TSInterfaceDeclaration(decl) => Some(&decl.modifiers),
+            _ => None,
+        }
+    }
 }
 
 /// Variable Declaration

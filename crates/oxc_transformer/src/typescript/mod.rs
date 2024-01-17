@@ -164,7 +164,17 @@ impl<'a> TypeScript<'a> {
 
                         if decl.export_kind.is_type()
                             || self.verbatim_module_syntax
-                            || (decl.declaration.is_none() && decl.specifiers.is_empty())
+                            || ((decl.declaration.is_none()
+                                || decl.declaration.as_ref().is_some_and(|d| {
+                                    d.modifiers().is_some_and(|modifiers| {
+                                        modifiers.contains(ModifierKind::Declare)
+                                    }) || matches!(
+                                        d,
+                                        Declaration::TSInterfaceDeclaration(_)
+                                            | Declaration::TSTypeAliasDeclaration(_)
+                                    )
+                                }))
+                                && decl.specifiers.is_empty())
                         {
                             delete_indexes.push(index);
                         }
