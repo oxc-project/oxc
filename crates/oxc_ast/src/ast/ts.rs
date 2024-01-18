@@ -891,6 +891,10 @@ impl<'a> Modifiers<'a> {
             .as_ref()
             .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
     }
+
+    pub fn is_contains_declare(&self) -> bool {
+        self.contains(ModifierKind::Declare)
+    }
 }
 
 /// Export Assignment in non-module files
