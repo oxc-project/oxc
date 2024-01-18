@@ -6,46 +6,34 @@ use oxc_span::SourceType;
 use std::{fs::read_dir, path::Path};
 use ureq::Response;
 
-// TODOs:
-// - Error handling, message
-//   - JS parsing may fail?
-// - Use Result properly
-// - Support other rules
-// - Better AST traversal... :(
+// TODOs: Fix up to support other rules
 
 const ORIGINAL: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
 const OURS_DIR: &str = "crates/oxc_linter/src/rules/eslint";
 
 fn main() {
-    let js_string = fetch_to_be_implemented_rules_js(ORIGINAL).unwrap();
-    let rules_to_be_implemented = find_to_be_implemented_rules(&js_string);
+    let run = |_plugin: &str| -> Result<(), String> {
+        let js_string = fetch_plugin_rules_js_string(ORIGINAL)?;
 
-    let rules_implemented = list_implemented_rules(Path::new(OURS_DIR));
+        let rules_to_be_implemented = find_to_be_implemented_rules(&js_string)?;
+        let rules_implemented = list_implemented_rules(Path::new(OURS_DIR))?;
 
-    for rule in &rules_to_be_implemented {
-        let mark = if rules_implemented.contains(rule) { "x" } else { " " };
-        println!("- [{mark}] {rule}");
-    }
+        print_markdown_todo_list(&rules_to_be_implemented, &rules_implemented);
+
+        Ok(())
+    };
+
+    let plugin = "eslint";
+
+    run(plugin).unwrap_or_else(|err| {
+        println!("Failed to run: {plugin}");
+        println!("{err}");
+    });
 }
 
-fn fetch_to_be_implemented_rules_js(url: &str) -> Result<String, String> {
-    let body = oxc_tasks_common::agent().get(url).call().map(Response::into_string);
-
-    match body {
-        Ok(Ok(body)) => Ok(body),
-        Err(err) => {
-            println!("Failed to fetch {ORIGINAL}");
-            Err(err.to_string())
-        }
-        Ok(Err(err)) => {
-            println!("Failed to fetch {ORIGINAL}");
-            Err(err.to_string())
-        }
-    }
-}
-
-fn find_to_be_implemented_rules(source_text: &str) -> Vec<String> {
+// Plugin specific
+fn find_to_be_implemented_rules(source_text: &str) -> Result<Vec<String>, String> {
     let allocator = Allocator::default();
     let source_type = SourceType::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -53,6 +41,7 @@ fn find_to_be_implemented_rules(source_text: &str) -> Vec<String> {
     let program = allocator.alloc(ret.program);
     let semantic_ret = SemanticBuilder::new(source_text, source_type).build(program);
 
+    // This code assumes that the `rules` property appears only once
     let mut rules = vec![];
     let mut is_rules = false;
     for node in semantic_ret.semantic.nodes().iter() {
@@ -78,13 +67,29 @@ fn find_to_be_implemented_rules(source_text: &str) -> Vec<String> {
         }
     }
 
-    rules
+    if rules.is_empty() {
+        return Err("No rules are found".to_string());
+    }
+
+    Ok(rules)
 }
 
-fn list_implemented_rules(path: &Path) -> Vec<String> {
-    let Ok(entries) = read_dir(path) else {
-        println!("Failed to read dir {path:?}");
-        return vec![];
+// Utils
+
+fn fetch_plugin_rules_js_string(url: &str) -> Result<String, String> {
+    let body = oxc_tasks_common::agent().get(url).call().map(Response::into_string);
+
+    match body {
+        Ok(Ok(body)) => Ok(body),
+        Err(err) => Err(err.to_string()),
+        Ok(Err(err)) => Err(err.to_string()),
+    }
+}
+
+fn list_implemented_rules(path: &Path) -> Result<Vec<String>, String> {
+    let entries = match read_dir(path) {
+        Ok(entries) => entries,
+        Err(err) => return Err(err.to_string()),
     };
 
     let mut rules = vec![];
@@ -94,5 +99,12 @@ fn list_implemented_rules(path: &Path) -> Vec<String> {
         rules.push(name);
     }
 
-    rules
+    Ok(rules)
+}
+
+fn print_markdown_todo_list(theirs: &[String], ours: &[String]) {
+    for rule in theirs {
+        let mark = if ours.contains(rule) { "x" } else { " " };
+        println!("- [{mark}] {rule}");
+    }
 }

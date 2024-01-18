@@ -20,10 +20,4 @@ oxc_parser       = { workspace = true }
 oxc_semantic     = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
-# convert_case = { workspace = true }
-# serde        = { workspace = true, features = ["derive"] }
-# regex        = { workspace = true }
-# lazy_static  = { workspace = true }
-ureq         = { workspace = true }
-
-# handlebars = "5.0.0"
+ureq = { workspace = true }
