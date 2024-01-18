@@ -49,53 +49,21 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    /// Remove `export` from merged declaration.
-    /// We only preserve the first one.
-    /// for example:
-    /// ```TypeScript
-    /// export enum Foo {}
-    /// export enum Foo {}
-    /// ```
-    /// ```JavaScript
-    /// export enum Foo {}
-    /// enum Foo {}
-    /// ```
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
-        let Statement::ModuleDeclaration(module_decl) = stmt else {
-            return;
-        };
-
-        let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &mut **module_decl else {
-            return;
-        };
-
-        let ExportNamedDeclaration {
-            declaration: Some(declaration),
-            source: None,
-            export_kind: ImportOrExportKind::Value,
-            ..
-        } = &mut **export_decl
-        else {
-            return;
-        };
-
-        let id = match &declaration {
-            Declaration::TSEnumDeclaration(decl) => decl.id.name.clone(),
-            Declaration::TSModuleDeclaration(decl) => {
-                let TSModuleDeclarationName::Identifier(id) = &decl.id else {
-                    return;
-                };
-
-                id.name.clone()
+        let new_stmt = match stmt {
+            Statement::ModuleDeclaration(module_decl) => {
+                if let ModuleDeclaration::ExportNamedDeclaration(decl) = &mut **module_decl {
+                    self.transform_export_named_declaration(decl)
+                } else {
+                    None
+                }
             }
-            _ => return,
+            _ => None,
         };
 
-        if self.export_name_set.insert(id) {
-            return;
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
         }
-
-        *stmt = Statement::Declaration(self.ast.move_declaration(declaration));
     }
 
     /// * Remove the top level import / export statements that are types
@@ -549,5 +517,49 @@ impl<'a> TypeScript<'a> {
             self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
 
         Some(Declaration::VariableDeclaration(variable_declaration))
+    }
+
+    /// Remove `export` from merged declaration.
+    /// We only preserve the first one.
+    /// for example:
+    /// ```TypeScript
+    /// export enum Foo {}
+    /// export enum Foo {}
+    /// ```
+    /// ```JavaScript
+    /// export enum Foo {}
+    /// enum Foo {}
+    /// ```
+    fn transform_export_named_declaration(
+        &mut self,
+        decl: &mut Box<'_, ExportNamedDeclaration<'a>>,
+    ) -> Option<Statement<'a>> {
+        let ExportNamedDeclaration {
+            declaration: Some(declaration),
+            source: None,
+            export_kind: ImportOrExportKind::Value,
+            ..
+        } = &mut **decl
+        else {
+            return None;
+        };
+
+        let id = match &declaration {
+            Declaration::TSEnumDeclaration(decl) => decl.id.name.clone(),
+            Declaration::TSModuleDeclaration(decl) => {
+                let TSModuleDeclarationName::Identifier(id) = &decl.id else {
+                    return None;
+                };
+
+                id.name.clone()
+            }
+            _ => return None,
+        };
+
+        if self.export_name_set.insert(id) {
+            return None;
+        }
+
+        Some(Statement::Declaration(self.ast.move_declaration(declaration)))
     }
 }
