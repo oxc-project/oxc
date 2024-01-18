@@ -511,11 +511,237 @@ var Animals = (Animals => {
 
 # typescript/tests/cases/conformance/enums/enumMerging.ts
 ```typescript
+let M1;
+(function(_M1) {
+	var EImpl1 = (EImpl1 => {
+		const A = 0;
+		EImpl1[EImpl1['A'] = A] = 'A';
+		const B = 1 + A;
+		EImpl1[EImpl1['B'] = B] = 'B';
+		const C = 1 + B;
+		EImpl1[EImpl1['C'] = C] = 'C';
+		return EImpl1;
+	})(EImpl1 || {});
+	var EImpl1 = (EImpl1 => {
+		const D = 1;
+		EImpl1[EImpl1['D'] = D] = 'D';
+		const E = 1 + D;
+		EImpl1[EImpl1['E'] = E] = 'E';
+		const F = 1 + E;
+		EImpl1[EImpl1['F'] = F] = 'F';
+		return EImpl1;
+	})(EImpl1 || {});
+export 	var EConst1 = (EConst1 => {
+		const A = 3;
+		EConst1[EConst1['A'] = A] = 'A';
+		const B = 2;
+		EConst1[EConst1['B'] = B] = 'B';
+		const C = 1;
+		EConst1[EConst1['C'] = C] = 'C';
+		return EConst1;
+	})(EConst1 || {});
+	var EConst1 = (EConst1 => {
+		const D = 7;
+		EConst1[EConst1['D'] = D] = 'D';
+		const E = 9;
+		EConst1[EConst1['E'] = E] = 'E';
+		const F = 8;
+		EConst1[EConst1['F'] = F] = 'F';
+		return EConst1;
+	})(EConst1 || {});
+	var x = [EConst1.A, EConst1.B, EConst1.C, EConst1.D, EConst1.E, EConst1.F];
+})(M1 || (M1 = {}));
+let M2;
+(function(_M2) {
+export 	var EComp2 = (EComp2 => {
+		const A = 'foo'.length;
+		EComp2[EComp2['A'] = A] = 'A';
+		const B = 'foo'.length;
+		EComp2[EComp2['B'] = B] = 'B';
+		const C = 'foo'.length;
+		EComp2[EComp2['C'] = C] = 'C';
+		return EComp2;
+	})(EComp2 || {});
+	var EComp2 = (EComp2 => {
+		const D = 'foo'.length;
+		EComp2[EComp2['D'] = D] = 'D';
+		const E = 'foo'.length;
+		EComp2[EComp2['E'] = E] = 'E';
+		const F = 'foo'.length;
+		EComp2[EComp2['F'] = F] = 'F';
+		return EComp2;
+	})(EComp2 || {});
+	var x = [EComp2.A, EComp2.B, EComp2.C, EComp2.D, EComp2.E, EComp2.F];
+})(M2 || (M2 = {}));
+let M3;
+(function(_M3) {
+	var EInit = (EInit => {
+		const A = 0;
+		EInit[EInit['A'] = A] = 'A';
+		const B = 1 + A;
+		EInit[EInit['B'] = B] = 'B';
+		return EInit;
+	})(EInit || {});
+	var EInit = (EInit => {
+		const C = 1;
+		EInit[EInit['C'] = C] = 'C';
+		const D = 1 + C;
+		EInit[EInit['D'] = D] = 'D';
+		const E = 1 + D;
+		EInit[EInit['E'] = E] = 'E';
+		return EInit;
+	})(EInit || {});
+})(M3 || (M3 = {}));
+let M4;
+(function(_M4) {
+export 	var Color = (Color => {
+		const Red = 0;
+		Color[Color['Red'] = Red] = 'Red';
+		const Green = 1 + Red;
+		Color[Color['Green'] = Green] = 'Green';
+		const Blue = 1 + Green;
+		Color[Color['Blue'] = Blue] = 'Blue';
+		return Color;
+	})(Color || {});
+})(M4 || (M4 = {}));
+let M5;
+(function(_M5) {
+	var Color = (Color => {
+		const Red = 0;
+		Color[Color['Red'] = Red] = 'Red';
+		const Green = 1 + Red;
+		Color[Color['Green'] = Green] = 'Green';
+		const Blue = 1 + Green;
+		Color[Color['Blue'] = Blue] = 'Blue';
+		return Color;
+	})(Color || {});
+})(M5 || (M5 = {}));
+let M6;
+(function(_M6) {
+	(function(_A) {
+		var Color = (Color => {
+			const Red = 0;
+			Color[Color['Red'] = Red] = 'Red';
+			const Green = 1 + Red;
+			Color[Color['Green'] = Green] = 'Green';
+			const Blue = 1 + Green;
+			Color[Color['Blue'] = Blue] = 'Blue';
+			return Color;
+		})(Color || {});
+	})(A || (A = {}));
+})(M6 || (M6 = {}));
+let M6;
+(function(_M6) {
+	var t = A.Color.Yellow;
+	t = A.Color.Red;
+})(M6 || (M6 = {}));
 
 ```
 
 # typescript/tests/cases/conformance/enums/enumMergingErrors.ts
 ```typescript
+let M;
+(function(_M) {
+export 	var E1 = (E1 => {
+		const A = 0;
+		E1[E1['A'] = A] = 'A';
+		return E1;
+	})(E1 || {});
+export 	var E2 = (E2 => {
+		const C = 0;
+		E2[E2['C'] = C] = 'C';
+		return E2;
+	})(E2 || {});
+export 	var E3 = (E3 => {
+		const A = 0;
+		E3[E3['A'] = A] = 'A';
+		return E3;
+	})(E3 || {});
+})(M || (M = {}));
+let M;
+(function(_M) {
+	var E1 = (E1 => {
+		const B = 'foo'.length;
+		E1[E1['B'] = B] = 'B';
+		return E1;
+	})(E1 || {});
+	var E2 = (E2 => {
+		const B = 'foo'.length;
+		E2[E2['B'] = B] = 'B';
+		return E2;
+	})(E2 || {});
+	var E3 = (E3 => {
+		const C = 0;
+		E3[E3['C'] = C] = 'C';
+		return E3;
+	})(E3 || {});
+})(M || (M = {}));
+let M;
+(function(_M) {
+	var E1 = (E1 => {
+		const C = 0;
+		E1[E1['C'] = C] = 'C';
+		return E1;
+	})(E1 || {});
+	var E2 = (E2 => {
+		const A = 0;
+		E2[E2['A'] = A] = 'A';
+		return E2;
+	})(E2 || {});
+	var E3 = (E3 => {
+		const B = 'foo'.length;
+		E3[E3['B'] = B] = 'B';
+		return E3;
+	})(E3 || {});
+})(M || (M = {}));
+let M1;
+(function(_M1) {
+	var E1 = (E1 => {
+		const A = 0;
+		E1[E1['A'] = A] = 'A';
+		return E1;
+	})(E1 || {});
+})(M1 || (M1 = {}));
+let M1;
+(function(_M1) {
+	var E1 = (E1 => {
+		const B = 0;
+		E1[E1['B'] = B] = 'B';
+		return E1;
+	})(E1 || {});
+})(M1 || (M1 = {}));
+let M1;
+(function(_M1) {
+	var E1 = (E1 => {
+		const C = 0;
+		E1[E1['C'] = C] = 'C';
+		return E1;
+	})(E1 || {});
+})(M1 || (M1 = {}));
+let M2;
+(function(_M2) {
+	var E1 = (E1 => {
+		const A = 0;
+		E1[E1['A'] = A] = 'A';
+		return E1;
+	})(E1 || {});
+})(M2 || (M2 = {}));
+let M2;
+(function(_M2) {
+	var E1 = (E1 => {
+		const B = 0;
+		E1[E1['B'] = B] = 'B';
+		return E1;
+	})(E1 || {});
+})(M2 || (M2 = {}));
+let M2;
+(function(_M2) {
+	var E1 = (E1 => {
+		const C = 0;
+		E1[E1['C'] = C] = 'C';
+		return E1;
+	})(E1 || {});
+})(M2 || (M2 = {}));
 
 ```
 
