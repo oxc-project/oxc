@@ -12,7 +12,7 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
     ArrowFunctionsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions,
-    TransformTarget, Transformer,
+    TransformTarget, Transformer, TypescriptOptions,
 };
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -92,6 +92,9 @@ pub trait TestCase {
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),
+            typescript: options
+                .get_plugin("transform-typescript")
+                .map(get_options::<TypescriptOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             instanceof: options.get_plugin("transform-instanceof").is_some(),

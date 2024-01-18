@@ -9,7 +9,10 @@ use oxc_syntax::{
 use rustc_hash::FxHashSet;
 use std::{mem, rc::Rc};
 
-use crate::{context::TransformerCtx, utils::is_valid_identifier};
+mod options;
+
+pub use self::options::TypescriptOptions;
+use crate::{context::TransformerCtx, utils::is_valid_identifier, TransformOptions};
 
 /// Transform TypeScript
 ///
@@ -22,6 +25,7 @@ pub struct TypeScript<'a> {
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
     export_name_set: FxHashSet<Atom>,
+    options: TypescriptOptions,
 }
 
 impl<'a> TypeScript<'a> {
@@ -29,8 +33,15 @@ impl<'a> TypeScript<'a> {
         ast: Rc<AstBuilder<'a>>,
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
+        options: &TransformOptions,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
+        Self {
+            ast,
+            ctx,
+            verbatim_module_syntax,
+            export_name_set: FxHashSet::default(),
+            options: options.typescript.clone().unwrap_or_default(),
+        }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -142,11 +153,11 @@ impl<'a> TypeScript<'a> {
 
         let mut import_type_names = FxHashSet::default();
         let mut delete_indexes = vec![];
-        let mut import_len = 0;
+        let mut module_declaration_len = 0;
 
         for (index, stmt) in program.body.iter_mut().enumerate() {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
-                import_len += 1;
+                module_declaration_len += 1;
                 match &mut **module_decl {
                     ModuleDeclaration::ExportNamedDeclaration(decl) => {
                         decl.specifiers.retain(|specifier| {
@@ -173,6 +184,7 @@ impl<'a> TypeScript<'a> {
                     }
                     ModuleDeclaration::ImportDeclaration(decl) => {
                         let is_type = decl.import_kind.is_type();
+
                         let is_specifiers_empty =
                             decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
 
@@ -184,12 +196,14 @@ impl<'a> TypeScript<'a> {
                                         return false;
                                     }
 
-                                    if export_type_names.contains(&s.local.name) {
-                                        return false;
+                                    if self.verbatim_module_syntax
+                                        || self.options.only_remove_type_imports
+                                    {
+                                        return true;
                                     }
 
-                                    if self.verbatim_module_syntax {
-                                        return true;
+                                    if export_type_names.contains(&s.local.name) {
+                                        return false;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -200,6 +214,11 @@ impl<'a> TypeScript<'a> {
                                 {
                                     if is_type {
                                         import_type_names.insert(s.local.name.clone());
+                                        return false;
+                                    }
+
+                                    if self.options.only_remove_type_imports {
+                                        return true;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -212,15 +231,23 @@ impl<'a> TypeScript<'a> {
                                         import_type_names.insert(s.local.name.clone());
                                     }
 
+                                    if self.options.only_remove_type_imports {
+                                        return true;
+                                    }
+
+                                    if export_names.contains(&s.local.name) {
+                                        return false;
+                                    }
+
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 _ => true,
                             });
                         }
 
                         if decl.import_kind.is_type()
-                            || (!is_specifiers_empty
+                            || (!self.options.only_remove_type_imports
+                                && !is_specifiers_empty
                                 && decl
                                     .specifiers
                                     .as_ref()
@@ -242,7 +269,7 @@ impl<'a> TypeScript<'a> {
         }
 
         // explicit esm
-        if import_len > 0 && import_len == delete_indexes_len {
+        if module_declaration_len > 0 && module_declaration_len == delete_indexes_len {
             let empty_export = self.ast.export_named_declaration(
                 SPAN,
                 None,
