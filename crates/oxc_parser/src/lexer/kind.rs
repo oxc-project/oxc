@@ -5,10 +5,10 @@ use std::fmt;
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Kind {
+    Skip, // Whitespace, line breaks, comments
     Undetermined,
     #[default]
     Eof,
-    Skip, // Whitespace, line breaks, comments
     // 12.5 Hashbang Comments
     HashbangComment,
     // 12.7.1 identifier
