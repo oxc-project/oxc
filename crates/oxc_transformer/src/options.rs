@@ -2,7 +2,7 @@ use oxc_syntax::assumptions::CompilerAssumptions;
 
 use crate::{
     es2015::ArrowFunctionsOptions, es2020::NullishCoalescingOperatorOptions,
-    react_jsx::ReactJsxOptions,
+    react_jsx::ReactJsxOptions, typescript::TypescriptOptions,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -11,6 +11,8 @@ pub struct TransformOptions {
     pub assumptions: CompilerAssumptions,
 
     pub react_jsx: Option<ReactJsxOptions>,
+
+    pub typescript: Option<TypescriptOptions>,
 
     // es2022
     pub class_static_block: bool,
