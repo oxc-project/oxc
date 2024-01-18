@@ -1,4 +1,4 @@
-Passed: 314/1179
+Passed: 316/1179
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -832,7 +832,7 @@ Passed: 314/1179
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (83/158)
+# babel-plugin-transform-typescript (85/158)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -875,7 +875,6 @@ Passed: 314/1179
 * namespace/clobber-import/input.ts
 * namespace/contentious-names/input.ts
 * namespace/declare/input.ts
-* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
 * namespace/export/input.ts
 * namespace/export-type-only/input.ts
@@ -891,7 +890,6 @@ Passed: 314/1179
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
-* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts

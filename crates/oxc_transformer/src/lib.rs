@@ -181,6 +181,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
+        self.typescript.as_mut().map(|t| t.transform_statements(stmts));
+
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }

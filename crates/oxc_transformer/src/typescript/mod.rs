@@ -49,6 +49,10 @@ impl<'a> TypeScript<'a> {
         }
     }
 
+    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.insert_let_decl_for_ts_module_block(stmts);
+    }
+
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
         let new_stmt = match stmt {
             Statement::ModuleDeclaration(module_decl) => {
@@ -56,6 +60,13 @@ impl<'a> TypeScript<'a> {
                     self.transform_export_named_declaration(decl)
                 } else {
                     None
+                }
+            }
+            Statement::Declaration(Declaration::TSModuleDeclaration(ts_module_decl)) => {
+                if ts_module_decl.modifiers.is_contains_declare() {
+                    None
+                } else {
+                    Some(self.transform_ts_module_block(ts_module_decl))
                 }
             }
             _ => None,
@@ -561,5 +572,129 @@ impl<'a> TypeScript<'a> {
         }
 
         Some(Statement::Declaration(self.ast.move_declaration(declaration)))
+    }
+
+    /// Insert let declaration for ts module block
+    fn insert_let_decl_for_ts_module_block(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        let mut insert_var_decl = vec![];
+
+        for (index, stmt) in stmts.iter().enumerate() {
+            if let Statement::Declaration(Declaration::TSModuleDeclaration(decl)) = stmt {
+                if !decl.modifiers.is_contains_declare() {
+                    insert_var_decl.push((index, decl.id.name().clone()));
+                }
+            }
+        }
+
+        for (index, name) in insert_var_decl.into_iter().rev() {
+            let kind = VariableDeclarationKind::Let;
+            let decls = {
+                let binding_identifier = BindingIdentifier::new(SPAN, name.clone());
+                let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
+                let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+                let decl = self.ast.variable_declarator(SPAN, kind, binding, None, false);
+                self.ast.new_vec_single(decl)
+            };
+            let variable_declaration =
+                self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+
+            let stmt =
+                Statement::Declaration(Declaration::VariableDeclaration(variable_declaration));
+            stmts.insert(index, stmt);
+        }
+    }
+
+    /// ```TypeScript
+    /// // transform ts module block
+    /// namespace Foo {
+    /// }
+    /// // to
+    /// let Foo; // this line added in `insert_let_decl_for_ts_module_block`
+    /// (function (_Foo) {
+    /// })(Foo || (Foo = {}));
+    /// ```
+    fn transform_ts_module_block(
+        &mut self,
+        block: &mut Box<'a, TSModuleDeclaration<'a>>,
+    ) -> Statement<'a> {
+        let body_statements = match &mut block.body {
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                let transformed_module_block = self.transform_ts_module_block(decl);
+                self.ast.new_vec_single(transformed_module_block)
+            }
+            TSModuleDeclarationBody::TSModuleBlock(ts_module_block) => {
+                self.ast.move_statement_vec(&mut ts_module_block.body)
+            }
+        };
+
+        let name = block.id.name();
+
+        let callee = {
+            let body = self.ast.function_body(SPAN, self.ast.new_vec(), body_statements);
+            let params = self.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                self.ast.new_vec_single(self.ast.formal_parameter(
+                    SPAN,
+                    self.ast.binding_pattern(
+                        self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                            SPAN,
+                            format!("_{}", name.clone()).into(),
+                        )),
+                        None,
+                        false,
+                    ),
+                    None,
+                    false,
+                    self.ast.new_vec(),
+                )),
+                None,
+            );
+            let function = self.ast.function(
+                FunctionType::FunctionExpression,
+                SPAN,
+                None,
+                false,
+                false,
+                false,
+                None,
+                params,
+                Some(body),
+                None,
+                None,
+                Modifiers::empty(),
+            );
+            let function_expr = self.ast.function_expression(function);
+            self.ast.parenthesized_expression(SPAN, function_expr)
+        };
+
+        let arguments = {
+            let right = {
+                let left = AssignmentTarget::SimpleAssignmentTarget(
+                    self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                        SPAN,
+                        name.clone(),
+                    )),
+                );
+                let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
+                self.ast.parenthesized_expression(
+                    SPAN,
+                    self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right),
+                )
+            };
+            self.ast.new_vec_single(Argument::Expression(
+                self.ast.logical_expression(
+                    SPAN,
+                    self.ast.identifier_reference_expression(IdentifierReference::new(
+                        SPAN,
+                        name.clone(),
+                    )),
+                    LogicalOperator::Or,
+                    right,
+                ),
+            ))
+        };
+        let expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
+        self.ast.expression_statement(SPAN, expr)
     }
 }
