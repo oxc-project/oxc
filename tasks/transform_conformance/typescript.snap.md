@@ -632,6 +632,14 @@ let M6;
 })(M6 || (M6 = {}));
 let M6;
 (function(_M6) {
+export 	let A;
+	(function(_A) {
+		var Color = (Color => {
+			const Yellow = 1;
+			Color[Color['Yellow'] = Yellow] = 'Yellow';
+			return Color;
+		})(Color || {});
+	})(A || (A = {}));
 	var t = A.Color.Yellow;
 	t = A.Color.Red;
 })(M6 || (M6 = {}));
