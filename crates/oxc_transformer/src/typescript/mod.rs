@@ -56,8 +56,21 @@ impl<'a> TypeScript<'a> {
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
         let new_stmt = match stmt {
             Statement::ModuleDeclaration(module_decl) => {
-                if let ModuleDeclaration::ExportNamedDeclaration(decl) = &mut **module_decl {
-                    self.transform_export_named_declaration(decl)
+                if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &mut **module_decl {
+                    self.transform_export_named_declaration(export_decl).or_else(|| {
+                        export_decl.declaration.as_mut().and_then(|decl| {
+                            if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                                None
+                            } else {
+                                match decl {
+                                    Declaration::TSModuleDeclaration(ts_module_decl) => {
+                                        Some(self.transform_ts_module_block(ts_module_decl))
+                                    }
+                                    _ => None,
+                                }
+                            }
+                        })
+                    })
                 } else {
                     None
                 }
@@ -579,14 +592,26 @@ impl<'a> TypeScript<'a> {
         let mut insert_var_decl = vec![];
 
         for (index, stmt) in stmts.iter().enumerate() {
-            if let Statement::Declaration(Declaration::TSModuleDeclaration(decl)) = stmt {
-                if !decl.modifiers.is_contains_declare() {
-                    insert_var_decl.push((index, decl.id.name().clone()));
+            match stmt {
+                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                    if !decl.modifiers.is_contains_declare() {
+                        insert_var_decl.push((index, decl.id.name().clone(), false));
+                    }
                 }
+                Statement::ModuleDeclaration(module_decl) => {
+                    if let ModuleDeclaration::ExportNamedDeclaration(decl) = &**module_decl {
+                        if let Some(Declaration::TSModuleDeclaration(decl)) = &decl.declaration {
+                            if !decl.modifiers.is_contains_declare() {
+                                insert_var_decl.push((index, decl.id.name().clone(), true));
+                            }
+                        }
+                    }
+                }
+                _ => {}
             }
         }
 
-        for (index, name) in insert_var_decl.into_iter().rev() {
+        for (index, name, is_export) in insert_var_decl.into_iter().rev() {
             let kind = VariableDeclarationKind::Let;
             let decls = {
                 let binding_identifier = BindingIdentifier::new(SPAN, name.clone());
@@ -598,8 +623,21 @@ impl<'a> TypeScript<'a> {
             let variable_declaration =
                 self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
-            let stmt =
-                Statement::Declaration(Declaration::VariableDeclaration(variable_declaration));
+            let decl = Declaration::VariableDeclaration(variable_declaration);
+
+            let stmt = if is_export {
+                self.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(
+                    self.ast.export_named_declaration(
+                        SPAN,
+                        Some(decl),
+                        self.ast.new_vec(),
+                        None,
+                        ImportOrExportKind::Value,
+                    ),
+                ))
+            } else {
+                Statement::Declaration(decl)
+            };
             stmts.insert(index, stmt);
         }
     }
