@@ -161,6 +161,10 @@ mod react {
     pub mod require_render_return;
 }
 
+mod react_perf {
+    pub mod no_new_function_as_props;
+}
+
 mod unicorn {
     pub mod catch_error_name;
     pub mod empty_brace_spaces;
@@ -504,6 +508,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_is_mounted,
     react::no_unknown_property,
     react::require_render_return,
+    react_perf::no_new_function_as_props,
     import::default,
     import::no_named_as_default_member,
     import::named,
