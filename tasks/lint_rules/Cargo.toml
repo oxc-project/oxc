@@ -1,0 +1,23 @@
+[package]
+name              = "lint_rules"
+version           = "0.0.0"
+publish           = false
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "lint_rules"
+test = false
+
+[dependencies]
+oxc_allocator    = { workspace = true }
+oxc_span         = { workspace = true }
+oxc_ast          = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_semantic     = { workspace = true }
+oxc_tasks_common = { workspace = true }
+
+ureq = { workspace = true }
