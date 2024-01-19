@@ -6,10 +6,13 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
     NumberBase,
 };
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::{mem, rc::Rc};
 
-use crate::{context::TransformerCtx, utils::is_valid_identifier};
+mod options;
+
+pub use self::options::TypescriptOptions;
+use crate::{context::TransformerCtx, utils::is_valid_identifier, TransformOptions};
 
 /// Transform TypeScript
 ///
@@ -22,6 +25,8 @@ pub struct TypeScript<'a> {
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
     export_name_set: FxHashSet<Atom>,
+    options: TypescriptOptions,
+    namespace_arg_names: FxHashMap<Atom, usize>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -29,8 +34,16 @@ impl<'a> TypeScript<'a> {
         ast: Rc<AstBuilder<'a>>,
         ctx: TransformerCtx<'a>,
         verbatim_module_syntax: bool,
+        options: &TransformOptions,
     ) -> Self {
-        Self { ast, ctx, verbatim_module_syntax, export_name_set: FxHashSet::default() }
+        Self {
+            ast,
+            ctx,
+            verbatim_module_syntax,
+            export_name_set: FxHashSet::default(),
+            options: options.typescript.clone().unwrap_or_default(),
+            namespace_arg_names: FxHashMap::default(),
+        }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -49,53 +62,45 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    /// Remove `export` from merged declaration.
-    /// We only preserve the first one.
-    /// for example:
-    /// ```TypeScript
-    /// export enum Foo {}
-    /// export enum Foo {}
-    /// ```
-    /// ```JavaScript
-    /// export enum Foo {}
-    /// enum Foo {}
-    /// ```
+    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.insert_let_decl_for_ts_module_block(stmts);
+    }
+
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
-        let Statement::ModuleDeclaration(module_decl) = stmt else {
-            return;
-        };
-
-        let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &mut **module_decl else {
-            return;
-        };
-
-        let ExportNamedDeclaration {
-            declaration: Some(declaration),
-            source: None,
-            export_kind: ImportOrExportKind::Value,
-            ..
-        } = &mut **export_decl
-        else {
-            return;
-        };
-
-        let id = match &declaration {
-            Declaration::TSEnumDeclaration(decl) => decl.id.name.clone(),
-            Declaration::TSModuleDeclaration(decl) => {
-                let TSModuleDeclarationName::Identifier(id) = &decl.id else {
-                    return;
-                };
-
-                id.name.clone()
+        let new_stmt = match stmt {
+            Statement::ModuleDeclaration(module_decl) => {
+                if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &mut **module_decl {
+                    self.transform_export_named_declaration(export_decl).or_else(|| {
+                        export_decl.declaration.as_mut().and_then(|decl| {
+                            if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                                None
+                            } else {
+                                match decl {
+                                    Declaration::TSModuleDeclaration(ts_module_decl) => {
+                                        Some(self.transform_ts_module_block(ts_module_decl))
+                                    }
+                                    _ => None,
+                                }
+                            }
+                        })
+                    })
+                } else {
+                    None
+                }
             }
-            _ => return,
+            Statement::Declaration(Declaration::TSModuleDeclaration(ts_module_decl)) => {
+                if ts_module_decl.modifiers.is_contains_declare() {
+                    None
+                } else {
+                    Some(self.transform_ts_module_block(ts_module_decl))
+                }
+            }
+            _ => None,
         };
 
-        if self.export_name_set.insert(id) {
-            return;
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
         }
-
-        *stmt = Statement::Declaration(self.ast.move_declaration(declaration));
     }
 
     /// * Remove the top level import / export statements that are types
@@ -150,11 +155,11 @@ impl<'a> TypeScript<'a> {
 
         let mut import_type_names = FxHashSet::default();
         let mut delete_indexes = vec![];
-        let mut import_len = 0;
+        let mut module_declaration_len = 0;
 
         for (index, stmt) in program.body.iter_mut().enumerate() {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
-                import_len += 1;
+                module_declaration_len += 1;
                 match &mut **module_decl {
                     ModuleDeclaration::ExportNamedDeclaration(decl) => {
                         decl.specifiers.retain(|specifier| {
@@ -181,6 +186,7 @@ impl<'a> TypeScript<'a> {
                     }
                     ModuleDeclaration::ImportDeclaration(decl) => {
                         let is_type = decl.import_kind.is_type();
+
                         let is_specifiers_empty =
                             decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
 
@@ -192,12 +198,14 @@ impl<'a> TypeScript<'a> {
                                         return false;
                                     }
 
-                                    if export_type_names.contains(&s.local.name) {
-                                        return false;
+                                    if self.verbatim_module_syntax
+                                        || self.options.only_remove_type_imports
+                                    {
+                                        return true;
                                     }
 
-                                    if self.verbatim_module_syntax {
-                                        return true;
+                                    if export_type_names.contains(&s.local.name) {
+                                        return false;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -208,6 +216,11 @@ impl<'a> TypeScript<'a> {
                                 {
                                     if is_type {
                                         import_type_names.insert(s.local.name.clone());
+                                        return false;
+                                    }
+
+                                    if self.options.only_remove_type_imports {
+                                        return true;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -220,15 +233,23 @@ impl<'a> TypeScript<'a> {
                                         import_type_names.insert(s.local.name.clone());
                                     }
 
+                                    if self.options.only_remove_type_imports {
+                                        return true;
+                                    }
+
+                                    if export_names.contains(&s.local.name) {
+                                        return false;
+                                    }
+
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 _ => true,
                             });
                         }
 
                         if decl.import_kind.is_type()
-                            || (!is_specifiers_empty
+                            || (!self.options.only_remove_type_imports
+                                && !is_specifiers_empty
                                 && decl
                                     .specifiers
                                     .as_ref()
@@ -250,7 +271,7 @@ impl<'a> TypeScript<'a> {
         }
 
         // explicit esm
-        if import_len > 0 && import_len == delete_indexes_len {
+        if module_declaration_len > 0 && module_declaration_len == delete_indexes_len {
             let empty_export = self.ast.export_named_declaration(
                 SPAN,
                 None,
@@ -549,5 +570,202 @@ impl<'a> TypeScript<'a> {
             self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
 
         Some(Declaration::VariableDeclaration(variable_declaration))
+    }
+
+    /// Remove `export` from merged declaration.
+    /// We only preserve the first one.
+    /// for example:
+    /// ```TypeScript
+    /// export enum Foo {}
+    /// export enum Foo {}
+    /// ```
+    /// ```JavaScript
+    /// export enum Foo {}
+    /// enum Foo {}
+    /// ```
+    fn transform_export_named_declaration(
+        &mut self,
+        decl: &mut Box<'_, ExportNamedDeclaration<'a>>,
+    ) -> Option<Statement<'a>> {
+        let ExportNamedDeclaration {
+            declaration: Some(declaration),
+            source: None,
+            export_kind: ImportOrExportKind::Value,
+            ..
+        } = &mut **decl
+        else {
+            return None;
+        };
+
+        let id = match &declaration {
+            Declaration::TSEnumDeclaration(decl) => decl.id.name.clone(),
+            Declaration::TSModuleDeclaration(decl) => {
+                let TSModuleDeclarationName::Identifier(id) = &decl.id else {
+                    return None;
+                };
+
+                id.name.clone()
+            }
+            _ => return None,
+        };
+
+        if self.export_name_set.insert(id) {
+            return None;
+        }
+
+        Some(Statement::Declaration(self.ast.move_declaration(declaration)))
+    }
+
+    /// Insert let declaration for ts module block
+    fn insert_let_decl_for_ts_module_block(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        let mut insert_var_decl = vec![];
+
+        for (index, stmt) in stmts.iter().enumerate() {
+            match stmt {
+                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                    if !decl.modifiers.is_contains_declare() {
+                        insert_var_decl.push((index, decl.id.name().clone(), false));
+                    }
+                }
+                Statement::ModuleDeclaration(module_decl) => {
+                    if let ModuleDeclaration::ExportNamedDeclaration(decl) = &**module_decl {
+                        if let Some(Declaration::TSModuleDeclaration(decl)) = &decl.declaration {
+                            if !decl.modifiers.is_contains_declare() {
+                                insert_var_decl.push((index, decl.id.name().clone(), true));
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for (index, name, is_export) in insert_var_decl.into_iter().rev() {
+            let kind = VariableDeclarationKind::Let;
+            let decls = {
+                let binding_identifier = BindingIdentifier::new(SPAN, name.clone());
+                let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
+                let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+                let decl = self.ast.variable_declarator(SPAN, kind, binding, None, false);
+                self.ast.new_vec_single(decl)
+            };
+            let variable_declaration =
+                self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+
+            let decl = Declaration::VariableDeclaration(variable_declaration);
+
+            let stmt = if is_export {
+                self.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(
+                    self.ast.export_named_declaration(
+                        SPAN,
+                        Some(decl),
+                        self.ast.new_vec(),
+                        None,
+                        ImportOrExportKind::Value,
+                    ),
+                ))
+            } else {
+                Statement::Declaration(decl)
+            };
+            stmts.insert(index, stmt);
+        }
+    }
+
+    fn get_namespace_arg_name(&mut self, name: &Atom) -> Atom {
+        let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
+        *count += 1;
+        format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()
+    }
+
+    /// ```TypeScript
+    /// // transform ts module block
+    /// namespace Foo {
+    /// }
+    /// // to
+    /// let Foo; // this line added in `insert_let_decl_for_ts_module_block`
+    /// (function (_Foo) {
+    /// })(Foo || (Foo = {}));
+    /// ```
+    fn transform_ts_module_block(
+        &mut self,
+        block: &mut Box<'a, TSModuleDeclaration<'a>>,
+    ) -> Statement<'a> {
+        let body_statements = match &mut block.body {
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                let transformed_module_block = self.transform_ts_module_block(decl);
+                self.ast.new_vec_single(transformed_module_block)
+            }
+            TSModuleDeclarationBody::TSModuleBlock(ts_module_block) => {
+                self.ast.move_statement_vec(&mut ts_module_block.body)
+            }
+        };
+
+        let name = block.id.name();
+
+        let callee = {
+            let body = self.ast.function_body(SPAN, self.ast.new_vec(), body_statements);
+            let arg_name = self.get_namespace_arg_name(name);
+            let params = self.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                self.ast.new_vec_single(self.ast.formal_parameter(
+                    SPAN,
+                    self.ast.binding_pattern(
+                        self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name)),
+                        None,
+                        false,
+                    ),
+                    None,
+                    false,
+                    self.ast.new_vec(),
+                )),
+                None,
+            );
+            let function = self.ast.function(
+                FunctionType::FunctionExpression,
+                SPAN,
+                None,
+                false,
+                false,
+                false,
+                None,
+                params,
+                Some(body),
+                None,
+                None,
+                Modifiers::empty(),
+            );
+            let function_expr = self.ast.function_expression(function);
+            self.ast.parenthesized_expression(SPAN, function_expr)
+        };
+
+        let arguments = {
+            let right = {
+                let left = AssignmentTarget::SimpleAssignmentTarget(
+                    self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                        SPAN,
+                        name.clone(),
+                    )),
+                );
+                let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
+                self.ast.parenthesized_expression(
+                    SPAN,
+                    self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right),
+                )
+            };
+            self.ast.new_vec_single(Argument::Expression(
+                self.ast.logical_expression(
+                    SPAN,
+                    self.ast.identifier_reference_expression(IdentifierReference::new(
+                        SPAN,
+                        name.clone(),
+                    )),
+                    LogicalOperator::Or,
+                    right,
+                ),
+            ))
+        };
+        let expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
+        self.ast.expression_statement(SPAN, expr)
     }
 }

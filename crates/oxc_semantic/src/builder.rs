@@ -38,7 +38,6 @@ struct UnusedLabels<'a> {
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {
-    pub name: Atom,
     pub span: Span,
     pub symbol_id: SymbolId,
 }
@@ -253,7 +252,9 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            self.add_redeclared_variables(VariableInfo { name: name.clone(), span, symbol_id });
+            if includes.is_function_scoped_declaration() {
+                self.add_redeclared_variables(VariableInfo { span, symbol_id });
+            }
             return symbol_id;
         }
 

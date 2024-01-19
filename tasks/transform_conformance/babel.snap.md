@@ -1,4 +1,4 @@
-Passed: 314/1179
+Passed: 323/1179
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -832,7 +832,7 @@ Passed: 314/1179
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (83/158)
+# babel-plugin-transform-typescript (92/158)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -858,14 +858,10 @@ Passed: 314/1179
 * imports/elide-injected/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
-* imports/import-named-type/input.ts
-* imports/import-named-type-default-and-named/input.ts
 * imports/import=-module/input.ts
 * imports/import=-module-to-cjs/input.ts
-* imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* imports/type-only-import-specifier-4/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
@@ -873,11 +869,7 @@ Passed: 314/1179
 * namespace/clobber-enum/input.ts
 * namespace/clobber-export/input.ts
 * namespace/clobber-import/input.ts
-* namespace/contentious-names/input.ts
-* namespace/declare/input.ts
-* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
-* namespace/export/input.ts
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
@@ -891,7 +883,6 @@ Passed: 314/1179
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
-* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
