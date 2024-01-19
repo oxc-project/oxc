@@ -47,7 +47,7 @@ impl std::ops::Deref for NoRestrictedMatchers {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Restrict the use of specific `jest` methods.
+    /// Ban specific matchers & modifiers from being used, and can suggest alternatives.
     ///
     /// ### Example
     /// ```javascript
