@@ -8,8 +8,6 @@ use std::collections::HashSet;
 pub const ORIGINAL_JS_SOURCE_URL: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
 
-pub const OUR_RULES_DIR: &str = "crates/oxc_linter/src/rules/eslint";
-
 const UNSUPPORTED_RULES: &[&str] = &["yoda"];
 
 pub fn find_to_be_implemented_rules(source_text: &str) -> Result<Vec<String>, String> {
