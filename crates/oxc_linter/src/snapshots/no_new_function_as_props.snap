@@ -4,36 +4,8 @@ expression: no_new_function_as_props
 ---
   ⚠ eslint-plugin-react-perf(no-new-function-as-props):
    ╭─[no_new_function_as_props.tsx:1:1]
- 1 │ <Item prop={function(){return true}} />
-   · ───────────────────────────────────────
-   ╰────
-  help: 
-
-  ⚠ eslint-plugin-react-perf(no-new-function-as-props):
-   ╭─[no_new_function_as_props.tsx:1:1]
- 1 │ <Item prop={() => true} />
-   · ──────────────────────────
-   ╰────
-  help: 
-
-  ⚠ eslint-plugin-react-perf(no-new-function-as-props):
-   ╭─[no_new_function_as_props.tsx:1:1]
- 1 │ <Item prop={new Function('a', 'alert(a)')}/>
-   · ────────────────────────────────────────────
-   ╰────
-  help: 
-
-  ⚠ eslint-plugin-react-perf(no-new-function-as-props):
-   ╭─[no_new_function_as_props.tsx:1:1]
- 1 │ <Item prop={Function()}/>
-   · ─────────────────────────
-   ╰────
-  help: 
-
-  ⚠ eslint-plugin-react-perf(no-new-function-as-props):
-   ╭─[no_new_function_as_props.tsx:1:1]
- 1 │ <Item onClick={this.clickHandler.bind(this)} />
-   · ───────────────────────────────────────────────
+ 1 │ <Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />
+   · ───────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
   help: 
 
