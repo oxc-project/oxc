@@ -46,13 +46,24 @@ impl std::ops::Deref for NoRestrictedJestMethods {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule reports imports from a path containing a __mocks__ component.
+    /// Restrict the use of specific `jest` methods.
     ///
     /// ### Example
     /// ```javascript
-    /// import thing from './__mocks__/index';
-    /// require('./__mocks__/index');
-    /// require('__mocks__');
+    /// jest.useFakeTimers();
+    /// it('calls the callback after 1 second via advanceTimersByTime', () => {
+    ///   // ...
+    ///
+    ///   jest.advanceTimersByTime(1000);
+    ///
+    ///   // ...
+    /// });
+    ///
+    /// test('plays video', () => {
+    ///   const spy = jest.spyOn(video, 'play');
+    ///
+    ///   // ...
+    /// });
     ///
     NoRestrictedJestMethods,
     style,
