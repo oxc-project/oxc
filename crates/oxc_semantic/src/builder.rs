@@ -38,7 +38,6 @@ struct UnusedLabels<'a> {
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {
-    pub name: Atom,
     pub span: Span,
     pub symbol_id: SymbolId,
 }
@@ -253,7 +252,9 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            self.add_redeclared_variables(VariableInfo { name: name.clone(), span, symbol_id });
+            if includes.is_function_scoped_declaration() {
+                self.add_redeclared_variables(VariableInfo { span, symbol_id });
+            }
             return symbol_id;
         }
 
@@ -478,7 +479,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.make_all_namespaces_valuelike();
                 self.in_type_definition = true;
             }
-            AstKind::TSTypeAnnotation(_) => {
+            AstKind::TSTypeParameterInstantiation(_) | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = true;
             }
             AstKind::TSEnumMember(enum_member) => {
@@ -553,6 +554,7 @@ impl<'a> SemanticBuilder<'a> {
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSInterfaceDeclaration(_)
             | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSTypeParameterInstantiation(_)
             | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = false;
             }

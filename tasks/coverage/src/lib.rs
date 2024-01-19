@@ -44,7 +44,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
-        self.run_codegen_runtime();
+        // self.run_codegen_runtime();
         self.run_minifier();
     }
 

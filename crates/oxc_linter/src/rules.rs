@@ -12,6 +12,7 @@ mod import {
     pub mod named;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_named_as_default_member;
     pub mod no_self_import;
 }
 
@@ -261,6 +262,7 @@ mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_redundant_roles;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
     pub mod role_support_aria_props;
@@ -505,6 +507,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_unknown_property,
     react::require_render_return,
     import::default,
+    import::no_named_as_default_member,
     import::named,
     import::no_cycle,
     import::no_self_import,
@@ -527,6 +530,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
+    jsx_a11y::no_redundant_roles,
     jsx_a11y::prefer_tag_over_role,
     jsx_a11y::role_has_required_aria_props,
     jsx_a11y::scope,

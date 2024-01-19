@@ -2,14 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 expression: consistent_type_exports
 ---
-  ⚠ typescript-eslint(consistent-type-export): Consistent type exports
+  ⚠ typescript-eslint(consistent-type-exports): Consistent type exports
    ╭─[consistent_type_exports.tsx:1:1]
  1 │ type foo = number; export {foo}
    ·                            ───
    ╰────
   help: Consistent type export
 
-  ⚠ typescript-eslint(consistent-type-export): Consistent type exports
+  ⚠ typescript-eslint(consistent-type-exports): Consistent type exports
    ╭─[consistent_type_exports.tsx:4:1]
  4 │         }
  5 │         export {TypeNS}
@@ -18,7 +18,7 @@ expression: consistent_type_exports
    ╰────
   help: Consistent type export
 
-  ⚠ typescript-eslint(consistent-type-export): Consistent type exports
+  ⚠ typescript-eslint(consistent-type-exports): Consistent type exports
    ╭─[consistent_type_exports.tsx:7:1]
  7 │ 
  8 │         export { Alias, IFace, TypeNS };
@@ -26,7 +26,7 @@ expression: consistent_type_exports
    ╰────
   help: Consistent type export
 
-  ⚠ typescript-eslint(consistent-type-export): Consistent type exports
+  ⚠ typescript-eslint(consistent-type-exports): Consistent type exports
    ╭─[consistent_type_exports.tsx:7:1]
  7 │ 
  8 │         export { Alias, IFace, TypeNS };

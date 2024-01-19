@@ -63,7 +63,7 @@ impl VisitMut<'_> for SpecParser {
                 // There are some files define `parsers` as `const parsers = [parser_1, parser_2]` in prettier, just read the init part is enough now.
                 // https://github.com/prettier/prettier/blob/83400d19b4b60094914b3f7a397260cac9471d1e/tests/format/js/object-property-ignore/jsfmt.spec.js#L1
                 Expression::Identifier(_) => {
-                    let start = "const parser = [";
+                    let start = "const parse";
                     let end = "];";
                     let start = self.source_text.find(start).unwrap() + start.len();
                     let end = self.source_text.find(end).unwrap();

@@ -25,7 +25,6 @@ oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minif
 
 oxc_linter         = { workspace = true }
 oxc_prettier       = { workspace = true }
-oxc_type_synthesis = { workspace = true }
 serde              = { workspace = true }
 
 wasm-bindgen       = { version = "0.2" }
@@ -38,4 +37,4 @@ serde-wasm-bindgen = "0.6.3"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.39"
+wasm-bindgen-test = "0.3.40"

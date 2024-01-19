@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// var a = 10;
     /// ```
     NoRedeclare,
-    nursery // There are false positives within TypeScript files (e.g. redeclare on interface)
+    pedantic
 );
 
 impl Rule for NoRedeclare {
@@ -81,13 +81,17 @@ impl Rule for NoRedeclare {
             match ctx.nodes().kind(decl) {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        self.report_diagnostic(ctx, variable, ident);
+                        if *symbol_table.get_name(variable.symbol_id) == ident.name {
+                            self.report_diagnostic(ctx, variable, ident);
+                        }
                     }
                 }
                 AstKind::FormalParameters(params) => {
                     for item in &params.items {
                         if let BindingPatternKind::BindingIdentifier(ident) = &item.pattern.kind {
-                            self.report_diagnostic(ctx, variable, ident);
+                            if *symbol_table.get_name(variable.symbol_id) == ident.name {
+                                self.report_diagnostic(ctx, variable, ident);
+                            }
                         }
                     }
                 }
@@ -106,7 +110,7 @@ impl NoRedeclare {
     ) {
         if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
             ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
-        } else if variable.name == ident.name && variable.span != ident.span {
+        } else if variable.span != ident.span {
             ctx.diagnostic(NoRedeclareDiagnostic(ident.name.clone(), ident.span, variable.span));
         }
     }
@@ -153,12 +157,10 @@ fn test() {
         ("var a = 3; var a = 10; var a = 15;", None),
         ("var a; var a;", None),
         ("export var a; var a;", None),
-        // `var` redeclaration in class static blocks. Redeclaration of functions is not allowed in class static blocks.
         ("class C { static { var a; var a; } }", None),
-        // Todo: Fix me
-        // ("class C { static { var a; { var a; } } }", None),
-        // ("class C { static { { var a; } var a; } }", None),
-        // ("class C { static { { var a; } { var a; } } }", None),
+        ("class C { static { var a; { var a; } } }", None),
+        ("class C { static { { var a; } var a; } }", None),
+        ("class C { static { { var a; } { var a; } } }", None),
         // ("var Object = 0;", Some(serde_json::json!([{ "builtinGlobals": true }]))),
         (
             "var a; var {a = 0, b: Object = 0} = {};",
@@ -171,7 +173,7 @@ fn test() {
         ),
         ("function f() { var a; var a; }", None),
         ("function f(a) { var a; }", None),
-        // ("function f() { var a; if (test) { var a; } }", None),
+        ("function f() { var a; if (test) { var a; } }", None),
         ("for (var a, a;;);", None),
     ];
 

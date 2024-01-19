@@ -88,20 +88,23 @@ impl ESLintConfig {
                     let rule_config = &rule_configs[0];
                     let rule_name = &rule_config.rule_name;
                     let plugin_name = &rule_config.plugin_name;
-                    if let Some(rule) = rules_for_override.iter().find(|r| r.name() == rule_name) {
-                        match rule_config.severity {
-                            AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                    match rule_config.severity {
+                        AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                            if let Some(rule) = all_rules
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
                                 rules_to_replace.push(rule.read_json(rule_config.config.clone()));
                             }
-                            AllowWarnDeny::Allow => {
+                        }
+                        AllowWarnDeny::Allow => {
+                            if let Some(rule) = rules_for_override
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
                                 rules_to_remove.push(rule.clone());
                             }
                         }
-                    } else if let Some(rule) = all_rules
-                        .iter()
-                        .find(|r| r.plugin_name() == plugin_name && r.name() == rule_name)
-                    {
-                        rules_to_replace.push(rule.read_json(rule_config.config.clone()));
                     }
                 }
                 _ => {
@@ -165,8 +168,7 @@ fn parse_settings_from_root(root_json: &Value) -> LintSettings {
 pub fn parse_settings(setting_value: &Value) -> LintSettings {
     if let Value::Object(settings_object) = setting_value {
         if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
-            let mut jsx_a11y_setting =
-                JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() };
+            let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
 
             if let Some(Value::Object(components)) = jsx_a11y.get("components") {
                 let components_map: FxHashMap<String, String> = components
@@ -183,7 +185,7 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
                     .set_polymorphic_prop_name(Some(String::from(polymorphic_prop_name)));
             }
 
-            return LintSettings { jsx_a11y: jsx_a11y_setting };
+            return LintSettings::new(jsx_a11y_setting);
         }
     }
 

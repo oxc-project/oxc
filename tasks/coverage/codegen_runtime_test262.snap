@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
-AST Parsed     : 19665/19665 (100.00%)
-Positive Passed: 19220/19665 (97.74%)
+AST Parsed     : 19663/19663 (100.00%)
+Positive Passed: 19219/19663 (97.74%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -103,6 +103,9 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 Expect to run correctly: "annexB/language/function-code/block-decl-func-skip-arguments.js"
 But got a runtime error: Test262Error: Expected SameValue(«function arguments() {
 		}», «[object Arguments]») to be true
+
+Expect to run correctly: "annexB/language/function-code/block-decl-nested-blocks-with-fun-decl.js"
+But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
 
 Expect to run correctly: "annexB/language/global-code/block-decl-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
@@ -606,10 +609,10 @@ Expect to run correctly: "language/expressions/class/decorator/syntax/valid/deco
 But got a runtime error: SyntaxError: Invalid or unexpected token
 
 Expect to run correctly: "language/expressions/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/expressions/class/elements/syntax/valid/grammar-field-accessor.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval-indirect.js"
 But got a runtime error: TypeError: _eval is not a constructor
@@ -1103,12 +1106,6 @@ But got a runtime error: Test262Error: Expected SameValue(«B», «A») to be tr
 Expect to run correctly: "language/statements/async-generator/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
 
-Expect to run correctly: "language/statements/async-generator/yield-star-promise-not-unwrapped.js"
-But got a runtime error: Test262Error: yield* should not unwrap promises from manually-implemented async iterators Expected SameValue(«unwrapped value», «[object Promise]») to be true
-
-Expect to run correctly: "language/statements/async-generator/yield-star-return-then-getter-ticks.js"
-But got a runtime error: Test262Error: Expected [start, tick 1, tick 2, get then, tick 3, get return, get then] and [start, tick 1, get then, tick 2, get return, get then, tick 3] to have the same contents. Ticks for return with thenable getter
-
 Expect to run correctly: "language/statements/class/cpn-class-decl-accessors-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
 
@@ -1182,10 +1179,10 @@ Expect to run correctly: "language/statements/class/decorator/syntax/valid/decor
 But got a runtime error: SyntaxError: Invalid or unexpected token
 
 Expect to run correctly: "language/statements/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/statements/class/elements/syntax/valid/grammar-field-accessor.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/statements/class/subclass/default-constructor-spread-override.js"
 But got a runtime error: Test262Error: @@iterator invoked
