@@ -29,13 +29,11 @@ pub use crate::{
     fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
     rule::RuleCategory,
+    rules::RULES,
     service::LintService,
     settings::LintSettings,
 };
-pub(crate) use crate::{
-    rules::{RuleEnum, RULES},
-    settings::JsxA11y,
-};
+pub(crate) use crate::{rules::RuleEnum, settings::JsxA11y};
 pub(crate) use oxc_semantic::AstNode;
 
 #[cfg(target_pointer_width = "64")]
