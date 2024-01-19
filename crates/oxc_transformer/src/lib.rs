@@ -44,6 +44,7 @@ pub use crate::{
     es2020::NullishCoalescingOperatorOptions,
     options::{TransformOptions, TransformTarget},
     react_jsx::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption},
+    typescript::TypescriptOptions,
 };
 
 pub struct Transformer<'a> {
@@ -90,7 +91,7 @@ impl<'a> Transformer<'a> {
         Self {
             ctx: ctx.clone(),
             // TODO: pass verbatim_module_syntax from user config
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false)),
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false, &options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             // es2022
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
@@ -181,6 +182,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
+        self.typescript.as_mut().map(|t| t.transform_statements(stmts));
+
         for stmt in stmts.iter_mut() {
             self.visit_statement(stmt);
         }

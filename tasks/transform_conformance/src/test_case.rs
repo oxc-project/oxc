@@ -12,7 +12,7 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
     ArrowFunctionsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions,
-    TransformTarget, Transformer,
+    TransformTarget, Transformer, TypescriptOptions,
 };
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -92,6 +92,9 @@ pub trait TestCase {
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),
+            typescript: options
+                .get_plugin("transform-typescript")
+                .map(get_options::<TypescriptOptions>),
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             instanceof: options.get_plugin("transform-instanceof").is_some(),
@@ -345,7 +348,6 @@ impl TestCase for ExecTestCase {
         let passed = Self::run_test(&target_path);
         if filtered {
             println!("input_path: {:?}", &self.path);
-            println!("target_path: {:?}", &target_path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
             println!("Transformed:\n{result}\n");
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));

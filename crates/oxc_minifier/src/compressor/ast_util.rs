@@ -113,6 +113,9 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             | Self::BigintLiteral(_)
             | Self::NullLiteral(_)
             | Self::RegExpLiteral(_)
+            | Self::MetaProperty(_)
+            | Self::ThisExpression(_)
+            | Self::ClassExpression(_)
             | Self::FunctionExpression(_) => false,
             Self::TemplateLiteral(template) => template
                 .expressions
@@ -121,6 +124,17 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             Self::Identifier(ident) => ident.reference_flag == ReferenceFlag::Write,
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
+            }
+            Self::ParenthesizedExpression(p) => {
+                p.expression.check_for_state_change(check_for_new_objects)
+            }
+            Self::ConditionalExpression(p) => {
+                p.test.check_for_state_change(check_for_new_objects)
+                    || p.consequent.check_for_state_change(check_for_new_objects)
+                    || p.alternate.check_for_state_change(check_for_new_objects)
+            }
+            Self::SequenceExpression(s) => {
+                s.expressions.iter().any(|expr| expr.check_for_state_change(check_for_new_objects))
             }
             Self::BinaryExpression(binary_expr) => {
                 binary_expr.check_for_state_change(check_for_new_objects)
