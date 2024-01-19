@@ -216,9 +216,6 @@ impl<'a> Binder for FormalParameters<'a> {
         }
     }
 }
-        });
-    }
-}
 
 impl<'a> Binder for CatchClause<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
