@@ -2,20 +2,21 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
+        JestFnKind, KnownMemberExpressionProperty, PossibleJestNode,
     },
 };
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::phf_set;
 use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault};
+use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoRestrictedMatchersDiagnostic {
@@ -51,21 +52,28 @@ declare_oxc_lint!(
     /// ### Example
     /// ```javascript
     ///
-    /// jest.useFakeTimers();
-    /// it('calls the callback after 1 second via advanceTimersByTime', () => {
-    ///   ...
-    ///   jest.advanceTimersByTime(1000);
-    ///   ...
+    /// it('is false', () => {
+    ///   if this has a modifer (i.e. `not.toBeFalsy`), it would be considered fine
+    ///   expect(a).toBeFalsy();
     /// });
     ///
-    /// test('plays video', () => {
-    ///   const spy = jest.spyOn(video, 'play');
-    ///   ...
+    /// it('resolves', async () => {
+    ///   // all uses of this modifier are disallowed, regardless of matcher
+    ///   await expect(myPromise()).resolves.toBe(true);
     /// });
-    /// ```
+    ///
+    /// describe('when an error happens', () => {
+    ///   it('does not upload the file', async () => {
+    ///     // all uses of this matcher are disallowed
+    ///     expect(uploadFileMock).not.toHaveBeenCalledWith('file.name');
+    ///   });
+    /// });
+    ///
     NoRestrictedMatchers,
     style,
 );
+
+const MODIFIER_NAME: phf::Set<&'static str> = phf_set!["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -88,61 +96,65 @@ impl Rule for NoRestrictedMatchers {
 }
 
 impl NoRestrictedMatchers {
-    fn contains(&self, key: &str) -> bool {
-        self.restricted_matchers.contains_key(key)
-    }
-
-    fn get_message(&self, name: &str) -> Option<String> {
-        self.restricted_matchers.get(name).cloned()
-    }
-
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        if !is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::Expect, JestFnKind::General(JestGeneralFnKind::Jest)],
-        ) {
+        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
             return;
         }
 
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
-            return;
-        };
-        let Some(property_name) = mem_expr.static_property_name() else {
-            return;
-        };
-        let Some((span, _)) = mem_expr.static_property_info() else {
+        let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
             return;
         };
 
-        if self.contains(property_name) {
-            self.get_message(property_name).map_or_else(
-                || {
+        let members = &jest_fn_call.members;
+
+        if members.is_empty() {
+            return;
+        }
+
+        let chain_call = members
+            .iter()
+            .filter_map(KnownMemberExpressionProperty::name)
+            .collect::<Vec<_>>()
+            .join(".");
+
+        let span = Span {
+            start: members.first().unwrap().span.start,
+            end: members.last().unwrap().span.end,
+        };
+
+        for (restriction, message) in &self.restricted_matchers {
+            if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
+                if message.is_empty() {
                     ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChain(
-                        property_name.to_string(),
+                        chain_call.clone(),
                         span,
                     ));
-                },
-                |message| {
-                    if message.trim() == "" {
-                        ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChain(
-                            property_name.to_string(),
-                            span,
-                        ));
-                    } else {
-                        ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChainWithMessage(
-                            message, span,
-                        ));
-                    }
-                },
-            );
+                } else {
+                    ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChainWithMessage(
+                        message.to_string(),
+                        span,
+                    ));
+                }
+            }
         }
+    }
+
+    fn check_restriction(chain_call: &str, restriction: &str) -> bool {
+        if MODIFIER_NAME.contains(restriction)
+            || Path::new(restriction)
+                .extension()
+                .map_or(false, |ext| ext.eq_ignore_ascii_case("not"))
+        {
+            return chain_call.starts_with(restriction);
+        }
+
+        chain_call == restriction
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -165,30 +177,74 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("jest()", None),
-        ("jest.mock()", None),
+        ("expect(a).toHaveBeenCalled()", None),
+        ("expect(a).not.toHaveBeenCalled()", None),
+        ("expect(a).toHaveBeenCalledTimes()", None),
+        ("expect(a).toHaveBeenCalledWith()", None),
+        ("expect(a).toHaveBeenLastCalledWith()", None),
+        ("expect(a).toHaveBeenNthCalledWith()", None),
+        ("expect(a).toHaveReturned()", None),
+        ("expect(a).toHaveReturnedTimes()", None),
+        ("expect(a).toHaveReturnedWith()", None),
+        ("expect(a).toHaveLastReturnedWith()", None),
+        ("expect(a).toHaveNthReturnedWith()", None),
+        ("expect(a).toThrow()", None),
         ("expect(a).rejects;", None),
         ("expect(a);", None),
+        ("expect(a).resolves", Some(serde_json::json!([{ "not": null }]))),
+        ("expect(a).toBe(b)", Some(serde_json::json!([{ "not.toBe": null }]))),
+        ("expect(a).toBeUndefined(b)", Some(serde_json::json!([{ "toBe": null }]))),
+        ("expect(a)[\"toBe\"](b)", Some(serde_json::json!([{ "not.toBe": null }]))),
+        ("expect(a).resolves.not.toBe(b)", Some(serde_json::json!([{ "not": null }]))),
+        ("expect(a).resolves.not.toBe(b)", Some(serde_json::json!([{ "not.toBe": null }]))),
         (
-            "
-                import { jest } from '@jest/globals';
-                jest;
-            ",
-            None,
+            "expect(uploadFileMock).resolves.toHaveBeenCalledWith('file.name')",
+            Some(
+                serde_json::json!([{ "not.toHaveBeenCalledWith": "Use not.toHaveBeenCalled instead" }]),
+            ),
+        ),
+        (
+            "expect(uploadFileMock).resolves.not.toHaveBeenCalledWith('file.name')",
+            Some(
+                serde_json::json!([{ "not.toHaveBeenCalledWith": "Use not.toHaveBeenCalled instead" }]),
+            ),
         ),
     ];
 
     let fail = vec![
-        ("jest.fn()", Some(serde_json::json!([ { "fn": null }]))),
-        ("jest['fn']()", Some(serde_json::json!([ { "fn": null }]))),
-        ("jest.mock()", Some(serde_json::json!([ { "mock": "Do not use mocks" }]))),
-        ("jest['mock']()", Some(serde_json::json!([ { "mock": "Do not use mocks" }]))),
+        ("expect(a).toBe(b)", Some(serde_json::json!([{ "toBe": null }]))),
+        ("expect(a)[\"toBe\"](b)", Some(serde_json::json!([{ "toBe": null }]))),
+        ("expect(a).not[x]()", Some(serde_json::json!([{ "not": null }]))),
+        ("expect(a).not.toBe(b)", Some(serde_json::json!([{ "not": null }]))),
+        ("expect(a).resolves.toBe(b)", Some(serde_json::json!([{ "resolves": null }]))),
+        ("expect(a).resolves.not.toBe(b)", Some(serde_json::json!([{ "resolves": null }]))),
+        ("expect(a).resolves.not.toBe(b)", Some(serde_json::json!([{ "resolves.not": null }]))),
+        ("expect(a).not.toBe(b)", Some(serde_json::json!([{ "not.toBe": null }]))),
+        (
+            "expect(a).resolves.not.toBe(b)",
+            Some(serde_json::json!([{ "resolves.not.toBe": null }])),
+        ),
+        (
+            "expect(a).toBe(b)",
+            Some(serde_json::json!([{ "toBe": "Prefer `toStrictEqual` instead" }])),
+        ),
         (
             "
-                import { jest } from '@jest/globals';
-                jest.advanceTimersByTime();
+                test('some test', async () => {
+                    await expect(Promise.resolve(1)).resolves.toBe(1);
+                });
             ",
-            Some(serde_json::json!([ { "advanceTimersByTime": null }])),
+            Some(serde_json::json!([{ "resolves": "Use `expect(await promise)` instead." }])),
+        ),
+        (
+            "expect(Promise.resolve({})).rejects.toBeFalsy()",
+            Some(serde_json::json!([{ "rejects.toBeFalsy": null }])),
+        ),
+        (
+            "expect(uploadFileMock).not.toHaveBeenCalledWith('file.name')",
+            Some(serde_json::json!([
+                { "not.toHaveBeenCalledWith": "Use not.toHaveBeenCalled instead" },
+            ])),
         ),
     ];
 
