@@ -631,9 +631,9 @@ let M6;
 	})(A || (A = {}));
 })(M6 || (M6 = {}));
 let M6;
-(function(_M6) {
+(function(_M62) {
 export 	let A;
-	(function(_A) {
+	(function(_A2) {
 		var Color = (Color => {
 			const Yellow = 1;
 			Color[Color['Yellow'] = Yellow] = 'Yellow';
@@ -667,7 +667,7 @@ export 	var E3 = (E3 => {
 	})(E3 || {});
 })(M || (M = {}));
 let M;
-(function(_M) {
+(function(_M2) {
 	var E1 = (E1 => {
 		const B = 'foo'.length;
 		E1[E1['B'] = B] = 'B';
@@ -685,7 +685,7 @@ let M;
 	})(E3 || {});
 })(M || (M = {}));
 let M;
-(function(_M) {
+(function(_M3) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';
@@ -711,7 +711,7 @@ let M1;
 	})(E1 || {});
 })(M1 || (M1 = {}));
 let M1;
-(function(_M1) {
+(function(_M12) {
 	var E1 = (E1 => {
 		const B = 0;
 		E1[E1['B'] = B] = 'B';
@@ -719,7 +719,7 @@ let M1;
 	})(E1 || {});
 })(M1 || (M1 = {}));
 let M1;
-(function(_M1) {
+(function(_M13) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';
@@ -735,7 +735,7 @@ let M2;
 	})(E1 || {});
 })(M2 || (M2 = {}));
 let M2;
-(function(_M2) {
+(function(_M22) {
 	var E1 = (E1 => {
 		const B = 0;
 		E1[E1['B'] = B] = 'B';
@@ -743,7 +743,7 @@ let M2;
 	})(E1 || {});
 })(M2 || (M2 = {}));
 let M2;
-(function(_M2) {
+(function(_M23) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';
