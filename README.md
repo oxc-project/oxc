@@ -15,6 +15,7 @@
 
 [![Discord chat][discord-badge]][discord-url]
 [![Playground][playground-badge]][playground-url]
+[![Website][website-badge]][website-url]
 
 </div>
 
@@ -131,15 +132,13 @@ our linter only requires a single command that you can immediately run on your c
 npx oxlint@latest
 ```
 
-We also plan to port essential plugins such as [eslint-plugin-import] and [eslint-plugin-jest].
-
 #### 🏆 Linter Performance
 
 The linter is 50 - 100 times faster than [ESLint] depending on the number of rules and number of CPU cores used.
 It completes in less than a second for most codebases with a few hundred files and completes in a few seconds for
 larger monorepos. See [bench-javascript-linter](https://github.com/Boshen/bench-javascript-linter) for details.
 
-As an upside, the binary is approximately 3MB, whereas [ESLint] and its associated plugin dependencies can easily exceed 100.
+As an upside, the binary is approximately 5MB, whereas [ESLint] and its associated plugin dependencies can easily exceed 100.
 
 You may also download the linter binary from the [latest release tag](https://github.com/oxc-project/oxc/releases/latest) as a standalone binary,
 this lets you run the linter without a Node.js installation in your CI.
@@ -159,7 +158,7 @@ this lets you run the linter without a Node.js installation in your CI.
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
 To address this, we are actively working on porting [enhanced-resolve].
 
-[eslint-plugin-import] will be our first application for the resolver, since it is currently a performance and complexity blocker for a lot of projects.
+The resolver is production-ready and is currently being used in Rspack. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
 
 ### 🔸 Transpiler
 
@@ -185,7 +184,8 @@ With the Oxc minifier, you can expect faster minification times without sacrific
 ### 🔸 Formatter
 
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
-Unfortunately we are currently lacking the resources to do so.
+
+The [prototype](https://github.com/oxc-project/oxc/tree/main/crates/oxc_prettier) is currently work in progress.
 
 ---
 
@@ -203,23 +203,9 @@ If you are unable to contribute by code, you can still participate by:
 
 ## 📚 Learning Resources
 
-- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/javascript-parser-in-rust)
-- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
-- [Crafting Interpreters](https://craftinginterpreters.com)
-- [Andrew Kelley - Practical DOD](https://vimeo.com/649009599)
-
-## 🧑‍💻 Maintenance
-
-Oxc is being maintained by [Boshen] as the project lead with the help of [contributors] from all over the world.
-
-Rules of thumb:
-
-- APIs should be simple and well-documented.
-- All performance issues (runtime and compilation speed) are considered as bugs in this project.
-- Third-party dependencies should be minimal.
-- Monitor code coverage for unused code. Aim for 99% code coverage.
-- Embrace data-oriented design.
-- Prefer smaller PRs. Try [graphite.dev](https://graphite.dev).
+- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/docs/learn/parser_in_rust/intro.html)
+- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc-project.github.io/docs/learn/performance.html)
+- [Practical Data Oriented Design](https://vimeo.com/649009599) video by Andrew Kelley
 
 ## 🤝 Credits
 
@@ -280,6 +266,8 @@ Oxc partially copies code from the following projects, their licenses are listed
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://oxc-project.github.io/oxc/playground
+[website-badge]: https://img.shields.io/badge/Website-blue
+[website-url]: https://oxc-project.github.io
 [crate-oxc-url]: https://crates.io/crates/oxc
 [crate-ast-url]: https://crates.io/crates/oxc_ast
 [crate-parser-url]: https://crates.io/crates/oxc_parser
