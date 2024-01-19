@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{JSXAttributeItem, JSXElementName},
-    AstKind,
-};
+use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -9,7 +6,13 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    globals::HTML_TAG,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements")]
@@ -60,12 +63,15 @@ impl Rule for Scope {
             }
         };
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
+        let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
 
-        let name = identifier.name.as_str();
-        if name == "th" {
+        if element_type == "th" {
+            return;
+        }
+
+        if !HTML_TAG.contains(&element_type) {
             return;
         }
 
@@ -77,24 +83,30 @@ impl Rule for Scope {
 fn test() {
     use crate::tester::Tester;
 
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "jsx-a11y": {
+                "components": {
+                    "Foo": "div",
+                    "TableHeader": "th"
+                }
+            }
+        })
+    }
+
     let pass = vec![
-        (r"<div />;", None),
-        (r"<div foo />;", None),
-        (r"<th scope />", None),
-        (r"<th scope='row' />", None),
-        (r"<th scope={foo} />", None),
-        (r"<th scope={'col'} {...props} />", None),
-        // TODO aria-query like parts is needed
-        // (r"<Foo scope='bar' {...props} />", None),
-        // TODO: When polymorphic components are supported
-        // (r"<TableHeader scope="row" />", None)
+        (r"<div />;", None, None),
+        (r"<div foo />;", None, None),
+        (r"<th scope />", None, None),
+        (r"<th scope='row' />", None, None),
+        (r"<th scope={foo} />", None, None),
+        (r"<th scope={'col'} {...props} />", None, None),
+        (r"<Foo scope='bar' {...props} />", None, None),
+        (r"<TableHeader scope='row' />", None, Some(settings())),
     ];
 
-    let fail = vec![
-        (r"<div scope />", None),
-        // TODO: When polymorphic components are supported
-        // (r"<Foo scope='bar' />;", None),
-    ];
+    let fail =
+        vec![(r"<div scope />", None, None), (r"<Foo scope='bar' />;", None, Some(settings()))];
 
     Tester::new(Scope::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
 }
