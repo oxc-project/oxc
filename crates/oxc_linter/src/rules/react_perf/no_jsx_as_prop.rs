@@ -12,8 +12,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(no-jsx-as-prop):")]
-#[diagnostic(severity(warning), help(""))]
+#[error("eslint-plugin-react-perf(no-jsx-as-prop): JSX attribute values should not contain other JSX.")]
+#[diagnostic(severity(warning))]
 struct NoJsxAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]

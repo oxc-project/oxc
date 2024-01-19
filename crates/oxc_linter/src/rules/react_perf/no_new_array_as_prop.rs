@@ -17,8 +17,8 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(no-new-array-as-prop):")]
-#[diagnostic(severity(warning), help(""))]
+#[error("eslint-plugin-react-perf(no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.")]
+#[diagnostic(severity(warning))]
 struct NoNewArrayAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]

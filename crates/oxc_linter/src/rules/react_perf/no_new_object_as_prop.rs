@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(no-new-object-as-prop):")]
+#[error("eslint-plugin-react-perf(no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.")]
 #[diagnostic(severity(warning), help(""))]
 struct NoNewObjectAsPropDiagnostic(#[label] pub Span);
 
