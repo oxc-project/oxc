@@ -302,8 +302,12 @@ impl<'a> Parser<'a> {
             return self.parse_ts_infer_type();
         }
 
-        let operator =
-            if self.at(Kind::Str) { None } else { TSTypeOperator::from_src(self.cur_string()) };
+        let operator = match self.cur_kind() {
+            Kind::KeyOf => Some(TSTypeOperator::Keyof),
+            Kind::Unique => Some(TSTypeOperator::Unique),
+            Kind::Readonly => Some(TSTypeOperator::Readonly),
+            _ => None,
+        };
 
         // test ts ts_type_operator
         // type B = keyof A;
