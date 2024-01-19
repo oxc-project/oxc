@@ -6,7 +6,7 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
     NumberBase,
 };
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::{mem, rc::Rc};
 
 mod options;
@@ -26,6 +26,7 @@ pub struct TypeScript<'a> {
     verbatim_module_syntax: bool,
     export_name_set: FxHashSet<Atom>,
     options: TypescriptOptions,
+    namespace_arg_names: FxHashMap<Atom, usize>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -41,6 +42,7 @@ impl<'a> TypeScript<'a> {
             verbatim_module_syntax,
             export_name_set: FxHashSet::default(),
             options: options.typescript.clone().unwrap_or_default(),
+            namespace_arg_names: FxHashMap::default(),
         }
     }
 
@@ -669,6 +671,12 @@ impl<'a> TypeScript<'a> {
         }
     }
 
+    fn get_namespace_arg_name(&mut self, name: &Atom) -> Atom {
+        let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
+        *count += 1;
+        format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()
+    }
+
     /// ```TypeScript
     /// // transform ts module block
     /// namespace Foo {
@@ -696,16 +704,14 @@ impl<'a> TypeScript<'a> {
 
         let callee = {
             let body = self.ast.function_body(SPAN, self.ast.new_vec(), body_statements);
+            let arg_name = self.get_namespace_arg_name(name);
             let params = self.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::FormalParameter,
                 self.ast.new_vec_single(self.ast.formal_parameter(
                     SPAN,
                     self.ast.binding_pattern(
-                        self.ast.binding_pattern_identifier(BindingIdentifier::new(
-                            SPAN,
-                            format!("_{}", name.clone()).into(),
-                        )),
+                        self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name)),
                         None,
                         false,
                     ),
