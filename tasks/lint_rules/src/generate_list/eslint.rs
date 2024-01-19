@@ -1,9 +1,9 @@
-use std::collections::HashSet;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::ObjectPropertyKind, syntax_directed_operations::PropName, AstKind};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use std::collections::HashSet;
 
 pub const ORIGINAL_JS_SOURCE_URL: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
