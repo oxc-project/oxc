@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_span::{Atom, SourceType};
 
-use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder, VariableInfo};
+use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
 pub trait Binder {
     fn bind(&self, _builder: &mut SemanticBuilder) {}
@@ -60,11 +60,6 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     builder.check_redeclaration(*scope_id, span, name, excludes, true)
                 {
                     ident.symbol_id.set(Some(symbol_id));
-                    builder.add_redeclared_variables(VariableInfo {
-                        name: ident.name.clone(),
-                        span: ident.span,
-                        symbol_id,
-                    });
                     return;
                 }
             }

@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::VariableInfo;
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
@@ -61,6 +61,12 @@ declare_oxc_lint!(
     nursery // There are false positives within TypeScript files (e.g. redeclare on interface)
 );
 
+struct RedclareVariable {
+    symbol_id: SymbolId,
+    name: Atom,
+    span: Span,
+}
+
 impl Rule for NoRedeclare {
     fn from_configuration(value: serde_json::Value) -> Self {
         let built_in_globals = value
@@ -73,7 +79,9 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let redeclare_variables = ctx.semantic().redeclare_variables();
+        // We should store redeclare variables in this rule.
+
+        let redeclare_variables: Vec<RedclareVariable> = vec![];
         let symbol_table = ctx.semantic().symbols();
 
         for variable in redeclare_variables {
@@ -81,13 +89,13 @@ impl Rule for NoRedeclare {
             match ctx.nodes().kind(decl) {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        self.report_diagnostic(ctx, variable, ident);
+                        self.report_diagnostic(ctx, &variable, ident);
                     }
                 }
                 AstKind::FormalParameters(params) => {
                     for item in &params.items {
                         if let BindingPatternKind::BindingIdentifier(ident) = &item.pattern.kind {
-                            self.report_diagnostic(ctx, variable, ident);
+                            self.report_diagnostic(ctx, &variable, ident);
                         }
                     }
                 }
@@ -101,7 +109,7 @@ impl NoRedeclare {
     fn report_diagnostic(
         &self,
         ctx: &LintContext,
-        variable: &VariableInfo,
+        variable: &RedclareVariable,
         ident: &BindingIdentifier,
     ) {
         if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
