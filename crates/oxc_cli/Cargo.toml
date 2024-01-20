@@ -34,15 +34,15 @@ path = "src/format/main.rs"
 test = false
 
 [dependencies]
-oxc_allocator      = { workspace = true }
-oxc_diagnostics    = { workspace = true }
-oxc_linter         = { workspace = true }
-oxc_parser         = { workspace = true }
-oxc_prettier       = { workspace = true }
-oxc_span           = { workspace = true }
-glob               = { workspace = true }
-lazy_static        = { workspace = true }
-regex              = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_linter      = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_prettier    = { workspace = true }
+oxc_span        = { workspace = true }
+glob            = { workspace = true }
+lazy_static     = { workspace = true }
+regex           = { workspace = true }
 
 ignore             = { workspace = true, features = ["simd-accel"] }
 miette             = { workspace = true }
