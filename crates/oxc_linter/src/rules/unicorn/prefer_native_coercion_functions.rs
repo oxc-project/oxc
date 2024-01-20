@@ -226,7 +226,10 @@ fn check_array_callback_methods(
     }
 
     let Some(first_param_name) = get_first_parameter_name(arg) else { return false };
-    let Some(returned_ident) = get_returned_ident(&function_body.statements[0], is_arrow) else {
+
+    let Some(first_stmt) = function_body.statements.first() else { return false };
+
+    let Some(returned_ident) = get_returned_ident(first_stmt, is_arrow) else {
         return false;
     };
 
@@ -280,6 +283,7 @@ fn test() {
         r"array.some(function(v) {return notFirstParameterName;})",
         r"array.some(function(v) {return;})",
         r"array.some(function(v) {return v.v;})",
+        r"cells.every((cellRowIdx, cellColIdx, tableLoop, cellLoop) => {});",
     ];
 
     let fail = vec![
