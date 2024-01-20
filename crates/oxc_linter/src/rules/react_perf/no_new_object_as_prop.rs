@@ -18,7 +18,7 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react-perf(no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
 struct NoNewObjectAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -57,30 +57,46 @@ impl Rule for NoNewObjectAsProp {
 }
 
 fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    if jsx_elem.opening_element.attributes.iter().any(|item| match get_prop_value(item) {
-        None => false,
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => check_expression(expr),
-        _ => false,
-    }) {
-        ctx.diagnostic(NoNewObjectAsPropDiagnostic(jsx_elem.opening_element.span));
+    for item in jsx_elem.opening_element.attributes.iter() {
+        match get_prop_value(item) {
+            None => {}
+            Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+                expression: JSXExpression::Expression(expr),
+                ..
+            })) => {
+                if let Some(span) = check_expression(expr) {
+                    ctx.diagnostic(NoNewObjectAsPropDiagnostic(span))
+                }
+            }
+            _ => {}
+        };
     }
 }
 
-fn check_expression(expr: &Expression) -> bool {
+fn check_expression(expr: &Expression) -> Option<Span> {
     match expr {
-        Expression::ObjectExpression(_) => true,
-        Expression::CallExpression(expr) => check_constructor(&expr.callee, "Object"),
-        Expression::NewExpression(expr) => check_constructor(&expr.callee, "Object"),
+        Expression::ObjectExpression(expr) => Some(expr.span),
+        Expression::CallExpression(expr) => {
+            if check_constructor(&expr.callee, "Object") {
+                Some(expr.span)
+            } else {
+                None
+            }
+        }
+        Expression::NewExpression(expr) => {
+            if check_constructor(&expr.callee, "Object") {
+                Some(expr.span)
+            } else {
+                None
+            }
+        }
         Expression::LogicalExpression(expr) => {
-            check_expression(&expr.left) || check_expression(&expr.right)
+            check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
         Expression::ConditionalExpression(expr) => {
-            check_expression(&expr.consequent) || check_expression(&expr.alternate)
+            check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
-        _ => false,
+        _ => None,
     }
 }
 

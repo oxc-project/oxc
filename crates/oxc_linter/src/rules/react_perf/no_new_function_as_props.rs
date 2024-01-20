@@ -21,7 +21,7 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react-perf(no-new-function-as-props): JSX attribute values should not contain functions created in the same scope.")]
-#[diagnostic(severity(warning))]
+#[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
 struct NoNewFunctionAsPropsDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -57,43 +57,57 @@ impl Rule for NoNewFunctionAsProps {
 }
 
 fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    if jsx_elem.opening_element.attributes.iter().any(|item| match get_prop_value(item) {
-        None => false,
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => check_expression(expr),
-        _ => false,
-    }) {
-        ctx.diagnostic(NoNewFunctionAsPropsDiagnostic(jsx_elem.opening_element.span));
+    for item in jsx_elem.opening_element.attributes.iter() {
+        match get_prop_value(item) {
+            None => {}
+            Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
+                expression: JSXExpression::Expression(expr),
+                ..
+            })) => {
+                if let Some(span) = check_expression(expr) {
+                    ctx.diagnostic(NoNewFunctionAsPropsDiagnostic(span))
+                }
+            }
+            _ => {}
+        };
     }
 }
 
-fn check_expression(expr: &Expression) -> bool {
+fn check_expression(expr: &Expression) -> Option<Span> {
     match expr {
-        Expression::ArrowExpression(_) => true,
-        Expression::FunctionExpression(_) => true,
+        Expression::ArrowExpression(expr) => Some(expr.span),
+        Expression::FunctionExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if check_constructor(&expr.callee, "Function") {
-                return true;
+                return Some(expr.span);
             }
 
             let Expression::MemberExpression(member_expr) = &expr.callee else {
-                return false;
+                return None;
             };
 
             let property_name = MemberExpression::static_property_name(&member_expr);
 
-            property_name == Some("bind")
+            if property_name == Some("bind") {
+                Some(expr.span)
+            } else {
+                None
+            }
         }
-        Expression::NewExpression(expr) => check_constructor(&expr.callee, "Function"),
+        Expression::NewExpression(expr) => {
+            if check_constructor(&expr.callee, "Function") {
+                Some(expr.span)
+            } else {
+                None
+            }
+        }
         Expression::LogicalExpression(expr) => {
-            check_expression(&expr.left) || check_expression(&expr.right)
+            check_expression(&expr.left).or_else(|| check_expression(&expr.right))
         }
         Expression::ConditionalExpression(expr) => {
-            check_expression(&expr.consequent) || check_expression(&expr.alternate)
+            check_expression(&expr.consequent).or_else(|| check_expression(&expr.alternate))
         }
-        _ => false,
+        _ => None,
     }
 }
 
@@ -102,31 +116,29 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // r"<Item callback={this.props.callback} />",
-        // r"<Item promise={new Promise()} />",
-        // r"<Item onClick={bind(foo)} />",
-        // r"<Item prop={0} />",
-        // r"var a;<Item prop={a} />",
-        // r"var a;a = 1;<Item prop={a} />",
-        // r"var a;<Item prop={a} />",
-        // r"function foo ({prop1 = function(){}, prop2}) {
-        //     return <Comp prop={prop2} />
-        //   }",
-        // r"function foo ({prop1, prop2 = function(){}}) {
-        //     return <Comp prop={prop1} />
-        //   }",
+        r"<Item callback={this.props.callback} />",
+        r"<Item promise={new Promise()} />",
+        r"<Item onClick={bind(foo)} />",
+        r"<Item prop={0} />",
+        r"var a;<Item prop={a} />",
+        r"var a;a = 1;<Item prop={a} />",
+        r"var a;<Item prop={a} />",
+        r"function foo ({prop1 = function(){}, prop2}) {
+            return <Comp prop={prop2} />
+          }",
+        r"function foo ({prop1, prop2 = function(){}}) {
+            return <Comp prop={prop1} />
+          }",
     ];
 
     let fail = vec![
-        // r"<Item prop={function(){return true}} />",
-        // r"<Item prop={() => true} />",
-        // r"<Item prop={new Function('a', 'alert(a)')}/>",
-        // r"<Item prop={Function()}/>",
-        // r"<Item onClick={this.clickHandler.bind(this)} />",
-
-        // LogicalExpression
-        // r"<Item callback={this.props.callback || function() {}} />",
-        // r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
+        r"<Item prop={function(){return true}} />",
+        r"<Item prop={() => true} />",
+        r"<Item prop={new Function('a', 'alert(a)')}/>",
+        r"<Item prop={Function()}/>",
+        r"<Item onClick={this.clickHandler.bind(this)} />",
+        r"<Item callback={this.props.callback || function() {}} />",
+        r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
         r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
     ];
 
