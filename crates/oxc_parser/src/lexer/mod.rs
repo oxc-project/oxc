@@ -952,18 +952,14 @@ impl<'a> Lexer<'a> {
                 self.current.chars.next();
                 Kind::LCurly
             }
-            Some(c) => {
-                let mut builder = AutoCow::new(self);
-                builder.push_matching(c);
+            Some(_) => {
                 loop {
                     // `>` and `}` are errors in TypeScript but not Babel
                     // let's make this less strict so we can parse more code
                     if matches!(self.peek(), Some('{' | '<')) {
                         break;
                     }
-                    if let Some(c) = self.current.chars.next() {
-                        builder.push_matching(c);
-                    } else {
+                    if self.current.chars.next().is_none() {
                         break;
                     }
                 }
@@ -1369,7 +1365,7 @@ macro_rules! ascii_byte_handler {
         const $id: ByteHandler = |$lex| {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
-                use ::assert_unchecked::assert_unchecked;
+                use assert_unchecked::assert_unchecked;
                 let s = $lex.current.chars.as_str();
                 assert_unchecked!(!s.is_empty());
                 assert_unchecked!(s.as_bytes()[0] < 128);
