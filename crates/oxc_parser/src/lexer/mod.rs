@@ -954,9 +954,11 @@ impl<'a> Lexer<'a> {
             }
             Some(_) => {
                 loop {
-                    // `>` and `}` are errors in TypeScript but not Babel
-                    // let's make this less strict so we can parse more code
-                    if matches!(self.peek(), Some('{' | '<')) {
+                    // The tokens `{`, `<`, `>` and `}` cannot appear in a jsx text.
+                    // The TypeScript compiler raises the error "Unexpected token. Did you mean `{'>'}` or `&gt;`?".
+                    // Where as the Babel compiler does not raise any errors.
+                    // The following check omits `>` and `}` so that more Babel tests can be passed.
+                    if self.peek().is_some_and(|c| c == '{' || c == '<') {
                         break;
                     }
                     if self.current.chars.next().is_none() {
