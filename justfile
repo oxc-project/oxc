@@ -74,6 +74,10 @@ codecov:
 benchmark:
   cargo benchmark
 
+# Generate the environment variables. See `tasks/envgen`
+gen-env:
+  cargo run -p envgen
+
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
 new-rule name:
   cargo run -p rulegen {{name}}

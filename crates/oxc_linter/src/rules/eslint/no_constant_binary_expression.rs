@@ -11,7 +11,6 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, 
 use crate::{
     ast_util::{self, IsConstant},
     context::LintContext,
-    globals::BUILTINS,
     rule::Rule,
     AstNode,
 };
@@ -349,7 +348,7 @@ impl NoConstantBinaryExpression {
             | Expression::RegExpLiteral(_) => true,
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return BUILTINS.contains_key(ident.name.as_str())
+                    return ctx.env_contains_var(ident.name.as_str())
                         && ctx.semantic().is_reference_to_global_variable(ident);
                 }
                 false

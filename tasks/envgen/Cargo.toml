@@ -1,0 +1,20 @@
+[package]
+name              = "envgen"
+version           = "0.0.0"
+publish           = false
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "envgen"
+test = false
+
+[dependencies]
+serde        = { workspace = true, features = ["derive"] }
+serde_json   = { workspace = true }
+lazy_static  = { workspace = true }
+
+handlebars = "5.0.0"

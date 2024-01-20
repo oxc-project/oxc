@@ -566,6 +566,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "envgen"
+version = "0.0.0"
+dependencies = [
+ "handlebars",
+ "lazy_static",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
