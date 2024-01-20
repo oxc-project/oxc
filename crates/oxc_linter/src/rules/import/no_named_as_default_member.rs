@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use dashmap::mapref::one::Ref;
 use oxc_ast::{
-    ast::{BindingPatternKind, Expression, MemberExpression},
+    ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -11,6 +11,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::module_record::ImportImportName;
 
@@ -44,12 +45,21 @@ declare_oxc_lint!(
     NoNamedAsDefaultMember,
     nursery
 );
+fn get_symbol_id_from_ident(
+    ctx: &LintContext<'_>,
+    ident: &IdentifierReference,
+) -> Option<SymbolId> {
+    let reference_id = ident.reference_id.get().unwrap();
+    let reference = &ctx.symbols().references[reference_id];
+    reference.symbol_id()
+}
 
 impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
-        let mut has_members_map: HashMap<&Atom, (Ref<'_, Atom, _, _>, Atom)> = HashMap::default();
+        let mut has_members_map: HashMap<SymbolId, (Ref<'_, Atom, _, _>, Atom)> =
+            HashMap::default();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(_) = import_entry.import_name else {
                 continue;
@@ -62,7 +72,7 @@ impl Rule for NoNamedAsDefaultMember {
 
             if !remote_module_record_ref.exported_bindings.is_empty() {
                 has_members_map.insert(
-                    import_entry.local_name.name(),
+                    ctx.symbols().get_symbol_id_from_span(&import_entry.local_name.span()).unwrap(),
                     (remote_module_record_ref, import_entry.module_request.name().to_owned()),
                 );
             }
@@ -71,15 +81,18 @@ impl Rule for NoNamedAsDefaultMember {
         if has_members_map.is_empty() {
             return;
         };
-        let get_external_module_name_if_has_entry = |module_name: &Atom, entry_name: &Atom| {
-            has_members_map.get(&module_name).and_then(|it| {
-                if it.0.exported_bindings.contains_key(entry_name) {
-                    Some(it.1.to_string())
-                } else {
-                    None
-                }
-            })
-        };
+        let get_external_module_name_if_has_entry =
+            |ident: &IdentifierReference, entry_name: &Atom| {
+                get_symbol_id_from_ident(ctx, ident)
+                    .and_then(|symbol_id| has_members_map.get(&symbol_id))
+                    .and_then(|it| {
+                        if it.0.exported_bindings.contains_key(entry_name) {
+                            Some(it.1.to_string())
+                        } else {
+                            None
+                        }
+                    })
+            };
 
         let process_member_expr = |member_expr: &MemberExpression| {
             let Expression::Identifier(ident) = member_expr.object() else {
@@ -89,7 +102,7 @@ impl Rule for NoNamedAsDefaultMember {
                 return;
             };
             if let Some(module_name) =
-                get_external_module_name_if_has_entry(&ident.name, &Atom::new_inline(prop_str))
+                get_external_module_name_if_has_entry(ident, &Atom::new_inline(prop_str))
             {
                 ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                     match member_expr {
@@ -108,21 +121,19 @@ impl Rule for NoNamedAsDefaultMember {
             match item.kind() {
                 AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
                 AstKind::VariableDeclarator(decl) => {
-                    if let Some(Expression::MemberExpression(member_expr)) = &decl.init {
-                        process_member_expr(member_expr);
-                        return;
-                    }
                     let Some(Expression::Identifier(ident)) = &decl.init else {
-                        return;
+                        continue;
                     };
                     let BindingPatternKind::ObjectPattern(object_pattern) = &decl.id.kind else {
-                        return;
+                        continue;
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else { return };
+                        let Some(name) = prop.key.static_name() else {
+                            continue;
+                        };
                         if let Some(module_name) =
-                            get_external_module_name_if_has_entry(&ident.name, &name)
+                            get_external_module_name_if_has_entry(ident, &name)
                         {
                             ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                                 decl.span,
