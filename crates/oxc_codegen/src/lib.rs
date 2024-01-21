@@ -23,6 +23,15 @@ use oxc_syntax::{
     precedence::Precedence,
     symbol::SymbolId,
 };
+use source_map::{
+    SourceId,
+    SourceMapBuilder,
+    global_store::GlobalStore
+};
+use base64::{
+    Engine,
+    prelude::BASE64_STANDARD
+};
 
 pub use crate::{
     context::Context,
@@ -58,6 +67,10 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
+
+    /// Output Source Map
+    pub(crate) source_id: SourceId,
+    pub(crate) sourcemap: SourceMapBuilder,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -68,9 +81,10 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
+    pub fn new(source: &str, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
+        let source_len = source.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
         Self {
             options,
@@ -85,6 +99,9 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+
+            sourcemap: SourceMapBuilder::new(),
+            source_id: SourceId::new(&mut GlobalStore, "(unknown source)".into(), source.into()),
         }
     }
 
@@ -100,6 +117,19 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     pub fn into_code(self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { String::from_utf8_unchecked(self.code) }
+    }
+
+    pub fn build_with_sourcemap(mut self, program: &Program<'_>) -> (String, String) {
+        program.gen(&mut self, Context::default());
+        self.into_code_with_sourcemap()
+    }
+
+    pub fn into_code_with_sourcemap(self) -> (String, String) {
+        let sourcemap = BASE64_STANDARD.encode(
+            self.sourcemap.build(&GlobalStore).to_json(&GlobalStore)
+        );
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
+        (unsafe { String::from_utf8_unchecked(self.code) }, sourcemap)
     }
 
     fn code(&self) -> &Vec<u8> {
