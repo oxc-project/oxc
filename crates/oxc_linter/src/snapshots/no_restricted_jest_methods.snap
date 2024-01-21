@@ -1,0 +1,43 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 143
+expression: no_restricted_jest_methods
+---
+  ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods
+   ╭─[no_restricted_jest_methods.tsx:1:1]
+ 1 │ jest.fn()
+   ·      ──
+   ╰────
+  help: Use of `"fn"` is disallowed
+
+  ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods
+   ╭─[no_restricted_jest_methods.tsx:1:1]
+ 1 │ jest["fn"]()
+   ·      ────
+   ╰────
+  help: Use of `"fn"` is disallowed
+
+  ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods
+   ╭─[no_restricted_jest_methods.tsx:1:1]
+ 1 │ jest.mock()
+   ·      ────
+   ╰────
+  help: "Do not use mocks"
+
+  ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods
+   ╭─[no_restricted_jest_methods.tsx:1:1]
+ 1 │ jest["mock"]()
+   ·      ──────
+   ╰────
+  help: "Do not use mocks"
+
+  ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods
+   ╭─[no_restricted_jest_methods.tsx:2:1]
+ 2 │                 import { jest } from '@jest/globals';
+ 3 │                 jest.advanceTimersByTime();
+   ·                      ───────────────────
+ 4 │             
+   ╰────
+  help: Use of `"advanceTimersByTime"` is disallowed
+
+
