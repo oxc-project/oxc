@@ -63,7 +63,7 @@ impl Rule for NoNamedAsDefault {
             };
 
             if remote_module_record_ref.exported_bindings.contains_key(import_name) {
-                ctx.diagnostic(NoNamedAsDefaultDiagnostic(import_span, import_name.to_string()))
+                ctx.diagnostic(NoNamedAsDefaultDiagnostic(import_span, import_name.to_string()));
             }
         }
     }
