@@ -60,11 +60,10 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     builder.check_redeclaration(*scope_id, span, name, excludes, true)
                 {
                     ident.symbol_id.set(Some(symbol_id));
-                    builder.add_redeclared_variables(VariableInfo {
-                        name: ident.name.clone(),
-                        span: ident.span,
-                        symbol_id,
-                    });
+                    if self.kind.is_var() {
+                        builder
+                            .add_redeclared_variables(VariableInfo { span: ident.span, symbol_id });
+                    }
                     return;
                 }
             }
@@ -208,12 +207,12 @@ impl<'a> Binder for FormalParameters<'a> {
             SymbolFlags::FunctionScopedVariableExcludes
         };
         let is_signature = self.kind == FormalParameterKind::Signature;
-        self.bound_names(&mut |ident| {
-            if !is_signature {
+        if !is_signature {
+            self.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
-            }
-        });
+            });
+        }
     }
 }
 

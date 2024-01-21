@@ -132,6 +132,8 @@ mod jest {
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_mocks_import;
+    pub mod no_restricted_jest_methods;
+    pub mod no_restricted_matchers;
     pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
@@ -411,6 +413,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_mocks_import,
+    jest::no_restricted_jest_methods,
+    jest::no_restricted_matchers,
     jest::no_standalone_expect,
     jest::no_test_prefixes,
     jest::no_test_return_statement,

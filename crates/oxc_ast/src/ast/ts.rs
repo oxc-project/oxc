@@ -197,17 +197,6 @@ pub enum TSTypeOperator {
     Readonly,
 }
 
-impl TSTypeOperator {
-    pub fn from_src(src: &str) -> Option<Self> {
-        match src {
-            "keyof" => Some(Self::Keyof),
-            "unique" => Some(Self::Unique),
-            "readonly" => Some(Self::Readonly),
-            _ => None,
-        }
-    }
-}
-
 /// `let myArray: string[] = ["hello", "world"];`
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
