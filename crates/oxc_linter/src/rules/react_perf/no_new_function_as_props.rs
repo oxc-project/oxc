@@ -46,26 +46,22 @@ declare_oxc_lint!(
 
 impl Rule for NoNewFunctionAsProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::JSXElement(jsx_elem) => {
-                check_jsx_element(jsx_elem, ctx);
-            }
-
-            _ => {}
-        };
+        if let AstKind::JSXElement(jsx_elem) = node.kind() {
+            check_jsx_element(jsx_elem, ctx);
+        }
     }
 }
 
 fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    for item in jsx_elem.opening_element.attributes.iter() {
+    for item in &jsx_elem.opening_element.attributes {
         match get_prop_value(item) {
-            None => {}
+            None => return,
             Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
                 expression: JSXExpression::Expression(expr),
                 ..
             })) => {
                 if let Some(span) = check_expression(expr) {
-                    ctx.diagnostic(NoNewFunctionAsPropsDiagnostic(span))
+                    ctx.diagnostic(NoNewFunctionAsPropsDiagnostic(span));
                 }
             }
             _ => {}
@@ -86,7 +82,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
                 return None;
             };
 
-            let property_name = MemberExpression::static_property_name(&member_expr);
+            let property_name = MemberExpression::static_property_name(member_expr);
 
             if property_name == Some("bind") {
                 Some(expr.span)

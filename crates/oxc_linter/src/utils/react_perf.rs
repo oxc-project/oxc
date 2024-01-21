@@ -1,6 +1,6 @@
 use oxc_ast::ast::Expression;
 
-pub fn check_constructor<'a>(callee: &Expression<'a>, name: &str) -> bool {
+pub fn check_constructor(callee: &Expression<'_>, name: &str) -> bool {
     let Expression::Identifier(ident) = callee else {
         return false;
     };
