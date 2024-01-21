@@ -10,7 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_span::{Atom, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
-    module_record::ExportLocalName,
+    module_record::{ExportLocalName, NameSpanOptional},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
@@ -142,14 +142,15 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
         ctx.error(DuplicateExport(name_span.name().clone(), name_span.span(), old_span));
     }
 
-    for span in &module_record.export_default_duplicated {
-        let old_span = module_record.export_default.unwrap();
-        ctx.error(DuplicateExport("default".into(), *span, old_span));
+    for NameSpanOptional { span, .. } in &module_record.export_default_duplicated {
+        let NameSpanOptional { span: old_span, .. } =
+            module_record.export_default.as_ref().unwrap();
+        ctx.error(DuplicateExport("default".into(), *span, *old_span));
     }
 
     // `export default x;`
     // `export { y as default };`
-    if let (Some(span), Some(default_span)) =
+    if let (Some(span), Some(NameSpanOptional { span: default_span, .. })) =
         (module_record.exported_bindings.get("default"), &module_record.export_default)
     {
         ctx.error(DuplicateExport("default".into(), *default_span, *span));

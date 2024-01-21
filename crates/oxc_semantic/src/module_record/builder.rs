@@ -111,8 +111,10 @@ impl ModuleRecordBuilder {
         }
     }
 
-    fn add_default_export(&mut self, span: Span) {
-        if let Some(old_node) = self.module_record.export_default.replace(span) {
+    fn add_default_export(&mut self, name: Option<Atom>, span: Span) {
+        if let Some(old_node) =
+            self.module_record.export_default.replace(NameSpanOptional { name, span })
+        {
             self.module_record.export_default_duplicated.push(old_node);
         }
     }
@@ -272,7 +274,6 @@ impl ModuleRecordBuilder {
             return;
         }
         let exported_name = &decl.exported;
-        self.add_default_export(exported_name.span());
 
         let id = match &decl.declaration {
             ExportDefaultDeclarationKind::Expression(_) => None,
@@ -291,6 +292,13 @@ impl ModuleRecordBuilder {
             span: decl.declaration.span(),
             ..ExportEntry::default()
         };
+        self.add_default_export(
+            match &export_entry.local_name {
+                ExportLocalName::Name(name) => Some(name.name().to_owned()),
+                _ => None,
+            },
+            exported_name.span(),
+        );
         self.add_export_entry(export_entry);
     }
 

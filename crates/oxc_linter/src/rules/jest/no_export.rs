@@ -4,6 +4,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::module_record::NameSpanOptional;
 
 use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
@@ -48,7 +49,7 @@ impl Rule for NoExport {
             ctx.diagnostic(NoExportDiagnostic(*span));
         }
 
-        if let Some(span) = ctx.semantic().module_record().export_default {
+        if let Some(NameSpanOptional { span, .. }) = ctx.semantic().module_record().export_default {
             ctx.diagnostic(NoExportDiagnostic(span));
         }
     }

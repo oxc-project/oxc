@@ -7,6 +7,12 @@ use indexmap::IndexMap;
 use oxc_span::{Atom, Span};
 use rustc_hash::{FxHashMap, FxHasher};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NameSpanOptional {
+    pub span: Span,
+    pub name: Option<Atom>,
+}
+
 /// Module Record
 ///
 /// See
@@ -62,8 +68,8 @@ pub struct ModuleRecord {
     pub exported_bindings: FxHashMap<Atom, Span>,
     pub exported_bindings_duplicated: Vec<NameSpan>,
 
-    pub export_default: Option<Span>,
-    pub export_default_duplicated: Vec<Span>,
+    pub export_default: Option<NameSpanOptional>,
+    pub export_default_duplicated: Vec<NameSpanOptional>,
 }
 
 impl ModuleRecord {
