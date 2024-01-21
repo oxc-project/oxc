@@ -113,7 +113,7 @@ impl ModuleRecordBuilder {
 
     fn add_default_export(&mut self, name: Option<Atom>, span: Span) {
         if let Some(old_node) =
-            self.module_record.export_default.replace(NameSpanOptional { name, span })
+            self.module_record.export_default.replace(NameSpanOptional { span, name })
         {
             self.module_record.export_default_duplicated.push(old_node);
         }
