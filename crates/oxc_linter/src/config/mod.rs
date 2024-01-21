@@ -5,7 +5,7 @@ use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use crate::{rules::RuleEnum, AllowWarnDeny, JsxA11y, LintSettings};
+use crate::{rules::RuleEnum, settings::Nextjs, AllowWarnDeny, JsxA11y, LintSettings};
 
 use self::errors::{
     FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseRuleValueError,
@@ -167,9 +167,9 @@ fn parse_settings_from_root(root_json: &Value) -> LintSettings {
 
 pub fn parse_settings(setting_value: &Value) -> LintSettings {
     if let Value::Object(settings_object) = setting_value {
+        let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
+        let mut nextjs_setting = Nextjs::new(vec![]);
         if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
-            let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
-
             if let Some(Value::Object(components)) = jsx_a11y.get("components") {
                 let components_map: FxHashMap<String, String> = components
                     .iter()
@@ -184,9 +184,20 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
                 jsx_a11y_setting
                     .set_polymorphic_prop_name(Some(String::from(polymorphic_prop_name)));
             }
-
-            return LintSettings::new(jsx_a11y_setting);
         }
+
+        if let Some(Value::Object(nextjs)) = settings_object.get("next") {
+            if let Some(Value::String(root_dir)) = nextjs.get("rootDir") {
+                nextjs_setting.set_root_dir(vec![String::from(root_dir)]);
+            }
+            if let Some(Value::Array(root_dir)) = nextjs.get("rootDir") {
+                nextjs_setting.set_root_dir(
+                    root_dir.iter().map(|v| v.as_str().unwrap().to_string()).collect(),
+                );
+            }
+        }
+
+        return LintSettings::new(jsx_a11y_setting, nextjs_setting);
     }
 
     LintSettings::default()
@@ -201,8 +212,12 @@ fn parse_rule_name(name: &str) -> (&str, &str) {
             "typescript-eslint" => "typescript",
             // plugin name in RuleEnum is in snake_case
             "jsx-a11y" => "jsx_a11y",
+            "next" => "nextjs",
             _ => category,
         };
+
+        // since next.js eslint rule starts with @next/next/
+        let name = name.trim_start_matches("next/");
 
         (category, name)
     } else {
