@@ -20,7 +20,10 @@ pub struct Token {
 
     /// True if the identifier / string / template kinds has escaped strings.
     /// The escaped strings are saved in [Lexer::escaped_strings] and [Lexer::escaped_templates] by
-    /// [Token::start]
+    /// [Token::start].
+    ///
+    /// [Lexer::escaped_strings]: [super::Lexer::escaped_strings]
+    /// [Lexer::escaped_templates]: [super::Lexer::escaped_templates]
     pub escaped: bool,
 }
 
