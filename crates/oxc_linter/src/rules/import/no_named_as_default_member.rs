@@ -102,7 +102,7 @@ impl Rule for NoNamedAsDefaultMember {
                 return;
             };
             if let Some(module_name) =
-                get_external_module_name_if_has_entry(ident, &Atom::new_inline(prop_str))
+                get_external_module_name_if_has_entry(ident, &Atom::from(prop_str))
             {
                 ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                     match member_expr {
@@ -164,6 +164,11 @@ fn test() {
         {
             const baz = {};
             const a = baz.a;
+        }",
+        r"import baz from './named-exports';
+        {
+            const baz = {};
+            const a = baz.looooooooooooooooooooooooong;
         }",
     ];
 
