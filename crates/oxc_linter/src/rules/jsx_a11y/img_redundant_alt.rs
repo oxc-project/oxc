@@ -2,8 +2,8 @@ use regex::Regex;
 
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, JSXExpressionContainer,
+        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression,
+        JSXExpressionContainer,
     },
     AstKind,
 };
@@ -14,7 +14,9 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::utils::{get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader};
+use crate::utils::{
+    get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
@@ -107,10 +109,11 @@ impl Rule for ImgRedundantAlt {
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        let JSXElementName::Identifier(iden) = &jsx_el.name else { return };
-        let name = iden.name.as_str();
+        let Some(element_type) = get_element_type(ctx, jsx_el) else {
+            return;
+        };
 
-        if !self.types_to_validate.iter().any(|comp| comp == name) {
+        if !self.types_to_validate.iter().any(|comp| comp == &element_type) {
             return;
         }
 
@@ -196,71 +199,78 @@ fn test() {
         }])
     }
 
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "jsx-a11y": {
+                "components": {
+                    "Image": "img",
+                }
+            }
+        })
+    }
+
     let pass = vec![
-        (r"<img alt='foo' />;", None),
-        (r"<img alt='picture of me taking a photo of an image' aria-hidden />", None),
-        (r"<img aria-hidden alt='photo of image' />", None),
-        (r"<img ALt='foo' />;", None),
-        (r"<img {...this.props} alt='foo' />", None),
-        (r"<img {...this.props} alt={'foo'} />", None),
-        (r"<img {...this.props} alt={alt} />", None),
-        (r"<a />", None),
-        (r"<img />", None),
-        (r"<IMG />", None),
-        (r"<img alt={undefined} />", None),
-        (r"<img alt={`this should pass for ${now}`} />", None),
-        (r"<img alt={`this should pass for ${photo}`} />", None),
-        (r"<img alt={`this should pass for ${image}`} />", None),
-        (r"<img alt={`this should pass for ${picture}`} />", None),
-        (r"<img alt={`${photo}`} />", None),
-        (r"<img alt={`${image}`} />", None),
-        (r"<img alt={`${picture}`} />", None),
-        (r"<img alt={'undefined'} />", None),
-        (r"<img alt={() => {}} />", None),
-        (r"<img alt={function(e){}} />", None),
-        (r"<img aria-hidden={false} alt='Doing cool things.' />", None),
-        (r"<img alt='photo of cool person' aria-hidden={true} />", None),
-        (r"<UX.Layout>test</UX.Layout>", None),
-        (r"<img alt />", None),
-        (r"<img alt={imageAlt} />", None),
-        (r"<img alt={imageAlt.name} />", None),
-        (r"<img alt={imageAlt?.name} />", None),
-        (r"<img alt='Doing cool things' aria-hidden={foo?.bar}/>", None),
-        (r"<img alt='Photography' />;", None),
-        (r"<img alt='ImageMagick' />;", None),
-        (r"<Image alt='Photo of a friend' />", None),
-        // TODO we need components_settings to test this
-        // (r"<Image alt='Foo' />", settings: Some(components_settings))
+        (r"<img alt='foo' />;", None, None),
+        (r"<img alt='picture of me taking a photo of an image' aria-hidden />", None, None),
+        (r"<img aria-hidden alt='photo of image' />", None, None),
+        (r"<img ALt='foo' />;", None, None),
+        (r"<img {...this.props} alt='foo' />", None, None),
+        (r"<img {...this.props} alt={'foo'} />", None, None),
+        (r"<img {...this.props} alt={alt} />", None, None),
+        (r"<a />", None, None),
+        (r"<img />", None, None),
+        (r"<IMG />", None, None),
+        (r"<img alt={undefined} />", None, None),
+        (r"<img alt={`this should pass for ${now}`} />", None, None),
+        (r"<img alt={`this should pass for ${photo}`} />", None, None),
+        (r"<img alt={`this should pass for ${image}`} />", None, None),
+        (r"<img alt={`this should pass for ${picture}`} />", None, None),
+        (r"<img alt={`${photo}`} />", None, None),
+        (r"<img alt={`${image}`} />", None, None),
+        (r"<img alt={`${picture}`} />", None, None),
+        (r"<img alt={'undefined'} />", None, None),
+        (r"<img alt={() => {}} />", None, None),
+        (r"<img alt={function(e){}} />", None, None),
+        (r"<img aria-hidden={false} alt='Doing cool things.' />", None, None),
+        (r"<img alt='photo of cool person' aria-hidden={true} />", None, None),
+        (r"<UX.Layout>test</UX.Layout>", None, None),
+        (r"<img alt />", None, None),
+        (r"<img alt={imageAlt} />", None, None),
+        (r"<img alt={imageAlt.name} />", None, None),
+        (r"<img alt={imageAlt?.name} />", None, None),
+        (r"<img alt='Doing cool things' aria-hidden={foo?.bar}/>", None, None),
+        (r"<img alt='Photography' />;", None, None),
+        (r"<img alt='ImageMagick' />;", None, None),
+        (r"<Image alt='Photo of a friend' />", None, None),
+        (r"<Image alt='Foo' />", None, Some(settings())),
     ];
 
     let fail = vec![
-        (r"<img alt='Photo of friend.' />;", None),
-        (r"<img alt='Picture of friend.' />;", None),
-        (r"<img alt='Image of friend.' />;", None),
-        (r"<img alt='PhOtO of friend.' />;", None),
-        (r"<img alt={'photo'} />;", None),
-        (r"<img alt='piCTUre of friend.' />;", None),
-        (r"<img alt='imAGE of friend.' />;", None),
-        (r"<img alt='photo of cool person' aria-hidden={false} />", None),
-        (r"<img alt='picture of cool person' aria-hidden={false} />", None),
-        (r"<img alt='image of cool person' aria-hidden={false} />", None),
-        (r"<img alt='photo' {...this.props} />", None),
-        (r"<img alt='image' {...this.props} />", None),
-        (r"<img alt='picture' {...this.props} />", None),
-        (r"<img alt={`picture doing ${things}`} {...this.props} />", None),
-        (r"<img alt={`photo doing ${things}`} {...this.props} />", None),
-        (r"<img alt={`image doing ${things}`} {...this.props} />", None),
-        (r"<img alt={`picture doing ${picture}`} {...this.props} />", None),
-        (r"<img alt={`photo doing ${photo}`} {...this.props} />", None),
-        (r"<img alt={`image doing ${image}`} {...this.props} />", None),
-        // TODO we need components_settings to test this
-        // (r"<Image alt='Photo of a friend' />", Some(components_settings),
-
+        (r"<img alt='Photo of friend.' />;", None, None),
+        (r"<img alt='Picture of friend.' />;", None, None),
+        (r"<img alt='Image of friend.' />;", None, None),
+        (r"<img alt='PhOtO of friend.' />;", None, None),
+        (r"<img alt={'photo'} />;", None, None),
+        (r"<img alt='piCTUre of friend.' />;", None, None),
+        (r"<img alt='imAGE of friend.' />;", None, None),
+        (r"<img alt='photo of cool person' aria-hidden={false} />", None, None),
+        (r"<img alt='picture of cool person' aria-hidden={false} />", None, None),
+        (r"<img alt='image of cool person' aria-hidden={false} />", None, None),
+        (r"<img alt='photo' {...this.props} />", None, None),
+        (r"<img alt='image' {...this.props} />", None, None),
+        (r"<img alt='picture' {...this.props} />", None, None),
+        (r"<img alt={`picture doing ${things}`} {...this.props} />", None, None),
+        (r"<img alt={`photo doing ${things}`} {...this.props} />", None, None),
+        (r"<img alt={`image doing ${things}`} {...this.props} />", None, None),
+        (r"<img alt={`picture doing ${picture}`} {...this.props} />", None, None),
+        (r"<img alt={`photo doing ${photo}`} {...this.props} />", None, None),
+        (r"<img alt={`image doing ${image}`} {...this.props} />", None, None),
+        (r"<Image alt='Photo of a friend' />", None, Some(settings())),
         // TESTS FOR ARRAY OPTION TESTS
-        (r"<img alt='Word1' />;", Some(array())),
-        (r"<img alt='Word2' />;", Some(array())),
-        (r"<Image alt='Word1' />;", Some(array())),
-        (r"<Image alt='Word2' />;", Some(array())),
+        (r"<img alt='Word1' />;", Some(array()), None),
+        (r"<img alt='Word2' />;", Some(array()), None),
+        (r"<Image alt='Word1' />;", Some(array()), None),
+        (r"<Image alt='Word2' />;", Some(array()), None),
     ];
 
     Tester::new(ImgRedundantAlt::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
