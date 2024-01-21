@@ -43,6 +43,10 @@ harness = false
 name    = "minifier"
 harness = false
 
+[[bench]]
+name    = "lexer"
+harness = false
+
 [dependencies]
 oxc_allocator    = { workspace = true }
 oxc_linter       = { workspace = true }
