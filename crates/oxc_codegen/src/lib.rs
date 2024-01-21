@@ -12,7 +12,7 @@ mod context;
 mod gen;
 mod operator;
 
-use std::str::from_utf8_unchecked;
+//use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -25,7 +25,9 @@ use oxc_syntax::{
 };
 use source_map::{
     SourceId,
-    SourceMapBuilder,
+    SourceMap,
+    StringWithOptionalSourceMap,
+    ToString,
     global_store::GlobalStore
 };
 use base64::{
@@ -49,7 +51,9 @@ pub struct Codegen<const MINIFY: bool> {
 
     // mangler: Option<Mangler>,
     /// Output Code
-    code: Vec<u8>,
+    code: StringWithOptionalSourceMap,
+    /// Output Source Map
+    pub(crate) source_id: SourceId,
 
     // states
     prev_op_end: usize,
@@ -67,10 +71,6 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
-
-    /// Output Source Map
-    pub(crate) source_id: SourceId,
-    pub(crate) sourcemap: SourceMapBuilder,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,7 +89,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         Self {
             options,
             // mangler: None,
-            code: Vec::with_capacity(capacity),
+            code: StringWithOptionalSourceMap::new(true),
+            source_id: SourceId::new(&mut GlobalStore, "(unknown source)".into(), source.into()),
             needs_semicolon: false,
             need_space_before_dot: 0,
             prev_op_end: 0,
@@ -99,9 +100,6 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
-
-            sourcemap: SourceMapBuilder::new(),
-            source_id: SourceId::new(&mut GlobalStore, "(unknown source)".into(), source.into()),
         }
     }
 
@@ -109,45 +107,29 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     // self.mangler = Some(mangler);
     // }
 
-    pub fn build(mut self, program: &Program<'_>) -> String {
+    pub fn build(mut self, program: &Program<'_>) -> (String, String) {
         program.gen(&mut self, Context::default());
-        self.into_code()
+        let (output, sourcemap) = self.code.build(&GlobalStore);
+        let sourcemap = BASE64_STANDARD.encode(sourcemap.unwrap().to_json(&GlobalStore));
+        (output, sourcemap)
     }
 
-    pub fn into_code(self) -> String {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(self.code) }
-    }
-
-    pub fn build_with_sourcemap(mut self, program: &Program<'_>) -> (String, String) {
-        program.gen(&mut self, Context::default());
-        self.into_code_with_sourcemap()
-    }
-
-    pub fn into_code_with_sourcemap(self) -> (String, String) {
-        let sourcemap = BASE64_STANDARD.encode(
-            self.sourcemap.build(&GlobalStore).to_json(&GlobalStore)
-        );
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        (unsafe { String::from_utf8_unchecked(self.code) }, sourcemap)
-    }
-
-    fn code(&self) -> &Vec<u8> {
-        &self.code
+    fn code(&self) -> &str {
+        &self.code.source
     }
 
     fn code_len(&self) -> usize {
-        self.code().len()
+        self.code.source.len()
     }
 
     /// Push a single character into the buffer
     pub fn print(&mut self, ch: u8) {
-        self.code.push(ch);
+        self.code.source.push(ch as char);
     }
 
     /// Push a string into the buffer
     pub fn print_str(&mut self, s: &[u8]) {
-        self.code.extend_from_slice(s);
+        self.code.source.push_str(&unsafe { String::from_utf8_unchecked(s.to_vec()) })
     }
 
     fn print_soft_space(&mut self) {
@@ -163,6 +145,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     fn print_soft_newline(&mut self) {
         if !MINIFY {
             self.print(b'\n');
+            self.code.push_new_line();
         }
     }
 
@@ -177,7 +160,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     fn print_space_before_identifier(&mut self) {
         if self
             .peek_nth(0)
-            .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
+            .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code_len())
         {
             self.print_hard_space();
         }
@@ -185,7 +168,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
 
     fn peek_nth(&self, n: usize) -> Option<char> {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+        self.code.source.chars().nth_back(n)
     }
 
     fn indent(&mut self) {
@@ -320,7 +303,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             self.print_hard_space();
             return;
         }
-        if self.prev_op_end != self.code.len() {
+        if self.prev_op_end != self.code_len() {
             return;
         }
         let Some(prev) = self.prev_op else { return };

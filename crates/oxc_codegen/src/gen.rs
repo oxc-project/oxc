@@ -8,7 +8,7 @@ use oxc_syntax::{
     NumberBase,
 };
 use oxc_span::GetSpan;
-use source_map::SpanWithSource;
+use source_map::{SpanWithSource, ToString};
 
 use super::{Codegen, Context, Operator, Separator};
 
@@ -83,11 +83,11 @@ fn print_directives_and_statements_with_semicolon_order<const MINIFY: bool>(
             p.print_semicolon_if_needed();
         }
         let span = stmt.span();
-        p.sourcemap.add_mapping(&SpanWithSource {
+        p.code.add_mapping(&SpanWithSource {
             start: span.start,
             end: span.end,
             source: p.source_id
-        }, 0)
+        })
     }
 }
 
