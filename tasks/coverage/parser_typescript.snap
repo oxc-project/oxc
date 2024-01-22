@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5238/5242 (99.92%)
-Positive Passed: 5231/5242 (99.79%)
-Negative Passed: 1023/4876 (20.98%)
+AST Parsed     : 5239/5243 (99.92%)
+Positive Passed: 5232/5243 (99.79%)
+Negative Passed: 1024/4879 (20.99%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -261,6 +261,7 @@ Expect Syntax Error: "compiler/circularAccessorAnnotations.ts"
 Expect Syntax Error: "compiler/circularBaseConstraint.ts"
 Expect Syntax Error: "compiler/circularBaseTypes.ts"
 Expect Syntax Error: "compiler/circularConstraintYieldsAppropriateError.ts"
+Expect Syntax Error: "compiler/circularInlineMappedGenericTupleTypeNoCrash.ts"
 Expect Syntax Error: "compiler/circularModuleImports.ts"
 Expect Syntax Error: "compiler/circularOptionalityRemoval.ts"
 Expect Syntax Error: "compiler/circularResolvedSignature.ts"
@@ -2727,6 +2728,7 @@ Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceO
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts"
+Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_errorLocations1.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts"
 Expect Syntax Error: "conformance/expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts"
@@ -4049,6 +4051,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                          ╰── `)` expected
  3 │   }
    ╰────
+
+  × Invalid Character `؆`
+   ╭─[compiler/TransportStream.ts:1:1]
+ 1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
+   ·                                                                                                                                                                                                     ─
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[compiler/TransportStream.ts:1:1]
+ 1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
+   ·                                                                                                                                                                                                     ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[compiler/accessorBodyInTypeContext.ts:1:1]
