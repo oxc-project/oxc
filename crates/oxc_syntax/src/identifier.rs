@@ -71,7 +71,7 @@ pub struct Align64<T>(pub(crate) T);
 
 // `a`-`z`, `A`-`Z`, `$` (0x24), `_` (0x5F)
 #[rustfmt::skip]
-pub const ASCII_START: Align64<[bool; 128]> = Align64([
+pub static ASCII_START: Align64<[bool; 128]> = Align64([
 //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
@@ -85,7 +85,7 @@ pub const ASCII_START: Align64<[bool; 128]> = Align64([
 
 // `ASCII_START` + `0`-`9`
 #[rustfmt::skip]
-pub const ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
+pub static ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
 //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
     __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
