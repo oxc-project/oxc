@@ -1,0 +1,29 @@
+name: Update lint_rules list
+
+on: 
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/oxc_linter/**'
+      - 'tasks/lint_rules/**'
+
+jobs:
+  lint_rules:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
+        with:
+          cache-base: main
+
+      - name: Build lint_rules task
+        run: cargo build -p lint_rules
+
+      - name: Update eslint
+        run: cargo run -p lint_rules eslint --update
