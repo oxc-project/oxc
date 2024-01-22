@@ -450,8 +450,11 @@ impl<'a> SemanticBuilder<'a> {
                     &self.nodes,
                 );
             }
-            AstKind::FormalParameters(params) => {
-                params.bind(self);
+            AstKind::BindingRestElement(element) => {
+                element.bind(self);
+            }
+            AstKind::FormalParameter(param) => {
+                param.bind(self);
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
