@@ -61,7 +61,7 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
 /// ObjectPattern.properties
 pub struct ObjectPatternProperties<'a> {
     pub elements: Vec<'a, BindingProperty<'a>>,
-    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
+    pub rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
@@ -81,10 +81,10 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
         if p.cur_kind() == Kind::Dot3 {
             let rest = p.parse_rest_element()?;
             if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                p.error(diagnostics::InvalidRestElement(rest.argument.span()));
+                p.error(diagnostics::InvalidBindingRestElement(rest.argument.span()));
             }
             if let Some(r) = self.rest.replace(rest) {
-                p.error(diagnostics::RestElementLast(r.span));
+                p.error(diagnostics::BindingRestElementLast(r.span));
             }
         } else {
             let prop = p.parse_binding_property()?;
@@ -132,7 +132,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
 /// ArrayPattern.elements
 pub struct ArrayPatternList<'a> {
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
+    pub rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
@@ -156,7 +156,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
             Kind::Dot3 => {
                 let rest = p.parse_rest_element()?;
                 if let Some(r) = self.rest.replace(rest) {
-                    p.error(diagnostics::RestElementLast(r.span));
+                    p.error(diagnostics::BindingRestElementLast(r.span));
                 }
             }
             _ => {
@@ -233,7 +233,7 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 /// Function Parameters
 pub struct FormalParameterList<'a> {
     pub elements: Vec<'a, FormalParameter<'a>>,
-    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
+    pub rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>>,
     pub this_param: Option<TSThisParameter<'a>>,
 }
 

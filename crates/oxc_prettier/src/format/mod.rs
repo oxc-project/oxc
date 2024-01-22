@@ -2120,7 +2120,7 @@ impl<'a> Format<'a> for BindingProperty<'a> {
     }
 }
 
-impl<'a> Format<'a> for RestElement<'a> {
+impl<'a> Format<'a> for BindingRestElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("..."), format!(p, self.argument))
     }

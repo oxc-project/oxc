@@ -1484,7 +1484,7 @@ pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> ObjectPattern<'a> {
@@ -1514,7 +1514,7 @@ pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> ArrayPattern<'a> {
@@ -1529,7 +1529,7 @@ impl<'a> ArrayPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct RestElement<'a> {
+pub struct BindingRestElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: BindingPattern<'a>,
@@ -1615,7 +1615,7 @@ pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> FormalParameters<'a> {

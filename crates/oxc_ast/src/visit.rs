@@ -1214,8 +1214,8 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_rest_element(&mut self, pat: &RestElement<'a>) {
-        let kind = AstKind::RestElement(self.alloc(pat));
+    fn visit_rest_element(&mut self, pat: &BindingRestElement<'a>) {
+        let kind = AstKind::BindingRestElement(self.alloc(pat));
         self.enter_node(kind);
         self.visit_binding_pattern(&pat.argument);
         self.leave_node(kind);

@@ -88,7 +88,7 @@ pub enum AstKind<'a> {
     Elision(Span),
     ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
-    RestElement(&'a RestElement<'a>),
+    BindingRestElement(&'a BindingRestElement<'a>),
 
     Function(&'a Function<'a>),
     FunctionBody(&'a FunctionBody<'a>),
@@ -401,7 +401,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::SpreadElement(x) => x.span,
             Self::Elision(span) => *span,
             Self::ExpressionArrayElement(x) => x.span(),
-            Self::RestElement(x) => x.span,
+            Self::BindingRestElement(x) => x.span,
 
             Self::Function(x) => x.span,
             Self::FunctionBody(x) => x.span,
@@ -574,7 +574,7 @@ impl<'a> AstKind<'a> {
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
             Self::ExpressionArrayElement(_) => "ExpressionArrayElement".into(),
-            Self::RestElement(_) => "RestElement".into(),
+            Self::BindingRestElement(_) => "BindingRestElement".into(),
 
             Self::Function(x) => format!(
                 "Function({})",

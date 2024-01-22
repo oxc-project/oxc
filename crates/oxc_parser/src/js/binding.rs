@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 14.3.3 Binding Rest Property
-    pub(crate) fn parse_rest_element(&mut self) -> Result<Box<'a, RestElement<'a>>> {
+    pub(crate) fn parse_rest_element(&mut self) -> Result<Box<'a, BindingRestElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_binding_pattern()?;
@@ -56,9 +56,9 @@ impl<'a> Parser<'a> {
 
         if self.at(Kind::Comma) {
             if self.peek_at(Kind::RBrack) {
-                self.error(diagnostics::RestElementTrailingComma(self.cur_token().span()));
+                self.error(diagnostics::BindingRestElementTrailingComma(self.cur_token().span()));
             } else if !self.ctx.has_ambient() {
-                self.error(diagnostics::RestElementLast(span));
+                self.error(diagnostics::BindingRestElementLast(span));
             }
         }
 

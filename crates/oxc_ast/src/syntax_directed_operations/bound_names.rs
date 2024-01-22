@@ -54,7 +54,7 @@ impl<'a> BoundNames for AssignmentPattern<'a> {
     }
 }
 
-impl<'a> BoundNames for RestElement<'a> {
+impl<'a> BoundNames for BindingRestElement<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         self.argument.bound_names(f);
     }
