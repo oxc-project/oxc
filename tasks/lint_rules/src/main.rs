@@ -41,7 +41,10 @@ fn main() {
         return;
     }
 
-    let url = update_comment::run(plugin_name, &markdown).unwrap();
+    let token =
+        std::env::var("GITHUB_TOKEN").unwrap_or_else(|_| panic!("🆖 env.GITHUB_TOKEN is not set!"));
+
+    let url = update_comment::run(plugin_name, &token, &markdown).unwrap();
     println!("✨ Done! Status for {plugin_name} is updated!");
     println!("See {url}");
 }
