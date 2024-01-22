@@ -450,7 +450,7 @@ impl<'a> SemanticBuilder<'a> {
                     &self.nodes,
                 );
             }
-            AstKind::RestElement(element) => {
+            AstKind::BindingRestElement(element) => {
                 element.bind(self);
             }
             AstKind::FormalParameter(param) => {
