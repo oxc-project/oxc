@@ -86,12 +86,10 @@ impl Rule for NoRedeclare {
                         }
                     }
                 }
-                AstKind::FormalParameters(params) => {
-                    for item in &params.items {
-                        if let BindingPatternKind::BindingIdentifier(ident) = &item.pattern.kind {
-                            if *symbol_table.get_name(variable.symbol_id) == ident.name {
-                                self.report_diagnostic(ctx, variable, ident);
-                            }
+                AstKind::FormalParameter(param) => {
+                    if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                        if *symbol_table.get_name(variable.symbol_id) == ident.name {
+                            self.report_diagnostic(ctx, variable, ident);
                         }
                     }
                 }

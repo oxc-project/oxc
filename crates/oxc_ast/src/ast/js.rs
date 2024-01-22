@@ -1648,6 +1648,12 @@ pub enum FormalParameterKind {
     Signature,
 }
 
+impl FormalParameterKind {
+    pub fn is_signature(&self) -> bool {
+        matches!(self, Self::Signature)
+    }
+}
+
 impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
