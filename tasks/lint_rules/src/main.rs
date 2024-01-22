@@ -34,17 +34,22 @@ fn main() {
     let plugin_name =
         positionals.first().unwrap_or_else(|| panic!("🆖 Target plugin_name is required!\n{HELP}"));
 
+    // Task start!
+
     let markdown = generate_list::run(plugin_name).unwrap();
 
+    // Print markdown and exit, you can paste it to update comment manually
     if !is_update {
         println!("{markdown}");
         return;
     }
 
+    // This is automatically set by GitHub Apps for CI, your local env should set this manually
+    // https://docs.github.com/en/actions/security-guides/automatic-token-authentication
     let token =
         std::env::var("GITHUB_TOKEN").unwrap_or_else(|_| panic!("🆖 env.GITHUB_TOKEN is not set!"));
 
-    let url = update_comment::run(plugin_name, &token, &markdown).unwrap();
+    let issue_url = update_comment::run(plugin_name, &token, &markdown).unwrap();
     println!("✨ Done! Status for {plugin_name} is updated!");
-    println!("See {url}");
+    println!("See {issue_url}");
 }

@@ -8,7 +8,7 @@ pub fn run(plugin_name: &str, token: &str, comment_body: &str) -> Result<String,
         _ => return Err(format!("😢 Unknown plugin name: {plugin_name}")),
     };
 
-    let _ = update_issue_body(api_url, token, comment_body);
+    update_issue_body(api_url, token, comment_body)?;
 
     Ok(api_url.to_string())
 }
