@@ -1,5 +1,6 @@
 {
     "rules": {
+        // requires jsonc support
         "no-console": "off",
         "no-bitwise": [
             "error",
@@ -17,6 +18,6 @@
             }
         ],
         "@typescript-eslint/ban-types": "error",
-        "jsx-a11y/alt-text": "warn"
+        "jsx-a11y/alt-text": "warn",
     }
 }

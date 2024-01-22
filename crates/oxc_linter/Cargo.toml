@@ -49,6 +49,7 @@ url           = { workspace = true }
 rust-lapper = "1.1.0"
 once_cell   = "1.19.0"
 memchr      = "2.7.1"
+json-strip-comments = "1.0.1"
 
 [dev-dependencies]
 miette = { workspace = true }
