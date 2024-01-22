@@ -1,11 +1,12 @@
 name: Update lint_rules list
 
-on: push
-  branches:
-    - main
-  paths:
-    - 'crates/oxc_linter/**'
-    - 'tasks/lint_rules/**'
+on: 
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/oxc_linter/**'
+      - 'tasks/lint_rules/**'
 
 jobs:
   lint_rules:
@@ -24,5 +25,5 @@ jobs:
       - name: Build lint_rules task
         run: cargo build -p lint_rules
 
-      - name: Update: eslint
+      - name: Update eslint
         run: cargo run -p lint_rules eslint --update
