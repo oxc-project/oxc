@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.jsx} />
     /// ```
     NoJsxAsProp,
-    correctness
+    restriction
 );
 
 impl Rule for NoJsxAsProp {
@@ -66,7 +66,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr {
+    match expr.without_parenthesized() {
         Expression::JSXElement(expr) => Some(expr.span),
         Expression::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))
@@ -88,6 +88,7 @@ fn test() {
         r"<Item jsx={<SubItem />} />",
         r"<Item jsx={this.props.jsx || <SubItem />} />",
         r"<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />",
+        r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
     ];
 
     Tester::new(NoJsxAsProp::NAME, pass, fail).test_and_snapshot();

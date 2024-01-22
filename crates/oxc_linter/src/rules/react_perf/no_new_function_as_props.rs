@@ -15,7 +15,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{check_constructor, get_prop_value},
+    utils::{get_prop_value, is_constructor_matching_name},
     AstNode,
 };
 
@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.callback} />
     /// ```
     NoNewFunctionAsProps,
-    correctness
+    restriction
 );
 
 impl Rule for NoNewFunctionAsProps {
@@ -70,11 +70,11 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr {
+    match expr.without_parenthesized() {
         Expression::ArrowExpression(expr) => Some(expr.span),
         Expression::FunctionExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
-            if check_constructor(&expr.callee, "Function") {
+            if is_constructor_matching_name(&expr.callee, "Function") {
                 return Some(expr.span);
             }
 
@@ -91,7 +91,7 @@ fn check_expression(expr: &Expression) -> Option<Span> {
             }
         }
         Expression::NewExpression(expr) => {
-            if check_constructor(&expr.callee, "Function") {
+            if is_constructor_matching_name(&expr.callee, "Function") {
                 Some(expr.span)
             } else {
                 None
@@ -136,6 +136,7 @@ fn test() {
         r"<Item callback={this.props.callback || function() {}} />",
         r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
         r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
+        r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
     ];
 
     Tester::new(NoNewFunctionAsProps::NAME, pass, fail).test_and_snapshot();

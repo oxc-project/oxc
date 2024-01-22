@@ -44,4 +44,11 @@ expression: no_new_object_as_prop
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
+  ⚠ eslint-plugin-react-perf(no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[no_new_object_as_prop.tsx:1:1]
+ 1 │ <Item config={this.props.config || (this.props.default ? this.props.default : {})} />
+   ·                                                                               ──
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
 

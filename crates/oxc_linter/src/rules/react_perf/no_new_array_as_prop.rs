@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{check_constructor, get_prop_value},
+    utils::{get_prop_value, is_constructor_matching_name},
     AstNode,
 };
 
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// <Item list={this.props.list} />
     /// ```
     NoNewArrayAsProp,
-    correctness
+    restriction
 );
 
 impl Rule for NoNewArrayAsProp {
@@ -72,17 +72,17 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr {
+    match expr.without_parenthesized() {
         Expression::ArrayExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
-            if check_constructor(&expr.callee, "Array") {
+            if is_constructor_matching_name(&expr.callee, "Array") {
                 Some(expr.span)
             } else {
                 None
             }
         }
         Expression::NewExpression(expr) => {
-            if check_constructor(&expr.callee, "Array") {
+            if is_constructor_matching_name(&expr.callee, "Array") {
                 Some(expr.span)
             } else {
                 None
@@ -110,6 +110,7 @@ fn test() {
         r"<Item list={Array()} />",
         r"<Item list={this.props.list || []} />",
         r"<Item list={this.props.list ? this.props.list : []} />",
+        r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
     ];
 
     Tester::new(NoNewArrayAsProp::NAME, pass, fail).test_and_snapshot();

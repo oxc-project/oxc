@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{check_constructor, get_prop_value},
+    utils::{get_prop_value, is_constructor_matching_name},
     AstNode,
 };
 
@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// <Item config={staticConfig} />
     /// ```
     NoNewObjectAsProp,
-    correctness
+    restriction
 );
 
 impl Rule for NoNewObjectAsProp {
@@ -71,17 +71,17 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr {
+    match expr.without_parenthesized() {
         Expression::ObjectExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
-            if check_constructor(&expr.callee, "Object") {
+            if is_constructor_matching_name(&expr.callee, "Object") {
                 Some(expr.span)
             } else {
                 None
             }
         }
         Expression::NewExpression(expr) => {
-            if check_constructor(&expr.callee, "Object") {
+            if is_constructor_matching_name(&expr.callee, "Object") {
                 Some(expr.span)
             } else {
                 None
@@ -110,6 +110,7 @@ fn test() {
         r"<div style={{display: 'none'}} />",
         r"<Item config={this.props.config || {}} />",
         r"<Item config={this.props.config ? this.props.config : {}} />",
+        r"<Item config={this.props.config || (this.props.default ? this.props.default : {})} />",
     ];
 
     Tester::new(NoNewObjectAsProp::NAME, pass, fail).test_and_snapshot();
