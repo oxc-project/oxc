@@ -224,7 +224,7 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
         return None;
     };
 
-    let LintSettings { jsx_a11y } = context.settings();
+    let LintSettings { jsx_a11y, .. } = context.settings();
     let JsxA11y { polymorphic_prop_name, components } = jsx_a11y;
 
     if let Some(polymorphic_prop_name_value) = polymorphic_prop_name {

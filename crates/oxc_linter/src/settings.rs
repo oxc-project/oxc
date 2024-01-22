@@ -4,17 +4,21 @@ use rustc_hash::FxHashMap;
 #[derive(Debug, Clone)]
 pub struct LintSettings {
     pub jsx_a11y: JsxA11y,
+    pub nextjs: Nextjs,
 }
 
 impl Default for LintSettings {
     fn default() -> Self {
-        Self { jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() } }
+        Self {
+            jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() },
+            nextjs: Nextjs { root_dir: vec![] },
+        }
     }
 }
 
 impl LintSettings {
-    pub fn new(jsx_a11y: JsxA11y) -> Self {
-        Self { jsx_a11y }
+    pub fn new(jsx_a11y: JsxA11y, nextjs: Nextjs) -> Self {
+        Self { jsx_a11y, nextjs }
     }
 }
 
@@ -38,5 +42,20 @@ impl JsxA11y {
 
     pub fn set_polymorphic_prop_name(&mut self, name: Option<String>) {
         self.polymorphic_prop_name = name;
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Nextjs {
+    pub root_dir: Vec<String>,
+}
+
+impl Nextjs {
+    pub fn new(root_dir: Vec<String>) -> Self {
+        Self { root_dir }
+    }
+
+    pub fn set_root_dir(&mut self, root_dir: Vec<String>) {
+        self.root_dir = root_dir;
     }
 }
