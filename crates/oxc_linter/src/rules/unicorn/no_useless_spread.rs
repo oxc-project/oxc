@@ -363,14 +363,6 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             ));
         }
     }
-
-    if let Expression::NewExpression(new_expr) = &spread_elem.argument {
-        if !is_new_expression(new_expr, &["Array"], None, None) {
-            return;
-        }
-
-        ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(span, "new Array".into()));
-    }
 }
 
 fn is_single_array_spread(node: &ArrayExpression) -> bool {
@@ -465,6 +457,7 @@ fn test() {
         r"[...Promise.all(foo)]",
         r"[...Promise.allSettled(foo)]",
         r"[...await Promise.all(foo, extraArgument)]",
+        r"[...new Array(3)]",
     ];
 
     let fail = vec![
@@ -558,7 +551,6 @@ fn test() {
         r"[...Object.values(foo)]",
         r"[...Array.from(foo)]",
         r"[...Array.of()]",
-        r"[...new Array(3)]",
         r"[...await Promise.all(foo)]",
         r"[...await Promise.allSettled(foo)]",
         r"for (const foo of[...iterable]);",

@@ -668,13 +668,6 @@ expression: no_useless_spread
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:1]
- 1 │ [...new Array(3)]
-   ·  ───
-   ╰────
-  help: `new Array` returns a new array. Spreading it into an array expression to create a new array is redundant.
-
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
  1 │ [...await Promise.all(foo)]
    ·  ───
    ╰────
