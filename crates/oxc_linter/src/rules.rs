@@ -12,6 +12,7 @@ mod import {
     pub mod named;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
 }
@@ -521,6 +522,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::no_new_object_as_prop,
     import::default,
     import::no_named_as_default_member,
+    import::no_named_as_default,
     import::named,
     import::no_cycle,
     import::no_self_import,
