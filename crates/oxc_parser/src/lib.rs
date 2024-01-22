@@ -84,6 +84,12 @@ use crate::{
     state::ParserState,
 };
 
+// Expose lexer for benchmarks
+#[doc(hidden)]
+pub mod __lexer {
+    pub use super::lexer::{Kind, Lexer, Token};
+}
+
 /// Maximum length of source in bytes which can be parsed (~4 GiB).
 // Span's start and end are u32s, so size limit is u32::MAX bytes.
 pub const MAX_LEN: usize = u32::MAX as usize;

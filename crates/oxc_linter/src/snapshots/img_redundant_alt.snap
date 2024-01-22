@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 143
 expression: img_redundant_alt
 ---
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.
@@ -150,6 +151,14 @@ expression: img_redundant_alt
    ╭─[img_redundant_alt.tsx:1:1]
  1 │ <img alt={`image doing ${image}`} {...this.props} />
    ·      ───
+   ╰────
+  help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom
+        words) in the alt prop.
+
+  ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.
+   ╭─[img_redundant_alt.tsx:1:1]
+ 1 │ <Image alt='Photo of a friend' />
+   ·        ───
    ╰────
   help: Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom
         words) in the alt prop.

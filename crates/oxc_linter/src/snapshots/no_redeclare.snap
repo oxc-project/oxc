@@ -102,6 +102,30 @@ expression: no_redeclare
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { var a; { var a; } } }
+   ·                        ┬        ┬
+   ·                        │        ╰── It can not be redeclare here.
+   ·                        ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } var a; } }
+   ·                          ┬        ┬
+   ·                          │        ╰── It can not be redeclare here.
+   ·                          ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ class C { static { { var a; } { var a; } } }
+   ·                          ┬          ┬
+   ·                          │          ╰── It can not be redeclare here.
+   ·                          ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclare here.
@@ -130,6 +154,14 @@ expression: no_redeclare
    ·            ┬        ┬
    ·            │        ╰── It can not be redeclare here.
    ·            ╰── 'a' is already defined.
+   ╰────
+
+  ⚠ eslint(no-redeclare): 'a' is already defined.
+   ╭─[no_redeclare.tsx:1:1]
+ 1 │ function f() { var a; if (test) { var a; } }
+   ·                    ┬                  ┬
+   ·                    │                  ╰── It can not be redeclare here.
+   ·                    ╰── 'a' is already defined.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
