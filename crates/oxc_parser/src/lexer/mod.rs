@@ -18,12 +18,10 @@ use oxc_allocator::{Allocator, String};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Error;
 use oxc_span::{SourceType, Span};
-use oxc_syntax::{
-    identifier::{
-        is_identifier_part, is_identifier_start_all, is_irregular_line_terminator,
-        is_irregular_whitespace, is_line_terminator, CR, FF, LF, LS, PS, TAB, VT,
-    },
-    unicode_id_start::is_id_start_unicode,
+use oxc_syntax::identifier::{
+    is_identifier_part, is_identifier_start, is_identifier_start_unicode,
+    is_irregular_line_terminator, is_irregular_whitespace, is_line_terminator, CR, FF, LF, LS, PS,
+    TAB, VT,
 };
 
 pub use self::{
@@ -392,7 +390,7 @@ impl<'a> Lexer<'a> {
     fn unicode_char_handler(&mut self) -> Kind {
         let c = self.current.chars.clone().next().unwrap();
         match c {
-            c if is_id_start_unicode(c) => {
+            c if is_identifier_start_unicode(c) => {
                 let mut builder = AutoCow::new(self);
                 let c = self.consume_char();
                 builder.push_matching(c);
@@ -571,7 +569,7 @@ impl<'a> Lexer<'a> {
         let mut builder = AutoCow::new(self);
         let start = self.offset();
         match self.current.chars.next() {
-            Some(c) if is_identifier_start_all(c) => {
+            Some(c) if is_identifier_start(c) => {
                 builder.push_matching(c);
             }
             Some('\\') => {
@@ -773,12 +771,12 @@ impl<'a> Lexer<'a> {
         let offset = self.offset();
         // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
         let c = self.peek();
-        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start_all(ch)) {
+        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start(ch)) {
             return kind;
         }
         self.current.chars.next();
         while let Some(c) = self.peek() {
-            if is_identifier_start_all(c) {
+            if is_identifier_start(c) {
                 self.current.chars.next();
             } else {
                 break;
@@ -920,7 +918,7 @@ impl<'a> Lexer<'a> {
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     fn read_jsx_identifier(&mut self, _start_offset: u32) -> Kind {
         while let Some(c) = self.peek() {
-            if c == '-' || is_identifier_start_all(c) {
+            if c == '-' || is_identifier_start(c) {
                 self.current.chars.next();
                 while let Some(c) = self.peek() {
                     if is_identifier_part(c) {
@@ -1049,11 +1047,8 @@ impl<'a> Lexer<'a> {
             }
         };
 
-        let is_valid = if check_identifier_start {
-            is_identifier_start_all(ch)
-        } else {
-            is_identifier_part(ch)
-        };
+        let is_valid =
+            if check_identifier_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
 
         if !is_valid {
             self.error(diagnostics::InvalidCharacter(ch, self.current_offset()));
