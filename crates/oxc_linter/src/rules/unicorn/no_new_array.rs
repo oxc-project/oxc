@@ -9,8 +9,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-new-array): Do not use `new Array()`.")]
-#[diagnostic(severity(warning), help(r#"If the argument is the array's length, consider using `Array.from({{ length: n }})` instead. If the argument is the only element, use `[element]` instead."#))]
+#[error("eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.")]
+#[diagnostic(severity(warning), help(r#"It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({{ length: n }})`. If the argument is the only element, use `[element]`."#))]
 struct NoNewArrayDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// const array = [42];
     /// ```
     NoNewArray,
-    suspicious
+    correctness
 );
 
 impl Rule for NoNewArray {
