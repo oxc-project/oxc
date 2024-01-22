@@ -55,6 +55,8 @@ impl<'a> AutoCow<'a> {
         self.value.is_some()
     }
 
+    // TODO: Remove this
+    #[allow(dead_code)]
     pub fn finish(mut self, lexer: &Lexer<'a>) -> &'a str {
         match self.value.take() {
             Some(s) => s.into_bump_str(),
