@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.jsx} />
     /// ```
     NoJsxAsProp,
-    restriction
+    correctness
 );
 
 impl Rule for NoJsxAsProp {
@@ -91,5 +91,5 @@ fn test() {
         r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
     ];
 
-    Tester::new(NoJsxAsProp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();
 }
