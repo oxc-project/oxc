@@ -89,8 +89,10 @@ impl Rule for NoAccumulatingSpread {
         let reference = symbols.get_reference(reference_id);
         let Some(referenced_symbol_id) = reference.symbol_id() else { return };
         let declaration_id = symbols.get_declaration(referenced_symbol_id);
-        let declaration = ctx.semantic().nodes().get_node(declaration_id);
-        let AstKind::FormalParameters(params) = declaration.kind() else { return };
+        let Some(declaration) = ctx.semantic().nodes().parent_node(declaration_id) else { return };
+        let AstKind::FormalParameters(params) = declaration.kind() else {
+            return;
+        };
 
         // We're only looking for the first parameter, since that's where acc is.
         // Skip non-parameter or non-first-parameter declarations.

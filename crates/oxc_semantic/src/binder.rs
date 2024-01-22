@@ -182,13 +182,42 @@ impl<'a> Binder for Function<'a> {
     }
 }
 
-impl<'a> Binder for FormalParameters<'a> {
-    // Binds the formal parameters of a function or method.
+impl<'a> Binder for RestElement<'a> {
+    // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let AstKind::FormalParameters(parameters) = parent_kind else {
+            return;
+        };
+
+        if parameters.kind.is_signature() {
+            return;
+        }
+
+        let includes = SymbolFlags::FunctionScopedVariable;
+        let excludes =
+            SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
+        self.bound_names(&mut |ident| {
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            ident.symbol_id.set(Some(symbol_id));
+        });
+    }
+}
+
+impl<'a> Binder for FormalParameter<'a> {
+    // Binds the FormalParameter of a function or method.
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
+        let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
+
+        if parameters.kind.is_signature() {
+            return;
+        }
+
         let includes = SymbolFlags::FunctionScopedVariable;
 
         let is_not_allowed_duplicate_parameters = matches!(
-                self.kind,
+                parameters.kind,
                 // ArrowFormalParameters: UniqueFormalParameters
                 FormalParameterKind::ArrowFormalParameters |
                 // UniqueFormalParameters : FormalParameters
@@ -199,20 +228,18 @@ impl<'a> Binder for FormalParameters<'a> {
             builder.strict_mode() ||
             // FormalParameters : FormalParameterList
             // * It is a Syntax Error if IsSimpleParameterList of FormalParameterList is false and BoundNames of FormalParameterList contains any duplicate elements.
-            !self.is_simple_parameter_list();
+            !parameters.is_simple_parameter_list();
 
         let excludes = if is_not_allowed_duplicate_parameters {
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes
         } else {
             SymbolFlags::FunctionScopedVariableExcludes
         };
-        let is_signature = self.kind == FormalParameterKind::Signature;
-        if !is_signature {
-            self.bound_names(&mut |ident| {
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
-                ident.symbol_id.set(Some(symbol_id));
-            });
-        }
+
+        self.bound_names(&mut |ident| {
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            ident.symbol_id.set(Some(symbol_id));
+        });
     }
 }
 
