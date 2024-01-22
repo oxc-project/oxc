@@ -9,9 +9,9 @@ use oxc_syntax::module_record::ImportImportName;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-named-as-default): Using exported name {1:?} as identifier for default export.")]
+#[error("eslint-plugin-import(no-named-as-default): Module {2:?} has named export {1:?}. Using default import as {1:?} can be confusing")]
 #[diagnostic(severity(warning), help("Use another name for default import to avoid confusion"))]
-struct NoNamedAsDefaultDiagnostic(#[label] pub Span, String);
+struct NoNamedAsDefaultDiagnostic(#[label] pub Span, String, String);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
@@ -63,7 +63,11 @@ impl Rule for NoNamedAsDefault {
             };
 
             if remote_module_record_ref.exported_bindings.contains_key(import_name) {
-                ctx.diagnostic(NoNamedAsDefaultDiagnostic(import_span, import_name.to_string()));
+                ctx.diagnostic(NoNamedAsDefaultDiagnostic(
+                    import_span,
+                    import_name.to_string(),
+                    import_entry.module_request.name().to_string(),
+                ));
             }
         }
     }
