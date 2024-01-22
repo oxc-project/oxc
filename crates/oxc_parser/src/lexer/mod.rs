@@ -69,11 +69,11 @@ pub struct Lexer<'a> {
     pub(crate) trivia_builder: TriviaBuilder,
 
     /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
-    pub escaped_strings: FxHashMap<u32, &'a str>,
+    pub escaped_strings: Vec<&'a str>,
 
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
-    pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+    pub escaped_templates: Vec<Option<&'a str>>,
 }
 
 #[allow(clippy::unused_self)]
@@ -99,8 +99,8 @@ impl<'a> Lexer<'a> {
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
-            escaped_strings: FxHashMap::default(),
-            escaped_templates: FxHashMap::default(),
+            escaped_strings: vec![],
+            escaped_templates: vec![],
         }
     }
 
@@ -315,13 +315,13 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_strings.insert(self.current.token.start, s);
+        self.escaped_strings.push(s);
         self.current.token.escaped = true;
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
         if token.escaped {
-            return self.escaped_strings[&token.start];
+            return self.escaped_strings.last().unwrap();
         }
 
         let raw = &self.source[token.start as usize..token.end as usize];
@@ -346,14 +346,13 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_templates
-            .insert(self.current.token.start, is_valid_escape_sequence.then(|| s));
+        self.escaped_templates.push(is_valid_escape_sequence.then(|| s));
         self.current.token.escaped = true;
     }
 
     pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
         if token.escaped {
-            return self.escaped_templates[&token.start];
+            return self.escaped_templates.last().unwrap().clone();
         }
         let raw = &self.source[token.start as usize..token.end as usize];
         Some(match token.kind {
