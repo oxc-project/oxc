@@ -24,8 +24,7 @@ jobs:
       - name: Build lint_rules task
         run: cargo build -p lint_rules
 
-      - name: eslint(debug)
-        run: cargo run -p lint_rules eslint
-
       - name: eslint
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo run -p lint_rules eslint --update
