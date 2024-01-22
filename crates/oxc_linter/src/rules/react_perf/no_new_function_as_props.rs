@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.callback} />
     /// ```
     NoNewFunctionAsProps,
-    restriction
+    correctness
 );
 
 impl Rule for NoNewFunctionAsProps {
@@ -139,5 +139,7 @@ fn test() {
         r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
     ];
 
-    Tester::new(NoNewFunctionAsProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewFunctionAsProps::NAME, pass, fail)
+        .with_react_perf_plugin(true)
+        .test_and_snapshot();
 }

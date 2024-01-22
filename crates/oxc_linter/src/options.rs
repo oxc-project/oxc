@@ -27,6 +27,7 @@ pub struct LintOptions {
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
+    pub react_perf_plugin: bool,
 }
 
 impl Default for LintOptions {
@@ -40,6 +41,7 @@ impl Default for LintOptions {
             jest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
+            react_perf_plugin: false,
         }
     }
 }
@@ -92,6 +94,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
         self.nextjs_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
+        self.react_perf_plugin = yes;
         self
     }
 }
@@ -154,6 +162,7 @@ impl TryFrom<&Number> for AllowWarnDeny {
 const JEST_PLUGIN_NAME: &str = "jest";
 const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 const NEXTJS_PLUGIN_NAME: &str = "nextjs";
+const REACT_PERF_PLUGIN_NAME: &str = "react_perf";
 
 impl LintOptions {
     /// # Errors
@@ -209,6 +218,7 @@ impl LintOptions {
         let mut rules = rules.into_iter().collect::<Vec<_>>();
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
+
         Ok((rules, config.map(ESLintConfig::settings).unwrap_or_default()))
     }
 
@@ -225,6 +235,7 @@ impl LintOptions {
         may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
         may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.react_perf_plugin, REACT_PERF_PLUGIN_NAME);
 
         rules
     }

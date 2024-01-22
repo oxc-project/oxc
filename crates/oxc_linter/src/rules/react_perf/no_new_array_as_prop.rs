@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// <Item list={this.props.list} />
     /// ```
     NoNewArrayAsProp,
-    restriction
+    correctness
 );
 
 impl Rule for NoNewArrayAsProp {
@@ -113,5 +113,7 @@ fn test() {
         r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
     ];
 
-    Tester::new(NoNewArrayAsProp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewArrayAsProp::NAME, pass, fail)
+        .with_react_perf_plugin(true)
+        .test_and_snapshot();
 }

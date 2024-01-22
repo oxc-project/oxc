@@ -68,6 +68,9 @@ Enable Plugins
         --import-plugin       Enable the experimental import plugin and detect ESM problems
         --jest-plugin         Enable the Jest plugin and detect test problems
         --jsx-a11y-plugin     Enable the JSX-a11y plugin and detect accessibility problems
+        --nextjs-plugin       Enable the Next.js plugin and detect Next.js problems
+        --react-perf-plugin   Enable the React performance plugin and detect rendering performance problems
+        
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in the
