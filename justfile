@@ -109,7 +109,7 @@ new-react-perf-rule name:
     cargo run -p rulegen {{name}} react-perf
 
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
-sync:
+sync-submodules:
   git submodule update --init --remote
 
 # Upgrade all Rust dependencies
