@@ -1,8 +1,29 @@
-#[allow(clippy::unnecessary_wraps)] // TODO: Remove this later
-pub fn run(_plugin_name: &str, _list: &str) -> Result<String, String> {
-    // TODO: Render markdown comment body
-    // TODO: Get issue url, comment_id to update by plugin_name
-    // TODO: POST to GitHub API(env.GITHUB_TOKEN or PAT may be needed)
+use ureq::Response;
 
-    Ok("https://github.com/oxc-project/oxc/issues/...".to_string())
+const ESLINT_ISSUE_API_URL: &str = "https://api.github.com/repos/oxc-project/oxc/issues/479";
+
+pub fn run(plugin_name: &str, token: &str, comment_body: &str) -> Result<String, String> {
+    let api_url = match plugin_name {
+        "eslint" => ESLINT_ISSUE_API_URL,
+        _ => return Err(format!("😢 Unknown plugin name: {plugin_name}")),
+    };
+
+    update_issue_body(api_url, token, comment_body)?;
+
+    Ok(api_url.to_string())
+}
+
+fn update_issue_body(url: &str, token: &str, body: &str) -> Result<String, String> {
+    let body = oxc_tasks_common::agent()
+        .patch(url)
+        .set("Accept", "application/vnd.github+json")
+        .set("Authorization", &format!("Bearer {token}"))
+        .send_json(ureq::json!({ "body": body }))
+        .map(Response::into_string);
+
+    match body {
+        Ok(Ok(body)) => Ok(body),
+        Ok(Err(err)) => Err(err.to_string()),
+        Err(err) => Err(err.to_string()),
+    }
 }
