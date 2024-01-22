@@ -7,11 +7,11 @@ Usage:
   $ cargo run <plugin_name> [--update]
 
 Arguments:
-  - plugin_name: Name of the target plugin
+  plugin_name: Name of the target plugin
 
 Options:
-  - --update: Update GitHub issue comment
-  - -h, --help: Show this message
+  --update: Update GitHub issue comment
+  -h, --help: Show this message
 ```
 
 Environment variables `GITHUB_TOKEN` is required when `--update` is specified.
