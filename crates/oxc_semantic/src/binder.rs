@@ -182,7 +182,7 @@ impl<'a> Binder for Function<'a> {
     }
 }
 
-impl<'a> Binder for RestElement<'a> {
+impl<'a> Binder for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();

@@ -126,7 +126,7 @@ pub struct ClassDeclaration(#[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("A rest element must be last in a destructuring pattern")]
 #[diagnostic()]
-pub struct RestElementLast(#[label] pub Span);
+pub struct BindingRestElementLast(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A rest parameter must be last in a parameter list")]
@@ -141,12 +141,12 @@ pub struct SpreadLastElement(#[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected trailing comma after rest element")]
 #[diagnostic()]
-pub struct RestElementTrailingComma(#[label] pub Span);
+pub struct BindingRestElementTrailingComma(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid rest element")]
 #[diagnostic(help("Expected identifier in rest element"))]
-pub struct InvalidRestElement(#[label] pub Span);
+pub struct InvalidBindingRestElement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot assign to this expression")]

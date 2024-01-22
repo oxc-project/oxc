@@ -2100,7 +2100,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for RestElement<'a> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingRestElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_ellipsis();
         self.argument.gen(p, ctx);
