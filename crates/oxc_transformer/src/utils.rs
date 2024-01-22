@@ -3,7 +3,7 @@ use std::mem;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, Span};
-use oxc_syntax::unicode_id_start::{is_id_continue, is_id_start};
+use oxc_syntax::identifier::is_identifier_name;
 
 use crate::context::TransformerCtx;
 
@@ -128,26 +128,6 @@ pub const KEYWORDS: phf::Set<&str> = phf::phf_set![
     "void",
     "delete",
 ];
-
-/// https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-helper-validator-identifier/src/identifier.ts#L85-L109
-pub fn is_identifier_name(name: &Atom) -> bool {
-    let string = name.as_str();
-    if string.is_empty() {
-        return false;
-    }
-    let mut is_first = true;
-    for ch in string.chars() {
-        if is_first {
-            is_first = false;
-            if !is_id_start(ch) {
-                return false;
-            }
-        } else if !is_id_continue(ch) {
-            return false;
-        }
-    }
-    true
-}
 
 pub fn is_valid_identifier(name: &Atom, reserved: bool) -> bool {
     if reserved && (KEYWORDS.contains(name.as_str()) || is_strict_reserved_word(name, true)) {
