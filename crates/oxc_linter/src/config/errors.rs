@@ -39,3 +39,8 @@ pub struct FailedToParseAllowWarnDenyFromNumberError(pub String);
 #[error(r#"Failed to parse rule severity, expected a string or a number, but got {0:?}"#)]
 #[diagnostic()]
 pub struct FailedToParseAllowWarnDenyFromJsonValueError(pub String);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Failed to parse jsonc file {0:?}")]
+#[diagnostic()]
+pub struct FailedToParseJsonc(pub PathBuf);

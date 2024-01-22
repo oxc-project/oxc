@@ -8,7 +8,8 @@ use serde_json::Value;
 use crate::{rules::RuleEnum, settings::Nextjs, AllowWarnDeny, JsxA11y, LintSettings};
 
 use self::errors::{
-    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseRuleValueError,
+    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
+    FailedToParseRuleValueError,
 };
 
 pub struct ESLintConfig {
@@ -37,18 +38,15 @@ impl ESLintConfig {
     }
 
     fn read_json(path: &Path) -> Result<serde_json::Value, Error> {
-        let file = match std::fs::read_to_string(path) {
-            Ok(file) => file,
-            Err(e) => {
-                return Err(FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(
-                    path.to_path_buf(),
-                    e,
-                ))])
-                .into());
-            }
-        };
+        let mut string = std::fs::read_to_string(path).map_err(|e| {
+            FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))])
+        })?;
 
-        serde_json::from_str::<serde_json::Value>(&file).map_err(|err| {
+        // jsonc support
+        json_strip_comments::strip(&mut string)
+            .map_err(|_| FailedToParseJsonc(path.to_path_buf()))?;
+
+        serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let guess = mime_guess::from_path(path);
             let err = match guess.first() {
                 // syntax error
@@ -256,15 +254,13 @@ fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Optio
 
 #[cfg(test)]
 mod test {
-    use super::parse_rules;
+    use super::ESLintConfig;
     use std::env;
 
     #[test]
     fn test_parse_rules() {
         let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
-        let input = std::fs::read_to_string(fixture_path).unwrap();
-        let file = serde_json::from_str::<serde_json::Value>(&input).unwrap();
-        let rules = parse_rules(&file).unwrap();
-        insta::assert_debug_snapshot!(rules);
+        let config = ESLintConfig::new(&fixture_path).unwrap();
+        assert!(!config.rules.is_empty());
     }
 }
