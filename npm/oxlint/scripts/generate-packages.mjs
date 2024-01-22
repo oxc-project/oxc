@@ -57,7 +57,7 @@ function generateNativePackage(target) {
 
   // Copy the binary
   const ext = platform === "win32" ? ".exe" : "";
-  const binarySource = resolve(REPO_ROOT, `${BIN_NAME}-${platform}-${arch}${ext}`);
+  const binarySource = resolve(REPO_ROOT, `${BIN_NAME}-${target}${ext}`);
   const binaryTarget = resolve(packageRoot, `${BIN_NAME}${ext}`);
 
   console.log(`Copy binary ${binaryTarget}`);
