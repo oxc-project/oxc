@@ -4,8 +4,8 @@ use std::rc::Rc;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_semantic::ScopeId;
 use oxc_span::{Atom, Span};
+use oxc_syntax::identifier::is_identifier_part;
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_syntax::unicode_id_start::is_id_continue;
 // use regex::Regex;
 
 use crate::context::TransformerCtx;
@@ -162,7 +162,7 @@ fn create_valid_identifier(
     // }
 
     let id = Atom::from(
-        atom.chars().map(|c| if is_id_continue(c) { c } else { '-' }).collect::<String>(),
+        atom.chars().map(|c| if is_identifier_part(c) { c } else { '-' }).collect::<String>(),
     );
 
     let id = if id == "" {
