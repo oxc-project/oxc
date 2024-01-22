@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// <Item config={staticConfig} />
     /// ```
     NoNewObjectAsProp,
-    restriction
+    correctness
 );
 
 impl Rule for NoNewObjectAsProp {
@@ -113,5 +113,7 @@ fn test() {
         r"<Item config={this.props.config || (this.props.default ? this.props.default : {})} />",
     ];
 
-    Tester::new(NoNewObjectAsProp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewObjectAsProp::NAME, pass, fail)
+        .with_react_perf_plugin(true)
+        .test_and_snapshot();
 }

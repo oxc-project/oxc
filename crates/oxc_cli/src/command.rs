@@ -93,6 +93,10 @@ pub struct EnablePlugins {
     /// Enable the Next.js plugin and detect Next.js problems
     #[bpaf(switch, hide_usage)]
     pub nextjs_plugin: bool,
+
+    /// Enable the React performance plugin and detect rendering performance problems
+    #[bpaf(switch, hide_usage)]
+    pub react_perf_plugin: bool,
 }
 
 #[derive(Debug, Clone, Bpaf)]
