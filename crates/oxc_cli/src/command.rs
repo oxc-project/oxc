@@ -3,7 +3,7 @@ use oxc_linter::AllowWarnDeny;
 use std::{ffi::OsString, path::PathBuf};
 
 #[derive(Debug, Clone, Bpaf)]
-#[bpaf(options)]
+#[bpaf(options, version)]
 pub enum CliCommand {
     /// Lint this repository
     #[bpaf(command)]
@@ -37,7 +37,7 @@ impl CliCommand {
 // <https://docs.rs/bpaf/latest/bpaf/struct.OptionParser.html#method.descr>
 /// Linter for the JavaScript Oxidation Compiler
 #[derive(Debug, Clone, Bpaf)]
-#[bpaf(options)]
+#[bpaf(options, version)]
 pub struct LintCommand {
     #[bpaf(external(lint_options))]
     pub lint_options: LintOptions,
@@ -51,7 +51,7 @@ impl LintCommand {
 
 /// Formatter for the JavaScript Oxidation Compiler
 #[derive(Debug, Clone, Bpaf)]
-#[bpaf(options)]
+#[bpaf(options, version)]
 pub struct FormatCommand {
     #[bpaf(external(format_options))]
     pub format_options: FormatOptions,

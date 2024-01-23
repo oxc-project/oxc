@@ -1386,7 +1386,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cli"
-version = "0.0.0"
+version = "0.5.0"
 dependencies = [
  "bpaf",
  "glob",
