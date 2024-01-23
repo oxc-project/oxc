@@ -19,14 +19,14 @@
     },
     {
       "groupName": "website",
-      "includePaths": ["website/*"],
+      "matchFileNames": ["website/package.json"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
     },
     {
       "groupName": "vscode",
-      "includePaths": ["editors/vscode/*"],
+      "matchFileNames": ["editors/vscode/package.json"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
