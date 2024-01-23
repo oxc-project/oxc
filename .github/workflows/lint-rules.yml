@@ -27,3 +27,5 @@ jobs:
 
       - name: Update eslint
         run: cargo run -p lint_rules eslint --update
+      - name: Update @typescript-eslint
+        run: cargo run -p lint_rules typescript --update
