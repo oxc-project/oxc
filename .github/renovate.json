@@ -30,6 +30,12 @@
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
+    },
+    {
+      "groupName": "off",
+      "matchFileNames": ["napi/*/package.json", "npm/*/package.json"],
+      "matchManagers": ["npm"],
+      "enabled": false
     }
   ]
 }
