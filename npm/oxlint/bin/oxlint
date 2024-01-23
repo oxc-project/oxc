@@ -1,22 +1,114 @@
 #!/usr/bin/env node
-const { platform, arch, env, version, release } = process;
 
-const PLATFORMS = {
-  win32: {
-    x64: "@oxlint/win32-x64/oxlint.exe",
-    arm64: "@oxlint/win32-arm64/oxlint.exe",
-  },
-  darwin: {
-    x64: "@oxlint/darwin-x64/oxlint",
-    arm64: "@oxlint/darwin-arm64/oxlint",
-  },
-  linux: {
-    x64: "@oxlint/linux-x64/oxlint",
-    arm64: "@oxlint/linux-arm64/oxlint",
-  },
+const isMusl = () => {
+  let musl = false;
+  if (process.platform === "linux") {
+    musl = isMuslFromFilesystem();
+    if (musl === null) {
+      musl = isMuslFromReport();
+    }
+    if (musl === null) {
+      musl = isMuslFromChildProcess();
+    }
+  }
+  return musl;
 };
 
-const binPath = PLATFORMS?.[platform]?.[arch];
+const isFileMusl = (f) => f.includes("libc.musl-") || f.includes("ld-musl-");
+
+const isMuslFromFilesystem = () => {
+  const { readFileSync } = require("fs");
+  try {
+    return readFileSync("/usr/bin/ldd", "utf-8").includes("musl");
+  } catch {
+    return null;
+  }
+};
+
+const isMuslFromReport = () => {
+  const report =
+    typeof process.report.getReport === "function"
+      ? process.report.getReport()
+      : null;
+  if (!report) {
+    return null;
+  }
+  if (report.header && report.header.glibcVersionRuntime) {
+    return false;
+  }
+  if (Array.isArray(report.sharedObjects)) {
+    if (report.sharedObjects.some(isFileMusl)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const isMuslFromChildProcess = () => {
+  try {
+    return require("child_process")
+      .execSync("ldd --version", { encoding: "utf8" })
+      .includes("musl");
+  } catch (e) {
+    // If we reach this case, we don't know if the system is musl or not, so is better to just fallback to false
+    return false;
+  }
+};
+
+const { platform, arch, env, version, release } = process;
+
+let binPath;
+
+switch (platform) {
+  case "win32": {
+    switch (arch) {
+      case "x64": {
+        binPath = "@oxlint/win32-x64/oxlint.exe";
+        break;
+      }
+      case "arm64": {
+        binPath = "@oxlint/win32-arm64/oxlint.exe";
+        break;
+      }
+    }
+    break;
+  }
+  case "darwin": {
+    switch (arch) {
+      case "x64": {
+        binPath = "@oxlint/darwin-x64/oxlint";
+        break;
+      }
+      case "arm64": {
+        binPath = "@oxlint/darwin-arm64/oxlint";
+        break;
+      }
+    }
+    break;
+  }
+  case "linux": {
+    switch (arch) {
+      case "x64": {
+        if (isMusl()) {
+          binPath = "@oxlint/linux-x64-musl/oxlint";
+        } else {
+          binPath = "@oxlint/linux-x64-gnu/oxlint";
+        }
+        break;
+      }
+      case "arm64": {
+        if (isMusl()) {
+          binPath = "@oxlint/linux-arm64-musl/oxlint";
+        } else {
+          binPath = "@oxlint/linux-arm64-gnu/oxlint";
+        }
+        break;
+      }
+    }
+    break;
+  }
+}
+
 if (binPath) {
   const result = require("child_process").spawnSync(
     require.resolve(binPath),
@@ -30,7 +122,7 @@ if (binPath) {
         JS_RUNTIME_NAME: release.name,
         NODE_PACKAGE_MANAGER: detectPackageManager(),
       },
-    }
+    },
   );
 
   if (result.error) {
@@ -41,7 +133,7 @@ if (binPath) {
 } else {
   console.error(
     "The oxlint CLI package doesn't ship with prebuilt binaries for your platform yet. " +
-    "You can create an issue at https://github.com/oxc-project/oxc/issues for support."
+      "You can create an issue at https://github.com/oxc-project/oxc/issues for support.",
   );
   process.exitCode = 1;
 }
@@ -64,4 +156,3 @@ function detectPackageManager() {
 
   return userAgent.split(" ")[0];
 }
-
