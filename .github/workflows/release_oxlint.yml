@@ -121,21 +121,18 @@ jobs:
 
   publish:
     name: Publish
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
-    needs:
-      - build
-    env:
-      version: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download Artifacts
@@ -176,8 +173,30 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          name: oxlint v${{ env.version }}
-          tag_name: oxlint_v${{ env.version }}
+          name: oxlint v${{ needs.check.outputs.version }}
+          tag_name: oxlint_v${{ needs.check.outputs.version }}
           draft: true
           files: oxlint-*
           fail_on_unmatched_files: true
+
+      - name: wait 3 minutes for smoke test
+        shell: bash
+        run: sleep 180s
+
+  smoke:
+    needs: publish
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+          - os: macos-latest
+    name: Smoke Test ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Test
+        shell: bash
+        run: |
+          touch test.js
+          npx oxlint@${{ needs.check.outputs.version }} ./test.js
+          exit 0

@@ -85,6 +85,7 @@ function writeManifest() {
   fs.writeFileSync(manifestPath, content);
 }
 
+// NOTE: Must update npm/oxlint/bin/oxlint
 const TARGETS = [
   "win32-x64",
   "win32-arm64",
