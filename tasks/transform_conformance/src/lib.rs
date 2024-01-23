@@ -89,6 +89,8 @@ const CASES: &[&str] = &[
     "babel-plugin-transform-typescript",
     // React
     "babel-plugin-transform-react-jsx",
+    // Proposal
+    "babel-plugin-proposal-decorators",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
