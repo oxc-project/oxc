@@ -162,7 +162,7 @@ fn create_valid_identifier(
     // }
 
     let id = Atom::from(
-        atom.chars().map(|c| if is_identifier_part(c) { c } else { '-' }).collect::<String>(),
+        atom.chars().map(|c| if is_identifier_part(c) { c } else { '_' }).collect::<String>(),
     );
 
     let id = if id == "" {
