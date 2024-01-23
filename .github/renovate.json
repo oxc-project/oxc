@@ -5,20 +5,30 @@
   ],
   "packageRules": [
     {
+      "groupName": "github-actions",
       "matchManagers": ["github-actions"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
     },
     {
+      "groupName": "cargo",
       "matchManagers": ["cargo"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
     },
     {
+      "groupName": "website",
+      "includePaths": ["website/**"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
-      "assignees": ["@Boshen"],
-      "includePaths": ["website/**"]
+      "assignees": ["@Boshen"]
+    },
+    {
+      "groupName": "vscode",
+      "includePaths": ["editors/vscode/**"],
+      "matchManagers": ["npm"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"]
     }
   ]
 }
