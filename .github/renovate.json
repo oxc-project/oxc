@@ -15,7 +15,7 @@
       "matchManagers": ["cargo"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"],
-      "ignoreDeps": ["textwrap"]
+      "ignoreDeps": ["textwrap", "owo-colors", "syn"]
     },
     {
       "groupName": "website",
