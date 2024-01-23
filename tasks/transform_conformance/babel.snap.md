@@ -1,4 +1,4 @@
-Passed: 325/1369
+Passed: 326/1369
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -911,7 +911,7 @@ Passed: 325/1369
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
 
-# babel-plugin-proposal-decorators (1/190)
+# babel-plugin-proposal-decorators (2/190)
 * 2018-09-transformation/async-generator-method/input.js
 * 2018-09-transformation/class-decorators-yield-await/input.js
 * 2021-12-accessors/context-name/input.js
@@ -1097,7 +1097,6 @@ Passed: 325/1369
 * legacy-decl-to-expression/class-decorators/input.mjs
 * legacy-decl-to-expression/method-decorators/input.mjs
 * legacy-decl-to-expression/no-decorators/input.mjs
-* legacy-regression/10264/input.mjs
 * legacy-regression/7030/input.js
 * legacy-regression/8041/input.mjs
 * legacy-regression/8559/input.mjs
