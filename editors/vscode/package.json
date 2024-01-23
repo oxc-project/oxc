@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -110,7 +110,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.19.3",
-    "@types/vscode": "1.85.0",
+    "@types/vscode": "1.80.0",
     "@vscode/vsce": "^2.22.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.19.8",
