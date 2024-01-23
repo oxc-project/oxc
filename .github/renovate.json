@@ -1,5 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "ignorePaths": [
+    "crates/oxc_linter/fixtures/**"
+  ],
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
@@ -10,6 +13,12 @@
       "matchManagers": ["cargo"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"],
+      "includePaths": ["website/**"]
     }
   ]
 }
