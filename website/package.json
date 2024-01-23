@@ -19,7 +19,7 @@
     "@codemirror/lint": "^6.4.2",
     "@codemirror/state": "^6.2.1",
     "@codemirror/view": "^6.21.0",
-    "@ddietr/codemirror-themes": "1.4.1",
+    "@ddietr/codemirror-themes": "1.4.2",
     "@lezer/json": "^1.0.1",
     "@replit/codemirror-vscode-keymap": "^6.0.2",
     "codemirror": "^6.0.1",
