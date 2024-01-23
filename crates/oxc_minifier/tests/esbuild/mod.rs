@@ -173,100 +173,12 @@ fn nullish() {
 
 #[test]
 #[ignore]
-fn string() {
-    test("let x = ''", "let x = \"\";");
-    test("let x = '\\b'", "let x = \"\\b\";");
-    test("let x = '\\f'", "let x = \"\\f\";");
-    test("let x = '\t'", "let x = \"\t\";");
-    test("let x = '\\v'", "let x = \"\\v\";");
-    test("let x = '\\n'", "let x = \"\\n\";");
-    test("let x = '\\''", "let x = \"'\";");
-    test("let x = '\\\"'", "let x = '\"';");
-    test("let x = '\\'\"'", "let x = `'\"`;");
-    test("let x = '\\\\'", "let x = \"\\\\\";");
-    test("let x = '\x00'", "let x = \"\\0\";");
-    test("let x = '\x00!'", "let x = \"\\0!\";");
-    test("let x = '\x001'", "let x = \"\\x001\";");
-    test("let x = '\\0'", "let x = \"\\0\";");
-    test("let x = '\\0!'", "let x = \"\\0!\";");
-    test("let x = '\x07'", "let x = \"\\x07\";");
-    test("let x = '\x07!'", "let x = \"\\x07!\";");
-    test("let x = '\x071'", "let x = \"\\x071\";");
-    test("let x = '\\7'", "let x = \"\\x07\";");
-    test("let x = '\\7!'", "let x = \"\\x07!\";");
-    test("let x = '\\01'", "let x = \"\x01\";");
-    test("let x = '\x10'", "let x = \"\x10\";");
-    test("let x = '\\x10'", "let x = \"\x10\";");
-    test("let x = '\x1B'", "let x = \"\\x1B\";");
-    test("let x = '\\x1B'", "let x = \"\\x1B\";");
-    test("let x = '\\uABCD'", "let x = \"\\uABCD\";");
-    test("let x = '\\uABCD'", "let x = \"\\uABCD\";");
-    test("let x = '\\U000123AB'", "let x = \"\\U000123AB\";");
-    test("let x = '\\u{123AB}'", "let x = \"\\U000123AB\";");
-    test("let x = '\\uD808\\uDFAB'", "let x = \"\\U000123AB\";");
-    test("let x = '\\uD808'", "let x = \"\\uD808\";");
-    test("let x = '\\uD808X'", "let x = \"\\uD808X\";");
-    test("let x = '\\uDFAB'", "let x = \"\\uDFAB\";");
-    test("let x = '\\uDFABX'", "let x = \"\\uDFABX\";");
-
-    test("let x = '\\x80'", "let x = \"\\U00000080\";");
-    test("let x = '\\xFF'", "let x = \"\\U000000FF\";");
-    test(
-        "let x = '\\xF0\\x9F\\x8D\\x95'",
-        "let x = \"\\U000000F0\\U0000009F\\U0000008D\\U00000095\"",
-    );
-    test("let x = '\\uD801\\uDC02\\uDC03\\uD804'", "let x = \"\\U00010402\\uDC03\\uD804\";");
-}
-
-#[test]
-#[ignore]
 fn template() {
-    test("let x = `\\0`", "let x = `\\0`;");
-    test("let x = `\\x01`", "let x = `\x01`;");
-    test("let x = `\\0${0}`", "let x = `\\0${0}`;");
-    test("let x = `\\x01${0}`", "let x = `\x01${0}`;");
-    test("let x = `${0}\\0`", "let x = `${0}\\0`;");
-    test("let x = `${0}\\x01`", "let x = `${0}\x01`;");
-    test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;");
-    test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;");
-
-    test("let x = String.raw`\\1`", "let x = String.raw`\\1`;");
-    test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;");
-    test("let x = String.raw`\\1${0}`", "let x = String.raw`\\1${0}`;");
-    test("let x = String.raw`\\x01${0}`", "let x = String.raw`\\x01${0}`;");
-    test("let x = String.raw`${0}\\1`", "let x = String.raw`${0}\\1`;");
-    test("let x = String.raw`${0}\\x01`", "let x = String.raw`${0}\\x01`;");
-    test("let x = String.raw`${0}\\1${1}`", "let x = String.raw`${0}\\1${1}`;");
-    test("let x = String.raw`${0}\\x01${1}`", "let x = String.raw`${0}\\x01${1}`;");
-
-    test("let x = `${y}`", "let x = `${y}`;");
-    test("let x = `$(y)`", "let x = `$(y)`;");
-    test("let x = `{y}$`", "let x = `{y}$`;");
-    test("let x = `$}y{`", "let x = `$}y{`;");
-    test("let x = `\\${y}`", "let x = `\\${y}`;");
-    test("let x = `$\\{y}`", "let x = `\\${y}`;");
-
-    test("await tag`x`", "await tag`x`;");
-    test("await (tag`x`)", "await tag`x`;");
-    test("(await tag)`x`", "(await tag)`x`;");
-
-    test("await tag`${x}`", "await tag`${x}`;");
-    test("await (tag`${x}`)", "await tag`${x}`;");
-    test("(await tag)`${x}`", "(await tag)`${x}`;");
-
-    test("new tag`x`", "new tag`x`();");
-    test("new (tag`x`)", "new tag`x`();");
-    test("new tag()`x`", "new tag()`x`;");
-    test("(new tag)`x`", "new tag()`x`;");
     test("new tag`x`", "new tag`x`;;");
     test("new (tag`x`)", "new tag`x`;;");
     test("new tag()`x`", "new tag()`x`;;");
     test("(new tag)`x`", "new tag()`x`;;");
 
-    test("new tag`${x}`", "new tag`${x}`();");
-    test("new (tag`${x}`)", "new tag`${x}`();");
-    test("new tag()`${x}`", "new tag()`${x}`;");
-    test("(new tag)`${x}`", "new tag()`${x}`;");
     test("new tag`${x}`", "new tag`${x}`;;");
     test("new (tag`${x}`)", "new tag`${x}`;;");
     test("new tag()`${x}`", "new tag()`${x}`;;");

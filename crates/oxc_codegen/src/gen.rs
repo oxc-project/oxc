@@ -1075,10 +1075,79 @@ impl<const MINIFY: bool> Gen<MINIFY> for RegExpLiteral {
     }
 }
 
-fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
-    p.print(b'\'');
+fn choose_quote(s: &str) -> char {
+    let mut single_cost = 0;
+    let mut double_cost = 0;
     for c in s.chars() {
         match c {
+            '\'' => single_cost += 1,
+            '"' => double_cost += 1,
+            _ => {}
+        }
+    }
+
+    if single_cost > double_cost {
+        '"'
+    } else {
+        '\''
+    }
+}
+
+fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
+    let quote = choose_quote(s);
+    p.print(quote as u8);
+    let mut chars = s.chars();
+
+    while let Some(c) = chars.next() {
+        match c {
+            '\x00' => {
+                if chars.clone().next().is_some_and(|next| next.is_ascii_digit()) {
+                    p.print_str(b"\\x00");
+                } else {
+                    p.print_str(b"\\0");
+                }
+            }
+            '\x07' => {
+                p.print_str(b"\\x07");
+            }
+            // \b
+            '\u{8}' => {
+                p.print_str(b"\\b");
+            }
+            // \v
+            '\u{b}' => {
+                p.print_str(b"\\v");
+            }
+            // \f
+            '\u{c}' => {
+                p.print_str(b"\\f");
+            }
+            '\n' => {
+                p.print_str(b"\\n");
+            }
+            '\r' => {
+                p.print_str(b"\\r");
+            }
+            '\x1B' => {
+                p.print_str(b"\\x1B");
+            }
+            '\\' => {
+                p.print_str(b"\\\\");
+            }
+            '\'' => {
+                if quote == '\'' {
+                    p.print_str(b"\\'");
+                } else {
+                    p.print_str(b"'");
+                }
+            }
+            '\"' => {
+                if quote == '"' {
+                    p.print_str(b"\\\"");
+                } else {
+                    p.print_str(b"\"");
+                }
+            }
             // Allow `U+2028` and `U+2029` in string literals
             // <https://tc39.es/proposal-json-superset>
             // <https://github.com/tc39/proposal-json-superset>
@@ -1090,7 +1159,7 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
             _ => p.print_str(c.escape_default().to_string().as_bytes()),
         }
     }
-    p.print(b'\'');
+    p.print(quote as u8);
 }
 
 impl<const MINIFY: bool> Gen<MINIFY> for StringLiteral {
