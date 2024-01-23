@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"]
+    },
+    {
+      "matchManagers": ["cargo"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"]
+    }
+  ]
+}
