@@ -84,13 +84,13 @@ oxc_tasks_common    = { path = "tasks/common" }
 oxc_language_server = { path = "crates/oxc_language_server" }
 
 assert-unchecked          = { version = "0.1.2" }
-bpaf                      = { version = "0.9.8" }
-bitflags                  = { version = "2.4.1" }
+bpaf                      = { version = "0.9.9" }
+bitflags                  = { version = "2.4.2" }
 bumpalo                   = { version = "3.14.0" }
 compact_str               = { version = "0.7.1" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
-crossbeam-channel         = { version = "0.5.10" }
+crossbeam-channel         = { version = "0.5.11" }
 dashmap                   = { version = "5.5.3" }
 env_logger                = { version = "0.11.0", default-features = false, features = ["auto-color", "humantime"] }
 flate2                    = { version = "1.0.28" }
@@ -105,17 +105,17 @@ num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.17" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.76" }
+proc-macro2               = { version = "1.0.78" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.35" }
-rayon                     = { version = "1.8.0" }
-regex                     = { version = "1.10.2" }
+rayon                     = { version = "1.8.1" }
+regex                     = { version = "1.10.3" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "1.0.0" }
 ropey                     = { version = "1.6.1" }
 serde                     = { version = "1.0.195" }
 serde_json                = { version = "1.0.111" }
-syn                       = { version = "=1" }
+syn                       = { version = "=1.0.109" }
 thiserror                 = { version = "1.0.56" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
