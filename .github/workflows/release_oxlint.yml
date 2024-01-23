@@ -190,13 +190,16 @@ jobs:
         include:
           - os: windows-latest
           - os: ubuntu-latest
+          - os: ubuntu-latest
+            container: node:18-alpine # musl
           - os: macos-latest
-    name: Smoke Test ${{ matrix.os }}
+    name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     steps:
       - name: Test
-        shell: bash
+        shell: sh
         run: |
           touch test.js
+          ldd --version || true
           npx oxlint@${{ needs.check.outputs.version }} ./test.js
-          exit 0
