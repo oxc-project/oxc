@@ -10,34 +10,34 @@
     "wasm-build": "wasm-pack build --out-dir ../../npm/wasm-web --target web --release --scope oxc ../crates/oxc_wasm"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.9.1",
-    "@codemirror/commands": "^6.3.0",
+    "@codemirror/autocomplete": "^6.12.0",
+    "@codemirror/commands": "^6.3.3",
     "@codemirror/lang-javascript": "^6.2.1",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-rust": "^6.0.1",
-    "@codemirror/language": "^6.9.1",
+    "@codemirror/language": "^6.10.0",
     "@codemirror/lint": "^6.4.2",
-    "@codemirror/state": "^6.2.1",
-    "@codemirror/view": "^6.21.0",
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.23.0",
     "@ddietr/codemirror-themes": "1.4.1",
-    "@lezer/json": "^1.0.1",
+    "@lezer/json": "^1.0.2",
     "@replit/codemirror-vscode-keymap": "^6.0.2",
     "codemirror": "^6.0.1",
     "lodash.throttle": "^4.1.1",
     "lzma": "^2.3.2"
   },
   "devDependencies": {
-    "@lezer/common": "^1.1.1",
+    "@lezer/common": "^1.2.1",
     "@oxc/wasm-web": "link:../npm/wasm-web",
-    "concurrently": "^8.2.1",
-    "vite": "^4.4.9",
-    "wasm-pack": "^0.11.1"
+    "concurrently": "^8.2.2",
+    "vite": "^5.0.0",
+    "wasm-pack": "^0.12.1"
   },
   "engines": {
     "node": ">=16.13.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.2.0",
+  "packageManager": "pnpm@8.14.2",
   "pnpm": {
     "patchedDependencies": {
       "@ddietr/codemirror-themes@1.4.1": "patches/@ddietr__codemirror-themes@1.4.1.patch"
