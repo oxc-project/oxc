@@ -14,7 +14,8 @@
       "groupName": "cargo",
       "matchManagers": ["cargo"],
       "schedule": ["on monday"],
-      "assignees": ["@Boshen"]
+      "assignees": ["@Boshen"],
+      "ignoreDeps": ["textwrap"]
     },
     {
       "groupName": "website",
