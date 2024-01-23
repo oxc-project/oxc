@@ -92,7 +92,6 @@ convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.11" }
 dashmap                   = { version = "5.5.3" }
-env_logger                = { version = "0.11.0", default-features = false, features = ["auto-color", "humantime"] }
 flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.30" }
 ignore                    = { version = "0.4.22" }
