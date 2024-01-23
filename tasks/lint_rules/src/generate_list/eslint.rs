@@ -8,7 +8,7 @@ use std::collections::HashSet;
 const ORIGINAL_JS_SOURCE_URL: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
 
-const UNSUPPORTED_RULES: &[&str] = &["yoda"];
+const UNSUPPORTED_RULES: &[&str] = &[];
 
 pub fn find_to_be_implemented_rules() -> Result<Vec<String>, String> {
     let source_text = super::fetch_plugin_rules_js_string(ORIGINAL_JS_SOURCE_URL)?;
