@@ -1,12 +1,15 @@
 use ureq::Response;
 
 const ESLINT_ISSUE_API_URL: &str = "https://api.github.com/repos/oxc-project/oxc/issues/2117";
-// TODO: Restore it after update text is fixed and unsupported list is updated
+const TYPESCRIPT_ISSUE_API_URL: &str = "https://api.github.com/repos/oxc-project/oxc/issues/2117";
+// TODO: Restore these after update text is fixed and unsupported list is updated
 // const ESLINT_ISSUE_API_URL: &str = "https://api.github.com/repos/oxc-project/oxc/issues/479";
+// const TYPESCRIPT_ISSUE_API_URL: &str = "https://api.github.com/repos/oxc-project/oxc/issues/503";
 
 pub fn run(plugin_name: &str, token: &str, comment_body: &str) -> Result<String, String> {
     let api_url = match plugin_name {
         "eslint" => ESLINT_ISSUE_API_URL,
+        "typescript" => TYPESCRIPT_ISSUE_API_URL,
         _ => return Err(format!("😢 Unknown plugin name: {plugin_name}")),
     };
 
