@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "lint_rules2",
+  "main": "./src/main.cjs",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "eslint": "latest",
+    "eslint-plugin-import": "latest",
+    "eslint-plugin-jest": "latest",
+    "eslint-plugin-jsdoc": "^48.0.2"
+  }
+}
