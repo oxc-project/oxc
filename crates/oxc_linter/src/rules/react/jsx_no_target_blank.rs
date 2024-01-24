@@ -95,7 +95,116 @@ declare_oxc_lint!(
     correctness
 );
 
+impl Rule for JsxNoTargetBlank {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
+            // TODO need to read from configuration: `settings: { linkComponents: ['Link'] }`
+            if !(self.links
+                && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "a" || tag_identifier.name.as_str() == "Link")
+                || self.forms
+                    && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "form"
+                    ))
+            {
+                return;
+            }
+
+            let mut target_blank_tuple = (false, "", false, false);
+            let mut rel_valid_tuple = (false, "", false, false);
+            let mut is_href_valid = true;
+            let mut has_href_value = false;
+            let mut is_warn_on_spread_attributes = false;
+
+            jsx_ele.attributes.iter().for_each(|attribute| match attribute {
+                JSXAttributeItem::Attribute(attribute) => {
+                    if let JSXAttributeName::Identifier(identifier) = &attribute.deref().name {
+                        if identifier.name.as_str() == "target" {
+                            if let Some(val) = attribute.deref().value.as_ref() {
+                                target_blank_tuple = check_target(val);
+                            }
+                        } else if identifier.name.as_str() == "href"
+                            || identifier.name.as_str() == "to"
+                            || identifier.name.as_str() == "action"
+                        {
+                            if let Some(val) = attribute.value.as_ref() {
+                                has_href_value = true;
+                                is_href_valid = check_href(val, &self.enforce_dynamic_links);
+                            }
+                        } else if identifier.name.as_str() == "rel" {
+                            if let Some(val) = attribute.value.as_ref() {
+                                rel_valid_tuple = check_rel(val, self.allow_referrer);
+                            }
+                        };
+                    }
+                }
+                JSXAttributeItem::SpreadAttribute(_) => {
+                    if self.warn_on_spread_attributes {
+                        is_warn_on_spread_attributes = true;
+                        target_blank_tuple = (false, "", false, false);
+                        rel_valid_tuple = (false, "", false, false);
+                        is_href_valid = false;
+                        has_href_value = true;
+                    };
+                }
+            });
+
+            if is_warn_on_spread_attributes {
+                if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
+                    return;
+                }
+                self.diagnostic(jsx_ele.span, ctx);
+                return;
+            }
+
+            if !is_href_valid {
+                if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1 {
+                    if (target_blank_tuple.2 && !rel_valid_tuple.2)
+                        || (target_blank_tuple.3 && !rel_valid_tuple.3)
+                    {
+                        self.diagnostic(jsx_ele.span, ctx);
+                    }
+                    return;
+                }
+
+                if target_blank_tuple.0 && !rel_valid_tuple.0 {
+                    self.diagnostic(jsx_ele.span, ctx);
+                }
+            }
+        }
+    }
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
+
+        Self {
+            enforce_dynamic_links: value
+                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
+                .map_or(EnforceDynamicLinksEnum::Always, |str| {
+                    if str == "always" {
+                        EnforceDynamicLinksEnum::Always
+                    } else {
+                        EnforceDynamicLinksEnum::Never
+                    }
+                }),
+
+            warn_on_spread_attributes: value
+                .and_then(|val| {
+                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
+                })
+                .unwrap_or(false),
+            links: value
+                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+            forms: value
+                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
+                .unwrap_or(false),
+            allow_referrer: value
+                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
+                .unwrap_or(false),
+        }
+    }
+}
+
 fn check_is_external_link(link: &Atom) -> bool {
+    // TODO It may hurt performance. replace Regex with something else more efficient
     lazy_static! {
         static ref CTL_PAT: Regex = Regex::new(r"(?:\w+:|\/\/)",).unwrap();
     }
@@ -247,113 +356,6 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
             }
         }
         _ => default,
-    }
-}
-
-impl Rule for JsxNoTargetBlank {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
-            if !(self.links
-                && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "a" || tag_identifier.name.as_str() == "Link")
-                || self.forms
-                    && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "form"
-                    ))
-            {
-                return;
-            }
-
-            let mut target_blank_tuple = (false, "", false, false);
-            let mut rel_valid_tuple = (false, "", false, false);
-            let mut is_href_valid = true;
-            let mut has_href_value = false;
-            let mut is_warn_on_spread_attributes = false;
-
-            jsx_ele.attributes.iter().for_each(|attribute| match attribute {
-                JSXAttributeItem::Attribute(attribute) => {
-                    if let JSXAttributeName::Identifier(identifier) = &attribute.deref().name {
-                        if identifier.name.as_str() == "target" {
-                            if let Some(val) = attribute.deref().value.as_ref() {
-                                target_blank_tuple = check_target(val);
-                            }
-                        } else if identifier.name.as_str() == "href"
-                            || identifier.name.as_str() == "to"
-                            || identifier.name.as_str() == "action"
-                        {
-                            if let Some(val) = attribute.value.as_ref() {
-                                has_href_value = true;
-                                is_href_valid = check_href(val, &self.enforce_dynamic_links);
-                            }
-                        } else if identifier.name.as_str() == "rel" {
-                            if let Some(val) = attribute.value.as_ref() {
-                                rel_valid_tuple = check_rel(val, self.allow_referrer);
-                            }
-                        };
-                    }
-                }
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    if self.warn_on_spread_attributes {
-                        is_warn_on_spread_attributes = true;
-                        target_blank_tuple = (false, "", false, false);
-                        rel_valid_tuple = (false, "", false, false);
-                        is_href_valid = false;
-                        has_href_value = true;
-                    };
-                }
-            });
-
-            if is_warn_on_spread_attributes {
-                if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
-                    return;
-                }
-                self.diagnostic(jsx_ele.span, ctx);
-                return;
-            }
-
-            if !is_href_valid {
-                if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1 {
-                    if (target_blank_tuple.2 && !rel_valid_tuple.2)
-                        || (target_blank_tuple.3 && !rel_valid_tuple.3)
-                    {
-                        self.diagnostic(jsx_ele.span, ctx);
-                    }
-                    return;
-                }
-
-                if target_blank_tuple.0 && !rel_valid_tuple.0 {
-                    self.diagnostic(jsx_ele.span, ctx);
-                }
-            }
-        }
-    }
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
-
-        Self {
-            enforce_dynamic_links: value
-                .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
-                .map_or(EnforceDynamicLinksEnum::Always, |str| {
-                    if str == "always" {
-                        EnforceDynamicLinksEnum::Always
-                    } else {
-                        EnforceDynamicLinksEnum::Never
-                    }
-                }),
-
-            warn_on_spread_attributes: value
-                .and_then(|val| {
-                    val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
-                })
-                .unwrap_or(false),
-            links: value
-                .and_then(|val| val.get("links").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
-            forms: value
-                .and_then(|val| val.get("forms").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-            allow_referrer: value
-                .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
-                .unwrap_or(false),
-        }
     }
 }
 
