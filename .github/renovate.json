@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "ignorePaths": [
+    "crates/oxc_linter/fixtures/**"
+  ],
+  "packageRules": [
+    {
+      "groupName": "github-actions",
+      "matchManagers": ["github-actions"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"]
+    },
+    {
+      "groupName": "cargo",
+      "matchManagers": ["cargo"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"],
+      "ignoreDeps": ["textwrap", "owo-colors", "syn"]
+    },
+    {
+      "groupName": "website",
+      "matchFileNames": ["website/package.json"],
+      "matchManagers": ["npm"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"]
+    },
+    {
+      "groupName": "vscode",
+      "matchFileNames": ["editors/vscode/package.json"],
+      "matchManagers": ["npm"],
+      "schedule": ["on monday"],
+      "assignees": ["@Boshen"],
+      "ignoreDeps": ["@types/vscode"]
+    },
+    {
+      "groupName": "off",
+      "matchFileNames": ["napi/*/package.json", "npm/*/package.json"],
+      "matchManagers": ["npm"],
+      "enabled": false
+    }
+  ]
+}

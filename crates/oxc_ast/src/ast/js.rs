@@ -897,6 +897,15 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+impl<'a> ArrayAssignmentTarget<'a> {
+    pub fn new_with_elements(
+        span: Span,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+    ) -> Self {
+        Self { span, elements, rest: None, trailing_comma: None }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectAssignmentTarget<'a> {
@@ -1443,6 +1452,12 @@ pub struct BindingPattern<'a> {
     pub optional: bool,
 }
 
+impl<'a> BindingPattern<'a> {
+    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
+        Self { kind, type_annotation: None, optional: false }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
@@ -1484,7 +1499,7 @@ pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, BindingProperty<'a>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> ObjectPattern<'a> {
@@ -1514,7 +1529,7 @@ pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> ArrayPattern<'a> {
@@ -1529,7 +1544,7 @@ impl<'a> ArrayPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct RestElement<'a> {
+pub struct BindingRestElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: BindingPattern<'a>,
@@ -1615,7 +1630,7 @@ pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
-    pub rest: Option<Box<'a, RestElement<'a>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> FormalParameters<'a> {
@@ -1646,6 +1661,12 @@ pub enum FormalParameterKind {
     ArrowFormalParameters,
     /// Part of TypeScript type signatures
     Signature,
+}
+
+impl FormalParameterKind {
+    pub fn is_signature(&self) -> bool {
+        matches!(self, Self::Signature)
+    }
 }
 
 impl<'a> FormalParameters<'a> {
@@ -2148,6 +2169,12 @@ pub struct ExportSpecifier {
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
     pub export_kind: ImportOrExportKind, // `export type *`
+}
+
+impl ExportSpecifier {
+    pub fn new(span: Span, local: ModuleExportName, exported: ModuleExportName) -> Self {
+        Self { span, local, exported, export_kind: ImportOrExportKind::Value }
+    }
 }
 
 #[derive(Debug, Hash)]

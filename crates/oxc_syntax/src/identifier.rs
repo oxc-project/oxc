@@ -63,39 +63,56 @@ pub fn is_line_terminator(c: char) -> bool {
     is_regular_line_terminator(c) || is_irregular_line_terminator(c)
 }
 
-const T: bool = true;
-const F: bool = false;
+const XX: bool = true;
+const __: bool = false;
 
 #[repr(C, align(64))]
 pub struct Align64<T>(pub(crate) T);
 
-// This contains `$` (36) and `_` (95)
-pub const ASCII_START: Align64<[bool; 128]> = Align64([
-    F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
-    F, F, F, F, T, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
-    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, T,
-    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F,
+// `a`-`z`, `A`-`Z`, `$` (0x24), `_` (0x5F)
+#[rustfmt::skip]
+pub static ASCII_START: Align64<[bool; 128]> = Align64([
+//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
+    __, __, __, __, XX, __, __, __, __, __, __, __, __, __, __, __, // 2
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
+    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 4
+    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, XX, // 5
+    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 6
+    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, // 7
 ]);
 
-// This contains `$` (36)
-pub const ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
-    F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
-    F, F, F, F, T, F, F, F, F, F, F, F, F, F, F, F, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F, F,
-    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, T,
-    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F,
+// `ASCII_START` + `0`-`9`
+#[rustfmt::skip]
+pub static ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
+//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
+    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
+    __, __, __, __, XX, __, __, __, __, __, __, __, __, __, __, __, // 2
+    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, __, // 3
+    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 4
+    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, XX, // 5
+    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 6
+    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, // 7
 ]);
+
+/// Section 12.7 Detect `IdentifierStartChar`
+#[inline]
+pub fn is_identifier_start(c: char) -> bool {
+    if c.is_ascii() {
+        return is_identifier_start_ascii(c);
+    }
+    is_identifier_start_unicode(c)
+}
 
 #[inline]
 pub fn is_identifier_start_ascii(c: char) -> bool {
     ASCII_START.0[c as usize]
 }
 
-/// Section 12.7 Detect `IdentifierStartChar`
 #[inline]
-pub fn is_identifier_start_all(c: char) -> bool {
-    if c.is_ascii() {
-        return is_identifier_start_ascii(c);
-    }
+pub fn is_identifier_start_unicode(c: char) -> bool {
     is_id_start_unicode(c)
 }
 
@@ -104,12 +121,22 @@ pub fn is_identifier_start_all(c: char) -> bool {
 #[inline]
 pub fn is_identifier_part(c: char) -> bool {
     if c.is_ascii() {
-        return ASCII_CONTINUE.0[c as usize];
+        return is_identifier_part_ascii(c);
     }
+    is_identifier_part_unicode(c)
+}
+
+#[inline]
+pub fn is_identifier_part_ascii(c: char) -> bool {
+    ASCII_CONTINUE.0[c as usize]
+}
+
+#[inline]
+pub fn is_identifier_part_unicode(c: char) -> bool {
     is_id_continue_unicode(c) || c == ZWNJ || c == ZWJ
 }
 
 pub fn is_identifier_name(name: &str) -> bool {
     let mut chars = name.chars();
-    chars.next().is_some_and(is_identifier_start_all) && chars.all(is_identifier_part)
+    chars.next().is_some_and(is_identifier_start) && chars.all(is_identifier_part)
 }

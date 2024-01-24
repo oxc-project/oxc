@@ -86,7 +86,6 @@ impl<'a> AstBuilder<'a> {
     ) -> AssignmentTarget<'a> {
         let ident = IdentifierReference::new(Span::default(), "".into());
         let dummy = self.simple_assignment_target_identifier(ident);
-        let dummy = AssignmentTarget::SimpleAssignmentTarget(dummy);
         mem::replace(target, dummy)
     }
 
@@ -442,18 +441,31 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn array_assignment_target(
+        &self,
+        array: ArrayAssignmentTarget<'a>,
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(
+            self.alloc(array),
+        ))
+    }
+
     pub fn simple_assignment_target_identifier(
         &self,
         ident: IdentifierReference,
-    ) -> SimpleAssignmentTarget<'a> {
-        SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident))
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::SimpleAssignmentTarget(
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident)),
+        )
     }
 
     pub fn simple_assignment_target_member_expression(
         &self,
         expr: MemberExpression<'a>,
-    ) -> SimpleAssignmentTarget<'a> {
-        SimpleAssignmentTarget::MemberAssignmentTarget(self.alloc(expr))
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(
+            self.alloc(expr),
+        ))
     }
 
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
@@ -731,7 +743,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: FormalParameterKind,
         items: Vec<'a, FormalParameter<'a>>,
-        rest: Option<Box<'a, RestElement<'a>>>,
+        rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
         self.alloc(FormalParameters { span, kind, items, rest })
     }
@@ -938,7 +950,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         properties: Vec<'a, BindingProperty<'a>>,
-        rest: Option<Box<'a, RestElement<'a>>>,
+        rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
         BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties, rest }))
     }
@@ -966,7 +978,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         elements: Vec<'a, Option<BindingPattern<'a>>>,
-        rest: Option<Box<'a, RestElement<'a>>>,
+        rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
         BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern { span, elements, rest }))
     }
@@ -989,8 +1001,8 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         argument: BindingPattern<'a>,
-    ) -> Box<'a, RestElement<'a>> {
-        self.alloc(RestElement { span, argument })
+    ) -> Box<'a, BindingRestElement<'a>> {
+        self.alloc(BindingRestElement { span, argument })
     }
 
     pub fn property_key_identifier(&self, ident: IdentifierName) -> PropertyKey<'a> {
