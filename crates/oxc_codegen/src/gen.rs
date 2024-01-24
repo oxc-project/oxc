@@ -95,7 +95,10 @@ impl<const MINIFY: bool> Gen<MINIFY> for Directive {
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/main/packages/babel-generator/src/generators/base.ts#L64
+        let quote = choose_quote(self.directive.as_str());
+        p.print(quote as u8);
         p.print_str(self.directive.as_str().to_string().as_bytes());
+        p.print(quote as u8);
         p.print_semicolon();
     }
 }
