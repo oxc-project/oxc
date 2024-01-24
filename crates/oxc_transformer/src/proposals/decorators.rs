@@ -224,12 +224,10 @@ impl<'a> Decorators<'a> {
 
         {
             // insert _classDecs = decorators;
-            let left = AssignmentTarget::SimpleAssignmentTarget(
-                self.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                    SPAN,
-                    class_decs_name.clone(),
-                )),
-            );
+            let left = self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                SPAN,
+                class_decs_name.clone(),
+            ));
 
             let right =
                 self.ast.array_expression(
@@ -296,19 +294,15 @@ impl<'a> Decorators<'a> {
 
             let mut elements = self.ast.new_vec();
             elements.push(Some(AssignmentTargetMaybeDefault::AssignmentTarget(
-                AssignmentTarget::SimpleAssignmentTarget(
-                    self.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                        SPAN, class_name,
-                    )),
-                ),
+                self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                    SPAN, class_name,
+                )),
             )));
             elements.push(Some(AssignmentTargetMaybeDefault::AssignmentTarget(
-                AssignmentTarget::SimpleAssignmentTarget(
-                    self.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                        SPAN,
-                        init_class_name.clone(),
-                    )),
-                ),
+                self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                    SPAN,
+                    init_class_name.clone(),
+                )),
             )));
             let left = self
                 .ast
@@ -364,9 +358,7 @@ impl<'a> Decorators<'a> {
             self.top_statements
                 .push(Statement::Declaration(Declaration::VariableDeclaration(decl)));
 
-            let left = AssignmentTarget::SimpleAssignmentTarget(
-                self.ast.simple_assignment_target_identifier(class_identifier.clone()),
-            );
+            let left = self.ast.simple_assignment_target_identifier(class_identifier.clone());
             let right = self.ast.class_expression(self.ast.copy(class));
             let new_expr =
                 self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);

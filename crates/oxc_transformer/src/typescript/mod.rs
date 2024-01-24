@@ -390,9 +390,7 @@ impl<'a> TypeScript<'a> {
 
                 self.ast.computed_member(SPAN, obj, expr, false)
             };
-            let left = AssignmentTarget::SimpleAssignmentTarget(
-                self.ast.simple_assignment_target_member_expression(member_expr),
-            );
+            let left = self.ast.simple_assignment_target_member_expression(member_expr);
             let mut expr =
                 self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, init);
 
@@ -405,9 +403,7 @@ impl<'a> TypeScript<'a> {
                     ));
                     self.ast.computed_member(SPAN, obj, expr, false)
                 };
-                let left = AssignmentTarget::SimpleAssignmentTarget(
-                    self.ast.simple_assignment_target_member_expression(member_expr),
-                );
+                let left = self.ast.simple_assignment_target_member_expression(member_expr);
                 let right = self
                     .ast
                     .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
@@ -741,12 +737,10 @@ impl<'a> TypeScript<'a> {
 
         let arguments = {
             let right = {
-                let left = AssignmentTarget::SimpleAssignmentTarget(
-                    self.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                        SPAN,
-                        name.clone(),
-                    )),
-                );
+                let left = self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                    SPAN,
+                    name.clone(),
+                ));
                 let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
                 self.ast.parenthesized_expression(
                     SPAN,
