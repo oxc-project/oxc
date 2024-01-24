@@ -93,6 +93,10 @@ pub struct EnablePlugins {
     /// Enable the Next.js plugin and detect Next.js problems
     #[bpaf(switch, hide_usage)]
     pub nextjs_plugin: bool,
+
+    /// Enable the React performance plugin and detect rendering performance problems
+    #[bpaf(switch, hide_usage)]
+    pub react_perf_plugin: bool,
 }
 
 #[derive(Debug, Clone, Bpaf)]
@@ -125,9 +129,19 @@ pub struct LintOptions {
     pub config: Option<PathBuf>,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many)]
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
 }
+
+fn validate_paths(paths: &Vec<PathBuf>) -> bool {
+    if paths.is_empty() {
+        true
+    } else {
+        paths.iter().all(|p| p.components().next() != Some(std::path::Component::ParentDir))
+    }
+}
+
+const PATHS_ERROR_MESSAGE: &str = "PATH cannot start with \"..\"";
 
 // This is formatted according to
 // <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
@@ -329,6 +343,19 @@ mod lint_options {
             options.paths,
             [PathBuf::from("foo"), PathBuf::from("bar"), PathBuf::from("baz")]
         );
+    }
+
+    #[test]
+    fn no_parent_path() {
+        match lint_command().run_inner(&["../parent_dir"]) {
+            Ok(_) => panic!("Should not allow parent dir"),
+            Err(err) => match err {
+                bpaf::ParseFailure::Stderr(doc) => {
+                    assert_eq!("`../parent_dir`: PATH cannot start with \"..\"", format!("{doc}"));
+                }
+                _ => unreachable!(),
+            },
+        }
     }
 
     #[test]

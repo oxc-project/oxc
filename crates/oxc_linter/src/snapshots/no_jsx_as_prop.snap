@@ -1,0 +1,33 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_jsx_as_prop
+---
+  ⚠ eslint-plugin-react-perf(no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[no_jsx_as_prop.tsx:1:1]
+ 1 │ <Item jsx={<SubItem />} />
+   ·            ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[no_jsx_as_prop.tsx:1:1]
+ 1 │ <Item jsx={this.props.jsx || <SubItem />} />
+   ·                              ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[no_jsx_as_prop.tsx:1:1]
+ 1 │ <Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />
+   ·                                              ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(no-jsx-as-prop): JSX attribute values should not contain other JSX.
+   ╭─[no_jsx_as_prop.tsx:1:1]
+ 1 │ <Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />
+   ·                                                                             ───────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+

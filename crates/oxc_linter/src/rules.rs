@@ -12,6 +12,7 @@ mod import {
     pub mod named;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
 }
@@ -162,6 +163,13 @@ mod react {
     pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
+}
+
+mod react_perf {
+    pub mod no_jsx_as_prop;
+    pub mod no_new_array_as_prop;
+    pub mod no_new_function_as_props;
+    pub mod no_new_object_as_prop;
 }
 
 mod unicorn {
@@ -510,8 +518,13 @@ oxc_macros::declare_all_lint_rules! {
     react::no_is_mounted,
     react::no_unknown_property,
     react::require_render_return,
+    react_perf::no_jsx_as_prop,
+    react_perf::no_new_array_as_prop,
+    react_perf::no_new_function_as_props,
+    react_perf::no_new_object_as_prop,
     import::default,
     import::no_named_as_default_member,
+    import::no_named_as_default,
     import::named,
     import::no_cycle,
     import::no_self_import,

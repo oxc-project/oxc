@@ -5,18 +5,20 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use std::collections::HashSet;
 
-pub const ORIGINAL_JS_SOURCE_URL: &str =
+const ORIGINAL_JS_SOURCE_URL: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/packages/js/src/configs/eslint-all.js";
 
-const UNSUPPORTED_RULES: &[&str] = &["yoda"];
+const UNSUPPORTED_RULES: &[&str] = &[];
 
-pub fn find_to_be_implemented_rules(source_text: &str) -> Result<Vec<String>, String> {
+pub fn find_to_be_implemented_rules() -> Result<Vec<String>, String> {
+    let source_text = super::fetch_plugin_rules_js_string(ORIGINAL_JS_SOURCE_URL)?;
+
     let allocator = Allocator::default();
     let source_type = SourceType::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     let program = allocator.alloc(ret.program);
-    let semantic_ret = SemanticBuilder::new(source_text, source_type).build(program);
+    let semantic_ret = SemanticBuilder::new(&source_text, source_type).build(program);
 
     let mut rules = vec![];
     let unsupported_rules = UNSUPPORTED_RULES.iter().collect::<HashSet<_>>();
