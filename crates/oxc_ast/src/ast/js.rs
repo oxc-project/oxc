@@ -2162,6 +2162,12 @@ pub struct ExportSpecifier {
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
+impl ExportSpecifier {
+    pub fn new(span: Span, local: ModuleExportName, exported: ModuleExportName) -> Self {
+        Self { span, local, exported, export_kind: ImportOrExportKind::Value }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
