@@ -140,12 +140,7 @@ impl<'a> ExponentiationOperator<'a> {
                         )
                     }
                 };
-                (
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        self.ast.simple_assignment_target_member_expression(reference),
-                    ),
-                    uid,
-                )
+                (self.ast.simple_assignment_target_member_expression(reference), uid)
             }
             _ => return None,
         };
@@ -231,7 +226,6 @@ impl<'a> ExponentiationOperator<'a> {
         let ident = self.create_new_var(&expr);
         // Add new reference `_name = name` to nodes
         let target = self.ast.simple_assignment_target_identifier(ident.clone());
-        let target = AssignmentTarget::SimpleAssignmentTarget(target);
         let op = AssignmentOperator::Assign;
         nodes.push(self.ast.assignment_expression(Span::default(), op, target, expr));
         self.ast.identifier_reference_expression(ident)

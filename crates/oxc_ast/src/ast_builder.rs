@@ -86,7 +86,6 @@ impl<'a> AstBuilder<'a> {
     ) -> AssignmentTarget<'a> {
         let ident = IdentifierReference::new(Span::default(), "".into());
         let dummy = self.simple_assignment_target_identifier(ident);
-        let dummy = AssignmentTarget::SimpleAssignmentTarget(dummy);
         mem::replace(target, dummy)
     }
 
@@ -454,15 +453,19 @@ impl<'a> AstBuilder<'a> {
     pub fn simple_assignment_target_identifier(
         &self,
         ident: IdentifierReference,
-    ) -> SimpleAssignmentTarget<'a> {
-        SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident))
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::SimpleAssignmentTarget(
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident)),
+        )
     }
 
     pub fn simple_assignment_target_member_expression(
         &self,
         expr: MemberExpression<'a>,
-    ) -> SimpleAssignmentTarget<'a> {
-        SimpleAssignmentTarget::MemberAssignmentTarget(self.alloc(expr))
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(
+            self.alloc(expr),
+        ))
     }
 
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {

@@ -63,7 +63,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         //               ^ left_expr
 
         let left_expr: Expression<'a>;
-        let assign_target: SimpleAssignmentTarget<'a>;
+        let assign_target: AssignmentTarget<'_>;
 
         // TODO: refactor this block, add tests, cover private identifier
         match &assignment_expr.left {
@@ -81,9 +81,8 @@ impl<'a> LogicalAssignmentOperators<'a> {
                             if let Some(ident) = self.maybe_generate_memoised(&static_expr.object) {
                                 let right = self.ast.copy(&static_expr.object);
                                 let mut expr = self.ast.copy(static_expr);
-                                let target = AssignmentTarget::SimpleAssignmentTarget(
-                                    self.ast.simple_assignment_target_identifier(ident.clone()),
-                                );
+                                let target =
+                                    self.ast.simple_assignment_target_identifier(ident.clone());
                                 expr.object =
                                     self.ast.assignment_expression(SPAN, op, target, right);
                                 left_expr = self.ast.member_expression(
@@ -102,9 +101,10 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                         self.ast.copy(static_expr),
                                     ),
                                 );
-                                assign_target = SimpleAssignmentTarget::MemberAssignmentTarget(
-                                    self.ast.copy(member_expr),
-                                );
+                                assign_target =
+                                    self.ast.simple_assignment_target_member_expression(
+                                        self.ast.copy(member_expr),
+                                    );
                             };
                         }
                         // `a[b.y] &&= c;` ->
@@ -117,16 +117,13 @@ impl<'a> LogicalAssignmentOperators<'a> {
 
                                 let right = self.ast.copy(&computed_expr.object);
                                 let mut expr = self.ast.copy(computed_expr);
-                                let target = AssignmentTarget::SimpleAssignmentTarget(
-                                    self.ast.simple_assignment_target_identifier(ident.clone()),
-                                );
+                                let target =
+                                    self.ast.simple_assignment_target_identifier(ident.clone());
                                 expr.object =
                                     self.ast.assignment_expression(SPAN, op, target, right);
                                 if let Some(property_ident) = &property_ident {
-                                    let left = AssignmentTarget::SimpleAssignmentTarget(
-                                        self.ast.simple_assignment_target_identifier(
-                                            property_ident.clone(),
-                                        ),
+                                    let left = self.ast.simple_assignment_target_identifier(
+                                        property_ident.clone(),
                                     );
                                     let right = self.ast.copy(&computed_expr.expression);
                                     expr.expression =
@@ -159,10 +156,8 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                 // expr.object =
                                 // self.ast.assignment_expression(span, op, target, right);
                                 if let Some(property_ident) = &property_ident {
-                                    let left = AssignmentTarget::SimpleAssignmentTarget(
-                                        self.ast.simple_assignment_target_identifier(
-                                            property_ident.clone(),
-                                        ),
+                                    let left = self.ast.simple_assignment_target_identifier(
+                                        property_ident.clone(),
                                     );
                                     let right = self.ast.copy(&computed_expr.expression);
                                     expr.expression =
@@ -196,7 +191,6 @@ impl<'a> LogicalAssignmentOperators<'a> {
         };
 
         let assign_op = AssignmentOperator::Assign;
-        let assign_target = AssignmentTarget::SimpleAssignmentTarget(assign_target);
         let right = self.ast.move_expression(&mut assignment_expr.right);
         let right = self.ast.assignment_expression(SPAN, assign_op, assign_target, right);
 
