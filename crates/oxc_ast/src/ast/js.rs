@@ -11,12 +11,15 @@ use oxc_syntax::{
 };
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "wasm")]
+use tsify::Tsify;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(Tsify))]
 pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -41,6 +44,7 @@ impl<'a> Program<'a> {
 /// Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(Tsify))]
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
