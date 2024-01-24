@@ -1443,6 +1443,12 @@ pub struct BindingPattern<'a> {
     pub optional: bool,
 }
 
+impl<'a> BindingPattern<'a> {
+    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
+        Self { kind, type_annotation: None, optional: false }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {

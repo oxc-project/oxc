@@ -11,8 +11,8 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    ArrowFunctionsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions, TransformOptions,
-    TransformTarget, Transformer, TypescriptOptions,
+    ArrowFunctionsOptions, DecoratorsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions,
+    TransformOptions, TransformTarget, Transformer, TypescriptOptions,
 };
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -89,6 +89,9 @@ pub trait TestCase {
         TransformOptions {
             target: TransformTarget::ESNext,
             babel_8_breaking: options.babel_8_breaking,
+            decorators: options
+                .get_plugin("proposal-decorators")
+                .map(get_options::<DecoratorsOptions>),
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),

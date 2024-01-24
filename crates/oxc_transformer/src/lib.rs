@@ -16,6 +16,7 @@ mod es2021;
 mod es2022;
 mod es3;
 mod options;
+mod proposals;
 mod react_jsx;
 mod regexp;
 #[cfg(test)]
@@ -31,6 +32,7 @@ use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeFlags, Semantic};
 use oxc_span::SourceType;
+use proposals::Decorators;
 
 use crate::{
     context::TransformerCtx, es2015::*, es2016::ExponentiationOperator,
@@ -43,12 +45,14 @@ pub use crate::{
     es2015::ArrowFunctionsOptions,
     es2020::NullishCoalescingOperatorOptions,
     options::{TransformOptions, TransformTarget},
+    proposals::DecoratorsOptions,
     react_jsx::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption},
     typescript::TypescriptOptions,
 };
 
 pub struct Transformer<'a> {
     ctx: TransformerCtx<'a>,
+    decorators: Option<Decorators<'a>>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
@@ -90,6 +94,7 @@ impl<'a> Transformer<'a> {
 
         Self {
             ctx: ctx.clone(),
+            decorators: Decorators::new(Rc::clone(&ast), ctx.clone(), &options),
             // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false, &options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
@@ -164,7 +169,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.visit_statements(&mut program.body);
 
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
-
+        self.decorators.as_mut().map(|t| t.transform_program(program));
         self.leave_node(kind);
         self.leave_scope();
     }
@@ -202,6 +207,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
         self.visit_declaration_match(decl);
         self.typescript.as_mut().map(|t| t.transform_declaration(decl));
+        self.decorators.as_mut().map(|t| t.transform_declaration(decl));
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {

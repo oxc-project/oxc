@@ -2,7 +2,7 @@ use oxc_syntax::assumptions::CompilerAssumptions;
 
 use crate::{
     es2015::ArrowFunctionsOptions, es2020::NullishCoalescingOperatorOptions,
-    react_jsx::ReactJsxOptions, typescript::TypescriptOptions,
+    proposals::DecoratorsOptions, react_jsx::ReactJsxOptions, typescript::TypescriptOptions,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -35,6 +35,8 @@ pub struct TransformOptions {
     pub babel_8_breaking: Option<bool>,
     pub instanceof: bool,
     pub new_target: bool,
+    // Proposal
+    pub decorators: Option<DecoratorsOptions>,
 }
 
 /// See <https://www.typescriptlang.org/tsconfig#target>
