@@ -92,8 +92,10 @@ impl<const MINIFY: bool> Gen<MINIFY> for Hashbang {
 
 impl<const MINIFY: bool> Gen<MINIFY> for Directive {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        // Use the string value instead of the raw self.directive because it can cannot escaped values.
-        print_str(self.expression.value.as_str(), p);
+        // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
+        // So here should print original `directive` value, the `expression` value is escaped str.
+        // See https://github.com/babel/babel/blob/main/packages/babel-generator/src/generators/base.ts#L64
+        print_origin_str(self.directive.as_str(), p);
         p.print_semicolon();
     }
 }
@@ -1160,6 +1162,24 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
         }
     }
     p.print(quote as u8);
+}
+
+fn print_origin_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
+    p.print(b'\'');
+    for c in s.chars() {
+        match c {
+            // Allow `U+2028` and `U+2029` in string literals
+            // <https://tc39.es/proposal-json-superset>
+            // <https://github.com/tc39/proposal-json-superset>
+            LS => p.print_str(b"\\u2028"),
+            PS => p.print_str(b"\\u2029"),
+            '\u{a0}' => {
+                p.print_str(b"\\xA0");
+            }
+            _ => p.print_str(c.to_string().as_bytes()),
+        }
+    }
+    p.print(b'\'');
 }
 
 impl<const MINIFY: bool> Gen<MINIFY> for StringLiteral {

@@ -87,7 +87,7 @@ impl<'a> Format<'a> for Directive {
         let mut parts = p.vec();
         parts.push(Doc::Str(string::print_string(
             p,
-            self.expression.value.as_str(),
+            self.directive.as_str(),
             p.options.single_quote,
         )));
         if let Some(semi) = p.semi() {

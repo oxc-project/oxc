@@ -46,7 +46,7 @@ impl Rule for NoAsyncClientComponent {
         if program
             .directives
             .iter()
-            .any(|directive| directive.expression.value.as_str() == "use client")
+            .any(|directive| directive.directive.as_str() == "use client")
         {
             for node in &program.body {
                 let Statement::ModuleDeclaration(mod_decl) = &node else {
