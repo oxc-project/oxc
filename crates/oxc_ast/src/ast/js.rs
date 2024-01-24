@@ -897,6 +897,15 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+impl<'a> ArrayAssignmentTarget<'a> {
+    pub fn new_with_elements(
+        span: Span,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+    ) -> Self {
+        Self { span, elements, rest: None, trailing_comma: None }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectAssignmentTarget<'a> {

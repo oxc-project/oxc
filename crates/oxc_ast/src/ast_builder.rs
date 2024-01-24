@@ -442,6 +442,15 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn array_assignment_target(
+        &self,
+        array: ArrayAssignmentTarget<'a>,
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(
+            self.alloc(array),
+        ))
+    }
+
     pub fn simple_assignment_target_identifier(
         &self,
         ident: IdentifierReference,
