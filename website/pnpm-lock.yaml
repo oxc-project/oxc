@@ -33,8 +33,8 @@ dependencies:
     specifier: ^6.23.0
     version: 6.23.0
   '@ddietr/codemirror-themes':
-    specifier: 1.4.1
-    version: 1.4.1
+    specifier: ^1.4.2
+    version: 1.4.2
   '@lezer/json':
     specifier: ^1.0.2
     version: 1.0.2
@@ -165,8 +165,8 @@ packages:
       w3c-keyname: 2.2.8
     dev: false
 
-  /@ddietr/codemirror-themes@1.4.1:
-    resolution: {integrity: sha512-2exPoRk/VlJMIceQXLRHE6N+81JszN1mDO+exwakYvwfK4BhpyIYaKzN+uEsph0g1qLI0PdHXBI9Yqg5WxyKAw==}
+  /@ddietr/codemirror-themes@1.4.2:
+    resolution: {integrity: sha512-8U3H3lmtmSWLD5VRlt7jf2HW62URnwgPxjZZDYjBX5EtMpgZ2QnqiIYrNzdQPPjJngT9D43gls3+JlekCBmrfw==}
     dependencies:
       '@codemirror/language': 6.10.0
       '@codemirror/state': 6.4.0
