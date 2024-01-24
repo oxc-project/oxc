@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
-AST Parsed     : 19663/19663 (100.00%)
-Positive Passed: 19219/19663 (97.74%)
+AST Parsed     : 19665/19665 (100.00%)
+Positive Passed: 19220/19665 (97.74%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -130,12 +130,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 
 Expect to run correctly: "annexB/language/global-code/switch-dflt-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/directive-prologue/14.1-4-s.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/directive-prologue/14.1-5-s.js"
-But got a runtime error: Test262Error: Expected true but got false
 
 Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
 But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
