@@ -109,16 +109,16 @@
     "fmt:js": "prettier --write ./**/*.{js,ts,json}"
   },
   "devDependencies": {
-    "@types/node": "^18.19.3",
+    "@types/node": "^20.11.5",
     "@types/vscode": "1.80.0",
     "@vscode/vsce": "^2.22.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.19.8",
-    "prettier": "^3.1.1",
+    "esbuild": "^0.19.11",
+    "prettier": "^3.2.4",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "vscode-languageclient": "^8.1.0"
+    "vscode-languageclient": "^9.0.1"
   },
   "vsce": {
     "dependencies": false

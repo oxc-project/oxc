@@ -29,7 +29,8 @@
       "matchFileNames": ["editors/vscode/package.json"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
-      "assignees": ["@Boshen"]
+      "assignees": ["@Boshen"],
+      "ignoreDeps": ["@types/vscode"]
     },
     {
       "groupName": "off",
