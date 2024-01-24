@@ -14,6 +14,11 @@ use crate::{
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
+#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type IndexVec<I, T> = Array<T>;
+"#;
+
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.

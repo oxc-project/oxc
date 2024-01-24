@@ -147,7 +147,6 @@ impl fmt::Display for RegExp {
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
     pub struct RegExpFlags: u8 {
         const G = 1 << 0;
         const I = 1 << 1;
@@ -160,6 +159,20 @@ bitflags! {
         const V = 1 << 7;
     }
 }
+
+#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type RegExpFlags = {
+    G: 1,
+    I: 2,
+    M: 4,
+    S: 8,
+    U: 16,
+    Y: 32,
+    D: 64,
+    V: 128
+}; 
+"#;
 
 impl TryFrom<char> for RegExpFlags {
     type Error = char;
