@@ -10,6 +10,7 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
     #[cfg_attr(feature = "serde", derive(Serialize))]
+    #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
     pub struct ReferenceFlag: u8 {
         const None = 0;
         const Read = 1 << 0;

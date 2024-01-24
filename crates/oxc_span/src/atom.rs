@@ -11,6 +11,7 @@ use serde::Serialize;
 /// Newtype for [`CompactString`]
 #[derive(Clone, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct Atom(CompactString);
 
 const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";

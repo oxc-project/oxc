@@ -11,6 +11,7 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize))]
+    #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
     pub struct SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter

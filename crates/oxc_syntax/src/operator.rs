@@ -5,6 +5,7 @@ use crate::precedence::{GetPrecedence, Precedence};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum AssignmentOperator {
     #[cfg_attr(feature = "serde", serde(rename = "="))]
     Assign,
@@ -83,6 +84,7 @@ impl AssignmentOperator {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum BinaryOperator {
     #[cfg_attr(feature = "serde", serde(rename = "=="))]
     Equality,
@@ -269,6 +271,7 @@ impl GetPrecedence for BinaryOperator {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum LogicalOperator {
     #[cfg_attr(feature = "serde", serde(rename = "||"))]
     Or,
@@ -300,6 +303,7 @@ impl GetPrecedence for LogicalOperator {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum UnaryOperator {
     #[cfg_attr(feature = "serde", serde(rename = "-"))]
     UnaryNegation,
@@ -345,6 +349,7 @@ impl UnaryOperator {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum UpdateOperator {
     #[cfg_attr(feature = "serde", serde(rename = "++"))]
     Increment,

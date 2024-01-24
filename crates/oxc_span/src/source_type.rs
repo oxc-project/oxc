@@ -6,6 +6,7 @@ use serde::Serialize;
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     language: Language,
@@ -24,6 +25,7 @@ pub struct SourceType {
 /// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum Language {
     JavaScript,
     #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -35,6 +37,7 @@ pub enum Language {
 /// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum ModuleKind {
     Script,
     Module,
@@ -43,6 +46,7 @@ pub enum ModuleKind {
 /// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum LanguageVariant {
     Standard,
     Jsx,
