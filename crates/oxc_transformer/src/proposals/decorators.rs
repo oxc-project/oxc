@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use oxc_allocator::Box;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
@@ -19,7 +19,10 @@ pub struct Decorators<'a> {
     _ctx: TransformerCtx<'a>,
     options: DecoratorsOptions,
     // Insert to the top of the program
-    top_statements: Vec<Statement<'a>>,
+    top_statements: Vec<'a, Statement<'a>>,
+    // Insert to the bottom of the program
+    bottom_statements: Vec<'a, Statement<'a>>,
+    class_name_uid: u32,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
@@ -48,23 +51,87 @@ impl<'a> Decorators<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
+        let top_statements = ast.new_vec();
+        let bottom_statements = ast.new_vec();
         options.decorators.map(|options| Self {
             ast,
             _ctx: ctx,
             options,
-            top_statements: Vec::new(),
+            top_statements,
+            bottom_statements,
+            class_name_uid: 0,
         })
+    }
+
+    pub fn get_class_name(&mut self) -> Atom {
+        self.class_name_uid += 1;
+        if self.class_name_uid == 1 {
+            return "_class".into();
+        }
+        Atom::from(format!("_class{}", self.class_name_uid))
     }
 
     pub fn transform_program(&mut self, program: &mut Program<'a>) {
         program.body.splice(0..0, self.top_statements.drain(..));
+        program.body.append(&mut self.bottom_statements);
     }
 
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+        if let Statement::ModuleDeclaration(decl) = stmt {
+            match &mut **decl {
+                ModuleDeclaration::ExportNamedDeclaration(export) => {
+                    export.declaration.as_mut().map_or_else(
+                        || (),
+                        |declaration| {
+                            self.transform_declaration(declaration);
+                        },
+                    );
+                }
+                ModuleDeclaration::ExportDefaultDeclaration(export) => {
+                    if let ExportDefaultDeclarationKind::ClassDeclaration(class) =
+                        &mut export.declaration
+                    {
+                        let class_name = class
+                            .id
+                            .clone()
+                            .map(|id| id.name)
+                            .or_else(|| Some(self.get_class_name()));
+
+                        *stmt = Statement::Declaration(
+                            self.transform_class_legacy(class, class_name.clone()),
+                        );
+                        self.bottom_statements.push(self.ast.module_declaration(
+                            ModuleDeclaration::ExportNamedDeclaration(
+                                self.ast.export_named_declaration(
+                                    SPAN,
+                                    None,
+                                    self.ast.new_vec_single(ExportSpecifier::new(
+                                        SPAN,
+                                        ModuleExportName::Identifier(IdentifierName::new(
+                                            SPAN,
+                                            class_name.unwrap(),
+                                        )),
+                                        ModuleExportName::Identifier(IdentifierName::new(
+                                            SPAN,
+                                            Atom::from("default"),
+                                        )),
+                                    )),
+                                    None,
+                                    ImportOrExportKind::Value,
+                                ),
+                            ),
+                        ));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         let new_decl = match decl {
             Declaration::ClassDeclaration(class) => {
                 if self.options.version.is_legacy() {
-                    Some(self.transform_class_legacy(class))
+                    Some(self.transform_class_legacy(class, None))
                 } else {
                     None
                 }
@@ -78,63 +145,72 @@ impl<'a> Decorators<'a> {
 
     pub fn transform_class_legacy(
         &mut self,
-        class: &mut Box<'a, oxc_ast::ast::Class<'a>>,
+        class: &mut Box<'a, Class<'a>>,
+        class_name: Option<Atom>,
     ) -> Declaration<'a> {
-        let class_identifier_name: Atom = "_class".into();
-        let class_identifier = IdentifierReference::new(SPAN, class_identifier_name.clone());
+        let class_binding_identifier = &class.id.clone().unwrap_or_else(|| {
+            BindingIdentifier::new(SPAN, class_name.unwrap_or_else(|| self.get_class_name()))
+        });
+        let class_name = BindingPattern::new_with_kind(
+            self.ast.binding_pattern_identifier(self.ast.copy(class_binding_identifier)),
+        );
 
-        let decl = self.ast.variable_declaration(
-            SPAN,
-            VariableDeclarationKind::Var,
-            self.ast.new_vec_single(self.ast.variable_declarator(
+        let init = {
+            let class_identifier_name: Atom = self.get_class_name();
+            let class_identifier = IdentifierReference::new(SPAN, class_identifier_name.clone());
+
+            let decl = self.ast.variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
-                BindingPattern::new_with_kind(self.ast.binding_pattern_identifier(
-                    BindingIdentifier::new(SPAN, class_identifier_name),
-                )),
-                None,
-                false,
-            )),
-            Modifiers::empty(),
-        );
-        self.top_statements.push(Statement::Declaration(Declaration::VariableDeclaration(decl)));
-
-        let left = AssignmentTarget::SimpleAssignmentTarget(
-            self.ast.simple_assignment_target_identifier(class_identifier.clone()),
-        );
-        let right = self.ast.class_expression(self.ast.copy(class));
-        let new_expr =
-            self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
-
-        let new_expr = class.decorators.drain(..).fold(new_expr, |new_expr, decorator| {
-            match &decorator.expression {
-                Expression::Identifier(identifier) => self.ast.call_expression(
+                self.ast.new_vec_single(self.ast.variable_declarator(
                     SPAN,
-                    self.ast.identifier_reference_expression(IdentifierReference::new(
-                        SPAN,
-                        identifier.name.clone(),
+                    VariableDeclarationKind::Var,
+                    BindingPattern::new_with_kind(self.ast.binding_pattern_identifier(
+                        BindingIdentifier::new(SPAN, class_identifier_name),
                     )),
-                    self.ast.new_vec_single(Argument::Expression(self.ast.copy(&new_expr))),
-                    false,
                     None,
-                ),
-                _ => new_expr,
-            }
-        });
+                    false,
+                )),
+                Modifiers::empty(),
+            );
+            self.top_statements
+                .push(Statement::Declaration(Declaration::VariableDeclaration(decl)));
 
-        let init = self.ast.logical_expression(
-            SPAN,
-            new_expr,
-            LogicalOperator::Or,
-            self.ast.identifier_reference_expression(class_identifier),
-        );
+            let left = AssignmentTarget::SimpleAssignmentTarget(
+                self.ast.simple_assignment_target_identifier(class_identifier.clone()),
+            );
+            let right = self.ast.class_expression(self.ast.copy(class));
+            let new_expr =
+                self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
+
+            let new_expr = class.decorators.drain(..).fold(new_expr, |new_expr, decorator| {
+                match &decorator.expression {
+                    Expression::Identifier(identifier) => self.ast.call_expression(
+                        SPAN,
+                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                            SPAN,
+                            identifier.name.clone(),
+                        )),
+                        self.ast.new_vec_single(Argument::Expression(self.ast.copy(&new_expr))),
+                        false,
+                        None,
+                    ),
+                    _ => new_expr,
+                }
+            });
+
+            self.ast.logical_expression(
+                SPAN,
+                new_expr,
+                LogicalOperator::Or,
+                self.ast.identifier_reference_expression(class_identifier),
+            )
+        };
 
         let declarator = self.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Let,
-            BindingPattern::new_with_kind(
-                self.ast.binding_pattern_identifier(self.ast.copy(&class.id.clone().unwrap())),
-            ),
+            class_name,
             Some(init),
             false,
         );

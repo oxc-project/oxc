@@ -201,6 +201,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.typescript.as_mut().map(|t| t.transform_statement(stmt));
+        self.decorators.as_mut().map(|t| t.transform_statement(stmt));
         self.visit_statement_match(stmt);
     }
 
