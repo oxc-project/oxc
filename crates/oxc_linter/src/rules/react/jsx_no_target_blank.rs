@@ -58,9 +58,9 @@ impl Default for JsxNoTargetBlank {
 impl JsxNoTargetBlank {
     fn diagnostic(&self, span: Span, ctx: &LintContext) {
         if self.allow_referrer {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoopener(span))
+            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoopener(span));
         } else {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoreferrer(span))
+            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoreferrer(span));
         }
     }
 }
@@ -128,14 +128,13 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = check_is_external_link(&str.value)
+            is_external_link = check_is_external_link(&str.value);
         }
-        JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
-            JSXExpression::Expression(expr) => {
-                match_href_expression(expr, &mut is_external_link, &mut is_dynamic_link)
+        JSXAttributeValue::ExpressionContainer(expr) => {
+            if let JSXExpression::Expression(expr) = &expr.expression {
+                match_href_expression(expr, &mut is_external_link, &mut is_dynamic_link);
             }
-            _ => {}
-        },
+        }
         _ => {}
     };
     if is_enforce_dynamic_links_never {
@@ -151,11 +150,11 @@ fn check_href(
     // wrong:
     // 1. <a target="_blank" href="https://test.com"></a>
     // 2. <a target="_blank" href={ dynamicLink }></a>
-    return !(is_external_link || is_dynamic_link);
+    !(is_external_link || is_dynamic_link)
 }
 
 fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
-    let mut splits = str.value.as_str().split(" ");
+    let mut splits = str.value.as_str().split(' ');
     if allow_referrer {
         return splits.any(|str| {
             if str == "noopener" {
@@ -167,7 +166,7 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
             false
         });
     }
-    return splits.any(|str| str.to_lowercase() == "noreferrer");
+    splits.any(|str| str.to_lowercase() == "noreferrer")
 }
 
 fn match_rel_expression<'a>(
@@ -176,9 +175,7 @@ fn match_rel_expression<'a>(
 ) -> (bool, &'a str, bool, bool) {
     let default = (false, "", false, false);
     match expr {
-        Expression::StringLiteral(str) => {
-            (check_rel_val(str.deref(), allow_referrer), "", false, false)
-        }
+        Expression::StringLiteral(str) => (check_rel_val(str, allow_referrer), "", false, false),
         Expression::ConditionalExpression(expr) => {
             let consequent = match_rel_expression(&expr.consequent, allow_referrer);
             let alternate = match_rel_expression(&expr.alternate, allow_referrer);
@@ -207,7 +204,7 @@ fn check_rel<'a>(
         }
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
             JSXExpression::Expression(expr) => match_rel_expression(expr, allow_referrer),
-            _ => default,
+            JSXExpression::EmptyExpression(_) => default,
         },
         _ => default,
     }
@@ -242,93 +239,90 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
         JSXAttributeValue::StringLiteral(str) => {
             (str.value.as_str().to_lowercase() == "_blank", "", false, false)
         }
-        JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
-            JSXExpression::Expression(expr) => match_target_expression(expr),
-            _ => default,
-        },
+        JSXAttributeValue::ExpressionContainer(expr) => {
+            if let JSXExpression::Expression(expr) = &expr.expression {
+                match_target_expression(expr)
+            } else {
+                default
+            }
+        }
         _ => default,
     }
 }
 
 impl Rule for JsxNoTargetBlank {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::JSXOpeningElement(jsx_ele) => {
-                if !(self.links
-                    && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "a" || tag_identifier.name.as_str() == "Link"))
-                    && !(self.forms
-                        && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "form"
-                        ))
-                {
-                    return;
-                }
+        if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
+            if !(self.links
+                && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "a" || tag_identifier.name.as_str() == "Link")
+                || self.forms
+                    && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "form"
+                    ))
+            {
+                return;
+            }
 
-                let mut target_blank_tuple = (false, "", false, false);
-                let mut rel_valid_tuple = (false, "", false, false);
-                let mut is_href_valid = true;
-                let mut has_href_value = false;
-                let mut is_warn_on_spread_attributes = false;
+            let mut target_blank_tuple = (false, "", false, false);
+            let mut rel_valid_tuple = (false, "", false, false);
+            let mut is_href_valid = true;
+            let mut has_href_value = false;
+            let mut is_warn_on_spread_attributes = false;
 
-                jsx_ele.attributes.iter().for_each(|attribute| match attribute {
-                    JSXAttributeItem::Attribute(attribute) => match &attribute.deref().name {
-                        JSXAttributeName::Identifier(identifier) => {
-                            if identifier.name.as_str() == "target" {
-                                attribute
-                                    .deref()
-                                    .value
-                                    .as_ref()
-                                    .map(|val| target_blank_tuple = check_target(val));
-                            } else if identifier.name.as_str() == "href"
-                                || identifier.name.as_str() == "to"
-                                || identifier.name.as_str() == "action"
-                            {
-                                attribute.value.as_ref().map(|val| {
-                                    has_href_value = true;
-                                    is_href_valid = check_href(val, &self.enforce_dynamic_links)
-                                });
-                            } else if identifier.name.as_str() == "rel" {
-                                attribute.value.as_ref().map(|val| {
-                                    rel_valid_tuple = check_rel(val, self.allow_referrer)
-                                });
-                            };
-                        }
-                        _ => {}
-                    },
-                    JSXAttributeItem::SpreadAttribute(_) => {
-                        if self.warn_on_spread_attributes {
-                            is_warn_on_spread_attributes = true;
-                            target_blank_tuple = (false, "", false, false);
-                            rel_valid_tuple = (false, "", false, false);
-                            is_href_valid = false;
-                            has_href_value = true;
+            jsx_ele.attributes.iter().for_each(|attribute| match attribute {
+                JSXAttributeItem::Attribute(attribute) => {
+                    if let JSXAttributeName::Identifier(identifier) = &attribute.deref().name {
+                        if identifier.name.as_str() == "target" {
+                            if let Some(val) = attribute.deref().value.as_ref() {
+                                target_blank_tuple = check_target(val);
+                            }
+                        } else if identifier.name.as_str() == "href"
+                            || identifier.name.as_str() == "to"
+                            || identifier.name.as_str() == "action"
+                        {
+                            if let Some(val) = attribute.value.as_ref() {
+                                has_href_value = true;
+                                is_href_valid = check_href(val, &self.enforce_dynamic_links);
+                            }
+                        } else if identifier.name.as_str() == "rel" {
+                            if let Some(val) = attribute.value.as_ref() {
+                                rel_valid_tuple = check_rel(val, self.allow_referrer);
+                            }
                         };
                     }
-                });
+                }
+                JSXAttributeItem::SpreadAttribute(_) => {
+                    if self.warn_on_spread_attributes {
+                        is_warn_on_spread_attributes = true;
+                        target_blank_tuple = (false, "", false, false);
+                        rel_valid_tuple = (false, "", false, false);
+                        is_href_valid = false;
+                        has_href_value = true;
+                    };
+                }
+            });
 
-                if is_warn_on_spread_attributes {
-                    if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
-                        return;
+            if is_warn_on_spread_attributes {
+                if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
+                    return;
+                }
+                self.diagnostic(jsx_ele.span, ctx);
+                return;
+            }
+
+            if !is_href_valid {
+                if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1 {
+                    if (target_blank_tuple.2 && !rel_valid_tuple.2)
+                        || (target_blank_tuple.3 && !rel_valid_tuple.3)
+                    {
+                        self.diagnostic(jsx_ele.span, ctx);
                     }
-                    self.diagnostic(jsx_ele.span, ctx);
                     return;
                 }
 
-                if !is_href_valid {
-                    if target_blank_tuple.1.len() > 0 && target_blank_tuple.1 == rel_valid_tuple.1 {
-                        if target_blank_tuple.2 && !rel_valid_tuple.2 {
-                            self.diagnostic(jsx_ele.span, ctx);
-                        } else if target_blank_tuple.3 && !rel_valid_tuple.3 {
-                            self.diagnostic(jsx_ele.span, ctx);
-                        }
-                        return;
-                    }
-
-                    if target_blank_tuple.0 && !rel_valid_tuple.0 {
-                        self.diagnostic(jsx_ele.span, ctx);
-                    }
+                if target_blank_tuple.0 && !rel_valid_tuple.0 {
+                    self.diagnostic(jsx_ele.span, ctx);
                 }
             }
-            _ => {}
         }
     }
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -337,14 +331,13 @@ impl Rule for JsxNoTargetBlank {
         Self {
             enforce_dynamic_links: value
                 .and_then(|val| val.get("enforceDynamicLinks").and_then(serde_json::Value::as_str))
-                .map(|str| {
+                .map_or(EnforceDynamicLinksEnum::Always, |str| {
                     if str == "always" {
                         EnforceDynamicLinksEnum::Always
                     } else {
                         EnforceDynamicLinksEnum::Never
                     }
-                })
-                .unwrap_or(EnforceDynamicLinksEnum::Always),
+                }),
 
             warn_on_spread_attributes: value
                 .and_then(|val| {
@@ -370,18 +363,18 @@ fn test() {
 
     let pass = vec![
         (r#"<a href="foobar"></a>"#, None),
-        (r#"<a randomTag></a>"#, None),
-        (r#"<a target />"#, None),
+        (r"<a randomTag></a>", None),
+        (r"<a target />", None),
         (r#"<a href="foobar" target="_blank" rel="noopener noreferrer"></a>"#, None),
         (r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#, None),
         (r#"<a href="foobar" target="_blank" rel={"noopener noreferrer"}></a>"#, None),
         (r#"<a href="foobar" target="_blank" rel={"noreferrer"}></a>"#, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noopener noreferrer"}></a>"#, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noreferrer"}></a>"#, None),
-        (r#"<a href={'foobar'} target={'_blank'} rel={'noopener noreferrer'}></a>"#, None),
-        (r#"<a href={'foobar'} target={'_blank'} rel={'noreferrer'}></a>"#, None),
-        (r#"<a href={`foobar`} target={`_blank`} rel={`noopener noreferrer`}></a>"#, None),
-        (r#"<a href={`foobar`} target={`_blank`} rel={`noreferrer`}></a>"#, None),
+        (r"<a href={'foobar'} target={'_blank'} rel={'noopener noreferrer'}></a>", None),
+        (r"<a href={'foobar'} target={'_blank'} rel={'noreferrer'}></a>", None),
+        (r"<a href={`foobar`} target={`_blank`} rel={`noopener noreferrer`}></a>", None),
+        (r"<a href={`foobar`} target={`_blank`} rel={`noreferrer`}></a>", None),
         (r#"<a target="_blank" {...spreadProps} rel="noopener noreferrer"></a>"#, None),
         (r#"<a target="_blank" {...spreadProps} rel="noreferrer"></a>"#, None),
         (
@@ -440,7 +433,7 @@ fn test() {
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
         ),
         (
-            r#"<a target={'_blank'} href={ dynamicLink }></a>"#,
+            r"<a target={'_blank'} href={ dynamicLink }></a>",
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
         ),
         (
@@ -463,7 +456,7 @@ fn test() {
             r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
         ),
-        (r#"<a target={3} />"#, None),
+        (r"<a target={3} />", None),
         (r#"<a href="some-link" {...otherProps} target="some-non-blank-target"></a>"#, None),
         (r#"<a href="some-link" target="some-non-blank-target" {...otherProps}></a>"#, None),
         (
@@ -516,8 +509,8 @@ fn test() {
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? "noopener noreferrer" : undefined} />"#,
             None,
         ),
-        (r#"<form action={action} />"#, Some(serde_json::json!([{ "forms": true }]))),
-        (r#"<form action={action} {...spread} />"#, Some(serde_json::json!([{ "forms": true }]))),
+        (r"<form action={action} />", Some(serde_json::json!([{ "forms": true }]))),
+        (r"<form action={action} {...spread} />", Some(serde_json::json!([{ "forms": true }]))),
     ];
 
     let fail = vec![
@@ -558,7 +551,7 @@ fn test() {
             Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
         ),
         (
-            r#"<a {...someObject}></a>"#,
+            r"<a {...someObject}></a>",
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
@@ -656,7 +649,7 @@ fn test() {
             Some(serde_json::json!([{ "forms": true }])),
         ),
         (
-            r#"<form action={action} {...spread} />"#,
+            r"<form action={action} {...spread} />",
             Some(serde_json::json!([{ "forms": true, "warnOnSpreadAttributes": true }])),
         ),
     ];
