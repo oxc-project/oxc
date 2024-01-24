@@ -105,8 +105,6 @@ impl<'a> Decorators<'a> {
                                     .map(|id| self.get_unique_name(&id.name))
                                     .or_else(|| Some(self.get_unique_name(&"class".into())));
 
-                                self.transform_class(class, class_name.clone());
-
                                 self.bottom_statements.push(self.ast.module_declaration(
                                     ModuleDeclaration::ExportNamedDeclaration(
                                         self.ast.export_named_declaration(
@@ -116,7 +114,7 @@ impl<'a> Decorators<'a> {
                                                 SPAN,
                                                 ModuleExportName::Identifier(IdentifierName::new(
                                                     SPAN,
-                                                    class_name.unwrap(),
+                                                    class_name.clone().unwrap(),
                                                 )),
                                                 ModuleExportName::Identifier(IdentifierName::new(
                                                     SPAN,
@@ -129,7 +127,9 @@ impl<'a> Decorators<'a> {
                                     ),
                                 ));
 
-                                return Some(Statement::Declaration(self.ast.copy(declaration)));
+                                return Some(Statement::Declaration(
+                                    self.transform_class(class, class_name),
+                                ));
                             }
                             None
                         },
@@ -145,7 +145,7 @@ impl<'a> Decorators<'a> {
                         let class_name = class
                             .id
                             .clone()
-                            .map(|id| id.name)
+                            .map(|id| self.get_unique_name(&id.name))
                             .or_else(|| Some(self.get_unique_name(&"class".into())));
 
                         self.bottom_statements.push(self.ast.module_declaration(
@@ -170,7 +170,7 @@ impl<'a> Decorators<'a> {
                             ),
                         ));
 
-                        Some(Statement::Declaration(self.transform_class_legacy(class, class_name)))
+                        Some(Statement::Declaration(self.transform_class(class, class_name)))
                     } else {
                         None
                     }
@@ -185,10 +185,10 @@ impl<'a> Decorators<'a> {
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         let new_decl = match decl {
             Declaration::ClassDeclaration(class) => {
-                if self.options.version.is_legacy() {
-                    Some(self.transform_class_legacy(class, None))
-                } else {
+                if class.decorators.is_empty() {
                     None
+                } else {
+                    Some(self.transform_class(class, None))
                 }
             }
             _ => None,
@@ -199,7 +199,14 @@ impl<'a> Decorators<'a> {
     }
 
     /// transform version: 2023-05
-    pub fn transform_class(&mut self, class: &mut Class<'a>, class_name: Option<Atom>) {
+    pub fn transform_class(
+        &mut self,
+        class: &mut Box<'a, Class<'a>>,
+        class_name: Option<Atom>,
+    ) -> Declaration<'a> {
+        if self.options.version.is_legacy() {
+            return self.transform_class_legacy(class, class_name);
+        }
         let class_name = class_name.unwrap_or_else(|| self.get_unique_name(&"class".into()));
 
         let class_decs_name = self.get_unique_name(&"classDecs".into());
@@ -327,6 +334,8 @@ impl<'a> Decorators<'a> {
             let static_block = self.ast.static_block(SPAN, statements);
             class.body.body.insert(1, static_block);
         }
+
+        Declaration::ClassDeclaration(self.ast.copy(class))
     }
 
     /// transform version: legacy
