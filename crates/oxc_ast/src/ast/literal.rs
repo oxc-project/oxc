@@ -14,6 +14,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BooleanLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -36,6 +37,7 @@ impl BooleanLiteral {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct NullLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -55,6 +57,7 @@ impl NullLiteral {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct NumberLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -106,6 +109,7 @@ impl<'a> Hash for NumberLiteral<'a> {
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -117,6 +121,7 @@ pub struct BigintLiteral {
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct RegExpLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -128,6 +133,7 @@ pub struct RegExpLiteral {
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct RegExp {
     pub pattern: Atom,
     pub flags: RegExpFlags,
@@ -205,10 +211,12 @@ impl fmt::Display for RegExpFlags {
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct EmptyObject;
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct StringLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
