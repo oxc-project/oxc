@@ -3,16 +3,20 @@ const { Linter } = require("eslint");
 // NOTICE!
 // Plugins do not provide their type definitions, and also `@types/*` do not exist!
 // Even worse, every plugin has slightly different types in detail...
+
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/src/index.js
 const {
   // @ts-expect-error: Module has no exported member
   rules: pluginJSDocAllRules,
   // @ts-expect-error: Module has no exported member
   configs: pluginJSDocConfigs,
 } = require("eslint-plugin-jsdoc");
+// https://github.com/import-js/eslint-plugin-import/blob/main/src/index.js
 const {
   rules: pluginImportAllRules,
   configs: pluginImportConfigs,
 } = require("eslint-plugin-import");
+// https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
 // All rules including depricated, recommended, etc.
