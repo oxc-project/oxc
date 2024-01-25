@@ -6,7 +6,12 @@ const {
   loadPluginUnicornRules,
   loadPluginJSDocRules,
   loadPluginImportRules,
+  loadPluginJSXA11yRules,
   loadPluginJestRules,
+  loadPluginReactRules,
+  loadPluginReactHooksRules,
+  loadPluginReactPerfRules,
+  loadPluginNextRules,
 } = require("./eslint-rules.cjs");
 const {
   createRuleEntries,
@@ -23,7 +28,12 @@ const ALL_TARGET_PLUGIN_NAMES = new Set([
   "unicorn",
   "jsdoc",
   "import",
+  "jsx-a11y",
   "jest",
+  "react",
+  "react-hooks",
+  "react-perf",
+  "nextjs",
 ]);
 
 const HELP = `
@@ -67,8 +77,12 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);
   loadPluginImportRules(linter);
+  loadPluginJSXA11yRules(linter);
   loadPluginJestRules(linter);
-  // TODO: more plugins
+  loadPluginReactRules(linter);
+  loadPluginReactHooksRules(linter);
+  loadPluginReactPerfRules(linter);
+  loadPluginNextRules(linter);
 
   //
   // Generate entry and update status

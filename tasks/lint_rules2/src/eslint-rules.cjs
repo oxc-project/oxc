@@ -5,8 +5,9 @@ const { Linter } = require("eslint");
 // Even worse, every plugin has slightly different types, different way of configuration in detail...
 //
 // So here, we need to list all rules while normalizing recommended and deprecated flags.
-// - rule.meta.docs.recommended
 // - rule.meta.deprecated
+// - rule.meta.docs.recommended
+// Some plugins have the recommended flag in rule itself, but some plugins have it in config.
 
 // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/index.ts
 const {
@@ -32,8 +33,26 @@ const {
   rules: pluginImportAllRules,
   configs: pluginImportConfigs,
 } = require("eslint-plugin-import");
+// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/index.js
+const {
+  rules: pluginJSXA11yAllRules,
+  configs: pluginJSXA11yConfigs,
+} = require("eslint-plugin-jsx-a11y");
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
+const { rules: pluginReactAllRules } = require("eslint-plugin-react");
+// https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.js
+const {
+  rules: pluginReactHooksAllRules,
+} = require("eslint-plugin-react-hooks");
+// https://github.com/cvazac/eslint-plugin-react-perf/blob/master/index.js
+const {
+  rules: pluginReactPerfAllRules,
+  configs: pluginReactPerfConfigs,
+} = require("eslint-plugin-react-perf");
+// https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
+const { rules: pluginNextAllRules } = require("@next/eslint-plugin-next");
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
@@ -117,12 +136,74 @@ exports.loadPluginImportRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
+exports.loadPluginJSXA11yRules = (linter) => {
+  const pluginJSXA11yRecommendedRules = new Map(
+    Object.entries(pluginJSXA11yConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginJSXA11yAllRules)) {
+    const prefixedName = `jsx-a11y/${name}`;
+
+    const recommendedValue = pluginJSXA11yRecommendedRules.get(prefixedName);
+    rule.meta.docs.recommended =
+      recommendedValue &&
+      // Type is `string | [string, opt]`
+      recommendedValue !== "off" &&
+      recommendedValue[0] !== "off";
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
 exports.loadPluginJestRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginJestAllRules)) {
     const prefixedName = `jest/${name}`;
 
     // Presented but type is `string | false`
     rule.meta.docs.recommended = typeof rule.meta.docs.recommended === "string";
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginReactAllRules)) {
+    const prefixedName = `react/${name}`;
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactHooksRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginReactHooksAllRules)) {
+    const prefixedName = `react-hooks/${name}`;
+
+    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactPerfRules = (linter) => {
+  const pluginReactPerfRecommendedRules = new Map(
+    Object.entries(pluginReactPerfConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginReactPerfAllRules)) {
+    const prefixedName = `react-perf/${name}`;
+
+    rule.meta.docs.recommended =
+      pluginReactPerfRecommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginNextRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginNextAllRules)) {
+    const prefixedName = `nextjs/${name}`;
 
     linter.defineRule(prefixedName, rule);
   }
