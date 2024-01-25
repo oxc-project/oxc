@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "lint_rules2",
+  "main": "./src/main.cjs",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "latest",
+    "eslint": "latest",
+    "eslint-plugin-import": "latest",
+    "eslint-plugin-jest": "latest",
+    "eslint-plugin-jsdoc": "latest",
+    "eslint-plugin-n": "latest",
+    "eslint-plugin-unicorn": "latest"
+  }
+}
