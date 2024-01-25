@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(no-new-function-as-props): JSX attribute values should not contain functions created in the same scope.")]
+#[error("eslint-plugin-react-perf(jsx-no-new-function-as-props): JSX attribute values should not contain functions created in the same scope.")]
 #[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
 struct NoNewFunctionAsPropsDiagnostic(#[label] pub Span);
 
