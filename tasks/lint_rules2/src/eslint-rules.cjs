@@ -5,8 +5,9 @@ const { Linter } = require("eslint");
 // Even worse, every plugin has slightly different types, different way of configuration in detail...
 //
 // So here, we need to list all rules while normalizing recommended and deprecated flags.
-// - rule.meta.docs.recommended
 // - rule.meta.deprecated
+// - rule.meta.docs.recommended
+// Some plugins have the recommended flag in rule itself, but some plugins have it in config.
 
 // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/index.ts
 const {
@@ -50,6 +51,8 @@ const {
   rules: pluginReactPerfAllRules,
   configs: pluginReactPerfConfigs,
 } = require("eslint-plugin-react-perf");
+// https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
+const { rules: pluginNextAllRules } = require("@next/eslint-plugin-next");
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
@@ -192,6 +195,15 @@ exports.loadPluginReactPerfRules = (linter) => {
 
     rule.meta.docs.recommended =
       pluginReactPerfRecommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginNextRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginNextAllRules)) {
+    const prefixedName = `nextjs/${name}`;
 
     linter.defineRule(prefixedName, rule);
   }

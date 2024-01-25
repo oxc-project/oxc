@@ -11,6 +11,7 @@ const {
   loadPluginReactRules,
   loadPluginReactHooksRules,
   loadPluginReactPerfRules,
+  loadPluginNextRules,
 } = require("./eslint-rules.cjs");
 const {
   createRuleEntries,
@@ -32,6 +33,7 @@ const ALL_TARGET_PLUGIN_NAMES = new Set([
   "react",
   "react-hooks",
   "react-perf",
+  "nextjs",
 ]);
 
 const HELP = `
@@ -80,7 +82,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   loadPluginReactRules(linter);
   loadPluginReactHooksRules(linter);
   loadPluginReactPerfRules(linter);
-  // TODO: more plugins
+  loadPluginNextRules(linter);
 
   //
   // Generate entry and update status
