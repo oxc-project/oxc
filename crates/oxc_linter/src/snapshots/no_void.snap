@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 150
+expression: no_void
+---
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ void 0
+   · ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ void 0
+   · ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ void 0
+   · ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ void(0)
+   · ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ var foo = void 0
+   ·           ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+  ⚠ eslint(no-void): Disallow `void` operators
+   ╭─[no_void.tsx:1:1]
+ 1 │ var foo = void 0
+   ·           ────
+   ╰────
+  help: Expected 'undefined' and instead saw 'void'.
+
+
