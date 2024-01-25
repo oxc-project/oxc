@@ -1,0 +1,28 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/if_else.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = "$return = <value>"]
+    3 [ label = "Unreachable()"]
+    4 [ label = "$return = <value>"]
+    5 [ label = "Unreachable()"]
+    6 [ label = ""]
+    7 [ label = "Unreachable()\n$return = <value>"]
+    8 [ label = "Unreachable()"]
+    9 [ label = ""]
+    0 -> 1 [ ]
+    2 -> 3 [ ]
+    4 -> 5 [ ]
+    6 -> 7 [ ]
+    3 -> 6 [ ]
+    1 -> 2 [ ]
+    1 -> 4 [ ]
+    5 -> 6 [ ]
+    7 -> 8 [ ]
+    0 -> 9 [ ]
+}
+

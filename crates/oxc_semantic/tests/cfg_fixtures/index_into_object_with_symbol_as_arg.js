@@ -1,0 +1,1 @@
+Reflect.apply({}[Symbol()], baz, [])

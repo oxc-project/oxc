@@ -1,0 +1,8 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/conditional_expression.js
+---
+bb0: {
+
+}
