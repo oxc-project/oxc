@@ -8,20 +8,20 @@ expression: prefer_called_with
  1 │ expect(fn).toBeCalled();
    ·            ──────────
    ╰────
-  help: Prefer "toBeCalled"With(/* expected args */)
+  help: Prefer toBeCalledWith(/* expected args */)
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:1]
  1 │ expect(fn).resolves.toBeCalled();
    ·                     ──────────
    ╰────
-  help: Prefer "toBeCalled"With(/* expected args */)
+  help: Prefer toBeCalledWith(/* expected args */)
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:1]
  1 │ expect(fn).toHaveBeenCalled();
    ·            ────────────────
    ╰────
-  help: Prefer "toHaveBeenCalled"With(/* expected args */)
+  help: Prefer toHaveBeenCalledWith(/* expected args */)
 
 

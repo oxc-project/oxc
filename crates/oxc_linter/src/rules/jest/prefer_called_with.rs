@@ -10,12 +10,17 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")]
-#[diagnostic(severity(warning), help("Prefer {0:?}With(/* expected args */)"))]
-struct PreferCalledWithDiagnostic(Atom, #[label] pub Span);
+enum PreferCalledWithDiagnostic {
+    #[error("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")]
+    #[diagnostic(severity(warning), help("Prefer toBeCalledWith(/* expected args */)"))]
+    UseToBeCalledWith(#[label] Span),
+    #[error("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")]
+    #[diagnostic(severity(warning), help("Prefer toHaveBeenCalledWith(/* expected args */)"))]
+    UseHaveBeenCalledWith(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferCalledWith;
@@ -79,9 +84,12 @@ impl PreferCalledWith {
 
         if let Some(matcher_property) = jest_fn_call.matcher() {
             if let Some(matcher_name) = matcher_property.name() {
-                if matcher_name == "toBeCalled" || matcher_name == "toHaveBeenCalled" {
-                    ctx.diagnostic(PreferCalledWithDiagnostic(
-                        Atom::from(matcher_name),
+                if matcher_name == "toBeCalled" {
+                    ctx.diagnostic(PreferCalledWithDiagnostic::UseToBeCalledWith(
+                        matcher_property.span,
+                    ));
+                } else if matcher_name == "toHaveBeenCalled" {
+                    ctx.diagnostic(PreferCalledWithDiagnostic::UseHaveBeenCalledWith(
                         matcher_property.span,
                     ));
                 }
