@@ -4,7 +4,7 @@ const { Linter } = require("eslint");
 // Plugins do not provide their type definitions, and also `@types/*` do not exist!
 // Even worse, every plugin has slightly different types, different way of configuration in detail...
 //
-// So here, we need to list all rules while normalizing recommended and depricated flags.
+// So here, we need to list all rules while normalizing recommended and deprecated flags.
 // - rule.meta.docs.recommended
 // - rule.meta.deprecated
 
@@ -35,7 +35,7 @@ const {
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
-// All rules(including depricated, recommended) are loaded initially.
+// All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
 
 /** @param {import("eslint").Linter} linter */
