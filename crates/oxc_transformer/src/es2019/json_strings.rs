@@ -37,7 +37,9 @@ impl JsonStrings {
     }
 
     #[allow(clippy::unused_self)]
-    // TODO here should mutate origin source string and print using origin source.
+    // TODO oxc_codegen currently prints json strings correctly, 
+    // but we need a way to turn off this behaviour from codegen 
+    // and do the transformation here.
     pub fn transform_string_literal(&mut self, _literal: &mut StringLiteral) {
         // let str = &self.ctx.semantic().source_text()[literal.span.start as usize + 1..literal.span.end as usize - 1];
         // if let Some(value) = Self::normalize_str(str) {
