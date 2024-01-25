@@ -8,7 +8,7 @@ use oxc_span::Atom;
 use super::{Expect, SemanticTester};
 
 pub struct SymbolTester<'a> {
-    parent: &'a SemanticTester,
+    parent: &'a SemanticTester<'a>,
     /// Reference to semantic analysis results, from [`SemanticTester`]
     semantic: Rc<Semantic<'a>>,
     /// Name of the subject symbol
@@ -247,6 +247,7 @@ impl<'a> Expect<(Rc<Semantic<'a>>, SymbolId), Result<(), Error>> for SymbolTeste
 
 impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
     fn from(val: SymbolTester<'a>) -> Self {
-        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(val.parent.source_text))
+        let source_code = val.parent.source_text.to_string();
+        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(source_code))
     }
 }

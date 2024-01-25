@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        Argument, CallExpression, ChainElement, Expression, FunctionBody, MemberExpression,
-        MethodDefinitionKind, ObjectExpression, ObjectPropertyKind, PropertyKind,
+        ArrowExpression, ChainElement, Expression, Function, MemberExpression,
+        MethodDefinitionKind, ObjectProperty, PropertyKind,
     },
     AstKind,
 };
@@ -10,9 +10,11 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_semantic::{
+    pg::neighbors_filtered_by_edge_weight, AssignmentValue, BasicBlockElement, EdgeType, Register,
+};
+use oxc_span::Span;
 
-use super::array_callback_return::return_checker;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
@@ -24,6 +26,13 @@ struct GetterReturnDiagnostic(#[label] pub Span);
 pub struct GetterReturn {
     pub allow_implicit: bool,
 }
+
+const METHODS_TO_WATCH_FOR: [(&str, &str); 4] = [
+    ("Object", "defineProperty"),
+    ("Reflect", "defineProperty"),
+    ("Object", "create"),
+    ("Object", "defineProperties"),
+];
 
 declare_oxc_lint!(
     /// ### What it does
@@ -41,142 +50,227 @@ declare_oxc_lint!(
     /// }
     /// ```
     GetterReturn,
-    nursery // This rule need a CFG to cover cases like
-            // `class Foo { get bar() { throw new Error() } }`
-            // which passes with ESLint
+    nursery
 );
 
 impl GetterReturn {
-    fn is_correct_getter(&self, function_body: &FunctionBody) -> bool {
-        // Filter on target methods on Arrays
-        let return_status = return_checker::check_function_body(function_body);
+    fn handle_member_expression<'a>(member_expression: &'a MemberExpression<'a>) -> bool {
+        for (a, b) in METHODS_TO_WATCH_FOR {
+            if member_expression.through_optional_is_specific_member_access(a, b) {
+                return true;
+            }
+        }
 
-        if self.allow_implicit {
-            return_status.must_return()
-        } else {
-            return_status == return_checker::StatementReturnStatus::AlwaysExplicit
+        false
+    }
+
+    fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
+        match callee.without_parenthesized() {
+            Expression::MemberExpression(me) => Self::handle_member_expression(me),
+            Expression::ChainExpression(ce) => match &ce.expression {
+                ChainElement::MemberExpression(me) => Self::handle_member_expression(me),
+                ChainElement::CallExpression(_) => {
+                    false // todo: make a test for this
+                }
+            },
+            _ => false,
         }
     }
 
-    fn check_object_descriptor(&self, object: &ObjectExpression) -> Option<Span> {
-        for property in &object.properties {
-            let ObjectPropertyKind::ObjectProperty(property) = property else { continue };
-            if !property.key.static_name().is_some_and(|name| name == "get") {
-                continue;
-            }
+    fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
+        match expr.without_parenthesized() {
+            Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
+            _ => false,
+        }
+    }
 
-            match &property.value {
-                Expression::FunctionExpression(function) => {
-                    let Some(body) = &function.body else { continue };
-                    if !self.is_correct_getter(body) {
-                        let span = Span::new(property.key.span().start, function.params.span.start);
-                        return Some(span);
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+            match parent.kind() {
+                AstKind::MethodDefinition(mdef) => {
+                    if matches!(mdef.kind, MethodDefinitionKind::Get) {
+                        return true;
                     }
                 }
-                Expression::ArrowExpression(arrow) if !arrow.expression => {
-                    if !self.is_correct_getter(&arrow.body) {
-                        let span = Span::new(property.key.span().start, arrow.params.span.start);
-                        return Some(span);
+                AstKind::ObjectProperty(ObjectProperty { kind, .. }) => {
+                    if matches!(kind, PropertyKind::Get) {
+                        return true;
+                    }
+
+                    if let Some(parent_2) = ctx.nodes().parent_node(parent.id()) {
+                        if let Some(parent_3) = ctx.nodes().parent_node(parent_2.id()) {
+                            if let Some(parent_4) = ctx.nodes().parent_node(parent_3.id()) {
+                                // handle (X())
+                                match parent_4.kind() {
+                                    AstKind::ParenthesizedExpression(p) => {
+                                        if Self::handle_paren_expr(&p.expression) {
+                                            return true;
+                                        }
+                                    }
+                                    AstKind::CallExpression(ce) => {
+                                        if Self::handle_actual_expression(&ce.callee) {
+                                            return true;
+                                        }
+                                    }
+                                    _ => {}
+                                }
+
+                                if let Some(parent_5) = ctx.nodes().parent_node(parent_4.id()) {
+                                    if let Some(parent_6) = ctx.nodes().parent_node(parent_5.id()) {
+                                        match parent_6.kind() {
+                                            AstKind::ParenthesizedExpression(p) => {
+                                                if Self::handle_paren_expr(&p.expression) {
+                                                    return true;
+                                                }
+                                            }
+                                            AstKind::CallExpression(ce) => {
+                                                if Self::handle_actual_expression(&ce.callee) {
+                                                    return true;
+                                                }
+                                            }
+                                            _ => {
+                                                return false;
+                                            }
+                                        };
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 _ => {}
             }
         }
-        None
+
+        false
     }
 
-    fn check_property(&self, call: &CallExpression) -> Option<Span> {
-        let Some(Argument::Expression(Expression::ObjectExpression(object))) =
-            call.arguments.get(2)
-        else {
-            return None;
-        };
+    fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
+        if !Self::is_wanted_node(node, ctx) {
+            return;
+        }
 
-        self.check_object_descriptor(object)
+        let cfg = ctx.semantic().cfg();
+
+        let output = neighbors_filtered_by_edge_weight(
+            &cfg.graph,
+            cfg.function_to_node_ix[&node.id()],
+            &|edge| match edge {
+                EdgeType::Normal => None,
+                // We don't need to handle backedges because we would have already visited
+                // them on the forward pass
+                | EdgeType::Backedge
+                // We don't need to visit NewFunction edges because it's not going to be evaluated
+                // immediately, and we are only doing a pass over things that will be immediately evaluated
+                | EdgeType::NewFunction
+                // By returning Some(X),
+                // we signal that we don't walk to this path any farther.
+                //
+                // We stop this path on a ::Yes because if it was a ::No,
+                // we would have already returned early before exploring more edges
+                => Some(DefinitelyReturnsOrThrows::Yes),
+            },
+            // We ignore the state going into this rule because we only care whether
+            // or not this path definitely returns or throws.
+            //
+            // Whether or not the path definitely returns is only has two states, Yes (the default)
+            // or No (when we see this, we immediately stop walking). Other rules that require knowing
+            // previous such as [`no_this_before_super`] we would want to observe this value.
+            &mut |basic_block_id, _state_going_into_this_rule| {
+                // Scan through the values in this basic block.
+                for entry in &cfg.basic_blocks[*basic_block_id] {
+                    match entry {
+                        // If the element is an assignment.
+                        //
+                        // Everything you can write in javascript that would have
+                        // the function continue are expressed as assignments in the cfg.
+                        BasicBlockElement::Assignment(to_reg, val) => {
+                            // If the assignment is to the return register.
+                            //
+                            // The return register is a special register that return statements
+                            // assign the returned value to.
+                            if matches!(to_reg, Register::Return) {
+                                // `allow_implicit` allows returning without a value to not
+                                // fail the rule. We check for this by checking if the value
+                                // being returned in the cfg this is expressed as
+                                // `AssignmentValue::ImplicitUndefined`.
+                                //
+                                // There is an assumption being made here that returning an
+                                // `undefined` will put the `undefined` directly into the
+                                // return and will not put the `undefined` into an immediate
+                                // register and return the register. However, the tests for
+                                // this rule enforce that this invariant is not broken.
+                                if !self.allow_implicit
+                                    && matches!(val, AssignmentValue::ImplicitUndefined)
+                                {
+                                    // Return false as the second argument to signify we should
+                                    // not continue walking this branch, as we know a return
+                                    // is the end of this path.
+                                    return (DefinitelyReturnsOrThrows::No, false);
+                                }
+                                // Otherwise, we definitely returned since we assigned
+                                // to the return register.
+                                //
+                                // Return false as the second argument to signify we should
+                                // not continue walking this branch, as we know a return
+                                // is the end of this path.
+                                return (DefinitelyReturnsOrThrows::Yes, false);
+                            }
+                        }
+                        BasicBlockElement::Throw(_) => {
+                            // Throws are classified as returning.
+                            //
+                            // todo: test with catching...
+                            return (DefinitelyReturnsOrThrows::Yes, false);
+                        }
+                        BasicBlockElement::Unreachable => {
+                            // Unreachable signifies the last element of this basic block and
+                            // this path that will be observed by javascript, therefore if we
+                            // haven't returned yet we won't after this.
+                            //
+                            // Return false as the second argument to signify we should
+                            // not continue walking this branch, as we know a return
+                            // is the end of this path.
+                            return (DefinitelyReturnsOrThrows::No, false);
+                        }
+                    }
+                }
+                // Return true as the second argument to signify we should
+                // continue walking this branch, as we haven't seen anything
+                // that will signify to us that this path of the program will
+                // definitely return or throw.
+                (DefinitelyReturnsOrThrows::No, true)
+            },
+        );
+
+        // Deciding whether we definitely return or throw in all
+        // codepaths is as simple as seeing if each individual codepath
+        // definitely returns or throws.
+        let definitely_returns_in_all_codepaths =
+            output.into_iter().all(|y| matches!(y, DefinitelyReturnsOrThrows::Yes));
+
+        // If not, flag it as a diagnostic.
+        if !definitely_returns_in_all_codepaths {
+            ctx.diagnostic(GetterReturnDiagnostic(span));
+        }
     }
+}
 
-    fn check_properties(&self, call: &CallExpression) -> Option<Vec<Span>> {
-        let Some(Argument::Expression(Expression::ObjectExpression(object))) =
-            call.arguments.get(1)
-        else {
-            return None;
-        };
-
-        let error_spans = object
-            .properties
-            .iter()
-            .filter_map(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else { return None };
-                let Expression::ObjectExpression(object) = &property.value else { return None };
-                self.check_object_descriptor(object)
-            })
-            .collect();
-
-        Some(error_spans)
-    }
+#[derive(Default, Copy, Clone, Debug)]
+enum DefinitelyReturnsOrThrows {
+    #[default]
+    No,
+    Yes,
 }
 
 impl Rule for GetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MethodDefinition(method) if method.kind == MethodDefinitionKind::Get => {
-                let Some(body) = &method.value.body else { return };
-
-                if self.is_correct_getter(body) {
-                    return;
-                }
-
-                let span = Span::new(method.span.start, method.key.span().end);
-                ctx.diagnostic(GetterReturnDiagnostic(span));
+            AstKind::Function(Function { span, .. })
+            | AstKind::ArrowExpression(ArrowExpression { span, .. }) => {
+                self.run_diagnostic(node, ctx, *span);
             }
-            AstKind::ObjectProperty(property) if property.kind == PropertyKind::Get => {
-                let Expression::FunctionExpression(function) = &property.value else { return };
-                let Some(body) = &function.body else { return };
 
-                if self.is_correct_getter(body) {
-                    return;
-                }
-
-                let span = Span::new(property.span.start, property.key.span().end);
-                ctx.diagnostic(GetterReturnDiagnostic(span));
-            }
-            AstKind::CallExpression(call) => {
-                let member = match call.callee.get_inner_expression() {
-                    Expression::ChainExpression(chain) => {
-                        let ChainElement::MemberExpression(member) = &chain.expression else {
-                            return;
-                        };
-                        member
-                    }
-                    Expression::MemberExpression(member) => member,
-                    _ => return,
-                };
-
-                let MemberExpression::StaticMemberExpression(static_member) = &member.0 else {
-                    return;
-                };
-
-                let Expression::Identifier(object_ident) =
-                    &static_member.object.get_inner_expression()
-                else {
-                    return;
-                };
-
-                match (object_ident.name.as_str(), static_member.property.name.as_str()) {
-                    ("Object" | "Reflect", "defineProperty") => {
-                        if let Some(span) = self.check_property(call) {
-                            ctx.diagnostic(GetterReturnDiagnostic(span));
-                        }
-                    }
-                    ("Object", "create" | "defineProperties") => {
-                        let Some(spans) = self.check_properties(call) else { return };
-                        for span in spans {
-                            ctx.diagnostic(GetterReturnDiagnostic(span));
-                        }
-                    }
-                    _ => {}
-                }
-            }
             _ => {}
         }
     }
@@ -268,6 +362,7 @@ fn test() {
         ("foo.defineProperty(null, { get() {} });", None),
         ("foo.defineProperties(null, { bar: { get() {} } });", None),
         ("foo.create(null, { bar: { get() {} } });", None),
+        ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
     ];
 
     let fail = vec![

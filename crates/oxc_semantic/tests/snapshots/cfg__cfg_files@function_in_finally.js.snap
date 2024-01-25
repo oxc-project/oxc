@@ -1,0 +1,48 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/function_in_finally.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+	Unreachable()
+}
+
+bb4: {
+
+}
+
+bb5: {
+
+}
+
+bb6: {
+
+}
+
+bb7: {
+
+}
+
+bb8: {
+
+}
+
+bb9: {
+
+}
+
+bb10: {
+
+}

@@ -1,0 +1,32 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/two_functions.js
+---
+bb0: {
+
+}
+
+bb1: {
+	$return = <value>
+}
+
+bb2: {
+	Unreachable()
+}
+
+bb3: {
+
+}
+
+bb4: {
+	$return = <value>
+}
+
+bb5: {
+	Unreachable()
+}
+
+bb6: {
+
+}

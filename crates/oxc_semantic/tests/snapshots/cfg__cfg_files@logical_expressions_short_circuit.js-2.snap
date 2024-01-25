@@ -1,0 +1,24 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/logical_expressions_short_circuit.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = ""]
+    3 [ label = ""]
+    4 [ label = ""]
+    5 [ label = ""]
+    6 [ label = ""]
+    1 -> 2 [ ]
+    0 -> 1 [ ]
+    0 -> 2 [ ]
+    3 -> 4 [ ]
+    2 -> 3 [ ]
+    2 -> 4 [ ]
+    5 -> 6 [ ]
+    4 -> 5 [ ]
+    4 -> 6 [ ]
+}
+

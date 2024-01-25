@@ -1,0 +1,56 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/labelled_try_break.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+	$return = <value>
+}
+
+bb4: {
+	Unreachable()
+}
+
+bb5: {
+	Unreachable()
+}
+
+bb6: {
+
+}
+
+bb7: {
+	Unreachable()
+}
+
+bb8: {
+	$return = <value>
+}
+
+bb9: {
+
+}
+
+bb10: {
+	Unreachable()
+}
+
+bb11: {
+	Unreachable()
+}
+
+bb12: {
+
+}

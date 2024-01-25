@@ -24,18 +24,27 @@ oxc_ast         = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
+oxc_allocator   = { workspace = true }
 
 bitflags   = { workspace = true }
-rustc-hash = { workspace = true }
-phf        = { workspace = true, features = ["macros"] }
 indexmap   = { workspace = true }
 itertools  = { workspace = true }
+phf        = { workspace = true, features = ["macros"] }
+rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
+petgraph   = "0.6.4"
 
 [dev-dependencies]
-oxc_parser    = { workspace = true }
-oxc_allocator = { workspace = true }
-miette        = { workspace = true, features = ["fancy-no-backtrace"] }
+oxc_parser = { workspace = true }
+
+bitflags          = { workspace = true }
+indexmap          = { workspace = true }
+insta             = { workspace = true }
+itertools         = { workspace = true }
+miette            = { workspace = true, features = ["fancy-no-backtrace"] }
+phf               = { workspace = true, features = ["macros"] }
+pretty_assertions = "1.4.0"
+rustc-hash        = { workspace = true }
 
 [features]
 default = []

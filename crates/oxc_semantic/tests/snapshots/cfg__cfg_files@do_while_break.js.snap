@@ -1,0 +1,76 @@
+---
+source: crates/oxc_semantic/tests/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/cfg_fixtures/do_while_break.js
+---
+bb0: {
+
+}
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+
+}
+
+bb4: {
+	Unreachable()
+}
+
+bb5: {
+
+}
+
+bb6: {
+
+}
+
+bb7: {
+	Unreachable()
+}
+
+bb8: {
+
+}
+
+bb9: {
+
+}
+
+bb10: {
+
+}
+
+bb11: {
+
+}
+
+bb12: {
+
+}
+
+bb13: {
+
+}
+
+bb14: {
+
+}
+
+bb15: {
+	Unreachable()
+}
+
+bb16: {
+	Unreachable()
+}
+
+bb17: {
+
+}
