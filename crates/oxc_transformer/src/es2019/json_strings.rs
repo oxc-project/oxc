@@ -37,8 +37,8 @@ impl JsonStrings {
     }
 
     #[allow(clippy::unused_self)]
-    // TODO oxc_codegen currently prints json strings correctly, 
-    // but we need a way to turn off this behaviour from codegen 
+    // TODO oxc_codegen currently prints json strings correctly,
+    // but we need a way to turn off this behaviour from codegen
     // and do the transformation here.
     pub fn transform_string_literal(&mut self, _literal: &mut StringLiteral) {
         // let str = &self.ctx.semantic().source_text()[literal.span.start as usize + 1..literal.span.end as usize - 1];
