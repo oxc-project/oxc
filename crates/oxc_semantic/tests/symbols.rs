@@ -1,7 +1,7 @@
 mod util;
 
 use oxc_semantic::SymbolFlags;
-use util::SemanticTester;
+pub use util::SemanticTester;
 
 #[test]
 fn test_class_simple() {

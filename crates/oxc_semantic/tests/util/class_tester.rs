@@ -10,7 +10,6 @@ pub struct ClassTester<'a> {
     class_id: ClassId,
 }
 
-#[allow(dead_code)] // Only used in #[test]
 impl<'a> ClassTester<'a> {
     pub(super) fn has_class(semantic: Semantic<'a>, name: &str) -> Self {
         let class_id = semantic.classes().iter_enumerated().find_map(|(class_id, ast_node_id)| {

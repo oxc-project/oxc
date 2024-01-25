@@ -3,8 +3,7 @@ mod util;
 use std::fs;
 
 use oxc_span::SourceType;
-#[allow(clippy::wildcard_imports)]
-use util::*;
+pub use util::SemanticTester;
 
 #[test]
 fn test_cfg_files() {

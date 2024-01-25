@@ -1,7 +1,7 @@
 mod util;
 
 use oxc_semantic::ScopeFlags;
-use util::{Expect, SemanticTester};
+pub use util::{Expect, SemanticTester};
 
 #[test]
 fn test_top_level_strict() {
@@ -11,7 +11,7 @@ fn test_top_level_strict() {
     "use strict";
     function foo() {
         return 1
-    }    
+    }
     "#,
     )
     .has_root_symbol("foo")
@@ -24,7 +24,7 @@ fn test_top_level_strict() {
         r"
     function foo() {
         return 1
-    }    
+    }
     ",
     )
     .has_root_symbol("foo")
@@ -37,7 +37,7 @@ fn test_top_level_strict() {
     "use strict";
     function foo() {
         return 1
-    }    
+    }
     "#,
     )
     .with_module(false)
@@ -50,7 +50,7 @@ fn test_top_level_strict() {
         r"
     function foo() {
         return 1
-    }    
+    }
     ",
     )
     .with_module(false)
