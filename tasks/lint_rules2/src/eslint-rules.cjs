@@ -4,8 +4,15 @@ const { Linter } = require("eslint");
 // Plugins do not provide their type definitions, and also `@types/*` do not exist!
 // Even worse, every plugin has slightly different types in detail...
 //
-// So, we need to normalize recommended and depricated properties manually.
+// So here, we will:
+// - list all rules
+// - normalize recommended and depricated flags
 
+// https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/index.ts
+const {
+  rules: pluginTypeScriptAllRules,
+  configs: pluginTypeScriptConfigs,
+} = require("@typescript-eslint/eslint-plugin");
 // https://github.com/eslint-community/eslint-plugin-n/blob/master/lib/index.js
 const { rules: pluginNAllRules } = require("eslint-plugin-n");
 // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/index.js
@@ -30,6 +37,24 @@ const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
 // All rules including depricated, recommended, etc.
 exports.createESLintLinter = () => new Linter();
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginTypeScriptRules = (linter) => {
+  // We want to list all rules but not support type-checked rules
+  const pluginTypeScriptDisableTypeCheckedRules = new Map(
+    Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
+  );
+  for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
+    const prefixedName = `typescript/${name}`;
+
+    if (
+      pluginTypeScriptDisableTypeCheckedRules.has(`@typescript-eslint/${name}`)
+    )
+      continue;
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
 
 /** @param {import("eslint").Linter} linter */
 exports.loadPluginNRules = (linter) => {

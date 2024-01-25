@@ -7,11 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "latest",
     "eslint": "latest",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
     "eslint-plugin-jsdoc": "latest",
-    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-n": "latest",
     "eslint-plugin-unicorn": "latest"
   }
 }

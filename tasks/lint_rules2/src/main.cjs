@@ -1,6 +1,7 @@
 const { parseArgs } = require("node:util");
 const {
   createESLintLinter,
+  loadPluginTypeScriptRules,
   loadPluginNRules,
   loadPluginUnicornRules,
   loadPluginJSDocRules,
@@ -17,6 +18,7 @@ const { renderRulesList, renderLayout } = require("./output-markdown.cjs");
 
 const ALL_TARGET_PLUGIN_NAMES = new Set([
   "eslint",
+  "typescript",
   "n",
   "unicorn",
   "jsdoc",
@@ -60,6 +62,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   // Load linter and all plugins
   //
   const linter = createESLintLinter();
+  loadPluginTypeScriptRules(linter);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);
