@@ -14,6 +14,7 @@
     "eslint-plugin-jsdoc": "latest",
     "eslint-plugin-jsx-a11y": "latest",
     "eslint-plugin-n": "latest",
+    "eslint-plugin-react": "latest",
     "eslint-plugin-unicorn": "latest"
   }
 }

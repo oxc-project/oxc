@@ -39,6 +39,8 @@ const {
 } = require("eslint-plugin-jsx-a11y");
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
+const { rules: pluginReactAllRules } = require("eslint-plugin-react");
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
@@ -147,6 +149,15 @@ exports.loadPluginJestRules = (linter) => {
 
     // Presented but type is `string | false`
     rule.meta.docs.recommended = typeof rule.meta.docs.recommended === "string";
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginReactAllRules)) {
+    const prefixedName = `react/${name}`;
 
     linter.defineRule(prefixedName, rule);
   }
