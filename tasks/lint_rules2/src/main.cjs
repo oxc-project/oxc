@@ -1,6 +1,7 @@
 const { parseArgs } = require("node:util");
 const {
   createESLintLinter,
+  loadPluginUnicornRules,
   loadPluginJSDocRules,
   loadPluginImportRules,
   loadPluginJestRules,
@@ -13,7 +14,13 @@ const {
 } = require("./oxlint-rules.cjs");
 const { renderRulesList, renderLayout } = require("./output-markdown.cjs");
 
-const ALL_TARGET_PLUGIN_NAMES = new Set(["eslint", "jsdoc", "import", "jest"]);
+const ALL_TARGET_PLUGIN_NAMES = new Set([
+  "eslint",
+  "unicorn",
+  "jsdoc",
+  "import",
+  "jest",
+]);
 
 const HELP = `
 Usage:
@@ -49,6 +56,7 @@ Options:
   // Load linter and all plugins
   //
   const linter = createESLintLinter();
+  loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);
   loadPluginImportRules(linter);
   loadPluginJestRules(linter);

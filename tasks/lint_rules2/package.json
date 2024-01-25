@@ -10,6 +10,7 @@
     "eslint": "latest",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
-    "eslint-plugin-jsdoc": "^48.0.2"
+    "eslint-plugin-jsdoc": "latest",
+    "eslint-plugin-unicorn": "latest"
   }
 }
