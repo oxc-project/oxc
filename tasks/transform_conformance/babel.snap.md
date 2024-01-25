@@ -1,9 +1,8 @@
-Passed: 329/1369
+Passed: 327/1369
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
 * babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
 * babel-plugin-transform-sticky-regex
 * babel-plugin-transform-instanceof
@@ -607,6 +606,10 @@ Passed: 329/1369
 * transparent-expr-wrappers/ts-as-in-conditional/input.ts
 * transparent-expr-wrappers/ts-as-member-expression/input.ts
 * transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+
+# babel-plugin-transform-json-strings (2/4)
+* json-strings/directive-line-separator/input.js
+* json-strings/directive-paragraph-separator/input.js
 
 # babel-plugin-transform-async-generator-functions (0/22)
 * async-generators/class-method/input.js
