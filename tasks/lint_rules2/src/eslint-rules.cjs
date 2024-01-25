@@ -32,6 +32,11 @@ const {
   rules: pluginImportAllRules,
   configs: pluginImportConfigs,
 } = require("eslint-plugin-import");
+// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/index.js
+const {
+  rules: pluginJSXA11yAllRules,
+  configs: pluginJSXA11yConfigs,
+} = require("eslint-plugin-jsx-a11y");
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
@@ -112,6 +117,25 @@ exports.loadPluginImportRules = (linter) => {
     rule.meta.docs.recommended = pluginImportRecommendedRules.has(prefixedName);
 
     // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginJSXA11yRules = (linter) => {
+  const pluginJSXA11yRecommendedRules = new Map(
+    Object.entries(pluginJSXA11yConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginJSXA11yAllRules)) {
+    const prefixedName = `jsx-a11y/${name}`;
+
+    const recommendedValue = pluginJSXA11yRecommendedRules.get(prefixedName);
+    rule.meta.docs.recommended =
+      recommendedValue &&
+      // Type is `string | [string, opt]`
+      recommendedValue !== "off" &&
+      recommendedValue[0] !== "off";
+
     linter.defineRule(prefixedName, rule);
   }
 };

@@ -6,6 +6,7 @@ const {
   loadPluginUnicornRules,
   loadPluginJSDocRules,
   loadPluginImportRules,
+  loadPluginJSXA11yRules,
   loadPluginJestRules,
 } = require("./eslint-rules.cjs");
 const {
@@ -23,6 +24,7 @@ const ALL_TARGET_PLUGIN_NAMES = new Set([
   "unicorn",
   "jsdoc",
   "import",
+  "jsx-a11y",
   "jest",
 ]);
 
@@ -67,6 +69,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);
   loadPluginImportRules(linter);
+  loadPluginJSXA11yRules(linter);
   loadPluginJestRules(linter);
   // TODO: more plugins
 
