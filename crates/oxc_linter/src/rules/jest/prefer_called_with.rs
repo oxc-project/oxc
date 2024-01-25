@@ -1,10 +1,7 @@
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
-        JestFnKind, PossibleJestNode,
-    },
+    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
 use oxc_ast::AstKind;
@@ -60,10 +57,6 @@ impl PreferCalledWith {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-
-        if !is_type_of_jest_fn_call(call_expr, possible_jest_node, ctx, &[JestFnKind::Expect]) {
-            return;
-        }
 
         let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
