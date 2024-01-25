@@ -149,6 +149,7 @@ mod react {
     pub mod jsx_key;
     pub mod jsx_no_comment_text_nodes;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
@@ -500,6 +501,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
     react::button_has_type,
+    react::jsx_no_target_blank,
     react::jsx_key,
     react::jsx_no_comment_text_nodes,
     react::jsx_no_duplicate_props,
