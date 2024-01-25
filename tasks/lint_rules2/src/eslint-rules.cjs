@@ -41,6 +41,8 @@ const {
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
 const { rules: pluginReactAllRules } = require("eslint-plugin-react");
+// https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.js
+const { rules: pluginReactHooksAllRules } = require("eslint-plugin-react-hooks");
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
@@ -159,6 +161,16 @@ exports.loadPluginReactRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginReactAllRules)) {
     const prefixedName = `react/${name}`;
 
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactHooksRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginReactHooksAllRules)) {
+    const prefixedName = `react-hooks/${name}`;
+
+    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };

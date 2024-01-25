@@ -9,6 +9,7 @@ const {
   loadPluginJSXA11yRules,
   loadPluginJestRules,
   loadPluginReactRules,
+  loadPluginReactHooksRules,
 } = require("./eslint-rules.cjs");
 const {
   createRuleEntries,
@@ -28,6 +29,7 @@ const ALL_TARGET_PLUGIN_NAMES = new Set([
   "jsx-a11y",
   "jest",
   "react",
+  "react-hooks",
 ]);
 
 const HELP = `
@@ -74,6 +76,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   loadPluginJSXA11yRules(linter);
   loadPluginJestRules(linter);
   loadPluginReactRules(linter);
+  loadPluginReactHooksRules(linter);
   // TODO: more plugins
 
   //
