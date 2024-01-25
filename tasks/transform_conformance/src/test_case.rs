@@ -111,6 +111,7 @@ pub trait TestCase {
             nullish_coalescing_operator: options
                 .get_plugin("transform-nullish-coalescing-operator")
                 .map(get_options::<NullishCoalescingOperatorOptions>),
+            json_strings: options.get_plugin("transform-json-strings").is_some(),
             optional_catch_binding: options
                 .get_plugin("transform-optional-catch-binding")
                 .is_some(),

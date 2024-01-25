@@ -22,6 +22,7 @@ pub struct TransformOptions {
     pub nullish_coalescing_operator: Option<NullishCoalescingOperatorOptions>,
     // es2019
     pub optional_catch_binding: bool,
+    pub json_strings: bool,
     // es2016
     pub exponentiation_operator: bool,
     // es2015
