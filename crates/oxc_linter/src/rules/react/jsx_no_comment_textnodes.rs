@@ -11,7 +11,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(jsx-no-comment-TextNodes): Comments inside children section of tag should be placed inside braces")]
+#[error("eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces")]
 #[diagnostic(severity(warning))]
 struct JsxNoCommentTextNodesDiagnostic(#[label] pub Span);
 

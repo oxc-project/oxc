@@ -149,7 +149,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod jsx_key;
-    pub mod jsx_no_comment_text_nodes;
+    pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
@@ -507,7 +507,7 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::jsx_no_target_blank,
     react::jsx_key,
-    react::jsx_no_comment_text_nodes,
+    react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
     react::jsx_no_undef,
