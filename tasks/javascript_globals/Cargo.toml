@@ -16,7 +16,6 @@ test = false
 oxc_tasks_common = { workspace = true }
 
 serde        = { workspace = true, features = ["derive"] }
-serde_json   = { workspace = true }
 lazy_static  = { workspace = true }
 
 handlebars = "5.0.0"

@@ -923,7 +923,6 @@ dependencies = [
  "lazy_static",
  "oxc_tasks_common",
  "serde",
- "serde_json",
 ]
 
 [[package]]
