@@ -279,7 +279,7 @@ mod jsx_a11y {
     pub mod role_has_required_aria_props;
     pub mod role_support_aria_props;
     pub mod scope;
-    pub mod tab_index_no_positive;
+    pub mod tabindex_no_positive;
 }
 
 mod oxc {
@@ -555,7 +555,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::prefer_tag_over_role,
     jsx_a11y::role_has_required_aria_props,
     jsx_a11y::scope,
-    jsx_a11y::tab_index_no_positive,
+    jsx_a11y::tabindex_no_positive,
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
     jsx_a11y::role_support_aria_props,

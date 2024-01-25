@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint-plugin-jsx-a11y(tab-index-no-positive): Avoid positive integer values for tabIndex."
+    "eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex."
 )]
 #[diagnostic(severity(warning), help("Change the tabIndex prop to a non-negative value"))]
 struct TabIndexNoPositiveDiagnostic(#[label] pub Span);
