@@ -1,0 +1,27 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 150
+expression: prefer_called_with
+---
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:1]
+ 1 │ expect(fn).toBeCalled();
+   ·            ──────────
+   ╰────
+  help: Prefer toBeCalledWith(/* expected args */)
+
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:1]
+ 1 │ expect(fn).resolves.toBeCalled();
+   ·                     ──────────
+   ╰────
+  help: Prefer toBeCalledWith(/* expected args */)
+
+  ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
+   ╭─[prefer_called_with.tsx:1:1]
+ 1 │ expect(fn).toHaveBeenCalled();
+   ·            ────────────────
+   ╰────
+  help: Prefer toHaveBeenCalledWith(/* expected args */)
+
+

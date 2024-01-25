@@ -139,6 +139,7 @@ mod jest {
     pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
+    pub mod prefer_called_with;
     pub mod prefer_todo;
     pub mod valid_describe_callback;
     pub mod valid_expect;
@@ -422,6 +423,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_standalone_expect,
     jest::no_test_prefixes,
     jest::no_test_return_statement,
+    jest::prefer_called_with,
     jest::prefer_todo,
     jest::valid_describe_callback,
     jest::valid_expect,
