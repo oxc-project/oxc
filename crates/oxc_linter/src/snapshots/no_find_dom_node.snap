@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 105
 expression: no_find_dom_node
 ---
   ⚠ eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.

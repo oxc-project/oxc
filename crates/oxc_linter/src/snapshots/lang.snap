@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 144
 expression: lang
 ---
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 143
 expression: img_redundant_alt
 ---
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.

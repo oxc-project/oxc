@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 144
 expression: no_distracting_elements
 ---
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.

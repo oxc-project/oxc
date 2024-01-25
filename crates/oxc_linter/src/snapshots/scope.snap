@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 143
 expression: scope
 ---
   ⚠ eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements

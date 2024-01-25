@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 119
 expression: no_amd
 ---
   ⚠ eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.
