@@ -20,9 +20,6 @@ exports.createRuleEntries = (loadedAllRules) => {
     // Default eslint rules are not prefixed
     const prefixedName = name.includes("/") ? name : `eslint/${name}`;
 
-    if (rulesEntry.has(prefixedName))
-      throw new Error(`Duplicate rule: ${name}`);
-
     const docsUrl = rule.meta?.docs?.url ?? "";
     const isDeprecated = rule.meta?.deprecated ?? false;
     const isRecommended = rule.meta?.docs?.recommended ?? false;
@@ -50,18 +47,19 @@ exports.readAllImplementedRuleNames = async () => {
   const rules = new Set();
 
   let found = false;
-  for (const line of rulesFile.split("\n")) {
-    if (line.startsWith("oxc_macros::declare_all_lint_rules!")) {
+  for (let line of rulesFile.split("\n")) {
+    line = line.trim();
+
+    if (line === "oxc_macros::declare_all_lint_rules! {") {
       found = true;
       continue;
     }
-    if (found && line.startsWith("}")) {
+    if (found && line === "}") {
       return rules;
     }
 
     if (found) {
       const prefixedName = line
-        .trim()
         .replaceAll(",", "")
         .replaceAll("::", "/")
         .replaceAll("_", "-");
@@ -76,6 +74,7 @@ exports.readAllImplementedRuleNames = async () => {
 };
 
 const NOT_SUPPORTED_RULE_NAMES = new Set([]);
+
 /** @param {RuleEntries} ruleEntries */
 exports.updateNotSupportedStatus = (ruleEntries) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
@@ -92,5 +91,6 @@ exports.updateImplementedStatus = (ruleEntries, implementedRuleNames) => {
   for (const name of implementedRuleNames) {
     const rule = ruleEntries.get(name);
     if (rule) rule.isImplemented = true;
+    else console.log(`👀 ${name} is implemented but not found in their rules`);
   }
 };

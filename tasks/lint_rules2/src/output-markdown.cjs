@@ -12,6 +12,7 @@ exports.renderRulesList = (ruleEntries, pluginName) => {
   for (const [name, entry] of ruleEntries) {
     if (!name.startsWith(`${pluginName}/`)) continue;
 
+    // These should be exclusive, but show it for sure...
     let kind = "";
     if (entry.isRecommended) kind += "🍀";
     if (entry.isDeprecated) kind += "⚠️";

@@ -2,11 +2,11 @@ const { Linter } = require("eslint");
 
 // NOTICE!
 // Plugins do not provide their type definitions, and also `@types/*` do not exist!
-// Even worse, every plugin has slightly different types in detail...
+// Even worse, every plugin has slightly different types, different way of configuration in detail...
 //
-// So here, we will:
-// - list all rules
-// - normalize recommended and depricated flags
+// So here, we need to list all rules while normalizing recommended and depricated flags.
+// - rule.meta.docs.recommended
+// - rule.meta.deprecated
 
 // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/index.ts
 const {
@@ -35,7 +35,7 @@ const {
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
 const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
-// All rules including depricated, recommended, etc.
+// All rules(including depricated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
 
 /** @param {import("eslint").Linter} linter */
@@ -45,12 +45,12 @@ exports.loadPluginTypeScriptRules = (linter) => {
     Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
   );
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    const prefixedName = `typescript/${name}`;
-
     if (
       pluginTypeScriptDisableTypeCheckedRules.has(`@typescript-eslint/${name}`)
     )
       continue;
+
+    const prefixedName = `typescript/${name}`;
 
     linter.defineRule(prefixedName, rule);
   }
@@ -74,7 +74,7 @@ exports.loadPluginUnicornRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginUnicornAllRules)) {
     const prefixedName = `unicorn/${name}`;
 
-    // Some of the rules do not have its property, so we need to mark it manually
+    // If name is presented and value is not "off", it is recommended
     const recommendedValue = pluginUnicornRecommendedRules.get(prefixedName);
     // @ts-expect-error: `rule.meta.docs` is possibly `undefined`
     rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
@@ -91,9 +91,9 @@ exports.loadPluginJSDocRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginJSDocAllRules)) {
     const prefixedName = `jsdoc/${name}`;
 
-    // Some of the rules do not have its property, so we need to mark it manually
-    rule.meta.docs.recommended =
-      pluginJSDocRecommendedRules.get(prefixedName) !== "off";
+    // If name is presented and value is not "off", it is recommended
+    const recommendedValue = pluginJSDocRecommendedRules.get(prefixedName);
+    rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
 
     linter.defineRule(prefixedName, rule);
   }
@@ -101,14 +101,13 @@ exports.loadPluginJSDocRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 exports.loadPluginImportRules = (linter) => {
-  const pluginImportRecommendedRules = new Set(
+  const pluginImportRecommendedRules = new Map(
     // @ts-expect-error: Property 'rules' does not exist on type 'Object'.
-    Object.keys(pluginImportConfigs.recommended.rules),
+    Object.entries(pluginImportConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginImportAllRules)) {
     const prefixedName = `import/${name}`;
 
-    // Some of the rules do not have its property, so we need to mark it manually
     // @ts-expect-error: Property 'recommended' does not exist on type
     rule.meta.docs.recommended = pluginImportRecommendedRules.has(prefixedName);
 
@@ -122,7 +121,7 @@ exports.loadPluginJestRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginJestAllRules)) {
     const prefixedName = `jest/${name}`;
 
-    // This is `string | false`
+    // Presented but type is `string | false`
     rule.meta.docs.recommended = typeof rule.meta.docs.recommended === "string";
 
     linter.defineRule(prefixedName, rule);
