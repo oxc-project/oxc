@@ -1,7 +1,6 @@
 mod util;
 
-#[allow(clippy::wildcard_imports)]
-use util::*;
+pub use util::SemanticTester;
 
 #[test]
 fn test_exports() {

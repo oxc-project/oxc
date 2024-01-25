@@ -18,7 +18,6 @@ pub struct SymbolTester<'a> {
 }
 
 impl<'a> SymbolTester<'a> {
-    #[allow(dead_code)]
     pub(super) fn new_at_root(
         parent: &'a SemanticTester,
         semantic: Semantic<'a>,
@@ -36,7 +35,6 @@ impl<'a> SymbolTester<'a> {
         }
     }
 
-    #[allow(dead_code)]
     pub(super) fn new_unique(
         parent: &'a SemanticTester,
         semantic: Semantic<'a>,
@@ -104,7 +102,6 @@ impl<'a> SymbolTester<'a> {
         self.has_number_of_references_where(ref_count, Reference::is_read)
     }
 
-    #[allow(dead_code)]
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, Reference::is_write)
     }

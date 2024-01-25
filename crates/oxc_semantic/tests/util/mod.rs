@@ -25,7 +25,6 @@ impl<'a> SemanticTester<'a> {
     /// Create a new tester for a TypeScript test case.
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
-    #[allow(dead_code)]
     pub fn ts(source_text: &'static str) -> Self {
         Self::new(source_text, SourceType::default().with_module(true).with_typescript(true))
     }
@@ -33,7 +32,6 @@ impl<'a> SemanticTester<'a> {
     /// Create a new tester for a JavaScript test case.
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases.
-    #[allow(dead_code)]
     pub fn js(source_text: &'static str) -> Self {
         Self::new(source_text, SourceType::default().with_module(true))
     }
@@ -43,26 +41,27 @@ impl<'a> SemanticTester<'a> {
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
-    #[allow(dead_code)]
+    #[must_use]
     pub fn with_typescript(mut self, yes: bool) -> Self {
         self.source_type = SourceType::default().with_typescript(yes);
         self
     }
 
     /// Mark the [`SourceType`] as JSX
-    #[allow(dead_code)]
+    #[must_use]
     pub fn with_jsx(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_jsx(yes);
         self
     }
 
-    #[allow(dead_code)]
+    #[must_use]
     pub fn with_module(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_module(yes);
         self
     }
 
     /// Parse the source text and produce a new [`Semantic`]
+    /// # Panics
     #[allow(unstable_name_collisions)]
     pub fn build(&self) -> Semantic<'_> {
         let parse =
@@ -102,13 +101,11 @@ impl<'a> SemanticTester<'a> {
         semantic_ret.semantic
     }
 
-    #[allow(dead_code)]
     pub fn basic_blocks_count(&self) -> usize {
         let built = self.build();
         built.cfg().basic_blocks.len()
     }
 
-    #[allow(dead_code)]
     pub fn basic_blocks_printed(&self) -> String {
         let built = self.build();
         built
@@ -126,7 +123,6 @@ impl<'a> SemanticTester<'a> {
             .join("\n\n")
     }
 
-    #[allow(dead_code)]
     pub fn cfg_dot_diagram(&self) -> String {
         let built = self.build();
         format!(
@@ -151,7 +147,6 @@ impl<'a> SemanticTester<'a> {
     ///
     /// ## Fails
     /// If no symbol with the given name exists at the top-level scope.
-    #[allow(dead_code)]
     pub fn has_root_symbol(&self, name: &str) -> SymbolTester {
         SymbolTester::new_at_root(self, self.build(), name)
     }
@@ -160,7 +155,6 @@ impl<'a> SemanticTester<'a> {
     ///
     /// ## Fails
     /// If no class with the given name exists.
-    #[allow(dead_code)]
     pub fn has_class(&self, name: &str) -> ClassTester {
         ClassTester::has_class(self.build(), name)
     }
@@ -171,7 +165,6 @@ impl<'a> SemanticTester<'a> {
     /// 1. No symbol with the given name exists,
     /// 2. More than one symbol with the given name exists, so a symbol cannot
     ///    be uniquely obtained.
-    #[allow(dead_code)]
     pub fn has_some_symbol(&self, name: &str) -> SymbolTester {
         SymbolTester::new_unique(self, self.build(), name)
     }

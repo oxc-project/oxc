@@ -1,6 +1,6 @@
 mod util;
 
-use util::SemanticTester;
+pub use util::SemanticTester;
 
 #[test]
 fn test_class_simple() {
@@ -15,7 +15,7 @@ fn test_class_simple() {
         set b(v) {}
         get b() {}
       }
-        
+
     ",
     )
     .has_class("Foo")
@@ -33,7 +33,7 @@ fn test_class_with_ts() {
         accessor #pap = 1;
         constructor() {} // this method is skip
       }
-        
+
     ",
     )
     .has_class("Foo")
