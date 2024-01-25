@@ -16,6 +16,7 @@
     "eslint-plugin-n": "latest",
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-perf": "latest",
     "eslint-plugin-unicorn": "latest"
   }
 }

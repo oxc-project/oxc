@@ -42,7 +42,14 @@ const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
 const { rules: pluginReactAllRules } = require("eslint-plugin-react");
 // https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.js
-const { rules: pluginReactHooksAllRules } = require("eslint-plugin-react-hooks");
+const {
+  rules: pluginReactHooksAllRules,
+} = require("eslint-plugin-react-hooks");
+// https://github.com/cvazac/eslint-plugin-react-perf/blob/master/index.js
+const {
+  rules: pluginReactPerfAllRules,
+  configs: pluginReactPerfConfigs,
+} = require("eslint-plugin-react-perf");
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () => new Linter();
@@ -171,6 +178,21 @@ exports.loadPluginReactHooksRules = (linter) => {
     const prefixedName = `react-hooks/${name}`;
 
     // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginReactPerfRules = (linter) => {
+  const pluginReactPerfRecommendedRules = new Map(
+    Object.entries(pluginReactPerfConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginReactPerfAllRules)) {
+    const prefixedName = `react-perf/${name}`;
+
+    rule.meta.docs.recommended =
+      pluginReactPerfRecommendedRules.has(prefixedName);
+
     linter.defineRule(prefixedName, rule);
   }
 };
