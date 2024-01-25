@@ -17,12 +17,12 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.")]
+#[error("eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.")]
 #[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct NoNewObjectAsPropDiagnostic(#[label] pub Span);
+struct JsxNoNewObjectAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoNewObjectAsProp;
+pub struct JsxNoNewObjectAsProp;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -41,11 +41,11 @@ declare_oxc_lint!(
     /// // Good
     /// <Item config={staticConfig} />
     /// ```
-    NoNewObjectAsProp,
+    JsxNoNewObjectAsProp,
     correctness
 );
 
-impl Rule for NoNewObjectAsProp {
+impl Rule for JsxNoNewObjectAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
@@ -62,7 +62,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
                 ..
             })) => {
                 if let Some(span) = check_expression(expr) {
-                    ctx.diagnostic(NoNewObjectAsPropDiagnostic(span));
+                    ctx.diagnostic(JsxNoNewObjectAsPropDiagnostic(span));
                 }
             }
             _ => {}
@@ -113,7 +113,7 @@ fn test() {
         r"<Item config={this.props.config || (this.props.default ? this.props.default : {})} />",
     ];
 
-    Tester::new(NoNewObjectAsProp::NAME, pass, fail)
+    Tester::new(JsxNoNewObjectAsProp::NAME, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

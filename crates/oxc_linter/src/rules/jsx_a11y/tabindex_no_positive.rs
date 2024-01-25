@@ -15,13 +15,13 @@ use crate::{
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint-plugin-jsx-a11y(tab-index-no-positive): Avoid positive integer values for tabIndex."
+    "eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex."
 )]
 #[diagnostic(severity(warning), help("Change the tabIndex prop to a non-negative value"))]
-struct TabIndexNoPositiveDiagnostic(#[label] pub Span);
+struct TabindexNoPositiveDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct TabIndexNoPositive;
+pub struct TabindexNoPositive;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -39,11 +39,11 @@ declare_oxc_lint!(
     /// <span tabIndex="0">foo</span>
     /// <span tabIndex="-1">bar</span>
     /// ```
-    TabIndexNoPositive,
+    TabindexNoPositive,
     correctness
 );
 
-impl Rule for TabIndexNoPositive {
+impl Rule for TabindexNoPositive {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
         if let Some(tab_index_prop) = has_jsx_prop_lowercase(jsx_el, "tabIndex") {
@@ -57,7 +57,7 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
         JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
             if let Ok(parsed_value) = parse_jsx_value(value) {
                 if parsed_value > 0.0 {
-                    ctx.diagnostic(TabIndexNoPositiveDiagnostic(attr.span));
+                    ctx.diagnostic(TabindexNoPositiveDiagnostic(attr.span));
                 }
             }
         }),
@@ -98,5 +98,5 @@ fn test() {
         (r"<div tabIndex={1.589} />", None),
     ];
 
-    Tester::new(TabIndexNoPositive::NAME, pass, fail).test_and_snapshot();
+    Tester::new(TabindexNoPositive::NAME, pass, fail).test_and_snapshot();
 }

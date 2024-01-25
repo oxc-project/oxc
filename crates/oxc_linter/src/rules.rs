@@ -149,13 +149,13 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod jsx_key;
-    pub mod jsx_no_comment_text_nodes;
+    pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
     pub mod no_children_prop;
-    pub mod no_dangerously_set_inner_html;
+    pub mod no_danger;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
@@ -168,10 +168,10 @@ mod react {
 }
 
 mod react_perf {
-    pub mod no_jsx_as_prop;
-    pub mod no_new_array_as_prop;
-    pub mod no_new_function_as_props;
-    pub mod no_new_object_as_prop;
+    pub mod jsx_no_jsx_as_prop;
+    pub mod jsx_no_new_array_as_prop;
+    pub mod jsx_no_new_function_as_props;
+    pub mod jsx_no_new_object_as_prop;
 }
 
 mod unicorn {
@@ -277,9 +277,9 @@ mod jsx_a11y {
     pub mod no_redundant_roles;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
-    pub mod role_support_aria_props;
+    pub mod role_supports_aria_props;
     pub mod scope;
-    pub mod tab_index_no_positive;
+    pub mod tabindex_no_positive;
 }
 
 mod oxc {
@@ -507,13 +507,13 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::jsx_no_target_blank,
     react::jsx_key,
-    react::jsx_no_comment_text_nodes,
+    react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
     react::jsx_no_undef,
     react::react_in_jsx_scope,
     react::no_children_prop,
-    react::no_dangerously_set_inner_html,
+    react::no_danger,
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
@@ -522,10 +522,10 @@ oxc_macros::declare_all_lint_rules! {
     react::no_is_mounted,
     react::no_unknown_property,
     react::require_render_return,
-    react_perf::no_jsx_as_prop,
-    react_perf::no_new_array_as_prop,
-    react_perf::no_new_function_as_props,
-    react_perf::no_new_object_as_prop,
+    react_perf::jsx_no_jsx_as_prop,
+    react_perf::jsx_no_new_array_as_prop,
+    react_perf::jsx_no_new_function_as_props,
+    react_perf::jsx_no_new_object_as_prop,
     import::default,
     import::no_named_as_default_member,
     import::no_named_as_default,
@@ -555,10 +555,10 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::prefer_tag_over_role,
     jsx_a11y::role_has_required_aria_props,
     jsx_a11y::scope,
-    jsx_a11y::tab_index_no_positive,
+    jsx_a11y::tabindex_no_positive,
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
-    jsx_a11y::role_support_aria_props,
+    jsx_a11y::role_supports_aria_props,
     jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
     oxc::const_comparisons,

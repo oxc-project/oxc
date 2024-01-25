@@ -43,25 +43,25 @@ declare_oxc_lint!(
     /// </ul>
     /// ```
     ///
-    RoleSupportAriaProps,
+    RoleSupportsAriaProps,
     correctness
 );
 
 #[derive(Debug, Default, Clone)]
-pub struct RoleSupportAriaProps;
+pub struct RoleSupportsAriaProps;
 
 #[derive(Debug, Error, Diagnostic)]
-enum RoleSupportAriaPropsDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(role-support-aria-props): The attribute {1} is not supported by the role {2}.")]
+enum RoleSupportsAriaPropsDiagnostic {
+    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}.")]
     #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
     Default(#[label] Span, String, String),
 
-    #[error("eslint-plugin-jsx-a11y(role-support-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
+    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
     #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
     IsImplicit(#[label] Span, String, String, String),
 }
 
-impl Rule for RoleSupportAriaProps {
+impl Rule for RoleSupportsAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(el_type) = get_element_type(ctx, jsx_el) {
@@ -81,14 +81,14 @@ impl Rule for RoleSupportAriaProps {
                             let name = get_jsx_attribute_name(&attr.name).to_lowercase();
                             if invalid_props.contains(&&name.as_str()) {
                                 ctx.diagnostic(if is_implicit {
-                                    RoleSupportAriaPropsDiagnostic::IsImplicit(
+                                    RoleSupportsAriaPropsDiagnostic::IsImplicit(
                                         attr.span,
                                         name,
                                         role_value.to_string(),
                                         el_type.clone(),
                                     )
                                 } else {
-                                    RoleSupportAriaPropsDiagnostic::Default(
+                                    RoleSupportsAriaPropsDiagnostic::Default(
                                         attr.span,
                                         name,
                                         role_value.to_string(),
@@ -1597,5 +1597,5 @@ fn test() {
         (r#"<Link href="/" aria-checked />"#, None, Some(settings()), None),
     ];
 
-    Tester::new(RoleSupportAriaProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RoleSupportsAriaProps::NAME, pass, fail).test_and_snapshot();
 }

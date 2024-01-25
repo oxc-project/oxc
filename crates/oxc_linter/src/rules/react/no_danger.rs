@@ -20,10 +20,10 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop")]
 #[diagnostic(severity(warning), help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities."))]
-struct NoDangerouslySetInnerHtmlDiagnostic(#[label] pub Span);
+struct NoDangerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoDangerouslySetInnerHtml;
+pub struct NoDanger;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -37,18 +37,18 @@ declare_oxc_lint!(
     /// ### Example
     /// ```javascript
     /// ```
-    NoDangerouslySetInnerHtml,
+    NoDanger,
     restriction
 );
 
-impl Rule for NoDangerouslySetInnerHtml {
+impl Rule for NoDanger {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if let Some(JSXAttributeItem::Attribute(prop)) =
                     has_jsx_prop(&jsx_elem.opening_element, "dangerouslySetInnerHTML")
                 {
-                    ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(prop.name.span()));
+                    ctx.diagnostic(NoDangerDiagnostic(prop.name.span()));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -64,9 +64,7 @@ impl Rule for NoDangerouslySetInnerHtml {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
                             if prop_name.as_str() == "dangerouslySetInnerHTML" {
-                                ctx.diagnostic(NoDangerouslySetInnerHtmlDiagnostic(
-                                    obj_prop.key.span(),
-                                ));
+                                ctx.diagnostic(NoDangerDiagnostic(obj_prop.key.span()));
                             }
                         }
                     }
@@ -94,5 +92,5 @@ fn test() {
         ("React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");", None),
     ];
 
-    Tester::new(NoDangerouslySetInnerHtml::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDanger::NAME, pass, fail).test_and_snapshot();
 }

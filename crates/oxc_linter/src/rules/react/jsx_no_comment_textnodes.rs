@@ -11,12 +11,12 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(jsx-no-comment-TextNodes): Comments inside children section of tag should be placed inside braces")]
+#[error("eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces")]
 #[diagnostic(severity(warning))]
-struct JsxNoCommentTextNodesDiagnostic(#[label] pub Span);
+struct JsxNoCommentTextnodesDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct JsxNoCommentTextNodes;
+pub struct JsxNoCommentTextnodes;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,16 +49,16 @@ declare_oxc_lint!(
     ///     return <div>{/* empty div */}</div>;
     /// }
     /// ```
-    JsxNoCommentTextNodes,
+    JsxNoCommentTextnodes,
     suspicious
 );
 
-impl Rule for JsxNoCommentTextNodes {
+impl Rule for JsxNoCommentTextnodes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXText(jsx_text) = node.kind() else { return };
 
         if control_patterns(&jsx_text.value) {
-            ctx.diagnostic(JsxNoCommentTextNodesDiagnostic(jsx_text.span));
+            ctx.diagnostic(JsxNoCommentTextnodesDiagnostic(jsx_text.span));
         }
     }
 }
@@ -309,5 +309,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoCommentTextNodes::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoCommentTextnodes::NAME, pass, fail).test_and_snapshot();
 }
