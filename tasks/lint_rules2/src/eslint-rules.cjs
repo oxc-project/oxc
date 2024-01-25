@@ -6,6 +6,8 @@ const { Linter } = require("eslint");
 //
 // So, we need to normalize recommended and depricated properties manually.
 
+// https://github.com/eslint-community/eslint-plugin-n/blob/master/lib/index.js
+const { rules: pluginNAllRules } = require("eslint-plugin-n");
 // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/index.js
 const {
   rules: pluginUnicornAllRules,
@@ -28,6 +30,16 @@ const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
 
 // All rules including depricated, recommended, etc.
 exports.createESLintLinter = () => new Linter();
+
+/** @param {import("eslint").Linter} linter */
+exports.loadPluginNRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginNAllRules)) {
+    const prefixedName = `n/${name}`;
+
+    // @ts-expect-error: The types of 'meta.fixable', 'null' is not assignable to type '"code" | "whitespace" | undefined'.
+    linter.defineRule(prefixedName, rule);
+  }
+};
 
 /** @param {import("eslint").Linter} linter */
 exports.loadPluginUnicornRules = (linter) => {

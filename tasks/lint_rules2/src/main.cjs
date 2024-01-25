@@ -1,6 +1,7 @@
 const { parseArgs } = require("node:util");
 const {
   createESLintLinter,
+  loadPluginNRules,
   loadPluginUnicornRules,
   loadPluginJSDocRules,
   loadPluginImportRules,
@@ -16,6 +17,7 @@ const { renderRulesList, renderLayout } = require("./output-markdown.cjs");
 
 const ALL_TARGET_PLUGIN_NAMES = new Set([
   "eslint",
+  "n",
   "unicorn",
   "jsdoc",
   "import",
@@ -24,12 +26,14 @@ const ALL_TARGET_PLUGIN_NAMES = new Set([
 
 const HELP = `
 Usage:
-  $ cmd [--target=<pluginName>] [--update] [--help]
+  $ cmd [--target=<pluginName>]... [--update] [--help]
 
 Options:
-  --target, -t: Which plugin to target, one of ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
+  --target, -t: Which plugin to target, multiple allowed
   --update: Update the issue instead of printing to stdout
   --help, -h: Print this help message
+
+Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
 `;
 
 (async () => {
@@ -56,6 +60,7 @@ Options:
   // Load linter and all plugins
   //
   const linter = createESLintLinter();
+  loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
   loadPluginJSDocRules(linter);
   loadPluginImportRules(linter);

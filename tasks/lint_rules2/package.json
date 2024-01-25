@@ -11,6 +11,7 @@
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
     "eslint-plugin-jsdoc": "latest",
+    "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-unicorn": "latest"
   }
 }
