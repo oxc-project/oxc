@@ -348,6 +348,8 @@ fn test() {
         // need getStaticValue
         // ("const A_NUMBER = 2; const x = foo.length || A_NUMBER", None),
         ("class A { a(){ if(this.length); while(!this.size || foo);}}", None),
+        // Use of .size but not in conditional "test" position
+        ("const totalCount = tests.reduce((count, test) => count + (test.enabled ? test.maxSize : test.size), 0)", None),
     ];
 
     let fail = vec![
@@ -361,7 +363,10 @@ fn test() {
         ("const x = foo.length || bar()", None),
         ("() => foo.length && bar()", None),
         ("alert(foo.length && bar())", None),
+        // Use of .size in conditional "test" position
+        ("let foo = arr.length ? 'non-empty' : 'empty'", None),
     ];
+
     let fixes = vec![
         (
             r"if ( !!!( !foo.length && foo.length == 0 && foo.length < 1 && 0 === foo.length && 0 == foo.length && 1 > foo.length ) ||

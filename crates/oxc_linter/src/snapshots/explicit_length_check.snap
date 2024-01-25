@@ -64,4 +64,10 @@ expression: explicit_length_check
    ╰────
   help: Replace `.length` with `.length > 0`.
 
+  ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
+   ╭─[explicit_length_check.tsx:1:1]
+ 1 │ let foo = arr.length ? 'non-empty' : 'empty'
+   ·           ──────────
+   ╰────
+
 
