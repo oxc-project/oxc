@@ -93,6 +93,12 @@
           ],
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
+        },
+        "oxc_language_server.configPath": {
+          "type": "string",
+          "scope": "window",
+          "default": ".eslintrc",
+          "description": "Path to ESlint configuration."
         }
       }
     }
