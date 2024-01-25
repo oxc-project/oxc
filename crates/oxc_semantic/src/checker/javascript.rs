@@ -393,7 +393,7 @@ fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &Semantic
     #[diagnostic()]
     struct IllegalUseStrict(#[label] Span);
 
-    if directive.expression.value != "use strict" {
+    if directive.directive != "use strict" {
         return;
     }
 

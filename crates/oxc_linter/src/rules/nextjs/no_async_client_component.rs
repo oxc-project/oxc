@@ -43,11 +43,7 @@ impl Rule for NoAsyncClientComponent {
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
 
-        if program
-            .directives
-            .iter()
-            .any(|directive| directive.expression.value.as_str() == "use client")
-        {
+        if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
             for node in &program.body {
                 let Statement::ModuleDeclaration(mod_decl) = &node else {
                     continue;
