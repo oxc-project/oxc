@@ -6,42 +6,42 @@ expression: no_void
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ──────
+   · ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ──────
+   · ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ──────
+   · ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ void(0)
-   · ───────
+   · ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ var foo = void 0
-   ·           ──────
+   ·           ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ var foo = void 0
-   ·           ──────
+   ·           ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
 
