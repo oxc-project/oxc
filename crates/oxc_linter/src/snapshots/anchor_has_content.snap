@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 119
 expression: anchor_has_content
 ---
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.

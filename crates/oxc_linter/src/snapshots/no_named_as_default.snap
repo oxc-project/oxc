@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 143
 expression: no_named_as_default
 ---
   ⚠ eslint-plugin-import(no-named-as-default): Module "./bar" has named export "foo". Using default import as "foo" can be confusing

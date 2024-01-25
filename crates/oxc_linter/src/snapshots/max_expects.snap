@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 119
 expression: max_expects
 ---
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.

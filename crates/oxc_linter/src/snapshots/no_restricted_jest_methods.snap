@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 143
 expression: no_restricted_jest_methods
 ---
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods

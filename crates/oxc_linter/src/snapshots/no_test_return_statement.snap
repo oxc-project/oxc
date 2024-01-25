@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 144
 expression: no_test_return_statement
 ---
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value

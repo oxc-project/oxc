@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 67
 expression: no_return_await
 ---
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.

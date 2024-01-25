@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 144
 expression: no_var
 ---
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
