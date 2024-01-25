@@ -277,7 +277,7 @@ mod jsx_a11y {
     pub mod no_redundant_roles;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
-    pub mod role_support_aria_props;
+    pub mod role_supports_aria_props;
     pub mod scope;
     pub mod tabindex_no_positive;
 }
@@ -558,7 +558,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::tabindex_no_positive,
     jsx_a11y::aria_role,
     jsx_a11y::no_distracting_elements,
-    jsx_a11y::role_support_aria_props,
+    jsx_a11y::role_supports_aria_props,
     jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
     oxc::const_comparisons,

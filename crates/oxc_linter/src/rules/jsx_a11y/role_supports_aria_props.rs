@@ -52,11 +52,11 @@ pub struct RoleSupportAriaProps;
 
 #[derive(Debug, Error, Diagnostic)]
 enum RoleSupportAriaPropsDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(role-support-aria-props): The attribute {1} is not supported by the role {2}.")]
+    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}.")]
     #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
     Default(#[label] Span, String, String),
 
-    #[error("eslint-plugin-jsx-a11y(role-support-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
+    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
     #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
     IsImplicit(#[label] Span, String, String, String),
 }
