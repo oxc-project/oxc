@@ -1,8 +1,9 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, ConditionalExpression, Expression},
     AstKind,
 };
 use oxc_semantic::AstNode;
+use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{ast_util::outermost_paren_parent, LintContext};
@@ -48,12 +49,19 @@ pub fn is_boolean_node<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     if matches!(
         parent.kind(),
         AstKind::IfStatement(_)
-            | AstKind::ConditionalExpression(_)
             | AstKind::WhileStatement(_)
             | AstKind::DoWhileStatement(_)
             | AstKind::ForStatement(_)
     ) {
         return true;
+    }
+
+    if let AstKind::ConditionalExpression(ConditionalExpression {
+        test: conditional_test, ..
+    }) = parent.kind()
+    {
+        let expr_span = conditional_test.get_inner_expression().without_parenthesized().span();
+        return expr_span == node.kind().span();
     }
 
     if is_logical_expression(parent) {
