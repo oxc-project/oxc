@@ -16,10 +16,10 @@ use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
     "eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX."
 )]
 #[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct NoJsxAsPropDiagnostic(#[label] pub Span);
+struct JsxNoJsxAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoJsxAsProp;
+pub struct JsxNoJsxAsProp;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -36,11 +36,11 @@ declare_oxc_lint!(
     /// // Good
     /// <Item callback={this.props.jsx} />
     /// ```
-    NoJsxAsProp,
+    JsxNoJsxAsProp,
     correctness
 );
 
-impl Rule for NoJsxAsProp {
+impl Rule for JsxNoJsxAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
@@ -57,7 +57,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
                 ..
             })) => {
                 if let Some(span) = check_expression(expr) {
-                    ctx.diagnostic(NoJsxAsPropDiagnostic(span));
+                    ctx.diagnostic(JsxNoJsxAsPropDiagnostic(span));
                 }
             }
             _ => {}
@@ -91,5 +91,5 @@ fn test() {
         r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
     ];
 
-    Tester::new(NoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();
+    Tester::new(JsxNoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();
 }

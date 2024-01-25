@@ -19,10 +19,10 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.")]
 #[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct NoNewArrayAsPropDiagnostic(#[label] pub Span);
+struct JsxNoNewArrayAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoNewArrayAsProp;
+pub struct JsxNoNewArrayAsProp;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -42,11 +42,11 @@ declare_oxc_lint!(
     /// // Good
     /// <Item list={this.props.list} />
     /// ```
-    NoNewArrayAsProp,
+    JsxNoNewArrayAsProp,
     correctness
 );
 
-impl Rule for NoNewArrayAsProp {
+impl Rule for JsxNoNewArrayAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
@@ -63,7 +63,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
                 ..
             })) => {
                 if let Some(span) = check_expression(expr) {
-                    ctx.diagnostic(NoNewArrayAsPropDiagnostic(span));
+                    ctx.diagnostic(JsxNoNewArrayAsPropDiagnostic(span));
                 }
             }
             _ => {}
@@ -113,7 +113,7 @@ fn test() {
         r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
     ];
 
-    Tester::new(NoNewArrayAsProp::NAME, pass, fail)
+    Tester::new(JsxNoNewArrayAsProp::NAME, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }
