@@ -33,6 +33,7 @@ phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
 petgraph   = "0.6.4"
+ahash      = "0.8.7"
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

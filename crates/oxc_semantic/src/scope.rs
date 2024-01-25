@@ -1,18 +1,18 @@
 use std::hash::BuildHasherDefault;
 
+use ahash::{AHashMap, AHasher};
 use indexmap::IndexMap;
 use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
 use oxc_index::IndexVec;
 use oxc_span::Atom;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type AHashIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<AHasher>>;
 
-type Bindings = FxIndexMap<Atom, SymbolId>;
-type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;
+type Bindings = AHashIndexMap<Atom, SymbolId>;
+type UnresolvedReferences = AHashMap<Atom, Vec<ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -23,9 +23,9 @@ pub struct ScopeTree {
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
     /// Maps a scope to direct children scopes
-    child_ids: FxHashMap<ScopeId, Vec<ScopeId>>,
+    child_ids: AHashMap<ScopeId, Vec<ScopeId>>,
     // Maps a scope to its node id
-    node_ids: FxHashMap<ScopeId, AstNodeId>,
+    node_ids: AHashMap<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
@@ -49,7 +49,7 @@ impl ScopeTree {
         // have recursive closures
         fn add_to_list(
             parent_id: ScopeId,
-            child_ids: &FxHashMap<ScopeId, Vec<ScopeId>>,
+            child_ids: &AHashMap<ScopeId, Vec<ScopeId>>,
             items: &mut Vec<ScopeId>,
         ) {
             if let Some(children) = child_ids.get(&parent_id) {
