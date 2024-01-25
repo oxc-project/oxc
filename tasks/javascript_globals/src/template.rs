@@ -28,7 +28,7 @@ impl<'a> Template<'a> {
             .render_template(ENV_TEMPLATE, &handlebars::to_json(self.context))
             .unwrap();
 
-        let out_path = Path::new("crates/oxc_linter/src/environments.rs");
+        let out_path = Path::new("crates/oxc_linter/src/javascript_globals.rs");
         File::create(out_path)?.write_all(rendered.as_bytes())?;
 
         println!("Saved env file to {out_path:?}");

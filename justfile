@@ -74,9 +74,9 @@ codecov:
 benchmark:
   cargo benchmark
 
-# Generate the environment variables. See `tasks/envgen`
-gen-env:
-  cargo run -p envgen
+# Generate the JavaScript global variables. See `tasks/javascript_globals`
+javascript-globals:
+  cargo run -p javascript_globals
 
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
 new-rule name:

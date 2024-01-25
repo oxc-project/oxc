@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
+use oxc_tasks_common::agent;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fs::File;
 mod template;
 
 #[derive(Serialize, Debug)]
@@ -67,14 +67,20 @@ lazy_static! {
 }
 
 fn main() {
-    // globals.json is copied from [sindresorhus/globals](https://github.com/sindresorhus/globals/blob/870383888c52f48d11d02975f107468f9401024e/globals.json)
     // Each global is given a value of true or false.
     // A value of true indicates that the variable may be overwritten.
     // A value of false indicates that the variable should be considered read-only.
     // open globals.json file relative to current file
-    let globals_json = File::open("tasks/envgen/globals.json").unwrap();
-    let globals: HashMap<String, HashMap<String, bool>> =
-        serde_json::from_reader(globals_json).unwrap();
+    // let globals: HashMap<String, HashMap<String, bool>>;
+    let globals: HashMap<String, HashMap<String, bool>> = match agent()
+        .get("https://raw.githubusercontent.com/sindresorhus/globals/main/globals.json")
+        .call()
+    {
+        Ok(response) => response.into_json().unwrap(),
+        Err(e) => {
+            panic!("Failed to fetch globals.json: {e}");
+        }
+    };
 
     // 19 variables such as Promise, Map, ...
     let new_globals_2015 = get_diff(&globals["es2015"], &globals["es5"]);

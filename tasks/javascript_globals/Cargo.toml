@@ -1,5 +1,5 @@
 [package]
-name              = "envgen"
+name              = "javascript_globals"
 version           = "0.0.0"
 publish           = false
 edition.workspace = true
@@ -9,10 +9,12 @@ license.workspace = true
 workspace = true
 
 [[bin]]
-name = "envgen"
+name = "javascript_globals"
 test = false
 
 [dependencies]
+oxc_tasks_common = { workspace = true }
+
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }
 lazy_static  = { workspace = true }

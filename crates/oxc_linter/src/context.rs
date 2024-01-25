@@ -7,8 +7,8 @@ use oxc_span::SourceType;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    environments::ENVIRONMENTS,
     fixer::{Fix, Message},
+    javascript_globals::GLOBALS,
     AstNode, Env, LintSettings,
 };
 
@@ -95,7 +95,7 @@ impl<'a> LintContext<'a> {
 
     pub fn env_contains_var(&self, var: &str) -> bool {
         for env in self.env.iter() {
-            let env = ENVIRONMENTS.get(env).unwrap_or(&ENVIRONMENTS["builtin"]);
+            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
             if env.get(var).is_some() {
                 return true;
             }
