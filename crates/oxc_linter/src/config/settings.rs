@@ -1,13 +1,15 @@
 use rustc_hash::FxHashMap;
 
 /// The `settings` field from ESLint config
+///
+/// An object containing name-value pairs of information that should be available to all rules
 #[derive(Debug, Clone)]
-pub struct LintSettings {
+pub struct ESLintSettings {
     pub jsx_a11y: JsxA11y,
     pub nextjs: Nextjs,
 }
 
-impl Default for LintSettings {
+impl Default for ESLintSettings {
     fn default() -> Self {
         Self {
             jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() },
@@ -16,7 +18,7 @@ impl Default for LintSettings {
     }
 }
 
-impl LintSettings {
+impl ESLintSettings {
     pub fn new(jsx_a11y: JsxA11y, nextjs: Nextjs) -> Self {
         Self { jsx_a11y, nextjs }
     }
