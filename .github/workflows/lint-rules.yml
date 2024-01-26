@@ -29,4 +29,4 @@ jobs:
       - name: Run task
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./tasks/lint_rules --update --t eslint
+        run: node ./tasks/lint_rules --update --target eslint
