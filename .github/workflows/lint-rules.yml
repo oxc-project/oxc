@@ -29,6 +29,4 @@ jobs:
       - name: Run task
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node ./tasks/lint_rules
-        # TODO: For debug
-        # run: node ./tasks/lint_rules --update
+        run: node ./tasks/lint_rules --update --t eslint
