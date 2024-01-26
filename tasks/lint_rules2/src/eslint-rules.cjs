@@ -54,11 +54,8 @@ const {
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
 const { rules: pluginNextAllRules } = require("@next/eslint-plugin-next");
 
-// All rules(including deprecated, recommended) are loaded initially.
-exports.createESLintLinter = () => new Linter();
-
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginTypeScriptRules = (linter) => {
+const loadPluginTypeScriptRules = (linter) => {
   // We want to list all rules but not support type-checked rules
   const pluginTypeScriptDisableTypeCheckedRules = new Map(
     Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
@@ -76,7 +73,7 @@ exports.loadPluginTypeScriptRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginNRules = (linter) => {
+const loadPluginNRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginNAllRules)) {
     const prefixedName = `n/${name}`;
 
@@ -86,7 +83,7 @@ exports.loadPluginNRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginUnicornRules = (linter) => {
+const loadPluginUnicornRules = (linter) => {
   const pluginUnicornRecommendedRules = new Map(
     Object.entries(pluginUnicornConfigs.recommended.rules),
   );
@@ -103,7 +100,7 @@ exports.loadPluginUnicornRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginJSDocRules = (linter) => {
+const loadPluginJSDocRules = (linter) => {
   const pluginJSDocRecommendedRules = new Map(
     Object.entries(pluginJSDocConfigs.recommended.rules),
   );
@@ -119,7 +116,7 @@ exports.loadPluginJSDocRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginImportRules = (linter) => {
+const loadPluginImportRules = (linter) => {
   const pluginImportRecommendedRules = new Map(
     // @ts-expect-error: Property 'rules' does not exist on type 'Object'.
     Object.entries(pluginImportConfigs.recommended.rules),
@@ -136,7 +133,7 @@ exports.loadPluginImportRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginJSXA11yRules = (linter) => {
+const loadPluginJSXA11yRules = (linter) => {
   const pluginJSXA11yRecommendedRules = new Map(
     Object.entries(pluginJSXA11yConfigs.recommended.rules),
   );
@@ -155,7 +152,7 @@ exports.loadPluginJSXA11yRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginJestRules = (linter) => {
+const loadPluginJestRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginJestAllRules)) {
     const prefixedName = `jest/${name}`;
 
@@ -167,7 +164,7 @@ exports.loadPluginJestRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginReactRules = (linter) => {
+const loadPluginReactRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginReactAllRules)) {
     const prefixedName = `react/${name}`;
 
@@ -176,7 +173,7 @@ exports.loadPluginReactRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginReactHooksRules = (linter) => {
+const loadPluginReactHooksRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginReactHooksAllRules)) {
     const prefixedName = `react-hooks/${name}`;
 
@@ -186,7 +183,7 @@ exports.loadPluginReactHooksRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginReactPerfRules = (linter) => {
+const loadPluginReactPerfRules = (linter) => {
   const pluginReactPerfRecommendedRules = new Map(
     Object.entries(pluginReactPerfConfigs.recommended.rules),
   );
@@ -201,10 +198,50 @@ exports.loadPluginReactPerfRules = (linter) => {
 };
 
 /** @param {import("eslint").Linter} linter */
-exports.loadPluginNextRules = (linter) => {
+const loadPluginNextRules = (linter) => {
   for (const [name, rule] of Object.entries(pluginNextAllRules)) {
     const prefixedName = `nextjs/${name}`;
 
     linter.defineRule(prefixedName, rule);
   }
+};
+
+/**
+ * @typedef {{
+ *   npm: string;
+ *   issueNo: number;
+ * }} TargetPluginMeta
+ * @type {Map<string, TargetPluginMeta>}
+ */
+exports.ALL_TARGET_PLUGINS = new Map([
+  ["eslint", { npm: "eslint", issueNo: 479 }],
+  ["typescript", { npm: "@typescript-eslint/eslint-plugin", issueNo: 503 }],
+  ["n", { npm: "eslint-plugin-n", issueNo: 493 }],
+  ["unicorn", { npm: "eslint-plugin-unicorn", issueNo: 684 }],
+  ["jsdoc", { npm: "eslint-plugin-jsdoc", issueNo: 1170 }],
+  ["import", { npm: "eslint-plugin-import", issueNo: 1117 }],
+  ["jsx-a11y", { npm: "eslint-plugin-jsx-a11y", issueNo: 1141 }],
+  ["jest", { npm: "eslint-plugin-jest", issueNo: 492 }],
+  ["react", { npm: "eslint-plugin-react", issueNo: 1022 }],
+  ["react-hooks", { npm: "eslint-plugin-react-hooks", issueNo: -1 }], // TODO: Fill issueNo
+  ["react-perf", { npm: "eslint-plugin-react-perf", issueNo: 2041 }],
+  ["nextjs", { npm: "@next/eslint-plugin-next", issueNo: 1929 }],
+]);
+
+// All rules(including deprecated, recommended) are loaded initially.
+exports.createESLintLinter = () => new Linter();
+
+/** @param {import("eslint").Linter} linter */
+exports.loadTargetPluginRules = (linter) => {
+  loadPluginTypeScriptRules(linter);
+  loadPluginNRules(linter);
+  loadPluginUnicornRules(linter);
+  loadPluginJSDocRules(linter);
+  loadPluginImportRules(linter);
+  loadPluginJSXA11yRules(linter);
+  loadPluginJestRules(linter);
+  loadPluginReactRules(linter);
+  loadPluginReactHooksRules(linter);
+  loadPluginReactPerfRules(linter);
+  loadPluginNextRules(linter);
 };
