@@ -391,7 +391,7 @@ expression: valid_expect
   help: "Add `await` to your assertion."
 
   ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
-   ╭─[valid_expect.tsx:2:1]
+   ╭─[valid_expect.tsx:3:17]
  2 │                     test('valid-expect', () => {
  3 │ ╭─▶                 Promise.all([
  4 │ │                       expect(Promise.resolve(2)).resolves.not.toBeDefined(),
@@ -402,7 +402,7 @@ expression: valid_expect
   help: "Add `await` to your assertion."
 
   ⚠ eslint-plugin-jest(valid-expect): "Promises which return async assertions must be awaited."
-   ╭─[valid_expect.tsx:2:1]
+   ╭─[valid_expect.tsx:3:17]
  2 │                     test('valid-expect', () => {
  3 │ ╭─▶                 Promise.x([
  4 │ │                       expect(Promise.resolve(2)).resolves.not.toBeDefined(),

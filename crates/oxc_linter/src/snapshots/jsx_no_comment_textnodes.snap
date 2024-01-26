@@ -28,7 +28,7 @@ expression: jsx_no_comment_textnodes
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
-   ╭─[jsx_no_comment_textnodes.tsx:4:1]
+   ╭─[jsx_no_comment_textnodes.tsx:5:32]
  4 │                             return (
  5 │ ╭─▶                           <div>
  6 │ │                               // invalid
@@ -37,7 +37,7 @@ expression: jsx_no_comment_textnodes
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
-    ╭─[jsx_no_comment_textnodes.tsx:4:1]
+    ╭─[jsx_no_comment_textnodes.tsx:5:32]
   4 │                             return (
   5 │ ╭─▶                           <div>
   6 │ │                               asdjfl
@@ -48,7 +48,7 @@ expression: jsx_no_comment_textnodes
     ╰────
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
-   ╭─[jsx_no_comment_textnodes.tsx:5:1]
+   ╭─[jsx_no_comment_textnodes.tsx:6:39]
  5 │                               <div>
  6 │ ╭─▶                             {'asdjfl'}
  7 │ │                               // invalid

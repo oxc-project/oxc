@@ -405,7 +405,7 @@ impl GraphicalReportHandler {
             .find_map(|hl| {
                 lines
                     .iter()
-                    .find(|line| line.span_applies(hl) && line.span_line_only(hl))
+                    .find(|line| line.span_applies(hl))
                     .map(|line| (line.line_number, self.visual_offset(line, hl.offset()) + 1))
             })
             .unwrap_or_else(|| (contents.line() + 1, contents.column() + 1));

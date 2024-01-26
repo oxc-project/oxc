@@ -196,7 +196,7 @@ expression: no_self_assign
    ╰────
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
-   ╭─[no_self_assign.tsx:2:1]
+   ╭─[no_self_assign.tsx:3:5]
  2 │         'b'
  3 │ ╭─▶ ] = a[
  4 │ │       'b'
@@ -228,7 +228,7 @@ expression: no_self_assign
    ╰────
 
   ⚠ eslint(no-self-assign): this expression is assigned to itself
-   ╭─[no_self_assign.tsx:2:1]
+   ╭─[no_self_assign.tsx:3:5]
  2 │         'b'
  3 │ ╭─▶ ] = a[
  4 │ │       'b'
