@@ -5,6 +5,7 @@ mod mangler;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
+use oxc_span::SourceType;
 
 pub use crate::{
     compressor::{CompressOptions, Compressor},
@@ -32,8 +33,8 @@ impl Minifier {
         Self { options }
     }
 
-    pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) {
-        Compressor::new(allocator, self.options.compress).build(program);
+    pub fn build<'a>(self, allocator: &'a Allocator, source_text: &'a str, source_type: SourceType, program: &mut Program<'a>) {
+        Compressor::new(allocator, source_text, source_type, program, self.options.compress);
         // if self.options.mangle {
         // let mangler = ManglerBuilder.build(program);
         // printer.with_mangler(mangler);

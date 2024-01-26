@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
 use pico_args::Arguments;
@@ -44,10 +45,12 @@ fn main() {
 
 fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: bool) -> String {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let parsed = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(parsed.program);
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
-    Minifier::new(options).build(&allocator, program);
+    // let semantic_builder = SemanticBuilder::new(source_text, source_type).with_trivias(parsed.trivias);
+    // let semantic = semantic_builder.build(program);
+    Minifier::new(options).build(&allocator, source_text, source_type, program);
     if whitespace {
         Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
     } else {

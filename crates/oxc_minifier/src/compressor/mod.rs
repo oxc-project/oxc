@@ -7,9 +7,10 @@ mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
+use oxc_ast::AstKind;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
-use oxc_span::Span;
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
     precedence::GetPrecedence,
@@ -29,13 +30,15 @@ pub struct Compressor<'a> {
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
-    pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
-    }
-
-    pub fn build(mut self, program: &mut Program<'a>) {
-        self.prepass.build(program);
-        self.visit_program(program);
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType, program: &mut Program<'a>, options: CompressOptions) -> Self {
+        let mut this = Self {
+            ast: AstBuilder::new(allocator),
+            options,
+            prepass: Prepass::new(allocator, source_text, source_type, program)
+        };
+        this.prepass.build(program);
+        this.visit_program(program);
+        this
     }
 
     /* Utilities */
@@ -349,6 +352,21 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        if let Expression::Identifier(ident) = expr {
+            if let Some(symbol_id) = self.prepass.reference_symbols.get(&ident.reference_id.get().unwrap()) {
+                if let Some(Some(replacement)) = self.prepass.inlinable_symbols.get(symbol_id) {
+                    match replacement {
+                        Expression::NumberLiteral(lit) => {
+                            *expr = self.ast.literal_number_expression(
+                                self.ast.number_literal(expr.span(), lit.value, lit.raw, lit.base)
+                            );
+                            return
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
         self.visit_expression_match(expr);
         self.compress_console(expr);
         self.fold_expression(expr);
