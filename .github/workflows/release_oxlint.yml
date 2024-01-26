@@ -39,6 +39,7 @@ jobs:
     if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
+      OXC_VERSION: ${{ needs.check.outputs.version }}
     strategy:
       matrix:
         include:
