@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::VariableInfo;
 use oxc_span::{Atom, Span};
 
-use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
@@ -106,7 +106,7 @@ impl NoRedeclare {
         variable: &VariableInfo,
         ident: &BindingIdentifier,
     ) {
-        if self.built_in_globals && BUILTINS.get(&ident.name).is_some() {
+        if self.built_in_globals && ctx.env_contains_var(&ident.name) {
             ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
         } else if variable.span != ident.span {
             ctx.diagnostic(NoRedeclareDiagnostic(ident.name.clone(), ident.span, variable.span));

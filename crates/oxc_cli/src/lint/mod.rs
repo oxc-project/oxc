@@ -325,6 +325,29 @@ mod test {
     }
 
     #[test]
+    fn eslintrc_no_env() {
+        let args =
+            &["-c", "fixtures/eslintrc_env/eslintrc_no_env.json", "fixtures/eslintrc_env/test.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn eslintrc_with_env() {
+        let args = &[
+            "-c",
+            "fixtures/eslintrc_env/eslintrc_env_browser.json",
+            "fixtures/eslintrc_env/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn no_empty_allow_empty_catch() {
         let args = &[
             "-c",

@@ -5,7 +5,7 @@ use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use crate::{rules::RuleEnum, settings::Nextjs, AllowWarnDeny, JsxA11y, LintSettings};
+use crate::{rules::RuleEnum, settings::Nextjs, AllowWarnDeny, Env, JsxA11y, LintSettings};
 
 use self::errors::{
     FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
@@ -15,6 +15,7 @@ use self::errors::{
 pub struct ESLintConfig {
     rules: Vec<ESLintRuleConfig>,
     settings: LintSettings,
+    env: Env,
 }
 
 #[derive(Debug)]
@@ -30,11 +31,12 @@ impl ESLintConfig {
         let json = Self::read_json(path)?;
         let rules = parse_rules(&json)?;
         let settings = parse_settings_from_root(&json);
-        Ok(Self { rules, settings })
+        let env = parse_env_from_root(&json);
+        Ok(Self { rules, settings, env })
     }
 
-    pub fn settings(self) -> LintSettings {
-        self.settings
+    pub fn properties(self) -> (LintSettings, Env) {
+        (self.settings, self.env)
     }
 
     fn read_json(path: &Path) -> Result<serde_json::Value, Error> {
@@ -199,6 +201,28 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
     }
 
     LintSettings::default()
+}
+
+fn parse_env_from_root(root_json: &Value) -> Env {
+    let Value::Object(root_object) = root_json else { return Env::default() };
+
+    let Some(env_value) = root_object.get("env") else { return Env::default() };
+
+    let env_object = match env_value {
+        Value::Object(env_object) => env_object,
+        _ => return Env::default(),
+    };
+
+    let mut result = vec![];
+    for (k, v) in env_object {
+        if let Value::Bool(v) = v {
+            if *v {
+                result.push(String::from(k));
+            }
+        }
+    }
+
+    Env::new(result)
 }
 
 fn parse_rule_name(name: &str) -> (&str, &str) {

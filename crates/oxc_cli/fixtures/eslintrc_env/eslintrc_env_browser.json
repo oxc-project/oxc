@@ -1,0 +1,8 @@
+{
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "no-undef": "error"
+  }
+}

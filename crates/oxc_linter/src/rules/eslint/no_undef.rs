@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, globals::BUILTINS, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-undef): Disallow the use of undeclared variables")]
@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// var bar = a + 1;
     /// ```
     NoUndef,
-    nursery // https://github.com/oxc-project/oxc/issues/732
+    nursery
 );
 
 impl Rule for NoUndef {
@@ -53,7 +53,7 @@ impl Rule for NoUndef {
         for reference_id_list in ctx.scopes().root_unresolved_references().values() {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                if BUILTINS.contains_key(reference.name().as_str()) {
+                if ctx.env_contains_var(reference.name().as_str()) {
                     return;
                 }
 

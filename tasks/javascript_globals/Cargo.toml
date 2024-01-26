@@ -1,0 +1,21 @@
+[package]
+name              = "javascript_globals"
+version           = "0.0.0"
+publish           = false
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "javascript_globals"
+test = false
+
+[dependencies]
+oxc_tasks_common = { workspace = true }
+
+serde        = { workspace = true, features = ["derive"] }
+lazy_static  = { workspace = true }
+
+handlebars = "5.0.0"

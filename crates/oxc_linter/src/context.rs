@@ -8,7 +8,8 @@ use oxc_span::SourceType;
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
-    AstNode, LintSettings,
+    javascript_globals::GLOBALS,
+    AstNode, Env, LintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -26,6 +27,8 @@ pub struct LintContext<'a> {
     file_path: Box<Path>,
 
     settings: Arc<LintSettings>,
+
+    env: Arc<Env>,
 }
 
 impl<'a> LintContext<'a> {
@@ -40,6 +43,7 @@ impl<'a> LintContext<'a> {
             current_rule_name: "",
             file_path,
             settings: Arc::new(LintSettings::default()),
+            env: Arc::new(Env::default()),
         }
     }
 
@@ -52,6 +56,12 @@ impl<'a> LintContext<'a> {
     #[must_use]
     pub fn with_settings(mut self, settings: &Arc<LintSettings>) -> Self {
         self.settings = Arc::clone(settings);
+        self
+    }
+
+    #[must_use]
+    pub fn with_env(mut self, env: &Arc<Env>) -> Self {
+        self.env = Arc::clone(env);
         self
     }
 
@@ -77,6 +87,21 @@ impl<'a> LintContext<'a> {
 
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    pub fn envs(&self) -> &Env {
+        &self.env
+    }
+
+    pub fn env_contains_var(&self, var: &str) -> bool {
+        for env in self.env.iter() {
+            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
+            if env.get(var).is_some() {
+                return true;
+            }
+        }
+
+        false
     }
 
     #[inline]
