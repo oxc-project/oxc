@@ -1,18 +1,20 @@
 /**
- * @param {string} pluginName
- * @param {import("./eslint-rules.cjs").TargetPluginMeta} pluginMeta
- * @param {string} listPart
+ * @typedef {({ name: string } & import("./oxlint-rules.cjs").RuleEntry)} RuleEntryView
  */
-const renderLayout = (pluginName, pluginMeta, listPart) => `
+
+const renderWarning = () => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
+`;
 
-This is tracking issue for \`${pluginMeta.npm}\`.
+/** @param {{ npm: string; }} props */
+const renderHeader = ({ npm }) => `
+This is tracking issue for \`${npm}\`.
+`;
 
-## Rules
-${listPart}
-
+/** @param {{ pluginName: string }} props */
+const renderGettingStarted = ({ pluginName }) => `
 ## Getting started
 
 \`\`\`sh
@@ -22,34 +24,30 @@ just new-${pluginName}-rule <RULE_NAME>
 Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_all_lint_rules\` at the bottom.
 `;
 
-/** @param {[string, import("./oxlint-rules.cjs").RuleEntry][]} ruleEntries */
-const renderRulesList = (ruleEntries) => {
-  /* prettier-ignore */
-  const list = [
-    "| Name | Kind | Status | Docs |",
-    "| :--- | :--: | :----: | :--- |",
-  ];
+/**
+ * @param {{
+ *   title: string;
+ *   views: RuleEntryView[];
+ *   defaultOpen?: boolean;
+ * }} props */
+const renderRulesList = ({ title, views, defaultOpen = true }) => `
+## ${title}
 
-  for (const [name, entry] of ruleEntries) {
-    // These should be exclusive, but show it for sure...
-    let kind = "";
-    if (entry.isRecommended) kind += "🍀";
-    if (entry.isDeprecated) kind += "⚠️";
+<details ${defaultOpen ? "open" : ""}>
 
-    let status = "";
-    if (entry.isImplemented) status += "✨";
-    if (entry.isNotSupported) status += "🚫";
+| Status | Name | Docs |
+| :----: | :--- | :--- |
+${views
+  .map(
+    (v) =>
+      `| ${v.isImplemented ? "✅" : ""}${v.isNotSupported ? "🚫" : ""} | ${v.name} | ${v.docsUrl} |`,
+  )
+  .join("\n")}
 
-    list.push(`| ${name} | ${kind} | ${status} | ${entry.docsUrl} |`);
-  }
+✅ = Implemented, 🚫 = Not supported
 
-  return `
-- Kind: 🍀 = recommended | ⚠️ = deprecated
-- Status: ✨ = implemented | 🚫 = not supported
-
-${list.join("\n")}
+</details>
 `;
-};
 
 /**
  * @param {string} pluginName
@@ -57,8 +55,39 @@ ${list.join("\n")}
  * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
  */
 exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
-  const pluginRules = Array.from(ruleEntries).filter(([name]) =>
-    name.startsWith(`${pluginName}/`),
-  );
-  return renderLayout(pluginName, pluginMeta, renderRulesList(pluginRules));
+  /** @type {RuleEntryView[][]} */
+  const [deprecated, recommended, others] = [[], [], []];
+  for (const [name, entry] of ruleEntries) {
+    if (!name.startsWith(`${pluginName}/`)) continue;
+
+    const view = { name, ...entry };
+
+    if (entry.isDeprecated) {
+      deprecated.push(view);
+      continue;
+    }
+    if (entry.isRecommended) {
+      recommended.push(view);
+      continue;
+    }
+    others.push(view);
+  }
+
+  return [
+    renderWarning(),
+    renderHeader({ npm: pluginMeta.npm }),
+    0 < recommended.length &&
+      renderRulesList({ title: "Recommended rules", views: recommended }),
+    0 < others.length &&
+      renderRulesList({ title: "Not recommended rules", views: others }),
+    0 < deprecated.length &&
+      renderRulesList({
+        title: "Deprecated rules",
+        views: deprecated,
+        defaultOpen: false,
+      }),
+    renderGettingStarted({ pluginName }),
+  ]
+    .filter(Boolean)
+    .join("\n");
 };
