@@ -1,21 +1,30 @@
+mod env;
+pub mod errors;
+mod settings;
+
 use std::path::Path;
 
-pub mod errors;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use crate::{rules::RuleEnum, settings::Nextjs, AllowWarnDeny, Env, JsxA11y, LintSettings};
+use crate::{rules::RuleEnum, AllowWarnDeny};
 
 use self::errors::{
     FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
     FailedToParseRuleValueError,
 };
+pub use self::{
+    env::ESLintEnv,
+    settings::{ESLintSettings, JsxA11y, Nextjs},
+};
 
+/// ESLint Config
+/// <https://eslint.org/docs/latest/use/configure/configuration-files-new#configuration-objects>
 pub struct ESLintConfig {
     rules: Vec<ESLintRuleConfig>,
-    settings: LintSettings,
-    env: Env,
+    settings: ESLintSettings,
+    env: ESLintEnv,
 }
 
 #[derive(Debug)]
@@ -35,7 +44,7 @@ impl ESLintConfig {
         Ok(Self { rules, settings, env })
     }
 
-    pub fn properties(self) -> (LintSettings, Env) {
+    pub fn properties(self) -> (ESLintSettings, ESLintEnv) {
         (self.settings, self.env)
     }
 
@@ -157,15 +166,17 @@ fn parse_rules(root_json: &Value) -> Result<Vec<ESLintRuleConfig>, Error> {
         .collect::<Result<Vec<_>, Error>>()
 }
 
-fn parse_settings_from_root(root_json: &Value) -> LintSettings {
-    let Value::Object(root_object) = root_json else { return LintSettings::default() };
+fn parse_settings_from_root(root_json: &Value) -> ESLintSettings {
+    let Value::Object(root_object) = root_json else { return ESLintSettings::default() };
 
-    let Some(settings_value) = root_object.get("settings") else { return LintSettings::default() };
+    let Some(settings_value) = root_object.get("settings") else {
+        return ESLintSettings::default();
+    };
 
     parse_settings(settings_value)
 }
 
-pub fn parse_settings(setting_value: &Value) -> LintSettings {
+pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
     if let Value::Object(settings_object) = setting_value {
         let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
         let mut nextjs_setting = Nextjs::new(vec![]);
@@ -197,20 +208,20 @@ pub fn parse_settings(setting_value: &Value) -> LintSettings {
             }
         }
 
-        return LintSettings::new(jsx_a11y_setting, nextjs_setting);
+        return ESLintSettings::new(jsx_a11y_setting, nextjs_setting);
     }
 
-    LintSettings::default()
+    ESLintSettings::default()
 }
 
-fn parse_env_from_root(root_json: &Value) -> Env {
-    let Value::Object(root_object) = root_json else { return Env::default() };
+fn parse_env_from_root(root_json: &Value) -> ESLintEnv {
+    let Value::Object(root_object) = root_json else { return ESLintEnv::default() };
 
-    let Some(env_value) = root_object.get("env") else { return Env::default() };
+    let Some(env_value) = root_object.get("env") else { return ESLintEnv::default() };
 
     let env_object = match env_value {
         Value::Object(env_object) => env_object,
-        _ => return Env::default(),
+        _ => return ESLintEnv::default(),
     };
 
     let mut result = vec![];
@@ -222,7 +233,7 @@ fn parse_env_from_root(root_json: &Value) -> Env {
         }
     }
 
-    Env::new(result)
+    ESLintEnv::new(result)
 }
 
 fn parse_rule_name(name: &str) -> (&str, &str) {
