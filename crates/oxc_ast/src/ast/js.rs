@@ -1911,18 +1911,14 @@ impl<'a> ClassElement<'a> {
     }
 
     pub fn has_decorator(&self) -> bool {
-        #[allow(clippy::match_same_arms)]
         match self {
-            Self::TSIndexSignature(_)
-            | Self::TSAbstractMethodDefinition(_)
-            | Self::TSAbstractPropertyDefinition(_) => false,
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
-            Self::AccessorProperty(_) => {
-                // TODO: AccessorProperty doesn't have decorators property
-                false
-            }
-            Self::StaticBlock(_) => false,
+            Self::AccessorProperty(property) => !property.decorators.is_empty(),
+            Self::StaticBlock(_)
+            | Self::TSIndexSignature(_)
+            | Self::TSAbstractMethodDefinition(_)
+            | Self::TSAbstractPropertyDefinition(_) => false,
         }
     }
 }
