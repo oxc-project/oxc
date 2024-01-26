@@ -3,9 +3,6 @@
   "name": "lint_rules2",
   "main": "./src/main.cjs",
   "version": "0.0.0",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
