@@ -20,12 +20,12 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(jsx-no-new-function-as-props): JSX attribute values should not contain functions created in the same scope.")]
+#[error("eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.")]
 #[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct JsxNoNewFunctionAsPropsDiagnostic(#[label] pub Span);
+struct JsxNoNewFunctionAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct JsxNoNewFunctionAsProps;
+pub struct JsxNoNewFunctionAsProp;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -40,11 +40,11 @@ declare_oxc_lint!(
     /// // Good
     /// <Item callback={this.props.callback} />
     /// ```
-    JsxNoNewFunctionAsProps,
+    JsxNoNewFunctionAsProp,
     correctness
 );
 
-impl Rule for JsxNoNewFunctionAsProps {
+impl Rule for JsxNoNewFunctionAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
@@ -61,7 +61,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
                 ..
             })) => {
                 if let Some(span) = check_expression(expr) {
-                    ctx.diagnostic(JsxNoNewFunctionAsPropsDiagnostic(span));
+                    ctx.diagnostic(JsxNoNewFunctionAsPropDiagnostic(span));
                 }
             }
             _ => {}
@@ -139,7 +139,7 @@ fn test() {
         r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
     ];
 
-    Tester::new(JsxNoNewFunctionAsProps::NAME, pass, fail)
+    Tester::new(JsxNoNewFunctionAsProp::NAME, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

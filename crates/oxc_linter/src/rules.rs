@@ -170,7 +170,7 @@ mod react {
 mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;
-    pub mod jsx_no_new_function_as_props;
+    pub mod jsx_no_new_function_as_prop;
     pub mod jsx_no_new_object_as_prop;
 }
 
@@ -524,7 +524,7 @@ oxc_macros::declare_all_lint_rules! {
     react::require_render_return,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
-    react_perf::jsx_no_new_function_as_props,
+    react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
     import::default,
     import::no_named_as_default_member,
