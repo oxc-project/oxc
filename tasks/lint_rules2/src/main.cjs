@@ -1,17 +1,8 @@
 const { parseArgs } = require("node:util");
 const {
+  ALL_TARGET_PLUGIN_NAMES,
   createESLintLinter,
-  loadPluginTypeScriptRules,
-  loadPluginNRules,
-  loadPluginUnicornRules,
-  loadPluginJSDocRules,
-  loadPluginImportRules,
-  loadPluginJSXA11yRules,
-  loadPluginJestRules,
-  loadPluginReactRules,
-  loadPluginReactHooksRules,
-  loadPluginReactPerfRules,
-  loadPluginNextRules,
+  loadTargetPluginRules,
 } = require("./eslint-rules.cjs");
 const {
   createRuleEntries,
@@ -20,21 +11,6 @@ const {
   updateImplementedStatus,
 } = require("./oxlint-rules.cjs");
 const { renderRulesList, renderLayout } = require("./output-markdown.cjs");
-
-const ALL_TARGET_PLUGIN_NAMES = new Set([
-  "eslint",
-  "typescript",
-  "n",
-  "unicorn",
-  "jsdoc",
-  "import",
-  "jsx-a11y",
-  "jest",
-  "react",
-  "react-hooks",
-  "react-perf",
-  "nextjs",
-]);
 
 const HELP = `
 Usage:
@@ -72,17 +48,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   // Load linter and all plugins
   //
   const linter = createESLintLinter();
-  loadPluginTypeScriptRules(linter);
-  loadPluginNRules(linter);
-  loadPluginUnicornRules(linter);
-  loadPluginJSDocRules(linter);
-  loadPluginImportRules(linter);
-  loadPluginJSXA11yRules(linter);
-  loadPluginJestRules(linter);
-  loadPluginReactRules(linter);
-  loadPluginReactHooksRules(linter);
-  loadPluginReactPerfRules(linter);
-  loadPluginNextRules(linter);
+  loadTargetPluginRules(linter);
 
   //
   // Generate entry and update status
