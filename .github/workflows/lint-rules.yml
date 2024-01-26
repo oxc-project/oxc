@@ -1,4 +1,4 @@
-name: Update lint_rules list
+name: Update implementation status of all linter plugins
 
 on: 
   push:
@@ -11,21 +11,20 @@ on:
 jobs:
   lint_rules:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          cache-base: main
+          node-version: 20
 
-      - name: Build lint_rules task
-        run: cargo build -p lint_rules
+      - name: Install latest plugins
+        working-directory: tasks/lint_rules
+        run: npm install
 
-      - name: Update eslint
-        run: cargo run -p lint_rules eslint --update
-      - name: Update @typescript-eslint
-        run: cargo run -p lint_rules typescript --update
+      - name: Run task
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node ./tasks/lint_rules --update

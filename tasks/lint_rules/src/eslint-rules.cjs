@@ -223,7 +223,7 @@ exports.ALL_TARGET_PLUGINS = new Map([
   ["jsx-a11y", { npm: "eslint-plugin-jsx-a11y", issueNo: 1141 }],
   ["jest", { npm: "eslint-plugin-jest", issueNo: 492 }],
   ["react", { npm: "eslint-plugin-react", issueNo: 1022 }],
-  ["react-hooks", { npm: "eslint-plugin-react-hooks", issueNo: -1 }], // TODO: Fill issueNo
+  ["react-hooks", { npm: "eslint-plugin-react-hooks", issueNo: 2174 }],
   ["react-perf", { npm: "eslint-plugin-react-perf", issueNo: 2041 }],
   ["nextjs", { npm: "@next/eslint-plugin-next", issueNo: 1929 }],
 ]);
