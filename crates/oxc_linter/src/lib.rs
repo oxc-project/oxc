@@ -8,7 +8,6 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
-mod env;
 mod fixer;
 mod globals;
 mod javascript_globals;
@@ -17,7 +16,6 @@ pub mod partial_loader;
 pub mod rule;
 mod rules;
 mod service;
-mod settings;
 mod utils;
 
 use rustc_hash::FxHashMap;
@@ -25,19 +23,19 @@ use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Report;
 
+use crate::{
+    config::{ESLintEnv, ESLintSettings, JsxA11y},
+    fixer::Fix,
+    fixer::{Fixer, Message},
+    rule::RuleCategory,
+    rules::{RuleEnum, RULES},
+};
 pub use crate::{
     context::LintContext,
-    env::Env,
-    fixer::Fix,
-    fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
-    rule::RuleCategory,
-    rules::RULES,
     service::LintService,
-    settings::LintSettings,
 };
-pub(crate) use crate::{rules::RuleEnum, settings::JsxA11y};
-pub(crate) use oxc_semantic::AstNode;
+use oxc_semantic::AstNode;
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -54,8 +52,8 @@ fn size_asserts() {
 pub struct Linter {
     rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
-    settings: Arc<LintSettings>,
-    env: Arc<Env>,
+    settings: Arc<ESLintSettings>,
+    env: Arc<ESLintEnv>,
 }
 
 impl Default for Linter {
@@ -81,13 +79,13 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn with_settings(mut self, settings: LintSettings) -> Self {
+    pub fn with_settings(mut self, settings: ESLintSettings) -> Self {
         self.settings = Arc::new(settings);
         self
     }
 
     #[must_use]
-    pub fn with_envs(mut self, env: Env) -> Self {
+    pub fn with_envs(mut self, env: ESLintEnv) -> Self {
         self.env = Arc::new(env);
         self
     }

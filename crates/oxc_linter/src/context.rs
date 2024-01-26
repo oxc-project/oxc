@@ -9,7 +9,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    AstNode, Env, LintSettings,
+    AstNode, ESLintEnv, ESLintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -26,9 +26,9 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
-    settings: Arc<LintSettings>,
+    settings: Arc<ESLintSettings>,
 
-    env: Arc<Env>,
+    env: Arc<ESLintEnv>,
 }
 
 impl<'a> LintContext<'a> {
@@ -42,8 +42,8 @@ impl<'a> LintContext<'a> {
             fix: false,
             current_rule_name: "",
             file_path,
-            settings: Arc::new(LintSettings::default()),
-            env: Arc::new(Env::default()),
+            settings: Arc::new(ESLintSettings::default()),
+            env: Arc::new(ESLintEnv::default()),
         }
     }
 
@@ -54,13 +54,13 @@ impl<'a> LintContext<'a> {
     }
 
     #[must_use]
-    pub fn with_settings(mut self, settings: &Arc<LintSettings>) -> Self {
+    pub fn with_settings(mut self, settings: &Arc<ESLintSettings>) -> Self {
         self.settings = Arc::clone(settings);
         self
     }
 
     #[must_use]
-    pub fn with_env(mut self, env: &Arc<Env>) -> Self {
+    pub fn with_env(mut self, env: &Arc<ESLintEnv>) -> Self {
         self.env = Arc::clone(env);
         self
     }
@@ -73,7 +73,7 @@ impl<'a> LintContext<'a> {
         &self.disable_directives
     }
 
-    pub fn settings(&self) -> &LintSettings {
+    pub fn settings(&self) -> &ESLintSettings {
         &self.settings
     }
 
@@ -89,7 +89,7 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
-    pub fn envs(&self) -> &Env {
+    pub fn envs(&self) -> &ESLintEnv {
         &self.env
     }
 

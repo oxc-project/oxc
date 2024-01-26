@@ -9,7 +9,7 @@ use crate::{
         ESLintConfig,
     },
     rules::RULES,
-    Env, LintSettings, RuleCategory, RuleEnum,
+    ESLintEnv, ESLintSettings, RuleCategory, RuleEnum,
 };
 use oxc_diagnostics::Error;
 use rustc_hash::FxHashSet;
@@ -28,7 +28,7 @@ pub struct LintOptions {
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
-    pub env: Env,
+    pub env: ESLintEnv,
 }
 
 impl Default for LintOptions {
@@ -43,7 +43,7 @@ impl Default for LintOptions {
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
-            env: Env::default(),
+            env: ESLintEnv::default(),
         }
     }
 }
@@ -107,7 +107,7 @@ impl LintOptions {
 
     #[must_use]
     pub fn with_env(mut self, env: Vec<String>) -> Self {
-        self.env = Env::new(env);
+        self.env = ESLintEnv::new(env);
         self
     }
 }
@@ -178,7 +178,7 @@ impl LintOptions {
     /// * Returns `Err` if there are any errors parsing the configuration file.
     pub fn derive_rules_and_settings_and_env(
         &self,
-    ) -> Result<(Vec<RuleEnum>, LintSettings, Env), Error> {
+    ) -> Result<(Vec<RuleEnum>, ESLintSettings, ESLintEnv), Error> {
         let config = self.config_path.as_ref().map(|path| ESLintConfig::new(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
