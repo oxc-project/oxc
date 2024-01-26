@@ -1,11 +1,14 @@
 /**
  * @param {string} pluginName
+ * @param {import("./eslint-rules.cjs").TargetPluginMeta} pluginMeta
  * @param {string} listPart
  */
-const renderLayout = (pluginName, listPart) => `
+const renderLayout = (pluginName, pluginMeta, listPart) => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
+
+This is tracking issue for \`${pluginMeta.npm}\`.
 
 ## Rules
 ${listPart}
@@ -50,11 +53,12 @@ ${list.join("\n")}
 
 /**
  * @param {string} pluginName
+ * @param {import("./eslint-rules.cjs").TargetPluginMeta} pluginMeta
  * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
  */
-exports.renderMarkdown = (pluginName, ruleEntries) => {
+exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
   const pluginRules = Array.from(ruleEntries).filter(([name]) =>
     name.startsWith(`${pluginName}/`),
   );
-  return renderLayout(pluginName, renderRulesList(pluginRules));
+  return renderLayout(pluginName, pluginMeta, renderRulesList(pluginRules));
 };

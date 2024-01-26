@@ -1,6 +1,6 @@
 const { parseArgs } = require("node:util");
 const {
-  ALL_TARGET_PLUGIN_NAMES,
+  ALL_TARGET_PLUGINS,
   createESLintLinter,
   loadTargetPluginRules,
 } = require("./eslint-rules.cjs");
@@ -20,7 +20,7 @@ Options:
   --update: Update the issue instead of printing to stdout
   --help, -h: Print this help message
 
-Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
+Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(", ")}
 `;
 
 (async () => {
@@ -38,9 +38,9 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
 
   if (values.help) return console.log(HELP);
 
-  const targetPluginNames = new Set(values.target ?? ALL_TARGET_PLUGIN_NAMES);
+  const targetPluginNames = new Set(values.target ?? ALL_TARGET_PLUGINS.keys());
   for (const pluginName of targetPluginNames) {
-    if (!ALL_TARGET_PLUGIN_NAMES.has(pluginName))
+    if (!ALL_TARGET_PLUGINS.has(pluginName))
       throw new Error(`Unknown plugin name: ${pluginName}`);
   }
 
@@ -62,7 +62,12 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   //
   await Promise.allSettled(
     Array.from(targetPluginNames).map(async (pluginName) => {
-      const content = renderMarkdown(pluginName, ruleEntries);
+      const content = renderMarkdown(
+        pluginName,
+        /** @type {import("./eslint-rules.cjs").TargetPluginMeta} */
+        (ALL_TARGET_PLUGINS.get(pluginName)),
+        ruleEntries,
+      );
 
       if (!values.update) return console.log(content);
       // TODO: Update issue

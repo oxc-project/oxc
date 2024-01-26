@@ -206,19 +206,25 @@ const loadPluginNextRules = (linter) => {
   }
 };
 
-exports.ALL_TARGET_PLUGIN_NAMES = new Set([
-  "eslint",
-  "typescript",
-  "n",
-  "unicorn",
-  "jsdoc",
-  "import",
-  "jsx-a11y",
-  "jest",
-  "react",
-  "react-hooks",
-  "react-perf",
-  "nextjs",
+/**
+ * @typedef {{
+ *   npm: string;
+ * }} TargetPluginMeta
+ * @type {Map<string, TargetPluginMeta>}
+ */
+exports.ALL_TARGET_PLUGINS = new Map([
+  ["eslint", { npm: "eslint" }],
+  ["typescript", { npm: "@typescript-eslint/eslint-plugin" }],
+  ["n", { npm: "eslint-plugin-n" }],
+  ["unicorn", { npm: "eslint-plugin-unicorn" }],
+  ["jsdoc", { npm: "eslint-plugin-jsdoc" }],
+  ["import", { npm: "eslint-plugin-import" }],
+  ["jsx-a11y", { npm: "eslint-plugin-jsx-a11y" }],
+  ["jest", { npm: "eslint-plugin-jest" }],
+  ["react", { npm: "eslint-plugin-react" }],
+  ["react-hooks", { npm: "eslint-plugin-react-hooks" }],
+  ["react-perf", { npm: "eslint-plugin-react-perf" }],
+  ["nextjs", { npm: "@next/eslint-plugin-next" }],
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
