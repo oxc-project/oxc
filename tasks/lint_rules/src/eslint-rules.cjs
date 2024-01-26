@@ -215,7 +215,7 @@ const loadPluginNextRules = (linter) => {
  */
 exports.ALL_TARGET_PLUGINS = new Map([
   ["eslint", { npm: "eslint", issueNo: 479 }],
-  ["typescript", { npm: "@typescript-eslint/eslint-plugin", issueNo: 503 }],
+  ["typescript", { npm: "@typescript-eslint/eslint-plugin", issueNo: 2180 }],
   ["n", { npm: "eslint-plugin-n", issueNo: 493 }],
   ["unicorn", { npm: "eslint-plugin-unicorn", issueNo: 684 }],
   ["jsdoc", { npm: "eslint-plugin-jsdoc", issueNo: 1170 }],
