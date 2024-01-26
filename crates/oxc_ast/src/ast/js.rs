@@ -473,6 +473,14 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    pub fn name(&self) -> Option<Atom> {
+        if self.is_private_identifier() {
+            self.private_name()
+        } else {
+            self.static_name()
+        }
+    }
+
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             PropertyKey::Identifier(ident) => ident.name == name,
@@ -1899,6 +1907,22 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
             Self::PropertyDefinition(property) => property.declare,
             _ => false,
+        }
+    }
+
+    pub fn has_decorator(&self) -> bool {
+        #[allow(clippy::match_same_arms)]
+        match self {
+            Self::TSIndexSignature(_)
+            | Self::TSAbstractMethodDefinition(_)
+            | Self::TSAbstractPropertyDefinition(_) => false,
+            Self::MethodDefinition(method) => !method.decorators.is_empty(),
+            Self::PropertyDefinition(property) => !property.decorators.is_empty(),
+            Self::AccessorProperty(_) => {
+                // TODO: AccessorProperty doesn't have decorators property
+                false
+            }
+            Self::StaticBlock(_) => false,
         }
     }
 }
