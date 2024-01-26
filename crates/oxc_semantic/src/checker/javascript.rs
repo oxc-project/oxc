@@ -159,7 +159,7 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot use await in class static initialization block")]
 #[diagnostic()]
-struct ClassStatickBlockAwait(#[label] Span);
+struct ClassStaticBlockAwait(#[label] Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("The keyword '{0}' is reserved")]
@@ -190,7 +190,7 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
         if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
-            return ctx.error(ClassStatickBlockAwait(span));
+            return ctx.error(ClassStaticBlockAwait(span));
         }
     }
 
@@ -1096,7 +1096,7 @@ fn check_await_expression<'a>(
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
     if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
         let start = expr.span.start;
-        ctx.error(ClassStatickBlockAwait(Span::new(start, start + 5)));
+        ctx.error(ClassStaticBlockAwait(Span::new(start, start + 5)));
     }
 }
 
