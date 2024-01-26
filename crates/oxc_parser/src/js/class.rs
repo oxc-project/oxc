@@ -478,6 +478,13 @@ impl<'a> Parser<'a> {
     ) -> Result<ClassElement<'a>> {
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
-        Ok(self.ast.accessor_property(self.end_span(span), key, value, computed, r#static))
+        Ok(self.ast.accessor_property(
+            self.end_span(span),
+            key,
+            value,
+            computed,
+            r#static,
+            self.state.consume_decorators(),
+        ))
     }
 }
