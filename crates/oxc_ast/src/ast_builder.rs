@@ -886,6 +886,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::AccessorProperty(self.alloc(AccessorProperty {
             span,
@@ -893,6 +894,7 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
+            decorators,
         }))
     }
 

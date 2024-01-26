@@ -2052,6 +2052,7 @@ pub struct AccessorProperty<'a> {
     pub value: Option<Expression<'a>>,
     pub computed: bool,
     pub r#static: bool,
+    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Hash)]
