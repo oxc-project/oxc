@@ -2,70 +2,70 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_includes
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:10]
  1 │ 'foobar'.indexOf('foo') !== -1
    ·          ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') != -1
    ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') > -1
    ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') == -1
    ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:10]
  1 │ 'foobar'.indexOf('foo') >= 0
    ·          ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:9]
  1 │ [1,2,3].indexOf(4) !== -1
    ·         ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ str.indexOf('foo') < 0
    ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:4]
  1 │ ''.indexOf('foo') < 0
    ·    ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:10]
  1 │ (a || b).indexOf('foo') === -1
    ·          ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ foo.indexOf(bar, 0) !== -1
    ·     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-   ╭─[prefer_includes.tsx:1:1]
+   ╭─[prefer_includes.tsx:1:5]
  1 │ foo.indexOf(bar, 1) !== -1
    ·     ───────
    ╰────
-
 

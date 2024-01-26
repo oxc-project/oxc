@@ -2,94 +2,94 @@
 source: crates/oxc_linter/src/tester.rs
 expression: catch_error_name
 ---
+
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "descriptiveError" should be named "exception"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (descriptiveError) { }
    ·                ────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "has_space_after "
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "1_start_with_a_number"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "_){ } evilCode; if(false"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (e) { }
    ·                ─
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (notMatching) { }
    ·                ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "_" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (_) { console.log(_) }
    ·                ─
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:15]
  1 │ promise.catch(notMatching => { })
    ·               ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:16]
  1 │ promise.catch((foo) => { })
    ·                ───
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:25]
  1 │ promise.catch(function (foo) { })
    ·                         ───
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:26]
  1 │ promise.catch((function (foo) { }))
    ·                          ───
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:41]
  1 │ promise.then(function (foo) { }).catch((foo) => { })
    ·                                         ───
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:35]
  1 │ promise.then(undefined, function (foo) { })
    ·                                   ───
    ╰────
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:1]
+   ╭─[catch_error_name.tsx:1:26]
  1 │ promise.then(undefined, (foo) => { })
    ·                          ───
    ╰────
-
 

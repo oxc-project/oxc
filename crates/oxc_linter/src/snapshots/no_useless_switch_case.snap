@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_switch_case
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:2:1]
+   ╭─[no_useless_switch_case.tsx:3:13]
  2 │         switch (foo) {
  3 │             case a:
    ·             ───────
@@ -37,7 +38,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:3:1]
+   ╭─[no_useless_switch_case.tsx:4:13]
  3 │             case a:
  4 │             case (( b ))         :
    ·             ──────────────────────
@@ -46,7 +47,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:2:1]
+   ╭─[no_useless_switch_case.tsx:3:13]
  2 │         switch (foo) {
  3 │             case a:
    ·             ───────
@@ -55,7 +56,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:7:1]
+   ╭─[no_useless_switch_case.tsx:8:13]
  7 │             case d:
  8 │             case d:
    ·             ───────
@@ -64,7 +65,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:6:1]
+   ╭─[no_useless_switch_case.tsx:7:13]
  6 │                 break;
  7 │             case d:
    ·             ───────
@@ -73,7 +74,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:3:1]
+   ╭─[no_useless_switch_case.tsx:4:13]
  3 │             case a:
  4 │             case b:
    ·             ───────
@@ -82,7 +83,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:2:1]
+   ╭─[no_useless_switch_case.tsx:3:13]
  2 │         switch (foo) {
  3 │             case a:
    ·             ───────
@@ -91,7 +92,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:4:1]
+   ╭─[no_useless_switch_case.tsx:5:13]
  4 │             case a:
  5 │             case b:
    ·             ───────
@@ -100,12 +101,11 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:2:1]
+   ╭─[no_useless_switch_case.tsx:3:13]
  2 │         switch (foo) {
  3 │             case a:
    ·             ───────
  4 │             // eslint-disable-next-line
    ╰────
   help: Consider removing this case or removing the `default` case.
-
 

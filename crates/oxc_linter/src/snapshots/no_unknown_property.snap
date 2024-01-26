@@ -2,308 +2,307 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unknown_property
 ---
+
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div allowTransparency="true" />
    ·      ─────────────────
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div hasOwnProperty="should not be allowed property"></div>;
    ·      ──────────────
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div abc="should not be allowed property"></div>;
    ·      ───
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div aria-fake="should not be allowed property"></div>;
    ·      ─────────
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div someProp="bar"></div>;
    ·      ────────
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div class="bar"></div>;
    ·      ─────
    ╰────
   help: Use 'className' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div for="bar"></div>;
    ·      ───
    ╰────
   help: Use 'htmlFor' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div accept-charset="bar"></div>;
    ·      ──────────────
    ╰────
   help: Use 'acceptCharset' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div http-equiv="bar"></div>;
    ·      ──────────
    ╰────
   help: Use 'httpEquiv' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div accesskey="bar"></div>;
    ·      ─────────
    ╰────
   help: Use 'accessKey' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onclick="bar"></div>;
    ·      ───────
    ╰────
   help: Use 'onClick' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onmousedown="bar"></div>;
    ·      ───────────
    ╰────
   help: Use 'onMouseDown' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onMousedown="bar"></div>;
    ·      ───────────
    ╰────
   help: Use 'onMouseDown' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <use xlink:href="bar" />;
    ·      ──────────
    ╰────
   help: Use 'xlinkHref' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:7]
  1 │ <rect clip-path="bar" />;
    ·       ─────────
    ╰────
   help: Use 'clipPath' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:9]
  1 │ <script crossorigin nomodule />
    ·         ───────────
    ╰────
   help: Use 'crossOrigin' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:21]
  1 │ <script crossorigin nomodule />
    ·                     ────────
    ╰────
   help: Use 'noModule' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div crossorigin />
    ·      ───────────
    ╰────
   help: Use 'crossOrigin' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div crossOrigin />
    ·      ───────────
    ╰────
   help: Property 'crossOrigin' is only allowed on: script, audio, link, image, video, img
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div as="audio" />
    ·      ──
    ╰────
   help: Property 'as' is only allowed on: link
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·      ───────
    ╰────
   help: Property 'onAbort' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:27]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                           ────────────────
    ╰────
   help: Property 'onDurationChange' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:66]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                  ─────────
    ╰────
   help: Property 'onEmptied' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:91]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                           ───────
    ╰────
   help: Property 'onEnded' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:110]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                                              ────────
    ╰────
   help: Property 'onResize' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:133]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                                                                     ───────
    ╰────
   help: Property 'onError' is only allowed on: source, link, script, audio, video, iframe, img, picture
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onLoad={this.load} />
    ·      ──────
    ╰────
   help: Property 'onLoad' is only allowed on: source, iframe, picture, script, object, img, link
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div fill="pink" />
    ·      ────
    ╰────
-  help: Property 'fill' is only allowed on: rect, ellipse, textPath, animateMotion, tref, animate, marker, svg, animateColor, use, symbol, polygon, text, circle, polyline, path, altGlyph, tspan,
-        set, g, line, animateTransform, mask
+  help: Property 'fill' is only allowed on: rect, ellipse, textPath, animateMotion, tref, animate, marker, svg, animateColor, use, symbol, polygon, text, circle, polyline, path, altGlyph, tspan, set, g, line, animateTransform, mask
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·      ────────
    ╰────
   help: Property 'controls' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:31]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                               ────
    ╰────
   help: Property 'loop' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:43]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                                           ─────
    ╰────
   help: Property 'muted' is only allowed on: video, audio
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:77]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                                                                             ───────────
    ╰────
   help: Property 'playsInline' is only allowed on: video
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:96]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                                                                                                ───────────────
    ╰────
   help: Property 'allowFullScreen' is only allowed on: iframe, video
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div download="foo" />
    ·      ────────
    ╰────
   help: Property 'download' is only allowed on: area, a
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div imageSrcSet="someImageSrcSet" />
    ·      ───────────
    ╰────
   help: Property 'imageSrcSet' is only allowed on: link
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div imageSizes="someImageSizes" />
    ·      ──────────
    ╰────
   help: Property 'imageSizes' is only allowed on: link
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div data-xml-anything="invalid" />
    ·      ─────────────────
    ╰────
   help: Remove unknown property
 
   ⚠ eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div data-testID="bar" data-under_sCoRe="bar" />;
    ·      ───────────
    ╰────
   help: Use 'data-testid' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:24]
  1 │ <div data-testID="bar" data-under_sCoRe="bar" />;
    ·                        ────────────────
    ╰────
   help: Use 'data-under_score' instead
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div abbr="abbr" />
    ·      ────
    ╰────
   help: Property 'abbr' is only allowed on: td, th
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div webkitDirectory="" />
    ·      ───────────────
    ╰────
   help: Property 'webkitDirectory' is only allowed on: input
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div webkitdirectory="" />
    ·      ───────────────
    ╰────
   help: Property 'webkitdirectory' is only allowed on: input
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:1:1]
+   ╭─[no_unknown_property.tsx:2:42]
  1 │ 
  2 │                     <div className="App" data-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash:c="customValue">
    ·                                          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  3 │                       Hello, world!
    ╰────
   help: Remove unknown property
-
 

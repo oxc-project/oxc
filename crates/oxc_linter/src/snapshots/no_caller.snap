@@ -2,18 +2,18 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_caller
 ---
+
   ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
-   ╭─[no_caller.tsx:1:1]
+   ╭─[no_caller.tsx:1:19]
  1 │ var x = arguments.callee
    ·                   ──────
    ╰────
   help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them
 
   ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
-   ╭─[no_caller.tsx:1:1]
+   ╭─[no_caller.tsx:1:19]
  1 │ var x = arguments.caller
    ·                   ──────
    ╰────
   help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them
-
 

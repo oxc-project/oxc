@@ -2,29 +2,30 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unreadable_array_destructuring
 ---
+
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [,, foo] = parts;
    ·       ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [foo,,, bar] = parts;
    ·       ────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [foo,,,] = parts;
    ·       ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [foo, bar,, baz ,,, qux] = parts;
    ·       ────────────────────────
    ╰────
@@ -38,171 +39,170 @@ expression: no_unreadable_array_destructuring
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:10]
  1 │ ({parts: [,, foo]} = bar);
    ·          ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:14]
  1 │ function foo([,, bar]) {}
    ·              ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:14]
  1 │ function foo([bar,,, baz]) {}
    ·              ────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:14]
  1 │ function foo([bar,,,]) {}
    ·              ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:14]
  1 │ function foo([bar, baz,, qux ,,, quux]) {}
    ·              ─────────────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [,,...rest] = parts;
    ·       ───────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [,,,] = parts;
    ·       ─────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [,,...rest] = new Array;
    ·       ───────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:7]
  1 │ const [,,...rest] = (0, foo);
    ·       ───────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ let [,,thirdElement] = new Array;
    ·     ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ var [,,thirdElement] = (((0, foo)));
    ·     ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ let [,,[,,thirdElementInThirdElement]] = foo
    ·     ──────────────────────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:8]
  1 │ let [,,[,,thirdElementInThirdElement]] = foo
    ·        ──────────────────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ let [,,{propertyOfThirdElement}] = foo
    ·     ────────────────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ let [,,thirdElement] = foo, anotherVariable = bar;
    ·     ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:5]
  1 │ let [,,thirdElement = {}] = foo;
    ·     ─────────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:12]
  1 │ for (const [, , id] of shuffle(list)) {}
    ·            ────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:4]
  1 │ let[,,thirdElement] = foo;
    ·    ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:4]
  1 │ let[,,...thirdElement] = foo;
    ·    ───────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:6]
  1 │ const[,,thirdElement] = foo;
    ·      ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:6]
  1 │ const[,,...thirdElement] = foo;
    ·      ───────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:4]
  1 │ var[,,thirdElement] = foo;
    ·    ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:4]
  1 │ var[,,...thirdElement] = foo;
    ·    ───────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
-   ╭─[no_unreadable_array_destructuring.tsx:1:1]
+   ╭─[no_unreadable_array_destructuring.tsx:1:10]
  1 │ let[]=[],[,,thirdElement] = foo;
    ·          ────────────────
    ╰────
   help: Array destructuring may not contain consecutive ignored values.
-
 

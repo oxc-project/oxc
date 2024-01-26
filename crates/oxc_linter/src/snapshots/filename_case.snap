@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: filename_case
 ---
+
   ⚠ eslint-plugin-unicorn(filename-case): Filename should not be in kebab case
    ╭─[filename_case.tsx:1:1]
  1 │ import foo from 'bar'
@@ -13,5 +14,4 @@ expression: filename_case
  1 │ baz;
    · ▲
    ╰────
-
 

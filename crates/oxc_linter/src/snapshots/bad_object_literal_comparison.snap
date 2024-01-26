@@ -2,74 +2,74 @@
 source: crates/oxc_linter/src/tester.rs
 expression: bad_object_literal_comparison
 ---
+
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (y === {}) { }
    ·     ────────
    ╰────
   help: This comparison will always return false as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected array literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (arr !== []) { }
    ·     ──────────
    ╰────
   help: This comparison will always return true as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:32]
  1 │ if (typeof item == 'object' && item == {}) { }
    ·                                ──────────
    ╰────
   help: This comparison will always return false as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected array literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (data === []) { }
    ·     ───────────
    ╰────
   help: This comparison will always return false as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:34]
  1 │ if (typeof person != 'object' || person != {}) { }
    ·                                  ────────────
    ╰────
   help: This comparison will always return true as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (list === {}) { }
    ·     ───────────
    ╰────
   help: This comparison will always return false as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:36]
  1 │ if (typeof response == 'object' && response != {}) { }
    ·                                    ──────────────
    ╰────
   help: This comparison will always return true as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected array literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (user !== []) { }
    ·     ───────────
    ╰────
   help: This comparison will always return true as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected object literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:35]
  1 │ if (typeof product == 'object' && product === {}) { }
    ·                                   ──────────────
    ╰────
   help: This comparison will always return false as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths.
 
   ⚠ deepscan(bad-object-literal-comparison): Unexpected array literal comparison.
-   ╭─[bad_object_literal_comparison.tsx:1:1]
+   ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (config != []) { }
    ·     ────────────
    ╰────
   help: This comparison will always return true as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended.
-
 

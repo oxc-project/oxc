@@ -2,13 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_title_in_document_head
 ---
+
   ⚠ eslint-plugin-next(no-title-in-document-head): Prevent usage of `<title>` with `Head` component from `next/document`.
-   ╭─[no_title_in_document_head.tsx:6:1]
+   ╭─[no_title_in_document_head.tsx:7:26]
  6 │                       return (
  7 │                         <Head>
    ·                          ────
  8 │                           <title>My page title</title>
    ╰────
   help: See https://nextjs.org/docs/messages/no-title-in-document-head
-
 

@@ -2,102 +2,102 @@
 source: crates/oxc_linter/src/tester.rs
 expression: mouse_events_have_key_events
 ---
+
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => void 0} />;
    ·      ──────────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOut must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOut={() => void 0} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => void 0} onFocus={undefined} />;
    ·      ──────────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOut must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOut={() => void 0} onBlur={undefined} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => void 0} {...props} />
    ·      ──────────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOut must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOut={() => void 0} {...props} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => {}} onMouseOut={() => {}} />
    ·      ──────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOut must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:29]
  1 │ <div onMouseOver={() => {}} onMouseOut={() => {}} />
    ·                             ─────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onPointerEnter must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onPointerEnter={() => {}} onPointerLeave={() => {}} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onPointerLeave must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:32]
  1 │ <div onPointerEnter={() => {}} onPointerLeave={() => {}} />
    ·                                ─────────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => {}} />
    ·      ──────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onPointerEnter must be accompanied by onFocus for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onPointerEnter={() => {}} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onFocus.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOut must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOut={() => {}} />
    ·      ─────────────────────
    ╰────
   help: Try to add onBlur.
 
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onPointerLeave must be accompanied by onBlur for accessibility.
-   ╭─[mouse_events_have_key_events.tsx:1:1]
+   ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onPointerLeave={() => {}} />
    ·      ─────────────────────────
    ╰────
   help: Try to add onBlur.
-
 

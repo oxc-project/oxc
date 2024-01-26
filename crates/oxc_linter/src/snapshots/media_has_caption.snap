@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: media_has_caption
 ---
+
   ⚠ eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element
    ╭─[media_has_caption.tsx:1:1]
  1 │ <audio><track /></audio>
@@ -232,5 +233,4 @@ expression: media_has_caption
    · ────────────────────────────────────────────────
    ╰────
   help: Media elements such as <audio> and <video> must have a <track> for captions.
-
 

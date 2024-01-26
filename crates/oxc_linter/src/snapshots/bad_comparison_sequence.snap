@@ -2,292 +2,256 @@
 source: crates/oxc_linter/src/tester.rs
 expression: bad_comparison_sequence
 ---
+
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b == c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b == c == d) { console.log('foo') }
    ·     ────────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:6]
  1 │ if ((a == b == c) == d) { console.log('foo') }
    ·      ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if ((a == b == c) == d == e == f) { console.log('foo') }
    ·     ────────────────────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:6]
  1 │ if ((a == b == c) == d == e == f) { console.log('foo') }
    ·      ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b === c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b != c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a == b !== c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b == c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b === c) { console.log('foo') }
    ·     ─────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b != c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a === b !== c) { console.log('foo') }
    ·     ─────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b == c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b === c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b != c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a != b !== c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b == c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b === c) { console.log('foo') }
    ·     ─────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b != c) { console.log('foo') }
    ·     ────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a !== b !== c) { console.log('foo') }
    ·     ─────────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b > c) { console.log('foo') }
    ·     ─────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b < c) { console.log('foo') }
    ·     ─────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b >= c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a > b <= c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b > c) { console.log('foo') }
    ·     ─────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b < c) { console.log('foo') }
    ·     ─────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b >= c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a < b <= c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b > c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b < c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b >= c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a >= b <= c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b > c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b < c) { console.log('foo') }
    ·     ──────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b >= c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 
   ⚠ deepscan(bad-comparison-sequence): Bad comparison sequence
-   ╭─[bad_comparison_sequence.tsx:1:1]
+   ╭─[bad_comparison_sequence.tsx:1:5]
  1 │ if (a <= b <= c) { console.log('foo') }
    ·     ───────────
    ╰────
-  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical
-        AND operator (`&&`)
-
+  help: Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)
 

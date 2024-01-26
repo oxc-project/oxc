@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: google_font_preconnect
 ---
+
   ⚠ eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font.
-   ╭─[google_font_preconnect.tsx:3:1]
+   ╭─[google_font_preconnect.tsx:4:24]
  3 │                     <div>
  4 │                       <link href="https://fonts.gstatic.com"/>
    ·                        ────
@@ -12,12 +13,11 @@ expression: google_font_preconnect
   help: See: https://nextjs.org/docs/messages/google-font-preconnect
 
   ⚠ eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font.
-   ╭─[google_font_preconnect.tsx:3:1]
+   ╭─[google_font_preconnect.tsx:4:24]
  3 │                     <div>
  4 │                       <link rel="preload" href="https://fonts.gstatic.com"/>
    ·                        ────
  5 │                     </div>
    ╰────
   help: See: https://nextjs.org/docs/messages/google-font-preconnect
-
 

@@ -2,39 +2,39 @@
 source: crates/oxc_linter/src/tester.rs
 expression: tabindex_no_positive
 ---
+
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.
-   ╭─[tabindex_no_positive.tsx:1:1]
+   ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex="1" />
    ·      ────────────
    ╰────
   help: Change the tabIndex prop to a non-negative value
 
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.
-   ╭─[tabindex_no_positive.tsx:1:1]
+   ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex={1} />
    ·      ────────────
    ╰────
   help: Change the tabIndex prop to a non-negative value
 
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.
-   ╭─[tabindex_no_positive.tsx:1:1]
+   ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex={"1"} />
    ·      ──────────────
    ╰────
   help: Change the tabIndex prop to a non-negative value
 
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.
-   ╭─[tabindex_no_positive.tsx:1:1]
+   ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex={`1`} />
    ·      ──────────────
    ╰────
   help: Change the tabIndex prop to a non-negative value
 
   ⚠ eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.
-   ╭─[tabindex_no_positive.tsx:1:1]
+   ╭─[tabindex_no_positive.tsx:1:6]
  1 │ <div tabIndex={1.589} />
    ·      ────────────────
    ╰────
   help: Change the tabIndex prop to a non-negative value
-
 

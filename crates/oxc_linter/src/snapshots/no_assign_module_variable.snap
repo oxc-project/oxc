@@ -2,13 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_assign_module_variable
 ---
+
   ⚠ eslint-plugin-next(no-assign-module-variable): Do not assign to the variable `module`.
-   ╭─[no_assign_module_variable.tsx:1:1]
+   ╭─[no_assign_module_variable.tsx:2:23]
  1 │ 
  2 │                   let module = {};
    ·                       ──────
  3 │             
    ╰────
   help: See https://nextjs.org/docs/messages/no-assign-module-variable
-
 

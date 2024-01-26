@@ -2,160 +2,160 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_modern_dom_apis
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
  1 │ parentNode.replaceChild(newChildNode, oldChildNode);
    ·            ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:24]
  1 │ const foo = parentNode.replaceChild(newChildNode, oldChildNode);
    ·                        ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:18]
  1 │ foo = parentNode.replaceChild(newChildNode, oldChildNode);
    ·                  ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
  1 │ parentNode.insertBefore(newNode, referenceNode);
    ·            ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
  1 │ parentNode.insertBefore(alfa, beta).insertBefore(charlie, delta);
    ·            ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:24]
  1 │ const foo = parentNode.insertBefore(alfa, beta);
    ·                        ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:18]
  1 │ foo = parentNode.insertBefore(alfa, beta);
    ·                  ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:20]
  1 │ new Dom(parentNode.insertBefore(alfa, beta))
    ·                    ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ `${parentNode.insertBefore(alfa, beta)}`
    ·               ────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentText("beforebegin", "text");
    ·               ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `prepend` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentText("afterbegin", "text");
    ·               ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `append` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentText("beforeend", "text");
    ·               ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `after` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentText("afterend", "text");
    ·               ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:27]
  1 │ const foo = referenceNode.insertAdjacentText("beforebegin", "text");
    ·                           ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentText`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:21]
  1 │ foo = referenceNode.insertAdjacentText("beforebegin", "text");
    ·                     ──────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentElement("beforebegin", newNode);
    ·               ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `prepend` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentElement("afterbegin", "text");
    ·               ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `append` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentElement("beforeend", "text");
    ·               ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `after` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentElement("afterend", newNode);
    ·               ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:27]
  1 │ const foo = referenceNode.insertAdjacentElement("beforebegin", newNode);
    ·                           ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:21]
  1 │ foo = referenceNode.insertAdjacentElement("beforebegin", newNode);
    ·                     ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:28]
  1 │ const foo = [referenceNode.insertAdjacentElement("beforebegin", newNode)]
    ·                            ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:25]
  1 │ foo(bar = referenceNode.insertAdjacentElement("beforebegin", newNode))
    ·                         ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:42]
  1 │ const foo = () => { return referenceNode.insertAdjacentElement("beforebegin", newNode); }
    ·                                          ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:19]
  1 │ if (referenceNode.insertAdjacentElement("beforebegin", newNode)) {}
    ·                   ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
-   ╭─[prefer_modern_dom_apis.tsx:1:1]
+   ╭─[prefer_modern_dom_apis.tsx:1:34]
  1 │ const foo = { bar: referenceNode.insertAdjacentElement("beforebegin", newNode) }
    ·                                  ─────────────────────
    ╰────
-
 

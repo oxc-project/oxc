@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_document_cookie
 ---
+
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
    ╭─[no_document_cookie.tsx:1:1]
  1 │ document.cookie = "foo=bar"
@@ -31,28 +32,28 @@ expression: no_document_cookie
   help: Use the Cookie Store API or a cookie library instead
 
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
-   ╭─[no_document_cookie.tsx:1:1]
+   ╭─[no_document_cookie.tsx:1:7]
  1 │ foo = document.cookie = "foo=bar"
    ·       ───────────────
    ╰────
   help: Use the Cookie Store API or a cookie library instead
 
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
-   ╭─[no_document_cookie.tsx:1:1]
+   ╭─[no_document_cookie.tsx:1:21]
  1 │ var doc = document; doc.cookie = "foo=bar"
    ·                     ──────────
    ╰────
   help: Use the Cookie Store API or a cookie library instead
 
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
-   ╭─[no_document_cookie.tsx:1:1]
+   ╭─[no_document_cookie.tsx:1:21]
  1 │ let doc = document; doc.cookie = "foo=bar"
    ·                     ──────────
    ╰────
   help: Use the Cookie Store API or a cookie library instead
 
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
-   ╭─[no_document_cookie.tsx:1:1]
+   ╭─[no_document_cookie.tsx:1:34]
  1 │ const doc = globalThis.document; doc.cookie = "foo=bar"
    ·                                  ──────────
    ╰────
@@ -64,5 +65,4 @@ expression: no_document_cookie
    · ──────────────────────
    ╰────
   help: Use the Cookie Store API or a cookie library instead
-
 

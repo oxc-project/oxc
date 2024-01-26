@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_sync_scripts
 ---
+
   ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
-    ╭─[no_sync_scripts.tsx:8:1]
+    ╭─[no_sync_scripts.tsx:9:30]
   8 │                             <h1>Hello title</h1>
   9 │                             <script src='https://blah.com'></script>
     ·                              ──────
@@ -12,12 +13,11 @@ expression: no_sync_scripts
   help: See https://nextjs.org/docs/messages/no-sync-scripts
 
   ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
-    ╭─[no_sync_scripts.tsx:8:1]
+    ╭─[no_sync_scripts.tsx:9:30]
   8 │                             <h1>Hello title</h1>
   9 │                             <script src={props.src}></script>
     ·                              ──────
  10 │                           </div>
     ╰────
   help: See https://nextjs.org/docs/messages/no-sync-scripts
-
 

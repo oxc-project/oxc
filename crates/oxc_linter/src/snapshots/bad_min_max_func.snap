@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: bad_min_max_func
 ---
+
   ⚠ deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result
    ╭─[bad_min_max_func.tsx:1:1]
  1 │ Math.min(Math.max(100, x), 0)
@@ -57,5 +58,4 @@ expression: bad_min_max_func
    · ──────────────────────────────────
    ╰────
   help: This evaluates to 155.0 because of the incorrect `Math.min`/`Math.max` combination
-
 

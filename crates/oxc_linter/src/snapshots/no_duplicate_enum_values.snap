@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_duplicate_enum_values
 ---
+
   ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:2:1]
+   ╭─[no_duplicate_enum_values.tsx:3:19]
  2 │             enum E {
  3 │               A = 1,
    ·                   ─
@@ -14,7 +15,7 @@ expression: no_duplicate_enum_values
   help: Duplicate values can lead to bugs that are hard to track down
 
   ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:2:1]
+   ╭─[no_duplicate_enum_values.tsx:3:19]
  2 │             enum E {
  3 │               A = 'A',
    ·                   ───
@@ -25,7 +26,7 @@ expression: no_duplicate_enum_values
   help: Duplicate values can lead to bugs that are hard to track down
 
   ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:2:1]
+   ╭─[no_duplicate_enum_values.tsx:3:19]
  2 │             enum E {
  3 │               A = 'A',
    ·                   ───
@@ -36,7 +37,7 @@ expression: no_duplicate_enum_values
   help: Duplicate values can lead to bugs that are hard to track down
 
   ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
-   ╭─[no_duplicate_enum_values.tsx:4:1]
+   ╭─[no_duplicate_enum_values.tsx:5:19]
  4 │               B = 'A',
  5 │               C = 1,
    ·                   ─
@@ -45,5 +46,4 @@ expression: no_duplicate_enum_values
  7 │             }
    ╰────
   help: Duplicate values can lead to bugs that are hard to track down
-
 

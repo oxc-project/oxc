@@ -2,50 +2,51 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_null
 ---
+
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:13]
  1 │ const foo = null
    ·             ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:5]
  1 │ foo(null)
    ·     ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:12]
  1 │ if (foo == null) {}
    ·            ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:12]
  1 │ if (foo != null) {}
    ·            ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:5]
  1 │ if (null == foo) {}
    ·     ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:5]
  1 │ if (null != foo) {}
    ·     ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:2:20]
  1 │ function foo() {
  2 │             return null;
    ·                    ────
@@ -54,206 +55,205 @@ expression: no_null
   help: Remove the `null` literal.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:11]
  1 │ let foo = null;
    ·           ────
    ╰────
   help: Remove the `null` literal.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:11]
  1 │ var foo = null;
    ·           ────
    ╰────
   help: Remove the `null` literal.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:20]
  1 │ var foo = 1, bar = null, baz = 2;
    ·                    ────
    ╰────
   help: Remove the `null` literal.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:13]
  1 │ const foo = null;
    ·             ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:13]
  1 │ if (foo === null) {}
    ·             ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:5]
  1 │ if (null === foo) {}
    ·     ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:13]
  1 │ if (foo !== null) {}
    ·             ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:5]
  1 │ if (null !== foo) {}
    ·     ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:19]
  1 │ new Object.create(null)
    ·                   ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:27]
  1 │ new foo.insertBefore(bar, null)
    ·                           ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:8]
  1 │ create(null)
    ·        ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:19]
  1 │ insertBefore(bar, null)
    ·                   ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:18]
  1 │ Object['create'](null)
    ·                  ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:26]
  1 │ foo['insertBefore'](bar, null)
    ·                          ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:16]
  1 │ Object[create](null)
    ·                ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:24]
  1 │ foo[insertBefore](bar, null)
    ·                        ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:14]
  1 │ Object[null](null)
    ·              ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:8]
  1 │ Object[null](null)
    ·        ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:18]
  1 │ Object.notCreate(null)
    ·                  ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:26]
  1 │ foo.notInsertBefore(foo, null)
    ·                          ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:18]
  1 │ NotObject.create(null)
    ·                  ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:19]
  1 │ lib.Object.create(null)
    ·                   ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:19]
  1 │ Object.create(...[null])
    ·                   ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:15]
  1 │ Object.create(null, bar, extraArgument)
    ·               ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:18]
  1 │ foo.insertBefore(null)
    ·                  ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:23]
  1 │ foo.insertBefore(foo, null, bar)
    ·                       ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:28]
  1 │ foo.insertBefore(...[foo], null)
    ·                            ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:18]
  1 │ foo.insertBefore(null, bar)
    ·                  ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:1]
+   ╭─[no_null.tsx:1:20]
  1 │ Object.create(bar, null)
    ·                    ────
    ╰────
   help: Replace the `null` literal with `undefined`.
-
 

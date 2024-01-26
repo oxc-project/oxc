@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_is_mounted
 ---
+
   ⚠ eslint(no-is-mounted): Do not use isMounted
-   ╭─[no_is_mounted.tsx:3:1]
+   ╭─[no_is_mounted.tsx:4:24]
  3 │                 componentDidUpdate: function() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
@@ -12,7 +13,7 @@ expression: no_is_mounted
   help: isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.
 
   ⚠ eslint(no-is-mounted): Do not use isMounted
-   ╭─[no_is_mounted.tsx:3:1]
+   ╭─[no_is_mounted.tsx:4:24]
  3 │                 someMethod: function() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
@@ -21,12 +22,11 @@ expression: no_is_mounted
   help: isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.
 
   ⚠ eslint(no-is-mounted): Do not use isMounted
-   ╭─[no_is_mounted.tsx:3:1]
+   ╭─[no_is_mounted.tsx:4:24]
  3 │                 someMethod() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
  5 │                     return;
    ╰────
   help: isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.
-
 
