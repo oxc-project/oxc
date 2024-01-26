@@ -916,6 +916,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
 
 [[package]]
+name = "javascript_globals"
+version = "0.0.0"
+dependencies = [
+ "handlebars",
+ "lazy_static",
+ "oxc_tasks_common",
+ "serde",
+]
+
+[[package]]
 name = "jemalloc-sys"
 version = "0.5.4+5.3.0-patched"
 source = "registry+https://github.com/rust-lang/crates.io-index"

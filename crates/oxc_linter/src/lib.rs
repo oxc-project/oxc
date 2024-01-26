@@ -8,8 +8,10 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
+mod env;
 mod fixer;
 mod globals;
+mod javascript_globals;
 mod options;
 pub mod partial_loader;
 pub mod rule;
@@ -25,6 +27,7 @@ use oxc_diagnostics::Report;
 
 pub use crate::{
     context::LintContext,
+    env::Env,
     fixer::Fix,
     fixer::{FixResult, Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
@@ -52,6 +55,7 @@ pub struct Linter {
     rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
     settings: Arc<LintSettings>,
+    env: Arc<Env>,
 }
 
 impl Default for Linter {
@@ -65,9 +69,9 @@ impl Linter {
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
-        let (rules, settings) = options.derive_rules_and_settings()?;
+        let (rules, settings, env) = options.derive_rules_and_settings_and_env()?;
         let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
-        Ok(Self { rules, options, settings: Arc::new(settings) })
+        Ok(Self { rules, options, settings: Arc::new(settings), env: Arc::new(env) })
     }
 
     #[must_use]
@@ -79,6 +83,12 @@ impl Linter {
     #[must_use]
     pub fn with_settings(mut self, settings: LintSettings) -> Self {
         self.settings = Arc::new(settings);
+        self
+    }
+
+    #[must_use]
+    pub fn with_envs(mut self, env: Env) -> Self {
+        self.env = Arc::new(env);
         self
     }
 
@@ -98,7 +108,8 @@ impl Linter {
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.options.fix).with_settings(&self.settings);
+        let mut ctx =
+            ctx.with_fix(self.options.fix).with_settings(&self.settings).with_env(&self.env);
 
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);

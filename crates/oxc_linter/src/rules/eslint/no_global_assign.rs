@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 
-use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-global-assign): Read-only global '{0}' should not be modified.")]
@@ -71,7 +71,7 @@ impl Rule for NoGlobalAssign {
                 if reference.is_write() && symbol_table.is_global_reference(reference_id) {
                     let name = reference.name();
 
-                    if !self.excludes.contains(name) && BUILTINS.contains_key(name) {
+                    if !self.excludes.contains(name) && ctx.env_contains_var(name) {
                         ctx.diagnostic(NoGlobalAssignDiagnostic(name.clone(), reference.span()));
                     }
                 }
