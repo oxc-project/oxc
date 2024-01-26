@@ -6,11 +6,10 @@ const {
 } = require("./eslint-rules.cjs");
 const {
   createRuleEntries,
-  readAllImplementedRuleNames,
   updateNotSupportedStatus,
   updateImplementedStatus,
 } = require("./oxlint-rules.cjs");
-const { renderRulesList, renderLayout } = require("./output-markdown.cjs");
+const { renderMarkdown } = require("./output-markdown.cjs");
 
 const HELP = `
 Usage:
@@ -30,6 +29,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   //
   const { values } = parseArgs({
     options: {
+      // Mainly for debugging
       target: { type: "string", short: "t", multiple: true },
       update: { type: "boolean" },
       help: { type: "boolean", short: "h" },
@@ -54,8 +54,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   // Generate entry and update status
   //
   const ruleEntries = createRuleEntries(linter.getRules());
-  const implementedRuleNames = await readAllImplementedRuleNames();
-  updateImplementedStatus(ruleEntries, implementedRuleNames);
+  await updateImplementedStatus(ruleEntries);
   updateNotSupportedStatus(ruleEntries);
 
   //
@@ -63,8 +62,7 @@ Plugins: ${[...ALL_TARGET_PLUGIN_NAMES].join(", ")}
   //
   await Promise.allSettled(
     Array.from(targetPluginNames).map(async (pluginName) => {
-      const listPart = renderRulesList(ruleEntries, pluginName);
-      const content = renderLayout(listPart, pluginName);
+      const content = renderMarkdown(pluginName, ruleEntries);
 
       if (!values.update) return console.log(content);
       // TODO: Update issue

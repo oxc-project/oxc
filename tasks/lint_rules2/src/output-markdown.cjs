@@ -1,8 +1,26 @@
 /**
- * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
  * @param {string} pluginName
+ * @param {string} listPart
  */
-exports.renderRulesList = (ruleEntries, pluginName) => {
+const renderLayout = (pluginName, listPart) => `
+> [!WARNING]
+> This comment is maintained by CI. Do not edit this comment directly.
+> To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
+
+## Rules
+${listPart}
+
+## Getting started
+
+\`\`\`sh
+just new-${pluginName}-rule <RULE_NAME>
+\`\`\`
+
+Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_all_lint_rules\` at the bottom.
+`;
+
+/** @param {[string, import("./oxlint-rules.cjs").RuleEntry][]} ruleEntries */
+const renderRulesList = (ruleEntries) => {
   /* prettier-ignore */
   const list = [
     "| Name | Kind | Status | Docs |",
@@ -10,8 +28,6 @@ exports.renderRulesList = (ruleEntries, pluginName) => {
   ];
 
   for (const [name, entry] of ruleEntries) {
-    if (!name.startsWith(`${pluginName}/`)) continue;
-
     // These should be exclusive, but show it for sure...
     let kind = "";
     if (entry.isRecommended) kind += "🍀";
@@ -33,22 +49,12 @@ ${list.join("\n")}
 };
 
 /**
- * @param {string} listPart
  * @param {string} pluginName
+ * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
  */
-exports.renderLayout = (listPart, pluginName) => `
-> [!WARNING]
-> This comment is maintained by CI. Do not edit this comment directly.
-> To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
-
-## Rules
-${listPart}
-
-## Getting started
-
-\`\`\`sh
-just new-${pluginName}-rule <RULE_NAME>
-\`\`\`
-
-Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_all_lint_rules\` at the bottom.
-`;
+exports.renderMarkdown = (pluginName, ruleEntries) => {
+  const pluginRules = Array.from(ruleEntries).filter(([name]) =>
+    name.startsWith(`${pluginName}/`),
+  );
+  return renderLayout(pluginName, renderRulesList(pluginRules));
+};
