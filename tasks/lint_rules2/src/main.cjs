@@ -72,6 +72,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(", ")}
       const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);
+      // Requires `env.GITHUB_TOKEN`
       return updateGitHubIssue(pluginMeta, content);
     }),
   );
