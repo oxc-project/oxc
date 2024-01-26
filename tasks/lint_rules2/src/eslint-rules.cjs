@@ -219,7 +219,7 @@ exports.ALL_TARGET_PLUGINS = new Map([
   ["n", { npm: "eslint-plugin-n", issueNo: 493 }],
   ["unicorn", { npm: "eslint-plugin-unicorn", issueNo: 684 }],
   ["jsdoc", { npm: "eslint-plugin-jsdoc", issueNo: 1170 }],
-  ["import", { npm: "eslint-plugin-import", issueNo: -1 }], // TODO: Fill issueNo
+  ["import", { npm: "eslint-plugin-import", issueNo: 1117 }],
   ["jsx-a11y", { npm: "eslint-plugin-jsx-a11y", issueNo: 1141 }],
   ["jest", { npm: "eslint-plugin-jest", issueNo: 492 }],
   ["react", { npm: "eslint-plugin-react", issueNo: 1022 }],
