@@ -47,11 +47,12 @@ enum Run {
 struct Options {
     run: Run,
     enable: bool,
+    config_path: String,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default() }
+        Self { enable: true, run: Run::default(), config_path: ".eslintrc".into() }
     }
 }
 
@@ -64,6 +65,13 @@ impl Options {
             }
         } else {
             SyntheticRunLevel::Disable
+        }
+    }
+    fn get_config_path(&self) -> Option<PathBuf> {
+        if self.config_path.is_empty() {
+            None
+        } else {
+            Some(PathBuf::from(&self.config_path))
         }
     }
 }
@@ -329,13 +337,9 @@ impl Backend {
             return;
         };
         let mut config_path = None;
-        let rc_config = root_path.join(".eslintrc");
-        if rc_config.exists() {
-            config_path = Some(rc_config);
-        }
-        let rc_json_config = root_path.join(".eslintrc.json");
-        if rc_json_config.exists() {
-            config_path = Some(rc_json_config);
+        let config = root_path.join(self.options.lock().await.get_config_path().unwrap());
+        if config.exists() {
+            config_path = Some(config);
         }
         if let Some(config_path) = config_path {
             let mut linter = self.server_linter.write().await;
@@ -343,7 +347,7 @@ impl Backend {
                 Linter::from_options(
                     LintOptions::default().with_fix(true).with_config_path(Some(config_path)),
                 )
-                .expect("should initialized linter with new options"),
+                .expect("should have initialized linter with new options"),
             );
         }
     }
