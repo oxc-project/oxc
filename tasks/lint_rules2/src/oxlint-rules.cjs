@@ -14,6 +14,9 @@ const readAllImplementedRuleNames = async () => {
   for (let line of rulesFile.split("\n")) {
     line = line.trim();
 
+    // Skip commented out rules
+    if (line.startsWith("//")) continue;
+
     if (line === "oxc_macros::declare_all_lint_rules! {") {
       found = true;
       continue;
