@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "lint_rules2",
+  "name": "lint_rules",
   "main": "./src/main.cjs",
   "version": "0.0.0",
   "dependencies": {

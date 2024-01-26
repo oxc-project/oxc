@@ -1,4 +1,4 @@
-# tasks/lint_rules2
+# tasks/lint_rules
 
 Task to update implementation progress for each linter plugin.
 
