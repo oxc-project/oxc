@@ -63,14 +63,13 @@ impl Rule for JsxNoUndef {
                 if ident.name.as_str() == "this" {
                     return;
                 }
-                let has_binding = ctx
-                    .symbols()
-                    .get_scope_id_from_name(&ident.name)
-                    .map_or(false, |scope_id| ctx.scopes().has_binding(scope_id, &ident.name));
-
-                if !has_binding {
-                    ctx.diagnostic(JsxNoUndefDiagnostic(ident.name.clone(), ident.span));
+                let jsx_scope_id = node.scope_id();
+                for scope_id in ctx.scopes().ancestors(jsx_scope_id) {
+                    if ctx.scopes().has_binding(scope_id, &ident.name) {
+                        return;
+                    }
                 }
+                ctx.diagnostic(JsxNoUndefDiagnostic(ident.name.clone(), ident.span));
             }
         }
     }
@@ -110,6 +109,8 @@ fn test() {
         "#,
             None,
         ),
+        ("var App; var React; enum A { App };  React.render(<App />);", None),
+        ("var React; enum A { App }; var App; React.render(<App />);", None),
     ];
 
     let fail = vec![
@@ -119,6 +120,8 @@ fn test() {
         ("var React; React.render(<appp.foo.Bar />);", None),
         ("var React; React.render(<Foo />);", None),
         ("var React; Unknown; React.render(<Unknown />)", None),
+        ("var React; { const App = null; }; React.render(<App />);", None),
+        ("var React; enum A { App }; React.render(<App />);", None),
     ];
 
     Tester::new(JsxNoUndef::NAME, pass, fail).test_and_snapshot();
