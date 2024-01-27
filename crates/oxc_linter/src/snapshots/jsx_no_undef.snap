@@ -44,4 +44,18 @@ expression: jsx_no_undef
    ╰────
   help: 'Unknown' is not defined.
 
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; { const App = null; }; React.render(<App />);
+   ·                                                 ───
+   ╰────
+  help: 'App' is not defined.
+
+  ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
+   ╭─[jsx_no_undef.tsx:1:1]
+ 1 │ var React; enum A { App }; React.render(<App />);
+   ·                                          ───
+   ╰────
+  help: 'App' is not defined.
+
 
