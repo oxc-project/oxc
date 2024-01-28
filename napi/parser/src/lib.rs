@@ -3,14 +3,15 @@
 use std::sync::Arc;
 
 use flexbuffers::FlexbufferSerializer;
-use miette::NamedSource;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
+use serde::Serialize;
+
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
+use oxc_diagnostics::miette::NamedSource;
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
-use serde::Serialize;
 
 /// Babel Parser Options
 ///

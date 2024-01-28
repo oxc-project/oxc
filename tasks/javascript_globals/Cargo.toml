@@ -15,7 +15,7 @@ test = false
 [dependencies]
 oxc_tasks_common = { workspace = true }
 
-serde        = { workspace = true, features = ["derive"] }
-lazy_static  = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+lazy_static = { workspace = true }
 
 handlebars = "5.0.0"

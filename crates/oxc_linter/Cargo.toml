@@ -52,8 +52,7 @@ memchr              = "2.7.1"
 json-strip-comments = "1.0.1"
 
 [dev-dependencies]
-miette = { workspace = true }
-insta  = { workspace = true }
+insta = { workspace = true }
 
 [package.metadata.cargo-machete]
 ignored = ["once_cell"]

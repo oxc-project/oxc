@@ -116,8 +116,11 @@ impl<'a> Fixer<'a> {
 mod test {
     use std::borrow::Cow;
 
-    use miette::{self, Diagnostic};
-    use oxc_diagnostics::{thiserror::Error, Error};
+    use oxc_diagnostics::{
+        miette::{self, Diagnostic},
+        thiserror::Error,
+        Error,
+    };
     use oxc_span::Span;
 
     use super::{Fix, FixResult, Fixer, Message};
