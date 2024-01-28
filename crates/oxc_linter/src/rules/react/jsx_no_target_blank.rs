@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{
         Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName,
@@ -11,8 +10,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
-use regex::Regex;
+use oxc_span::{Atom, GetSpan, Span};
 use std::ops::Deref;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -21,11 +19,15 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 enum JsxNoTargetBlankDiagnostic {
     #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
     #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
-    NoTargetBlankWithoutNoreferrer(#[label] Span),
+    TargetBlankWithoutNoreferrer(#[label] Span),
 
     #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
     #[diagnostic(severity(warning), help("add rel=`noreferrer` or rel=`noopener` to the element"))]
-    NoTargetBlankWithoutNoopener(#[label] Span),
+    TargetBlankWithoutNoopener(#[label] Span),
+
+    #[error("eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")]
+    #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
+    ExplicitPropsInSpreadAttributes(#[label] Span),
 }
 
 #[derive(Debug, Clone)]
@@ -58,9 +60,9 @@ impl Default for JsxNoTargetBlank {
 impl JsxNoTargetBlank {
     fn diagnostic(&self, span: Span, ctx: &LintContext) {
         if self.allow_referrer {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoopener(span));
+            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoopener(span));
         } else {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::NoTargetBlankWithoutNoreferrer(span));
+            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoreferrer(span));
         }
     }
 }
@@ -113,6 +115,8 @@ impl Rule for JsxNoTargetBlank {
             let mut is_href_valid = true;
             let mut has_href_value = false;
             let mut is_warn_on_spread_attributes = false;
+            let mut target_span = None;
+            let mut spread_span = Span::default();
 
             jsx_ele.attributes.iter().for_each(|attribute| match attribute {
                 JSXAttributeItem::Attribute(attribute) => {
@@ -120,6 +124,7 @@ impl Rule for JsxNoTargetBlank {
                         if identifier.name.as_str() == "target" {
                             if let Some(val) = attribute.deref().value.as_ref() {
                                 target_blank_tuple = check_target(val);
+                                target_span = attribute.value.as_ref().map(GetSpan::span);
                             }
                         } else if identifier.name.as_str() == "href"
                             || identifier.name.as_str() == "to"
@@ -139,6 +144,7 @@ impl Rule for JsxNoTargetBlank {
                 JSXAttributeItem::SpreadAttribute(_) => {
                     if self.warn_on_spread_attributes {
                         is_warn_on_spread_attributes = true;
+                        spread_span = attribute.span();
                         target_blank_tuple = (false, "", false, false);
                         rel_valid_tuple = (false, "", false, false);
                         is_href_valid = false;
@@ -151,22 +157,25 @@ impl Rule for JsxNoTargetBlank {
                 if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
                     return;
                 }
-                self.diagnostic(jsx_ele.span, ctx);
+                ctx.diagnostic(JsxNoTargetBlankDiagnostic::ExplicitPropsInSpreadAttributes(
+                    spread_span,
+                ));
                 return;
             }
 
+            let span = target_span.unwrap_or(jsx_ele.span);
             if !is_href_valid {
                 if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1 {
                     if (target_blank_tuple.2 && !rel_valid_tuple.2)
                         || (target_blank_tuple.3 && !rel_valid_tuple.3)
                     {
-                        self.diagnostic(jsx_ele.span, ctx);
+                        self.diagnostic(span, ctx);
                     }
                     return;
                 }
 
                 if target_blank_tuple.0 && !rel_valid_tuple.0 {
-                    self.diagnostic(jsx_ele.span, ctx);
+                    self.diagnostic(span, ctx);
                 }
             }
         }
@@ -204,11 +213,7 @@ impl Rule for JsxNoTargetBlank {
 }
 
 fn check_is_external_link(link: &Atom) -> bool {
-    // TODO It may hurt performance. replace Regex with something else more efficient
-    lazy_static! {
-        static ref CTL_PAT: Regex = Regex::new(r"(?:\w+:|\/\/)",).unwrap();
-    }
-    CTL_PAT.is_match(link.as_str())
+    link.as_str().contains("//")
 }
 
 fn match_href_expression(
