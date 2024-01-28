@@ -100,3 +100,8 @@ fn template() {
     test("new tag()`${x}`", "new tag()`${x}`;\n");
     test("(new tag)`${x}`", "new tag()`${x}`;\n");
 }
+
+#[test]
+fn module_decl() {
+    test("export * as foo from 'foo'", "export * as foo from 'foo';\n");
+}
