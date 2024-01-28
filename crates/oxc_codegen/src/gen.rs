@@ -805,15 +805,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
         if self.is_typescript_syntax() {
             return;
         }
-        p.print_str(b"export");
+        p.print_str(b"export ");
         p.print(b'*');
 
         if let Some(exported) = &self.exported {
-            p.print_str(b"as ");
+            p.print_str(b" as ");
             exported.gen(p, ctx);
         }
 
-        p.print_str(b" from");
+        p.print_str(b" from ");
         self.source.gen(p, ctx);
         self.with_clause.gen(p, ctx);
 
