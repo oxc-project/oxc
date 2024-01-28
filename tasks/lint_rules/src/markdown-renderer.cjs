@@ -1,21 +1,35 @@
 /**
  * @typedef {({ name: string } & import("./oxlint-rules.cjs").RuleEntry)} RuleEntryView
+ * @typedef {{ isImplemented: number; isNotSupported: number; total: number }} CounterView
  */
 
-const renderWarning = () => `
+/** @param {{ npm: string; }} props */
+const renderIntroduction = ({ npm }) => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
+
+This is tracking issue for \`${npm}\`.
 `;
 
-/** @param {{ npm: string; }} props */
-const renderHeader = ({ npm }) => `
-This is tracking issue for \`${npm}\`.
+/**
+ * @param {{
+ *   counters: {
+ *     recommended: CounterView;
+ *     others: CounterView;
+ *     deprecated: CounterView;
+ *   };
+ * }} props
+ */
+const renderCounters = ({ counters: { recommended, others, deprecated } }) => `
+- There are ${recommended.total + others.total}(+ ${deprecated.total} deprecated) rules
+- ${recommended.total - (recommended.isImplemented + recommended.isNotSupported)}/${recommended.total} recommended rules are remaining as TODO
+- ${others.total - (others.isImplemented + others.isNotSupported)}/${others.total} not recommended rules are remaining as TODO
 `;
 
 /** @param {{ pluginName: string }} props */
 const renderGettingStarted = ({ pluginName }) => `
-## Getting started
+To get started, run the following command:
 
 \`\`\`sh
 just new-${pluginName}-rule <RULE_NAME>
@@ -27,13 +41,19 @@ Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_
 /**
  * @param {{
  *   title: string;
+ *   counters: CounterView;
  *   views: RuleEntryView[];
  *   defaultOpen?: boolean;
  * }} props */
-const renderRulesList = ({ title, views, defaultOpen = true }) => `
+const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ## ${title}
 
 <details ${defaultOpen ? "open" : ""}>
+<summary>
+ ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
+</summary>
+
+✅ = Implemented, 🚫 = Not supported
 
 | Status | Name | Docs |
 | :----: | :--- | :--- |
@@ -44,8 +64,6 @@ ${views
   )
   .join("\n")}
 
-✅ = Implemented, 🚫 = Not supported
-
 </details>
 `;
 
@@ -55,56 +73,69 @@ ${views
  * @param {import("./oxlint-rules.cjs").RuleEntries} ruleEntries
  */
 exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
-  /** @type {RuleEntryView[][]} */
-  const [deprecated, recommended, others] = [[], [], []];
-  const counters = { deprecated: [0, 0], recommended: [0, 0], others: [0, 0] };
+  /** @type {Record<string, RuleEntryView[]>} */
+  const views = {
+    deprecated: [],
+    recommended: [],
+    others: [],
+  };
+  const counters = {
+    deprecated: { isImplemented: 0, isNotSupported: 0, total: 0 },
+    recommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
+    others: { isImplemented: 0, isNotSupported: 0, total: 0 },
+  };
   for (const [name, entry] of ruleEntries) {
     if (!name.startsWith(`${pluginName}/`)) continue;
 
-    const view = { name, ...entry };
-    const isMarked = entry.isImplemented || entry.isNotSupported;
+    let viewsRef, counterRef;
 
-    if (entry.isDeprecated) {
-      deprecated.push(view);
-      if (isMarked) counters.deprecated[0] += 1;
-      continue;
+    switch (true) {
+      case entry.isDeprecated: {
+        viewsRef = views.deprecated;
+        counterRef = counters.deprecated;
+        break;
+      }
+      case entry.isRecommended: {
+        viewsRef = views.recommended;
+        counterRef = counters.recommended;
+        break;
+      }
+      default: {
+        viewsRef = views.others;
+        counterRef = counters.others;
+      }
     }
 
-    if (entry.isRecommended) {
-      recommended.push(view);
-      if (isMarked) counters.recommended[0] += 1;
-      continue;
-    }
-    others.push(view);
-    if (isMarked) counters.others[0] += 1;
+    viewsRef.push({ name, ...entry });
+
+    if (entry.isImplemented) counterRef.isImplemented++;
+    if (entry.isNotSupported) counterRef.isNotSupported++;
+    counterRef.total++;
   }
 
-  counters.deprecated[1] = deprecated.length;
-  counters.recommended[1] = recommended.length;
-  counters.others[1] = others.length;
-
-  // TODO: How to display counters?
-
   return [
-    renderWarning(),
-    renderHeader({ npm: pluginMeta.npm }),
-    0 < recommended.length &&
+    renderIntroduction({ npm: pluginMeta.npm }),
+    renderCounters({ counters }),
+    renderGettingStarted({ pluginName }),
+    0 < views.recommended.length &&
       renderRulesList({
-        title: "Recommended",
-        views: recommended,
+        title: "Recommended rules",
+        counters: counters.recommended,
+        views: views.recommended,
       }),
-    0 < others.length &&
+    0 < views.others.length &&
       renderRulesList({
-        title: "Not recommended",
-        views: others,
+        title: "Not recommended rules",
+        counters: counters.others,
+        views: views.others,
       }),
-    0 < deprecated.length &&
+    0 < views.deprecated.length &&
       renderRulesList({
-        title: "Deprecated",
-        views: deprecated,
+        title: "Deprecated rules",
+        counters: counters.deprecated,
+        views: views.deprecated,
         defaultOpen: false,
       }),
-    renderGettingStarted({ pluginName }),
   ]
     .filter(Boolean)
     .join("\n");
