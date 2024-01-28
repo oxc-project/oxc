@@ -29,7 +29,6 @@ oxc_span        = { workspace = true }
 dashmap         = { workspace = true }
 futures         = { workspace = true }
 ignore          = { workspace = true, features = ["simd-accel"] }
-miette          = { workspace = true, features = ["fancy-no-backtrace"] }
 ropey           = { workspace = true }
 tokio           = { workspace = true, features = ["full"] }
 tower-lsp       = { workspace = true, features = ["proposed"] }

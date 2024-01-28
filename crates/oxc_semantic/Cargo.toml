@@ -41,7 +41,6 @@ bitflags          = { workspace = true }
 indexmap          = { workspace = true }
 insta             = { workspace = true }
 itertools         = { workspace = true }
-miette            = { workspace = true, features = ["fancy-no-backtrace"] }
 phf               = { workspace = true, features = ["macros"] }
 pretty_assertions = "1.4.0"
 rustc-hash        = { workspace = true }

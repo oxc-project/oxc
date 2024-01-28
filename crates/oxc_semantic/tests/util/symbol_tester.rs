@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
 use oxc_diagnostics::{miette::miette, Error};
-extern crate miette;
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
 use oxc_span::Atom;
 
