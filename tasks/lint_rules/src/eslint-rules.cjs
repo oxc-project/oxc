@@ -68,6 +68,9 @@ const loadPluginTypeScriptRules = (linter) => {
 
     const prefixedName = `typescript/${name}`;
 
+    // Presented but type is `string | false`
+    rule.meta.docs.recommended = typeof rule.meta.docs.recommended === "string";
+
     linter.defineRule(prefixedName, rule);
   }
 };
