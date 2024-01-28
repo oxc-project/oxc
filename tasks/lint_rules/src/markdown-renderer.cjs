@@ -16,16 +16,36 @@ This is tracking issue for \`${npm}\`.
  * @param {{
  *   counters: {
  *     recommended: CounterView;
- *     others: CounterView;
+ *     notRecommended: CounterView;
  *     deprecated: CounterView;
  *   };
  * }} props
  */
-const renderCounters = ({ counters: { recommended, others, deprecated } }) => `
-- There are ${recommended.total + others.total}(+ ${deprecated.total} deprecated) rules
-- ${recommended.total - (recommended.isImplemented + recommended.isNotSupported)}/${recommended.total} recommended rules are remaining as TODO
-- ${others.total - (others.isImplemented + others.isNotSupported)}/${others.total} not recommended rules are remaining as TODO
+const renderCounters = ({
+  counters: { recommended, notRecommended, deprecated },
+}) => {
+  const recommendedTodos =
+    recommended.total -
+    (recommended.isImplemented + recommended.isNotSupported);
+  const notRecommendedTodos =
+    notRecommended.total -
+    (notRecommended.isImplemented + notRecommended.isNotSupported);
+
+  const countersList = [
+    `- ${recommendedTodos}/${recommended.total} recommended rules are remaining as TODO`,
+    recommendedTodos === 0 && `  - All done! 🎉`,
+    `- ${notRecommendedTodos}/${notRecommended.total} not recommended rules are remaining as TODO`,
+    notRecommendedTodos === 0 && `  - All done! 🎉`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return `
+There are ${recommended.total + notRecommended.total}(+ ${deprecated.total} deprecated) rules.
+
+${countersList}
 `;
+};
 
 /** @param {{ pluginName: string }} props */
 const renderGettingStarted = ({ pluginName }) => `
@@ -50,7 +70,7 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 
 <details ${defaultOpen ? "open" : ""}>
 <summary>
- ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
+  ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
 </summary>
 
 | Status | Name | Docs |
@@ -58,11 +78,11 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ${views
   .map(
     (v) =>
-      `| ${v.isImplemented ? "✅" : ""}${v.isNotSupported ? "🚫" : ""} | ${v.name} | ${v.docsUrl} |`,
+      `| ${v.isImplemented ? "✨" : ""}${v.isNotSupported ? "🚫" : ""} | ${v.name} | ${v.docsUrl} |`,
   )
   .join("\n")}
 
-✅ = Implemented, 🚫 = Not supported
+✨ = Implemented, 🚫 = Not supported
 
 </details>
 `;
@@ -77,13 +97,14 @@ exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
   const views = {
     deprecated: [],
     recommended: [],
-    others: [],
+    notRecommended: [],
   };
   const counters = {
     deprecated: { isImplemented: 0, isNotSupported: 0, total: 0 },
     recommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
-    others: { isImplemented: 0, isNotSupported: 0, total: 0 },
+    notRecommended: { isImplemented: 0, isNotSupported: 0, total: 0 },
   };
+
   for (const [name, entry] of ruleEntries) {
     if (!name.startsWith(`${pluginName}/`)) continue;
 
@@ -101,8 +122,8 @@ exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
         break;
       }
       default: {
-        viewsRef = views.others;
-        counterRef = counters.others;
+        viewsRef = views.notRecommended;
+        counterRef = counters.notRecommended;
       }
     }
 
@@ -123,11 +144,11 @@ exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
         counters: counters.recommended,
         views: views.recommended,
       }),
-    0 < views.others.length &&
+    0 < views.notRecommended.length &&
       renderRulesList({
         title: "Not recommended rules",
-        counters: counters.others,
-        views: views.others,
+        counters: counters.notRecommended,
+        views: views.notRecommended,
       }),
     0 < views.deprecated.length &&
       renderRulesList({
