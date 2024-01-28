@@ -175,8 +175,10 @@ impl Runtime {
             }
         };
 
-        let sources = PartialLoader::parse(ext, &source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
+        let sources = PartialLoader::parse(ext, &source_text);
+        let is_processed_by_partial_loader = sources.is_some();
+        let sources =
+            sources.unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
             return;
@@ -187,7 +189,8 @@ impl Runtime {
             let mut messages =
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);
 
-            if self.linter.options().fix {
+            // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
+            if !is_processed_by_partial_loader && self.linter.options().fix {
                 let fix_result = Fixer::new(source_text, messages).fix();
                 fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
                 messages = fix_result.messages;
