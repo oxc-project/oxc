@@ -53,8 +53,6 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
  ✅: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
 </summary>
 
-✅ = Implemented, 🚫 = Not supported
-
 | Status | Name | Docs |
 | :----: | :--- | :--- |
 ${views
@@ -63,6 +61,8 @@ ${views
       `| ${v.isImplemented ? "✅" : ""}${v.isNotSupported ? "🚫" : ""} | ${v.name} | ${v.docsUrl} |`,
   )
   .join("\n")}
+
+✅ = Implemented, 🚫 = Not supported
 
 </details>
 `;
