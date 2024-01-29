@@ -1377,7 +1377,6 @@ dependencies = [
  "oxc_syntax",
  "ryu-js",
  "serde",
- "serde-wasm-bindgen",
  "serde_json",
  "tsify",
  "wasm-bindgen",
@@ -1710,7 +1709,6 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
- "serde-wasm-bindgen",
  "tsify",
  "wasm-bindgen",
 ]
@@ -1722,7 +1720,6 @@ dependencies = [
  "compact_str",
  "miette",
  "serde",
- "serde-wasm-bindgen",
  "tsify",
  "wasm-bindgen",
 ]
