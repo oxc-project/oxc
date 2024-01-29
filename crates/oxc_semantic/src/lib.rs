@@ -5,6 +5,7 @@ mod class;
 mod control_flow;
 mod diagnostics;
 mod jsdoc;
+mod label;
 mod module_record;
 mod node;
 pub mod pg;
@@ -27,6 +28,7 @@ pub use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
+use rustc_hash::FxHashSet;
 
 pub use crate::{
     builder::VariableInfo,
@@ -61,7 +63,7 @@ pub struct Semantic<'a> {
 
     jsdoc: JSDoc<'a>,
 
-    unused_labels: Vec<AstNodeId>,
+    unused_labels: FxHashSet<AstNodeId>,
 
     redeclare_variables: Vec<VariableInfo>,
 
@@ -113,7 +115,7 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
-    pub fn unused_labels(&self) -> &Vec<AstNodeId> {
+    pub fn unused_labels(&self) -> &FxHashSet<AstNodeId> {
         &self.unused_labels
     }
 

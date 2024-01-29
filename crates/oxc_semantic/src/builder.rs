@@ -19,6 +19,7 @@ use crate::{
     },
     diagnostics::Redeclaration,
     jsdoc::JSDocBuilder,
+    label::LabelBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     pg::replicate_tree_to_leaves,
@@ -27,18 +28,6 @@ use crate::{
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     Semantic,
 };
-
-pub struct LabeledScope<'a> {
-    name: &'a str,
-    used: bool,
-    parent: usize,
-}
-
-struct UnusedLabels<'a> {
-    scopes: Vec<LabeledScope<'a>>,
-    curr_scope: usize,
-    labels: Vec<AstNodeId>,
-}
 
 #[derive(Debug, Clone)]
 pub struct VariableInfo {
@@ -83,7 +72,7 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
-    unused_labels: UnusedLabels<'a>,
+    pub label_builder: LabelBuilder<'a>,
 
     jsdoc: JSDocBuilder<'a>,
 
@@ -123,7 +112,7 @@ impl<'a> SemanticBuilder<'a> {
             scope,
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
-            unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
+            label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
             redeclare_variables: RedeclareVariables { variables: vec![] },
@@ -185,7 +174,7 @@ impl<'a> SemanticBuilder<'a> {
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
-            unused_labels: self.unused_labels.labels,
+            unused_labels: self.label_builder.unused_node_ids,
             redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         };
@@ -203,7 +192,7 @@ impl<'a> SemanticBuilder<'a> {
             classes: self.class_table_builder.build(),
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
-            unused_labels: self.unused_labels.labels,
+            unused_labels: self.label_builder.unused_node_ids,
             redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         }
@@ -1563,9 +1552,11 @@ impl<'a> SemanticBuilder<'a> {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();
             }
+            AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
+                self.label_builder.enter_function_or_static_block();
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
@@ -1641,29 +1632,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_jsx_element_name(elem);
             }
             AstKind::LabeledStatement(stmt) => {
-                self.unused_labels.scopes.push(LabeledScope {
-                    name: stmt.label.name.as_str(),
-                    used: false,
-                    parent: self.unused_labels.curr_scope,
-                });
-                self.unused_labels.curr_scope = self.unused_labels.scopes.len() - 1;
+                self.label_builder.enter(stmt, self.current_node_id);
             }
-            AstKind::ContinueStatement(stmt) => {
-                if let Some(label) = &stmt.label {
-                    let scope =
-                        self.unused_labels.scopes.iter_mut().rev().find(|x| x.name == label.name);
-                    if let Some(scope) = scope {
-                        scope.used = true;
-                    }
-                }
-            }
-            AstKind::BreakStatement(stmt) => {
-                if let Some(label) = &stmt.label {
-                    let scope =
-                        self.unused_labels.scopes.iter_mut().rev().find(|x| x.name == label.name);
-                    if let Some(scope) = scope {
-                        scope.used = true;
-                    }
+            AstKind::ContinueStatement(ContinueStatement { label, .. })
+            | AstKind::BreakStatement(BreakStatement { label, .. }) => {
+                if let Some(label) = &label {
+                    self.label_builder.mark_as_used(label);
                 }
             }
             AstKind::YieldExpression(_) => {
@@ -1683,14 +1657,15 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ModuleDeclaration(decl) => {
                 self.current_symbol_flags -= Self::symbol_flag_from_module_declaration(decl);
             }
-            AstKind::LabeledStatement(_) => {
-                let scope = &self.unused_labels.scopes[self.unused_labels.curr_scope];
-                if !scope.used {
-                    self.unused_labels.labels.push(self.current_node_id);
-                }
-                self.unused_labels.curr_scope = scope.parent;
+            AstKind::LabeledStatement(_) => self.label_builder.leave(),
+            AstKind::StaticBlock(_) => {
+                self.label_builder.leave_function_or_static_block();
             }
-            AstKind::Function(_) | AstKind::ArrowExpression(_) => {
+            AstKind::Function(_) => {
+                self.label_builder.leave_function_or_static_block();
+                self.function_stack.pop();
+            }
+            AstKind::ArrowExpression(_) => {
                 self.function_stack.pop();
             }
             AstKind::TSModuleBlock(_) => {

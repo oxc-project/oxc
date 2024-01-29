@@ -21736,27 +21736,30 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  24 │     var y=2;
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[language/statements/break/S12.8_A5_T1.js:22:1]
  22 │             return;
  23 │         break LABEL_ANOTHER_LOOP;
-    ·               ──────────────────
+    ·               ─────────┬────────
+    ·                        ╰── This label is used, but not defined
  24 │         LABEL_IN_2 : y++;
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[language/statements/break/S12.8_A5_T2.js:24:1]
  24 │             return;
  25 │         break IN_DO_FUNC;
-    ·               ──────────
+    ·               ─────┬────
+    ·                    ╰── This label is used, but not defined
  26 │         LABEL_IN_2 : y++;
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[language/statements/break/S12.8_A5_T3.js:24:1]
  24 │             return;
  25 │         break LABEL_IN;
-    ·               ────────
+    ·               ────┬───
+    ·                   ╰── This label is used, but not defined
  26 │         LABEL_IN_2 : y++;
     ╰────
 
@@ -28280,11 +28283,12 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  21 │   }
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[language/statements/class/static-init-invalid-undefined-break-target.js:21:1]
  21 │     x: while (false) {
  22 │       break y;
-    ·             ─
+    ·             ┬
+    ·             ╰── This label is used, but not defined
  23 │     }
     ╰────
 
