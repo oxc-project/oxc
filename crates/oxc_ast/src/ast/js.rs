@@ -45,7 +45,7 @@ pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumberLiteral(Box<'a, NumberLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral>),
+    BigintLiteral(Box<'a, BigintLiteral<'a>>),
     RegExpLiteral(Box<'a, RegExpLiteral>),
     StringLiteral(Box<'a, StringLiteral>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),

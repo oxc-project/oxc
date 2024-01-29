@@ -14,7 +14,7 @@ use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
 
-/// Bumpalo Box
+/// A Box without `Drop`
 pub struct Box<'alloc, T: ?Sized>(pub &'alloc mut T);
 
 impl<'alloc, T> Box<'alloc, T> {

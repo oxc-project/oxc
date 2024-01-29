@@ -1293,7 +1293,7 @@ impl<'a> Format<'a> for NumberLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for BigintLiteral {
+impl<'a> Format<'a> for BigintLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.

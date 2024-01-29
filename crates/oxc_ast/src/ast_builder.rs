@@ -8,7 +8,7 @@
 use num_bigint::BigInt;
 use std::mem;
 
-use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_allocator::{Allocator, Box, BoxWithDrop, String, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{
@@ -136,8 +136,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, value: BigInt, base: BigintBase) -> BigintLiteral {
-        BigintLiteral { span, value, base }
+    pub fn bigint_literal(&self, span: Span, value: BigInt, base: BigintBase) -> BigintLiteral<'a> {
+        BigintLiteral { span, value: BoxWithDrop::new_in(value, self.allocator), base }
     }
 
     pub fn template_literal(
@@ -191,7 +191,7 @@ impl<'a> AstBuilder<'a> {
         Expression::NumberLiteral(self.alloc(literal))
     }
 
-    pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {
+    pub fn literal_bigint_expression(&self, literal: BigintLiteral<'a>) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 

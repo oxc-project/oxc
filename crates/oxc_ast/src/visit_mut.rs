@@ -1274,7 +1274,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_bigint_literal(&mut self, lit: &mut BigintLiteral) {
+    fn visit_bigint_literal(&mut self, lit: &mut BigintLiteral<'a>) {
         let kind = AstKind::BigintLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);

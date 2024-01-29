@@ -18,7 +18,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-bumpalo = { workspace = true, features = ["collections"] }
+bumpalo = { workspace = true, features = ["collections", "boxed"] }
 serde   = { workspace = true }
 
 [dev-dependencies]

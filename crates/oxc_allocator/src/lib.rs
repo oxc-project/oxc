@@ -3,6 +3,7 @@ use std::{convert::From, ops::Deref};
 mod arena;
 
 pub use arena::{Box, String, Vec};
+pub use bumpalo::boxed::Box as BoxWithDrop;
 use bumpalo::Bump;
 
 #[derive(Default)]

@@ -1050,7 +1050,7 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     result
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BigintLiteral {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BigintLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         use num_bigint::Sign;
 

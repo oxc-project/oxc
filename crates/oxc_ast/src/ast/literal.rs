@@ -7,6 +7,7 @@ use std::{
 
 use bitflags::bitflags;
 use num_bigint::BigInt;
+use oxc_allocator::BoxWithDrop;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
 #[cfg(feature = "serde")]
@@ -104,13 +105,13 @@ impl<'a> Hash for NumberLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct BigintLiteral {
+pub struct BigintLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
-    pub value: BigInt,
+    pub value: BoxWithDrop<'a, BigInt>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub base: BigintBase,
 }
