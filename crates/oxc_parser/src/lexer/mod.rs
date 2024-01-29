@@ -76,11 +76,12 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
-        // Token's start and end are u32s, so limit for length of source is u32::MAX bytes.
-        // Only a debug assertion is required, as parser checks length of source before calling
-        // this method.
-        debug_assert!(source.len() <= MAX_LEN, "Source length exceeds MAX_LEN");
+    pub fn new(allocator: &'a Allocator, mut source: &'a str, source_type: SourceType) -> Self {
+        // If source exceeds size limit, substitute a short source which will fail to parse.
+        // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
+        if source.len() > MAX_LEN {
+            source = "\0";
+        }
 
         let token = Token {
             // the first token is at the start of file, so is allows on a new line

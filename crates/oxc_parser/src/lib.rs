@@ -155,12 +155,8 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     /// Create a new parser
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
-        // If source exceeds size limit, substitute a short source which will fail to parse.
-        // `parse()` will convert error to `diagnostics::OverlongSource`.
-        let source_text_for_lexer = if source_text.len() > MAX_LEN { "\0" } else { source_text };
-
         Self {
-            lexer: Lexer::new(allocator, source_text_for_lexer, source_type),
+            lexer: Lexer::new(allocator, source_text, source_type),
             source_type,
             source_text,
             errors: vec![],
@@ -254,7 +250,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
-    /// Original parsing error is not real - `Parser::new` substituted "\0" as the source text.
+    /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
     fn overlong_error(&self) -> Option<Error> {
         if self.source_text.len() > MAX_LEN {
             return Some(diagnostics::OverlongSource.into());
