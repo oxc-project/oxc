@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        ImportDeclarationSpecifier, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, JSXIdentifier, ModuleDeclaration,
-    },
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName, JSXIdentifier},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -10,6 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use phf::{phf_set, Set};
 
@@ -111,85 +109,73 @@ const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
 };
 
 impl Rule for NoUnwantedPolyfillio {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut script_import = "";
-        for node in ctx.nodes().iter() {
-            let kind = node.kind();
-            match kind {
-                AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) => {
-                    if import_decl.source.value.as_str() != "next/script" {
-                        continue;
-                    }
-                    let Some(specifiers) = &import_decl.specifiers else {
-                        continue;
-                    };
-                    let Some(default_import) = specifiers.first() else {
-                        continue;
-                    };
-                    if let ImportDeclarationSpecifier::ImportDefaultSpecifier(
-                        default_import_specifier,
-                    ) = default_import
-                    {
-                        script_import = default_import_specifier.local.name.as_str();
-                    };
-                }
-                AstKind::JSXOpeningElement(jsx_el) => {
-                    let JSXElementName::Identifier(JSXIdentifier { name: tag_name, .. }) =
-                        &jsx_el.name
-                    else {
-                        continue;
-                    };
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
+            let JSXElementName::Identifier(JSXIdentifier { name: tag_name, .. }) = &jsx_el.name
+            else {
+                return;
+            };
 
-                    if tag_name.as_str() != "script" && tag_name.as_str() != script_import {
-                        continue;
+            let next_script_import_local_name =
+                ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
+                    if entry.module_request.name().as_str() == "next/script" {
+                        Some(entry.local_name.name())
+                    } else {
+                        None
                     }
+                });
 
-                    if jsx_el.attributes.len() == 0 {
-                        continue;
-                    }
+            if tag_name.as_str() != "script"
+                && !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
+            {
+                return;
+            }
 
-                    let Some(JSXAttributeItem::Attribute(src)) = jsx_el.attributes.iter().find(|attr| {
-                        matches!(
-                            attr,
-                            JSXAttributeItem::Attribute(jsx_attr)
-                                if matches!(
-                                    &jsx_attr.name,
-                                    JSXAttributeName::Identifier(id) if id.name.as_str() == "src"
-                                )
+            if jsx_el.attributes.len() == 0 {
+                return;
+            }
+
+            let Some(JSXAttributeItem::Attribute(src)) = jsx_el.attributes.iter().find(|attr| {
+                matches!(
+                    attr,
+                    JSXAttributeItem::Attribute(jsx_attr)
+                        if matches!(
+                            &jsx_attr.name,
+                            JSXAttributeName::Identifier(id) if id.name.as_str() == "src"
                         )
-                    }) else {continue; };
+                )
+            }) else {
+                return;
+            };
 
-                    if let Some(JSXAttributeValue::StringLiteral(src_value)) = &src.value {
-                        if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
-                            || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
-                        {
-                            let Ok(url) = url::Url::parse(src_value.value.as_str()) else {
-                                continue;
-                            };
+            if let Some(JSXAttributeValue::StringLiteral(src_value)) = &src.value {
+                if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
+                    || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
+                {
+                    let Ok(url) = url::Url::parse(src_value.value.as_str()) else {
+                        return;
+                    };
 
-                            let Some((_, features_value)) =
-                                url.query_pairs().find(|(key, _)| key == "features")
-                            else {
-                                continue;
-                            };
-                            let unwanted_features: Vec<&str> = features_value
-                                .split(',')
-                                .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
-                                .collect();
-                            if !unwanted_features.is_empty() {
-                                ctx.diagnostic(NoUnwantedPolyfillioDiagnostic(
-                                    format!(
-                                        "{} {}",
-                                        unwanted_features.join(", "),
-                                        if unwanted_features.len() > 1 { "are" } else { "is" }
-                                    ),
-                                    src.span,
-                                ));
-                            }
-                        }
+                    let Some((_, features_value)) =
+                        url.query_pairs().find(|(key, _)| key == "features")
+                    else {
+                        return;
+                    };
+                    let unwanted_features: Vec<&str> = features_value
+                        .split(',')
+                        .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
+                        .collect();
+                    if !unwanted_features.is_empty() {
+                        ctx.diagnostic(NoUnwantedPolyfillioDiagnostic(
+                            format!(
+                                "{} {}",
+                                unwanted_features.join(", "),
+                                if unwanted_features.len() > 1 { "are" } else { "is" }
+                            ),
+                            src.span,
+                        ));
                     }
                 }
-                _ => {}
             }
         }
     }
