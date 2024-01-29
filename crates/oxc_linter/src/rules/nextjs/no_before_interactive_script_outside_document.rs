@@ -9,7 +9,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_next_script_import_local_name, is_document_page, is_in_app_dir},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")]
@@ -39,14 +44,8 @@ declare_oxc_lint!(
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(path) = ctx.file_path().to_str() else { return };
-            let is_in_app_dir = path.contains("app/") || path.contains("app\\");
-            if is_in_app_dir {
-                return;
-            }
-
-            let Some(page) = path.split("pages").last() else { return };
-            if page.starts_with("/_document") || page.starts_with("\\_document") {
+            let Some(file_path) = ctx.file_path().to_str() else { return };
+            if is_in_app_dir(file_path) {
                 return;
             }
             let JSXElementName::Identifier(JSXIdentifier { name: tag_name, .. }) = &jsx_el.name
@@ -74,14 +73,10 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
 
             if let Some(JSXAttributeValue::StringLiteral(strategy_value)) = &strategy.value {
                 if strategy_value.value.as_str() == "beforeInteractive" {
-                    let next_script_import_local_name =
-                        ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
-                            if entry.module_request.name().as_str() == "next/script" {
-                                Some(entry.local_name.name())
-                            } else {
-                                None
-                            }
-                        });
+                    if is_document_page(file_path) {
+                        return;
+                    }
+                    let next_script_import_local_name = get_next_script_import_local_name(ctx);
                     if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
                     {
                         return;
