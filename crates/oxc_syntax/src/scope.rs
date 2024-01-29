@@ -5,7 +5,10 @@ define_index_type! {
     pub struct ScopeId = u32;
 }
 
-#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ScopeId = number;
 "#;

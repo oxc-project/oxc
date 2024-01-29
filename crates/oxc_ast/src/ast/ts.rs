@@ -11,7 +11,10 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'>;
 export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'>;
@@ -209,7 +212,11 @@ pub struct TSTypeOperatorType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase", rename = "TSTypeOperatorEnum"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize),
+    serde(rename_all = "lowercase", rename = "TSTypeOperatorEnum")
+)]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypeOperator {
     Keyof,

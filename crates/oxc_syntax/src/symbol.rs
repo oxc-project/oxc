@@ -8,7 +8,10 @@ define_index_type! {
     pub struct SymbolId = u32;
 }
 
-#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type SymbolId = number;
 export type SymbolFlags = unknown;
@@ -17,7 +20,6 @@ export type SymbolFlags = unknown;
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Serialize))]
-    #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
     pub struct SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter
