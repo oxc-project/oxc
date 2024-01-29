@@ -15,6 +15,7 @@ use oxc_syntax::{
     NumberBase,
 };
 use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::Redeclaration, scope::ScopeFlags, AstNode};
 
@@ -25,6 +26,7 @@ impl EarlyErrorJavaScript {
         let kind = node.kind();
 
         match kind {
+            AstKind::Program(_) => check_labeled_statement(ctx),
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -54,7 +56,6 @@ impl EarlyErrorJavaScript {
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
             AstKind::LabeledStatement(stmt) => {
                 check_function_declaration(&stmt.body, true, ctx);
-                check_labeled_statement(stmt, node, ctx);
             }
             AstKind::ForInStatement(stmt) => {
                 check_function_declaration(&stmt.body, false, ctx);
@@ -593,6 +594,20 @@ struct InvalidLabelJumpTarget(#[label] Span);
 #[diagnostic()]
 struct InvalidLabelTarget(#[label("This label is used, but not defined")] Span);
 
+fn check_label(label: &LabelIdentifier, ctx: &SemanticBuilder) {
+    if ctx.label_builder.is_inside_labeled_statement() {
+        for labeled in ctx.label_builder.get_accessible_labels() {
+            if label.name == labeled.name {
+                return;
+            }
+        }
+        if ctx.label_builder.is_inside_function_or_static_block() {
+            return ctx.error(InvalidLabelJumpTarget(label.span));
+        }
+    }
+    ctx.error(InvalidLabelTarget(label.span));
+}
+
 fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal break statement")]
@@ -601,29 +616,15 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Se
     ))]
     struct InvalidBreak(#[label] Span);
 
+    if let Some(label) = &stmt.label {
+        return check_label(label, ctx);
+    }
+
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Program(_) => {
-                return stmt.label.as_ref().map_or_else(
-                    || ctx.error(InvalidBreak(stmt.span)),
-                    |label| ctx.error(InvalidLabelTarget(label.span)),
-                );
-            }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                return stmt.label.as_ref().map_or_else(
-                    || ctx.error(InvalidBreak(stmt.span)),
-                    |label| ctx.error(InvalidLabelJumpTarget(label.span)),
-                );
-            }
-            AstKind::LabeledStatement(labeled_statement) => {
-                if stmt
-                    .label
-                    .as_ref()
-                    .is_some_and(|label| label.name == labeled_statement.label.name)
-                {
-                    break;
-                }
+            AstKind::Program(_) | AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                ctx.error(InvalidBreak(stmt.span));
             }
             kind if (kind.is_iteration_statement()
                 || matches!(kind, AstKind::SwitchStatement(_)))
@@ -701,26 +702,18 @@ fn check_continue_statement<'a>(
     }
 }
 
-fn check_labeled_statement<'a>(
-    stmt: &LabeledStatement,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
-        match ctx.nodes.kind(node_id) {
-            // label cannot cross boundary on function or static block
-            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
-            // check label name redeclaration
-            AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
-                return ctx.error(Redeclaration(
-                    stmt.label.name.clone(),
-                    label_stmt.label.span,
-                    stmt.label.span,
-                ));
+#[allow(clippy::option_if_let_else)]
+fn check_labeled_statement(ctx: &SemanticBuilder) {
+    ctx.label_builder.labels.iter().for_each(|labels| {
+        let mut defined = FxHashMap::default();
+        for labeled in labels {
+            if let Some(span) = defined.get(labeled.name) {
+                ctx.error(Redeclaration(labeled.name.into(), *span, labeled.span));
+            } else {
+                defined.insert(labeled.name, labeled.span);
             }
-            _ => {}
         }
-    }
+    });
 }
 
 fn check_for_statement_left<'a>(

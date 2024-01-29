@@ -18236,11 +18236,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  32 │             return toFixed()
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[conformance/salsa/plainJSBinderErrors.ts:37:1]
  37 │             label: var x = 1
  38 │             break label
-    ·                   ─────
+    ·                   ──┬──
+    ·                     ╰── This label is used, but not defined
  39 │         }
     ╰────
 
