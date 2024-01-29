@@ -32,29 +32,29 @@ pub fn main() {
 #[derive(Default, Tsify)]
 pub struct Oxc {
     source_text: String,
-    #[wasm_bindgen(readonly)]
+    #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub ast: JsValue,
-    #[wasm_bindgen(readonly)]
+    #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Statement[]")]
     pub ir: JsValue,
-    #[wasm_bindgen(readonly)]
+    #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
     pub symbols: JsValue,
 
-    #[wasm_bindgen(readonly, js_name = "scopeText")]
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
     #[serde(rename = "scopeText")]
     pub scope_text: String,
-    #[wasm_bindgen(readonly, js_name = "codegenText")]
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
     #[serde(rename = "codegenText")]
     pub codegen_text: String,
-    #[wasm_bindgen(readonly, js_name = "formattedText")]
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "formattedText")]
     #[serde(rename = "formattedText")]
     pub formatted_text: String,
-    #[wasm_bindgen(readonly, js_name = "prettierFormattedText")]
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierFormattedText")]
     #[serde(rename = "prettierFormattedText")]
     pub prettier_formatted_text: String,
-    #[wasm_bindgen(readonly, js_name = "prettierIrText")]
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
     #[serde(rename = "prettierIrText")]
     pub prettier_ir_text: String,
 
