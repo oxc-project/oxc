@@ -2,7 +2,7 @@ mod env;
 pub mod errors;
 mod settings;
 
-use std::path::Path;
+use std::{ffi::OsStr, path::Path, process::Command};
 
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -37,7 +37,10 @@ pub struct ESLintRuleConfig {
 
 impl ESLintConfig {
     pub fn new(path: &Path) -> Result<Self, Report> {
-        let json = Self::read_json(path)?;
+        let json = match path.extension().and_then(OsStr::to_str) {
+            Some("js") => Self::read_js(path)?,
+            _ => Self::read_json(path)?,
+        };
         let rules = parse_rules(&json)?;
         let settings = parse_settings_from_root(&json);
         let env = parse_env_from_root(&json);
@@ -75,6 +78,60 @@ impl ESLintConfig {
             ))])
             .into()
         })
+    }
+
+    fn read_js(path: &Path) -> Result<serde_json::Value, Error> {
+        let fullpath = std::env::current_dir().map_err(|e| {
+            FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))])
+        })?;
+        let fullpath = fullpath.join(path);
+
+        let Some(node_major_version) = resolve_node_major_version() else {
+            return Err(FailedToParseConfigError(vec![Error::msg("Failed to find a node binary on your machine, which is needed to parse JavaScript ESLint config files. Please ensure that node is downloaded, or use a JSON config instead.")]).into());
+        };
+
+        // When available, use the experimental permissions API to reduce risk
+        // of RCE. This was added in node 20.
+        // https://nodejs.org/docs/latest-v20.x/api/permissions.html
+        let output = {
+            let mut node_cmd = Command::new("node");
+            node_cmd
+                .arg("-e")
+                .arg(format!(r#"console.log(JSON.stringify(require('{}')))"#, fullpath.display()));
+            if node_major_version > 20 {
+                node_cmd.args(["--experimental-permission", "--allow-fs-read=*"]);
+            }
+            node_cmd.output().map_err(|e| {
+                FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(
+                    path.to_path_buf(),
+                    e,
+                ))])
+            })?
+        };
+
+        if !output.status.success() {
+            let code = output.status.code();
+            let mut error = Error::msg(
+                code
+                    .map_or_else(
+                || "node subprocess was unexpectedly terminated by a signal".into(),
+                        |code| format!("node subprocess exited with code {code} while reading the ESLint config at {}", path.display()))
+                );
+            if let Ok(stderr) = String::from_utf8(output.stderr) {
+                error = error.context(stderr);
+            }
+            return Err(FailedToParseConfigError(vec![error]).into());
+        }
+
+        let config_contents = String::from_utf8(output.stdout).map_err(|e| {
+            FailedToParseConfigError(vec![Error::msg(format!(
+                "The provided ESLint config contains non UTF-8 characters at position {}.",
+                e.utf8_error().valid_up_to()
+            ))])
+        })?;
+
+        serde_json::from_str::<serde_json::Value>(&config_contents)
+            .map_err(|e| FailedToParseConfigJsonError(path.to_path_buf(), e.to_string()).into())
     }
 
     #[allow(clippy::option_if_let_else)]
@@ -287,6 +344,21 @@ fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Optio
     Err(FailedToParseRuleValueError(value.to_string(), "Invalid rule value").into())
 }
 
+/// Get the SemVer major version of node on this machine. Returns `None` if
+/// node cannot be found or (for some reason) parsing the version string from
+/// stdout fails.
+fn resolve_node_major_version() -> Option<u32> {
+    let output = Command::new("node").arg("--version").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let version_str = String::from_utf8(output.stdout).ok()?;
+    let semver = version_str.trim().strip_prefix('v')?;
+    let major_version = semver.split('.').next()?;
+
+    str::parse(major_version).ok()
+}
+
 #[cfg(test)]
 mod test {
     use super::ESLintConfig;
@@ -297,5 +369,13 @@ mod test {
         let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
         let config = ESLintConfig::new(&fixture_path).unwrap();
         assert!(!config.rules.is_empty());
+    }
+
+    #[test]
+    fn test_js_config() {
+        let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.js");
+        let config = ESLintConfig::new(&fixture_path).unwrap();
+        assert!(!config.rules.is_empty());
+        assert!(config.rules.iter().any(|rule| rule.rule_name == "no-console"));
     }
 }
