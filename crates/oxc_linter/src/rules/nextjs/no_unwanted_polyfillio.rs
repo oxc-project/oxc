@@ -11,7 +11,7 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::get_next_script_import_local_name};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. {0} already shipped with Next.js.")]
@@ -117,14 +117,7 @@ impl Rule for NoUnwantedPolyfillio {
             };
 
             if tag_name.as_str() != "script" {
-                let next_script_import_local_name =
-                    ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
-                        if entry.module_request.name().as_str() == "next/script" {
-                            Some(entry.local_name.name())
-                        } else {
-                            None
-                        }
-                    });
+                let next_script_import_local_name = get_next_script_import_local_name(ctx);
                 if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
                 {
                     return;

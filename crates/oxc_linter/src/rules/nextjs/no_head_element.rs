@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-next(no-head-element): Do not use `<head>` element. Use `<Head />` from `next/head` instead.")]
@@ -33,8 +33,7 @@ declare_oxc_lint!(
 impl Rule for NoHeadElement {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let Some(full_file_path) = ctx.file_path().to_str() else { return };
-        let is_in_app_dir = full_file_path.contains("app/") || full_file_path.contains("app\\");
-        if is_in_app_dir {
+        if is_in_app_dir(full_file_path) {
             return;
         }
         if let AstKind::JSXOpeningElement(elem) = node.kind() {
@@ -54,7 +53,7 @@ fn test() {
     let pass = vec![
         (
             r"import Head from 'next/head';
-			
+
 			export class MyComponent {
 			  render() {
 				return (
