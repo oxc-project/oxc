@@ -1,3 +1,5 @@
+use petgraph::stable_graph::NodeIndex;
+
 use oxc_ast::AstKind;
 use oxc_index::IndexVec;
 
@@ -15,16 +17,23 @@ pub struct AstNode<'a> {
     /// Associated Scope (initialized by binding)
     scope_id: ScopeId,
 
+    /// Associated NodeIndex in CFG (initialized by control_flow)
+    cfg_ix: NodeIndex,
+
     flags: NodeFlags,
 }
 
 impl<'a> AstNode<'a> {
-    pub fn new(kind: AstKind<'a>, scope_id: ScopeId, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, scope_id, flags }
+    pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
+        Self { id: AstNodeId::new(0), kind, cfg_ix, scope_id, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
         self.id
+    }
+
+    pub fn cfg_ix(&self) -> NodeIndex {
+        self.cfg_ix
     }
 
     pub fn kind(&self) -> AstKind<'a> {
