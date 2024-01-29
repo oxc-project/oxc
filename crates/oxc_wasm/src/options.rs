@@ -162,6 +162,7 @@ pub struct OxcMinifierOptions {
 }
 
 #[wasm_bindgen]
+#[allow(clippy::trivially_copy_pass_by_ref)]
 impl OxcMinifierOptions {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {

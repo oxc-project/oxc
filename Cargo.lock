@@ -1736,7 +1736,6 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
- "serde-wasm-bindgen",
  "tsify",
  "unicode-id-start",
  "wasm-bindgen",
