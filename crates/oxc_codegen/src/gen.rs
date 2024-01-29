@@ -1098,9 +1098,7 @@ fn choose_quote(s: &str) -> char {
     }
 }
 
-fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
-    let quote = choose_quote(s);
-    p.print(quote as u8);
+fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<{ MINIFY }>) {
     let mut chars = s.chars();
 
     while let Some(c) = chars.next() {
@@ -1153,6 +1151,20 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
                     p.print_str(b"\"");
                 }
             }
+            '`' => {
+                if quote == '`' {
+                    p.print_str(b"\\`");
+                } else {
+                    p.print_str(b"`");
+                }
+            }
+            '$' => {
+                if chars.clone().next().is_some_and(|next| next == '{') {
+                    p.print_str(b"\\$");
+                } else {
+                    p.print_str(b"$");
+                }
+            }
             // Allow `U+2028` and `U+2029` in string literals
             // <https://tc39.es/proposal-json-superset>
             // <https://github.com/tc39/proposal-json-superset>
@@ -1164,12 +1176,15 @@ fn print_str<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
             _ => p.print_str(c.escape_default().to_string().as_bytes()),
         }
     }
-    p.print(quote as u8);
 }
 
 impl<const MINIFY: bool> Gen<MINIFY> for StringLiteral {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        print_str(self.value.as_str(), p);
+        let s = &self.value.as_str();
+        let quote = choose_quote(s);
+        p.print(quote as u8);
+        print_unquoted_str(s, quote, p);
+        p.print(quote as u8);
     }
 }
 
@@ -1725,7 +1740,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
         let mut expressions = self.expressions.iter();
 
         for quasi in &self.quasis {
-            p.print_str(quasi.value.raw.as_bytes());
+            if let Some(cooked) = &quasi.value.cooked {
+                print_unquoted_str(cooked.as_str(), '`', p);
+            }
 
             if let Some(expr) = expressions.next() {
                 p.print_str(b"${");
