@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_before_interactive_script_outside_document
+---
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                         src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                         strategy="beforeInteractive"
+    ·                         ────────────────────────────
+ 10 │                       ></Script>
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                    src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                    strategy="beforeInteractive"
+    ·                    ────────────────────────────
+ 10 │                  ></Script>
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                           src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                           strategy='beforeInteractive'
+    ·                           ────────────────────────────
+ 10 │                         />
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                           src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                           strategy='beforeInteractive'
+    ·                           ────────────────────────────
+ 10 │                         />
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                           src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                           strategy='beforeInteractive'
+    ·                           ────────────────────────────
+ 10 │                         />
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+  ⚠ eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`
+    ╭─[no_before_interactive_script_outside_document.tsx:8:1]
+  8 │                           src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+  9 │                           strategy='beforeInteractive'
+    ·                           ────────────────────────────
+ 10 │                         />
+    ╰────
+  help: See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document
+
+

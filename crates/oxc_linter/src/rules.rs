@@ -299,6 +299,7 @@ mod nextjs {
     pub mod next_script_for_ga;
     pub mod no_assign_module_variable;
     pub mod no_async_client_component;
+    pub mod no_before_interactive_script_outside_document;
     pub mod no_css_tags;
     pub mod no_document_import_in_page;
     pub mod no_head_element;
@@ -584,4 +585,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
+    nextjs::no_before_interactive_script_outside_document,
 }
