@@ -11,21 +11,21 @@
       "assignees": ["@Boshen"]
     },
     {
-      "groupName": "cargo",
+      "groupName": "rust crates",
       "matchManagers": ["cargo"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"],
       "ignoreDeps": ["textwrap", "owo-colors", "syn"]
     },
     {
-      "groupName": "website",
+      "groupName": "website npm packages",
       "matchFileNames": ["website/package.json"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
       "assignees": ["@Boshen"]
     },
     {
-      "groupName": "vscode",
+      "groupName": "vscode npm packages",
       "matchFileNames": ["editors/vscode/package.json"],
       "matchManagers": ["npm"],
       "schedule": ["on monday"],
