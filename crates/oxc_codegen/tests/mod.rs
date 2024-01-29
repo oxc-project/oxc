@@ -5,10 +5,11 @@ use oxc_span::SourceType;
 
 fn test(source_text: &str, expected: &str) {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, SourceType::default()).parse().program;
+    let source_type = SourceType::default().with_module(true);
+    let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     let result = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
-    assert_eq!(expected, result, "for source {source_text}");
+    assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
 #[test]
@@ -55,25 +56,24 @@ fn string() {
 }
 
 #[test]
-#[ignore]
-fn template() {
+fn test_template_1() {
     test("let x = `\\0`", "let x = `\\0`;\n");
-    test("let x = `\\x01`", "let x = `\x01`;\n");
+    // test("let x = `\\x01`", "let x = `\\x01`;\n");
     test("let x = `\\0${0}`", "let x = `\\0${0}`;\n");
-    test("let x = `\\x01${0}`", "let x = `\x01${0}`;\n");
+    // test("let x = `\\x01${0}`", "let x = `\x01${0}`;\n");
     test("let x = `${0}\\0`", "let x = `${0}\\0`;\n");
-    test("let x = `${0}\\x01`", "let x = `${0}\x01`;\n");
+    // test("let x = `${0}\\x01`", "let x = `${0}\x01`;\n");
     test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;\n");
-    test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;\n");
+    // test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;\n");
 
-    test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
-    test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
-    test("let x = String.raw`\\1${0}`", "let x = String.raw`\\1${0}`;\n");
-    test("let x = String.raw`\\x01${0}`", "let x = String.raw`\\x01${0}`;\n");
-    test("let x = String.raw`${0}\\1`", "let x = String.raw`${0}\\1`;\n");
-    test("let x = String.raw`${0}\\x01`", "let x = String.raw`${0}\\x01`;\n");
-    test("let x = String.raw`${0}\\1${1}`", "let x = String.raw`${0}\\1${1}`;\n");
-    test("let x = String.raw`${0}\\x01${1}`", "let x = String.raw`${0}\\x01${1}`;\n");
+    // test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
+    // test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
+    // test("let x = String.raw`\\1${0}`", "let x = String.raw`\\1${0}`;\n");
+    // test("let x = String.raw`\\x01${0}`", "let x = String.raw`\\x01${0}`;\n");
+    // test("let x = String.raw`${0}\\1`", "let x = String.raw`${0}\\1`;\n");
+    // test("let x = String.raw`${0}\\x01`", "let x = String.raw`${0}\\x01`;\n");
+    // test("let x = String.raw`${0}\\1${1}`", "let x = String.raw`${0}\\1${1}`;\n");
+    // test("let x = String.raw`${0}\\x01${1}`", "let x = String.raw`${0}\\x01${1}`;\n");
 
     test("let x = `${y}`", "let x = `${y}`;\n");
     test("let x = `$(y)`", "let x = `$(y)`;\n");
@@ -84,7 +84,7 @@ fn template() {
 
     test("await tag`x`", "await tag`x`;\n");
     test("await (tag`x`)", "await tag`x`;\n");
-    test("(await tag)`x`", "(await tag)`x`;\n");
+    // test("(await tag)`x`", "(await tag)`x`;\n");
 
     test("await tag`${x}`", "await tag`${x}`;\n");
     test("await (tag`${x}`)", "await tag`${x}`;\n");
@@ -92,13 +92,13 @@ fn template() {
 
     test("new tag`x`", "new tag`x`();\n");
     test("new (tag`x`)", "new tag`x`();\n");
-    test("new tag()`x`", "new tag()`x`;\n");
-    test("(new tag)`x`", "new tag()`x`;\n");
+    // test("new tag()`x`", "new tag()`x`;\n");
+    // test("(new tag)`x`", "new tag()`x`;\n");
 
     test("new tag`${x}`", "new tag`${x}`();\n");
     test("new (tag`${x}`)", "new tag`${x}`();\n");
-    test("new tag()`${x}`", "new tag()`${x}`;\n");
-    test("(new tag)`${x}`", "new tag()`${x}`;\n");
+    // test("new tag()`${x}`", "new tag()`${x}`;\n");
+    // test("(new tag)`${x}`", "new tag()`${x}`;\n");
 }
 
 #[test]
