@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_document_page, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page")]
@@ -46,9 +46,8 @@ impl Rule for NoDocumentImportInPage {
         }
 
         let Some(path) = ctx.file_path().to_str() else { return };
-        let Some(page) = path.split("pages").last() else { return };
 
-        if page.starts_with("/_document") || page.starts_with("\\_document") {
+        if is_document_page(path) {
             return;
         }
 
@@ -64,7 +63,7 @@ fn test() {
     let pass = vec![
         (
             r#"import Document from "next/document"
-			
+
 			export default class MyDocument extends Document {
 			  render() {
 				return (
@@ -80,7 +79,7 @@ fn test() {
         ),
         (
             r#"import Document from "next/document"
-			
+
 				export default class MyDocument extends Document {
 				render() {
 					return (
