@@ -11,6 +11,12 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
+#[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
+const TS_APPEND_CONTENT: &'static str = r#"
+export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'>;
+export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'>;
+"#;
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -203,7 +209,8 @@ pub struct TSTypeOperatorType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged, rename_all = "lowercase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase", rename = "TSTypeOperatorEnum"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypeOperator {
     Keyof,
     Unique,
@@ -506,7 +513,6 @@ pub struct TSTypeAliasDeclaration<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TSAbstractMethodDefinition<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub method_definition: MethodDefinition<'a>,
@@ -514,7 +520,6 @@ pub struct TSAbstractMethodDefinition<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TSAbstractPropertyDefinition<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub property_definition: PropertyDefinition<'a>,
@@ -810,7 +815,7 @@ pub struct TSMappedType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged, rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSMappedTypeModifierOperator {
     True,

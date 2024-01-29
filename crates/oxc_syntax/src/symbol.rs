@@ -11,6 +11,7 @@ define_index_type! {
 #[cfg_attr(all(feature = "serde", feature = "wasm"), wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section))]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type SymbolId = number;
+export type SymbolFlags = unknown;
 "#;
 
 bitflags! {
