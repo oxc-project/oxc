@@ -308,6 +308,7 @@ mod nextjs {
     pub mod no_sync_scripts;
     pub mod no_title_in_document_head;
     pub mod no_typos;
+    pub mod no_unwanted_polyfillio;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -582,4 +583,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_title_in_document_head,
     nextjs::no_typos,
     nextjs::no_document_import_in_page,
+    nextjs::no_unwanted_polyfillio,
 }
