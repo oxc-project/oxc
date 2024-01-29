@@ -144,7 +144,7 @@ pub struct ControlFlowGraph {
     pub next_label: Option<Atom>,
     pub label_to_ast_node_ix: Vec<(Atom, AstNodeId)>,
     pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
-    pub function_to_node_ix: HashMap<AstNodeId, NodeIndex>,
+    pub ast_node_to_node_ix: HashMap<AstNodeId, NodeIndex>,
     pub after_throw_block: Option<NodeIndex>,
 }
 
@@ -176,7 +176,7 @@ impl ControlFlowGraph {
             next_label: None,
             label_to_ast_node_ix: Vec::new(),
             ast_node_to_break_continue: Vec::new(),
-            function_to_node_ix: HashMap::new(),
+            ast_node_to_node_ix: HashMap::new(),
             after_throw_block: None,
         }
     }

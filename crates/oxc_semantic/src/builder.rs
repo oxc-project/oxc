@@ -396,6 +396,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // The order is important here.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
+        match kind {
+            AstKind::Function(_) | AstKind::ArrowExpression(_) => {
+                // do nothing
+            }
+            _ => {
+                self.cfg.ast_node_to_node_ix.insert(self.current_node_id, self.cfg.current_node_ix);
+            }
+        }
+
         self.enter_kind(kind);
     }
 
@@ -1424,7 +1433,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let before_function_graph_ix = self.cfg.current_node_ix;
         let function_graph_ix = self.cfg.new_basic_block_for_function();
-        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
+        self.cfg.ast_node_to_node_ix.insert(self.current_node_id, function_graph_ix);
         self.cfg.add_edge(before_function_graph_ix, function_graph_ix, EdgeType::NewFunction);
         /* cfg */
 
@@ -1520,7 +1529,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let current_basic_block_ix = self.cfg.current_basic_block;
         let current_node_ix = self.cfg.current_node_ix;
         let function_graph_ix = self.cfg.new_basic_block_for_function();
-        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
+        self.cfg.ast_node_to_node_ix.insert(self.current_node_id, function_graph_ix);
         self.cfg.add_edge(current_node_ix, function_graph_ix, EdgeType::NewFunction);
         if expr.expression {
             self.cfg.store_assignments_into_this_array.push(vec![]);

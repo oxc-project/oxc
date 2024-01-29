@@ -154,7 +154,7 @@ impl GetterReturn {
 
         let output = neighbors_filtered_by_edge_weight(
             &cfg.graph,
-            cfg.function_to_node_ix[&node.id()],
+            cfg.ast_node_to_node_ix[&node.id()],
             &|edge| match edge {
                 EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
