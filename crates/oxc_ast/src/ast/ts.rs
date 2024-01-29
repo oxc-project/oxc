@@ -16,8 +16,8 @@ use crate::ast::*;
     wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
 )]
 const TS_APPEND_CONTENT: &'static str = r#"
-export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'>;
-export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'>;
+export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'> {}
+export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'> {}
 "#;
 
 #[derive(Debug, Hash)]
