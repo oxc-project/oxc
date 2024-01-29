@@ -90,9 +90,19 @@ pub mod __lexer {
     pub use super::lexer::{Kind, Lexer, Token};
 }
 
-/// Maximum length of source in bytes which can be parsed (~4 GiB).
-// Span's start and end are u32s, so size limit is u32::MAX bytes.
-pub const MAX_LEN: usize = u32::MAX as usize;
+/// Maximum length of source which can be parsed (in bytes).
+/// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
+// Length is constrained by 2 factors:
+// 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
+// 2. Rust's allocator APIs limit allocations to `isize::MAX`.
+// https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
+    // 64-bit systems
+    u32::MAX as usize
+} else {
+    // 32-bit or 16-bit systems
+    isize::MAX as usize
+};
 
 /// Return value of parser consisting of AST, errors and comments
 ///
@@ -333,38 +343,50 @@ mod test {
         }
     }
 
-    // Source with length u32::MAX + 1 fails to parse
+    // Source with length MAX_LEN + 1 fails to parse.
+    // Skip this test on 32-bit systems as impossible to allocate a string longer than `isize::MAX`.
+    #[cfg(target_pointer_width = "64")]
     #[test]
     fn overlong_source() {
+        // Build string in 16 KiB chunks for speed
+        let mut source = String::with_capacity(MAX_LEN + 1);
+        let line = "var x = 123456;\n";
+        let chunk = line.repeat(1024);
+        while source.len() < MAX_LEN + 1 - chunk.len() {
+            source.push_str(&chunk);
+        }
+        while source.len() < MAX_LEN + 1 - line.len() {
+            source.push_str(line);
+        }
+        while source.len() < MAX_LEN + 1 {
+            source.push('\n');
+        }
+        assert_eq!(source.len(), MAX_LEN + 1);
+
         let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let source = "var x = 123456;\n".repeat(256 * 1024 * 1024);
-        assert_eq!(source.len() - 1, u32::MAX as usize);
-        let ret = Parser::new(&allocator, &source, source_type).parse();
+        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);
         assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
     }
 
-    // Source with length u32::MAX parses OK.
+    // Source with length MAX_LEN parses OK.
     // This test takes over 1 minute on an M1 Macbook Pro unless compiled in release mode.
     // `not(debug_assertions)` is a proxy for detecting release mode.
     #[cfg(not(debug_assertions))]
     #[test]
     fn legal_length_source() {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-
-        // Build a string u32::MAX bytes long which doesn't take too long to parse
+        // Build a string MAX_LEN bytes long which doesn't take too long to parse
         let head = "const x = 1;\n/*";
         let foot = "*/\nconst y = 2;\n";
-        let mut source = "x".repeat(u32::MAX as usize);
+        let mut source = "x".repeat(MAX_LEN);
         source.replace_range(..head.len(), head);
-        source.replace_range(source.len() - foot.len().., foot);
-        assert_eq!(source.len(), u32::MAX as usize);
+        source.replace_range(MAX_LEN - foot.len().., foot);
+        assert_eq!(source.len(), MAX_LEN);
 
-        let ret = Parser::new(&allocator, &source, source_type).parse();
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
         assert!(!ret.panicked);
         assert!(ret.errors.is_empty());
         assert_eq!(ret.program.body.len(), 2);
