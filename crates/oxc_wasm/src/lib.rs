@@ -39,17 +39,23 @@ pub struct Oxc {
     #[tsify(type = "Statement[]")]
     pub ir: JsValue,
     #[wasm_bindgen(readonly)]
+    #[tsify(type = "SymbolTable")]
     pub symbols: JsValue,
 
     #[wasm_bindgen(readonly, js_name = "scopeText")]
+    #[serde(rename = "scopeText")]
     pub scope_text: String,
     #[wasm_bindgen(readonly, js_name = "codegenText")]
+    #[serde(rename = "codegenText")]
     pub codegen_text: String,
     #[wasm_bindgen(readonly, js_name = "formattedText")]
+    #[serde(rename = "formattedText")]
     pub formatted_text: String,
     #[wasm_bindgen(readonly, js_name = "prettierFormattedText")]
+    #[serde(rename = "prettierFormattedText")]
     pub prettier_formatted_text: String,
     #[wasm_bindgen(readonly, js_name = "prettierIrText")]
+    #[serde(rename = "prettierIrText")]
     pub prettier_ir_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
