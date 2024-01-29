@@ -14,7 +14,9 @@ use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
 
-/// Bumpalo Box
+/// A Box without Drop.
+/// This is used for over coming self-referential structs.
+/// It is a memory leak if the boxed value has a `Drop` implementation.
 pub struct Box<'alloc, T: ?Sized>(pub &'alloc mut T);
 
 impl<'alloc, T> Box<'alloc, T> {
