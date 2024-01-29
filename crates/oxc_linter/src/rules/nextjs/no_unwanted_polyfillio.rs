@@ -116,19 +116,19 @@ impl Rule for NoUnwantedPolyfillio {
                 return;
             };
 
-            let next_script_import_local_name =
-                ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
-                    if entry.module_request.name().as_str() == "next/script" {
-                        Some(entry.local_name.name())
-                    } else {
-                        None
-                    }
-                });
-
-            if tag_name.as_str() != "script"
-                && !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
-            {
-                return;
+            if tag_name.as_str() != "script" {
+                let next_script_import_local_name =
+                    ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
+                        if entry.module_request.name().as_str() == "next/script" {
+                            Some(entry.local_name.name())
+                        } else {
+                            None
+                        }
+                    });
+                if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
+                {
+                    return;
+                }
             }
 
             if jsx_el.attributes.len() == 0 {
