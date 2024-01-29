@@ -6688,6 +6688,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[compiler/invalidContinueInDownlevelAsync.ts:2:1]
+ 2 │     if (true) {
+ 3 │         continue;
+   ·         ─────────
+ 4 │     }
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
   × Expected `;` but found `[`
    ╭─[compiler/invalidLetInForOfAndForIn_ES5.ts:5:1]
  5 │ var let = 10;
