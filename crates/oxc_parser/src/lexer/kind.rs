@@ -418,6 +418,7 @@ impl Kind {
             "never" => Never,
             "super" => Super,
             "throw" => Throw,
+            "using" => Using,
             "while" => While,
             "yield" => Yield,
 
@@ -439,7 +440,6 @@ impl Kind {
             "target" => Target,
             "typeof" => Typeof,
             "unique" => Unique,
-            "using" => Using,
 
             "asserts" => Asserts,
             "boolean" => Boolean,
