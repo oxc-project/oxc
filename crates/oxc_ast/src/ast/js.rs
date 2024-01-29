@@ -1091,6 +1091,19 @@ pub enum Statement<'a> {
     Declaration(Declaration<'a>),
 }
 
+impl<'a> Statement<'a> {
+    pub fn is_iteration_statement(&self) -> bool {
+        matches!(
+            self,
+            Statement::DoWhileStatement(_)
+                | Statement::ForInStatement(_)
+                | Statement::ForOfStatement(_)
+                | Statement::ForStatement(_)
+                | Statement::WhileStatement(_)
+        )
+    }
+}
+
 /// Directive Prologue
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]

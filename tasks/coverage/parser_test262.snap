@@ -28292,11 +28292,12 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  23 │     }
     ╰────
 
-  × Jump target cannot cross function boundary.
+  × Use of undefined label
     ╭─[language/statements/class/static-init-invalid-undefined-continue-target.js:21:1]
  21 │     x: while (false) {
  22 │       continue y;
-    ·                ─
+    ·                ┬
+    ·                ╰── This label is used, but not defined
  23 │     }
     ╰────
 
