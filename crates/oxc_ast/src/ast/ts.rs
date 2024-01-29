@@ -202,7 +202,7 @@ pub struct TSIntersectionType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "TSTypeOperator"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TSTypeOperatorType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -215,7 +215,7 @@ pub struct TSTypeOperatorType<'a> {
 #[cfg_attr(
     feature = "serde",
     derive(Serialize),
-    serde(rename_all = "lowercase", rename = "TSTypeOperatorEnum")
+    serde(rename_all = "lowercase")
 )]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypeOperator {

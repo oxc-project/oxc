@@ -2764,7 +2764,8 @@ dependencies = [
 [[package]]
 name = "tsify"
 version = "0.4.5"
-source = "git+https://github.com/siefkenj/tsify.git?rev=36f42be#36f42bef747bb918c4ec913df479ad548ec26276"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6b26cf145f2f3b9ff84e182c448eaf05468e247f148cf3d2a7d67d78ff023a0"
 dependencies = [
  "gloo-utils",
  "serde",
@@ -2776,7 +2777,8 @@ dependencies = [
 [[package]]
 name = "tsify-macros"
 version = "0.4.5"
-source = "git+https://github.com/siefkenj/tsify.git?rev=36f42be#36f42bef747bb918c4ec913df479ad548ec26276"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a94b0f0954b3e59bfc2c246b4c8574390d94a4ad4ad246aaf2fb07d7dfd3b47"
 dependencies = [
  "proc-macro2",
  "quote",
