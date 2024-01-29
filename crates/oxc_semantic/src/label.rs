@@ -6,7 +6,7 @@ use crate::AstNodeId;
 
 #[derive(Debug)]
 pub struct Label<'a> {
-    id: AstNodeId,
+    pub id: AstNodeId,
     pub name: &'a str,
     pub span: Span,
     used: bool,
