@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Wasm target for the oxc parser.",
   "keywords": [
     "JavaScript",
@@ -28,7 +28,8 @@
   "module": "oxc_parser_wasm.js",
   "types": "oxc_parser_wasm.d.ts",
   "scripts": {
-    "build": "wasm-pack build --release --no-pack --target web --out-dir ../../npm/parser-wasm . && cp ./package.json ../../npm/parser-wasm/package.json"
+    "build": "wasm-pack build --release --no-pack --target web --out-dir ../../npm/parser-wasm . && pnpm run copy-files",
+    "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md"
   },
   "devDependencies": {
     "wasm-pack": "^0.12.1"
