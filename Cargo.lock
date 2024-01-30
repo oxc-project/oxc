@@ -1615,7 +1615,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_napi_parser"
+name = "oxc_parser"
+version = "0.5.0"
+dependencies = [
+ "assert-unchecked",
+ "bitflags 2.4.2",
+ "miette",
+ "num-bigint",
+ "ouroboros",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_index",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+ "serde_json",
+]
+
+[[package]]
+name = "oxc_parser_napi"
 version = "0.0.0"
 dependencies = [
  "flexbuffers",
@@ -1633,22 +1652,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_parser"
-version = "0.5.0"
+name = "oxc_parser_wasm"
+version = "0.0.1"
 dependencies = [
- "assert-unchecked",
- "bitflags 2.4.2",
- "miette",
- "num-bigint",
- "ouroboros",
- "oxc_allocator",
- "oxc_ast",
- "oxc_diagnostics",
- "oxc_index",
- "oxc_span",
- "oxc_syntax",
- "rustc-hash",
- "serde_json",
+ "console_error_panic_hook",
+ "oxc",
+ "serde",
+ "serde-wasm-bindgen",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
