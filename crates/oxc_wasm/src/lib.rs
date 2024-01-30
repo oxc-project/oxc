@@ -15,6 +15,7 @@ use oxc::{
 use oxc_linter::{LintContext, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
@@ -27,23 +28,38 @@ pub fn main() {
     console_error_panic_hook::set_once();
 }
 
-#[wasm_bindgen]
-#[derive(Default)]
+#[wasm_bindgen(getter_with_clone)]
+#[derive(Default, Tsify)]
 pub struct Oxc {
     source_text: String,
+    #[wasm_bindgen(readonly, skip_typescript)]
+    #[tsify(type = "Program")]
+    pub ast: JsValue,
+    #[wasm_bindgen(readonly, skip_typescript)]
+    #[tsify(type = "Statement[]")]
+    pub ir: JsValue,
+    #[wasm_bindgen(readonly, skip_typescript)]
+    #[tsify(type = "SymbolTable")]
+    pub symbols: JsValue,
 
-    ast: JsValue,
-    ir: JsValue,
-    symbols: JsValue,
-
-    scope_text: String,
-    codegen_text: String,
-    formatted_text: String,
-    prettier_formatted_text: String,
-    prettier_ir_text: String,
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
+    #[serde(rename = "scopeText")]
+    pub scope_text: String,
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
+    #[serde(rename = "codegenText")]
+    pub codegen_text: String,
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "formattedText")]
+    #[serde(rename = "formattedText")]
+    pub formatted_text: String,
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierFormattedText")]
+    #[serde(rename = "prettierFormattedText")]
+    pub prettier_formatted_text: String,
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
+    #[serde(rename = "prettierIrText")]
+    pub prettier_ir_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
-
+    #[serde(skip)]
     serializer: serde_wasm_bindgen::Serializer,
 }
 
@@ -71,47 +87,6 @@ impl Oxc {
     pub fn set_source_text(&mut self, source_text: String) {
         self.diagnostics = RefCell::default();
         self.source_text = source_text;
-    }
-
-    /// Returns AST in JSON
-    #[wasm_bindgen(getter)]
-    pub fn ast(&self) -> JsValue {
-        self.ast.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn ir(&self) -> JsValue {
-        self.ir.clone()
-    }
-
-    #[wasm_bindgen(getter = prettierIrText)]
-    pub fn prettier_ir_text(&self) -> String {
-        self.prettier_ir_text.clone()
-    }
-
-    #[wasm_bindgen(getter = prettierFormattedText)]
-    pub fn prettier_formatted_text(&self) -> String {
-        self.prettier_formatted_text.clone()
-    }
-
-    #[wasm_bindgen(getter = formattedText)]
-    pub fn formatted_text(&self) -> String {
-        self.formatted_text.clone()
-    }
-
-    #[wasm_bindgen(getter = codegenText)]
-    pub fn codegen_text(&self) -> String {
-        self.codegen_text.clone()
-    }
-
-    #[wasm_bindgen(getter = scopeText)]
-    pub fn scope_text(&self) -> String {
-        self.scope_text.clone()
-    }
-
-    #[wasm_bindgen(getter = symbols)]
-    pub fn symbols(&self) -> JsValue {
-        self.symbols.clone()
     }
 
     /// Returns Array of String

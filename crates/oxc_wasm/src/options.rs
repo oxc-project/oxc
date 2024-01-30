@@ -22,7 +22,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn syntax(self) -> bool {
+    pub fn syntax(&self) -> bool {
         self.format
     }
 
@@ -32,7 +32,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn lint(self) -> bool {
+    pub fn lint(&self) -> bool {
         self.lint
     }
 
@@ -42,7 +42,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn format(self) -> bool {
+    pub fn format(&self) -> bool {
         self.format
     }
 
@@ -52,7 +52,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn prettier_format(self) -> bool {
+    pub fn prettier_format(&self) -> bool {
         self.prettier_format
     }
 
@@ -62,7 +62,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn prettier_ir(self) -> bool {
+    pub fn prettier_ir(&self) -> bool {
         self.prettier_ir
     }
 
@@ -72,7 +72,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn transform(self) -> bool {
+    pub fn transform(&self) -> bool {
         self.transform
     }
 
@@ -82,7 +82,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn type_check(self) -> bool {
+    pub fn type_check(&self) -> bool {
         self.type_check
     }
 
@@ -92,7 +92,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn scope(self) -> bool {
+    pub fn scope(&self) -> bool {
         self.scope
     }
 
@@ -102,7 +102,7 @@ impl OxcRunOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn symbol(self) -> bool {
+    pub fn symbol(&self) -> bool {
         self.symbol
     }
 
@@ -162,6 +162,7 @@ pub struct OxcMinifierOptions {
 }
 
 #[wasm_bindgen]
+#[allow(clippy::trivially_copy_pass_by_ref)]
 impl OxcMinifierOptions {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
@@ -169,7 +170,7 @@ impl OxcMinifierOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn whitespace(self) -> bool {
+    pub fn whitespace(&self) -> bool {
         self.whitespace
     }
 
@@ -179,7 +180,7 @@ impl OxcMinifierOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn mangle(self) -> bool {
+    pub fn mangle(&self) -> bool {
         self.mangle
     }
 
@@ -189,7 +190,7 @@ impl OxcMinifierOptions {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn compress(self) -> bool {
+    pub fn compress(&self) -> bool {
         self.compress
     }
 

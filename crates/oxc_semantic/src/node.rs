@@ -8,6 +8,19 @@ define_index_type! {
     pub struct AstNodeId = usize;
 }
 
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type AstNodeId = number;
+export type NodeFlags = {
+    JSDoc: 1,
+    Class: 2,
+    HasYield: 4
+};
+"#;
+
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct NodeFlags: u8 {

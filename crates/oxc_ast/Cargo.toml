@@ -31,6 +31,10 @@ serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 ryu-js     = { workspace = true, optional = true }
 
+tsify        = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+
 [features]
 default = []
 serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "oxc_span/serde", "oxc_syntax/serde"]
+wasm    = ["dep:tsify", "dep:wasm-bindgen"]

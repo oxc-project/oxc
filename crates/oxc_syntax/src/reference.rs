@@ -7,6 +7,21 @@ define_index_type! {
     pub struct ReferenceId = u32;
 }
 
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type ReferenceId = number;
+export type ReferenceFlag = {
+    None: 0,
+    Read: 0b1,
+    Write: 0b10,
+    Type: 0b100,
+    ReadWrite: 0b11
+}
+"#;
+
 bitflags! {
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
     #[cfg_attr(feature = "serde", derive(Serialize))]
