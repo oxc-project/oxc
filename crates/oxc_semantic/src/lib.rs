@@ -38,7 +38,7 @@ pub use crate::{
         ObjectPropertyAccessAssignmentValue, Register, UnaryExpressioneAssignmentValue,
         UpdateAssignmentValue,
     },
-    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
+    node::{AstNode, AstNodeId, AstNodes},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
     symbol::SymbolTable,

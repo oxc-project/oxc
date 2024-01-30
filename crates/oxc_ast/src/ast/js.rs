@@ -307,15 +307,13 @@ impl IdentifierName {
 
 /// Identifier Reference
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<Option<ReferenceId>>,
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_flag: ReferenceFlag,
 }
 
@@ -334,13 +332,12 @@ impl IdentifierReference {
 
 /// Binding Identifier
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
