@@ -55,8 +55,6 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
-    pub function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
@@ -106,7 +104,6 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             in_type_definition: false,
             current_scope_id,
-            function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
             scope,
@@ -230,8 +227,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
-        if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
+        if self.current_scope_flags().is_function() {
+            *self.nodes.get_node_mut(self.scope.get_node_id(self.current_scope_id)).flags_mut() |=
+                flag;
         }
     }
 
@@ -1554,14 +1552,12 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
-                self.function_stack.push(self.current_node_id);
                 func.bind(self);
                 self.label_builder.enter_function_or_static_block();
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowExpression(_) => {
-                self.function_stack.push(self.current_node_id);
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
@@ -1658,15 +1654,8 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_symbol_flags -= Self::symbol_flag_from_module_declaration(decl);
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
-            AstKind::StaticBlock(_) => {
+            AstKind::StaticBlock(_) | AstKind::Function(_) => {
                 self.label_builder.leave_function_or_static_block();
-            }
-            AstKind::Function(_) => {
-                self.label_builder.leave_function_or_static_block();
-                self.function_stack.pop();
-            }
-            AstKind::ArrowExpression(_) => {
-                self.function_stack.pop();
             }
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
