@@ -27,7 +27,7 @@ jobs:
         id: version
         with:
           static-checking: localIsNew
-          file-url: https://unpkg.com/@oxc-parser@wasm/package.json
+          file-url: https://unpkg.com/@oxc-parser/wasm/package.json
           file-name: wasm/parser/package.json
 
       - name: Set version name
