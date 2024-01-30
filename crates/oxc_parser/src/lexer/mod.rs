@@ -255,7 +255,7 @@ impl<'a> Lexer<'a> {
     #[inline]
     #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
-        (self.source.len() - self.current.chars.as_str().len()) as u32
+        (self.current.chars.as_str().as_ptr() as usize - self.source.as_ptr() as usize) as u32
     }
 
     /// Get the current unterminated token range
