@@ -400,13 +400,23 @@ impl GraphicalReportHandler {
             self.theme.characters.hbar,
         )?;
 
+        let (source_line, source_col) = labels
+            .iter()
+            .find_map(|hl| {
+                lines
+                    .iter()
+                    .find(|line| line.span_applies(hl) && line.span_line_only(hl))
+                    .map(|line| (line.line_number, self.visual_offset(line, hl.offset()) + 1))
+            })
+            .unwrap_or_else(|| (contents.line() + 1, contents.column() + 1));
+
         if let Some(source_name) = contents.name() {
             let source_name = source_name.style(self.theme.styles.link);
-            writeln!(f, "[{}:{}:{}]", source_name, contents.line() + 1, contents.column() + 1)?;
+            writeln!(f, "[{}:{}:{}]", source_name, source_line, source_col)?;
         } else if lines.len() <= 1 {
             writeln!(f, "{}", self.theme.characters.hbar.to_string().repeat(3))?;
         } else {
-            writeln!(f, "[{}:{}]", contents.line() + 1, contents.column() + 1)?;
+            writeln!(f, "[{}:{}]", source_line, source_col)?;
         }
 
         // Now it's time for the fun part--actually rendering everything!
