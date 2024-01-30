@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   server: {
     fs: {
-      allow: [__dirname, "../npm/wasm-web"],
+      allow: [__dirname, "../npm/oxc-wasm"],
     },
   },
   build: {
