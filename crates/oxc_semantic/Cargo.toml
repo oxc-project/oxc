@@ -26,7 +26,6 @@ oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
 
-bitflags   = { workspace = true }
 indexmap   = { workspace = true }
 itertools  = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
@@ -50,5 +49,5 @@ rustc-hash        = { workspace = true }
 
 [features]
 default = []
-serde   = ["dep:serde", "oxc_span/serde", "oxc_syntax/serde", "oxc_index/serde"]
+serde   = ["dep:serde", "oxc_span/serde", "oxc_syntax/serde"]
 wasm    = ["dep:tsify", "dep:wasm-bindgen"]

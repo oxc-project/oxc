@@ -7,7 +7,11 @@ use itertools::Itertools;
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use oxc_syntax::{
+    module_record::ModuleRecord,
+    node::{AstNodeId, NodeFlags},
+    operator::AssignmentOperator,
+};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -21,7 +25,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
-    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
+    node::{AstNode, AstNodes},
     pg::replicate_tree_to_leaves,
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},

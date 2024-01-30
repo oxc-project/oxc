@@ -139,7 +139,6 @@ impl Oxc {
             .parse();
         self.save_diagnostics(ret.errors);
 
-        self.ast = ret.program.serialize(&self.serializer)?;
         self.ir = format!("{:#?}", ret.program.body).into();
 
         let program = allocator.alloc(ret.program);
@@ -164,7 +163,10 @@ impl Oxc {
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
+        } else {
+            semantic_builder.build(program);
         }
+        self.ast = program.serialize(&self.serializer)?;
 
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
