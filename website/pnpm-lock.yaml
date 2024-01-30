@@ -55,9 +55,9 @@ devDependencies:
   '@lezer/common':
     specifier: ^1.2.1
     version: 1.2.1
-  '@oxc/wasm-web':
-    specifier: link:../npm/wasm-web
-    version: link:../npm/wasm-web
+  '@oxc/oxc_wasm':
+    specifier: link:../npm/oxc-wasm
+    version: link:../npm/oxc-wasm
   concurrently:
     specifier: ^8.2.2
     version: 8.2.2

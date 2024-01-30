@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*", "napi/*"]
+members  = ["crates/*", "tasks/*", "napi/*", "wasm/*"]
 exclude  = ["tasks/lint_rules"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
 categories   = ["development-tools", "web-programming", "compilers"]
-description  = "Oxc is a JavaScript / TypeScript tooling suite."
+description  = "A collection of JavaScript tools written in Rust."
 edition      = "2021"
 homepage     = "https://oxc-project.github.io"
 keywords     = ["JavaScript", "TypeScript", "parser", "linter", "minifier"]
