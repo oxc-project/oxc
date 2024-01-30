@@ -57,7 +57,7 @@ jobs:
         uses: ./.github/actions/rustup
         with:
           shared-key: 'wasm'
-          # cache is saved from the website workflow
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check
         run: |

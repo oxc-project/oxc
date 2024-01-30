@@ -33,7 +33,7 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcCodegenOptions,
-} from "@oxc/wasm-web";
+} from "@oxc/oxc_wasm";
 import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 
 const placeholderText = `
