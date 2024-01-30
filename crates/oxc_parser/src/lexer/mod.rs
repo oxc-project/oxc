@@ -83,11 +83,8 @@ impl<'a> Lexer<'a> {
             source = "\0";
         }
 
-        let token = Token {
-            // the first token is at the start of file, so is allows on a new line
-            is_on_new_line: true,
-            ..Token::default()
-        };
+        // The first token is at the start of file, so is allows on a new line
+        let token = Token::new_on_new_line();
         let current = LexerCheckpoint { chars: source.chars(), token, errors_pos: 0 };
         Self {
             allocator,
