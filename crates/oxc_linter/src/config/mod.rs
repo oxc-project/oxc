@@ -373,7 +373,8 @@ mod test {
 
     #[test]
     fn test_js_config() {
-        let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.js");
+        // double join to use correct separator on windows
+        let fixture_path = env::current_dir().unwrap().join("fixtures").join("eslint_config.js");
         let config = ESLintConfig::new(&fixture_path).unwrap();
         assert!(!config.rules.is_empty());
         assert!(config.rules.iter().any(|rule| rule.rule_name == "no-console"));
