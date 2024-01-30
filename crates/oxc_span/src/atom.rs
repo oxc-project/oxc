@@ -13,6 +13,14 @@ use serde::Serialize;
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Atom(CompactString);
 
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type Atom = string;
+"#;
+
 const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
 
 impl Atom {

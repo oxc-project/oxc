@@ -755,6 +755,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "gloo-utils"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "037fcb07216cb3a30f7292bd0176b050b7b9a052ba830ef7d5d65f6dc64ba58e"
+dependencies = [
+ "js-sys",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "half"
 version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1373,6 +1386,8 @@ dependencies = [
  "ryu-js",
  "serde",
  "serde_json",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1703,6 +1718,8 @@ dependencies = [
  "pretty_assertions 1.4.0",
  "rustc-hash",
  "serde",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1712,6 +1729,8 @@ dependencies = [
  "compact_str",
  "miette",
  "serde",
+ "tsify",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1726,7 +1745,9 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
+ "tsify",
  "unicode-id-start",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1791,6 +1812,7 @@ dependencies = [
  "oxc_prettier",
  "serde",
  "serde-wasm-bindgen",
+ "tsify",
  "wasm-bindgen",
  "wasm-bindgen-test",
 ]
@@ -2324,6 +2346,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_derive_internals"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e578a843d40b4189a4d66bba51d7684f57da5bd7c304c64e14bd63efbef49509"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "serde_json"
 version = "1.0.113"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2755,6 +2788,31 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "tsify"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6b26cf145f2f3b9ff84e182c448eaf05468e247f148cf3d2a7d67d78ff023a0"
+dependencies = [
+ "gloo-utils",
+ "serde",
+ "serde_json",
+ "tsify-macros",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "tsify-macros"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a94b0f0954b3e59bfc2c246b4c8574390d94a4ad4ad246aaf2fb07d7dfd3b47"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "syn 2.0.48",
 ]
 
 [[package]]

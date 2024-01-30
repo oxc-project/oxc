@@ -21,14 +21,15 @@ doctest    = false
 default = ["console_error_panic_hook"]
 
 [dependencies]
-oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minifier", "codegen"] }
+oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minifier", "codegen", "wasm"] }
 
 oxc_linter   = { workspace = true }
 oxc_prettier = { workspace = true }
 serde        = { workspace = true }
 
-wasm-bindgen       = { version = "0.2" }
-serde-wasm-bindgen = "0.6.3"
+wasm-bindgen       = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+tsify              = { workspace = true }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
