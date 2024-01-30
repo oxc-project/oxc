@@ -212,11 +212,7 @@ pub struct TSTypeOperatorType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize),
-    serde(rename_all = "lowercase")
-)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypeOperator {
     Keyof,
