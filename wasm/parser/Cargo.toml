@@ -25,7 +25,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 oxc = { workspace = true, features = ["serde", "wasm"] }
-serde        = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
 
 wasm-bindgen       = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
