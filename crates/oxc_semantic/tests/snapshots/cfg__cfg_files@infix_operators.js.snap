@@ -6,3 +6,11 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/infix_operators.js
 bb0: {
 
 }
+
+bb1: {
+
+}
+
+bb2: {
+
+}

@@ -6,3 +6,27 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/assignment_operators.js
 bb0: {
 
 }
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+
+}
+
+bb4: {
+
+}
+
+bb5: {
+
+}
+
+bb6: {
+
+}
