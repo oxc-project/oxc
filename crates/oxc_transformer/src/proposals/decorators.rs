@@ -117,6 +117,19 @@ impl<'a> Decorators<'a> {
         Atom::from(format!("_{name}{}", if *uid == 1 { String::new() } else { uid.to_string() }))
     }
 
+    pub fn get_call_with_this(&self, name: Atom) -> Statement<'a> {
+        self.ast.expression_statement(
+            SPAN,
+            self.ast.call_expression(
+                SPAN,
+                self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+                self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN))),
+                false,
+                None,
+            ),
+        )
+    }
+
     pub fn transform_program(&mut self, program: &mut Program<'a>) {
         program.body.splice(0..0, self.top_statements.drain(..));
         program.body.append(&mut self.bottom_statements);
@@ -378,7 +391,9 @@ impl<'a> Decorators<'a> {
                     ast.array_expression(SPAN, decorator_elements, None)
                 };
 
+            let mut is_proto = false;
             let mut is_static = false;
+
             class.body.body.iter_mut().for_each(|element| {
                 if !element.has_decorator() {
                     return;
@@ -387,6 +402,8 @@ impl<'a> Decorators<'a> {
                     ClassElement::MethodDefinition(def) => {
                         if def.r#static {
                             is_static = def.r#static;
+                        } else {
+                            is_proto = true;
                         }
                         let name = def.key.name();
                         let mut flag = DecoratorFlags::get_flag_by_kind(def.kind).bits();
@@ -454,6 +471,57 @@ impl<'a> Decorators<'a> {
                 }
             });
 
+            if is_proto {
+                // The class has method decorator and is not static
+                let name = self.get_unique_name(&"initProto".into());
+                e_elements.push(self.get_assignment_target_maybe_default(name.clone()));
+                declarations.push(self.get_variable_declarator(name.clone()));
+
+                // constructor() { _initProto(this) }
+                if let Some(constructor_element) = class.body.body.iter_mut().find(
+                    |element| matches!(element, ClassElement::MethodDefinition(def) if def.kind.is_constructor()),
+                ) {
+                    if let ClassElement::MethodDefinition(def) = constructor_element {
+                        if let Some(body) = &mut def.value.body {
+                            body.statements.insert(0, self.get_call_with_this(name));
+                        }
+                    } else {
+                        unreachable!();
+                    };
+                } else {
+                    // if the class has no constructor, insert a empty constructor and call initProto
+                    class.body.body.insert(
+                        0,
+                        self.ast.class_constructor(
+                            SPAN,
+                            self.ast.function(
+                                FunctionType::FunctionExpression,
+                                SPAN,
+                                None,
+                                false,
+                                false,
+                                false,
+                                None,
+                                self.ast.formal_parameters(
+                                    SPAN,
+                                    FormalParameterKind::FormalParameter,
+                                    self.ast.new_vec(),
+                                    None,
+                                ),
+                                Some(self.ast.function_body(
+                                    SPAN,
+                                    self.ast.new_vec(),
+                                    self.ast.new_vec_single(self.get_call_with_this(name)),
+                                )),
+                                None,
+                                None,
+                                Modifiers::empty(),
+                            ),
+                        ),
+                    );
+                }
+            }
+
             if is_static {
                 let name = self.get_unique_name(&"initStatic".into());
                 e_elements.push(self.get_assignment_target_maybe_default(name.clone()));
@@ -478,7 +546,7 @@ impl<'a> Decorators<'a> {
         }
 
         {
-            // call  babelHelpers.applyDecs2305
+            // call babelHelpers.applyDecs2305
             let callee = self.ast.static_member_expression(
                 SPAN,
                 self.ast.identifier_reference_expression(IdentifierReference::new(

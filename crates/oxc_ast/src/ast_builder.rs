@@ -9,7 +9,7 @@ use num_bigint::BigInt;
 use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_span::{Atom, GetSpan, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -876,6 +876,23 @@ impl<'a> AstBuilder<'a> {
             type_annotation: None,
             accessibility: None,
             decorators,
+        }))
+    }
+
+    pub fn class_constructor(&self, span: Span, value: Box<'a, Function<'a>>) -> ClassElement<'a> {
+        ClassElement::MethodDefinition(self.alloc(MethodDefinition {
+            span,
+            key: self.property_key_expression(self.identifier_reference_expression(
+                IdentifierReference::new(SPAN, "constructor".into()),
+            )),
+            kind: MethodDefinitionKind::Constructor,
+            value,
+            computed: false,
+            r#static: false,
+            r#override: false,
+            optional: false,
+            accessibility: None,
+            decorators: self.new_vec(),
         }))
     }
 
