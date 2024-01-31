@@ -8,7 +8,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_template_literal(&mut self, substitute: Kind, tail: Kind) -> Kind {
         let mut builder = AutoCow::new(self);
         let mut is_valid_escape_sequence = true;
-        while let Some(c) = self.current.chars.next() {
+        while let Some(c) = self.next_char() {
             match c {
                 '$' if self.peek() == Some('{') => {
                     self.save_template_string(
@@ -16,7 +16,7 @@ impl<'a> Lexer<'a> {
                         builder.has_escape(),
                         builder.finish_without_push(self),
                     );
-                    self.current.chars.next();
+                    self.consume_char();
                     return substitute;
                 }
                 '`' => {

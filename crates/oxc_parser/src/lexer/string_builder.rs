@@ -15,14 +15,14 @@ impl<'a> AutoCow<'a> {
         AutoCow { start, value: None }
     }
 
-    // Push a char that matches lexer.chars().next()
+    // Push a char that matches lexer.current.chars().next()
     pub fn push_matching(&mut self, c: char) {
         if let Some(text) = &mut self.value {
             text.push(c);
         }
     }
 
-    // Push a different character than lexer.chars().next().
+    // Push a different character than lexer.current.chars().next().
     // force_allocation_without_current_ascii_char must be called before this.
     pub fn push_different(&mut self, c: char) {
         debug_assert!(self.value.is_some());

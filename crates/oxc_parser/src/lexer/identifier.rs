@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn private_identifier(&mut self) -> Kind {
         let mut builder = AutoCow::new(self);
         let start = self.offset();
-        match self.current.chars.next() {
+        match self.next_char() {
             Some(c) if is_identifier_start(c) => {
                 builder.push_matching(c);
             }
@@ -48,14 +48,14 @@ impl<'a> Lexer<'a> {
         while let Some(c) = self.peek() {
             if !is_identifier_part(c) {
                 if c == '\\' {
-                    self.current.chars.next();
+                    self.consume_char();
                     builder.force_allocation_without_current_ascii_char(self);
                     self.identifier_unicode_escape_sequence(&mut builder, false);
                     continue;
                 }
                 break;
             }
-            self.current.chars.next();
+            self.consume_char();
             builder.push_matching(c);
         }
         let has_escape = builder.has_escape();

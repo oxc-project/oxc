@@ -4,8 +4,8 @@ impl<'a> Lexer<'a> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek() == Some('.') && self.peek2() == Some('.') {
-            self.current.chars.next();
-            self.current.chars.next();
+            self.consume_char();
+            self.consume_char();
             return Kind::Dot3;
         }
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
