@@ -109,6 +109,10 @@ pub enum AstKind<'a> {
     Decorator(&'a Decorator<'a>),
 
     ModuleDeclaration(&'a ModuleDeclaration<'a>),
+    ImportDeclaration(&'a ImportDeclaration<'a>),
+    ImportSpecifier(&'a ImportSpecifier),
+    ImportDefaultSpecifier(&'a ImportDefaultSpecifier),
+    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier),
 
     // JSX
     // Please make sure to add these to `is_jsx` below.
@@ -422,6 +426,10 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::Decorator(x) => x.span,
 
             Self::ModuleDeclaration(x) => x.span(),
+            Self::ImportDeclaration(x) => x.span,
+            Self::ImportSpecifier(x) => x.span,
+            Self::ImportDefaultSpecifier(x) => x.span,
+            Self::ImportNamespaceSpecifier(x) => x.span,
 
             Self::JSXOpeningElement(x) => x.span,
             Self::JSXClosingElement(x) => x.span,
@@ -603,6 +611,10 @@ impl<'a> AstKind<'a> {
             Self::Decorator(_) => "Decorator".into(),
 
             Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
+            Self::ImportDeclaration(_) => "ImportDeclaration".into(),
+            Self::ImportSpecifier(_) => "ImportSpecifier".into(),
+            Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
+            Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
             Self::JSXElementName(_) => "JSXElementName".into(),

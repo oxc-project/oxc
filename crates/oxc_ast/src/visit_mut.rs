@@ -1333,13 +1333,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        let kind = AstKind::ImportDeclaration(self.alloc(decl));
+        self.enter_node(kind);
         if let Some(specifiers) = &mut decl.specifiers {
             for specifier in specifiers.iter_mut() {
                 self.visit_import_declaration_specifier(specifier);
             }
         }
-        // TODO: source
+        self.visit_string_literal(&mut decl.source);
         // TODO: assertions
+        self.leave_node(kind);
     }
 
     fn visit_import_declaration_specifier(&mut self, specifier: &mut ImportDeclarationSpecifier) {
@@ -1357,16 +1360,25 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier) {
+        let kind = AstKind::ImportSpecifier(self.alloc(specifier));
+        self.enter_node(kind);
         // TODO: imported
         self.visit_binding_identifier(&mut specifier.local);
+        self.leave_node(kind);
     }
 
     fn visit_import_default_specifier(&mut self, specifier: &mut ImportDefaultSpecifier) {
+        let kind = AstKind::ImportDefaultSpecifier(self.alloc(specifier));
+        self.enter_node(kind);
         self.visit_binding_identifier(&mut specifier.local);
+        self.leave_node(kind);
     }
 
     fn visit_import_name_specifier(&mut self, specifier: &mut ImportNamespaceSpecifier) {
+        let kind = AstKind::ImportNamespaceSpecifier(self.alloc(specifier));
+        self.enter_node(kind);
         self.visit_binding_identifier(&mut specifier.local);
+        self.leave_node(kind);
     }
 
     fn visit_export_all_declaration(&mut self, _decl: &mut ExportAllDeclaration<'a>) {}
