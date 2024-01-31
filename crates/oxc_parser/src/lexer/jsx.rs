@@ -17,7 +17,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_jsx_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         loop {
-            match self.current.chars.next() {
+            match self.next_char() {
                 Some(c @ ('"' | '\'')) => {
                     if c == delimiter {
                         self.save_string(builder.has_escape(), builder.finish_without_push(self));
@@ -58,11 +58,11 @@ impl<'a> Lexer<'a> {
     fn read_jsx_child(&mut self) -> Kind {
         match self.peek() {
             Some('<') => {
-                self.current.chars.next();
+                self.consume_char();
                 Kind::LAngle
             }
             Some('{') => {
-                self.current.chars.next();
+                self.consume_char();
                 Kind::LCurly
             }
             Some(_) => {
@@ -74,7 +74,7 @@ impl<'a> Lexer<'a> {
                     if self.peek().is_some_and(|c| c == '{' || c == '<') {
                         break;
                     }
-                    if self.current.chars.next().is_none() {
+                    if self.next_char().is_none() {
                         break;
                     }
                 }
@@ -91,10 +91,10 @@ impl<'a> Lexer<'a> {
     fn read_jsx_identifier(&mut self, _start_offset: u32) -> Kind {
         while let Some(c) = self.peek() {
             if c == '-' || is_identifier_start(c) {
-                self.current.chars.next();
+                self.consume_char();
                 while let Some(c) = self.peek() {
                     if is_identifier_part(c) {
-                        self.current.chars.next();
+                        self.consume_char();
                     } else {
                         break;
                     }

@@ -6,7 +6,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         loop {
-            match self.current.chars.next() {
+            match self.next_char() {
                 None | Some('\r' | '\n') => {
                     self.error(diagnostics::UnterminatedString(self.unterminated_range()));
                     return Kind::Undetermined;

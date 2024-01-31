@@ -11,15 +11,15 @@ impl<'a> Lexer<'a> {
             Some('o' | 'O') => self.read_non_decimal(Kind::Octal),
             Some('x' | 'X') => self.read_non_decimal(Kind::Hex),
             Some('e' | 'E') => {
-                self.current.chars.next();
+                self.consume_char();
                 self.read_decimal_exponent()
             }
             Some('.') => {
-                self.current.chars.next();
+                self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
             Some('n') => {
-                self.current.chars.next();
+                self.consume_char();
                 self.check_after_numeric_literal(Kind::Decimal)
             }
             Some(n) if n.is_ascii_digit() => self.read_legacy_octal(),
@@ -40,10 +40,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
-        self.current.chars.next();
+        self.consume_char();
 
         if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
-            self.current.chars.next();
+            self.consume_char();
         } else {
             self.unexpected_err();
             return Kind::Undetermined;
@@ -52,22 +52,22 @@ impl<'a> Lexer<'a> {
         while let Some(c) = self.peek() {
             match c {
                 '_' => {
-                    self.current.chars.next();
+                    self.consume_char();
                     if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
-                        self.current.chars.next();
+                        self.consume_char();
                     } else {
                         self.unexpected_err();
                         return Kind::Undetermined;
                     }
                 }
                 c if kind.matches_number_char(c) => {
-                    self.current.chars.next();
+                    self.consume_char();
                 }
                 _ => break,
             }
         }
         if self.peek() == Some('n') {
-            self.current.chars.next();
+            self.consume_char();
         }
         self.check_after_numeric_literal(kind)
     }
@@ -77,10 +77,10 @@ impl<'a> Lexer<'a> {
         loop {
             match self.peek() {
                 Some('0'..='7') => {
-                    self.current.chars.next();
+                    self.consume_char();
                 }
                 Some('8'..='9') => {
-                    self.current.chars.next();
+                    self.consume_char();
                     kind = Kind::Decimal;
                 }
                 _ => break,
@@ -90,12 +90,12 @@ impl<'a> Lexer<'a> {
         match self.peek() {
             // allow 08.5 and 09.5
             Some('.') if kind == Kind::Decimal => {
-                self.current.chars.next();
+                self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
             // allow 08e1 and 09e1
             Some('e') if kind == Kind::Decimal => {
-                self.current.chars.next();
+                self.consume_char();
                 self.read_decimal_exponent()
             }
             _ => self.check_after_numeric_literal(kind),
@@ -105,11 +105,11 @@ impl<'a> Lexer<'a> {
     fn read_decimal_exponent(&mut self) -> Kind {
         let kind = match self.peek() {
             Some('-') => {
-                self.current.chars.next();
+                self.consume_char();
                 Kind::NegativeExponential
             }
             Some('+') => {
-                self.current.chars.next();
+                self.consume_char();
                 Kind::PositiveExponential
             }
             _ => Kind::PositiveExponential,
@@ -120,7 +120,7 @@ impl<'a> Lexer<'a> {
 
     fn read_decimal_digits(&mut self) {
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-            self.current.chars.next();
+            self.consume_char();
         } else {
             self.unexpected_err();
             return;
@@ -133,16 +133,16 @@ impl<'a> Lexer<'a> {
         while let Some(c) = self.peek() {
             match c {
                 '_' => {
-                    self.current.chars.next();
+                    self.consume_char();
                     if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-                        self.current.chars.next();
+                        self.consume_char();
                     } else {
                         self.unexpected_err();
                         return;
                     }
                 }
                 '0'..='9' => {
-                    self.current.chars.next();
+                    self.consume_char();
                 }
                 _ => break,
             }
@@ -163,7 +163,7 @@ impl<'a> Lexer<'a> {
 
     fn optional_decimal_digits(&mut self) {
         if self.peek().is_some_and(|c| c.is_ascii_digit()) {
-            self.current.chars.next();
+            self.consume_char();
         } else {
             return;
         }
@@ -172,7 +172,7 @@ impl<'a> Lexer<'a> {
 
     fn optional_exponent(&mut self) -> Option<Kind> {
         if matches!(self.peek(), Some('e' | 'E')) {
-            self.current.chars.next();
+            self.consume_char();
             return Some(self.read_decimal_exponent());
         }
         None
@@ -185,10 +185,10 @@ impl<'a> Lexer<'a> {
         if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start(ch)) {
             return kind;
         }
-        self.current.chars.next();
+        self.consume_char();
         while let Some(c) = self.peek() {
             if is_identifier_start(c) {
-                self.current.chars.next();
+                self.consume_char();
             } else {
                 break;
             }

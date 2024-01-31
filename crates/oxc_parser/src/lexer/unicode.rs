@@ -18,7 +18,7 @@ enum SurrogatePair {
 
 impl<'a> Lexer<'a> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
-        let c = self.current.chars.clone().next().unwrap();
+        let c = self.peek().unwrap();
         match c {
             c if is_identifier_start_unicode(c) => {
                 let mut builder = AutoCow::new(self);
@@ -55,7 +55,7 @@ impl<'a> Lexer<'a> {
         check_identifier_start: bool,
     ) {
         let start = self.offset();
-        if self.current.chars.next() != Some('u') {
+        if self.next_char() != Some('u') {
             let range = Span::new(start, self.offset());
             self.error(diagnostics::UnicodeEscapeSequence(range));
             return;
@@ -167,7 +167,7 @@ impl<'a> Lexer<'a> {
             Some(c @ 'A'..='F') => 10 + (c as u32 - 'A' as u32),
             _ => return None,
         };
-        self.current.chars.next();
+        self.consume_char();
         Some(value)
     }
 
@@ -196,8 +196,8 @@ impl<'a> Lexer<'a> {
             return Some(SurrogatePair::CodePoint(high));
         }
 
-        self.current.chars.next();
-        self.current.chars.next();
+        self.next_char();
+        self.next_char();
 
         let low = self.hex_4_digits()?;
 
@@ -219,7 +219,7 @@ impl<'a> Lexer<'a> {
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
-        match self.current.chars.next() {
+        match self.next_char() {
             None => {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
             }
@@ -299,7 +299,7 @@ impl<'a> Lexer<'a> {
                     text.push(value);
                 }
                 '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
-                    self.current.chars.next();
+                    self.consume_char();
                     // error raised within the parser by `diagnostics::TemplateLiteral`
                     *is_valid_escape_sequence = false;
                 }

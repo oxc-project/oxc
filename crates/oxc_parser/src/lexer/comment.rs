@@ -8,7 +8,7 @@ impl<'a> Lexer<'a> {
     #[allow(clippy::cast_possible_truncation)]
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
         let start = self.current.token.start;
-        while let Some(c) = self.current.chars.next() {
+        while let Some(c) = self.next_char() {
             if is_line_terminator(c) {
                 self.current.token.is_on_new_line = true;
                 self.trivia_builder
@@ -23,7 +23,7 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next() {
+        while let Some(c) = self.next_char() {
             if c == '*' && self.next_eq('/') {
                 self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
                 return Kind::Skip;
@@ -38,7 +38,7 @@ impl<'a> Lexer<'a> {
 
     /// Section 12.5 Hashbang Comments
     pub(super) fn read_hashbang_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next().as_ref() {
+        while let Some(c) = self.next_char().as_ref() {
             if is_line_terminator(*c) {
                 break;
             }

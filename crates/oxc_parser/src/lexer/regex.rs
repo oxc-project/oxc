@@ -28,7 +28,7 @@ impl<'a> Lexer<'a> {
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
-            match self.current.chars.next() {
+            match self.next_char() {
                 None => {
                     self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
                     return (self.offset(), RegExpFlags::empty());
@@ -59,7 +59,7 @@ impl<'a> Lexer<'a> {
         let mut flags = RegExpFlags::empty();
 
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
-            self.current.chars.next();
+            self.consume_char();
             let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
                 flag
             } else {

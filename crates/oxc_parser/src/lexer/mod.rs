@@ -212,6 +212,12 @@ impl<'a> Lexer<'a> {
         Span::new(self.current.token.start, self.offset())
     }
 
+    /// Consume the current char if not at EOF
+    #[inline]
+    fn next_char(&mut self) -> Option<char> {
+        self.current.chars.next()
+    }
+
     /// Consume the current char
     #[inline]
     fn consume_char(&mut self) -> char {
