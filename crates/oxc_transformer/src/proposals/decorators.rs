@@ -341,14 +341,28 @@ impl<'a> Decorators<'a> {
                             if def.decorators.is_empty() {
                                 None
                             } else {
-                                Some((index, def.key.name(), def.computed, &def.decorators))
+                                Some((
+                                    index,
+                                    def.key.name(),
+                                    None,
+                                    def.r#static,
+                                    def.computed,
+                                    &def.decorators,
+                                ))
                             }
                         }
                         ClassElement::PropertyDefinition(def) => {
                             if def.decorators.is_empty() {
                                 None
                             } else {
-                                Some((index, def.key.name(), def.computed, &def.decorators))
+                                Some((
+                                    index,
+                                    def.key.name(),
+                                    self.ast.copy(&def.value),
+                                    def.r#static,
+                                    def.computed,
+                                    &def.decorators,
+                                ))
                             }
                         }
                         _ => None,
@@ -358,38 +372,23 @@ impl<'a> Decorators<'a> {
 
             let mut replace_elements = HashMap::new();
 
-            for (index, name, computed, decorators) in elements {
+            for (index, name, value, r#static, computed, decorators) in elements {
                 let init_name = self.get_unique_name(&if computed {
                     "init_computedKey".into()
                 } else {
                     format!("init_{}", name.clone().unwrap()).into()
                 });
                 decorators.iter().for_each(|decorator| {
-                    let dec_name = self.get_unique_name(&"dec".into());
-                    declarations.push(self.get_variable_declarator(dec_name.clone()));
-
-                    let left = self.ast.simple_assignment_target_identifier(
-                        IdentifierReference::new(SPAN, dec_name.clone()),
-                    );
-                    let right = self.ast.copy(&decorator.expression);
-                    let dec_expr = self.ast.assignment_expression(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        left,
-                        right,
-                    );
                     e_elements.push(self.get_assignment_target_maybe_default(init_name.clone()));
                     let mut decorator_elements = self.ast.new_vec_with_capacity(2);
                     decorator_elements.push(ArrayExpressionElement::Expression(
-                        self.ast.identifier_reference_expression(IdentifierReference::new(
-                            SPAN, dec_name,
-                        )),
+                        self.ast.copy(&decorator.expression),
                     ));
                     decorator_elements.push(ArrayExpressionElement::Expression(
                         self.ast.literal_number_expression(NumberLiteral::new(
                             SPAN,
                             0f64,
-                            "0",
+                            if r#static { "8" } else { "0" },
                             oxc_syntax::NumberBase::Decimal,
                         )),
                     ));
@@ -401,42 +400,44 @@ impl<'a> Decorators<'a> {
                     member_decorators_vec.push(ArrayExpressionElement::Expression(
                         self.ast.array_expression(SPAN, decorator_elements, None),
                     ));
-
-                    self.top_statements.push(self.ast.expression_statement(SPAN, dec_expr));
                 });
 
                 declarations.push(self.get_variable_declarator(init_name.clone()));
 
-                if let Some(name) = name.clone() {
-                    replace_elements.insert(
-                        index,
-                        self.ast.class_property(
-                            SPAN,
-                            self.ast
-                                .property_key_identifier(IdentifierName::new(SPAN, name.clone())),
-                            Some(self.ast.call_expression(
-                                SPAN,
-                                self.ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN, init_name,
-                                )),
-                                self.ast.new_vec_single(Argument::Expression(
-                                    self.ast.this_expression(SPAN),
-                                )),
-                                false,
-                                None,
-                            )),
-                            false,
-                            false,
-                            self.ast.new_vec(),
-                        ),
-                    );
+                let mut arguments =
+                    self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
+
+                if let Some(default_value) = value {
+                    arguments.push(Argument::Expression(default_value));
                 }
+
+                replace_elements.insert(
+                    index,
+                    self.ast.call_expression(
+                        SPAN,
+                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                            SPAN, init_name,
+                        )),
+                        arguments,
+                        false,
+                        None,
+                    ),
+                );
             }
 
             // replace the element with `name = init_name(this)`
             for (index, element) in class.body.body.iter_mut().enumerate() {
                 if let Some(new_element) = replace_elements.remove(&index) {
-                    *element = new_element;
+                    match element {
+                        ClassElement::PropertyDefinition(definition) => {
+                            definition.decorators.clear();
+                            definition.value = Some(new_element);
+                        }
+                        ClassElement::MethodDefinition(definition) => {
+                            definition.decorators.clear();
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
