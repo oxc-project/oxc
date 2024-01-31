@@ -6,17 +6,20 @@ use std::path::Path;
 
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
 
-use self::errors::{
-    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
-    FailedToParseRuleValueError,
-};
 pub use self::{
     env::ESLintEnv,
     settings::{ESLintSettings, JsxA11y, Nextjs},
+};
+use self::{
+    errors::{
+        FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
+        FailedToParseRuleValueError,
+    },
+    settings::{FormComponents, LinkComponents},
 };
 
 /// ESLint Config
@@ -180,6 +183,8 @@ pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
     if let Value::Object(settings_object) = setting_value {
         let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
         let mut nextjs_setting = Nextjs::new(vec![]);
+        let mut link_components_setting: Vec<LinkComponents> = vec![];
+        let mut form_components_setting: Vec<FormComponents> = vec![];
         if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
             if let Some(Value::Object(components)) = jsx_a11y.get("components") {
                 let components_map: FxHashMap<String, String> = components
@@ -208,10 +213,102 @@ pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
             }
         }
 
-        return ESLintSettings::new(jsx_a11y_setting, nextjs_setting);
+        parse_custom_components(
+            settings_object,
+            CustomComponentEnum::LinkComponents(&mut link_components_setting),
+        );
+        parse_custom_components(
+            settings_object,
+            CustomComponentEnum::FormComponents(&mut form_components_setting),
+        );
+
+        return ESLintSettings::new(
+            jsx_a11y_setting,
+            nextjs_setting,
+            link_components_setting,
+            form_components_setting,
+        );
     }
 
     ESLintSettings::default()
+}
+
+enum CustomComponentEnum<'a> {
+    LinkComponents(&'a mut Vec<LinkComponents>),
+    FormComponents(&'a mut Vec<FormComponents>),
+}
+
+fn parse_custom_components(settings_object: &Map<String, Value>, settings: CustomComponentEnum) {
+    fn parse_obj(obj: &Map<String, Value>, attribute_name: &str) -> Option<(String, Vec<String>)> {
+        if let Some(Value::String(name)) = obj.get("name") {
+            let mut arr: Vec<String> = vec![];
+            if let Some(Value::String(attribute)) = obj.get(attribute_name) {
+                arr.push(attribute.to_string());
+            } else if let Some(Value::Array(attributes)) = obj.get(attribute_name) {
+                for attribute in attributes {
+                    if let Value::String(attribute) = attribute {
+                        arr.push(attribute.to_string());
+                    }
+                }
+            }
+            return Some((name.to_string(), arr));
+        }
+        None
+    }
+
+    fn parse_component(
+        settings_object: &Map<String, Value>,
+        component_name: &str,
+        attribute_name: &str,
+    ) -> Vec<Option<(String, Vec<String>)>> {
+        match settings_object.get(component_name) {
+            Some(Value::Array(component)) => component
+                .iter()
+                .map(|component| {
+                    if let Value::String(name) = component {
+                        return Some((name.to_string(), [].to_vec()));
+                    }
+                    if let Value::Object(obj) = component {
+                        return parse_obj(obj, attribute_name);
+                    }
+                    None
+                })
+                .collect(),
+            Some(Value::Object(obj)) => [parse_obj(obj, attribute_name)].to_vec(),
+            _ => [].to_vec(),
+        }
+    }
+
+    match settings {
+        CustomComponentEnum::FormComponents(setting) => {
+            let res = parse_component(settings_object, "FormComponents", "formAttribute");
+            let mut setting_list: Vec<FormComponents> = res
+                .into_iter()
+                .filter_map(|option_tuple| {
+                    if let Some(tuple) = option_tuple {
+                        Some(FormComponents { name: tuple.0, form_attribute: tuple.1 })
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            setting.append(&mut setting_list);
+        }
+        CustomComponentEnum::LinkComponents(setting) => {
+            let res = parse_component(settings_object, "linkComponents", "linkAttribute");
+            let mut setting_list: Vec<LinkComponents> = res
+                .into_iter()
+                .filter_map(|option_tuple| {
+                    if let Some(tuple) = option_tuple {
+                        Some(LinkComponents { name: tuple.0, link_attribute: tuple.1 })
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            setting.append(&mut setting_list);
+        }
+    }
 }
 
 fn parse_env_from_root(root_json: &Value) -> ESLintEnv {
