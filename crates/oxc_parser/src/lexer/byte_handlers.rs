@@ -28,14 +28,14 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
     TPL, L_A, L_B, L_C, L_D, L_E, L_F, L_G, IDT, L_I, IDT, L_K, L_L, L_M, L_N, L_O, // 6
     L_P, IDT, L_R, L_S, L_T, L_U, L_V, L_W, IDT, L_Y, IDT, BEO, PIP, BEC, TLD, ERR, // 7
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // 8
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // 9
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // A
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // B
+    UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 8
+    UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
+    UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
+    UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // B
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // F
+    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, // F
 ];
 
 #[allow(clippy::unnecessary_safety_comment)]
@@ -586,3 +586,11 @@ ascii_byte_handler!(L_Y(lexer) match &lexer.identifier_name_handler()[1..] {
 // NB: Must not use `ascii_byte_handler!()` macro, as this handler is for non-ASCII chars.
 #[allow(clippy::redundant_closure_for_method_calls)]
 const UNI: ByteHandler = |lexer| lexer.unicode_char_handler();
+
+// UTF-8 continuation bytes (128-191) (i.e. middle of a multi-byte UTF-8 sequence)
+// + and byte values which are not legal in UTF-8 strings (248-255).
+// `handle_byte()` should only be called with 1st byte of a valid UTF-8 char,
+// so something has gone wrong if we get here.
+// https://en.wikipedia.org/wiki/UTF-8
+// NB: Must not use `ascii_byte_handler!()` macro, as this handler is for non-ASCII bytes.
+const UER: ByteHandler = |_| unreachable!();
