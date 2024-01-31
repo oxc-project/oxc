@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
-AST Parsed     : 19665/19665 (100.00%)
-Positive Passed: 19220/19665 (97.74%)
+AST Parsed     : 19663/19663 (100.00%)
+Positive Passed: 19248/19663 (97.89%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -449,9 +449,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/eval-code/indirect/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/expressions/addition/S11.6.1_A4_T9.js"
-But got a runtime error: Test262Error: #2: (-Number.MAX_VALUE + Number.MAX_VALUE) + Number.MAX_VALUE === -Number.MAX_VALUE + (Number.MAX_VALUE + Number.MAX_VALUE). Actual: -1.7976931348623157e+3081.7976931348623157e+3081.7976931348623157e+308
-
 Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T1.js"
 But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
 
@@ -824,35 +821,11 @@ But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeE
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/division/S11.5.2_A4_T6.js"
-But got a runtime error: Test262Error: #1.2: 1 / -Infinity === - 0. Actual: +0
-
-Expect to run correctly: "language/expressions/division/S11.5.2_A4_T9.js"
-But got a runtime error: Test262Error: #5: Number.MAX_VALUE / (Number.MAX_VALUE / 0.9) !== (Number.MAX_VALUE / Number.MAX_VALUE) / 0.9
-
 Expect to run correctly: "language/expressions/dynamic-import/always-create-new-promise.js"
 But got a runtime error: Test262Error: p1 constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
 
 Expect to run correctly: "language/expressions/dynamic-import/eval-self-once-module.js"
 But got a runtime error: Test262Error: global property was defined and incremented only once Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-get-with-error.js"
-But got a runtime error: Test262Error: Expected an error, but observed no error
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-abrupt.js"
-But got a runtime error: Test262Error: Expected promise to be rejected, but promise was fulfilled.
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-enumerable.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-non-object.js"
-But got a runtime error: Test262Error: Promise for null was not rejected.
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-abrupt.js"
-But got a runtime error: Test262Error: Expected promise to be rejected, but it was fulfilled
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-non-string.js"
-But got a runtime error: Test262Error: Promise for undefined was not rejected.
 
 Expect to run correctly: "language/expressions/dynamic-import/imported-self-update.js"
 But got a runtime error: Test262Error: updated value, direct binding Expected SameValue(«0», «1») to be true
@@ -892,24 +865,6 @@ But got a runtime error: Test262Error: constructor is %Promise% Expected SameVal
 
 Expect to run correctly: "language/expressions/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T2.js"
-But got a runtime error: Test262Error: #1.2: 1 % 1 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T5.js"
-But got a runtime error: Test262Error: #5.2: 0 % Infinity === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T6.js"
-But got a runtime error: Test262Error: #1.2: 0 % 1 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T2.js"
-But got a runtime error: Test262Error: #5.2: 0 * 0 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T7.js"
-But got a runtime error: Test262Error: #2.2: -0.1 * Number.MIN_VALUE === -0. Actual: +0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T8.js"
-But got a runtime error: Test262Error: #2: (Number.MAX_VALUE * 1.1) * 0.9 !== Number.MAX_VALUE * (1.1 * 0.9)
 
 Expect to run correctly: "language/expressions/object/__proto__-permitted-dup-shorthand.js"
 But got a runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
@@ -989,44 +944,11 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/global-code/decl-var.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/import/import-attributes/json-extensibility-array.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-extensibility-object.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-idempotency.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-array.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-boolean.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-null.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-number.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-object.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-string.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-via-namespace.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
 Expect to run correctly: "language/module-code/eval-self-once.js"
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
 
 Expect to run correctly: "language/module-code/import-attributes/allow-nlt-before-with.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/module-code/import-attributes/import-attribute-empty.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
+But got a runtime error: SyntaxError: The requested module './ensure-linking-error_FIXTURE.js' does not provide an export named 'nonExistent'
 
 Expect to run correctly: "language/module-code/instn-iee-bndng-cls.js"
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
@@ -1321,9 +1243,6 @@ But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to 
 
 Expect to run correctly: "language/statements/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
-Expect to run correctly: "language/statements/return/S12.9_A4.js"
-But got a runtime error: Test262Error: #1: return Expression yields to Return (return, GetValue(Evaluate Expression), empty)
 
 Expect to run correctly: "language/statements/variable/binding-resolution.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true
