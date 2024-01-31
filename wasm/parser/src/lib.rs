@@ -1,6 +1,6 @@
 #![allow(clippy::needless_pass_by_value)]
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
@@ -12,31 +12,33 @@ pub fn main() {
     console_error_panic_hook::set_once();
 }
 
-/// Babel Parser Options
-///
-/// <https://github.com/babel/babel/blob/main/packages/babel-parser/typings/babel-parser.d.ts>
-#[wasm_bindgen(getter_with_clone)]
-#[derive(Default, Tsify)]
+#[derive(Debug, Default, Clone, Deserialize, Tsify)]
+#[tsify(from_wasm_abi)]
 pub struct ParserOptions {
-    #[wasm_bindgen(js_name = sourceType)]
+    #[serde(rename = "sourceType")]
+    #[tsify(optional, type = "\"script\" | \"module\"")]
     pub source_type: Option<String>,
-    #[wasm_bindgen]
-    pub filename: Option<String>,
+
+    /// "module" and "jsx" will be inferred from `sourceFilename`.
+    #[serde(rename = "sourceFilename")]
+    #[tsify(optional)]
+    pub source_filename: Option<String>,
 }
 
-#[wasm_bindgen(getter_with_clone)]
 #[derive(Default, Tsify)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct ParseResult {
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub program: JsValue,
+
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "OxcDiagnostic[]")]
+    #[tsify(type = "Diagnostic[]")]
     pub errors: Vec<JsValue>,
 }
 
-#[derive(Default, Tsify, Serialize)]
-pub struct OxcDiagnostic {
+#[derive(Debug, Default, Serialize, Tsify)]
+pub struct Diagnostic {
     pub start: usize,
     pub end: usize,
     pub severity: String,
@@ -61,7 +63,7 @@ pub fn parse_sync(
     let allocator = Allocator::default();
 
     let source_type = options
-        .filename
+        .source_filename
         .as_ref()
         .map(|name| SourceType::from_path(name).unwrap())
         .unwrap_or_default();
@@ -87,7 +89,7 @@ pub fn parse_sync(
                 let Some(labels) = error.labels() else { return vec![] };
                 labels
                     .map(|label| {
-                        OxcDiagnostic {
+                        Diagnostic {
                             start: label.offset(),
                             end: label.offset() + label.len(),
                             severity: format!("{:?}", error.severity().unwrap_or_default()),
@@ -96,9 +98,9 @@ pub fn parse_sync(
                         .serialize(&serializer)
                         .unwrap()
                     })
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<JsValue>>()
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<JsValue>>()
     };
 
     Ok(ParseResult { program, errors })

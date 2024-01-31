@@ -63,15 +63,21 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
-      - name: Build types
+
+      - name: Build
         run: |
           npx -y wasm-pack build --target web --dev ./crates/oxc_wasm
+          npx -y wasm-pack build --target web --dev ./wasm/parser
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Check output types
-        run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
+        run: |
+          npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
+
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
