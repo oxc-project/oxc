@@ -1801,6 +1801,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.5.0"
 dependencies = [
+ "bitflags 2.4.2",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
+use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
@@ -23,6 +24,30 @@ pub struct Decorators<'a> {
     // Insert to the bottom of the program
     bottom_statements: Vec<'a, Statement<'a>>,
     uid_map: HashMap<Atom, u32>,
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy)]
+    pub struct DecoratorFlags: u8 {
+        const Field = 0;
+        const Accessor = 1;
+        const Method = 2;
+        const Getter = 3;
+        const Setter = 4;
+        const Static = 8;
+        const DecoratorsHaveThis = 16;
+    }
+}
+
+impl DecoratorFlags {
+    pub fn get_flag_by_kind(kind: MethodDefinitionKind) -> Self {
+        match kind {
+            MethodDefinitionKind::Method => Self::Method,
+            MethodDefinitionKind::Get => Self::Getter,
+            MethodDefinitionKind::Set => Self::Setter,
+            MethodDefinitionKind::Constructor => unreachable!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
@@ -251,6 +276,8 @@ impl<'a> Decorators<'a> {
         let mut c_elements = self.ast.new_vec();
         let mut e_elements = self.ast.new_vec();
 
+        let mut init_static_name = None;
+
         // insert member decorators
         let mut member_decorators_vec = self.ast.new_vec();
         let mut class_decorators_argument =
@@ -330,115 +357,108 @@ impl<'a> Decorators<'a> {
                 class.body.body.insert(0, static_block);
             }
         } else if has_member_decorator {
-            let elements: std::vec::Vec<_> = {
-                class
-                    .body
-                    .body
-                    .iter_mut()
-                    .enumerate()
-                    .filter_map(|(index, element)| match element {
-                        ClassElement::MethodDefinition(def) => {
-                            if def.decorators.is_empty() {
-                                None
-                            } else {
-                                Some((
-                                    index,
-                                    def.key.name(),
-                                    None,
-                                    def.r#static,
-                                    def.computed,
-                                    &def.decorators,
-                                ))
-                            }
-                        }
-                        ClassElement::PropertyDefinition(def) => {
-                            if def.decorators.is_empty() {
-                                None
-                            } else {
-                                Some((
-                                    index,
-                                    def.key.name(),
-                                    self.ast.copy(&def.value),
-                                    def.r#static,
-                                    def.computed,
-                                    &def.decorators,
-                                ))
-                            }
-                        }
-                        _ => None,
-                    })
-                    .collect()
-            };
-
-            let mut replace_elements = HashMap::new();
-
-            for (index, name, value, r#static, computed, decorators) in elements {
-                let init_name = self.get_unique_name(&if computed {
-                    "init_computedKey".into()
-                } else {
-                    format!("init_{}", name.clone().unwrap()).into()
-                });
-                decorators.iter().for_each(|decorator| {
-                    e_elements.push(self.get_assignment_target_maybe_default(init_name.clone()));
-                    let mut decorator_elements = self.ast.new_vec_with_capacity(2);
+            let get_decorator_info =
+                |name: Option<Atom>, flag: u8, decorator: &Decorator<'a>, ast: &AstBuilder<'a>| {
+                    let mut decorator_elements = ast.new_vec_with_capacity(2);
+                    decorator_elements
+                        .push(ArrayExpressionElement::Expression(ast.copy(&decorator.expression)));
                     decorator_elements.push(ArrayExpressionElement::Expression(
-                        self.ast.copy(&decorator.expression),
-                    ));
-                    decorator_elements.push(ArrayExpressionElement::Expression(
-                        self.ast.literal_number_expression(NumberLiteral::new(
+                        ast.literal_number_expression(NumberLiteral::new(
                             SPAN,
                             0f64,
-                            if r#static { "8" } else { "0" },
+                            ast.new_str(flag.to_string().as_str()),
                             oxc_syntax::NumberBase::Decimal,
                         )),
                     ));
-                    if let Some(name) = name.clone() {
+                    if let Some(name) = name {
                         decorator_elements.push(ArrayExpressionElement::Expression(
-                            self.ast.literal_string_expression(StringLiteral::new(SPAN, name)),
+                            ast.literal_string_expression(StringLiteral::new(SPAN, name)),
                         ));
                     }
-                    member_decorators_vec.push(ArrayExpressionElement::Expression(
-                        self.ast.array_expression(SPAN, decorator_elements, None),
-                    ));
-                });
+                    ast.array_expression(SPAN, decorator_elements, None)
+                };
 
-                declarations.push(self.get_variable_declarator(init_name.clone()));
-
-                let mut arguments =
-                    self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
-
-                if let Some(default_value) = value {
-                    arguments.push(Argument::Expression(default_value));
+            let mut is_static = false;
+            class.body.body.iter_mut().for_each(|element| {
+                if !element.has_decorator() {
+                    return;
                 }
-
-                replace_elements.insert(
-                    index,
-                    self.ast.call_expression(
-                        SPAN,
-                        self.ast.identifier_reference_expression(IdentifierReference::new(
-                            SPAN, init_name,
-                        )),
-                        arguments,
-                        false,
-                        None,
-                    ),
-                );
-            }
-
-            // replace the element with `name = init_name(this)`
-            for (index, element) in class.body.body.iter_mut().enumerate() {
-                if let Some(new_element) = replace_elements.remove(&index) {
-                    match element {
-                        ClassElement::PropertyDefinition(definition) => {
-                            definition.decorators.clear();
-                            definition.value = Some(new_element);
+                match element {
+                    ClassElement::MethodDefinition(def) => {
+                        if def.r#static {
+                            is_static = def.r#static;
                         }
-                        ClassElement::MethodDefinition(definition) => {
-                            definition.decorators.clear();
+                        let name = def.key.name();
+                        let mut flag = DecoratorFlags::get_flag_by_kind(def.kind).bits();
+                        if def.r#static {
+                            flag += DecoratorFlags::Static.bits();
                         }
-                        _ => {}
+
+                        def.decorators.drain(..).for_each(|decorator| {
+                            member_decorators_vec.push(ArrayExpressionElement::Expression(
+                                get_decorator_info(name.clone(), flag, &decorator, &self.ast),
+                            ));
+                        });
                     }
+                    ClassElement::PropertyDefinition(def) => {
+                        let flag = if def.r#static {
+                            DecoratorFlags::Static
+                        } else {
+                            DecoratorFlags::Field
+                        };
+
+                        let name = def.key.name();
+
+                        let init_name = self.get_unique_name(&if def.computed {
+                            "init_computedKey".into()
+                        } else {
+                            format!("init_{}", name.clone().unwrap()).into()
+                        });
+
+                        e_elements
+                            .push(self.get_assignment_target_maybe_default(init_name.clone()));
+
+                        def.decorators.drain(..).for_each(|decorator| {
+                            member_decorators_vec.push(ArrayExpressionElement::Expression(
+                                get_decorator_info(
+                                    name.clone(),
+                                    flag.bits(),
+                                    &decorator,
+                                    &self.ast,
+                                ),
+                            ));
+                        });
+
+                        let mut arguments = self
+                            .ast
+                            .new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
+
+                        if let Some(value) = &mut def.value {
+                            arguments.push(Argument::Expression(self.ast.move_expression(value)));
+                        }
+
+                        def.value = Some(self.ast.call_expression(
+                            SPAN,
+                            self.ast.identifier_reference_expression(IdentifierReference::new(
+                                SPAN,
+                                init_name.clone(),
+                            )),
+                            arguments,
+                            false,
+                            None,
+                        ));
+
+                        declarations.push(self.get_variable_declarator(init_name));
+                    }
+                    _ => {}
                 }
+            });
+
+            if is_static {
+                let name = self.get_unique_name(&"initStatic".into());
+                e_elements.push(self.get_assignment_target_maybe_default(name.clone()));
+                declarations.push(self.get_variable_declarator(name.clone()));
+                init_static_name = Some(name);
             }
         }
 
@@ -500,6 +520,21 @@ impl<'a> Decorators<'a> {
 
             let mut statements = self.ast.new_vec();
             statements.push(self.ast.expression_statement(SPAN, new_expr));
+
+            if let Some(init_static_name) = init_static_name {
+                // call initStatic
+                let callee = self.ast.identifier_reference_expression(IdentifierReference::new(
+                    SPAN,
+                    init_static_name,
+                ));
+                let arguments =
+                    self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
+                statements.push(self.ast.expression_statement(
+                    SPAN,
+                    self.ast.call_expression(SPAN, callee, arguments, false, None),
+                ));
+            }
+
             let static_block = self.ast.static_block(SPAN, statements);
             class.body.body.insert(0, static_block);
         }
