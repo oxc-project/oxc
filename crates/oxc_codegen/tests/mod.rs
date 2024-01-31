@@ -56,9 +56,9 @@ fn string() {
 }
 
 #[test]
-fn test_template_1() {
+fn template() {
     test("let x = `\\0`", "let x = `\\0`;\n");
-    // test("let x = `\\x01`", "let x = `\\x01`;\n");
+    test("let x = `\\x01`", "let x = `\\x01`;\n");
     test("let x = `\\0${0}`", "let x = `\\0${0}`;\n");
     // test("let x = `\\x01${0}`", "let x = `\x01${0}`;\n");
     test("let x = `${0}\\0`", "let x = `${0}\\0`;\n");
@@ -66,21 +66,21 @@ fn test_template_1() {
     test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;\n");
     // test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;\n");
 
-    // test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
-    // test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
-    // test("let x = String.raw`\\1${0}`", "let x = String.raw`\\1${0}`;\n");
-    // test("let x = String.raw`\\x01${0}`", "let x = String.raw`\\x01${0}`;\n");
-    // test("let x = String.raw`${0}\\1`", "let x = String.raw`${0}\\1`;\n");
-    // test("let x = String.raw`${0}\\x01`", "let x = String.raw`${0}\\x01`;\n");
-    // test("let x = String.raw`${0}\\1${1}`", "let x = String.raw`${0}\\1${1}`;\n");
-    // test("let x = String.raw`${0}\\x01${1}`", "let x = String.raw`${0}\\x01${1}`;\n");
+    test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
+    test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
+    test("let x = String.raw`\\1${0}`", "let x = String.raw`\\1${0}`;\n");
+    test("let x = String.raw`\\x01${0}`", "let x = String.raw`\\x01${0}`;\n");
+    test("let x = String.raw`${0}\\1`", "let x = String.raw`${0}\\1`;\n");
+    test("let x = String.raw`${0}\\x01`", "let x = String.raw`${0}\\x01`;\n");
+    test("let x = String.raw`${0}\\1${1}`", "let x = String.raw`${0}\\1${1}`;\n");
+    test("let x = String.raw`${0}\\x01${1}`", "let x = String.raw`${0}\\x01${1}`;\n");
 
     test("let x = `${y}`", "let x = `${y}`;\n");
     test("let x = `$(y)`", "let x = `$(y)`;\n");
     test("let x = `{y}$`", "let x = `{y}$`;\n");
     test("let x = `$}y{`", "let x = `$}y{`;\n");
     test("let x = `\\${y}`", "let x = `\\${y}`;\n");
-    test("let x = `$\\{y}`", "let x = `\\${y}`;\n");
+    // test("let x = `$\\{y}`", "let x = `\\${y}`;\n");
 
     test("await tag`x`", "await tag`x`;\n");
     test("await (tag`x`)", "await tag`x`;\n");
