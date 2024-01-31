@@ -242,11 +242,11 @@ ascii_byte_handler!(SLH(lexer) {
     lexer.consume_char();
     match lexer.peek() {
         Some('/') => {
-            lexer.current.chars.next();
+            lexer.consume_char();
             lexer.skip_single_line_comment()
         }
         Some('*') => {
-            lexer.current.chars.next();
+            lexer.consume_char();
             lexer.skip_multi_line_comment()
         }
         _ => {
@@ -327,7 +327,7 @@ ascii_byte_handler!(QST(lexer) {
         if lexer.peek2().is_some_and(|c| c.is_ascii_digit()) {
             Kind::Question
         } else {
-            lexer.current.chars.next();
+            lexer.consume_char();
             Kind::QuestionDot
         }
     } else {
