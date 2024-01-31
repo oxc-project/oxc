@@ -1740,9 +1740,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
         let mut expressions = self.expressions.iter();
 
         for quasi in &self.quasis {
-            if let Some(cooked) = &quasi.value.cooked {
-                print_unquoted_str(cooked.as_str(), '`', p);
-            }
+            p.print_str(quasi.value.raw.as_bytes());
 
             if let Some(expr) = expressions.next() {
                 p.print_str(b"${");
