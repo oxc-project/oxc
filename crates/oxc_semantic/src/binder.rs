@@ -288,6 +288,34 @@ impl<'a> Binder for ModuleDeclaration<'a> {
     }
 }
 
+fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut SemanticBuilder) {
+    let symbol_id = builder.declare_symbol(
+        ident.span,
+        &ident.name,
+        SymbolFlags::ImportBinding,
+        SymbolFlags::ImportBindingExcludes,
+    );
+    ident.symbol_id.set(Some(symbol_id));
+}
+
+impl Binder for ImportSpecifier {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        declare_symbol_for_import_specifier(&self.local, builder);
+    }
+}
+
+impl Binder for ImportDefaultSpecifier {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        declare_symbol_for_import_specifier(&self.local, builder);
+    }
+}
+
+impl Binder for ImportNamespaceSpecifier {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        declare_symbol_for_import_specifier(&self.local, builder);
+    }
+}
+
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let symbol_id = builder.declare_symbol(
