@@ -12,14 +12,22 @@ bb1: {
 }
 
 bb2: {
-	Unreachable()
-	$return = <value>
+
 }
 
 bb3: {
 	Unreachable()
+	$return = <value>
 }
 
 bb4: {
+
+}
+
+bb5: {
+	Unreachable()
+}
+
+bb6: {
 
 }

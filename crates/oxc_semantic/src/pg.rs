@@ -19,14 +19,13 @@ pub fn neighbors_filtered_by_edge_weight<
 ) -> Vec<State>
 where
     F: Fn(&EdgeWeight) -> Option<State>,
-    G: FnMut(&NodeWeight, State) -> (State, bool),
+    G: FnMut(&NodeIndex, State) -> (State, bool),
 {
     let mut q = vec![];
     let mut final_states = vec![];
 
     // for initial node
-    let (new_state, keep_walking_this_path) =
-        visitor(graph.node_weight(node).unwrap(), Default::default());
+    let (new_state, keep_walking_this_path) = visitor(&node, Default::default());
     // if we will continue walking push this node
     if keep_walking_this_path {
         q.push((node, new_state));
@@ -42,7 +41,7 @@ where
             } else {
                 let opposite_dir_of_edge_graph_ix = edge.target();
                 let (new_state, keep_walking_this_path) =
-                    visitor(graph.node_weight(opposite_dir_of_edge_graph_ix).unwrap(), state);
+                    visitor(&opposite_dir_of_edge_graph_ix, state);
                 if keep_walking_this_path {
                     q.push((opposite_dir_of_edge_graph_ix, new_state));
                 } else {
@@ -65,13 +64,13 @@ pub fn replicate_tree_to_leaves(
     start_at: NodeIndex,
     cfg: &mut ControlFlowGraph,
 ) -> HashMap<NodeIndex, NodeIndex> {
-    fn duplicate_graph_node(basic_block_id: usize, cfg: &mut ControlFlowGraph) -> NodeIndex {
+    fn duplicate_graph_node(basic_block_id: NodeIndex, cfg: &mut ControlFlowGraph) -> NodeIndex {
         let new_basic_block_graph_ix = cfg.new_basic_block();
 
         // todo: what's a better way to do this?
-        for i in 0..cfg.basic_blocks[basic_block_id].len() {
-            let item = cfg.basic_blocks[basic_block_id][i].clone();
-            cfg.basic_blocks[cfg.current_basic_block].push(item);
+        let items = cfg.basic_block_by_index(basic_block_id).clone();
+        for item in items {
+            cfg.current_basic_block().push(item);
         }
 
         // todo: should we add the functions copied here to the function_to_node_ix?
@@ -80,12 +79,11 @@ pub fn replicate_tree_to_leaves(
     }
 
     let preserved_graph_ix = cfg.current_node_ix;
-    let preserved_bb = cfg.current_basic_block;
 
     let mut old_to_new: HashMap<NodeIndex, NodeIndex> = HashMap::default();
     let mut q = vec![];
 
-    let new_graph_start_ix = duplicate_graph_node(*cfg.graph.node_weight(start_at).unwrap(), cfg);
+    let new_graph_start_ix = duplicate_graph_node(start_at, cfg);
     old_to_new.insert(start_at, new_graph_start_ix);
     q.push((new_graph_start_ix, start_at));
     let mut edges_finished_already = HashSet::new();
@@ -108,7 +106,7 @@ pub fn replicate_tree_to_leaves(
             let new_graph_ix = if old_to_new.contains_key(&to) {
                 old_to_new[&to]
             } else {
-                let new_graph_ix = duplicate_graph_node(*cfg.graph.node_weight(to).unwrap(), cfg);
+                let new_graph_ix = duplicate_graph_node(to, cfg);
                 old_to_new.insert(node.1, new_graph_start_ix);
                 new_graph_ix
             };
@@ -119,7 +117,6 @@ pub fn replicate_tree_to_leaves(
         }
     }
 
-    cfg.current_basic_block = preserved_bb;
     cfg.current_node_ix = preserved_graph_ix;
     old_to_new
 }

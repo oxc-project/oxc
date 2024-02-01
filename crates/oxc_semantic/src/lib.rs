@@ -19,7 +19,6 @@ pub use petgraph;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
-use control_flow::ControlFlowGraph;
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
@@ -34,8 +33,8 @@ pub use crate::{
     builder::VariableInfo,
     control_flow::{
         print_basic_block, AssignmentValue, BasicBlockElement, BinaryAssignmentValue, BinaryOp,
-        CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, EdgeType,
-        ObjectPropertyAccessAssignmentValue, Register, UnaryExpressioneAssignmentValue,
+        CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph,
+        EdgeType, ObjectPropertyAccessAssignmentValue, Register, UnaryExpressioneAssignmentValue,
         UpdateAssignmentValue,
     },
     node::{AstNode, AstNodeId, AstNodes},

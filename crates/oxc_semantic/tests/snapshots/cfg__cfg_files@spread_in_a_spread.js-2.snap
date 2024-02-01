@@ -6,10 +6,11 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/spread_in_a_spread.js
 digraph {
     0 [ label = ""]
     1 [ label = "$return = <value>"]
-    2 [ label = "Unreachable()"]
-    3 [ label = ""]
+    2 [ label = ""]
+    3 [ label = "Unreachable()"]
+    4 [ label = ""]
     0 -> 1 [ ]
-    1 -> 2 [ ]
-    0 -> 3 [ ]
+    2 -> 3 [ ]
+    0 -> 4 [ ]
 }
 

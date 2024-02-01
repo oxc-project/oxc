@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use oxc_span::Atom;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -117,13 +115,13 @@ pub enum EdgeType {
     NewFunction,
 }
 
+#[derive(Debug, Default)]
 pub struct ControlFlowGraph {
     pub basic_blocks: Vec<Vec<BasicBlockElement>>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
     pub use_this_register: Option<Register>,
-    pub current_basic_block: usize,
     pub next_free_register: u32,
     pub store_assignments_into_this_array: Vec<Vec<Register>>,
     pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
@@ -144,41 +142,31 @@ pub struct ControlFlowGraph {
     pub next_label: Option<Atom>,
     pub label_to_ast_node_ix: Vec<(Atom, AstNodeId)>,
     pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
-    pub function_to_node_ix: HashMap<AstNodeId, NodeIndex>,
     pub after_throw_block: Option<NodeIndex>,
-}
-
-impl Default for ControlFlowGraph {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl ControlFlowGraph {
     pub fn new() -> Self {
-        Self {
-            basic_blocks: Vec::new(),
-            use_this_register: None,
-            current_basic_block: 0,
-            next_free_register: 0,
-            store_assignments_into_this_array: Vec::new(),
-            store_final_assignments_into_this_array: Vec::new(),
-            spread_indices: Vec::new(),
-            should_save_stores_for_patching: false,
-            saved_stores: Vec::new(),
-            saved_store: None,
-            graph: Graph::default(),
-            // todo: invalid state
-            current_node_ix: NodeIndex::default(),
-            basic_blocks_with_breaks: Vec::new(),
-            basic_blocks_with_continues: Vec::new(),
-            switch_case_conditions: Vec::new(),
-            next_label: None,
-            label_to_ast_node_ix: Vec::new(),
-            ast_node_to_break_continue: Vec::new(),
-            function_to_node_ix: HashMap::new(),
-            after_throw_block: None,
-        }
+        Self::default()
+    }
+
+    /// # Panics
+    pub fn basic_block_by_index(&self, index: NodeIndex) -> &Vec<BasicBlockElement> {
+        let idx =
+            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
+        self.basic_blocks.get(idx).expect("expected a valid node index in self.basic_blocks")
+    }
+
+    /// # Panics
+    pub fn basic_block_by_index_mut(&mut self, index: NodeIndex) -> &mut Vec<BasicBlockElement> {
+        let idx =
+            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
+        self.basic_blocks.get_mut(idx).expect("expected a valid node index in self.basic_blocks")
+    }
+
+    /// # Panics
+    pub fn current_basic_block(&mut self) -> &mut Vec<BasicBlockElement> {
+        self.basic_block_by_index_mut(self.current_node_ix)
     }
 
     #[must_use]
@@ -187,7 +175,6 @@ impl ControlFlowGraph {
         let basic_block_id = self.basic_blocks.len() - 1;
         let graph_index = self.graph.add_node(basic_block_id);
         self.current_node_ix = graph_index;
-        self.current_basic_block = basic_block_id;
 
         // todo: get smarter about what can throw, ie: return can't throw but it's expression can
         if let Some(after_throw_block) = self.after_throw_block {
@@ -200,10 +187,8 @@ impl ControlFlowGraph {
     #[must_use]
     pub fn new_basic_block(&mut self) -> NodeIndex {
         self.basic_blocks.push(Vec::new());
-        let basic_block_id = self.basic_blocks.len() - 1;
-        let graph_index = self.graph.add_node(basic_block_id);
+        let graph_index = self.graph.add_node(self.basic_blocks.len() - 1);
         self.current_node_ix = graph_index;
-        self.current_basic_block = basic_block_id;
 
         // todo: get smarter about what can throw, ie: return can't throw but it's expression can
         if let Some(after_throw_block) = self.after_throw_block {
@@ -224,6 +209,7 @@ impl ControlFlowGraph {
         register
     }
 
+    /// # Panics
     pub fn put_x_in_register(&mut self, asmt_value: AssignmentValue) {
         let register = self.use_this_register.take().unwrap_or_else(|| self.new_register());
 
@@ -237,7 +223,7 @@ impl ControlFlowGraph {
             saved_store.0.push(basic_block_element);
             saved_store.1 = Some(register);
         } else {
-            self.basic_blocks[self.current_basic_block].push(basic_block_element);
+            self.current_basic_block().push(basic_block_element);
         }
         // used for storing the object base for MemberExpressions
         if let Some(arr) = self.store_assignments_into_this_array.last_mut() {
@@ -249,165 +235,20 @@ impl ControlFlowGraph {
         }
     }
 
-    // pub fn put_callee_with_arguments_in_register(
-    //     &mut self,
-    //     expression_ast_node_id: AstNodeId,
-    //     callee_node_index: Register,
-    //     call_type: CallType,
-    //     arguments: Vec<Register>,
-    // ) {
-    //     let call_expression = AssignmentValue::CalleeWithArguments(
-    //         CalleeWithArgumentsAssignmentValue {
-    //             id: expression_ast_node_id,
-    //             callee: callee_node_index,
-    //             arguments,
-    //             spreads: self
-    //                 .spread_indices
-    //                 .pop()
-    //                 .expect("expected there to be atleast one vec in the spread_indices"),
-    //             call_type,
-    //         }
-    //         .into(),
-    //     );
-
-    //     self.put_x_in_register(call_expression);
-    // }
-
-    // pub fn put_collection_in_register(
-    //     &mut self,
-    //     collection_ast_node_id: AstNodeId,
-    //     collection_type: CollectionType,
-    //     elements: Vec<Register>,
-    // ) {
-    //     let array = AssignmentValue::Collection(
-    //         CollectionAssignmentValue {
-    //             id: collection_ast_node_id,
-    //             elements,
-    //             spreads: self
-    //                 .spread_indices
-    //                 .pop()
-    //                 .expect("expected there to be a corresponding spread_indices for an array"),
-    //             collection_type,
-    //         }
-    //         .into(),
-    //     );
-
-    //     self.put_x_in_register(array);
-    // }
-
-    // pub fn put_constant_in_register(&mut self, constant_ast_node_id: AstNodeId) {
-    //     self.put_x_in_register(AssignmentValue::Constant(constant_ast_node_id));
-    // }
-
-    // pub fn put_reference_in_register(&mut self, constant_ast_node_id: AstNodeId) {
-    //     self.put_x_in_register(AssignmentValue::Reference(constant_ast_node_id));
-    // }
-
     pub fn put_throw(&mut self, throw_expr: Register) {
-        self.basic_blocks[self.current_basic_block].push(BasicBlockElement::Throw(throw_expr));
+        self.current_basic_block().push(BasicBlockElement::Throw(throw_expr));
     }
 
     pub fn put_unreachable(&mut self) {
         let current_node_ix = self.current_node_ix;
         let basic_block_with_unreachable_graph_ix = self.new_basic_block();
         self.add_edge(current_node_ix, basic_block_with_unreachable_graph_ix, EdgeType::Normal);
-        self.basic_blocks[self.current_basic_block].push(BasicBlockElement::Unreachable);
+        self.current_basic_block().push(BasicBlockElement::Unreachable);
     }
 
     pub fn put_undefined(&mut self) {
         self.put_x_in_register(AssignmentValue::ImplicitUndefined);
     }
-
-    // pub fn visit_computed_member_expression(
-    //     &mut self,
-    //     expr: &ComputedMemberExpression,
-    //     ast_node_id: AstNodeId,
-    // ) {
-    //     let basic_block = &mut self.basic_blocks[self.current_basic_block];
-    //     let removed = self.saved_stores.pop();
-    //     if let Some((saved_nodes, Some(last_register))) = removed {
-    //         if self.should_save_stores_for_patching {
-    //             let saved_store = self.saved_stores.last_mut().expect(
-    //                 "expected a saved_store if self.should_save_stores_for_patching is true",
-    //             );
-    //             saved_store.0.extend(saved_nodes);
-    //             saved_store.1 = Some(last_register);
-    //         } else {
-    //             basic_block.extend(saved_nodes);
-    //         }
-
-    //         let accessed_on = {
-    //             let asmts = self
-    //                 .store_assignments_into_this_array
-    //                 .pop()
-    //                 .expect("expected store_assignments_into_this_array to have an element");
-    //             debug_assert!(!asmts.is_empty(), "there should be at least the object base here");
-    //             asmts[asmts.len() - 1]
-    //         };
-
-    //         self.put_x_in_register(AssignmentValue::ObjectPropertyAccess(
-    //             ObjectPropertyAccessAssignmentValue {
-    //                 id: ast_node_id,
-    //                 access_by: ObjectPropertyAccessBy::Expression(last_register),
-    //                 optional: expr.optional,
-    //                 access_on: accessed_on,
-    //             }
-    //             .into(),
-    //         ));
-    //     } else {
-    //         panic!("No saved_node_indices in self.saved_stores")
-    //     }
-    // }
-
-    // pub fn visit_static_member_expression(
-    //     &mut self,
-    //     expr: &StaticMemberExpression,
-    //     ast_node_id: AstNodeId,
-    // ) {
-    //     let accessed_on = {
-    //         let asmts = self
-    //             .store_assignments_into_this_array
-    //             .pop()
-    //             .expect("expected store_assignments_into_this_array to have an element");
-    //         debug_assert!(!asmts.is_empty(), "there should be at least the object base here");
-    //         asmts[asmts.len() - 1]
-    //     };
-
-    //     self.put_x_in_register(AssignmentValue::ObjectPropertyAccess(
-    //         ObjectPropertyAccessAssignmentValue {
-    //             id: ast_node_id,
-    //             access_by: ObjectPropertyAccessBy::Property(expr.property.name.clone()), // todo: should we be cloning here?
-    //             optional: expr.optional,
-    //             access_on: accessed_on,
-    //         }
-    //         .into(),
-    //     ));
-    // }
-
-    // pub fn visit_private_field_expression(
-    //     &mut self,
-    //     expr: &PrivateFieldExpression,
-    //     ast_node_id: AstNodeId,
-    // ) {
-    //     let accessed_on = {
-    //         let asmts = self
-    //             .store_assignments_into_this_array
-    //             .pop()
-    //             .expect("expected store_assignments_into_this_array to have an element");
-    //         debug_assert!(!asmts.is_empty(), "there should be at least the object base here");
-    //         asmts[asmts.len() - 1]
-    //     };
-
-    //     self.put_x_in_register(AssignmentValue::ObjectPropertyAccess(
-    //         ObjectPropertyAccessAssignmentValue {
-    //             id: ast_node_id,
-    //             access_by: ObjectPropertyAccessBy::PrivateProperty(expr.field.name.clone()), // todo: should we be cloning here?
-    //             optional: expr.optional,
-    //             access_on: accessed_on,
-    //         }
-    //         .into(),
-    //     ));
-    // }
 
     #[must_use]
     pub fn preserve_expression_state(&mut self) -> PreservedExpressionState {
@@ -471,6 +312,7 @@ impl ControlFlowGraph {
         pss
     }
 
+    /// # Panics
     pub fn after_statement(
         &mut self,
         preserved_state: &PreservedStatementState,
