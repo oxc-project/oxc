@@ -21,8 +21,9 @@ impl<'a> Parser<'a> {
             _ => self.parse_binding_pattern_identifier(),
         }?;
         if self.ts_enabled() {
-            let optional = self.eat(Kind::Question);
-            let (type_annotation, definite) = self.parse_ts_variable_annotation()?;
+            let optional = if self.ctx.has_required() { false } else { self.eat(Kind::Question) };
+            let (type_annotation, definite) =
+                self.without_context(Context::Required, Parser::parse_ts_variable_annotation)?;
             Ok((self.ast.binding_pattern(kind, type_annotation, optional), definite))
         } else {
             Ok((self.ast.binding_pattern(kind, None, false), false))

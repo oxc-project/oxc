@@ -44,6 +44,9 @@ bitflags! {
         ///   * ambient variable declaration => `declare var $: any`
         ///   * ambient class declaration => `declare class C { foo(); } , etc..`
         const Ambient = 1 << 5;
+
+        /// Binding is not allowed as optional
+        const Required = 1 << 6;
     }
 }
 
@@ -82,6 +85,11 @@ impl Context {
     #[inline]
     pub(crate) fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
+    }
+
+    #[inline]
+    pub(crate) fn has_required(self) -> bool {
+        self.contains(Self::Required)
     }
 
     #[inline]

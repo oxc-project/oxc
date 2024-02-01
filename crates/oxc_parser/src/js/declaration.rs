@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use crate::{diagnostics, lexer::Kind, Parser, StatementContext};
+use crate::{context::Context, diagnostics, lexer::Kind, Parser, StatementContext};
 
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {
@@ -93,8 +93,7 @@ impl<'a> Parser<'a> {
         kind: VariableDeclarationKind,
     ) -> Result<VariableDeclarator<'a>> {
         let span = self.start_span();
-
-        let (id, definite) = self.parse_binding()?;
+        let (id, definite) = self.with_context(Context::Required, Parser::parse_binding)?;
 
         let init =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 10/10 (100.00%)
 Positive Passed: 10/10 (100.00%)
-Negative Passed: 5/5 (100.00%)
+Negative Passed: 6/6 (100.00%)
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
@@ -22,6 +22,21 @@ Negative Passed: 5/5 (100.00%)
    ·        ─
  3 │ }
    ╰────
+
+  × Missing initializer in const declaration
+   ╭─[fail/oxc-2253.js:1:1]
+ 1 │ // 1. BindingIdentifier
+ 2 │ const a? = "A"
+   ·       ─
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[fail/oxc-2253.js:1:1]
+ 1 │ // 1. BindingIdentifier
+ 2 │ const a? = "A"
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × Empty parenthesized expression
    ╭─[fail/oxc-232.js:1:1]
