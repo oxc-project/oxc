@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_return_await
 ---
+
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:12]
  2 │ async function foo() {
  3 │     return await bar();
    ·            ─────
@@ -12,7 +13,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:12]
  2 │ async function foo() {
  3 │     return await(bar());
    ·            ─────
@@ -21,7 +22,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:16]
  2 │ async function foo() {
  3 │     return (a, await bar());
    ·                ─────
@@ -30,7 +31,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:19]
  2 │ async function foo() {
  3 │     return (a, b, await bar());
    ·                   ─────
@@ -39,7 +40,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:18]
  2 │ async function foo() {
  3 │     return (a && await bar());
    ·                  ─────
@@ -48,7 +49,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:23]
  2 │ async function foo() {
  3 │     return (a && b && await bar());
    ·                       ─────
@@ -57,7 +58,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:18]
  2 │ async function foo() {
  3 │     return (a || await bar());
    ·                  ─────
@@ -66,7 +67,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:26]
  2 │ async function foo() {
  3 │     return (a, b, (c, d, await bar()));
    ·                          ─────
@@ -75,7 +76,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:25]
  2 │ async function foo() {
  3 │     return (a, b, (c && await bar()));
    ·                         ─────
@@ -84,7 +85,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:29]
  2 │ async function foo() {
  3 │     return (await baz(), b, await bar());
    ·                             ─────
@@ -93,7 +94,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:21]
  2 │ async function foo() {
  3 │     return (baz() ? await bar() : b);
    ·                     ─────
@@ -102,7 +103,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:25]
  2 │ async function foo() {
  3 │     return (baz() ? a : await bar());
    ·                         ─────
@@ -111,7 +112,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:25]
  2 │ async function foo() {
  3 │     return (baz() ? (a, await bar()) : b);
    ·                         ─────
@@ -120,7 +121,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:29]
  2 │ async function foo() {
  3 │     return (baz() ? a : (b, await bar()));
    ·                             ─────
@@ -129,7 +130,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:27]
  2 │ async function foo() {
  3 │     return (baz() ? (a && await bar()) : b);
    ·                           ─────
@@ -138,7 +139,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:31]
  2 │ async function foo() {
  3 │     return (baz() ? a : (b && await bar()));
    ·                               ─────
@@ -147,7 +148,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:22]
  1 │ 
  2 │ async () => { return await bar(); }
    ·                      ─────
@@ -155,7 +156,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:13]
  1 │ 
  2 │ async () => await bar()
    ·             ─────
@@ -163,7 +164,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:20]
  1 │ 
  2 │ async () => (a, b, await bar())
    ·                    ─────
@@ -171,7 +172,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:19]
  1 │ 
  2 │ async () => (a && await bar())
    ·                   ─────
@@ -179,7 +180,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:22]
  1 │ 
  2 │ async () => (baz() ? await bar() : b)
    ·                      ─────
@@ -187,7 +188,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:30]
  1 │ 
  2 │ async () => (baz() ? a : (b, await bar()))
    ·                              ─────
@@ -195,7 +196,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:1:1]
+   ╭─[no_return_await.tsx:2:32]
  1 │ 
  2 │ async () => (baz() ? a : (b && await bar()))
    ·                                ─────
@@ -203,7 +204,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:4:1]
+   ╭─[no_return_await.tsx:5:20]
  4 │         if (b) {
  5 │             return await bar();
    ·                    ─────
@@ -212,7 +213,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:4:1]
+   ╭─[no_return_await.tsx:5:20]
  4 │         if (b) {
  5 │             return await bar();
    ·                    ─────
@@ -221,7 +222,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:3:1]
+   ╭─[no_return_await.tsx:4:8]
  3 │ finally {
  4 │ return await bar();
    ·        ─────
@@ -230,7 +231,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:4:1]
+   ╭─[no_return_await.tsx:5:8]
  4 │ catch (e) {
  5 │ return await bar();
    ·        ─────
@@ -239,7 +240,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:3:1]
+   ╭─[no_return_await.tsx:4:8]
  3 │ async function foo() {
  4 │ return await bar();
    ·        ─────
@@ -248,7 +249,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:13]
  2 │ try {
  3 │ async () => await bar();
    ·             ─────
@@ -257,7 +258,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:6:1]
+   ╭─[no_return_await.tsx:7:9]
  6 │ catch (e) {
  7 │  return await bar();
    ·         ─────
@@ -266,7 +267,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:8]
  2 │ async function foo() {
  3 │ return await new Promise(resolve => {
    ·        ─────
@@ -275,7 +276,7 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:8]
  2 │ async () => {
  3 │ return await (
    ·        ─────
@@ -284,12 +285,11 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
-   ╭─[no_return_await.tsx:2:1]
+   ╭─[no_return_await.tsx:3:8]
  2 │ async function foo() {
  3 │ return await // Test
    ·        ─────
  4 │ 5;
    ╰────
   help: Remove redundant `await`.
-
 

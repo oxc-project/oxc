@@ -2,404 +2,354 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_target_blank
 ---
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="https://example.com/1"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel="" href="https://example.com/2"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel={0} href="https://example.com/3"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel={1} href="https://example.com/3"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel={false} href="https://example.com/4"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel={null} href="https://example.com/5"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel="noopenernoreferrer" href="https://example.com/6"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" rel="no referrer" href="https://example.com/7"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_BLANK" href="https://example.com/8"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/9"></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/10" rel={true}></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/11" rel={3}></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/12" rel={null}></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/13" rel={getRel()}></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/14" rel={"noopenernoreferrer"}></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target={"_blank"} href={"//example.com/15"} rel={"noopenernoreferrer"}></a>
    ·           ──────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target={"_blank"} href={"//example.com/16"} rel={"noopenernoreferrernoreferrernoreferrernoreferrernoreferrer"}></a>
    ·           ──────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com/17" rel></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href={ dynamicLink }></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target={'_blank'} href="//example.com/18"></a>
    ·           ──────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target={"_blank"} href="//example.com/19"></a>
    ·           ──────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security
-  │ risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:41]
  1 │ <a href="https://example.com/20" target="_blank" rel></a>
    ·                                         ────────
    ╰────
   help: add rel=`noreferrer` or rel=`noopener` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security
-  │ risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:41]
  1 │ <a href="https://example.com/20" target="_blank"></a>
    ·                                         ────────
    ╰────
   help: add rel=`noreferrer` or rel=`noopener` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href={ dynamicLink }></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:4]
  1 │ <a {...someObject}></a>
    ·    ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:4]
  1 │ <a {...someObject} target="_blank"></a>
    ·    ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:18]
  1 │ <a href="foobar" {...someObject} target="_blank"></a>
    ·                  ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:51]
  1 │ <a href="foobar" target="_blank" rel="noreferrer" {...someObject}></a>
    ·                                                   ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:34]
  1 │ <a href="foobar" target="_blank" {...someObject}></a>
    ·                                  ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:14]
  1 │ <Link target="_blank" href={ dynamicLink }></Link>
    ·              ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:14]
  1 │ <Link target="_blank" to={ dynamicLink }></Link>
    ·              ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:21]
  1 │ <a href="some-link" {...otherProps} target="some-non-blank-target"></a>
    ·                     ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:52]
  1 │ <a href="some-link" target="some-non-blank-target" {...otherProps}></a>
    ·                                                    ───────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com" rel></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com" rel></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:11]
  1 │ <a target="_blank" href="//example.com" rel></a>
    ·           ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:57]
  1 │ <form method="POST" action="https://example.com" target="_blank"></form>
    ·                                                         ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:64]
  1 │ <form method="POST" action="https://example.com" rel="" target="_blank"></form>
    ·                                                                ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:82]
  1 │ <form method="POST" action="https://example.com" rel="noopenernoreferrer" target="_blank"></form>
    ·                                                                                  ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:82]
  1 │ <form method="POST" action="https://example.com" rel="noopenernoreferrer" target="_blank"></form>
    ·                                                                                  ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? "undefined" : "undefined"} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? "noopener" : undefined} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? "undefined" : "noopener"} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? undefined : "noopener noreferrer"} />
    ·                       ───────────────────────────────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? 3 : "noopener noreferrer"} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? "noopener noreferrer" : "3"} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security
-  │ risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <a href={href} target="_blank" rel={isExternal ? "noopener" : "2"} />
    ·                       ────────
    ╰────
   help: add rel=`noreferrer` or rel=`noopener` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security
-  │ risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:30]
  1 │ <form action={action} target="_blank" />
    ·                              ────────
    ╰────
   help: add rel=`noreferrer` or rel=`noopener` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/
-  │ rel-noopener/#recommendations
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations
+   ╭─[jsx_no_target_blank.tsx:1:30]
  1 │ <form action={action} target="_blank" />
    ·                              ────────
    ╰────
   help: add rel=`noreferrer` to the element
 
-  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread
-  │ attribute prop.
-   ╭─[jsx_no_target_blank.tsx:1:1]
+  ⚠ eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.
+   ╭─[jsx_no_target_blank.tsx:1:23]
  1 │ <form action={action} {...spread} />
    ·                       ───────────
    ╰────
   help: add rel=`noreferrer` to the element
-
 

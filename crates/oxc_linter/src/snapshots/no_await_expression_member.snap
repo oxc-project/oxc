@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_await_expression_member
 ---
+
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
    ╭─[no_await_expression_member.tsx:1:1]
  1 │ (await promise)[0]
@@ -17,164 +18,163 @@ expression: no_await_expression_member
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:13]
  1 │ const foo = (await promise).bar()
    ·             ───────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:13]
  1 │ const foo = (await promise).bar?.()
    ·             ───────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:13]
  1 │ const foo = (await promise)?.bar()
    ·             ────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:22]
  1 │ const firstElement = (await getArray())[0]
    ·                      ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:23]
  1 │ const secondElement = (await getArray())[1]
    ·                       ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:22]
  1 │ const thirdElement = (await getArray())[2]
    ·                      ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:30]
  1 │ const optionalFirstElement = (await getArray())?.[0]
    ·                              ───────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:34]
  1 │ const {propertyOfFirstElement} = (await getArray())[0]
    ·                                  ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:38]
  1 │ const [firstElementOfFirstElement] = (await getArray())[0]
    ·                                      ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:25]
  1 │ let foo, firstElement = (await getArray())[0]
    ·                         ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:20]
  1 │ var firstElement = (await getArray())[0], bar
    ·                    ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:18]
  1 │ const property = (await getObject()).property
    ·                  ────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:17]
  1 │ const renamed = (await getObject()).property
    ·                 ────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:18]
  1 │ const property = (await getObject())[property]
    ·                  ─────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:18]
  1 │ const property = (await getObject())?.property
    ·                  ─────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:30]
  1 │ const {propertyOfProperty} = (await getObject()).property
    ·                              ────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:30]
  1 │ const {propertyOfProperty} = (await getObject()).propertyOfProperty
    ·                              ──────────────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:34]
  1 │ const [firstElementOfProperty] = (await getObject()).property
    ·                                  ────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:34]
  1 │ const [firstElementOfProperty] = (await getObject()).firstElementOfProperty
    ·                                  ──────────────────────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:16]
  1 │ firstElement = (await getArray())[0]
    ·                ─────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:12]
  1 │ property = (await getArray()).property
    ·            ───────────────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:19]
  1 │ const foo: Type = (await promise)[0]
    ·                   ──────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.tsx:1:23]
  1 │ const foo: Type | A = (await promise).foo
    ·                       ───────────────────
    ╰────
   help: When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.
-
 

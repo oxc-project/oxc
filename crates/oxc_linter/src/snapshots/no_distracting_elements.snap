@@ -2,60 +2,60 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_distracting_elements
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <marquee />
    ·  ───────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <marquee {...props} />
    ·  ───────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <marquee lang={undefined} />
    ·  ───────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <blink />
    ·  ─────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <blink {...props} />
    ·  ─────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <blink foo={undefined} />
    ·  ─────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <Blink />
    ·  ─────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
 
   ⚠ eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.
-   ╭─[no_distracting_elements.tsx:1:1]
+   ╭─[no_distracting_elements.tsx:1:2]
  1 │ <Marquee />
    ·  ───────
    ╰────
   help: Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.
-
 

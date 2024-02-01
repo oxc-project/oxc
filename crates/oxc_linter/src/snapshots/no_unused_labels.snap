@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unused_labels
 ---
+
   ⚠ eslint(no-unused-labels): Disallow unused labels
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: var foo = 0;
@@ -38,7 +39,7 @@ expression: no_unused_labels
   help: 'A:' is defined but never used.
 
   ⚠ eslint(no-unused-labels): Disallow unused labels
-   ╭─[no_unused_labels.tsx:1:1]
+   ╭─[no_unused_labels.tsx:1:35]
  1 │ A: for (var i = 0; i < 10; ++i) { B: break A; }
    ·                                   ─
    ╰────
@@ -64,5 +65,4 @@ expression: no_unused_labels
    · ─
    ╰────
   help: 'A:' is defined but never used.
-
 

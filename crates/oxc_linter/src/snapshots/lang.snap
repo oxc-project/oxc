@@ -2,39 +2,39 @@
 source: crates/oxc_linter/src/tester.rs
 expression: lang
 ---
+
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
-   ╭─[lang.tsx:1:1]
+   ╭─[lang.tsx:1:7]
  1 │ <html lang='foo' />
    ·       ──────────
    ╰────
   help: Set a valid value for lang attribute.
 
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
-   ╭─[lang.tsx:1:1]
+   ╭─[lang.tsx:1:7]
  1 │ <html lang='zz-LL' />
    ·       ────────────
    ╰────
   help: Set a valid value for lang attribute.
 
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
-   ╭─[lang.tsx:1:1]
+   ╭─[lang.tsx:1:7]
  1 │ <html lang={undefined} />
    ·       ────────────────
    ╰────
   help: Set a valid value for lang attribute.
 
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
-   ╭─[lang.tsx:1:1]
+   ╭─[lang.tsx:1:6]
  1 │ <Foo lang={undefined} />
    ·      ────────────────
    ╰────
   help: Set a valid value for lang attribute.
 
   ⚠ eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.
-   ╭─[lang.tsx:1:1]
+   ╭─[lang.tsx:1:16]
  1 │ <Box as='html' lang='foo' />
    ·                ──────────
    ╰────
   help: Set a valid value for lang attribute.
-
 

@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_identical_title
 ---
+
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:3:1]
+   ╭─[no_identical_title.tsx:4:20]
  3 │                 it('works', () => {});
  4 │                 it('works', () => {});
    ·                    ───────
@@ -12,7 +13,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:18]
  2 │               it('works', () => {});
  3 │               it('works', () => {});
    ·                  ───────
@@ -21,7 +22,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:20]
  2 │               test.only('this', () => {});
  3 │               test('this', () => {});
    ·                    ──────
@@ -30,7 +31,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:20]
  2 │               xtest('this', () => {});
  3 │               test('this', () => {});
    ·                    ──────
@@ -39,7 +40,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:25]
  2 │               test.only('this', () => {});
  3 │               test.only('this', () => {});
    ·                         ──────
@@ -48,7 +49,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:31]
  2 │               test.concurrent('this', () => {});
  3 │               test.concurrent('this', () => {});
    ·                               ──────
@@ -57,7 +58,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:31]
  2 │               test.only('this', () => {});
  3 │               test.concurrent('this', () => {});
    ·                               ──────
@@ -66,7 +67,7 @@ expression: no_identical_title
   help: Change the title of test.
 
   ⚠ eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:24]
  2 │               describe('foo', () => {});
  3 │               describe('foo', () => {});
    ·                        ─────
@@ -75,7 +76,7 @@ expression: no_identical_title
   help: Change the title of describe block.
 
   ⚠ eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:1:1]
+   ╭─[no_identical_title.tsx:2:24]
  1 │ 
  2 │               describe('foo', () => {});
    ·                        ─────
@@ -84,7 +85,7 @@ expression: no_identical_title
   help: Change the title of describe block.
 
   ⚠ eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:2:1]
+   ╭─[no_identical_title.tsx:3:24]
  2 │               fdescribe('foo', () => {});
  3 │               describe('foo', () => {});
    ·                        ─────
@@ -93,7 +94,7 @@ expression: no_identical_title
   help: Change the title of describe block.
 
   ⚠ eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:4:1]
+   ╭─[no_identical_title.tsx:5:24]
  4 │               });
  5 │               describe('foo', () => {});
    ·                        ─────
@@ -102,12 +103,11 @@ expression: no_identical_title
   help: Change the title of describe block.
 
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
-   ╭─[no_identical_title.tsx:3:1]
+   ╭─[no_identical_title.tsx:4:20]
  3 │                 it(`catches backticks with the same title`, () => {});
  4 │                 it(`catches backticks with the same title`, () => {});
    ·                    ───────────────────────────────────────
  5 │               });
    ╰────
   help: Change the title of test.
-
 

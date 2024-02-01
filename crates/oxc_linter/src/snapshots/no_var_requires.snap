@@ -2,85 +2,86 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_var_requires
 ---
+
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:11]
  1 │ var foo = require('foo');
    ·           ──────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:13]
  1 │ const foo = require('foo');
    ·             ──────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:11]
  1 │ let foo = require('foo');
    ·           ──────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:17]
  1 │ let foo = trick(require('foo'));
    ·                 ──────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:11]
  1 │ var foo = require?.('foo');
    ·           ────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:13]
  1 │ const foo = require?.('foo');
    ·             ────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:11]
  1 │ let foo = require?.('foo');
    ·           ────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:17]
  1 │ let foo = trick(require?.('foo'));
    ·                 ────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:19]
  1 │ let foo = trick?.(require('foo'));
    ·                   ──────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:13]
  1 │ const foo = require('./foo.json') as Foo;
    ·             ─────────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:1:18]
  1 │ const foo: Foo = require('./foo.json').default;
    ·                  ─────────────────────
    ╰────
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:1:1]
+   ╭─[no_var_requires.tsx:2:51]
  1 │ 
  2 │             const configValidator = new Validator(require('./a.json'));
    ·                                                   ───────────────────
@@ -89,12 +90,11 @@ expression: no_var_requires
   help: Use ES6 style imports or import instead.
 
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
-   ╭─[no_var_requires.tsx:2:1]
+   ╭─[no_var_requires.tsx:3:39]
  2 │             const configValidator = new Validator(require('./a.json'));
  3 │             configValidator.addSchema(require('./a.json'));
    ·                                       ───────────────────
  4 │         
    ╰────
   help: Use ES6 style imports or import instead.
-
 

@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_typos
 ---
+
   ⚠ eslint-plugin-next(no-typos): getStaticpaths may be a typo. Did you mean getStaticPaths?
-   ╭─[no_typos.tsx:4:1]
+   ╭─[no_typos.tsx:5:30]
  4 │                 }
  5 │                 export const getStaticpaths = async () => {};
    ·                              ──────────────
@@ -12,7 +13,7 @@ expression: no_typos
   help: Prevent common typos in Next.js's data fetching functions
 
   ⚠ eslint-plugin-next(no-typos): getStaticPathss may be a typo. Did you mean getStaticPaths?
-   ╭─[no_typos.tsx:4:1]
+   ╭─[no_typos.tsx:5:39]
  4 │                 }
  5 │                 export async function getStaticPathss(){};
    ·                                       ───────────────
@@ -21,7 +22,7 @@ expression: no_typos
   help: Prevent common typos in Next.js's data fetching functions
 
   ⚠ eslint-plugin-next(no-typos): getStaticPropss may be a typo. Did you mean getStaticProps?
-   ╭─[no_typos.tsx:5:1]
+   ╭─[no_typos.tsx:6:39]
  5 │                 export async function getStaticPathss(){};
  6 │                 export async function getStaticPropss(){};
    ·                                       ───────────────
@@ -30,7 +31,7 @@ expression: no_typos
   help: Prevent common typos in Next.js's data fetching functions
 
   ⚠ eslint-plugin-next(no-typos): getServurSideProps may be a typo. Did you mean getServerSideProps?
-   ╭─[no_typos.tsx:4:1]
+   ╭─[no_typos.tsx:5:39]
  4 │                 }
  5 │                 export async function getServurSideProps(){};
    ·                                       ──────────────────
@@ -39,12 +40,11 @@ expression: no_typos
   help: Prevent common typos in Next.js's data fetching functions
 
   ⚠ eslint-plugin-next(no-typos): getServurSideProps may be a typo. Did you mean getServerSideProps?
-   ╭─[no_typos.tsx:4:1]
+   ╭─[no_typos.tsx:5:30]
  4 │                 }
  5 │                 export const getServurSideProps = () => {};
    ·                              ──────────────────
  6 │             
    ╰────
   help: Prevent common typos in Next.js's data fetching functions
-
 

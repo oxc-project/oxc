@@ -2,81 +2,81 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_access_key
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accesskey="h" />
    ·      ─────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey="h" />
    ·      ─────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey="h" {...props} />
    ·      ─────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div acCesSKeY="y" />
    ·      ─────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={"y"} />
    ·      ───────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={`${y}`} />
    ·      ──────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={`${undefined}y${undefined}`} />
    ·      ───────────────────────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={`This is ${bad}`} />
    ·      ────────────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={accessKey} />
    ·      ─────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={`${undefined}`} />
    ·      ──────────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
 
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
-   ╭─[no_access_key.tsx:1:1]
+   ╭─[no_access_key.tsx:1:6]
  1 │ <div accessKey={`${undefined}${undefined}`} />
    ·      ──────────────────────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
-
 

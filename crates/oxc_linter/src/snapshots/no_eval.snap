@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_eval
 ---
+
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
  1 │ eval(foo)
@@ -15,111 +16,110 @@ expression: no_eval
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:22]
  1 │ function foo(eval) { eval('foo') }
    ·                      ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:5]
  1 │ (0, eval)('foo')
    ·     ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:12]
  1 │ (0, window.eval)('foo')
    ·            ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:12]
  1 │ (0, window['eval'])('foo')
    ·            ──────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:8]
  1 │ window.eval('foo')
    ·        ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:15]
  1 │ window.window.eval('foo')
    ·               ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:15]
  1 │ window.window['eval']('foo')
    ·               ──────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:8]
  1 │ global.eval('foo')
    ·        ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:15]
  1 │ global.global.eval('foo')
    ·               ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:15]
  1 │ global.global[`eval`]('foo')
    ·               ──────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:23]
  1 │ var EVAL = globalThis.eval; EVAL('foo')
    ·                       ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:12]
  1 │ globalThis.eval('foo')
    ·            ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:23]
  1 │ globalThis.globalThis.eval('foo')
    ·                       ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:23]
  1 │ globalThis.globalThis['eval']('foo')
    ·                       ──────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:16]
  1 │ (0, globalThis.eval)('foo')
    ·                ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:16]
  1 │ (0, globalThis['eval'])('foo')
    ·                ──────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:9]
  1 │ window?.eval('foo')
    ·         ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
-   ╭─[no_eval.tsx:1:1]
+   ╭─[no_eval.tsx:1:10]
  1 │ (window?.eval)('foo')
    ·          ────
    ╰────
-
 

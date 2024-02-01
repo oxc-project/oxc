@@ -2,46 +2,46 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_set_size
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:21]
  1 │ [...new Set(array)].length
    ·                     ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:22]
  1 │ [...new Set(array),].length
    ·                      ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:27]
  1 │ [...(( new Set(array) ))].length
    ·                           ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:27]
  1 │ (( [...new Set(array)] )).length
    ·                           ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:34]
  1 │ [/* comment */...new Set(array)].length
    ·                                  ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:35]
  1 │ const foo = new Set([]); [...foo].length;
    ·                                   ──────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:1]
+   ╭─[prefer_set_size.tsx:1:35]
  1 │ [...new /* comment */ Set(array)].length
    ·                                   ──────
    ╰────
-
 

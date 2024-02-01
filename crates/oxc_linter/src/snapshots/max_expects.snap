@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: max_expects
 ---
+
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -12,7 +13,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -21,7 +22,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -30,7 +31,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -39,7 +40,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -48,7 +49,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-    ╭─[max_expects.tsx:15:1]
+    ╭─[max_expects.tsx:16:21]
  15 │                     expect(true).toBeDefined();
  16 │                     expect(true).toBeDefined();
     ·                     ──────
@@ -57,7 +58,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-    ╭─[max_expects.tsx:8:1]
+    ╭─[max_expects.tsx:9:25]
   8 │                         expect(true).toBeDefined();
   9 │                         expect(true).toBeDefined();
     ·                         ──────
@@ -66,7 +67,7 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:1]
+   ╭─[max_expects.tsx:8:21]
  7 │                     expect(true).toBeDefined();
  8 │                     expect(true).toBeDefined();
    ·                     ──────
@@ -75,12 +76,11 @@ expression: max_expects
   help: Too many assertion calls (6) - maximum allowed is 5
 
   ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:3:1]
+   ╭─[max_expects.tsx:4:21]
  3 │                     expect(true).toBeDefined();
  4 │                     expect(true).toBeDefined();
    ·                     ──────
  5 │                 });
    ╰────
   help: Too many assertion calls (2) - maximum allowed is 1
-
 

@@ -2,340 +2,340 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_regexp_test
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:34]
  1 │ const re = /a/; const bar = !foo.match(re)
    ·                                  ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:41]
  1 │ const re = /a/; const bar = Boolean(foo.match(re))
    ·                                         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:25]
  1 │ const re = /a/; if (foo.match(re)) {}
    ·                         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:33]
  1 │ const re = /a/; const bar = foo.match(re) ? 1 : 2
    ·                                 ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:28]
  1 │ const re = /a/; while (foo.match(re)) foo = foo.slice(1);
    ·                            ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:52]
  1 │ const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));
    ·                                                    ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:28]
  1 │ const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);
    ·                            ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:33]
  1 │ const re = /a/; const bar = !re.exec(foo)
    ·                                 ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:40]
  1 │ const re = /a/; const bar = Boolean(re.exec(foo))
    ·                                        ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:24]
  1 │ const re = /a/; if (re.exec(foo)) {}
    ·                        ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:32]
  1 │ const re = /a/; const bar = re.exec(foo) ? 1 : 2
    ·                                ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = /a/; while (re.exec(foo)) foo = foo.slice(1);
    ·                           ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:51]
  1 │ const re = /a/; do {foo = foo.slice(1)} while (re.exec(foo));
    ·                                                   ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = /a/; for (; re.exec(foo); ) foo = foo.slice(1);
    ·                           ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:30]
  1 │ const re = /a/; if ((0, foo).match(re)) {}
    ·                              ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:30]
  1 │ const re = /a/; if ((0, foo).match((re))) {}
    ·                              ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = /a/; if ((foo).match(re)) {}
    ·                           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = /a/; if ((foo).match((re))) {}
    ·                           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(/re/)) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:25]
  1 │ const re = /a/; if (foo.match(re)) {}
    ·                         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:33]
  1 │ const bar = {bar: /a/}; if (foo.match(bar.baz)) {}
    ·                                 ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(bar.baz())) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(new RegExp("re", "g"))) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(new SomeRegExp())) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(new SomeRegExp)) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(bar?.baz)) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(bar?.baz())) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(bar || baz)) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if ((foo).match(/re/)) {}
    ·           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if ((foo).match(new SomeRegExp)) {}
    ·           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if ((foo).match(bar?.baz)) {}
    ·           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if ((foo).match(bar?.baz())) {}
    ·           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:47]
  1 │ const bar = false; const baz = /a/; if ((foo).match(bar || baz)) {}
    ·                                               ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:27]
  1 │ const re = [/a/]; if (foo.match([re][0])) {}
    ·                           ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(unknown)) {}
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(/a/g));
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(/a/y));
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(/a/gy));
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(/a/ig));
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:9]
  1 │ if (foo.match(new RegExp("a", "g")));
    ·         ─────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:10]
  1 │ if (/a/g.exec(foo));
    ·          ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:10]
  1 │ if (/a/y.exec(foo));
    ·          ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if (/a/gy.exec(foo));
    ·           ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:11]
  1 │ if (/a/yi.exec(foo));
    ·           ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:26]
  1 │ if (new RegExp("a", "g").exec(foo));
    ·                          ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:26]
  1 │ if (new RegExp("a", "y").exec(foo));
    ·                          ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:7]
  1 │ !/a/u.exec(foo)
    ·       ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
 
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
-   ╭─[prefer_regexp_test.tsx:1:1]
+   ╭─[prefer_regexp_test.tsx:1:7]
  1 │ !/a/v.exec(foo)
    ·       ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
-
 

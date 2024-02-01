@@ -2,344 +2,345 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_number_properties
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = NaN;
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:18]
  1 │ if (Number.isNaN(NaN)) {}
    ·                  ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:20]
  1 │ if (Object.is(foo, NaN)) {}
    ·                    ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:17]
  1 │ const foo = bar[NaN];
    ·                 ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const foo = {NaN};
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:19]
  1 │ const foo = {NaN: NaN};
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const {foo = NaN} = {};
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = NaN.toString();
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ class Foo3 {[NaN] = 1}
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ class Foo2 {[NaN] = 1}
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:13]
  1 │ class Foo {[NaN] = 1}
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = {[NaN]: 1}
    ·               ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = {[NaN]() {}}
    ·               ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:5]
  1 │ foo[NaN] = 1;
    ·     ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:11]
  1 │ class A {[NaN](){}}
    ·           ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:9]
  1 │ foo = {[NaN]: 1}
    ·         ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = Infinity;
    ·             ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:18]
  1 │ if (Number.isNaN(Infinity)) {}
    ·                  ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:20]
  1 │ if (Object.is(foo, Infinity)) {}
    ·                    ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:17]
  1 │ const foo = bar[Infinity];
    ·                 ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const foo = {Infinity};
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:24]
  1 │ const foo = {Infinity: Infinity};
    ·                        ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = {[Infinity]: -Infinity};
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:27]
  1 │ const foo = {[Infinity]: -Infinity};
    ·                           ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:16]
  1 │ const foo = {[-Infinity]: Infinity};
    ·                ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:27]
  1 │ const foo = {[-Infinity]: Infinity};
    ·                           ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:25]
  1 │ const foo = {Infinity: -Infinity};
    ·                         ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const {foo = Infinity} = {};
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const {foo = -Infinity} = {};
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = Infinity.toString();
    ·             ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const foo = -Infinity.toString();
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = (-Infinity).toString();
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const foo = +Infinity;
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:15]
  1 │ const foo = +-Infinity;
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:14]
  1 │ const foo = -Infinity;
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:16]
  1 │ const foo = -(-Infinity);
    ·                ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:17]
  1 │ const foo = 1 - Infinity;
    ·                 ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:18]
  1 │ const foo = 1 - -Infinity;
    ·                  ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:62]
  1 │ const isPositiveZero = value => value === 0 && 1 / value === Infinity;
    ·                                                              ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:63]
  1 │ const isNegativeZero = value => value === 0 && 1 / value === -Infinity;
    ·                                                               ────────
    ╰────
   help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:12]
  1 │ const {a = NaN} = {};
    ·            ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:9]
  1 │ const {[NaN]: a = NaN} = {};
    ·         ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:19]
  1 │ const {[NaN]: a = NaN} = {};
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:12]
  1 │ const [a = NaN] = [];
    ·            ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:19]
  1 │ function foo({a = NaN}) {}
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:16]
  1 │ function foo({[NaN]: a = NaN}) {}
    ·                ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:26]
  1 │ function foo({[NaN]: a = NaN}) {}
    ·                          ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:19]
  1 │ function foo([a = NaN]) {}
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:24]
  1 │ function foo() {return-Infinity}
    ·                        ────────
    ╰────
@@ -409,10 +410,9 @@ expression: prefer_number_properties
   help: Replace it with `Number.NaN`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
-   ╭─[prefer_number_properties.tsx:1:1]
+   ╭─[prefer_number_properties.tsx:1:2]
  1 │ -globalThis.Infinity
    ·  ───────────────────
    ╰────
   help: Replace it with `Number.Infinity`
-
 

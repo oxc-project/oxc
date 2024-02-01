@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: next_script_for_ga
 ---
+
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
-   ╭─[next_script_for_ga.tsx:6:1]
+   ╭─[next_script_for_ga.tsx:7:30]
  6 │                             <h1>Hello title</h1>
  7 │                             <script async src='https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}' />
    ·                              ──────
@@ -12,7 +13,7 @@ expression: next_script_for_ga
   help: See https://nextjs.org/docs/messages/next-script-for-ga
 
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
-   ╭─[next_script_for_ga.tsx:7:1]
+   ╭─[next_script_for_ga.tsx:8:30]
  7 │                             {/* Google Tag Manager - Global base code */}
  8 │                             <script
    ·                              ──────
@@ -21,7 +22,7 @@ expression: next_script_for_ga
   help: See https://nextjs.org/docs/messages/next-script-for-ga
 
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
-   ╭─[next_script_for_ga.tsx:6:1]
+   ╭─[next_script_for_ga.tsx:7:30]
  6 │                             <h1>Hello title</h1>
  7 │                             <script dangerouslySetInnerHTML={{
    ·                              ──────
@@ -30,7 +31,7 @@ expression: next_script_for_ga
   help: See https://nextjs.org/docs/messages/next-script-for-ga
 
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
-    ╭─[next_script_for_ga.tsx:13:1]
+    ╭─[next_script_for_ga.tsx:14:30]
  13 │                               }}/>
  14 │                             <script async src='https://www.google-analytics.com/analytics.js'></script>
     ·                              ──────
@@ -39,12 +40,11 @@ expression: next_script_for_ga
   help: See https://nextjs.org/docs/messages/next-script-for-ga
 
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
-    ╭─[next_script_for_ga.tsx:17:1]
+    ╭─[next_script_for_ga.tsx:18:30]
  17 │                             <script dangerouslySetInnerHTML={this.createGoogleAnalyticsMarkup()} />
  18 │                             <script async src='https://www.google-analytics.com/analytics.js'></script>
     ·                              ──────
  19 │                           </div>
     ╰────
   help: See https://nextjs.org/docs/messages/next-script-for-ga
-
 

@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unwanted_polyfillio
 ---
+
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. WeakSet, Promise, Promise.prototype.finally, es2015, es5, es6 are already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:7:1]
+   ╭─[no_unwanted_polyfillio.tsx:8:35]
  7 │                           <h1>Hello title</h1>
  8 │                           <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
    ·                                   ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -12,7 +13,7 @@ expression: no_unwanted_polyfillio
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
 
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Array.prototype.copyWithin is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:6:1]
+   ╭─[no_unwanted_polyfillio.tsx:7:35]
  6 │                           <h1>Hello title</h1>
  7 │                           <script src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
    ·                                   ────────────────────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ expression: no_unwanted_polyfillio
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
 
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Array.prototype.copyWithin is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:6:1]
+   ╭─[no_unwanted_polyfillio.tsx:7:39]
  6 │                           <Component {...pageProps} />
  7 │                           <NextScript src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin' />
    ·                                       ────────────────────────────────────────────────────────────────────────────────
@@ -30,12 +31,11 @@ expression: no_unwanted_polyfillio
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
 
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. Object.fromEntries is already shipped with Next.js.
-   ╭─[no_unwanted_polyfillio.tsx:7:1]
+   ╭─[no_unwanted_polyfillio.tsx:8:37]
  7 │                             <h1>Hello title</h1>
  8 │                             <script src='https://polyfill.io/v3/polyfill.min.js?features=Object.fromEntries'></script>
    ·                                     ────────────────────────────────────────────────────────────────────────
  9 │                           </div>
    ╰────
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
-
 

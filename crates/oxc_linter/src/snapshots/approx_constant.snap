@@ -2,67 +2,67 @@
 source: crates/oxc_linter/src/tester.rs
 expression: approx_constant
 ---
+
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:29]
  1 │ const getArea = (radius) => 3.141 * radius * radius;
    ·                             ─────
    ╰────
   help: Use `Math.PI` instead
 
   ⚠ oxc(approx-constant): Approximate value of `E` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:9]
  1 │ let e = 2.718281
    ·         ────────
    ╰────
   help: Use `Math.E` instead
 
   ⚠ oxc(approx-constant): Approximate value of `LN10` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:12]
  1 │ let ln10 = 2.302585
    ·            ────────
    ╰────
   help: Use `Math.LN10` instead
 
   ⚠ oxc(approx-constant): Approximate value of `LN2` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:11]
  1 │ let ln2 = 0.693147
    ·           ────────
    ╰────
   help: Use `Math.LN2` instead
 
   ⚠ oxc(approx-constant): Approximate value of `LOG10E` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:14]
  1 │ let log10e = 0.434294
    ·              ────────
    ╰────
   help: Use `Math.LOG10E` instead
 
   ⚠ oxc(approx-constant): Approximate value of `LOG2E` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:13]
  1 │ let log2e = 1.442695
    ·             ────────
    ╰────
   help: Use `Math.LOG2E` instead
 
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:10]
  1 │ let pi = 3.141592
    ·          ────────
    ╰────
   help: Use `Math.PI` instead
 
   ⚠ oxc(approx-constant): Approximate value of `SQRT1_2` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:14]
  1 │ let sqrt12 = 0.707106
    ·              ────────
    ╰────
   help: Use `Math.SQRT1_2` instead
 
   ⚠ oxc(approx-constant): Approximate value of `SQRT2` found.
-   ╭─[approx_constant.tsx:1:1]
+   ╭─[approx_constant.tsx:1:13]
  1 │ let sqrt2 = 1.414213
    ·             ────────
    ╰────
   help: Use `Math.SQRT2` instead
-
 

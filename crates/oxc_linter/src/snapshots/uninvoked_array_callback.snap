@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: uninvoked_array_callback
 ---
+
   ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
-   ╭─[uninvoked_array_callback.tsx:1:1]
+   ╭─[uninvoked_array_callback.tsx:1:14]
  1 │ const list = new Array(5).map(_ => {})
    ·              ──────┬───── ─┬─
    ·                    │       ╰── this callback will not be invoked
@@ -12,7 +13,7 @@ expression: uninvoked_array_callback
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
 
   ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
-   ╭─[uninvoked_array_callback.tsx:1:1]
+   ╭─[uninvoked_array_callback.tsx:1:14]
  1 │ const list = new Array(5).filter(function(_) {})
    ·              ──────┬───── ───┬──
    ·                    │         ╰── this callback will not be invoked
@@ -21,12 +22,11 @@ expression: uninvoked_array_callback
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
 
   ⚠ deepscan(uninvoked-array-callback): Uninvoked array callback
-   ╭─[uninvoked_array_callback.tsx:1:1]
+   ╭─[uninvoked_array_callback.tsx:1:14]
  1 │ const list = new Array(5)['every'](function(_) {})
    ·              ──────┬───── ───┬───
    ·                    │         ╰── this callback will not be invoked
    ·                    ╰── because this is an array with only empty slots
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
-
 

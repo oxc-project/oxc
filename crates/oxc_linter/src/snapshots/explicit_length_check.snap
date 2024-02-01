@@ -2,72 +2,72 @@
 source: crates/oxc_linter/src/tester.rs
 expression: explicit_length_check
 ---
+
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()
    ·           ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || unknown
    ·           ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length === 0` when checking length is zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:5]
  1 │ bar(!foo.length || foo.length)
    ·     ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:20]
  1 │ bar(!foo.length || foo.length)
    ·                    ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length !== 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()
    ·           ──────────
    ╰────
   help: Replace `.length` with `.length !== 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()
    ·           ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()
    ·           ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:7]
  1 │ () => foo.length && bar()
    ·       ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:7]
  1 │ alert(foo.length && bar())
    ·       ──────────
    ╰────
   help: Replace `.length` with `.length > 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
-   ╭─[explicit_length_check.tsx:1:1]
+   ╭─[explicit_length_check.tsx:1:11]
  1 │ let foo = arr.length ? 'non-empty' : 'empty'
    ·           ──────────
    ╰────
-
 

@@ -2,32 +2,32 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_named_as_default
 ---
+
   ⚠ eslint-plugin-import(no-named-as-default): Module "./bar" has named export "foo". Using default import as "foo" can be confusing
-   ╭─[index.js:1:1]
+   ╭─[index.js:1:8]
  1 │ import foo from "./bar";
    ·        ───
    ╰────
   help: Use another name for default import to avoid confusion
 
   ⚠ eslint-plugin-import(no-named-as-default): Module "./bar" has named export "foo". Using default import as "foo" can be confusing
-   ╭─[index.js:1:1]
+   ╭─[index.js:1:8]
  1 │ import foo, { foo as bar } from "./bar";
    ·        ───
    ╰────
   help: Use another name for default import to avoid confusion
 
   ⚠ eslint-plugin-import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo". Using default import as "foo" can be confusing
-   ╭─[index.js:1:1]
+   ╭─[index.js:1:8]
  1 │ import foo from "./export-default-string-and-named"
    ·        ───
    ╰────
   help: Use another name for default import to avoid confusion
 
   ⚠ eslint-plugin-import(no-named-as-default): Module "./export-default-string-and-named" has named export "foo". Using default import as "foo" can be confusing
-   ╭─[index.js:1:1]
+   ╭─[index.js:1:8]
  1 │ import foo, { foo as bar } from "./export-default-string-and-named"
    ·        ───
    ╰────
   help: Use another name for default import to avoid confusion
-
 

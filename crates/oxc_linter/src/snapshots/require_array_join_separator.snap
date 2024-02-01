@@ -2,53 +2,53 @@
 source: crates/oxc_linter/src/tester.rs
 expression: require_array_join_separator
 ---
+
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:9]
  1 │ foo.join()
    ·         ──
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:13]
  1 │ [].join.call(foo)
    ·             ─────
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:13]
  1 │ [].join.call(foo,)
    ·             ──────
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:13]
  1 │ [].join.call(foo , );
    ·             ────────
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:26]
  1 │ Array.prototype.join.call(foo)
    ·                          ─────
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:26]
  1 │ Array.prototype.join.call(foo, )
    ·                          ───────
    ╰────
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
-   ╭─[require_array_join_separator.tsx:1:1]
+   ╭─[require_array_join_separator.tsx:1:10]
  1 │ foo?.join()
    ·          ──
    ╰────
   help: Missing the separator argument.
-
 

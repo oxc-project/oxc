@@ -2,22 +2,23 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_spread
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...{a}}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a])
    ·     ───
    ╰────
@@ -25,7 +26,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a])
    ·         ───
    ╰────
@@ -33,21 +34,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a,]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...{a,}}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a,])
    ·     ───
    ╰────
@@ -55,7 +56,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a,])
    ·         ───
    ╰────
@@ -63,21 +64,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a,],]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...{a,},}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a,],)
    ·     ───
    ╰────
@@ -85,7 +86,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a,],)
    ·         ───
    ╰────
@@ -93,21 +94,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...(( [a] ))]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...(( {a} ))}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...(( [a] )))
    ·     ───
    ╰────
@@ -115,7 +116,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...(( [a] )))
    ·         ───
    ╰────
@@ -123,21 +124,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...{}}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[])
    ·     ───
    ╰────
@@ -145,7 +146,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[])
    ·         ───
    ╰────
@@ -153,14 +154,14 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[,]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[,])
    ·     ───
    ╰────
@@ -168,7 +169,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[,])
    ·         ───
    ╰────
@@ -176,14 +177,14 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[,,]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[,,])
    ·     ───
    ╰────
@@ -191,7 +192,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[,,])
    ·         ───
    ╰────
@@ -199,14 +200,14 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a, , b,]]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a, , b,])
    ·     ───
    ╰────
@@ -214,7 +215,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a, , b,])
    ·         ───
    ╰────
@@ -222,14 +223,14 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a, , b,],]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a, , b,],)
    ·     ───
    ╰────
@@ -237,7 +238,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a, , b,],)
    ·         ───
    ╰────
@@ -245,7 +246,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[,, ,(( a )), ,,(0, b), ,,])
    ·     ───
    ╰────
@@ -253,21 +254,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:19]
  1 │ const array = [a, ...[a, b]]
    ·                   ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ const object = {a, ...{a, b}}
    ·                    ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:8]
  1 │ foo(a, ...[a, b])
    ·        ───
    ╰────
@@ -275,7 +276,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:12]
  1 │ new Foo(a, ...[a, b])
    ·            ───
    ╰────
@@ -283,21 +284,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:16]
  1 │ const array = [...[a, b], b,]
    ·                ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:17]
  1 │ const object = {...{a, b}, b,}
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:5]
  1 │ foo(...[a, b], b,)
    ·     ───
    ╰────
@@ -305,7 +306,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Foo(...[a, b], b,)
    ·         ───
    ╰────
@@ -313,21 +314,21 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:19]
  1 │ const array = [a, ...[a, b], b,]
    ·                   ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ const object = {a, ...{a, b}, b,}
    ·                    ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:8]
  1 │ foo(a, ...[a, b], b,)
    ·        ───
    ╰────
@@ -335,7 +336,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:12]
  1 │ new Foo(a, ...[a, b], b,)
    ·            ───
    ╰────
@@ -343,35 +344,35 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:8]
  1 │ ({a:1, ...{a: 2}})
    ·        ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:3]
  1 │ ({...{a:1}, ...{a: 2}})
    ·   ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:13]
  1 │ ({...{a:1}, ...{a: 2}})
    ·             ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:10]
  1 │ ({[a]:1, ...{[a]: 2}})
    ·          ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:13]
  1 │ Promise.all(...[...iterable])
    ·             ───
    ╰────
@@ -379,7 +380,7 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:9]
  1 │ new Map(...[...iterable])
    ·         ───
    ╰────
@@ -387,315 +388,315 @@ expression: no_useless_spread
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:22]
  1 │ const map = new Map([...iterable])
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `WeakMap` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:30]
  1 │ const weakMap = new WeakMap([...iterable])
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Set` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:22]
  1 │ const set = new Set([...iterable])
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `WeakSet` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:30]
  1 │ const weakSet = new WeakSet([...iterable])
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:35]
  1 │ const typed = new BigUint64Array([...iterable], byteOffset, length)
    ·                                   ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:35]
  1 │ const typed = new BigUint64Array([...iterable], ...args)
    ·                                   ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.all` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:30]
  1 │ const promise = Promise.all([...iterable])
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.allSettled` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:37]
  1 │ const promise = Promise.allSettled([...iterable])
    ·                                     ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.any` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:30]
  1 │ const promise = Promise.any([...iterable])
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.race` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:31]
  1 │ const promise = Promise.race([...iterable])
    ·                               ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Array.from` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:27]
  1 │ const array = Array.from([...iterable])
    ·                           ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array.from` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:36]
  1 │ const typed = BigUint64Array.from([...iterable])
    ·                                    ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Object.fromEntries` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:36]
  1 │ const object = Object.fromEntries([...iterable])
    ·                                    ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ for (const foo of [...iterable]);
    ·                    ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:39]
  1 │ async () => {for await (const foo of [...iterable]);}
    ·                                       ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:22]
  1 │ const map = new Map([...iterable,])
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ for (const foo of [...iterable]);
    ·                    ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:22]
  1 │ const map = new Map([...iterable,],)
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:22]
  1 │ const map = new Map([...(( iterable ))])
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ for (const foo of [...(( iterable ))]);
    ·                    ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:25]
  1 │ const map = new Map((( [...(( iterable ))] )))
    ·                         ───
    ╰────
   help: Consider removing the spread operator.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:23]
  1 │ for (const foo of (( [...(( iterable ))] )));
    ·                       ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:20]
  1 │ for (const foo of [...iterable]);
    ·                    ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.concat(bar)]
    ·  ───
    ╰────
   help: `foo.concat` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.copyWithin(-2)]
    ·  ───
    ╰────
   help: `foo.copyWithin` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.filter(bar)]
    ·  ───
    ╰────
   help: `foo.filter` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.flat()]
    ·  ───
    ╰────
   help: `foo.flat` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.flatMap(bar)]
    ·  ───
    ╰────
   help: `foo.flatMap` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.map(bar)]
    ·  ───
    ╰────
   help: `foo.map` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.slice(1)]
    ·  ───
    ╰────
   help: `foo.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.splice(1)]
    ·  ───
    ╰────
   help: `foo.splice` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.toReversed()]
    ·  ───
    ╰────
   help: `foo.toReversed` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.toSorted()]
    ·  ───
    ╰────
   help: `foo.toSorted` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.toSpliced(0, 1)]
    ·  ───
    ╰────
   help: `foo.toSpliced` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.with(0, bar)]
    ·  ───
    ╰────
   help: `foo.with` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...foo.split("|")]
    ·  ───
    ╰────
   help: `foo.split` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...Object.keys(foo)]
    ·  ───
    ╰────
   help: `Object.keys` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...Object.values(foo)]
    ·  ───
    ╰────
   help: `Object.values` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...Array.from(foo)]
    ·  ───
    ╰────
   help: `Array.from` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...Array.of()]
    ·  ───
    ╰────
   help: `Array.of` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...await Promise.all(foo)]
    ·  ───
    ╰────
   help: `Promise.all` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:2]
  1 │ [...await Promise.allSettled(foo)]
    ·  ───
    ╰────
   help: `Promise.allSettled` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:19]
  1 │ for (const foo of[...iterable]);
    ·                   ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:1]
+   ╭─[no_useless_spread.tsx:1:19]
  1 │ for (const foo of[...iterable2]);
    ·                   ───
    ╰────
   help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:2:1]
+   ╭─[no_useless_spread.tsx:3:38]
  2 │         if (organization.features?.includes('performance-database-view-percentiles')) {
  3 │             availableAggregates.push(...['p50', 'p75', 'p95', 'p99']);
    ·                                      ───
@@ -703,5 +704,4 @@ expression: no_useless_spread
    ╰────
   help: This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.
         For example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.
-
 

@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: for_direction
 ---
+
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for (var i = 0; i < 10; i--){}
    ·                 ───┬──  ─┬─
    ·                    │     ╰── with this update
@@ -12,7 +13,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for (var i = 0; i <= 10; i--){}
    ·                 ───┬───  ─┬─
    ·                    │      ╰── with this update
@@ -21,7 +22,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i > 10; i++){}
    ·                 ───┬──  ─┬─
    ·                    │     ╰── with this update
@@ -30,7 +31,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i >= 0; i++){}
    ·                 ───┬──  ─┬─
    ·                    │     ╰── with this update
@@ -39,7 +40,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; 10 > i; i--){}
    ·                ───┬──  ─┬─
    ·                   │     ╰── with this update
@@ -48,7 +49,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; 10 >= i; i--){}
    ·                ───┬───  ─┬─
    ·                   │      ╰── with this update
@@ -57,7 +58,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; 10 < i; i++){}
    ·                 ───┬──  ─┬─
    ·                    │     ╰── with this update
@@ -66,7 +67,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; 0 <= i; i++){}
    ·                 ───┬──  ─┬─
    ·                    │     ╰── with this update
@@ -75,7 +76,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; i < 10; i-=1){}
    ·                ───┬──  ──┬─
    ·                   │      ╰── with this update
@@ -84,7 +85,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; i <= 10; i-=1){}
    ·                ───┬───  ──┬─
    ·                   │       ╰── with this update
@@ -93,7 +94,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i > 10; i+=1){}
    ·                 ───┬──  ──┬─
    ·                    │      ╰── with this update
@@ -102,7 +103,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i >= 0; i+=1){}
    ·                 ───┬──  ──┬─
    ·                    │      ╰── with this update
@@ -111,7 +112,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; i < 10; i+=-1){}
    ·                ───┬──  ──┬──
    ·                   │      ╰── with this update
@@ -120,7 +121,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; i <= 10; i+=-1){}
    ·                ───┬───  ──┬──
    ·                   │       ╰── with this update
@@ -129,7 +130,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i > 10; i-=-1){}
    ·                 ───┬──  ──┬──
    ·                    │      ╰── with this update
@@ -138,7 +139,7 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:17]
  1 │ for(var i = 10; i >= 0; i-=-1){}
    ·                 ───┬──  ──┬──
    ·                    │      ╰── with this update
@@ -147,12 +148,11 @@ expression: for_direction
   help: Use while loop for intended infinite loop
 
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
-   ╭─[for_direction.tsx:1:1]
+   ╭─[for_direction.tsx:1:16]
  1 │ for(var i = 0; 10 > i; i-=1){}
    ·                ───┬──  ──┬─
    ·                   │      ╰── with this update
    ·                   ╰── This test moves in the wrong direction
    ╰────
   help: Use while loop for intended infinite loop
-
 

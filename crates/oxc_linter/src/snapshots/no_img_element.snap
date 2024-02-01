@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_img_element
 ---
+
   ⚠ eslint-plugin-next(no-img-element): Prevent usage of `<img>` element due to slower LCP and higher bandwidth.
-   ╭─[no_img_element.tsx:5:1]
+   ╭─[no_img_element.tsx:6:28]
  5 │                         <div>
  6 │                           <img
    ·                            ───
@@ -12,12 +13,11 @@ expression: no_img_element
   help: See https://nextjs.org/docs/messages/no-img-element
 
   ⚠ eslint-plugin-next(no-img-element): Prevent usage of `<img>` element due to slower LCP and higher bandwidth.
-   ╭─[no_img_element.tsx:4:1]
+   ╭─[no_img_element.tsx:5:26]
  4 │                       return (
  5 │                         <img
    ·                          ───
  6 │                           src="/test.png"
    ╰────
   help: See https://nextjs.org/docs/messages/no-img-element
-
 

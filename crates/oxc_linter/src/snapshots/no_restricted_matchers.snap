@@ -2,78 +2,79 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_restricted_matchers
 ---
+
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).toBe(b)
    ·           ────
    ╰────
   help: Use of `"toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a)["toBe"](b)
    ·           ──────
    ╰────
   help: Use of `"toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not[x]()
    ·           ───
    ╰────
   help: Use of `"not"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not.toBe(b)
    ·           ────────
    ╰────
   help: Use of `"not.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.toBe(b)
    ·           ─────────────
    ╰────
   help: Use of `"resolves.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
   help: Use of `"resolves.not.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
   help: Use of `"resolves.not.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not.toBe(b)
    ·           ────────
    ╰────
   help: Use of `"not.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
   help: Use of `"resolves.not.toBe"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).toBe(b)
    ·           ────
    ╰────
   help: "Prefer `toStrictEqual` instead"
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:2:1]
+   ╭─[no_restricted_matchers.tsx:3:54]
  2 │                 test('some test', async () => {
  3 │                     await expect(Promise.resolve(1)).resolves.toBe(1);
    ·                                                      ─────────────
@@ -82,17 +83,16 @@ expression: no_restricted_matchers
   help: "Use `expect(await promise)` instead."
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:29]
  1 │ expect(Promise.resolve({})).rejects.toBeFalsy()
    ·                             ─────────────────
    ╰────
   help: Use of `"rejects.toBeFalsy"` is disallowed`
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers
-   ╭─[no_restricted_matchers.tsx:1:1]
+   ╭─[no_restricted_matchers.tsx:1:24]
  1 │ expect(uploadFileMock).not.toHaveBeenCalledWith('file.name')
    ·                        ────────────────────────
    ╰────
   help: "Use not.toHaveBeenCalled instead"
-
 

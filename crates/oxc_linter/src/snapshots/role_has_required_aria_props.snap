@@ -2,270 +2,270 @@
 source: crates/oxc_linter/src/tester.rs
 expression: role_has_required_aria_props
 ---
+
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuemax`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' aria-valuemax />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' aria-valuemax />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' aria-valuemax aria-valuemin />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `slider` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `checkbox` role is missing required aria props `aria-checked`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='checkbox' />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-checked` to the element with `checkbox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `checkbox` role is missing required aria props `aria-checked`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='checkbox' checked />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-checked` to the element with `checkbox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `checkbox` role is missing required aria props `aria-checked`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='checkbox' aria-chcked />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-checked` to the element with `checkbox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `checkbox` role is missing required aria props `aria-checked`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:7]
  1 │ <span role='checkbox' aria-labelledby='foo' tabindex='0'></span>
    ·       ───────────────
    ╰────
   help: Add missing aria props `aria-checked` to the element with `checkbox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-expanded`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' expanded />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-expanded`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' expanded />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' aria-expandd />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-expanded`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='combobox' aria-expandd />
    ·      ───────────────
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemax`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuenow`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuemin />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuenow` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemin`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemin` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemax aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-orientation`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-orientation` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-valuemax`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-valuemax` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `scrollbar` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='scrollbar' aria-valuemin aria-valuenow />
    ·      ────────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `scrollbar` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `heading` role is missing required aria props `aria-level`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='heading' />
    ·      ──────────────
    ╰────
   help: Add missing aria props `aria-level` to the element with `heading` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `option` role is missing required aria props `aria-selected`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='option' />
    ·      ─────────────
    ╰────
   help: Add missing aria props `aria-selected` to the element with `option` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:14]
  1 │ <MyComponent role='combobox' />
    ·              ───────────────
    ╰────
   help: Add missing aria props `aria-controls` to the element with `combobox` role.
 
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-expanded`.
-   ╭─[role_has_required_aria_props.tsx:1:1]
+   ╭─[role_has_required_aria_props.tsx:1:14]
  1 │ <MyComponent role='combobox' />
    ·              ───────────────
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
-
 

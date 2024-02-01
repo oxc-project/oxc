@@ -2,15 +2,16 @@
 source: crates/oxc_linter/src/tester.rs
 expression: html_has_lang
 ---
+
   ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
-   ╭─[html_has_lang.tsx:1:1]
+   ╭─[html_has_lang.tsx:1:2]
  1 │ <html />;
    ·  ────
    ╰────
   help: Add a lang attribute to the html element whose value represents the primary language of document.
 
   ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
-   ╭─[html_has_lang.tsx:1:1]
+   ╭─[html_has_lang.tsx:1:2]
  1 │ <html {...props} />;
    ·  ────
    ╰────
@@ -31,10 +32,9 @@ expression: html_has_lang
   help: Must have meaningful value for `lang` prop.
 
   ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
-   ╭─[html_has_lang.tsx:1:1]
+   ╭─[html_has_lang.tsx:1:2]
  1 │ <HTMLTop />
    ·  ───────
    ╰────
   help: Add a lang attribute to the html element whose value represents the primary language of document.
-
 

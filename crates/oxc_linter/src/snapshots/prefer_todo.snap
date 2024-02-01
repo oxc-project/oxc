@@ -2,20 +2,21 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_todo
 ---
+
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
-   ╭─[prefer_todo.tsx:1:1]
+   ╭─[prefer_todo.tsx:1:5]
  1 │ test('i need to write this test');
    ·     ▲
    ╰────
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
-   ╭─[prefer_todo.tsx:1:1]
+   ╭─[prefer_todo.tsx:1:5]
  1 │ test('i need to write this test',);
    ·     ▲
    ╰────
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
-   ╭─[prefer_todo.tsx:1:1]
+   ╭─[prefer_todo.tsx:1:5]
  1 │ test(`i need to write this test`);
    ·     ▲
    ╰────
@@ -55,5 +56,4 @@ expression: prefer_todo
  1 │ test[`skip`]('i need to write this test', function() {});
    · ────────────────────────────────────────────────────────
    ╰────
-
 

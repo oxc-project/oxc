@@ -2,25 +2,25 @@
 source: crates/oxc_linter/src/tester.rs
 expression: aria_props
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.
-   ╭─[aria_props.tsx:1:1]
+   ╭─[aria_props.tsx:1:6]
  1 │ <div aria-="foobar" />
    ·      ──────────────
    ╰────
   help: `aria-` is an invalid ARIA attribute.
 
   ⚠ eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.
-   ╭─[aria_props.tsx:1:1]
+   ╭─[aria_props.tsx:1:6]
  1 │ <div aria-labeledby="foobar" />
    ·      ───────────────────────
    ╰────
   help: `aria-labeledby` is an invalid ARIA attribute.
 
   ⚠ eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.
-   ╭─[aria_props.tsx:1:1]
+   ╭─[aria_props.tsx:1:6]
  1 │ <div aria-skldjfaria-klajsd="foobar" />
    ·      ───────────────────────────────
    ╰────
   help: `aria-skldjfaria-klajsd` is an invalid ARIA attribute.
-
 

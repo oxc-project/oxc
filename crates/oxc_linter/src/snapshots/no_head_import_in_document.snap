@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_head_import_in_document
 ---
+
   ⚠ eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
-   ╭─[no_head_import_in_document.tsx:2:1]
+   ╭─[no_head_import_in_document.tsx:3:19]
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
@@ -12,7 +13,7 @@ expression: no_head_import_in_document
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
   ⚠ eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
-   ╭─[no_head_import_in_document.tsx:2:1]
+   ╭─[no_head_import_in_document.tsx:3:19]
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
@@ -21,7 +22,7 @@ expression: no_head_import_in_document
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
   ⚠ eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
-   ╭─[no_head_import_in_document.tsx:2:1]
+   ╭─[no_head_import_in_document.tsx:3:19]
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
@@ -30,7 +31,7 @@ expression: no_head_import_in_document
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
   ⚠ eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
-   ╭─[no_head_import_in_document.tsx:2:1]
+   ╭─[no_head_import_in_document.tsx:3:19]
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
@@ -39,12 +40,11 @@ expression: no_head_import_in_document
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
 
   ⚠ eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.
-   ╭─[no_head_import_in_document.tsx:2:1]
+   ╭─[no_head_import_in_document.tsx:3:19]
  2 │                   import Document, { Html, Main, NextScript } from 'next/document'
  3 │                   import Head from 'next/head'
    ·                   ────────────────────────────
  4 │ 
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-import-in-document
-
 

@@ -4,8 +4,8 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc_diagnostics::DiagnosticService;
+use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler};
+use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
 use serde_json::Value;
 
 use crate::{
@@ -235,7 +235,7 @@ impl Tester {
         }
         .to_string_lossy();
 
-        let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+        let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
@@ -243,7 +243,6 @@ impl Tester {
                 source_text.to_string(),
             ));
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
-            self.snapshot.push('\n');
         }
         TestResult::Failed
     }

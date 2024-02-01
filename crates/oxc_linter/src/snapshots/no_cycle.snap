@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_cycle
 ---
+
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './es6/depth-one'
    ·                     ─────────────────
    ╰────
@@ -12,7 +13,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:25]
  1 │ const { foo } = require('./es6/depth-one')
    ·                         ─────────────────
    ╰────
@@ -21,7 +22,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './es6/depth-one-reexport'
    ·                     ──────────────────────────
    ╰────
@@ -30,7 +31,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './es6/depth-two'
    ·                     ─────────────────
    ╰────
@@ -40,7 +41,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './es6/depth-three-star'
    ·                     ────────────────────────
    ╰────
@@ -51,7 +52,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './es6/depth-three-indirect'
    ·                     ────────────────────────────
    ╰────
@@ -62,7 +63,7 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './intermediate-ignore'
    ·                     ───────────────────────
    ╰────
@@ -72,12 +73,11 @@ expression: no_cycle
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:1]
+   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from './ignore'
    ·                     ──────────
    ╰────
   help: These paths form a cycle:
         -> ./ignore - fixtures/import/cycles/ignore/index.js
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
-
 

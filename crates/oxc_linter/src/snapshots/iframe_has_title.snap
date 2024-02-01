@@ -2,67 +2,67 @@
 source: crates/oxc_linter/src/tester.rs
 expression: iframe_has_title
 ---
+
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe {...props} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={undefined} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title='' />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={false} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={true} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={''} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={``} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
 
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
-   ╭─[iframe_has_title.tsx:1:1]
+   ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe title={42} />
    ·  ──────
    ╰────
   help: Provide title property for iframe element.
-
 

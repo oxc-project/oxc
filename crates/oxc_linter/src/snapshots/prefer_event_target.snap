@@ -2,53 +2,53 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_event_target
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:19]
  1 │ class Foo extends EventEmitter {}
    ·                   ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:19]
  1 │ class Foo extends EventEmitter { someMethod() {} }
    ·                   ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:27]
  1 │ const Foo = class extends EventEmitter {}
    ·                           ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:5]
  1 │ new EventEmitter
    ·     ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:21]
  1 │ const emitter = new EventEmitter;
    ·                     ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:39]
  1 │ for (const {EventEmitter} of []) {new EventEmitter}
    ·                                       ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
-   ╭─[prefer_event_target.tsx:1:1]
+   ╭─[prefer_event_target.tsx:1:37]
  1 │ for (const EventEmitter of []) {new EventEmitter}
    ·                                     ────────────
    ╰────
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
-
 

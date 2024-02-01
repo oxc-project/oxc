@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_accumulating_spread
 ---
+
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})
    ·                  ───┬──                  ───┬──
    ·                     │                       ╰── From this spread
@@ -13,7 +14,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), ({} as foo))
    ·                  ───┬──                  ───┬──
    ·                     │                       ╰── From this spread
@@ -23,7 +24,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), foo)
    ·                  ───┬──                  ───┬──
    ·                     │                       ╰── From this spread
@@ -33,7 +34,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·     ───┬──                ───┬──
    ·        │                     ╰── From this spread
@@ -43,7 +44,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ arr.reduce((differentName, x) => ({ ...differentName, [x]: x }), {})
    ·     ───┬──                          ────────┬───────
    ·        │                                    ╰── From this spread
@@ -53,7 +54,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·         ───┬──                ───┬──
    ·            │                     ╰── From this spread
@@ -63,7 +64,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({} as baz)))
    ·         ───┬──                ───┬──
    ·            │                     ╰── From this spread
@@ -73,7 +74,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.arr.reduce((acc, x) => ({ ...acc, [x]: x }), (({})))
    ·         ───┬──                ───┬──
    ·            │                     ╰── From this spread
@@ -83,7 +84,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), [])
    ·         ───┬──              ───┬──
    ·            │                   ╰── From this spread
@@ -93,7 +94,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), ([]))
    ·         ───┬──              ───┬──
    ·            │                   ╰── From this spread
@@ -103,7 +104,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), ([] as foo))
    ·         ───┬──              ───┬──
    ·            │                   ╰── From this spread
@@ -113,7 +114,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:9]
  1 │ a.b.c.d.reduce((acc,x) => ([...acc, x]), (([]) as foo))
    ·         ───┬──              ───┬──
    ·            │                   ╰── From this spread
@@ -123,7 +124,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:13]
  1 │ get_array().reduce((acc, x) => ({ ...acc, [x]: x }), {})
    ·             ───┬──                ───┬──
    ·                │                     ╰── From this spread
@@ -133,7 +134,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ arr.reduce(function (acc, x) { return { ...acc, [x]: x } }, {})
    ·     ───┬──                              ───┬──
    ·        │                                   ╰── From this spread
@@ -143,7 +144,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ arr.reduce((acc, x) => {
    ·     ───┬──
    ·        ╰── For this reduce
@@ -156,7 +157,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => [...acc, bar], [])
    ·     ───┬──                ───┬──
    ·        │                     ╰── From this spread
@@ -166,7 +167,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => [...acc, bar], [])
    ·     ─────┬─────                ───┬──
    ·          │                        ╰── From this spread
@@ -176,7 +177,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => {return [...acc, bar];}, [])
    ·     ───┬──                        ───┬──
    ·        │                             ╰── From this spread
@@ -186,7 +187,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => {return [...acc, bar];}, [])
    ·     ─────┬─────                        ───┬──
    ·          │                                ╰── From this spread
@@ -196,7 +197,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => [...acc, ...bar], [])
    ·     ───┬──                ───┬──
    ·        │                     ╰── From this spread
@@ -206,7 +207,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => [...acc, ...bar], [])
    ·     ─────┬─────                ───┬──
    ·          │                        ╰── From this spread
@@ -216,7 +217,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => {return [...acc, ...bar];}, [])
    ·     ───┬──                        ───┬──
    ·        │                             ╰── From this spread
@@ -226,7 +227,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => {return [...acc, ...bar];}, [])
    ·     ─────┬─────                        ───┬──
    ·          │                                ╰── From this spread
@@ -236,7 +237,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => ({...acc, [bar.key]: bar.value}), {})
    ·     ───┬──                 ───┬──
    ·        │                      ╰── From this spread
@@ -246,7 +247,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => ({...acc, [bar.key]: bar.value}), {})
    ·     ─────┬─────                 ───┬──
    ·          │                         ╰── From this spread
@@ -256,7 +257,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})
    ·     ───┬──                        ───┬──
    ·        │                             ╰── From this spread
@@ -266,7 +267,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => {return {...acc, [bar.key]: bar.value};}, {})
    ·     ─────┬─────                        ───┬──
    ·          │                                ╰── From this spread
@@ -276,7 +277,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => ({...acc, ...bar}), {})
    ·     ───┬──                 ───┬──
    ·        │                      ╰── From this spread
@@ -286,7 +287,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => ({...acc, ...bar}), {})
    ·     ─────┬─────                 ───┬──
    ·          │                         ╰── From this spread
@@ -296,7 +297,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduce((acc, bar) => {return {...acc, ...bar};}, {})
    ·     ───┬──                        ───┬──
    ·        │                             ╰── From this spread
@@ -306,7 +307,7 @@ expression: no_accumulating_spread
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
-   ╭─[no_accumulating_spread.tsx:1:1]
+   ╭─[no_accumulating_spread.tsx:1:5]
  1 │ foo.reduceRight((acc, bar) => {return {...acc, ...bar};}, {})
    ·     ─────┬─────                        ───┬──
    ·          │                                ╰── From this spread
@@ -314,5 +315,4 @@ expression: no_accumulating_spread
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
-
 

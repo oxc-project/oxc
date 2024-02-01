@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_string_starts_ends_with
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
    ╭─[prefer_string_starts_ends_with.tsx:1:1]
  1 │ /^foo/.test(bar)
@@ -39,19 +40,19 @@ expression: prefer_string_starts_ends_with
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:17]
  1 │ const foo = {}; /^abc/.test(foo);
    ·                 ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:18]
  1 │ const foo = 123; /^abc/.test(foo);
    ·                  ───────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:22]
  1 │ const foo = "hello"; /^abc/.test(foo);
    ·                      ───────────
    ╰────
@@ -69,13 +70,13 @@ expression: prefer_string_starts_ends_with
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:24]
  1 │ const fn = async () => /^b/.test(await foo)
    ·                        ─────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:24]
  1 │ const fn = async () => (/^b/).test(await foo)
    ·                        ───────────
    ╰────
@@ -93,7 +94,7 @@ expression: prefer_string_starts_ends_with
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:28]
  1 │ async function a() {return /^a/.test(await foo())}
    ·                            ─────────
    ╰────
@@ -237,15 +238,14 @@ expression: prefer_string_starts_ends_with
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:11]
  1 │ const a = /你$/.test('a');
    ·           ──────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
-   ╭─[prefer_string_starts_ends_with.tsx:1:1]
+   ╭─[prefer_string_starts_ends_with.tsx:1:11]
  1 │ const a = /^你/.test('a');
    ·           ──────────
    ╰────
-
 

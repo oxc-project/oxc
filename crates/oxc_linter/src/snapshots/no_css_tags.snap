@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_css_tags
 ---
+
   ⚠ eslint-plugin-next(no-css-tags): Do not include stylesheets manually.
-    ╭─[no_css_tags.tsx:8:1]
+    ╭─[no_css_tags.tsx:9:30]
   8 │                             <h1>Hello title</h1>
   9 │                             <link href="/_next/static/css/styles.css" rel="stylesheet" />
     ·                              ────
@@ -12,12 +13,11 @@ expression: no_css_tags
   help: See https://nextjs.org/docs/messages/no-css-tags
 
   ⚠ eslint-plugin-next(no-css-tags): Do not include stylesheets manually.
-   ╭─[no_css_tags.tsx:2:1]
+   ╭─[no_css_tags.tsx:3:22]
  2 │                   <div>
  3 │                     <link href="/_next/static/css/styles.css" rel="stylesheet" />
    ·                      ────
  4 │                   </div>
    ╰────
   help: See https://nextjs.org/docs/messages/no-css-tags
-
 

@@ -2,256 +2,256 @@
 source: crates/oxc_linter/src/tester.rs
 expression: role_supports_aria_props
 ---
+
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role link. This role is implicit on the element a.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:13]
  1 │ <a href="/" aria-checked />
    ·             ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role link. This role is implicit on the element area.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:16]
  1 │ <area href="/" aria-checked />
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role link. This role is implicit on the element link.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:16]
  1 │ <link href="/" aria-checked />
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role img. This role is implicit on the element img.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:19]
  1 │ <img alt="foobar" aria-checked />
    ·                   ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role toolbar. This role is implicit on the element menu.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:22]
  1 │ <menu type="toolbar" aria-checked />
    ·                      ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role complementary. This role is implicit on the element aside.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:8]
  1 │ <aside aria-checked />
    ·        ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role list. This role is implicit on the element ul.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:5]
  1 │ <ul aria-expanded />
    ·     ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role group. This role is implicit on the element details.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:10]
  1 │ <details aria-expanded />
    ·          ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role dialog. This role is implicit on the element dialog.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:9]
  1 │ <dialog aria-expanded />
    ·         ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role complementary. This role is implicit on the element aside.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:8]
  1 │ <aside aria-expanded />
    ·        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role article. This role is implicit on the element article.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:10]
  1 │ <article aria-expanded />
    ·          ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role document. This role is implicit on the element body.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:7]
  1 │ <body aria-expanded />
    ·       ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role listitem. This role is implicit on the element li.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:5]
  1 │ <li aria-expanded />
    ·     ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role navigation. This role is implicit on the element nav.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:6]
  1 │ <nav aria-expanded />
    ·      ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role list. This role is implicit on the element ol.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:5]
  1 │ <ol aria-expanded />
    ·     ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role status. This role is implicit on the element output.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:9]
  1 │ <output aria-expanded />
    ·         ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role region. This role is implicit on the element section.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:10]
  1 │ <section aria-expanded />
    ·          ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role rowgroup. This role is implicit on the element tbody.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:8]
  1 │ <tbody aria-expanded />
    ·        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role rowgroup. This role is implicit on the element tfoot.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:8]
  1 │ <tfoot aria-expanded />
    ·        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role rowgroup. This role is implicit on the element thead.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:8]
  1 │ <thead aria-expanded />
    ·        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role radio. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:21]
  1 │ <input type="radio" aria-invalid />
    ·                     ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-selected is not supported by the role radio. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:21]
  1 │ <input type="radio" aria-selected />
    ·                     ─────────────
    ╰────
   help: Try to remove invalid attribute aria-selected.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-haspopup is not supported by the role radio. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:21]
  1 │ <input type="radio" aria-haspopup />
    ·                     ─────────────
    ╰────
   help: Try to remove invalid attribute aria-haspopup.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-haspopup is not supported by the role checkbox. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:24]
  1 │ <input type="checkbox" aria-haspopup />
    ·                        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-haspopup.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role button. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:21]
  1 │ <input type="reset" aria-invalid />
    ·                     ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role button. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:21]
  1 │ <input type="image" aria-invalid />
    ·                     ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role button. This role is implicit on the element input.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:22]
  1 │ <input type="button" aria-invalid />
    ·                      ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role menuitem. This role is implicit on the element menuitem.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:26]
  1 │ <menuitem type="command" aria-invalid />
    ·                          ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-selected is not supported by the role menuitemradio. This role is implicit on the element menuitem.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:24]
  1 │ <menuitem type="radio" aria-selected />
    ·                        ─────────────
    ╰────
   help: Try to remove invalid attribute aria-selected.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-haspopup is not supported by the role toolbar. This role is implicit on the element menu.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:22]
  1 │ <menu type="toolbar" aria-haspopup />
    ·                      ─────────────
    ╰────
   help: Try to remove invalid attribute aria-haspopup.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role toolbar. This role is implicit on the element menu.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:22]
  1 │ <menu type="toolbar" aria-invalid />
    ·                      ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-expanded is not supported by the role toolbar. This role is implicit on the element menu.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:22]
  1 │ <menu type="toolbar" aria-expanded />
    ·                      ─────────────
    ╰────
   help: Try to remove invalid attribute aria-expanded.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role link. This role is implicit on the element link.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:16]
  1 │ <link href="/" aria-invalid />
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role link. This role is implicit on the element area.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:16]
  1 │ <area href="/" aria-invalid />
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-invalid is not supported by the role link. This role is implicit on the element a.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:13]
  1 │ <a href="/" aria-invalid />
    ·             ────────────
    ╰────
   help: Try to remove invalid attribute aria-invalid.
 
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role link. This role is implicit on the element a.
-   ╭─[role_supports_aria_props.tsx:1:1]
+   ╭─[role_supports_aria_props.tsx:1:16]
  1 │ <Link href="/" aria-checked />
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
-
 

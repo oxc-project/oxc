@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unreadable_iife
 ---
+
   ⚠ eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
-   ╭─[no_unreadable_iife.tsx:1:1]
+   ╭─[no_unreadable_iife.tsx:1:20]
  1 │ const foo = (() => (a ? b : c))();
    ·                    ───────────
    ╰────
@@ -50,7 +51,7 @@ expression: no_unreadable_iife
   help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
-   ╭─[no_unreadable_iife.tsx:1:1]
+   ╭─[no_unreadable_iife.tsx:1:21]
  1 │ const foo = (bar => (bar))();
    ·                     ─────
    ╰────
@@ -77,10 +78,9 @@ expression: no_unreadable_iife
   help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
 
   ⚠ eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
-   ╭─[no_unreadable_iife.tsx:1:1]
+   ╭─[no_unreadable_iife.tsx:1:14]
  1 │ (async () => (( {bar} )))();
    ·              ───────────
    ╰────
   help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
-
 

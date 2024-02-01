@@ -2,18 +2,18 @@
 source: crates/oxc_linter/src/tester.rs
 expression: scope
 ---
+
   ⚠ eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements
-   ╭─[scope.tsx:1:1]
+   ╭─[scope.tsx:1:6]
  1 │ <div scope />
    ·      ─────
    ╰────
   help: Must use scope prop only on <th> elements
 
   ⚠ eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements
-   ╭─[scope.tsx:1:1]
+   ╭─[scope.tsx:1:6]
  1 │ <Foo scope='bar' />;
    ·      ───────────
    ╰────
   help: Must use scope prop only on <th> elements
-
 

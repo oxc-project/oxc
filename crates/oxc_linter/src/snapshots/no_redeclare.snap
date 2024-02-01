@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_redeclare
 ---
+
   ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:27]
  1 │ switch(foo) { case a: var b = 3;
    ·                           ┬
    ·                           ╰── 'b' is already defined.
@@ -13,7 +14,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = 3; var a = 10;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclare here.
@@ -21,7 +22,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = {}; var a = [];
    ·     ┬           ┬
    ·     │           ╰── It can not be redeclare here.
@@ -29,7 +30,7 @@ expression: no_redeclare
    ╰────
 
   × Identifier `a` has already been declared
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a; function a() {}
    ·     ┬           ┬
    ·     │           ╰── It can not be redeclared here
@@ -37,7 +38,7 @@ expression: no_redeclare
    ╰────
 
   × Identifier `a` has already been declared
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:10]
  1 │ function a() {} function a() {}
    ·          ┬               ┬
    ·          │               ╰── It can not be redeclared here
@@ -45,7 +46,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = function() { }; var a = function() { }
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclare here.
@@ -53,7 +54,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = function() { }; var a = new Date();
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclare here.
@@ -61,7 +62,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclare here.
@@ -69,7 +70,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬                      ┬
    ·     │                      ╰── It can not be redeclare here.
@@ -77,7 +78,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a; var a;
    ·     ┬      ┬
    ·     │      ╰── It can not be redeclare here.
@@ -85,7 +86,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:12]
  1 │ export var a; var a;
    ·            ┬      ┬
    ·            │      ╰── It can not be redeclare here.
@@ -93,7 +94,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:24]
  1 │ class C { static { var a; var a; } }
    ·                        ┬      ┬
    ·                        │      ╰── It can not be redeclare here.
@@ -101,7 +102,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:24]
  1 │ class C { static { var a; { var a; } } }
    ·                        ┬        ┬
    ·                        │        ╰── It can not be redeclare here.
@@ -109,7 +110,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:26]
  1 │ class C { static { { var a; } var a; } }
    ·                          ┬        ┬
    ·                          │        ╰── It can not be redeclare here.
@@ -117,7 +118,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:26]
  1 │ class C { static { { var a; } { var a; } } }
    ·                          ┬          ┬
    ·                          │          ╰── It can not be redeclare here.
@@ -125,7 +126,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclare here.
@@ -133,7 +134,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:5]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclare here.
@@ -141,7 +142,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:20]
  1 │ function f() { var a; var a; }
    ·                    ┬      ┬
    ·                    │      ╰── It can not be redeclare here.
@@ -149,7 +150,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:12]
  1 │ function f(a) { var a; }
    ·            ┬        ┬
    ·            │        ╰── It can not be redeclare here.
@@ -157,7 +158,7 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:20]
  1 │ function f() { var a; if (test) { var a; } }
    ·                    ┬                  ┬
    ·                    │                  ╰── It can not be redeclare here.
@@ -165,11 +166,10 @@ expression: no_redeclare
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare.tsx:1:1]
+   ╭─[no_redeclare.tsx:1:10]
  1 │ for (var a, a;;);
    ·          ┬  ┬
    ·          │  ╰── It can not be redeclare here.
    ·          ╰── 'a' is already defined.
    ╰────
-
 

@@ -2,46 +2,46 @@
 source: crates/oxc_linter/src/tester.rs
 expression: autocomplete_valid
 ---
+
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `foo` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='foo' />;
    ·                    ──────────────────
    ╰────
   help: Change `foo` to a valid value for autocomplete.
 
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `name invalid` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='name invalid' />;
    ·                    ───────────────────────────
    ╰────
   help: Change `name invalid` to a valid value for autocomplete.
 
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `invalid name` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='invalid name' />;
    ·                    ───────────────────────────
    ╰────
   help: Change `invalid name` to a valid value for autocomplete.
 
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `home url` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='home url' />;
    ·                    ───────────────────────
    ╰────
   help: Change `home url` to a valid value for autocomplete.
 
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `baz` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:6]
  1 │ <Bar autocomplete='baz'></Bar>;
    ·      ──────────────────
    ╰────
   help: Change `baz` to a valid value for autocomplete.
 
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `baz` is not a valid value for autocomplete.
-   ╭─[autocomplete_valid.tsx:1:1]
+   ╭─[autocomplete_valid.tsx:1:20]
  1 │ <Input type='text' autocomplete='baz' />;
    ·                    ──────────────────
    ╰────
   help: Change `baz` to a valid value for autocomplete.
-
 

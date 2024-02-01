@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: expect_expect
 ---
+
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", () => {});
@@ -94,7 +95,7 @@ expression: expect_expect
   help: Add assertion(s) in this Test
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:3:1]
+   ╭─[expect_expect.tsx:4:13]
  3 │ 
  4 │             checkThat('this passes', () => {
    ·             ─────────
@@ -103,7 +104,7 @@ expression: expect_expect
   help: Add assertion(s) in this Test
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:3:1]
+   ╭─[expect_expect.tsx:4:13]
  3 │ 
  4 │             checkThat.skip('this passes', () => {
    ·             ──────────────
@@ -112,12 +113,11 @@ expression: expect_expect
   help: Add assertion(s) in this Test
 
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
-   ╭─[expect_expect.tsx:1:1]
+   ╭─[expect_expect.tsx:2:13]
  1 │ 
  2 │             it("should warn on non-assert await expression", async () => {
    ·             ──
  3 │                 const asyncFunction = async () => {
    ╰────
   help: Add assertion(s) in this Test
-
 

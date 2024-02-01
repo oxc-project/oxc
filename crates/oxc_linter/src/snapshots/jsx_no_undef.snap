@@ -2,60 +2,60 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_undef
 ---
+
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<App />);
    ·                          ───
    ╰────
   help: 'App' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<Appp.Foo />);
    ·                          ────
    ╰────
   help: 'Appp' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<appp.Foo />);
    ·                          ────
    ╰────
   help: 'appp' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<appp.foo.Bar />);
    ·                          ────
    ╰────
   help: 'appp' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:26]
  1 │ var React; React.render(<Foo />);
    ·                          ───
    ╰────
   help: 'Foo' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:35]
  1 │ var React; Unknown; React.render(<Unknown />)
    ·                                   ───────
    ╰────
   help: 'Unknown' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:49]
  1 │ var React; { const App = null; }; React.render(<App />);
    ·                                                 ───
    ╰────
   help: 'App' is not defined.
 
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
-   ╭─[jsx_no_undef.tsx:1:1]
+   ╭─[jsx_no_undef.tsx:1:42]
  1 │ var React; enum A { App }; React.render(<App />);
    ·                                          ───
    ╰────
   help: 'App' is not defined.
-
 

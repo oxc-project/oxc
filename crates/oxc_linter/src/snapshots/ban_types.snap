@@ -2,145 +2,146 @@
 source: crates/oxc_linter/src/tester.rs
 expression: ban_types
 ---
+
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let a: String;
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let b: Boolean;
    ·        ───────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let c: Number;
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let d: Symbol;
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let e: BigInt;
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let f: Object;
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let g: Function;
    ·        ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let h: {}; 
    ·        ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:13]
  1 │ let i: { b: String };
    ·             ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:13]
  1 │ let j: { c: String };
    ·             ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:20]
  1 │ function foo(arg0: String) {}
    ·                    ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:10]
  1 │ 'foo' as String;
    ·          ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:10]
  1 │ 'baz' as Function;
    ·          ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:8]
  1 │ let d: Symbol = Symbol('foo');
    ·        ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:20]
  1 │ let baz: [boolean, Boolean] = [true, false];
    ·                    ───────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:17]
  1 │ let z = true as Boolean;
    ·                 ───────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:14]
  1 │ type Props = {};
    ·              ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:9]
  1 │ let fn: Function = () => true
    ·         ────────
    ╰────
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:12]
  1 │ const str: String = 'foo';
    ·            ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:13]
  1 │ const bool: Boolean = true;
    ·             ───────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:12]
  1 │ const num: Number = 1;
    ·            ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:13]
  1 │ const symb: Symbol = Symbol('foo');
    ·             ──────
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:15]
  1 │ const bigInt: BigInt = 1n;
    ·               ──────
    ╰────
@@ -154,14 +155,14 @@ expression: ban_types
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:22]
  1 │ const emptyEmptyObj: {} = { };
    ·                      ──
    ╰────
   help: This type means "any non-nullish value", which is slightly better than 'unknown', but it's still a broad type
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:2:24]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
    ·                        ───────
@@ -169,7 +170,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:2:45]
  1 │ 
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
    ·                                             ──────
@@ -177,7 +178,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:2:1]
+   ╭─[ban_types.tsx:3:28]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
    ·                            ──────
@@ -185,7 +186,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
-   ╭─[ban_types.tsx:2:1]
+   ╭─[ban_types.tsx:3:37]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
    ·                                     ──────
@@ -193,7 +194,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
-   ╭─[ban_types.tsx:2:1]
+   ╭─[ban_types.tsx:3:46]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
  3 │           constructor(foo: String | Object | Function) {}
    ·                                              ────────
@@ -202,7 +203,7 @@ expression: ban_types
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:5:1]
+   ╭─[ban_types.tsx:6:24]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
    ·                        ──────
@@ -210,7 +211,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:5:1]
+   ╭─[ban_types.tsx:6:38]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
    ·                                      ──────
@@ -218,7 +219,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:4:1]
+   ╭─[ban_types.tsx:5:24]
  4 │ 
  5 │           arg(): Array<String> {
    ·                        ──────
@@ -226,12 +227,11 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
-   ╭─[ban_types.tsx:2:1]
+   ╭─[ban_types.tsx:3:12]
  2 │ type Props = {
  3 │   onClick: Function
    ·            ────────
  4 │ }
    ╰────
   help: The `Function` type accepts any function-like value
-
 

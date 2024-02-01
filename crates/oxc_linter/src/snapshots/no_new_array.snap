@@ -2,452 +2,396 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_new_array
 ---
+
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(1)
    ·               ────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(1.5)
    ·               ──────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(Number("1"))
    ·               ──────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array("1")
    ·               ──────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(null)
    ·               ───────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(("1"))
    ·               ────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array((0, 1))
    ·               ─────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(0xff)
    · ───────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Math.PI | foo)
    · ────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Math.min(foo, bar))
    · ─────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Number(foo))
    · ──────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Number.MAX_SAFE_INTEGER)
    · ──────────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(parseInt(foo))
    · ────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Number.parseInt(foo))
    · ───────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(+foo)
    · ───────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(-Math.PI)
    · ───────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(-"-2")
    · ────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo.length)
    · ─────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:16]
  1 │ const foo = 1; new Array(foo + 2)
    ·                ──────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo - 2)
    · ──────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo -= 2)
    · ───────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo ? 1 : 2)
    · ──────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:26]
  1 │ const truthy = "truthy"; new Array(truthy ? 1 : foo)
    ·                          ───────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:26]
  1 │ const falsy = !"truthy"; new Array(falsy ? foo : 1)
    ·                          ──────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array((1n, 2))
    · ──────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Number.NaN)
    · ─────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(NaN)
    · ──────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo >>> bar)
    · ──────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo >>>= bar)
    · ───────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(++bar.length)
    · ───────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(bar.length++)
    · ───────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo = bar.length)
    · ───────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array("0xff")
    · ─────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Math.NON_EXISTS_PROPERTY)
    · ───────────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Math.NON_EXISTS_METHOD(foo))
    · ──────────────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Math[min](foo, bar))
    · ──────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(Number[MAX_SAFE_INTEGER])
    · ───────────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(new Number(foo))
    · ──────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:16]
  1 │ const foo = 1; new Array(foo + "2")
    ·                ────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo - 2n)
    · ───────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo -= 2n)
    · ────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo instanceof 1)
    · ───────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo || 1)
    · ───────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo ||= 1)
    · ────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(foo ? 1n : 2)
    · ───────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array((1, 2n))
    · ──────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(-foo)
    · ───────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(~foo)
    · ───────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(typeof 1)
    · ───────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:26]
  1 │ const truthy = "truthy"; new Array(truthy ? foo : 1)
    ·                          ───────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:26]
  1 │ const falsy = !"truthy"; new Array(falsy ? 1 : foo)
    ·                          ──────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(unknown ? foo : 1)
    · ────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(unknown ? 1 : foo)
    · ────────────────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:1]
  1 │ new Array(++foo)
    · ────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(foo)
    ·               ──────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
-   ╭─[no_new_array.tsx:1:1]
+   ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(length)
    ·               ─────────────────
    ╰────
-  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the
-        argument is the only element, use `[element]`.
-
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
 

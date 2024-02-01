@@ -2,228 +2,228 @@
 source: crates/oxc_linter/src/tester.rs
 expression: aria_unsupported_elements
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <base role {...props} />
    ·       ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:6]
  1 │ <col role {...props} />
    ·      ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:11]
  1 │ <colgroup role {...props} />
    ·           ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <head role {...props} />
    ·       ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <html role {...props} />
    ·       ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <link role {...props} />
    ·       ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <meta role {...props} />
    ·       ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:10]
  1 │ <noembed role {...props} />
    ·          ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:11]
  1 │ <noscript role {...props} />
    ·           ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <param role {...props} />
    ·        ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:10]
  1 │ <picture role {...props} />
    ·          ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:9]
  1 │ <script role {...props} />
    ·         ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:9]
  1 │ <source role {...props} />
    ·         ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <style role {...props} />
    ·        ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <title role {...props} />
    ·        ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <track role {...props} />
    ·        ────
    ╰────
   help: Try removing the prop `role`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <base aria-hidden aria-role="none" {...props} />
    ·       ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:6]
  1 │ <col aria-hidden aria-role="none" {...props} />
    ·      ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:11]
  1 │ <colgroup aria-hidden aria-role="none" {...props} />
    ·           ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <head aria-hidden aria-role="none" {...props} />
    ·       ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <html aria-hidden aria-role="none" {...props} />
    ·       ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <link aria-hidden aria-role="none" {...props} />
    ·       ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <meta aria-hidden aria-role="none" {...props} />
    ·       ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:10]
  1 │ <noembed aria-hidden aria-role="none" {...props} />
    ·          ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:11]
  1 │ <noscript aria-hidden aria-role="none" {...props} />
    ·           ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <param aria-hidden aria-role="none" {...props} />
    ·        ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:10]
  1 │ <picture aria-hidden aria-role="none" {...props} />
    ·          ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:9]
  1 │ <script aria-hidden aria-role="none" {...props} />
    ·         ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:9]
  1 │ <source aria-hidden aria-role="none" {...props} />
    ·         ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <style aria-hidden aria-role="none" {...props} />
    ·        ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <title aria-hidden aria-role="none" {...props} />
    ·        ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
 
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.
-   ╭─[aria_unsupported_elements.tsx:1:1]
+   ╭─[aria_unsupported_elements.tsx:1:8]
  1 │ <track aria-hidden aria-role="none" {...props} />
    ·        ───────────
    ╰────
   help: Try removing the prop `aria-hidden`.
-
 

@@ -2,92 +2,93 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_done_callback
 ---
+
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:20]
  1 │ test('something', (...args) => {args[0]();})
    ·                    ───────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:19]
  1 │ test('something', done => {done();})
    ·                   ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:20]
  1 │ test('something', (done,) => {done();})
    ·                    ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:19]
  1 │ test('something', finished => {finished();})
    ·                   ────────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:20]
  1 │ test('something', (done) => {done();})
    ·                    ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:19]
  1 │ test('something', done => done())
    ·                   ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:20]
  1 │ test('something', (done) => done())
    ·                    ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:28]
  1 │ test('something', function(done) {done();})
    ·                            ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:29]
  1 │ test('something', function (done) {done();})
    ·                             ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:25]
  1 │ test('something', async done => {done();})
    ·                         ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:25]
  1 │ test('something', async done => done())
    ·                         ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:35]
  1 │ test('something', async function (done) {done();})
    ·                                   ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:2:40]
  1 │ 
  2 │                 test('my test', async (done) => {
    ·                                        ────
@@ -96,7 +97,7 @@ expression: no_done_callback
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:2:36]
  1 │ 
  2 │                 test('something', (done) => {
    ·                                    ────
@@ -105,84 +106,84 @@ expression: no_done_callback
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:12]
  1 │ afterEach((...args) => {args[0]();})
    ·            ───────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:11]
  1 │ beforeAll(done => {done();})
    ·           ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:11]
  1 │ beforeAll(finished => {finished();})
    ·           ────────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:13]
  1 │ beforeEach((done) => {done();})
    ·             ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:10]
  1 │ afterAll(done => done())
    ·          ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:12]
  1 │ afterEach((done) => done())
    ·            ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:20]
  1 │ beforeAll(function(done) {done();})
    ·                    ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:21]
  1 │ afterEach(function (done) {done();})
    ·                     ────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:17]
  1 │ beforeAll(async done => {done();})
    ·                 ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:17]
  1 │ beforeAll(async done => done())
    ·                 ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:27]
  1 │ beforeAll(async function (done) {done();})
    ·                           ────
    ╰────
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:2:33]
  1 │ 
  2 │                 afterAll(async (done) => {
    ·                                 ────
@@ -191,7 +192,7 @@ expression: no_done_callback
   help: Use await instead of callback in async functions
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:2:29]
  1 │ 
  2 │                 beforeEach((done) => {
    ·                             ────
@@ -200,7 +201,7 @@ expression: no_done_callback
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:3:1]
+   ╭─[no_done_callback.tsx:4:29]
  3 │ 
  4 │                 beforeEach((done) => {
    ·                             ────
@@ -209,7 +210,7 @@ expression: no_done_callback
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:3:1]
+   ╭─[no_done_callback.tsx:4:39]
  3 │ 
  4 │                 atTheStartOfEachTest((done) => {
    ·                                       ────
@@ -218,17 +219,16 @@ expression: no_done_callback
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:27]
  1 │ test.each``('something', ({ a, b }, done) => { done(); })
    ·                           ────────
    ╰────
   help: Return a Promise instead of relying on callback parameter
 
   ⚠ eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument
-   ╭─[no_done_callback.tsx:1:1]
+   ╭─[no_done_callback.tsx:1:25]
  1 │ it.each``('something', ({ a, b }, done) => { done(); })
    ·                         ────────
    ╰────
   help: Return a Promise instead of relying on callback parameter
-
 

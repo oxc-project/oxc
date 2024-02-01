@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_useless_fragment
 ---
+
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]
  1 │ <></>
@@ -15,13 +16,13 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
  1 │ <p>moo<>foo</></p>
    ·       ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
  1 │ <p>moo<>foo</></p>
    ·       ──
    ╰────
@@ -33,13 +34,13 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:4]
  1 │ <p><>{meow}</></p>
    ·    ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:4]
  1 │ <p><>{meow}</></p>
    ·    ──
    ╰────
@@ -51,7 +52,7 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:2:13]
  1 │ 
  2 │             <>
    ·             ──
@@ -65,7 +66,7 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:2:17]
  1 │ 
  2 │                 <React.Fragment>
    ·                 ────────────────
@@ -73,37 +74,37 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:7]
  1 │ <Eeee><>foo</></Eeee>
    ·       ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
  1 │ <div><>foo</></div>
    ·      ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
  1 │ <div><>foo</></div>
    ·      ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
  1 │ <div><>{"a"}{"b"}</></div>
    ·      ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
  1 │ <div><>{"a"}{"b"}</></div>
    ·      ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:4:1]
+   ╭─[jsx_no_useless_fragment.tsx:5:15]
  4 │               <Eeee />
  5 │               <>{"a"}{"b"}</>
    ·               ──
@@ -111,13 +112,13 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:6]
  1 │ <div><Fragment>{"a"}{"b"}</Fragment></div>
    ·      ──────────
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:2:1]
+   ╭─[jsx_no_useless_fragment.tsx:3:18]
  2 │             <section>
  3 │               git<>
    ·                  ──
@@ -125,7 +126,7 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:6:1]
+   ╭─[jsx_no_useless_fragment.tsx:7:18]
  6 │ 
  7 │               git<> <b>hub</b></>
    ·                  ──
@@ -133,13 +134,13 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:1]
+   ╭─[jsx_no_useless_fragment.tsx:1:8]
  1 │ <div>a <>{""}{""}</> a</div>
    ·        ──
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
-   ╭─[jsx_no_useless_fragment.tsx:3:1]
+   ╭─[jsx_no_useless_fragment.tsx:4:17]
  3 │               <html>
  4 │                 <React.Fragment />
    ·                 ──────────────────
@@ -147,7 +148,7 @@ expression: jsx_no_useless_fragment
    ╰────
 
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:3:1]
+   ╭─[jsx_no_useless_fragment.tsx:4:17]
  3 │               <html>
  4 │                 <React.Fragment />
    ·                 ──────────────────
@@ -159,5 +160,4 @@ expression: jsx_no_useless_fragment
  1 │ <><Foo>{moo}</Foo></>
    · ──
    ╰────
-
 

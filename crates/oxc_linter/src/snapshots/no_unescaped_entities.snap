@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unescaped_entities
 ---
+
   ⚠ eslint-plugin-react(no-unescaped-entities): `>` can be escaped with &gt;
-   ╭─[no_unescaped_entities.tsx:2:1]
+   ╭─[no_unescaped_entities.tsx:3:24]
  2 │             render: function() {
  3 │               return <>> babel-eslint</>;
    ·                        ─
@@ -11,7 +12,7 @@ expression: no_unescaped_entities
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `>` can be escaped with &gt;
-   ╭─[no_unescaped_entities.tsx:4:1]
+   ╭─[no_unescaped_entities.tsx:5:47]
  4 │               so is second
  5 │               and here are some bad entities: ></>
    ·                                               ─
@@ -19,7 +20,7 @@ expression: no_unescaped_entities
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `'` can be escaped with &apos; or &lsquo; or &#39; or &rsquo;
-   ╭─[no_unescaped_entities.tsx:3:1]
+   ╭─[no_unescaped_entities.tsx:4:27]
  3 │             render: function() {
  4 │               return <div>'</div>;
    ·                           ─
@@ -27,7 +28,7 @@ expression: no_unescaped_entities
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `}` can be escaped with &#125;
-   ╭─[no_unescaped_entities.tsx:3:1]
+   ╭─[no_unescaped_entities.tsx:4:60]
  3 │             render: function() {
  4 │               return <>{"Unbalanced braces - babel-eslint"}}</>;
    ·                                                            ─
@@ -35,21 +36,20 @@ expression: no_unescaped_entities
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
-   ╭─[no_unescaped_entities.tsx:1:1]
+   ╭─[no_unescaped_entities.tsx:1:22]
  1 │ <script>window.foo = "bar"</script>
    ·                      ─
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
-   ╭─[no_unescaped_entities.tsx:1:1]
+   ╭─[no_unescaped_entities.tsx:1:26]
  1 │ <script>window.foo = "bar"</script>
    ·                          ─
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
-   ╭─[no_unescaped_entities.tsx:1:1]
+   ╭─[no_unescaped_entities.tsx:1:14]
  1 │ <script>测试 " 测试</script>
    ·              ─
    ╰────
-
 

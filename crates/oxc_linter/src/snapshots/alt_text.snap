@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: alt_text
 ---
+
   ⚠ eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.
    ╭─[alt_text.tsx:1:1]
  1 │ <img />;
@@ -442,5 +443,4 @@ expression: alt_text
    · ──────────────────────
    ╰────
   help: <input> elements with type="image" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.
-
 

@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: text_encoding_identifier_case
 ---
+
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
    ╭─[text_encoding_identifier_case.tsx:1:1]
  1 │ "UTF-8"
@@ -33,111 +34,110 @@ expression: text_encoding_identifier_case
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:21]
  1 │ fs.readFile?.(file, "UTF-8")
    ·                     ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:20]
  1 │ fs?.readFile(file, "UTF-8")
    ·                    ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:16]
  1 │ readFile(file, "UTF-8")
    ·                ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:22]
  1 │ fs.readFile(...file, "UTF-8")
    ·                      ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:23]
  1 │ new fs.readFile(file, "UTF-8")
    ·                       ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:30]
  1 │ fs.readFile(file, {encoding: "UTF-8"})
    ·                              ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:13]
  1 │ fs.readFile("UTF-8")
    ·             ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:19]
  1 │ fs.readFile(file, "UTF-8", () => {})
    ·                   ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:23]
  1 │ fs.readFileSync(file, "UTF-8")
    ·                       ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:20]
  1 │ fs[readFile](file, "UTF-8")
    ·                    ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:22]
  1 │ fs["readFile"](file, "UTF-8")
    ·                      ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:25]
  1 │ await fs.readFile(file, "UTF-8",)
    ·                         ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:28]
  1 │ fs.promises.readFile(file, "UTF-8",)
    ·                            ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:25]
  1 │ whatever.readFile(file, "UTF-8",)
    ·                         ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `utf-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:19]
  1 │ <not-meta charset="utf-8" />
    ·                   ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `utf-8`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:19]
  1 │ <meta not-charset="utf-8" />
    ·                   ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `ascii` over `ASCII`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:15]
  1 │ <meta charset="ASCII" />
    ·               ───────
    ╰────
 
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `ascii` over `ASCII`.
-   ╭─[text_encoding_identifier_case.tsx:1:1]
+   ╭─[text_encoding_identifier_case.tsx:1:15]
  1 │ <META CHARSET="ASCII" />
    ·               ───────
    ╰────
-
 

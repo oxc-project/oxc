@@ -2,39 +2,39 @@
 source: crates/oxc_linter/src/tester.rs
 expression: react_in_jsx_scope
 ---
+
   ⚠ eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX
-   ╭─[react_in_jsx_scope.tsx:1:1]
+   ╭─[react_in_jsx_scope.tsx:1:15]
  1 │ var App, a = <App />;
    ·               ───
    ╰────
   help: When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
 
   ⚠ eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX
-   ╭─[react_in_jsx_scope.tsx:1:1]
+   ╭─[react_in_jsx_scope.tsx:1:10]
  1 │ var a = <App />;
    ·          ───
    ╰────
   help: When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
 
   ⚠ eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX
-   ╭─[react_in_jsx_scope.tsx:1:1]
+   ╭─[react_in_jsx_scope.tsx:1:10]
  1 │ var a = <img />;
    ·          ───
    ╰────
   help: When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
 
   ⚠ eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX
-   ╭─[react_in_jsx_scope.tsx:1:1]
+   ╭─[react_in_jsx_scope.tsx:1:9]
  1 │ var a = <>fragment</>;
    ·         ──
    ╰────
   help: When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
 
   ⚠ eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX
-   ╭─[react_in_jsx_scope.tsx:1:1]
+   ╭─[react_in_jsx_scope.tsx:1:15]
  1 │ var Foo, a = <img />;
    ·               ───
    ╰────
   help: When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
-
 

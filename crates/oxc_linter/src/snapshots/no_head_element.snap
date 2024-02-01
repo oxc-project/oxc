@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_head_element
 ---
+
   ⚠ eslint-plugin-next(no-head-element): Do not use `<head>` element. Use `<Head />` from `next/head` instead.
-   ╭─[no_head_element.tsx:5:1]
+   ╭─[no_head_element.tsx:6:27]
  5 │                         <div>
  6 │                           <head>
    ·                           ──────
@@ -12,12 +13,11 @@ expression: no_head_element
   help: See https://nextjs.org/docs/messages/no-head-element
 
   ⚠ eslint-plugin-next(no-head-element): Do not use `<head>` element. Use `<Head />` from `next/head` instead.
-   ╭─[no_head_element.tsx:6:1]
+   ╭─[no_head_element.tsx:7:27]
  6 │                         <div>
  7 │                           <head>
    ·                           ──────
  8 │                             <title>My page title</title>
    ╰────
   help: See https://nextjs.org/docs/messages/no-head-element
-
 
