@@ -164,6 +164,7 @@ bitflags! {
     all(feature = "serde", feature = "wasm"),
     wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
 )]
+#[allow(dead_code)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type RegExpFlags = {
     G: 1,
@@ -174,7 +175,7 @@ export type RegExpFlags = {
     Y: 32,
     D: 64,
     V: 128
-}; 
+};
 "#;
 
 impl TryFrom<char> for RegExpFlags {
