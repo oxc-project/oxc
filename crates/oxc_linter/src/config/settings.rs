@@ -7,8 +7,8 @@ use rustc_hash::FxHashMap;
 pub struct ESLintSettings {
     pub jsx_a11y: JsxA11y,
     pub nextjs: Nextjs,
-    pub link_components: Vec<LinkComponents>,
-    pub form_components: Vec<FormComponents>,
+    pub link_components: CustomComponents,
+    pub form_components: CustomComponents,
 }
 
 impl Default for ESLintSettings {
@@ -16,8 +16,8 @@ impl Default for ESLintSettings {
         Self {
             jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() },
             nextjs: Nextjs { root_dir: vec![] },
-            link_components: vec![],
-            form_components: vec![],
+            link_components: FxHashMap::default(),
+            form_components: FxHashMap::default(),
         }
     }
 }
@@ -26,8 +26,8 @@ impl ESLintSettings {
     pub fn new(
         jsx_a11y: JsxA11y,
         nextjs: Nextjs,
-        link_components: Vec<LinkComponents>,
-        form_components: Vec<FormComponents>,
+        link_components: CustomComponents,
+        form_components: CustomComponents,
     ) -> Self {
         Self { jsx_a11y, nextjs, link_components, form_components }
     }
@@ -71,14 +71,4 @@ impl Nextjs {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct LinkComponents {
-    pub name: String,
-    pub link_attribute: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct FormComponents {
-    pub name: String,
-    pub form_attribute: Vec<String>,
-}
+pub type CustomComponents = FxHashMap<String, Vec<String>>;
