@@ -65,6 +65,24 @@ impl JsxNoTargetBlank {
             ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoreferrer(span));
         }
     }
+    fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
+        if !self.links {
+            return false;
+        }
+        if tag_name == "a" {
+            return true;
+        }
+        return ctx.settings().link_components.get(tag_name).is_some();
+    }
+    fn check_is_forms(&self, tag_name: &str, ctx: &LintContext) -> bool {
+        if !self.forms {
+            return false;
+        }
+        if tag_name == "form" {
+            return true;
+        }
+        return ctx.settings().form_components.get(tag_name).is_some();
+    }
 }
 
 declare_oxc_lint!(
@@ -100,82 +118,96 @@ declare_oxc_lint!(
 impl Rule for JsxNoTargetBlank {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
-            // TODO need to read from configuration: `settings: { linkComponents: ['Link'] }`
-            if !(self.links
-                && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "a" || tag_identifier.name.as_str() == "Link")
-                || self.forms
-                    && matches!(&jsx_ele.name,JSXElementName::Identifier(tag_identifier) if tag_identifier.name.as_str() == "form"
-                    ))
-            {
-                return;
-            }
+            if let JSXElementName::Identifier(tag_identifier) = &jsx_ele.name {
+                let tag_name = tag_identifier.name.as_str();
+                if self.check_is_link(tag_name, ctx) || self.check_is_forms(tag_name, ctx) {
+                    let mut target_blank_tuple = (false, "", false, false);
+                    let mut rel_valid_tuple = (false, "", false, false);
+                    let mut is_href_valid = true;
+                    let mut has_href_value = false;
+                    let mut is_warn_on_spread_attributes = false;
+                    let mut target_span = None;
+                    let mut spread_span = Span::default();
 
-            let mut target_blank_tuple = (false, "", false, false);
-            let mut rel_valid_tuple = (false, "", false, false);
-            let mut is_href_valid = true;
-            let mut has_href_value = false;
-            let mut is_warn_on_spread_attributes = false;
-            let mut target_span = None;
-            let mut spread_span = Span::default();
-
-            jsx_ele.attributes.iter().for_each(|attribute| match attribute {
-                JSXAttributeItem::Attribute(attribute) => {
-                    if let JSXAttributeName::Identifier(identifier) = &attribute.deref().name {
-                        if identifier.name.as_str() == "target" {
-                            if let Some(val) = attribute.deref().value.as_ref() {
-                                target_blank_tuple = check_target(val);
-                                target_span = attribute.value.as_ref().map(GetSpan::span);
+                    jsx_ele.attributes.iter().for_each(|attribute| match attribute {
+                        JSXAttributeItem::Attribute(attribute) => {
+                            if let JSXAttributeName::Identifier(identifier) =
+                                &attribute.deref().name
+                            {
+                                let attribute_name = identifier.name.as_str();
+                                if attribute_name == "target" {
+                                    if let Some(val) = attribute.deref().value.as_ref() {
+                                        target_blank_tuple = check_target(val);
+                                        target_span = attribute.value.as_ref().map(GetSpan::span);
+                                    }
+                                } else if attribute_name == "href"
+                                    || attribute_name == "action"
+                                    || ctx.settings().link_components.get(tag_name).map_or(
+                                        false,
+                                        |link_attribute| {
+                                            link_attribute.contains(&attribute_name.to_string())
+                                        },
+                                    )
+                                    || ctx.settings().form_components.get(tag_name).map_or(
+                                        false,
+                                        |link_attribute| {
+                                            link_attribute.contains(&attribute_name.to_string())
+                                        },
+                                    )
+                                {
+                                    if let Some(val) = attribute.value.as_ref() {
+                                        has_href_value = true;
+                                        is_href_valid =
+                                            check_href(val, &self.enforce_dynamic_links);
+                                    }
+                                } else if attribute_name == "rel" {
+                                    if let Some(val) = attribute.value.as_ref() {
+                                        rel_valid_tuple = check_rel(val, self.allow_referrer);
+                                    }
+                                };
                             }
-                        } else if identifier.name.as_str() == "href"
-                            || identifier.name.as_str() == "to"
-                            || identifier.name.as_str() == "action"
-                        {
-                            if let Some(val) = attribute.value.as_ref() {
+                        }
+                        JSXAttributeItem::SpreadAttribute(_) => {
+                            if self.warn_on_spread_attributes {
+                                is_warn_on_spread_attributes = true;
+                                spread_span = attribute.span();
+                                target_blank_tuple = (false, "", false, false);
+                                rel_valid_tuple = (false, "", false, false);
+                                is_href_valid = false;
                                 has_href_value = true;
-                                is_href_valid = check_href(val, &self.enforce_dynamic_links);
-                            }
-                        } else if identifier.name.as_str() == "rel" {
-                            if let Some(val) = attribute.value.as_ref() {
-                                rel_valid_tuple = check_rel(val, self.allow_referrer);
-                            }
-                        };
+                            };
+                        }
+                    });
+
+                    if is_warn_on_spread_attributes {
+                        if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
+                            return;
+                        }
+                        ctx.diagnostic(
+                            JsxNoTargetBlankDiagnostic::ExplicitPropsInSpreadAttributes(
+                                spread_span,
+                            ),
+                        );
+                        return;
                     }
-                }
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    if self.warn_on_spread_attributes {
-                        is_warn_on_spread_attributes = true;
-                        spread_span = attribute.span();
-                        target_blank_tuple = (false, "", false, false);
-                        rel_valid_tuple = (false, "", false, false);
-                        is_href_valid = false;
-                        has_href_value = true;
-                    };
-                }
-            });
 
-            if is_warn_on_spread_attributes {
-                if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
-                    return;
-                }
-                ctx.diagnostic(JsxNoTargetBlankDiagnostic::ExplicitPropsInSpreadAttributes(
-                    spread_span,
-                ));
-                return;
-            }
+                    let span = target_span.unwrap_or(jsx_ele.span);
+                    if !is_href_valid {
+                        if !target_blank_tuple.1.is_empty()
+                            && target_blank_tuple.1 == rel_valid_tuple.1
+                        {
+                            if (target_blank_tuple.2 && !rel_valid_tuple.2)
+                                || (target_blank_tuple.3 && !rel_valid_tuple.3)
+                            {
+                                self.diagnostic(span, ctx);
+                            }
+                            return;
+                        }
 
-            let span = target_span.unwrap_or(jsx_ele.span);
-            if !is_href_valid {
-                if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1 {
-                    if (target_blank_tuple.2 && !rel_valid_tuple.2)
-                        || (target_blank_tuple.3 && !rel_valid_tuple.3)
-                    {
-                        self.diagnostic(span, ctx);
+                        if target_blank_tuple.0 && !rel_valid_tuple.0 {
+                            self.diagnostic(span, ctx);
+                        }
                     }
-                    return;
-                }
-
-                if target_blank_tuple.0 && !rel_valid_tuple.0 {
-                    self.diagnostic(span, ctx);
                 }
             }
         }
@@ -369,295 +401,389 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r#"<a href="foobar"></a>"#, None),
-        (r"<a randomTag></a>", None),
-        (r"<a target />", None),
-        (r#"<a href="foobar" target="_blank" rel="noopener noreferrer"></a>"#, None),
-        (r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#, None),
-        (r#"<a href="foobar" target="_blank" rel={"noopener noreferrer"}></a>"#, None),
-        (r#"<a href="foobar" target="_blank" rel={"noreferrer"}></a>"#, None),
-        (r#"<a href={"foobar"} target={"_blank"} rel={"noopener noreferrer"}></a>"#, None),
-        (r#"<a href={"foobar"} target={"_blank"} rel={"noreferrer"}></a>"#, None),
-        (r"<a href={'foobar'} target={'_blank'} rel={'noopener noreferrer'}></a>", None),
-        (r"<a href={'foobar'} target={'_blank'} rel={'noreferrer'}></a>", None),
-        (r"<a href={`foobar`} target={`_blank`} rel={`noopener noreferrer`}></a>", None),
-        (r"<a href={`foobar`} target={`_blank`} rel={`noreferrer`}></a>", None),
-        (r#"<a target="_blank" {...spreadProps} rel="noopener noreferrer"></a>"#, None),
-        (r#"<a target="_blank" {...spreadProps} rel="noreferrer"></a>"#, None),
+        (r#"<a href="foobar"></a>"#, None, None),
+        (r"<a randomTag></a>", None, None),
+        (r"<a target />", None, None),
+        (r#"<a href="foobar" target="_blank" rel="noopener noreferrer"></a>"#, None, None),
+        (r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#, None, None),
+        (r#"<a href="foobar" target="_blank" rel={"noopener noreferrer"}></a>"#, None, None),
+        (r#"<a href="foobar" target="_blank" rel={"noreferrer"}></a>"#, None, None),
+        (r#"<a href={"foobar"} target={"_blank"} rel={"noopener noreferrer"}></a>"#, None, None),
+        (r#"<a href={"foobar"} target={"_blank"} rel={"noreferrer"}></a>"#, None, None),
+        (r"<a href={'foobar'} target={'_blank'} rel={'noopener noreferrer'}></a>", None, None),
+        (r"<a href={'foobar'} target={'_blank'} rel={'noreferrer'}></a>", None, None),
+        (r"<a href={`foobar`} target={`_blank`} rel={`noopener noreferrer`}></a>", None, None),
+        (r"<a href={`foobar`} target={`_blank`} rel={`noreferrer`}></a>", None, None),
+        (r#"<a target="_blank" {...spreadProps} rel="noopener noreferrer"></a>"#, None, None),
+        (r#"<a target="_blank" {...spreadProps} rel="noreferrer"></a>"#, None, None),
         (
             r#"<a {...spreadProps} target="_blank" rel="noopener noreferrer" href="https://example.com">s</a>"#,
+            None,
             None,
         ),
         (
             r#"<a {...spreadProps} target="_blank" rel="noreferrer" href="https://example.com">s</a>"#,
             None,
+            None,
         ),
-        (r#"<a target="_blank" rel="noopener noreferrer" {...spreadProps}></a>"#, None),
-        (r#"<a target="_blank" rel="noreferrer" {...spreadProps}></a>"#, None),
-        (r#"<p target="_blank"></p>"#, None),
-        (r#"<a href="foobar" target="_BLANK" rel="NOOPENER noreferrer"></a>"#, None),
-        (r#"<a href="foobar" target="_BLANK" rel="NOREFERRER"></a>"#, None),
-        (r#"<a target="_blank" rel={relValue}></a>"#, None),
-        (r#"<a target={targetValue} rel="noopener noreferrer"></a>"#, None),
-        (r#"<a target={targetValue} rel="noreferrer"></a>"#, None),
-        (r#"<a target={targetValue} rel={"noopener noreferrer"}></a>"#, None),
-        (r#"<a target={targetValue} rel={"noreferrer"}></a>"#, None),
-        (r#"<a target={targetValue} href="relative/path"></a>"#, None),
-        (r#"<a target={targetValue} href="/absolute/path"></a>"#, None),
-        (r#"<a target={'targetValue'} href="/absolute/path"></a>"#, None),
-        (r#"<a target={"targetValue"} href="/absolute/path"></a>"#, None),
-        (r#"<a target={null} href="//example.com"></a>"#, None),
+        (r#"<a target="_blank" rel="noopener noreferrer" {...spreadProps}></a>"#, None, None),
+        (r#"<a target="_blank" rel="noreferrer" {...spreadProps}></a>"#, None, None),
+        (r#"<p target="_blank"></p>"#, None, None),
+        (r#"<a href="foobar" target="_BLANK" rel="NOOPENER noreferrer"></a>"#, None, None),
+        (r#"<a href="foobar" target="_BLANK" rel="NOREFERRER"></a>"#, None, None),
+        (r#"<a target="_blank" rel={relValue}></a>"#, None, None),
+        (r#"<a target={targetValue} rel="noopener noreferrer"></a>"#, None, None),
+        (r#"<a target={targetValue} rel="noreferrer"></a>"#, None, None),
+        (r#"<a target={targetValue} rel={"noopener noreferrer"}></a>"#, None, None),
+        (r#"<a target={targetValue} rel={"noreferrer"}></a>"#, None, None),
+        (r#"<a target={targetValue} href="relative/path"></a>"#, None, None),
+        (r#"<a target={targetValue} href="/absolute/path"></a>"#, None, None),
+        (r#"<a target={'targetValue'} href="/absolute/path"></a>"#, None, None),
+        (r#"<a target={"targetValue"} href="/absolute/path"></a>"#, None, None),
+        (r#"<a target={null} href="//example.com"></a>"#, None, None),
         (
             r#"<a {...someObject} href="/absolute/path"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a {...someObject} rel="noreferrer"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a {...someObject} rel="noreferrer" target="_blank"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a {...someObject} href="foobar" target="_blank"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a target="_blank" href={ dynamicLink }></a>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            None,
         ),
         (
             r#"<a target={"_blank"} href={ dynamicLink }></a>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            None,
         ),
         (
             r"<a target={'_blank'} href={ dynamicLink }></a>",
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            None,
         ),
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            Some(serde_json::json!({ "linkComponents": ["Link"] })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            Some(
+                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": "to" } }),
+            ),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
+            Some(
+                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": ["to"] } }),
+            ),
         ),
         (
             r#"<a href="foobar" target="_blank" rel="noopener"></a>"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
         (
             r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
-        (r"<a target={3} />", None),
-        (r#"<a href="some-link" {...otherProps} target="some-non-blank-target"></a>"#, None),
-        (r#"<a href="some-link" target="some-non-blank-target" {...otherProps}></a>"#, None),
+        (r"<a target={3} />", None, None),
+        (r#"<a href="some-link" {...otherProps} target="some-non-blank-target"></a>"#, None, None),
+        (r#"<a href="some-link" target="some-non-blank-target" {...otherProps}></a>"#, None, None),
         (
             r#"<a target="_blank" href="/absolute/path"></a>"#,
             Some(serde_json::json!([{ "forms": false }])),
+            None,
         ),
         (
             r#"<a target="_blank" href="/absolute/path"></a>"#,
             Some(serde_json::json!([{ "forms": false, "links": true }])),
+            None,
         ),
         (
             r#"<form action="https://example.com" target="_blank"></form>"#,
             Some(serde_json::json!([])),
+            None,
         ),
         (
             r#"<form action="https://example.com" target="_blank" rel="noopener noreferrer"></form>"#,
             Some(serde_json::json!([{ "forms": true }])),
+            None,
         ),
         (
             r#"<form action="https://example.com" target="_blank" rel="noopener noreferrer"></form>"#,
             Some(serde_json::json!([{ "forms": true, "links": false }])),
+            None,
         ),
-        (r#"<a href target="_blank"/>"#, None),
+        (r#"<a href target="_blank"/>"#, None, None),
         (
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel="noopener noreferrer" />"#,
+            None,
             None,
         ),
         (
             r#"<a href={href} target={isExternal ? undefined : "_blank"} rel={isExternal ? "noreferrer" : "noopener noreferrer"} />"#,
             None,
+            None,
         ),
         (
             r#"<a href={href} target={isExternal ? undefined : "_blank"} rel={isExternal ? "noreferrer noopener" : "noreferrer"} />"#,
+            None,
             None,
         ),
         (
             r#"<a href={href} target="_blank" rel={isExternal ? "noreferrer" : "noopener"} />"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
         (
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? "noreferrer" : undefined} />"#,
+            None,
             None,
         ),
         (
             r#"<a href={href} target={isSelf ? "_self" : "_blank"} rel={isSelf ? undefined : "noreferrer"} />"#,
             None,
+            None,
         ),
-        (r#"<a href={href} target={isSelf ? "_self" : ""} rel={isSelf ? undefined : ""} />"#, None),
+        (
+            r#"<a href={href} target={isSelf ? "_self" : ""} rel={isSelf ? undefined : ""} />"#,
+            None,
+            None,
+        ),
         (
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? "noopener noreferrer" : undefined} />"#,
             None,
+            None,
         ),
-        (r"<form action={action} />", Some(serde_json::json!([{ "forms": true }]))),
-        (r"<form action={action} {...spread} />", Some(serde_json::json!([{ "forms": true }]))),
+        (r"<form action={action} />", Some(serde_json::json!([{ "forms": true }])), None),
+        (
+            r"<form action={action} {...spread} />",
+            Some(serde_json::json!([{ "forms": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
-        (r#"<a target="_blank" href="https://example.com/1"></a>"#, None),
-        (r#"<a target="_blank" rel="" href="https://example.com/2"></a>"#, None),
-        (r#"<a target="_blank" rel={0} href="https://example.com/3"></a>"#, None),
-        (r#"<a target="_blank" rel={1} href="https://example.com/3"></a>"#, None),
-        (r#"<a target="_blank" rel={false} href="https://example.com/4"></a>"#, None),
-        (r#"<a target="_blank" rel={null} href="https://example.com/5"></a>"#, None),
-        (r#"<a target="_blank" rel="noopenernoreferrer" href="https://example.com/6"></a>"#, None),
-        (r#"<a target="_blank" rel="no referrer" href="https://example.com/7"></a>"#, None),
-        (r#"<a target="_BLANK" href="https://example.com/8"></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/9"></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/10" rel={true}></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/11" rel={3}></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/12" rel={null}></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/13" rel={getRel()}></a>"#, None),
-        (r#"<a target="_blank" href="//example.com/14" rel={"noopenernoreferrer"}></a>"#, None),
-        (r#"<a target={"_blank"} href={"//example.com/15"} rel={"noopenernoreferrer"}></a>"#, None),
+        (r#"<a target="_blank" href="https://example.com/1"></a>"#, None, None),
+        (r#"<a target="_blank" rel="" href="https://example.com/2"></a>"#, None, None),
+        (r#"<a target="_blank" rel={0} href="https://example.com/3"></a>"#, None, None),
+        (r#"<a target="_blank" rel={1} href="https://example.com/3"></a>"#, None, None),
+        (r#"<a target="_blank" rel={false} href="https://example.com/4"></a>"#, None, None),
+        (r#"<a target="_blank" rel={null} href="https://example.com/5"></a>"#, None, None),
+        (
+            r#"<a target="_blank" rel="noopenernoreferrer" href="https://example.com/6"></a>"#,
+            None,
+            None,
+        ),
+        (r#"<a target="_blank" rel="no referrer" href="https://example.com/7"></a>"#, None, None),
+        (r#"<a target="_BLANK" href="https://example.com/8"></a>"#, None, None),
+        (r#"<a target="_blank" href="//example.com/9"></a>"#, None, None),
+        (r#"<a target="_blank" href="//example.com/10" rel={true}></a>"#, None, None),
+        (r#"<a target="_blank" href="//example.com/11" rel={3}></a>"#, None, None),
+        (r#"<a target="_blank" href="//example.com/12" rel={null}></a>"#, None, None),
+        (r#"<a target="_blank" href="//example.com/13" rel={getRel()}></a>"#, None, None),
+        (
+            r#"<a target="_blank" href="//example.com/14" rel={"noopenernoreferrer"}></a>"#,
+            None,
+            None,
+        ),
+        (
+            r#"<a target={"_blank"} href={"//example.com/15"} rel={"noopenernoreferrer"}></a>"#,
+            None,
+            None,
+        ),
         (
             r#"<a target={"_blank"} href={"//example.com/16"} rel={"noopenernoreferrernoreferrernoreferrernoreferrernoreferrer"}></a>"#,
             None,
+            None,
         ),
-        (r#"<a target="_blank" href="//example.com/17" rel></a>"#, None),
-        (r#"<a target="_blank" href={ dynamicLink }></a>"#, None),
-        (r#"<a target={'_blank'} href="//example.com/18"></a>"#, None),
-        (r#"<a target={"_blank"} href="//example.com/19"></a>"#, None),
+        (r#"<a target="_blank" href="//example.com/17" rel></a>"#, None, None),
+        (r#"<a target="_blank" href={ dynamicLink }></a>"#, None, None),
+        (r#"<a target={'_blank'} href="//example.com/18"></a>"#, None, None),
+        (r#"<a target={"_blank"} href="//example.com/19"></a>"#, None, None),
         (
             r#"<a href="https://example.com/20" target="_blank" rel></a>"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
         (
             r#"<a href="https://example.com/20" target="_blank"></a>"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
         (
             r#"<a target="_blank" href={ dynamicLink }></a>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
+            None,
         ),
         (
             r"<a {...someObject}></a>",
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a {...someObject} target="_blank"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a href="foobar" {...someObject} target="_blank"></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a href="foobar" target="_blank" rel="noreferrer" {...someObject}></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<a href="foobar" target="_blank" {...someObject}></a>"#,
             Some(
                 serde_json::json!([{ "enforceDynamicLinks": "always", "warnOnSpreadAttributes": true }]),
             ),
+            None,
         ),
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
-            Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
+            Some(serde_json::json!([{ "enforceDynamicLinks": "always"}])),
+            Some(serde_json::json!({ "linkComponents": ["Link"] })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
+            Some(
+                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": "to" } }),
+            ),
         ),
         (
             r#"<a href="some-link" {...otherProps} target="some-non-blank-target"></a>"#,
             Some(serde_json::json!([{ "warnOnSpreadAttributes": true }])),
+            None,
         ),
         (
             r#"<a href="some-link" target="some-non-blank-target" {...otherProps}></a>"#,
             Some(serde_json::json!([{ "warnOnSpreadAttributes": true }])),
+            None,
         ),
         (
             r#"<a target="_blank" href="//example.com" rel></a>"#,
             Some(serde_json::json!([{ "links": true }])),
+            None,
         ),
         (
             r#"<a target="_blank" href="//example.com" rel></a>"#,
             Some(serde_json::json!([{ "links": true, "forms": true }])),
+            None,
         ),
         (
             r#"<a target="_blank" href="//example.com" rel></a>"#,
             Some(serde_json::json!([{ "links": true, "forms": false }])),
+            None,
         ),
         (
             r#"<form method="POST" action="https://example.com" target="_blank"></form>"#,
             Some(serde_json::json!([{ "forms": true }])),
+            None,
         ),
         (
             r#"<form method="POST" action="https://example.com" rel="" target="_blank"></form>"#,
             Some(serde_json::json!([{ "forms": true }])),
+            None,
         ),
         (
             r#"<form method="POST" action="https://example.com" rel="noopenernoreferrer" target="_blank"></form>"#,
             Some(serde_json::json!([{ "forms": true }])),
+            None,
         ),
         (
             r#"<form method="POST" action="https://example.com" rel="noopenernoreferrer" target="_blank"></form>"#,
             Some(serde_json::json!([{ "forms": true, "links": false }])),
+            None,
         ),
-        (r#"<a href={href} target="_blank" rel={isExternal ? "undefined" : "undefined"} />"#, None),
-        (r#"<a href={href} target="_blank" rel={isExternal ? "noopener" : undefined} />"#, None),
-        (r#"<a href={href} target="_blank" rel={isExternal ? "undefined" : "noopener"} />"#, None),
+        (
+            r#"<a href={href} target="_blank" rel={isExternal ? "undefined" : "undefined"} />"#,
+            None,
+            None,
+        ),
+        (
+            r#"<a href={href} target="_blank" rel={isExternal ? "noopener" : undefined} />"#,
+            None,
+            None,
+        ),
+        (
+            r#"<a href={href} target="_blank" rel={isExternal ? "undefined" : "noopener"} />"#,
+            None,
+            None,
+        ),
         (
             r#"<a href={href} target={isExternal ? "_blank" : undefined} rel={isExternal ? undefined : "noopener noreferrer"} />"#,
             None,
+            None,
         ),
-        (r#"<a href={href} target="_blank" rel={isExternal ? 3 : "noopener noreferrer"} />"#, None),
+        (
+            r#"<a href={href} target="_blank" rel={isExternal ? 3 : "noopener noreferrer"} />"#,
+            None,
+            None,
+        ),
         (
             r#"<a href={href} target="_blank" rel={isExternal ? "noopener noreferrer" : "3"} />"#,
+            None,
             None,
         ),
         (
             r#"<a href={href} target="_blank" rel={isExternal ? "noopener" : "2"} />"#,
             Some(serde_json::json!([{ "allowReferrer": true }])),
+            None,
         ),
         (
             r#"<form action={action} target="_blank" />"#,
             Some(serde_json::json!([{ "allowReferrer": true, "forms": true }])),
+            None,
         ),
         (
             r#"<form action={action} target="_blank" />"#,
             Some(serde_json::json!([{ "forms": true }])),
+            None,
         ),
         (
             r"<form action={action} {...spread} />",
             Some(serde_json::json!([{ "forms": true, "warnOnSpreadAttributes": true }])),
+            None,
         ),
     ];
 

@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fmt,
+    fmt::{self},
     fmt::{Display, Formatter},
 };
 
@@ -54,16 +54,18 @@ struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
     config: Option<Cow<'a, str>>,
+    settings: Option<Cow<'a, str>>,
 }
 
 impl<'a> TestCase<'a> {
     fn new(source_text: &str, arg: &'a Expression<'a>) -> Self {
-        let mut test_case = Self { source_text: source_text.to_string(), code: None, config: None };
+        let mut test_case =
+            Self { source_text: source_text.to_string(), code: None, config: None, settings: None };
         test_case.visit_expression(arg);
         test_case
     }
 
-    fn code(&self, need_config: bool) -> String {
+    fn code(&self, need_config: bool, need_settings: bool) -> String {
         self.code
             .as_ref()
             .map(|code| {
@@ -82,7 +84,13 @@ impl<'a> TestCase<'a> {
                     || "None".to_string(),
                     |config| format!("Some(serde_json::json!({config}))"),
                 );
-                if need_config {
+                let settings = self.settings.as_ref().map_or_else(
+                    || "None".to_string(),
+                    |settings| format!("Some(serde_json::json!({settings}))"),
+                );
+                if need_settings {
+                    format!("(r#\"{code}\"#, {config}, {settings})")
+                } else if need_config {
                     format!("(r#\"{code}\"#, {config})")
                 } else {
                     format!("r#\"{code}\"#")
@@ -188,6 +196,13 @@ impl<'a> Visit<'a> for TestCase<'a> {
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
                         self.config =
                             Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
+                    }
+                    PropertyKey::Identifier(ident) if ident.name == "settings" => {
+                        let span = prop.value.span();
+                        let setting_text =
+                            &self.source_text[span.start as usize..span.end as usize];
+                        self.settings =
+                            Some(Cow::Owned(json::convert_config_to_json_literal(setting_text)));
                     }
                     _ => continue,
                 },
@@ -504,16 +519,20 @@ fn main() {
             let fail_has_config = fail_cases.iter().any(|case| case.config.is_some());
             let has_config = pass_has_config || fail_has_config;
 
+            let pass_has_settings = pass_cases.iter().any(|case| case.settings.is_some());
+            let fail_has_settings = fail_cases.iter().any(|case| case.settings.is_some());
+            let has_settings = pass_has_settings || fail_has_settings;
+
             let pass_cases = pass_cases
                 .into_iter()
-                .map(|c| c.code(has_config))
+                .map(|c| c.code(has_config, has_settings))
                 .filter(|t| !t.is_empty())
                 .collect::<Vec<_>>()
                 .join(",\n");
 
             let fail_cases = fail_cases
                 .into_iter()
-                .map(|c| c.code(has_config))
+                .map(|c| c.code(has_config, has_settings))
                 .filter(|t| !t.is_empty())
                 .collect::<Vec<_>>()
                 .join(",\n");
