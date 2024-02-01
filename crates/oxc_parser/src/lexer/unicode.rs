@@ -189,15 +189,15 @@ impl<'a> Lexer<'a> {
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
         // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        if !((0xD800..=0xDBFF).contains(&high)
+        let is_pair = (0xD800..=0xDBFF).contains(&high)
             && self.peek() == Some('\\')
-            && self.peek2() == Some('u'))
-        {
+            && self.peek2() == Some('u');
+        if !is_pair {
             return Some(SurrogatePair::CodePoint(high));
         }
 
-        self.next_char();
-        self.next_char();
+        self.consume_char();
+        self.consume_char();
 
         let low = self.hex_4_digits()?;
 
