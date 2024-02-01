@@ -20,7 +20,7 @@ type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
 #[rustfmt::skip]
 static BYTE_HANDLERS: [ByteHandler; 256] = [
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
-    ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, SPS, SPS, LIN, ERR, ERR, // 0
+    ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
     SPS, EXL, QOT, HAS, IDT, PRC, AMP, QOT, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
     ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
@@ -98,9 +98,16 @@ ascii_byte_handler!(ERR(lexer) {
     Kind::Undetermined
 });
 
-// <SPACE> <TAB> <VT> <FF>
+// <SPACE> <TAB> Normal Whitespace
 ascii_byte_handler!(SPS(lexer) {
     lexer.consume_char();
+    Kind::Skip
+});
+
+// <VT> <FF> Irregular Whitespace
+ascii_byte_handler!(ISP(lexer) {
+    lexer.consume_char();
+    lexer.trivia_builder.add_irregular_whitespace(lexer.current.token.start, lexer.offset());
     Kind::Skip
 });
 
