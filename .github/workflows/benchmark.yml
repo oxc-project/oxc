@@ -23,7 +23,7 @@ concurrency:
 jobs:
   benchmark:
     name: Benchmark
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
