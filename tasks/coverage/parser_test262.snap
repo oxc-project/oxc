@@ -20100,8 +20100,24 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-catch-finally.js:14:1]
+ 14 │ try { } catch (err) { } finally {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
     ╭─[language/module-code/parse-err-decl-pos-export-try-catch.js:14:1]
  14 │ try { } catch (err) {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-finally.js:14:1]
+ 14 │ try { } finally {
  15 │   export default null;
     ·   ──────
  16 │ }
@@ -20405,9 +20421,25 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-catch-finally.js:14:1]
+ 14 │ try { } catch (err) { } finally {
+ 15 │   import v from './decl-pos-import-try-catch-finally.js';
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
     ╭─[language/module-code/parse-err-decl-pos-import-try-catch.js:14:1]
  14 │ try { } catch (err) {
  15 │   import v from './decl-pos-import-try-catch.js';
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-finally.js:14:1]
+ 14 │ try { } finally {
+ 15 │   import v from './decl-pos-import-try-finally.js';
     ·   ──────
  16 │ }
     ╰────
