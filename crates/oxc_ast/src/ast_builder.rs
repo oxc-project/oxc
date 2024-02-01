@@ -599,6 +599,21 @@ impl<'a> AstBuilder<'a> {
         self.member_expression(self.static_member(span, object, property, optional))
     }
 
+    pub fn private_field(
+        &self,
+        span: Span,
+        object: Expression<'a>,
+        field: PrivateIdentifier,
+        optional: bool,
+    ) -> MemberExpression<'a> {
+        MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
+            span,
+            object,
+            field,
+            optional,
+        })
+    }
+
     pub fn private_field_expression(
         &self,
         span: Span,
@@ -606,12 +621,7 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier,
         optional: bool,
     ) -> Expression<'a> {
-        self.member_expression(MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
-            span,
-            object,
-            field,
-            optional,
-        }))
+        self.member_expression(self.private_field(span, object, field, optional))
     }
 
     pub fn new_expression(
