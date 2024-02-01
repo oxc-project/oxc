@@ -96,7 +96,7 @@ expression: no_duplicate_case
   help: Remove the duplicated case
 
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
-   ╭─[no_duplicate_case.tsx:3:18]
+   ╭─[no_duplicate_case.tsx:1:54]
  1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p .p
  2 │ │   /* comment */
  3 │ ╰─▶ .p1: break; case p.p.p1: break; default: break;}
@@ -105,7 +105,7 @@ expression: no_duplicate_case
   help: Remove the duplicated case
 
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
-   ╭─[no_duplicate_case.tsx:1:1]
+   ╭─[no_duplicate_case.tsx:1:54]
  1 │ ╭──▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p .p
  2 │ │    /* comment */
  3 │ ╰──▶ .p1: break; case p. p // comment
@@ -123,7 +123,7 @@ expression: no_duplicate_case
   help: Remove the duplicated case
 
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
-   ╭─[no_duplicate_case.tsx:1:1]
+   ╭─[no_duplicate_case.tsx:1:74]
  1 │ ╭──▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
  2 │ ╰──▶  .p1: break; case p .p
  3 │ │    /* comment */
@@ -139,7 +139,7 @@ expression: no_duplicate_case
   help: Remove the duplicated case
 
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
-   ╭─[no_duplicate_case.tsx:1:1]
+   ╭─[no_duplicate_case.tsx:1:67]
  1 │ ╭──▶ var a = 1, f = function(s) { return { p1: s } }; switch (a) {case f(
  2 │ │    a + 1 // comment
  3 │ ╰──▶ ).p1: break; case f(a+1)

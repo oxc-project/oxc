@@ -16,7 +16,7 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ Do not use @ts-expect-error because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:1]
+   ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
  3 │ ╰─▶   @ts-expect-error
@@ -93,7 +93,7 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ Do not use @ts-ignore because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:1]
+   ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
  3 │ ╰─▶   @ts-ignore
@@ -170,7 +170,7 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ Do not use @ts-nocheck because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:1]
+   ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
  3 │ ╰─▶   @ts-nocheck
@@ -235,7 +235,7 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:1]
+   ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
  3 │ ╰─▶   @ts-check
