@@ -2096,6 +2096,12 @@ pub struct PrivateIdentifier {
     pub name: Atom,
 }
 
+impl PrivateIdentifier {
+    pub fn new(span: Span, name: Atom) -> Self {
+        Self { span, name }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
