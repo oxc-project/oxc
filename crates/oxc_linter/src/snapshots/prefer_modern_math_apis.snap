@@ -118,7 +118,7 @@ expression: prefer_modern_math_apis
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log(x) / Math.LN10`
-   ╭─[prefer_modern_math_apis.tsx:3:1]
+   ╭─[prefer_modern_math_apis.tsx:4:21]
  3 │                     return (
  4 │ ╭─▶                     Math.log(x)
  5 │ ╰─▶                         / Math.LN10
@@ -162,7 +162,7 @@ expression: prefer_modern_math_apis
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log(x) / Math.LN2`
-   ╭─[prefer_modern_math_apis.tsx:3:1]
+   ╭─[prefer_modern_math_apis.tsx:4:21]
  3 │                     return (
  4 │ ╭─▶                     Math.log(x)
  5 │ ╰─▶                         / Math.LN2

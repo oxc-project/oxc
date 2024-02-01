@@ -147,7 +147,7 @@ expression: ban_types
    ╰────
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
-   ╭─[ban_types.tsx:1:1]
+   ╭─[ban_types.tsx:1:17]
  1 │ ╭─▶ const emptyObj: {
  2 │ │   
  3 │ ╰─▶         } = {foo: "bar"};

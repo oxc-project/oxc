@@ -13,7 +13,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-   ╭─[no_useless_switch_case.tsx:2:1]
+   ╭─[no_useless_switch_case.tsx:3:13]
  2 │             switch (foo) {
  3 │ ╭─▶             case a: {
  4 │ ╰─▶             }
@@ -22,7 +22,7 @@ expression: no_useless_switch_case
   help: Consider removing this case or removing the `default` case.
 
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
-    ╭─[no_useless_switch_case.tsx:2:1]
+    ╭─[no_useless_switch_case.tsx:3:13]
   2 │             switch (foo) {
   3 │ ╭─▶             case a: {
   4 │ │                   ;;
