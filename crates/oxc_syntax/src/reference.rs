@@ -11,6 +11,7 @@ define_index_type! {
     all(feature = "serde", feature = "wasm"),
     wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
 )]
+#[allow(dead_code)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ReferenceId = number;
 export type ReferenceFlag = {

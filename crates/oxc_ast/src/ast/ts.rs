@@ -15,6 +15,7 @@ use crate::ast::*;
     all(feature = "serde", feature = "wasm"),
     wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
 )]
+#[allow(dead_code)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'> {}
 export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'> {}
