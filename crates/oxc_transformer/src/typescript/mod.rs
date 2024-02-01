@@ -723,7 +723,6 @@ impl<'a> TypeScript<'a> {
                 None,
                 false,
                 false,
-                false,
                 None,
                 params,
                 Some(body),

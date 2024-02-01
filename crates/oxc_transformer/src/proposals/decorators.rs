@@ -612,7 +612,6 @@ impl<'a> Decorators<'a> {
                                 None,
                                 false,
                                 false,
-                                false,
                                 None,
                                 self.ast.formal_parameters(
                                     SPAN,

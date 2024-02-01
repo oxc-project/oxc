@@ -1683,7 +1683,6 @@ pub struct Function<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: Option<BindingIdentifier>,
-    pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>

@@ -125,7 +125,6 @@ impl<'a> Parser<'a> {
             function_type,
             self.end_span(span),
             id,
-            false, // expression
             generator,
             r#async,
             this_param,
