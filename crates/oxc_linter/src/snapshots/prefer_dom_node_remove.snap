@@ -2,50 +2,51 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_dom_node_remove
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(foo)
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(this)
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(some.node)
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(getChild())
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(lib.getChild())
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild((() => childNode)())
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:2:1]
+   ╭─[prefer_dom_node_remove.tsx:3:32]
  2 │                 async function foo () {
  3 │                     parentNode.removeChild(
    ·                                ───────────
@@ -54,7 +55,7 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:2:1]
+   ╭─[prefer_dom_node_remove.tsx:3:24]
  2 │         async function foo () {
  3 │             parentNode.removeChild(
    ·                        ───────────
@@ -63,28 +64,28 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild((0, child))
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild( (  (new Image)) )
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild( new Audio )
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:2:1]
+   ╭─[prefer_dom_node_remove.tsx:3:20]
  2 │         const array = []
  3 │         parentNode.removeChild([a, b, c].reduce(child => child, child))
    ·                    ───────────
@@ -93,7 +94,7 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:3:1]
+   ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
    ·                        ───────────
@@ -102,7 +103,7 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:3:1]
+   ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
    ·                        ───────────
@@ -111,7 +112,7 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:3:1]
+   ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
    ·                        ───────────
@@ -120,7 +121,7 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:3:1]
+   ╭─[prefer_dom_node_remove.tsx:4:24]
  3 │             const array = []
  4 │             parentNode.removeChild(
    ·                        ───────────
@@ -129,171 +130,170 @@ expression: prefer_dom_node_remove
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:16]
  1 │ if (parentNode.removeChild(foo)) {}
    ·                ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:26]
  1 │ var removed = parentNode.removeChild(child);
    ·                          ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:24]
  1 │ const foo = parentNode.removeChild(child);
    ·                        ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ foo.bar(parentNode.removeChild(child));
    ·                    ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) || "foo";
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) + 0;
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:13]
  1 │ +parentNode.removeChild(child);
    ·             ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(child) ? "foo" : "bar";
    ·            ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:16]
  1 │ if (parentNode.removeChild(child)) {}
    ·                ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:25]
  1 │ const foo = [parentNode.removeChild(child)]
    ·                         ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:31]
  1 │ const foo = { bar: parentNode.removeChild(child) }
    ·                               ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:36]
  1 │ function foo() { return parentNode.removeChild(child); }
    ·                                    ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:42]
  1 │ const foo = () => { return parentElement.removeChild(child); }
    ·                                          ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:22]
  1 │ foo(bar = parentNode.removeChild(child))
    ·                      ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:7]
  1 │ foo().removeChild(child)
    ·       ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ foo[doSomething()].removeChild(child)
    ·                    ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:13]
  1 │ parentNode?.removeChild(foo)
    ·             ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ foo?.parentNode.removeChild(foo)
    ·                 ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ foo.parentNode?.removeChild(foo)
    ·                 ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:18]
  1 │ foo?.parentNode?.removeChild(foo)
    ·                  ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:21]
  1 │ foo.bar?.parentNode.removeChild(foo.bar)
    ·                     ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:19]
  1 │ a.b?.c.parentNode.removeChild(foo)
    ·                   ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:20]
  1 │ a[b?.c].parentNode.removeChild(foo)
    ·                    ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
-   ╭─[prefer_dom_node_remove.tsx:1:1]
+   ╭─[prefer_dom_node_remove.tsx:1:17]
  1 │ a?.b.parentNode.removeChild(a.b)
    ·                 ───────────
    ╰────
   help: Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.
-
 

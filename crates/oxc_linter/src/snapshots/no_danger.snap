@@ -2,32 +2,32 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_danger
 ---
+
   ⚠ eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop
-   ╭─[no_danger.tsx:1:1]
+   ╭─[no_danger.tsx:1:6]
  1 │ <div dangerouslySetInnerHTML={{ __html: "" }}></div>;
    ·      ───────────────────────
    ╰────
   help: `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
 
   ⚠ eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop
-   ╭─[no_danger.tsx:1:1]
+   ╭─[no_danger.tsx:1:9]
  1 │ <button dangerouslySetInnerHTML={{ __html: "baz" }}>Foo</button>;
    ·         ───────────────────────
    ╰────
   help: `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
 
   ⚠ eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop
-   ╭─[no_danger.tsx:1:1]
+   ╭─[no_danger.tsx:1:30]
  1 │ React.createElement("div", { dangerouslySetInnerHTML: { __html: "" } });
    ·                              ───────────────────────
    ╰────
   help: `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
 
   ⚠ eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop
-   ╭─[no_danger.tsx:1:1]
+   ╭─[no_danger.tsx:1:33]
  1 │ React.createElement("button", { dangerouslySetInnerHTML: { __html: "baz" } }, "Foo");
    ·                                 ───────────────────────
    ╰────
   help: `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
-
 

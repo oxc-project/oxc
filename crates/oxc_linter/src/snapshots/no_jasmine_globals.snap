@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_jasmine_globals
 ---
+
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of global spyOn"
    ╭─[no_jasmine_globals.tsx:1:1]
  1 │ spyOn(some, 'object')
@@ -31,115 +32,114 @@ expression: no_jasmine_globals
   help: "prefer explicitly skipping a test using `test.skip`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
    ·         ────────────────────────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.DEFAULT_TIMEOUT_INTERVAL = function() {}
    ·         ────────────────────────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `addMatchers`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.addMatchers(matchers)
    ·         ───────────
    ╰────
   help: "prefer use Jest own API `expect.extend`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `createSpy`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.createSpy()
    ·         ─────────
    ╰────
   help: "prefer use Jest own API `jest.fn`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `any`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.any()
    ·         ───
    ╰────
   help: "prefer use Jest own API `expect.any`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `anything`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.anything()
    ·         ────────
    ╰────
   help: "prefer use Jest own API `expect.anything`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `arrayContaining`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.arrayContaining()
    ·         ───────────────
    ╰────
   help: "prefer use Jest own API `expect.arrayContaining`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `objectContaining`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.objectContaining()
    ·         ────────────────
    ╰────
   help: "prefer use Jest own API `expect.objectContaining`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `stringMatching`"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.stringMatching()
    ·         ──────────────
    ╰────
   help: "prefer use Jest own API `expect.stringMatching`"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.getEnv()
    ·         ──────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.empty()
    ·         ─────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.falsy()
    ·         ─────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.truthy()
    ·         ──────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.arrayWithExactContents()
    ·         ──────────────────────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.clock()
    ·         ─────
    ╰────
   help: "prefer use Jest own API"
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
-   ╭─[no_jasmine_globals.tsx:1:1]
+   ╭─[no_jasmine_globals.tsx:1:9]
  1 │ jasmine.MAX_PRETTY_PRINT_ARRAY_LENGTH = 42
    ·         ─────────────────────────────
    ╰────
   help: "prefer use Jest own API"
-
 

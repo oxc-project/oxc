@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_disabled_tests
 ---
+
   ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip('foo', function () {})
@@ -157,7 +158,7 @@ expression: no_disabled_tests
   help: "Add function argument"
 
   ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
-   ╭─[no_disabled_tests.tsx:1:1]
+   ╭─[no_disabled_tests.tsx:1:48]
  1 │ it('contains a call to pending', function () { pending() })
    ·                                                ─────────
    ╰────
@@ -171,17 +172,16 @@ expression: no_disabled_tests
   help: "Remove pending() call"
 
   ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
-   ╭─[no_disabled_tests.tsx:1:1]
+   ╭─[no_disabled_tests.tsx:1:54]
  1 │ describe('contains a call to pending', function () { pending() })
    ·                                                      ─────────
    ╰────
   help: "Remove pending() call"
 
   ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
-   ╭─[no_disabled_tests.tsx:1:1]
+   ╭─[no_disabled_tests.tsx:1:38]
  1 │ import { test } from '@jest/globals';test('something');
    ·                                      ─────────────────
    ╰────
   help: "Add function argument"
-
 

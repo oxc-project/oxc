@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: google_font_display
 ---
+
   ⚠ eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).
-   ╭─[google_font_display.tsx:5:1]
+   ╭─[google_font_display.tsx:6:25]
  5 │                      <Head>
  6 │                        <link
    ·                         ────
@@ -12,7 +13,7 @@ expression: google_font_display
   help: See https://nextjs.org/docs/messages/google-font-display
 
   ⚠ eslint-plugin-next(google-font-display): `block` is not a recommended font-display value.
-   ╭─[google_font_display.tsx:6:1]
+   ╭─[google_font_display.tsx:7:26]
  6 │                        <link
  7 │                          href="https://fonts.googleapis.com/css2?family=Krona+One&display=block"
    ·                          ───────────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ expression: google_font_display
   help: See https://nextjs.org/docs/messages/google-font-display
 
   ⚠ eslint-plugin-next(google-font-display): `auto` is not a recommended font-display value.
-   ╭─[google_font_display.tsx:6:1]
+   ╭─[google_font_display.tsx:7:26]
  6 │                        <link
  7 │                          href="https://fonts.googleapis.com/css2?family=Krona+One&display=auto"
    ·                          ──────────────────────────────────────────────────────────────────────
@@ -30,12 +31,11 @@ expression: google_font_display
   help: See https://nextjs.org/docs/messages/google-font-display
 
   ⚠ eslint-plugin-next(google-font-display): `fallback` is not a recommended font-display value.
-   ╭─[google_font_display.tsx:6:1]
+   ╭─[google_font_display.tsx:7:26]
  6 │                        <link
  7 │                          href="https://fonts.googleapis.com/css2?display=fallback&family=Krona+One"
    ·                          ──────────────────────────────────────────────────────────────────────────
  8 │                          rel="stylesheet"
    ╰────
   help: See https://nextjs.org/docs/messages/google-font-display
-
 

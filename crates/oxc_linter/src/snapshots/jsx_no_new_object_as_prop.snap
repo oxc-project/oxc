@@ -2,53 +2,53 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_new_object_as_prop
 ---
+
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:15]
  1 │ <Item config={{}} />
    ·               ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:15]
  1 │ <Item config={new Object()} />
    ·               ────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:15]
  1 │ <Item config={Object()} />
    ·               ────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:13]
  1 │ <div style={{display: 'none'}} />
    ·             ─────────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:36]
  1 │ <Item config={this.props.config || {}} />
    ·                                    ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:55]
  1 │ <Item config={this.props.config ? this.props.config : {}} />
    ·                                                       ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
-   ╭─[jsx_no_new_object_as_prop.tsx:1:1]
+   ╭─[jsx_no_new_object_as_prop.tsx:1:79]
  1 │ <Item config={this.props.config || (this.props.default ? this.props.default : {})} />
    ·                                                                               ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-
 

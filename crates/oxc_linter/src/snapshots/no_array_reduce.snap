@@ -2,15 +2,16 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_array_reduce
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((str, item) => str += item, "")
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduce((obj, item) => {
    ·                   ──────
@@ -19,14 +20,14 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((obj, item) => ({ [item]: null }), {})
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:1]
+   ╭─[no_array_reduce.tsx:3:29]
  2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduce(hyphenate);
    ·                             ──────
@@ -35,70 +36,70 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:11]
  1 │ [].reduce.call(array, (s, i) => s + i)
    ·           ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:11]
  1 │ [].reduce.call(array, sum);
    ·           ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:11]
  1 │ [].reduce.call(sum);
    ·           ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:24]
  1 │ Array.prototype.reduce.call(array, (s, i) => s + i)
    ·                        ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:24]
  1 │ Array.prototype.reduce.call(array, sum);
    ·                        ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:11]
  1 │ [].reduce.apply(array, [(s, i) => s + i])
    ·           ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:11]
  1 │ [].reduce.apply(array, [sum]);
    ·           ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:24]
  1 │ Array.prototype.reduce.apply(array, [(s, i) => s + i])
    ·                        ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:24]
  1 │ Array.prototype.reduce.apply(array, [sum]);
    ·                        ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduce((total, item) => {
    ·                   ──────
@@ -107,49 +108,49 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((total, item) => total + item)
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((total, item) => { return total - item })
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce(function (total, item) { return total * item })
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((total, item) => total + item, 0)
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((total, item) => { return total - item }, 0 )
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce(function (total, item) { return total * item }, 0)
    ·       ──────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:23]
  1 │ 
  2 │                 array.reduce((total, item) => {
    ·                       ──────
@@ -158,14 +159,14 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((str, item) => str += item, "")
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduceRight((obj, item) => {
    ·                   ───────────
@@ -174,14 +175,14 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((obj, item) => ({ [item]: null }), {})
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:2:1]
+   ╭─[no_array_reduce.tsx:3:29]
  2 │             const hyphenate = (str, char) => `${str}-${char}`;
  3 │             ["a", "b", "c"].reduceRight(hyphenate);
    ·                             ───────────
@@ -190,70 +191,70 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:16]
  1 │ [].reduceRight.call(array, (s, i) => s + i)
    ·                ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:16]
  1 │ [].reduceRight.call(array, sum);
    ·                ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:16]
  1 │ [].reduceRight.call(sum);
    ·                ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:29]
  1 │ Array.prototype.reduceRight.call(array, (s, i) => s + i)
    ·                             ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:29]
  1 │ Array.prototype.reduceRight.call(array, sum);
    ·                             ────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:16]
  1 │ [].reduceRight.apply(array, [(s, i) => s + i])
    ·                ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:16]
  1 │ [].reduceRight.apply(array, [sum]);
    ·                ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:29]
  1 │ Array.prototype.reduceRight.apply(array, [(s, i) => s + i])
    ·                             ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:29]
  1 │ Array.prototype.reduceRight.apply(array, [sum]);
    ·                             ─────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:19]
  1 │ 
  2 │             array.reduceRight((total, item) => {
    ·                   ───────────
@@ -262,54 +263,53 @@ expression: no_array_reduce
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((total, item) => total + item)
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((total, item) => { return total - item })
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight(function (total, item) { return total * item })
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((total, item) => total + item, 0)
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight((total, item) => { return total - item }, 0 )
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduceRight(function (total, item) { return total * item }, 0)
    ·       ───────────
    ╰────
   help: Refactor your code to use `for` loops instead.
 
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
-   ╭─[no_array_reduce.tsx:1:1]
+   ╭─[no_array_reduce.tsx:2:23]
  1 │ 
  2 │                 array.reduceRight((total, item) => {
    ·                       ───────────
  3 │                     return (total / item) * 100;
    ╰────
   help: Refactor your code to use `for` loops instead.
-
 

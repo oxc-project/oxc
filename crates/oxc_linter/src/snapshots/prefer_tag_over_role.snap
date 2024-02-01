@@ -2,74 +2,74 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_tag_over_role
 ---
+
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="checkbox" />
    ·      ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `button` over `role` attribute `button`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="button checkbox" />
    ·      ──────────────────────
    ╰────
   help: Replace HTML elements with `role` attribute `button` to corresponding semantic HTML tag `button`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="button checkbox" />
    ·      ──────────────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `h1,h2,h3,h4,h5,h6` over `role` attribute `heading`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="heading" />
    ·      ──────────────
    ╰────
   help: Replace HTML elements with `role` attribute `heading` to corresponding semantic HTML tag `h1,h2,h3,h4,h5,h6`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `a,area` over `role` attribute `link`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="link" />
    ·      ───────────
    ╰────
   help: Replace HTML elements with `role` attribute `link` to corresponding semantic HTML tag `a,area`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `tbody,tfoot,thead` over `role` attribute `rowgroup`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="rowgroup" />
    ·      ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `rowgroup` to corresponding semantic HTML tag `tbody,tfoot,thead`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:7]
  1 │ <span role="checkbox" />
    ·       ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:8]
  1 │ <other role="checkbox" />
    ·        ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:8]
  1 │ <other role="checkbox" />
    ·        ───────────────
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `header` over `role` attribute `banner`.
-   ╭─[prefer_tag_over_role.tsx:1:1]
+   ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="banner" />
    ·      ─────────────
    ╰────
   help: Replace HTML elements with `role` attribute `banner` to corresponding semantic HTML tag `header`.
-
 

@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: double_comparisons
 ---
+
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
  1 │ x == y || x < y
@@ -85,5 +86,4 @@ expression: double_comparisons
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
-
 

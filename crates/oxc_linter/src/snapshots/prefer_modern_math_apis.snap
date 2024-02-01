@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_modern_math_apis
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
    ╭─[prefer_modern_math_apis.tsx:1:1]
  1 │ Math.sqrt(a * a + b * b)
@@ -167,5 +168,4 @@ expression: prefer_modern_math_apis
  5 │ ╰─▶                         / Math.LN2
  6 │                     );
    ╰────
-
 

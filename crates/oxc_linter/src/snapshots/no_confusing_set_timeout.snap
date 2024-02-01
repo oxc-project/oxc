@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_confusing_set_timeout
 ---
+
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-    ╭─[no_confusing_set_timeout.tsx:9:1]
+    ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
  10 │                 jest.setTimeout(800);
     ·                 ───────────────
@@ -12,7 +13,7 @@ expression: no_confusing_set_timeout
   help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-    ╭─[no_confusing_set_timeout.tsx:9:1]
+    ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
  10 │                 jest.setTimeout(800);
     ·                 ───────────────
@@ -21,7 +22,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-    ╭─[no_confusing_set_timeout.tsx:9:1]
+    ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
  10 │                 jest.setTimeout(800);
     ·                 ───────────────
@@ -30,7 +31,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-    ╭─[no_confusing_set_timeout.tsx:9:1]
+    ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
  10 │                 jest.setTimeout(800);
     ·                 ───────────────
@@ -39,7 +40,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-    ╭─[no_confusing_set_timeout.tsx:9:1]
+    ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
  10 │                 jest.setTimeout(800);
     ·                 ───────────────
@@ -48,7 +49,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:2:1]
+   ╭─[no_confusing_set_timeout.tsx:3:21]
  2 │                 describe('A', () => {
  3 │                     jest.setTimeout(800);
    ·                     ───────────────
@@ -57,7 +58,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be call in `global` scope
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:4:1]
+   ╭─[no_confusing_set_timeout.tsx:5:25]
  4 │                         await new Promise((resolve) => {
  5 │                         jest.setTimeout(1000);
    ·                         ───────────────
@@ -66,7 +67,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be call in `global` scope
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:2:1]
+   ╭─[no_confusing_set_timeout.tsx:3:21]
  2 │                 test('test-suite', () => {
  3 │                     jest.setTimeout(1000);
    ·                     ───────────────
@@ -75,7 +76,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be call in `global` scope
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:6:1]
+   ╭─[no_confusing_set_timeout.tsx:7:17]
  6 │                 });
  7 │                 jest.setTimeout(1000);
    ·                 ───────────────
@@ -84,7 +85,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:6:1]
+   ╭─[no_confusing_set_timeout.tsx:7:17]
  6 │                 });
  7 │                 jest.setTimeout(1000);
    ·                 ───────────────
@@ -93,7 +94,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:6:1]
+   ╭─[no_confusing_set_timeout.tsx:7:17]
  6 │                 });
  7 │                 jest.setTimeout(1000);
    ·                 ───────────────
@@ -102,7 +103,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:6:1]
+   ╭─[no_confusing_set_timeout.tsx:7:17]
  6 │                 });
  7 │                 jest.setTimeout(1000);
    ·                 ───────────────
@@ -111,7 +112,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:3:1]
+   ╭─[no_confusing_set_timeout.tsx:4:20]
  3 │                 {
  4 │                    jest.setTimeout(800);
    ·                    ───────────────
@@ -120,7 +121,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be call in `global` scope
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:2:1]
+   ╭─[no_confusing_set_timeout.tsx:3:17]
  2 │                 jest.setTimeout(800);
  3 │                 jest.setTimeout(900);
    ·                 ───────────────
@@ -129,7 +130,7 @@ expression: no_confusing_set_timeout
   help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:3:1]
+   ╭─[no_confusing_set_timeout.tsx:4:21]
  3 │                 {
  4 │                     Jest.setTimeout(800);
    ·                     ───────────────
@@ -138,7 +139,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be call in `global` scope
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:2:1]
+   ╭─[no_confusing_set_timeout.tsx:3:17]
  2 │                 expect(1 + 2).toEqual(3);
  3 │                 jest.setTimeout(1000);
    ·                 ───────────────
@@ -147,7 +148,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:7:1]
+   ╭─[no_confusing_set_timeout.tsx:8:17]
  7 │                 });
  8 │                 Jest.setTimeout(800);
    ·                 ───────────────
@@ -156,7 +157,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:7:1]
+   ╭─[no_confusing_set_timeout.tsx:8:17]
  7 │                 });
  8 │                 Jest.setTimeout(800);
    ·                 ───────────────
@@ -165,7 +166,7 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:4:1]
+   ╭─[no_confusing_set_timeout.tsx:5:21]
  4 │                     });
  5 │                     jest.setTimeout(1000);
    ·                     ───────────────
@@ -174,12 +175,11 @@ expression: no_confusing_set_timeout
   help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
-   ╭─[no_confusing_set_timeout.tsx:4:1]
+   ╭─[no_confusing_set_timeout.tsx:5:21]
  4 │                     });
  5 │                     jest.setTimeout(1000);
    ·                     ───────────────
  6 │                 
    ╰────
   help: `jest.setTimeout` should be placed before any other jest methods
-
 

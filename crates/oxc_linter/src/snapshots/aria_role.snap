@@ -2,115 +2,115 @@
 source: crates/oxc_linter/src/tester.rs
 expression: aria_role
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='foobar' />
    ·           ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `foobar` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='datepicker'></div>
    ·           ────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `datepicker` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='range'></div>
    ·           ───────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `range` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='Button'></div>
    ·           ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
 
   × Unterminated string
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='></div>
    ·           ────────
    ╰────
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='tabpanel row foobar'></div>
    ·           ─────────────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `foobar` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='tabpanel row range'></div>
    ·           ────────────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `range` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='doc-endnotes range'></div>
    ·           ────────────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `range` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:6]
  1 │ <div role />
    ·      ────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <div role='unknown-invalid-role' />
    ·           ──────────────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `unknown-invalid-role` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:6]
  1 │ <div role={null}></div>
    ·      ───────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <Foo role='datepicker' />
    ·           ────────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `datepicker` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <Foo role='Button' />
    ·           ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <Div role='Button' />
    ·           ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:11]
  1 │ <Div role='Button' />
    ·           ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
 
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
-   ╭─[aria_role.tsx:1:1]
+   ╭─[aria_role.tsx:1:25]
  1 │ <Box asChild='div' role='Button' />
    ·                         ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
-
 

@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: heading_has_content
 ---
+
   ⚠ eslint(heading-has-content): Headings must have content and the content must be accessible by a screen reader.
    ╭─[heading_has_content.tsx:1:1]
  1 │ <h1 />
@@ -57,5 +58,4 @@ expression: heading_has_content
    · ─────────
    ╰────
   help: Provide screen reader accessible content when using heading elements.
-
 

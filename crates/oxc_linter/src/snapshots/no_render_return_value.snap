@@ -2,15 +2,16 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_render_return_value
 ---
+
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:1:1]
+   ╭─[no_render_return_value.tsx:1:13]
  1 │ var Hello = ReactDOM.render(<div />, document.body);
    ·             ───────────────
    ╰────
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:2:1]
+   ╭─[no_render_return_value.tsx:3:29]
  2 │                     var o = {
  3 │                       inst: ReactDOM.render(<div />, document.body)
    ·                             ───────────────
@@ -19,7 +20,7 @@ expression: no_render_return_value
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:2:1]
+   ╭─[no_render_return_value.tsx:3:30]
  2 │                     function render () {
  3 │                       return ReactDOM.render(<div />, document.body)
    ·                              ───────────────
@@ -28,31 +29,30 @@ expression: no_render_return_value
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:1:1]
+   ╭─[no_render_return_value.tsx:1:24]
  1 │ var render = (a, b) => ReactDOM.render(a, b)
    ·                        ───────────────
    ╰────
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:1:1]
+   ╭─[no_render_return_value.tsx:1:10]
  1 │ this.o = ReactDOM.render(<div />, document.body);
    ·          ───────────────
    ╰────
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:1:1]
+   ╭─[no_render_return_value.tsx:1:12]
  1 │ var v; v = ReactDOM.render(<div />, document.body);
    ·            ───────────────
    ╰────
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.
-   ╭─[no_render_return_value.tsx:1:1]
+   ╭─[no_render_return_value.tsx:1:12]
  1 │ var inst = ReactDOM.render(<div />, document.body);
    ·            ───────────────
    ╰────
   help: Using the return value is a legacy feature.
-
 

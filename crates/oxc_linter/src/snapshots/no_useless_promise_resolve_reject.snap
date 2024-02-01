@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_promise_resolve_reject
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:4:28]
  3 │                 if (foo > 4) {
  4 │                     return Promise.reject(new Error('🤪'));
    ·                            ───────────────────────────────
@@ -12,7 +13,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:5:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:6:24]
  5 │                 }
  6 │                 return Promise.resolve(result);
    ·                        ───────────────────────
@@ -21,14 +22,14 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve(bar);
    ·             ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async () => {
  3 │                 return Promise.resolve(bar);
    ·                        ────────────────────
@@ -37,7 +38,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async function foo() {
  3 │                 return Promise.resolve(bar);
    ·                        ────────────────────
@@ -46,7 +47,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             (async function() {
  3 │                 return Promise.resolve(bar);
    ·                        ────────────────────
@@ -55,7 +56,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async function * foo() {
  3 │                 return Promise.resolve(bar);
    ·                        ────────────────────
@@ -64,7 +65,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             (async function*() {
  3 │                 return Promise.resolve(bar);
    ·                        ────────────────────
@@ -73,14 +74,14 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.reject(bar);
    ·             ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async () => {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
@@ -89,7 +90,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async function foo() {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
@@ -98,7 +99,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             (async function() {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
@@ -107,7 +108,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async function * foo() {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
@@ -116,7 +117,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             (async function*() {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
@@ -125,7 +126,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 async function * foo() {
  3 │                     yield Promise.resolve(bar);
    ·                           ────────────────────
@@ -134,7 +135,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 (async function * () {
  3 │                     yield Promise.resolve(bar);
    ·                           ────────────────────
@@ -143,7 +144,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 async function * foo() {
  3 │                     yield Promise.reject(bar);
    ·                           ───────────────────
@@ -152,7 +153,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 (async function * () {
  3 │                     yield Promise.reject(bar);
    ·                           ───────────────────
@@ -161,14 +162,14 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve();
    ·             ─────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:28]
  2 │                 async function foo() {
  3 │                     return Promise.resolve();
    ·                            ─────────────────
@@ -177,14 +178,14 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.reject();
    ·             ────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:28]
  2 │                 async function foo() {
  3 │                     return Promise.reject();
    ·                            ────────────────
@@ -193,7 +194,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 async function * foo() {
  3 │                     yield Promise.resolve();
    ·                           ─────────────────
@@ -202,21 +203,21 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve(bar, baz);
    ·             ─────────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.reject(bar, baz);
    ·             ────────────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:27]
  2 │                 async function * foo() {
  3 │                     yield Promise.resolve((bar, baz));
    ·                           ───────────────────────────
@@ -225,21 +226,21 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve((bar, baz))
    ·             ───────────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve({})
    ·             ───────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:4:32]
  3 │                     try {
  4 │                         return Promise.resolve(1);
    ·                                ──────────────────
@@ -248,7 +249,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:3:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:4:32]
  3 │                     try {
  4 │                         return Promise.reject(1);
    ·                                ─────────────────
@@ -257,14 +258,14 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.resolve(...bar);
    ·             ───────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:13]
  1 │ async () => Promise.reject(...bar);
    ·             ──────────────────────
    ╰────
@@ -272,7 +273,7 @@ expression: no_useless_promise_resolve_reject
 
   × Invalid Character `
   │ `
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:2]
  1 │ #
    ·  ─
  2 │         async function * foo() {
@@ -280,7 +281,7 @@ expression: no_useless_promise_resolve_reject
    ╰────
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:31]
  2 │         async function * foo() {
  3 │             const baz = yield Promise.reject(bar);
    ·                               ───────────────────
@@ -289,28 +290,28 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:14]
  1 │ async () => (Promise.resolve(bar));
    ·              ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:14]
  1 │ async () => (Promise.reject(bar));
    ·              ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:15]
  1 │ async () => ((Promise.reject(bar)));
    ·               ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:24]
  2 │             async function * foo() {
  3 │                 (yield Promise.reject(bar));
    ·                        ───────────────────
@@ -319,7 +320,7 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:2:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:3:25]
  2 │             async function * foo() {
  3 │                 ((yield Promise.reject(bar)));
    ·                         ───────────────────
@@ -328,129 +329,128 @@ expression: no_useless_promise_resolve_reject
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:20]
  1 │ promise.then(() => Promise.resolve(bar))
    ·                    ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:29]
  1 │ promise.then(() => { return Promise.resolve(bar); })
    ·                             ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:26]
  1 │ promise.then(async () => Promise.reject(bar))
    ·                          ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:35]
  1 │ promise.then(async () => { return Promise.reject(bar); })
    ·                                   ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:21]
  1 │ promise.catch(() => Promise.resolve(bar))
    ·                     ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:30]
  1 │ promise.catch(() => { return Promise.resolve(bar); })
    ·                              ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:27]
  1 │ promise.catch(async () => Promise.reject(bar))
    ·                           ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:36]
  1 │ promise.catch(async () => { return Promise.reject(bar); })
    ·                                    ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:23]
  1 │ promise.finally(() => Promise.resolve(bar))
    ·                       ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:32]
  1 │ promise.finally(() => { return Promise.resolve(bar); })
    ·                                ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:29]
  1 │ promise.finally(async () => Promise.reject(bar))
    ·                             ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:38]
  1 │ promise.finally(async () => { return Promise.reject(bar); })
    ·                                      ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:30]
  1 │ promise.then(() => {}, () => Promise.resolve(bar))
    ·                              ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:20]
  1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
    ·                    ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:48]
  1 │ promise.then(() => Promise.resolve(bar), () => Promise.resolve(baz))
    ·                                                ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `return value` over `return Promise.resolve(value)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:39]
  1 │ promise.then(() => {}, () => { return Promise.resolve(bar); })
    ·                                       ────────────────────
    ╰────
   help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:36]
  1 │ promise.then(() => {}, async () => Promise.reject(bar))
    ·                                    ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
-   ╭─[no_useless_promise_resolve_reject.tsx:1:1]
+   ╭─[no_useless_promise_resolve_reject.tsx:1:45]
  1 │ promise.then(() => {}, async () => { return Promise.reject(bar); })
    ·                                             ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
-
 

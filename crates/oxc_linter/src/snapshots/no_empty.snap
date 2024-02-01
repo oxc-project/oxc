@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_empty
 ---
+
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {throw ex}
    ·     ─┬
    ·      ╰── Empty block statement
@@ -11,7 +12,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:45]
  1 │ try { foo() } catch (ex) {throw ex} finally {}
    ·                                             ─┬
    ·                                              ╰── Empty block statement
@@ -19,7 +20,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:26]
  1 │ try { foo() } catch (ex) {}
    ·                          ─┬
    ·                           ╰── Empty block statement
@@ -27,7 +28,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:10]
  1 │ if (foo) {}
    ·          ─┬
    ·           ╰── Empty block statement
@@ -35,7 +36,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:13]
  1 │ while (foo) {}
    ·             ─┬
    ·              ╰── Empty block statement
@@ -43,7 +44,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:13]
  1 │ for (;foo;) {}
    ·             ─┬
    ·              ╰── Empty block statement
@@ -67,7 +68,7 @@ expression: no_empty
   help: Add comment inside empty switch statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {}
    ·     ─┬
    ·      ╰── Empty block statement
@@ -75,7 +76,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:38]
  1 │ try { foo(); } catch (ex) {} finally {}
    ·                                      ─┬
    ·                                       ╰── Empty block statement
@@ -83,7 +84,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:5]
  1 │ try {} catch (ex) {} finally {}
    ·     ─┬
    ·      ╰── Empty block statement
@@ -91,7 +92,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:30]
  1 │ try {} catch (ex) {} finally {}
    ·                              ─┬
    ·                               ╰── Empty block statement
@@ -99,7 +100,7 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:27]
  1 │ try { foo(); } catch (ex) {} finally {}
    ·                           ─┬
    ·                            ╰── Empty block statement
@@ -107,11 +108,10 @@ expression: no_empty
   help: Add comment inside empty block statement
 
   ⚠ eslint(no-empty): Disallow empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:38]
  1 │ try { foo(); } catch (ex) {} finally {}
    ·                                      ─┬
    ·                                       ╰── Empty block statement
    ╰────
   help: Add comment inside empty block statement
-
 

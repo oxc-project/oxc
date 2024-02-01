@@ -2,8 +2,9 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_type_error
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (!isFinite(foo)) {
  3 │                 throw new Error();
    ·                           ─────
@@ -12,7 +13,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (isNaN(foo) === false) {
  3 │                 throw new Error();
    ·                           ─────
@@ -21,7 +22,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (Array.isArray(foo)) {
  3 │                 throw new Error('foo is an Array');
    ·                           ─────
@@ -30,7 +31,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (foo instanceof bar) {
  3 │                 throw new Error(foobar);
    ·                           ─────
@@ -39,7 +40,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (_.isElement(foo)) {
  3 │                 throw new Error();
    ·                           ─────
@@ -48,7 +49,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (_.isElement(foo)) {
  3 │                 throw new Error;
    ·                           ─────
@@ -57,7 +58,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper._.isElement(foo)) {
  3 │                 throw new Error;
    ·                           ─────
@@ -66,7 +67,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   × Invalid Character `"`
-   ╭─[prefer_type_error.tsx:4:1]
+   ╭─[prefer_type_error.tsx:5:11]
  4 │             }
  5 │         r#"
    ·           ─
@@ -74,7 +75,7 @@ expression: prefer_type_error
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[prefer_type_error.tsx:4:1]
+   ╭─[prefer_type_error.tsx:5:10]
  4 │             }
  5 │         r#"
    ·          ▲
@@ -83,7 +84,7 @@ expression: prefer_type_error
   help: Try insert a semicolon here
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
  3 │                 throw new Error();
    ·                           ─────
@@ -92,7 +93,7 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:27]
  2 │             if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
  3 │                 throw new Error();
    ·                           ─────
@@ -101,12 +102,11 @@ expression: prefer_type_error
   help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
-   ╭─[prefer_type_error.tsx:2:1]
+   ╭─[prefer_type_error.tsx:3:28]
  2 │             if (_.isElement(foo)) {
  3 │                 throw (new Error());
    ·                            ─────
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
-
 

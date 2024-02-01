@@ -2,6 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_test_prefixes
 ---
+
   ⚠ eslint-plugin-jest(no-test-prefixes): Use "describe.only" instead.
    ╭─[no_test_prefixes.tsx:1:1]
  1 │ fdescribe('foo', function () {})
@@ -63,7 +64,7 @@ expression: no_test_prefixes
    ╰────
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use "it.skip" instead.
-   ╭─[no_test_prefixes.tsx:2:1]
+   ╭─[no_test_prefixes.tsx:3:17]
  2 │                 import { xit } from '@jest/globals';
  3 │                 xit('foo', function () {})
    ·                 ───
@@ -71,7 +72,7 @@ expression: no_test_prefixes
    ╰────
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use "it.skip" instead.
-   ╭─[no_test_prefixes.tsx:2:1]
+   ╭─[no_test_prefixes.tsx:3:17]
  2 │                 import { xit as skipThis } from '@jest/globals';
  3 │                 skipThis('foo', function () {})
    ·                 ────────
@@ -79,11 +80,10 @@ expression: no_test_prefixes
    ╰────
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use "it.only" instead.
-   ╭─[no_test_prefixes.tsx:2:1]
+   ╭─[no_test_prefixes.tsx:3:17]
  2 │                 import { fit as onlyThis } from '@jest/globals';
  3 │                 onlyThis('foo', function () {})
    ·                 ────────
  4 │             
    ╰────
-
 

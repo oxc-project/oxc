@@ -2,183 +2,184 @@
 source: crates/oxc_linter/src/tester.rs
 expression: valid_title
 ---
+
   ⚠ eslint-plugin-jest(valid-title): "correct is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test('the correct way to properly handle all things', () => {});
    ·      ───────────────────────────────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "correct is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('the correct way to do things', function () {})
    ·          ──────────────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "ALL is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it('has ALL the things', () => {})
    ·    ────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "every is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe('every single one of them', function () {})
    ·           ──────────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "Descriptive is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('Very Descriptive Title Goes Here', function () {})
    ·          ──────────────────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "properly is not allowed in test title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(`that the value is set properly`, function () {})
    ·      ────────────────────────────────
    ╰────
   help: "It is included in the `disallowedWords` of your config file, try to remove it from your title"
 
   ⚠ eslint-plugin-jest(valid-title): "test should match (?u)#(?:unit|integration|e2e)"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test('the correct way to properly handle all things', () => {});
    ·      ───────────────────────────────────────────────
    ╰────
   help: "Make sure the title matches the `mustMatch` of your config file"
 
   ⚠ eslint-plugin-jest(valid-title): "describe should match (?u)#(?:unit|integration|e2e)"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('the test', () => {});
    ·          ──────────
    ╰────
   help: "Make sure the title matches the `mustMatch` of your config file"
 
   ⚠ eslint-plugin-jest(valid-title): "describe should match (?u)#(?:unit|integration|e2e)"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe('the test', () => {});
    ·           ──────────
    ╰────
   help: "Make sure the title matches the `mustMatch` of your config file"
 
   ⚠ eslint-plugin-jest(valid-title): "describe should match (?u)#(?:unit|integration|e2e)"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ describe.skip('the test', () => {});
    ·               ──────────
    ╰────
   help: "Make sure the title matches the `mustMatch` of your config file"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:13]
  1 │ it.each([])(1, () => {});
    ·             ─
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:18]
  1 │ it.skip.each([])(1, () => {});
    ·                  ─
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:16]
  1 │ it.skip.each``(1, () => {});
    ·                ─
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it(123, () => {});
    ·    ───
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ it.concurrent(123, () => {});
    ·               ───
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it(1 + 2 + 3, () => {});
    ·    ─────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ it.concurrent(1 + 2 + 3, () => {});
    ·               ─────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ test.skip(123, () => {});
    ·           ───
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(String(/.+/), () => {});
    ·          ────────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(myFunction, () => 1);
    ·          ──────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(myFunction, () => {});
    ·          ──────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe(myFunction, () => {});
    ·           ──────────
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(6, function () {})
    ·          ─
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ describe.skip(123, () => {});
    ·               ───
    ╰────
   help: "Replace your title with a string"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('', function () {})
    ·          ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:2:1]
+   ╭─[valid_title.tsx:3:24]
  2 │                 describe('foo', () => {
  3 │                     it('', () => {});
    ·                        ──
@@ -187,168 +188,168 @@ expression: valid_title
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it('', function () {})
    ·    ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ it.concurrent('', function () {})
    ·               ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test('', function () {})
    ·      ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent('', function () {})
    ·                 ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(``, function () {})
    ·      ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(``, function () {})
    ·                 ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe('', () => {})
    ·           ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ xit('', () => {})
    ·     ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:7]
  1 │ xtest('', () => {})
    ·       ──
    ╰────
   help: "Write a meaningful title for your test"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(' foo', function () {})
    ·          ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ describe.each()(' foo', function () {})
    ·                 ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:22]
  1 │ describe.only.each()(' foo', function () {})
    ·                      ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe(' foo foe fum', function () {})
    ·          ──────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('foo foe fum ', function () {})
    ·          ──────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ fdescribe(' foo', function () {})
    ·           ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ fdescribe(' foo', function () {})
    ·           ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe(' foo', function () {})
    ·           ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it(' foo', function () {})
    ·    ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:15]
  1 │ it.concurrent(' foo', function () {})
    ·               ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ fit(' foo', function () {})
    ·     ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:9]
  1 │ it.skip(' foo', function () {})
    ·         ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ fit('foo ', function () {})
    ·     ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:9]
  1 │ it.skip('foo ', function () {})
    ·         ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:3:1]
+   ╭─[valid_title.tsx:4:26]
  3 │ 
  4 │                 testThat('foo works ', () => {});
    ·                          ────────────
@@ -357,84 +358,84 @@ expression: valid_title
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ xit(' foo', function () {})
    ·     ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(' foo', function () {})
    ·      ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(' foo', function () {})
    ·                 ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(` foo`, function () {})
    ·      ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(` foo`, function () {})
    ·                 ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(` foo bar bang`, function () {})
    ·      ───────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(` foo bar bang`, function () {})
    ·                 ───────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(` foo bar bang  `, function () {})
    ·      ─────────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(` foo bar bang  `, function () {})
    ·                 ─────────────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:7]
  1 │ xtest(' foo', function () {})
    ·       ──────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:7]
  1 │ xtest(' foo  ', function () {})
    ·       ────────
    ╰────
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:2:26]
  1 │ 
  2 │                 describe(' foo', () => {
    ·                          ──────
@@ -443,7 +444,7 @@ expression: valid_title
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have leading or trailing spaces"
-   ╭─[valid_title.tsx:2:1]
+   ╭─[valid_title.tsx:3:24]
  2 │                 describe('foo', () => {
  3 │                     it(' bar', () => {})
    ·                        ──────
@@ -452,98 +453,98 @@ expression: valid_title
   help: "Remove the leading or trailing spaces"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('describe foo', function () {})
    ·          ──────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ fdescribe('describe foo', function () {})
    ·           ──────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ xdescribe('describe foo', function () {})
    ·           ──────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:10]
  1 │ describe('describe foo', function () {})
    ·          ──────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:11]
  1 │ fdescribe(`describe foo`, function () {})
    ·           ──────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test('test foo', function () {})
    ·      ──────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:7]
  1 │ xtest('test foo', function () {})
    ·       ──────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(`test foo`, function () {})
    ·      ──────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:6]
  1 │ test(`test foo test`, function () {})
    ·      ───────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it('it foo', function () {})
    ·    ────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ fit('it foo', function () {})
    ·     ────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:5]
  1 │ xit('it foo', function () {})
    ·     ────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:1:4]
  1 │ it('it foos it correctly', function () {})
    ·    ──────────────────────
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:2:26]
  1 │ 
  2 │                 describe('describe foo', () => {
    ·                          ──────────────
@@ -552,7 +553,7 @@ expression: valid_title
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:1:1]
+   ╭─[valid_title.tsx:2:26]
  1 │ 
  2 │                 describe('describe foo', () => {
    ·                          ──────────────
@@ -561,12 +562,11 @@ expression: valid_title
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
 
   ⚠ eslint-plugin-jest(valid-title): "Should not have duplicate prefix"
-   ╭─[valid_title.tsx:2:1]
+   ╭─[valid_title.tsx:3:24]
  2 │                 describe('foo', () => {
  3 │                     it('it bar', () => {})
    ·                        ────────
  4 │                 })
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
-
 

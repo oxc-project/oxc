@@ -2,60 +2,60 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_empty_character_class
 ---
+
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /^abc[]/;
    ·           ────────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /foo[]bar/;
    ·           ──────────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:15]
  1 │ if (foo.match(/^abc[]/)) {}
    ·               ────────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:5]
  1 │ if (/^abc[]/.test(foo)) {}
    ·     ────────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /[]]/;
    ·           ─────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /\[[]/;
    ·           ──────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /\[\[\]a-z[]/;
    ·           ─────────────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
 
   ⚠ eslint(no-empty-character-class): Empty character class
-   ╭─[no_empty_character_class.tsx:1:1]
+   ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /[]]/d;
    ·           ──────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
-
 
