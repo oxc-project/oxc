@@ -18,5 +18,8 @@ npm/cli-*
 /*.ts
 /*.tsx
 /tasks/transform_conformance/fixtures/*
+/*.ast.txt
+/*.cfg.txt
+/*.dot
 
 .oxc/plugins/**.*

@@ -21,7 +21,6 @@ fn main() {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     let program = allocator.alloc(ret.program);
-    println!("{:#?}", &program);
 
     let semantic = SemanticBuilder::new(&source_text, source_type)
         .with_check_syntax_error(true)
