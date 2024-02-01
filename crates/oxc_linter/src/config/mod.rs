@@ -6,17 +6,20 @@ use std::path::Path;
 
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
 
-use self::errors::{
-    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
-    FailedToParseRuleValueError,
-};
 pub use self::{
     env::ESLintEnv,
     settings::{ESLintSettings, JsxA11y, Nextjs},
+};
+use self::{
+    errors::{
+        FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
+        FailedToParseRuleValueError,
+    },
+    settings::CustomComponents,
 };
 
 /// ESLint Config
@@ -208,10 +211,83 @@ pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
             }
         }
 
-        return ESLintSettings::new(jsx_a11y_setting, nextjs_setting);
+        let link_components_setting =
+            parse_custom_components(settings_object, &CustomComponentEnum::LinkComponents);
+        let form_components_setting =
+            parse_custom_components(settings_object, &CustomComponentEnum::FormComponents);
+
+        return ESLintSettings::new(
+            jsx_a11y_setting,
+            nextjs_setting,
+            link_components_setting,
+            form_components_setting,
+        );
     }
 
     ESLintSettings::default()
+}
+
+enum CustomComponentEnum {
+    LinkComponents,
+    FormComponents,
+}
+
+fn parse_custom_components(
+    settings_object: &Map<String, Value>,
+    components_type: &CustomComponentEnum,
+) -> CustomComponents {
+    fn parse_obj(obj: &Map<String, Value>, attribute_name: &str, setting: &mut CustomComponents) {
+        if let Some(Value::String(name)) = obj.get("name") {
+            let mut arr: Vec<String> = vec![];
+            if let Some(Value::String(attribute)) = obj.get(attribute_name) {
+                arr.push(attribute.to_string());
+            } else if let Some(Value::Array(attributes)) = obj.get(attribute_name) {
+                for attribute in attributes {
+                    if let Value::String(attribute) = attribute {
+                        arr.push(attribute.to_string());
+                    }
+                }
+            }
+            setting.insert(name.to_string(), arr);
+        }
+    }
+
+    fn parse_component(
+        settings_object: &Map<String, Value>,
+        component_name: &str,
+        attribute_name: &str,
+        setting: &mut CustomComponents,
+    ) {
+        match settings_object.get(component_name) {
+            Some(Value::Array(component)) => {
+                for component in component {
+                    if let Value::String(name) = component {
+                        setting.insert(name.to_string(), [].to_vec());
+                        continue;
+                    }
+                    if let Value::Object(obj) = component {
+                        parse_obj(obj, attribute_name, setting);
+                    }
+                }
+            }
+            Some(Value::Object(obj)) => {
+                parse_obj(obj, attribute_name, setting);
+            }
+            _ => {}
+        };
+    }
+
+    let mut setting: CustomComponents = FxHashMap::default();
+
+    match components_type {
+        CustomComponentEnum::FormComponents => {
+            parse_component(settings_object, "formComponents", "formAttribute", &mut setting);
+        }
+        CustomComponentEnum::LinkComponents => {
+            parse_component(settings_object, "linkComponents", "linkAttribute", &mut setting);
+        }
+    }
+    setting
 }
 
 fn parse_env_from_root(root_json: &Value) -> ESLintEnv {
