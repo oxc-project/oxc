@@ -5,5 +5,10 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/infix_operators.js
 ---
 digraph {
     0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = ""]
+    0 -> 1 [ ]
+    0 -> 2 [ ]
+    1 -> 2 [ ]
 }
 

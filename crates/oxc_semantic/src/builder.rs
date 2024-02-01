@@ -666,6 +666,73 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_logical_expression(&mut self, expr: &LogicalExpression<'a>) {
+        // logical expressions are short-circuiting, and therefore
+        // also represent control flow.
+        // For example, in:
+        //   foo && bar();
+        // the bar() call will only be executed if foo is truthy.
+        let kind = AstKind::LogicalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        self.visit_expression(&expr.left);
+
+        /* cfg  */
+        let left_expr_end_ix = self.cfg.current_node_ix;
+        let right_expr_start_ix = self.cfg.new_basic_block();
+        /* cfg  */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        let right_expr_end_ix = self.cfg.current_node_ix;
+        let after_logical_expr_ix = self.cfg.new_basic_block();
+
+        self.cfg.add_edge(left_expr_end_ix, right_expr_start_ix, EdgeType::Normal);
+        self.cfg.add_edge(left_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
+        self.cfg.add_edge(right_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
+        // assignment expressions can include an operator, which
+        // can be used to determine the control flow of the expression.
+        // For example, in:
+        //   foo &&= super();
+        // the super() call will only be executed if foo is truthy.
+
+        let kind = AstKind::AssignmentExpression(self.alloc(expr));
+        self.enter_node(kind);
+        self.visit_assignment_target(&expr.left);
+
+        /* cfg  */
+        let cfg_ixs = if expr.operator.is_logical() {
+            let target_end_ix = self.cfg.current_node_ix;
+            let expr_start_ix = self.cfg.new_basic_block();
+            Some((target_end_ix, expr_start_ix))
+        } else {
+            None
+        };
+        /* cfg  */
+
+        self.visit_expression(&expr.right);
+
+        /* cfg */
+        if let Some((target_end_ix, expr_start_ix)) = cfg_ixs {
+            let expr_end_ix = self.cfg.current_node_ix;
+            let after_assignment_ix = self.cfg.new_basic_block();
+
+            self.cfg.add_edge(target_end_ix, expr_start_ix, EdgeType::Normal);
+            self.cfg.add_edge(target_end_ix, after_assignment_ix, EdgeType::Normal);
+            self.cfg.add_edge(expr_end_ix, after_assignment_ix, EdgeType::Normal);
+        }
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         let is_lexical_declaration =
