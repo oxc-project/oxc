@@ -7,11 +7,7 @@ use itertools::Itertools;
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{
-    module_record::ModuleRecord,
-    node::{AstNodeId, NodeFlags},
-    operator::AssignmentOperator,
-};
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -25,8 +21,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
-    node::{AstNode, AstNodes},
-    pg::replicate_tree_to_leaves,
+    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
@@ -1158,167 +1153,194 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
 
+        // There are 3 possible kinds of Try Statements (See
+        //    <https://tc39.es/ecma262/#sec-try-statement>):
+        // 1. try-catch
+        // 2. try-finally
+        // 3. try-catch-finally
+        //
+        // We will consider each kind of try statement separately.
+        //
+        // For a try-catch, there are only 2 ways to reach
+        // the outgoing node (after the entire statement):
+        //
+        // 1. after the try block completing successfully
+        // 2. after the catch block completing successfully,
+        //    in which case some statement in the try block
+        //    must have thrown.
+        //
+        // For a try-finally, there is only 1 way to reach
+        // the outgoing node, whereby:
+        // - the try block completed successfully, and
+        // - the finally block completed successfully
+        //
+        // But the finally block can also be reached when the try
+        // fails. We thus need to fork the control flow graph into
+        // 2 different finally statements:
+        //    1. one where the try block completes successfully, (finally_succ)
+        //    2. one where some statement in the try block throws (finally_err)
+        // Only the end of the try block will have an incoming edge to the
+        // finally_succ, and only finally_succ will have an outgoing node to
+        // the next statement.
+        //
+        // For a try-catch-finally, we have seemlingly more cases:
+        //   1. after the try block completing successfully
+        //   2. after the catch block completing successfully
+        //   3. after the try block if the catch block throws
+        // Despite having 3 distings scenarios, we can simplify the control flow
+        // graph by still only using a finally_succ and a finally_err node.
+        // The key is that the outgoing edge going past the entire
+        // try-catch-finally statement is guaranteed that all code paths have
+        // either completed the try block or the catch block in full.
+
+        // Implementation notes:
+        // We will use the following terminology:
+        //
+        // the "parent after_throw block" is the block that would be the target
+        // of a throw if there were no try-catch-finally.
+        //
+        // Within the try block, a throw will not go to the parent after_throw
+        // block. Instead, it will go to the catch block in a try-catch or to
+        // the finally_err block in a try-catch-finally.
+        //
+        // In a catch block, a throw will go to the finally_err block in a
+        // try-catch-finally, or to the parent after_throw block in a basic
+        // try-catch.
+        //
+        // In a finally block, a throw will always go to the parent after_throw
+        // block, both for finally_succ and finally_err.
+
         /* cfg */
         let statement_state = self
             .cfg
             .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
 
-        let before_try_stmt_graph_ix = self.cfg.current_node_ix;
-        let catch_block_graph_ix = self.cfg.new_basic_block();
-        // every statement created with this active adds an edge from that node to this
-        // catch block node
+        // TODO: support unwinding finally/catch blocks that aren't in this function
+        // even if something throws.
+        let parent_after_throw_block_ix = self.cfg.after_throw_block;
+
+        let try_stmt_pre_start_ix = self.cfg.current_node_ix;
+
+        let try_stmt_start_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(try_stmt_pre_start_ix, try_stmt_start_ix, EdgeType::Normal);
+        let try_after_throw_block_ix = self.cfg.new_basic_block();
+
+        self.cfg.current_node_ix = try_stmt_start_ix;
+
+        // every statement created with this active adds an edge from that node to this node
         //
         // NOTE: we oversimplify here, realistically even in between basic blocks we
         // do throwsy things which could cause problems, but for the most part simply
         // pointing the end of every basic block to the catch block is enough
-        self.cfg.after_throw_block = Some(catch_block_graph_ix);
-        let start_of_try_block_graph_ix = self.cfg.new_basic_block();
+        self.cfg.after_throw_block = Some(try_after_throw_block_ix);
+        // The one case that needs to be handled specially is if the first statement in the
+        // try block throws. In that case, it is not sufficient to rely on an edge after that
+        // statement, because the catch will run before that edge is taken.
+        self.cfg.add_edge(try_stmt_pre_start_ix, try_after_throw_block_ix, EdgeType::Normal);
         /* cfg */
 
         self.visit_block_statement(&stmt.block);
 
         /* cfg */
-        self.cfg.after_throw_block = None; // only active during try block
+        let end_of_try_block_ix = self.cfg.current_node_ix;
+        self.cfg.add_edge(end_of_try_block_ix, try_after_throw_block_ix, EdgeType::Normal);
+        self.cfg.after_throw_block = parent_after_throw_block_ix;
 
-        let end_of_try_block_graph_ix = self.cfg.current_node_ix;
+        let start_of_finally_err_block_ix = if stmt.finalizer.is_some() {
+            if stmt.handler.is_some() {
+                // try-catch-finally
+                Some(self.cfg.new_basic_block())
+            } else {
+                // try-finally
+                Some(try_after_throw_block_ix)
+            }
+        } else {
+            // try-catch
+            None
+        };
         /* cfg */
 
-        let optional_catch_block_graph_ix = if let Some(handler) = &stmt.handler {
+        let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
-            self.cfg.current_node_ix = catch_block_graph_ix;
+            let catch_after_throw_block_ix = if stmt.finalizer.is_some() {
+                start_of_finally_err_block_ix
+            } else {
+                parent_after_throw_block_ix
+            };
+            self.cfg.after_throw_block = catch_after_throw_block_ix;
+
+            let catch_block_start_ix = try_after_throw_block_ix;
+            self.cfg.current_node_ix = catch_block_start_ix;
+
+            if let Some(catch_after_throw_block_ix) = catch_after_throw_block_ix {
+                self.cfg.add_edge(
+                    catch_block_start_ix,
+                    catch_after_throw_block_ix,
+                    EdgeType::Normal,
+                );
+            }
             /* cfg */
 
             self.visit_catch_clause(handler);
 
-            Some((catch_block_graph_ix, self.cfg.current_node_ix))
+            /* cfg */
+            Some(self.cfg.current_node_ix)
+            /* cfg */
         } else {
-            /* cfg */
-            let preserved_node_ix = self.cfg.current_node_ix;
-            // each statement that connects the would be catch block should just point
-            // to an unreachable() as if any statement throws this function would end early
-            self.cfg.current_node_ix = catch_block_graph_ix;
-            self.cfg.put_unreachable();
-            self.cfg.current_node_ix = preserved_node_ix;
-            /* cfg */
-
             None
         };
-        let finally = if let Some(finalizer) = &stmt.finalizer {
+
+        // Restore the after_throw_block
+        self.cfg.after_throw_block = parent_after_throw_block_ix;
+
+        if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
-            let start_of_finally_block_graph_ix = self.cfg.new_basic_block();
+            let finally_err_block_start_ix =
+                start_of_finally_err_block_ix.expect("this try statement has a finally_err block");
+
+            self.cfg.current_node_ix = finally_err_block_start_ix;
             /* cfg */
 
             self.visit_finally_clause(finalizer);
 
             /* cfg */
-            Some((start_of_finally_block_graph_ix, self.cfg.current_node_ix))
+            // put an unreachable after the finally_err block
+            self.cfg.put_unreachable();
+
+            let finally_succ_block_start_ix = self.cfg.new_basic_block();
+
+            // The end_of_try_block has an outgoing edge to finally_succ also
+            // for when the try block completes successfully.
+            self.cfg.add_edge(end_of_try_block_ix, finally_succ_block_start_ix, EdgeType::Normal);
+
+            // The end_of_catch_block has an outgoing edge to finally_succ for
+            // when the catch block in a try-catch-finally completes successfully.
+            if let Some(end_of_catch_block_ix) = catch_block_end_ix {
+                // try-catch-finally
+                self.cfg.add_edge(
+                    end_of_catch_block_ix,
+                    finally_succ_block_start_ix,
+                    EdgeType::Normal,
+                );
+            }
             /* cfg */
-        } else {
-            None
-        };
+
+            self.visit_finally_clause(finalizer);
+        }
 
         /* cfg */
-        let after_try_stmt_graph_ix = self.cfg.new_basic_block();
-
-        self.cfg.add_edge(before_try_stmt_graph_ix, start_of_try_block_graph_ix, EdgeType::Normal);
-        match (finally, optional_catch_block_graph_ix) {
-            (
-                Some((nothrow_finally_start, nothrow_finally_end)),
-                Some((catch_start, catch_end)),
-            ) => {
-                //                            <try>
-                //                              |
-                //                         (1)/  \(2)
-                //                 <nothrow fin>  |
-                //                     |          |
-                //             <fn continues>  <catch>
-                //                                |
-                //                           <throw fin>
-                //                                |
-                //                           <unreachable>
-                //                                |
-                //       todo: should continue to upper function's catch
-                let duplicated = replicate_tree_to_leaves(nothrow_finally_start, &mut self.cfg);
-                let throw_finally_start = duplicated[&nothrow_finally_start];
-
-                // 1
-                self.cfg.add_edge(end_of_try_block_graph_ix, catch_start, EdgeType::Normal);
-                self.cfg.add_edge(catch_end, throw_finally_start, EdgeType::Normal);
-                // 2
-                self.cfg.add_edge(
-                    end_of_try_block_graph_ix,
-                    nothrow_finally_start,
-                    EdgeType::Normal,
-                );
-                self.cfg.add_edge(nothrow_finally_end, after_try_stmt_graph_ix, EdgeType::Normal);
-
-                // throw can happen before a single statement finishes in try block - essentially skipping try block
-                self.cfg.add_edge(before_try_stmt_graph_ix, catch_start, EdgeType::Normal);
-            }
-            (Some((nothrow_finally_start, nothrow_finally_end)), None) => {
-                //                            <try>
-                //                              |
-                //                         (1)/  \(2)
-                //                 <nothrow fin>  |
-                //                     |          |
-                //             <fn continues>  <catch>
-                //                                |
-                //                           <throw fin>
-                //                                |
-                //                           <unreachable>
-                //                                |
-                //       todo: should continue to upper function's catch
-
-                let duplicated = replicate_tree_to_leaves(nothrow_finally_start, &mut self.cfg);
-                let throw_finally_start = duplicated[&nothrow_finally_start];
-                // 1
-                self.cfg.add_edge(
-                    end_of_try_block_graph_ix,
-                    nothrow_finally_start,
-                    EdgeType::Normal,
-                );
-                self.cfg.add_edge(nothrow_finally_end, after_try_stmt_graph_ix, EdgeType::Normal);
-
-                // 2
-
-                // even though we don't explicitly have a catch block, we still make a catch
-                // block in the cfg which immediately points to the throw catch block.
-                self.cfg.add_edge(
-                    end_of_try_block_graph_ix,
-                    catch_block_graph_ix,
-                    EdgeType::Normal,
-                );
-                self.cfg.add_edge(catch_block_graph_ix, throw_finally_start, EdgeType::Normal);
-                // throw can happen before a single statement finishes in try block - essentially skipping try block
-                self.cfg.add_edge(before_try_stmt_graph_ix, throw_finally_start, EdgeType::Normal);
-            }
-            (None, Some((catch_start, catch_end))) => {
-                self.cfg.add_edge(end_of_try_block_graph_ix, catch_start, EdgeType::Normal);
-                self.cfg.add_edge(catch_end, after_try_stmt_graph_ix, EdgeType::Normal);
-                // if nothing throws
-                self.cfg.add_edge(
-                    end_of_try_block_graph_ix,
-                    after_try_stmt_graph_ix,
-                    EdgeType::Normal,
-                );
-                // throw can happen before a single statement finishes in try block - essentially skipping try block
-                self.cfg.add_edge(before_try_stmt_graph_ix, catch_start, EdgeType::Normal);
-            }
-            (None, None) => {
-                // todo: support unwinding finally/catch blocks that aren't in this function
-                // even if something throws
-                self.cfg.add_edge(
-                    end_of_try_block_graph_ix,
-                    after_try_stmt_graph_ix,
-                    EdgeType::Normal,
-                );
-            }
-        }
+        let try_statement_block_end_ix = self.cfg.current_node_ix;
+        let after_try_statement_block_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(
+            try_statement_block_end_ix,
+            after_try_statement_block_ix,
+            EdgeType::Normal,
+        );
 
         self.cfg.after_statement(
             &statement_state,
             self.current_node_id,
-            after_try_stmt_graph_ix,
+            self.cfg.current_node_ix,
             None,
         );
         /* cfg */

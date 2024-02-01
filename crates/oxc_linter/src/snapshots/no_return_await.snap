@@ -231,6 +231,15 @@ expression: no_return_await
   help: Remove redundant `await`.
 
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
+   ╭─[no_return_await.tsx:4:8]
+ 3 │ finally {
+ 4 │ return await bar();
+   ·        ─────
+ 5 │ }
+   ╰────
+  help: Remove redundant `await`.
+
+  ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
    ╭─[no_return_await.tsx:5:8]
  4 │ catch (e) {
  5 │ return await bar();
