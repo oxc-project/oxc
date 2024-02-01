@@ -371,37 +371,87 @@ impl<'a> Decorators<'a> {
             }
         } else if has_member_decorator {
             // https://github.com/babel/babel/blob/eccbd203383487f6957dcf086aa83d773691560b/packages/babel-helpers/src/helpers/applyDecs2305.ts#L7-L45
-            let get_decorator_info =
-                |key: &PropertyKey<'a>,
-                 flag: u8,
-                 decorator: &Decorator<'a>,
-                 ast: &AstBuilder<'a>| {
-                    let name = key.name();
-                    // [dec, flag, name, defaultValue | (o) => o.#a, (o, v) => o.#a = v]
-                    let mut decorator_elements = ast.new_vec_with_capacity(2);
-                    decorator_elements
-                        .push(ArrayExpressionElement::Expression(ast.copy(&decorator.expression)));
+            let get_decorator_info = |key: &PropertyKey<'a>,
+                                      flag: u8,
+                                      decorator: &Decorator<'a>,
+                                      ast: &AstBuilder<'a>| {
+                let name = key.name();
+                // [dec, flag, name, defaultValue | (o) => o.#a, (o, v) => o.#a = v]
+                let mut decorator_elements = ast.new_vec_with_capacity(2);
+                decorator_elements
+                    .push(ArrayExpressionElement::Expression(ast.copy(&decorator.expression)));
+                decorator_elements.push(ArrayExpressionElement::Expression(
+                    ast.literal_number_expression(NumberLiteral::new(
+                        SPAN,
+                        0f64,
+                        ast.new_str(flag.to_string().as_str()),
+                        oxc_syntax::NumberBase::Decimal,
+                    )),
+                ));
+                if let Some(name) = name {
                     decorator_elements.push(ArrayExpressionElement::Expression(
-                        ast.literal_number_expression(NumberLiteral::new(
-                            SPAN,
-                            0f64,
-                            ast.new_str(flag.to_string().as_str()),
-                            oxc_syntax::NumberBase::Decimal,
-                        )),
+                        ast.literal_string_expression(StringLiteral::new(SPAN, name.clone())),
                     ));
-                    if let Some(name) = name {
+
+                    if key.is_private_identifier() {
+                        // (o) => o.#a
+                        let mut items = ast.new_vec_single(ast.formal_parameter(
+                            SPAN,
+                            ast.binding_pattern(
+                                ast.binding_pattern_identifier(BindingIdentifier::new(
+                                    SPAN,
+                                    "o".into(),
+                                )),
+                                None,
+                                false,
+                            ),
+                            None,
+                            false,
+                            ast.new_vec(),
+                        ));
+                        let private_field = ast.private_field(
+                            SPAN,
+                            ast.identifier_reference_expression(IdentifierReference::new(
+                                SPAN,
+                                "o".into(),
+                            )),
+                            PrivateIdentifier::new(SPAN, name),
+                            false,
+                        );
+                        let params = ast.formal_parameters(
+                            SPAN,
+                            FormalParameterKind::ArrowFormalParameters,
+                            ast.copy(&items),
+                            None,
+                        );
                         decorator_elements.push(ArrayExpressionElement::Expression(
-                            ast.literal_string_expression(StringLiteral::new(SPAN, name.clone())),
+                            ast.arrow_expression(
+                                SPAN,
+                                true,
+                                false,
+                                false,
+                                params,
+                                ast.function_body(
+                                    SPAN,
+                                    ast.new_vec(),
+                                    ast.new_vec_single(ast.expression_statement(
+                                        SPAN,
+                                        ast.member_expression(ast.copy(&private_field)),
+                                    )),
+                                ),
+                                None,
+                                None,
+                            ),
                         ));
 
-                        if key.is_private_identifier() {
-                            // (o) => o.#a
-                            let mut items = ast.new_vec_single(ast.formal_parameter(
+                        {
+                            // (o, v) => o.#a = v
+                            items.push(ast.formal_parameter(
                                 SPAN,
                                 ast.binding_pattern(
                                     ast.binding_pattern_identifier(BindingIdentifier::new(
                                         SPAN,
-                                        "o".into(),
+                                        "v".into(),
                                     )),
                                     None,
                                     false,
@@ -410,21 +460,14 @@ impl<'a> Decorators<'a> {
                                 false,
                                 ast.new_vec(),
                             ));
-                            let private_identifier = ast.private_field_expression(
-                                SPAN,
-                                ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN,
-                                    "o".into(),
-                                )),
-                                PrivateIdentifier::new(SPAN, name),
-                                false,
-                            );
+
                             let params = ast.formal_parameters(
                                 SPAN,
                                 FormalParameterKind::ArrowFormalParameters,
-                                ast.copy(&items),
+                                items,
                                 None,
                             );
+
                             decorator_elements.push(ArrayExpressionElement::Expression(
                                 ast.arrow_expression(
                                     SPAN,
@@ -437,77 +480,27 @@ impl<'a> Decorators<'a> {
                                         ast.new_vec(),
                                         ast.new_vec_single(ast.expression_statement(
                                             SPAN,
-                                            ast.copy(&private_identifier),
-                                        )),
-                                    ),
-                                    None,
-                                    None,
-                                ),
-                            ));
-
-                            {
-                                // (o, v) => o.#a = v
-                                items.push(ast.formal_parameter(
-                                    SPAN,
-                                    ast.binding_pattern(
-                                        ast.binding_pattern_identifier(BindingIdentifier::new(
-                                            SPAN,
-                                            "v".into(),
-                                        )),
-                                        None,
-                                        false,
-                                    ),
-                                    None,
-                                    false,
-                                    ast.new_vec(),
-                                ));
-
-                                let params = ast.formal_parameters(
-                                    SPAN,
-                                    FormalParameterKind::ArrowFormalParameters,
-                                    ast.copy(&items),
-                                    None,
-                                );
-
-                                decorator_elements.push(ArrayExpressionElement::Expression(
-                                ast.arrow_expression(
-                                    SPAN,
-                                    true,
-                                    false,
-                                    false,
-                                    params,
-                                    ast.function_body(
-                                        SPAN,
-                                        ast.new_vec(),
-                                        ast.new_vec_single(
-                                            ast.expression_statement(
+                                            ast.assignment_expression(
                                                 SPAN,
-                                                ast.assignment_expression(
-                                                    SPAN,
-                                                    AssignmentOperator::Assign,
-                                                    ast.simple_assignment_target_member_expression(
-                                                        ast.copy(
-                                                            private_identifier
-                                                                .get_member_expr()
-                                                                .unwrap(),
-                                                        ),
-                                                    ),
-                                                    ast.identifier_reference_expression(
-                                                        IdentifierReference::new(SPAN, "v".into()),
-                                                    ),
+                                                AssignmentOperator::Assign,
+                                                ast.simple_assignment_target_member_expression(
+                                                    private_field,
+                                                ),
+                                                ast.identifier_reference_expression(
+                                                    IdentifierReference::new(SPAN, "v".into()),
                                                 ),
                                             ),
-                                        ),
+                                        )),
                                     ),
                                     None,
                                     None,
                                 ),
                             ));
-                            }
                         }
                     }
-                    ast.array_expression(SPAN, decorator_elements, None)
-                };
+                }
+                ast.array_expression(SPAN, decorator_elements, None)
+            };
 
             let mut is_proto = false;
             let mut is_static = false;
