@@ -28,14 +28,16 @@ impl<'a> Lexer<'a> {
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
+                self.consume_char();
                 self.trivia_builder
                     .add_irregular_whitespace(self.current.token.start, self.offset());
-                self.consume_char();
                 Kind::Skip
             }
             c if is_irregular_line_terminator(c) => {
                 self.consume_char();
                 self.current.token.is_on_new_line = true;
+                self.trivia_builder
+                    .add_irregular_whitespace(self.current.token.start, self.offset());
                 Kind::Skip
             }
             _ => {

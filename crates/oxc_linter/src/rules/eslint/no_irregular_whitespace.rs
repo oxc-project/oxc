@@ -42,6 +42,7 @@ impl Rule for NoIrregularWhitespace {
     }
 }
 
+#[allow(clippy::unicode_not_nfc, clippy::invisible_characters)]
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -76,8 +77,8 @@ fn test() {
         (r"' ';", None),
         (r"'᠎';", None),
         (r"'﻿';", None),
-        // ("' ';", None), lint error
-        // (r"' ';", None), lint error
+        ("' ';", None),
+        (r"' ';", None),
         (r"' ';", None),
         (r"' ';", None),
         (r"' ';", None),
@@ -87,7 +88,7 @@ fn test() {
         (r"' ';", None),
         (r"' ';", None),
         (r"' ';", None),
-        // (r"'​';", None), lint error
+        (r"'​';", None),
         (r"'\ ';", None),
         (r"'\ ';", None),
         (r"' ';", None),
@@ -227,12 +228,12 @@ fn test() {
     ];
 
     let fail = vec![
-        // (r"var any  = 'thing';", None),
-        // (r"var any  = 'thing';", None),
+        (r"var any  = 'thing';", None),
+        (r"var any  = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any ﻿ = 'thing';", None),
-        // (r"var any   = 'thing';", None),
-        // (r"var any   = 'thing';", None),
+        (r"var any   = 'thing';", None),
+        (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
@@ -242,16 +243,16 @@ fn test() {
         (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
-        // (r"var any   = 'thing';", None),
-        // (r"var any   = 'thing';", None),
+        (r"var any   = 'thing';", None),
+        (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any   = 'thing';", None),
         (r"var any 　 = 'thing';", None),
-        // (
-        //     r"var a = 'b', c = 'd',
-        // 	e = 'f' ",
-        //     None,
-        // ),
+        (
+            r"var a = 'b', c = 'd',
+          e = 'f' ",
+            None,
+        ),
         (
             r"var any 　 = 'thing', other 　 = 'thing';
 			var third 　 = 'thing';",
@@ -346,42 +347,42 @@ fn test() {
 			　",
             Some(serde_json::json!([{ "skipTemplates": true }])),
         ),
-        // (r"var foo =  bar;", None),
-        // (r"var foo =bar;", None),
-        // (r"var foo =  bar;", None),
-        // (r"var foo =  bar;", None),
-        // (r"var foo =   bar;", None),
-        // (r"var foo = bar;", None),
-        // (r"", None),
+        (r"var foo =  bar;", None),
+        (r"var foo =bar;", None),
+        (r"var foo =  bar;", None),
+        (r"var foo =  bar;", None),
+        (r"var foo =   bar;", None),
+        (r"var foo = bar;", None),
+        (r"", None),
         ("   ", None),
         // (
-        //     r"var foo =
-        // 	bar;",
-        //     None,
+        // r"var foo =
+        // bar;",
+        // None,
         // ),
-        // (
-        //     r"var foo =
-        // 	bar;",
-        //     None,
-        // ),
-        // (
-        //     r"var foo =
-        // 	bar
-        // 	;
-        // 	",
-        //     None,
-        // ),
-        // (r"var foo =  bar;", None),
-        // (r"var foo =  bar;", None),
-        // (r"var foo = bar; ", None),
-        // (r" ", None),
-        // (r"foo  ", None),
-        // (r"foo  ", None),
-        // (
-        //     r"foo
-        // 	 ",
-        //     None,
-        // ),
+        (
+            r"var foo =
+        bar;",
+            None,
+        ),
+        (
+            r"var foo =
+        bar
+        ;
+        ",
+            None,
+        ),
+        (r"var foo =  bar;", None),
+        (r"var foo =  bar;", None),
+        (r"var foo = bar; ", None),
+        (r" ", None),
+        (r"foo  ", None),
+        (r"foo  ", None),
+        (
+            r"foo
+         ",
+            None,
+        ),
         // (r"foo ", None),
         // (r"<div></div>;", None),
         // (r"<div></div>;", None),
