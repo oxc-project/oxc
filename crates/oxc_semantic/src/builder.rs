@@ -209,7 +209,7 @@ impl<'a> SemanticBuilder<'a> {
         if self.jsdoc.retrieve_jsdoc_comment(kind) {
             flags |= NodeFlags::JSDoc;
         }
-        let ast_node = AstNode::new(kind, self.current_scope_id, flags);
+        let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
         let parent_node_id =
             if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };
         self.current_node_id = self.nodes.add_node(ast_node, parent_node_id);
@@ -1012,6 +1012,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         /* cfg - put unreachable after return */
+        let _ = self.cfg.new_basic_block();
         self.cfg.put_unreachable();
 
         self.cfg.after_statement(
@@ -1164,7 +1165,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let before_try_stmt_graph_ix = self.cfg.current_node_ix;
         let catch_block_graph_ix = self.cfg.new_basic_block();
-        let catch_block_basic_block_id = self.cfg.current_basic_block;
         // every statement created with this active adds an edge from that node to this
         // catch block node
         //
@@ -1186,7 +1186,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let optional_catch_block_graph_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
             self.cfg.current_node_ix = catch_block_graph_ix;
-            self.cfg.current_basic_block = catch_block_basic_block_id;
             /* cfg */
 
             self.visit_catch_clause(handler);
@@ -1417,14 +1416,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             flags
         });
-        self.enter_node(kind);
 
         /* cfg */
         let preserved = self.cfg.preserve_expression_state();
 
         let before_function_graph_ix = self.cfg.current_node_ix;
         let function_graph_ix = self.cfg.new_basic_block_for_function();
-        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
+        /* cfg */
+
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
+        self.enter_node(kind);
+
+        /* cfg */
         self.cfg.add_edge(before_function_graph_ix, function_graph_ix, EdgeType::NewFunction);
         /* cfg */
 
@@ -1510,17 +1514,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_arrow_expression(&mut self, expr: &ArrowExpression<'a>) {
         let kind = AstKind::ArrowExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
+
+        /* cfg */
+        let preserved = self.cfg.preserve_expression_state();
+        let current_node_ix = self.cfg.current_node_ix;
+        let function_graph_ix = self.cfg.new_basic_block_for_function();
+        /* cfg */
+
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
         self.enter_node(kind);
 
         self.visit_formal_parameters(&expr.params);
 
         /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-
-        let current_basic_block_ix = self.cfg.current_basic_block;
-        let current_node_ix = self.cfg.current_node_ix;
-        let function_graph_ix = self.cfg.new_basic_block_for_function();
-        self.cfg.function_to_node_ix.insert(self.current_node_id, function_graph_ix);
         self.cfg.add_edge(current_node_ix, function_graph_ix, EdgeType::NewFunction);
         if expr.expression {
             self.cfg.store_assignments_into_this_array.push(vec![]);
@@ -1531,7 +1538,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         self.cfg.restore_expression_state(preserved);
-        self.cfg.current_basic_block = current_basic_block_ix;
         self.cfg.current_node_ix = current_node_ix;
         // self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
         /* cfg */

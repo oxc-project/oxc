@@ -12,9 +12,13 @@ bb1: {
 }
 
 bb2: {
-	Unreachable()
+
 }
 
 bb3: {
+	Unreachable()
+}
+
+bb4: {
 
 }

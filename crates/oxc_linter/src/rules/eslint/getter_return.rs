@@ -154,7 +154,7 @@ impl GetterReturn {
 
         let output = neighbors_filtered_by_edge_weight(
             &cfg.graph,
-            cfg.function_to_node_ix[&node.id()],
+            node.cfg_ix(),
             &|edge| match edge {
                 EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
@@ -178,7 +178,7 @@ impl GetterReturn {
             // previous such as [`no_this_before_super`] we would want to observe this value.
             &mut |basic_block_id, _state_going_into_this_rule| {
                 // Scan through the values in this basic block.
-                for entry in &cfg.basic_blocks[*basic_block_id] {
+                for entry in cfg.basic_block_by_index(*basic_block_id) {
                     match entry {
                         // If the element is an assignment.
                         //
