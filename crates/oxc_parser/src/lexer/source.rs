@@ -80,18 +80,18 @@ pub(super) struct Source<'a> {
 
 impl<'a> Source<'a> {
     /// Create `Source` from `&str`.
-    pub(super) fn new(mut source: &'a str) -> Self {
+    pub(super) fn new(mut source_text: &'a str) -> Self {
         // If source exceeds size limit, substitute a short source which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
-        if source.len() > MAX_LEN {
-            source = "\0";
+        if source_text.len() > MAX_LEN {
+            source_text = "\0";
         }
 
-        let start = source.as_ptr();
-        // SAFETY: Adding `source.len()` to the starting pointer gives a pointer
-        // at the end of `source`. `end` will never be dereferenced, only checked
+        let start = source_text.as_ptr();
+        // SAFETY: Adding `source_text.len()` to the starting pointer gives a pointer
+        // at the end of `source_text`. `end` will never be dereferenced, only checked
         // for direct pointer equality with `current` to check if at end of file.
-        let end = unsafe { start.add(source.len()) };
+        let end = unsafe { start.add(source_text.len()) };
 
         Self { start, end, ptr: start, _marker: PhantomData }
     }
