@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
-Positive Passed: 2088/2096 (99.62%)
-Negative Passed: 1351/1500 (90.07%)
+Positive Passed: 2086/2096 (99.52%)
+Negative Passed: 1355/1500 (90.33%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -71,7 +71,6 @@ Expect Syntax Error: "typescript/class/modifiers-index-signatures/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-invalid-order/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-override-errors/input.ts"
 Expect Syntax Error: "typescript/class/parameter-properties-binding-patterns/input.ts"
-Expect Syntax Error: "typescript/class/parameter-properties-not-constructor/input.ts"
 Expect Syntax Error: "typescript/class/private-fields-modifier-abstract/input.ts"
 Expect Syntax Error: "typescript/class/private-fields-modifier-private/input.ts"
 Expect Syntax Error: "typescript/class/private-fields-modifier-protected/input.ts"
@@ -94,9 +93,6 @@ Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/export/double-declare/input.ts"
 Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/function/empty-type-parameters/input.ts"
-Expect Syntax Error: "typescript/function/parameter-properties/input.ts"
-Expect Syntax Error: "typescript/function/pattern-optional-parameters/input.ts"
-Expect Syntax Error: "typescript/function/pattern-optional-parameters-arrow/input.ts"
 Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
@@ -185,6 +181,22 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·   ─────┬─────
    ·        ╰── it cannot be redeclared here
  4 │ }
+   ╰────
+
+Expect to Parse: "typescript/class/parameter-properties/input.ts"
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/class/parameter-properties/input.ts:6:1]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ───────────────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
+Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/function/declare-pattern-parameters/input.ts:1:1]
+ 1 │ declare function f([]?, {})
+   ·                         ──
    ╰────
 
 Expect to Parse: "typescript/interface/get-set-properties/input.ts"
@@ -9775,6 +9787,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/class/parameter-properties-not-constructor/input.ts:6:1]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ───────────────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
   × Unexpected token
    ╭─[typescript/const/invalid-initializer-ambient-context/input.ts:1:1]
  1 │ declare module N {
@@ -9820,6 +9840,26 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/export/declare-invalid/input.ts:1:1]
  1 │ export declare foo;
    ·                ───
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/function/parameter-properties/input.ts:5:1]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·   ───────────────────
+ 7 │   readonly x = 0,
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/function/pattern-optional-parameters/input.ts:1:1]
+ 1 │ function f([]?, {}) {}
+   ·                 ──
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[typescript/function/pattern-optional-parameters-arrow/input.ts:1:1]
+ 1 │ ([]?, {}) => {}
+   ·       ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
