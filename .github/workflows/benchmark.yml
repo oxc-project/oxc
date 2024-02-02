@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install Rust
         uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
