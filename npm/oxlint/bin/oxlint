@@ -131,9 +131,13 @@ if (binPath) {
 
   process.exitCode = result.status;
 } else {
+  let target = `${platform}-${arch}`;
+  if (isMusl()) {
+    target = `${target}-musl`;
+  }
   console.error(
-    "The oxlint CLI package doesn't ship with prebuilt binaries for your platform yet. " +
-      "You can create an issue at https://github.com/oxc-project/oxc/issues for support.",
+    `The oxlint CLI package doesn't ship with prebuilt binaries for your platform (${target}) yet. ` +
+    "You can create an issue at https://github.com/oxc-project/oxc/issues for support.",
   );
   process.exitCode = 1;
 }
