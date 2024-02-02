@@ -9787,6 +9787,30 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/class/parameter-properties-not-constructor/input.ts:3:1]
+ 3 │         readonly r,
+ 4 │         public pu: number,
+   ·         ─────────────────
+ 5 │         protected po?,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/class/parameter-properties-not-constructor/input.ts:4:1]
+ 4 │         public pu: number,
+ 5 │         protected po?,
+   ·         ─────────────
+ 6 │         private pi?: number,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/class/parameter-properties-not-constructor/input.ts:5:1]
+ 5 │         protected po?,
+ 6 │         private pi?: number,
+   ·         ───────────────────
+ 7 │         public readonly pur,
+   ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[typescript/class/parameter-properties-not-constructor/input.ts:6:1]
  6 │         private pi?: number,
@@ -9794,6 +9818,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/class/parameter-properties-not-constructor/input.ts:6:1]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ───────────────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/class/parameter-properties-not-constructor/input.ts:9:1]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·         ─────────────────────
+ 11 │ }
+    ╰────
 
   × Unexpected token
    ╭─[typescript/const/invalid-initializer-ambient-context/input.ts:1:1]
@@ -9842,12 +9882,52 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                ───
    ╰────
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/function/parameter-properties/input.ts:2:1]
+ 2 │   readonly r,
+ 3 │   public pu: number,
+   ·   ─────────────────
+ 4 │   protected po?,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/function/parameter-properties/input.ts:3:1]
+ 3 │   public pu: number,
+ 4 │   protected po?,
+   ·   ─────────────
+ 5 │   private pi?: number,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/function/parameter-properties/input.ts:4:1]
+ 4 │   protected po?,
+ 5 │   private pi?: number,
+   ·   ───────────────────
+ 6 │   public readonly pur,
+   ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[typescript/function/parameter-properties/input.ts:5:1]
  5 │   private pi?: number,
  6 │   public readonly pur,
    ·   ───────────────────
  7 │   readonly x = 0,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/function/parameter-properties/input.ts:5:1]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·   ───────────────────
+ 7 │   readonly x = 0,
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/function/parameter-properties/input.ts:7:1]
+ 7 │   readonly x = 0,
+ 8 │   public y?: number = 0
+   ·   ─────────────────────
+ 9 │ ) {}
    ╰────
 
   × A required parameter cannot follow an optional parameter.

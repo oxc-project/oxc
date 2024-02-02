@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1025/4879 (21.01%)
+Negative Passed: 1035/4879 (21.21%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -21,9 +21,6 @@ Expect Syntax Error: "compiler/FunctionDeclaration4.ts"
 Expect Syntax Error: "compiler/FunctionDeclaration6.ts"
 Expect Syntax Error: "compiler/FunctionDeclaration7.ts"
 Expect Syntax Error: "compiler/InterfaceDeclaration8.ts"
-Expect Syntax Error: "compiler/MemberAccessorDeclaration15.ts"
-Expect Syntax Error: "compiler/ParameterList13.ts"
-Expect Syntax Error: "compiler/ParameterList4.ts"
 Expect Syntax Error: "compiler/ParameterList7.ts"
 Expect Syntax Error: "compiler/ParameterList8.ts"
 Expect Syntax Error: "compiler/abstractClassInLocalScopeIsAbstract.ts"
@@ -35,7 +32,6 @@ Expect Syntax Error: "compiler/accessStaticMemberFromInstanceMethod01.ts"
 Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
 Expect Syntax Error: "compiler/accessorDeclarationEmitVisibilityErrors.ts"
 Expect Syntax Error: "compiler/accessorInferredReturnTypeErrorInReturnStatement.ts"
-Expect Syntax Error: "compiler/accessorParameterAccessibilityModifier.ts"
 Expect Syntax Error: "compiler/accessorWithInitializer.ts"
 Expect Syntax Error: "compiler/accessorWithRestParam.ts"
 Expect Syntax Error: "compiler/accessorWithoutBody1.ts"
@@ -1404,7 +1400,6 @@ Expect Syntax Error: "compiler/parameterNamesInTypeParameterList.ts"
 Expect Syntax Error: "compiler/parameterPropertyInConstructor1.ts"
 Expect Syntax Error: "compiler/parameterPropertyInConstructor2.ts"
 Expect Syntax Error: "compiler/parameterPropertyInConstructor3.ts"
-Expect Syntax Error: "compiler/parameterPropertyOutsideConstructor.ts"
 Expect Syntax Error: "compiler/paramsOnlyHaveLiteralTypesWhenAppropriatelyContextualized.ts"
 Expect Syntax Error: "compiler/paramterDestrcuturingDeclaration.ts"
 Expect Syntax Error: "compiler/parenthesizedJSDocCastDoesNotNarrow.ts"
@@ -3179,7 +3174,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parse
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration11.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration15.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts"
@@ -3204,13 +3198,11 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserMo
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList11.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList14.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList15.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts"
@@ -3585,8 +3577,6 @@ Expect Syntax Error: "conformance/types/nonPrimitive/nonPrimitiveUnionIntersecti
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers.ts"
-Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts"
-Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/specializedSignatureIsNotSubtypeOfNonSpecializedSignature.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/stringLiteralTypesInImplementationSignatures2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/typeParameterUsedAsTypeParameterConstraint4.ts"
@@ -4034,6 +4024,29 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/MemberAccessorDeclaration15.ts:1:1]
+ 1 │ class C {
+ 2 │    set Foo(public a: number) { }
+   ·            ────────────────
+ 3 │ }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList13.ts:1:1]
+ 1 │ interface I {
+ 2 │     new (public x);
+   ·          ────────
+ 3 │ }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList4.ts:1:1]
+ 1 │ function F(public A) {
+   ·            ────────
+ 2 │ }
+   ╰────
+
   × Expected `)` but found `Identifier`
    ╭─[compiler/ParameterList5.ts:1:1]
  1 │ function A(): (public B) => C {
@@ -4070,6 +4083,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │     get foo() { return 0 }
    ·               ─
  3 │ };
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/accessorParameterAccessibilityModifier.ts:3:1]
+ 3 │ class C {
+ 4 │     set X(public v) { }
+   ·           ────────
+ 5 │     static set X(public v2) { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/accessorParameterAccessibilityModifier.ts:4:1]
+ 4 │     set X(public v) { }
+ 5 │     static set X(public v2) { }
+   ·                  ─────────
+ 6 │ }
    ╰────
 
   × Unexpected token
@@ -7967,6 +7996,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·              ┬
    ·              ╰── `(` expected
  3 │   static test()
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/parameterPropertyOutsideConstructor.ts:1:1]
+ 1 │ class C {
+ 2 │     foo(public x) {
+   ·         ────────
+ 3 │     }
    ╰────
 
   × Unexpected token
@@ -17021,6 +17058,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ }
    ╰────
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration15.ts:2:1]
+ 2 │ class C {
+ 3 │    set Foo(public a: number) { }
+   ·            ────────────────
+ 4 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:1:1]
  1 │ class C {
@@ -17084,12 +17129,27 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts:1:1]
+ 1 │ interface I {
+ 2 │     new (public x);
+   ·          ────────
+ 3 │ }
+   ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:1:1]
  1 │ class C {
  2 │   F(A?, B) { }
    ·         ─
  3 │ }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts:1:1]
+ 1 │ function F(public A) {
+   ·            ────────
+ 2 │ }
    ╰────
 
   × Expected `)` but found `Identifier`
@@ -19285,6 +19345,102 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  21 │     foo(x = 1) { }, // error
     ╰────
   help: Try insert a semicolon here
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:15:1]
+ 15 │ interface I {
+ 16 │     new (public x);
+    ·          ────────
+ 17 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:19:1]
+ 19 │ interface I2 {
+ 20 │     new (private x);
+    ·          ─────────
+ 21 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:23:1]
+ 23 │ var a: {
+ 24 │     new (public x);
+    ·          ────────
+ 25 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:27:1]
+ 27 │ var b: {
+ 28 │     new (private x);
+    ·          ─────────
+ 29 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:18:1]
+ 18 │ interface I {
+ 19 │     new (public x);
+    ·          ────────
+ 20 │     new (public x);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:19:1]
+ 19 │     new (public x);
+ 20 │     new (public x);
+    ·          ────────
+ 21 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:23:1]
+ 23 │ interface I2 {
+ 24 │     new (private x);
+    ·          ─────────
+ 25 │     new (private x);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:24:1]
+ 24 │     new (private x);
+ 25 │     new (private x);
+    ·          ─────────
+ 26 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:28:1]
+ 28 │ var a: {
+ 29 │     new (public x);
+    ·          ────────
+ 30 │     new (public y);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:29:1]
+ 29 │     new (public x);
+ 30 │     new (public y);
+    ·          ────────
+ 31 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:33:1]
+ 33 │ var b: {
+ 34 │     new (private x);
+    ·          ─────────
+ 35 │     new (private y);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:34:1]
+ 34 │     new (private x);
+ 35 │     new (private y);
+    ·          ─────────
+ 36 │ }
+    ╰────
 
   × A rest element must be last in a destructuring pattern
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:4:1]
