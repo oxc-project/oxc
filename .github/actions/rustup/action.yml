@@ -82,3 +82,9 @@ runs:
       with:
         shared-key: ${{ inputs.shared-key }}
         save-if: ${{ inputs.save-cache == 'true' }}
+
+    - name: Install cargo-binstall
+      shell: bash
+      run: | 
+        cargo install cargo-binstall
+        cargo binstall
