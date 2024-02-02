@@ -127,7 +127,7 @@ impl<'a> ArrowFunctions<'a> {
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
-                arrow_expr.generator,
+                false,
                 arrow_expr.r#async,
                 None,
                 self.ast.copy(&arrow_expr.params),

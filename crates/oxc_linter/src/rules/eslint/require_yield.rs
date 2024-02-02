@@ -50,11 +50,7 @@ impl Rule for RequireYield {
             {
                 func.id.as_ref().map_or_else(|| kind.span(), |ident| ident.span)
             }
-            AstKind::ArrowExpression(arrow)
-                if arrow.generator && !arrow.body.statements.is_empty() =>
-            {
-                arrow.span
-            }
+            AstKind::ArrowExpression(arrow) if !arrow.body.statements.is_empty() => arrow.span,
             _ => return,
         };
 

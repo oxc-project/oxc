@@ -1827,7 +1827,6 @@ pub struct ArrowExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
-    pub generator: bool,
     pub r#async: bool,
     pub params: Box<'a, FormalParameters<'a>>,
     /// See `expression` for whether this arrow expression returns an expression.
