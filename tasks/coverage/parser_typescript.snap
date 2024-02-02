@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1035/4879 (21.21%)
+Negative Passed: 1036/4879 (21.23%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -664,7 +664,6 @@ Expect Syntax Error: "compiler/expandoFunctionContextualTypesNoValue.ts"
 Expect Syntax Error: "compiler/exportAlreadySeen.ts"
 Expect Syntax Error: "compiler/exportAsNamespaceConflict.ts"
 Expect Syntax Error: "compiler/exportAssignmentWithExports.ts"
-Expect Syntax Error: "compiler/exportClassWithoutName.ts"
 Expect Syntax Error: "compiler/exportDeclarationsInAmbientNamespaces2.ts"
 Expect Syntax Error: "compiler/exportDeclareClass1.ts"
 Expect Syntax Error: "compiler/exportDefaultAlias_excludesEverything.ts"
@@ -6324,6 +6323,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ var x;
  3 │ export export = x;
    ·        ──────
+   ╰────
+
+  × A class name is required.
+   ╭─[compiler/exportClassWithoutName.ts:3:8]
+ 2 │ //@target: es2015
+ 3 │ export class {
+   ·        ─────
+ 4 │ }
    ╰────
 
   × Unexpected token

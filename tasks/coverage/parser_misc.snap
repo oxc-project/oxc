@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 10/10 (100.00%)
 Positive Passed: 10/10 (100.00%)
-Negative Passed: 6/6 (100.00%)
+Negative Passed: 7/7 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
@@ -22,6 +22,20 @@ Negative Passed: 6/6 (100.00%)
  2 │   set x: (v: number) => {}
    ·        ─
  3 │ }
+   ╰────
+
+  × A class name is required.
+   ╭─[fail/oxc-2144.js:1:1]
+ 1 │ class {}
+   · ─────
+ 2 │ export class {}
+   ╰────
+
+  × A class name is required.
+   ╭─[fail/oxc-2144.js:2:8]
+ 1 │ class {}
+ 2 │ export class {}
+   ·        ─────
    ╰────
 
   × Unexpected `?` operator
