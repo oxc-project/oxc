@@ -654,6 +654,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 p.print(b'\'');
                 p.print_str(self.source.value.as_bytes());
                 p.print(b'\'');
+                if self.with_clause.is_some() {
+                    p.print_hard_space();
+                }
                 self.with_clause.gen(p, ctx);
                 p.print_semicolon_after_statement();
                 return;
@@ -718,6 +721,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
             p.print_str(b" from ");
         }
         self.source.gen(p, ctx);
+        if self.with_clause.is_some() {
+            p.print_hard_space();
+        }
         self.with_clause.gen(p, ctx);
         p.print_semicolon_after_statement();
     }
@@ -734,6 +740,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<WithClause<'a>> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.attributes_keyword.gen(p, ctx);
+        p.print_soft_space();
         p.print_block(&self.with_entries, Separator::Comma, ctx);
     }
 }
@@ -815,6 +822,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
         p.print_str(b" from ");
         self.source.gen(p, ctx);
+        if self.with_clause.is_some() {
+            p.print_hard_space();
+        }
         self.with_clause.gen(p, ctx);
 
         p.print_semicolon_after_statement();
