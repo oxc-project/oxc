@@ -1371,11 +1371,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
         if self.computed {
             p.print(b'[');
         }
-        self.key.gen(p, ctx);
+        if !self.shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print(b']');
         }
-        p.print_colon();
+        if !self.shorthand {
+            p.print_colon();
+        }
         self.value.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -2180,11 +2184,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
         if self.computed {
             p.print(b'[');
         }
-        self.key.gen(p, ctx);
+        if !self.shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print(b']');
         }
-        p.print(b':');
+        if !self.shorthand {
+            p.print_colon();
+        }
         self.value.gen(p, ctx);
     }
 }
