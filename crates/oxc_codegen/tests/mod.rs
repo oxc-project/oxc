@@ -104,4 +104,7 @@ fn template() {
 #[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from 'foo';\n");
+    test("import x from './foo.js' with {}", "import x from './foo.js' with {\n};\n");
+    test("import {} from './foo.js' with {}", "import './foo.js' with {\n};\n");
+    test("export * from './foo.js' with {}", "export * from './foo.js' with {\n};\n");
 }
