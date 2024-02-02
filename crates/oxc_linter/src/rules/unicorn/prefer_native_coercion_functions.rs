@@ -56,8 +56,7 @@ impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowExpression(arrow_expr) => {
-                if arrow_expr.r#async || arrow_expr.generator || arrow_expr.params.items.len() == 0
-                {
+                if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {
                     return;
                 }
 
