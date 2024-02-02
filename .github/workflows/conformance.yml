@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/actions/rustup
 
       - name: Install just
-        uses: taiki-e/install-action
+        uses: taiki-e/install-action@v2
         with:
           tool: just
 
@@ -63,10 +63,8 @@ jobs:
           node-version: 18
           registry-url: 'https://registry.npmjs.org'
 
-      - run: cargo coverage
-      - run: cargo run --release -p oxc_transform_conformance -- --exec
-      - run: cargo run --release -p oxc_prettier_conformance
-      # - run: cargo minsize
+      - name: Coverage
+        run: just coverage
 
       - name: Check for snapshot diff
         run: git diff --exit-code
