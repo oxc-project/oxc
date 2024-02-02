@@ -23,16 +23,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Clone submodules
+        uses: ./.github/actions/clone-submodules
+
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-llvm-cov,just
-
-      - name: Clone modules
-        run: just submodules
+          tool: cargo-llvm-cov
 
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
