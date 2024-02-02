@@ -40,8 +40,24 @@ fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_
 }
 
 fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A required parameter cannot follow an optional parameter.")]
+    #[diagnostic()]
+    struct RequiredParameterAfterOptionalParameter(#[label] Span);
+
     if !params.is_empty() && params.kind == FormalParameterKind::Signature {
         check_duplicate_bound_names(params, ctx);
+    }
+
+    let mut has_optional = false;
+    for item in &params.items {
+        // function a(optional?: number, required: number) { }
+        if has_optional && !item.pattern.optional && !item.pattern.kind.is_assignment_pattern() {
+            ctx.error(RequiredParameterAfterOptionalParameter(item.span));
+        }
+        if item.pattern.optional {
+            has_optional = true;
+        }
     }
 }
 

@@ -1602,6 +1602,10 @@ impl<'a> BindingPatternKind<'a> {
     pub fn is_binding_identifier(&self) -> bool {
         matches!(self, Self::BindingIdentifier(_))
     }
+
+    pub fn is_assignment_pattern(&self) -> bool {
+        matches!(self, Self::AssignmentPattern(_))
+    }
 }
 
 #[derive(Debug, Hash)]
