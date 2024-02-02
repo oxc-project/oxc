@@ -96,11 +96,11 @@ impl<'a> Source<'a> {
         Self { start, end, ptr: start, _marker: PhantomData }
     }
 
-    /// Get entire source as `&str`.
+    /// Get entire source text as `&str`.
     #[inline]
     pub(super) fn whole(&self) -> &'a str {
         // SAFETY: `start` and `end` are created from a `&str` in `Source::new`,
-        // so guaranteed to be start and end of a valid UTF-8 string.
+        // so guaranteed to be start and end of a valid UTF-8 string
         unsafe {
             let len = self.end as usize - self.start as usize;
             let slice = slice::from_raw_parts(self.start, len);
@@ -108,7 +108,7 @@ impl<'a> Source<'a> {
         }
     }
 
-    /// Get remaining source as `&str`.
+    /// Get remaining source text as `&str`.
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
         // SAFETY:
@@ -131,7 +131,7 @@ impl<'a> Source<'a> {
         self.ptr == self.end
     }
 
-    /// Get source position.
+    /// Get current position.
     /// The `SourcePosition` returned is guaranteed to be within bounds of `&str` that `Source`
     /// was created from, and on a UTF-8 character boundary, so can be used by caller
     /// to later move current position of this `Source` using `Source::set_position`.
@@ -140,7 +140,7 @@ impl<'a> Source<'a> {
         SourcePosition { ptr: self.ptr, _marker: PhantomData }
     }
 
-    /// Move current position in source.
+    /// Move current position.
     // TODO: Should this be unsafe? It's possible to create a `SourcePosition` from a *different*
     // `Source`, which would violate `Source`'s invariants.
     #[inline]
@@ -180,7 +180,7 @@ impl<'a> Source<'a> {
         );
 
         // SAFETY: We have checked that `n` is less than distance between `start` and `ptr`,
-        // so this cannot move `ptr` outside of allocation of original `&str`
+        // so `new_ptr` cannot be outside of allocation of original `&str`
         let new_ptr = unsafe { self.ptr.sub(n) };
 
         // Enforce invariant that `ptr` must be positioned on a UTF-8 character boundary.
@@ -347,7 +347,8 @@ impl<'a> Source<'a> {
 
     /// Peek next byte of source without consuming it, without bounds-check.
     ///
-    /// SAFETY: Caller must ensure `ptr < end` i.e. not at end of file.
+    /// # SAFETY
+    /// Caller must ensure `Source` is not at end of file.
     #[inline]
     pub(super) unsafe fn peek_byte_unchecked(&self) -> u8 {
         // SAFETY: Caller guarantees `ptr` is before `end` (i.e. not at end of file).
