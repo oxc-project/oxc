@@ -17,9 +17,6 @@ crate-type = ["cdylib", "rlib"]
 test       = false
 doctest    = false
 
-[features]
-default = ["console_error_panic_hook"]
-
 [dependencies]
 oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minifier", "codegen", "wasm"] }
 
@@ -30,12 +27,3 @@ serde        = { workspace = true }
 wasm-bindgen       = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 tsify              = { workspace = true }
-
-# The `console_error_panic_hook` crate provides better debugging of panics by
-# logging them with `console.error`. This is great for development, but requires
-# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
-# code size when deploying.
-console_error_panic_hook = { version = "0.1.7", optional = true }
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3.40"

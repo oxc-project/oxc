@@ -6,12 +6,6 @@ use wasm_bindgen::prelude::*;
 
 use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 
-#[wasm_bindgen(start)]
-pub fn main() {
-    #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
-}
-
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
 pub struct ParserOptions {
