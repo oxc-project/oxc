@@ -22,14 +22,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true # Pull submodules for `cargo coverage`
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        uses: taiki-e/install-action
+        with:
+          tool: cargo-llvm-cov,just
+
+      - name: Clone modules
+        run: just submodules
 
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
