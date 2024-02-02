@@ -467,7 +467,7 @@ var E6 = (E6 => {
 
 # typescript/tests/cases/conformance/enums/enumErrorOnConstantBindingWithInitializer.ts
 ```typescript
-const {value:value='123'} = thing;
+const {value='123'} = thing;
 var E = (E => {
 	const test = value;
 	E[E['test'] = test] = 'test';
