@@ -112,6 +112,9 @@ new-jsdoc-rule name:
 new-react-perf-rule name:
     cargo run -p rulegen {{name}} react-perf
 
+new-n-rule name:
+    cargo run -p rulegen {{name}} n
+
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync-submodules:
   git submodule update --init --remote
