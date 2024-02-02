@@ -1,0 +1,30 @@
+name: Clone submodules
+
+description: Clone submodules
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: tc39/test262
+        path: tasks/coverage/test262
+        ref: 17ba9aea47e496f5b2bc6ce7405b3f32e3cfbf7a
+
+    - uses: actions/checkout@v4
+      with:
+        repository: babel/babel
+        path: tasks/coverage/babel
+        ref: eccbd203383487f6957dcf086aa83d773691560b
+
+    - uses: actions/checkout@v4
+      with:
+        repository: microsoft/TypeScript
+        path: tasks/coverage/typescript
+        ref: 64d2eeea7b9c7f1a79edf42cb99f302535136a2e
+
+    - uses: actions/checkout@v4
+      with:
+        repository: prettier/prettier
+        path: tasks/prettier_conformance/prettier
+        ref: ff83d55d05e92ceef10ec0cb1c0272ab894a00a0

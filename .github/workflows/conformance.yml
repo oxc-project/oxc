@@ -46,13 +46,8 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
-        with:
-          tool: just
-
-      - name: Clone modules
-        run: just submodules
+      - name: Clone submodules
+        uses: ./.github/actions/clone-submodules
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
