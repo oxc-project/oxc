@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1024/4879 (20.99%)
+Negative Passed: 1025/4879 (21.01%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3210,7 +3210,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParame
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts"
@@ -6369,6 +6368,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  89 │ 
     ╰────
   help: Try insert a semicolon here
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:1]
+ 1 │ (arg1?, arg2) => 101;
+   ·         ────
+ 2 │ (...arg?) => 102;
+   ╰────
 
   × A rest parameter cannot have an initializer
    ╭─[compiler/fatarrowfunctionsOptionalArgsErrors1.ts:3:1]
@@ -15798,6 +15804,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  10 │ function fn5() { }
     ╰────
 
+  × A required parameter cannot follow an optional parameter.
+   ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:1:1]
+ 1 │ //Function overload signature with optional parameter followed by non-optional parameter
+ 2 │ function fn4a(x?: number, y: string);
+   ·                           ─────────
+ 3 │ function fn4a() { }
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:4:1]
+ 4 │ 
+ 5 │ function fn4b(n: string, x?: number, y: string);
+   ·                                      ─────────
+ 6 │ function fn4b() { }
+   ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[conformance/functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:3:1]
  3 │ function a(a = 10) {
@@ -17059,6 +17081,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ class C {
  2 │    foo(...bar = 0) { }
    ·           ───────
+ 3 │ }
+   ╰────
+
+  × A required parameter cannot follow an optional parameter.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList3.ts:1:1]
+ 1 │ class C {
+ 2 │   F(A?, B) { }
+   ·         ─
  3 │ }
    ╰────
 
