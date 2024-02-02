@@ -88,7 +88,6 @@ impl<'a> ClassStaticBlock<'a> {
                         SPAN,
                         false,
                         false,
-                        false,
                         params,
                         function_body,
                         None,

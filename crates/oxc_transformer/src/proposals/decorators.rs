@@ -429,7 +429,6 @@ impl<'a> Decorators<'a> {
                                 SPAN,
                                 true,
                                 false,
-                                false,
                                 params,
                                 ast.function_body(
                                     SPAN,
@@ -472,7 +471,6 @@ impl<'a> Decorators<'a> {
                                 ast.arrow_expression(
                                     SPAN,
                                     true,
-                                    false,
                                     false,
                                     params,
                                     ast.function_body(

@@ -407,7 +407,6 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         expression: bool,
-        generator: bool,
         r#async: bool,
         params: Box<'a, FormalParameters<'a>>,
         body: Box<'a, FunctionBody<'a>>,
@@ -417,7 +416,6 @@ impl<'a> AstBuilder<'a> {
         Expression::ArrowExpression(self.alloc(ArrowExpression {
             span,
             expression,
-            generator,
             r#async,
             params,
             body,

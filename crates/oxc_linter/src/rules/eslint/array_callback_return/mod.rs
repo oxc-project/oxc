@@ -85,9 +85,7 @@ impl Rule for ArrayCallbackReturn {
         let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowExpression(arrow) => {
-                (&arrow.body, arrow.r#async || arrow.generator || arrow.expression)
-            }
+            AstKind::ArrowExpression(arrow) => (&arrow.body, arrow.r#async || arrow.expression),
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
                     (body, function.r#async || function.generator)
