@@ -77,7 +77,7 @@ impl EarlyErrorJavaScript {
                 }
             }
 
-            AstKind::Class(class) => check_class(class, ctx),
+            AstKind::Class(class) => check_class(class, node, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
             AstKind::ObjectProperty(prop) => check_object_property(prop, ctx),
 
@@ -743,7 +743,7 @@ fn check_for_statement_left<'a>(
     }
 }
 
-fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
+fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Multiple constructor implementations are not allowed.")]
     #[diagnostic()]
@@ -752,7 +752,23 @@ fn check_class(class: &Class, ctx: &SemanticBuilder<'_>) {
         #[label("it cannot be redeclared here")] Span,
     );
 
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A class name is required.")]
+    #[diagnostic()]
+    struct RequireClassName(#[label] Span);
+
     check_private_identifier(ctx);
+
+    if class.is_declaration()
+        && class.id.is_none()
+        && !matches!(
+            ctx.nodes.parent_kind(node.id()),
+            Some(AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_)))
+        )
+    {
+        let start = class.span.start;
+        ctx.error(RequireClassName(Span::new(start, start + 5)));
+    }
 
     // ClassBody : ClassElementList
     // It is a Syntax Error if PrototypePropertyNameList of ClassElementList contains more than one occurrence of "constructor".
