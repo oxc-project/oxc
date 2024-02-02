@@ -111,15 +111,15 @@ pub trait Suite<T: Case> {
         if paths.is_empty() {
             println!("-------------------------------------------------------");
             println!("git submodule is empty for {name}");
-            println!("Running `git submodule update --init`");
+            println!("Running `just submodules` to clone the submodules");
             println!("This may take a while.");
             println!("-------------------------------------------------------");
-            Command::new("git")
-                .args(["submodule", "update", "--init", "--progress"])
+            Command::new("just")
+                .args(["submodules"])
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
                 .output()
-                .expect("failed to execute `git submodule update --init`");
+                .expect("failed to execute `just submodules`");
             paths = get_paths();
         }
 

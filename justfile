@@ -23,10 +23,12 @@ ready:
   just lint
   git status
 
-# Update our local branch with the remote branch (this is for you to sync the git submodules)
-update:
-  git submodule sync
-  git submodule update --init --recursive
+# Clone or update submodules
+submodules:
+  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 17ba9aea47e496f5b2bc6ce7405b3f32e3cfbf7a
+  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git eccbd203383487f6957dcf086aa83d773691560b
+  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git 64d2eeea7b9c7f1a79edf42cb99f302535136a2e
+  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git ff83d55d05e92ceef10ec0cb1c0272ab894a00a0
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
@@ -115,10 +117,10 @@ new-react-perf-rule name:
 new-n-rule name:
     cargo run -p rulegen {{name}} n
 
-# Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
-sync-submodules:
-  git submodule update --init --remote
-
 # Upgrade all Rust dependencies
 upgrade:
   cargo upgrade --incompatible
+
+clone-submodule dir url sha:
+  git clone --depth=1 {{url}} {{dir}} || true
+  cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
