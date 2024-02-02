@@ -43,18 +43,13 @@ impl Rule for RequireYield {
             return;
         }
 
-        let span = match kind {
-            AstKind::Function(func)
-                if func.generator
-                    && func.body.as_ref().is_some_and(|body| !body.statements.is_empty()) =>
+        if let AstKind::Function(func) = kind {
+            if func.generator && func.body.as_ref().is_some_and(|body| !body.statements.is_empty())
             {
-                func.id.as_ref().map_or_else(|| kind.span(), |ident| ident.span)
+                let span = func.id.as_ref().map_or_else(|| kind.span(), |ident| ident.span);
+                ctx.diagnostic(RequireYieldDiagnostic(span));
             }
-            AstKind::ArrowExpression(arrow) if !arrow.body.statements.is_empty() => arrow.span,
-            _ => return,
-        };
-
-        ctx.diagnostic(RequireYieldDiagnostic(span));
+        }
     }
 }
 
@@ -72,6 +67,7 @@ fn test() {
         ("var obj = { *foo() { } };", None),
         ("class A { *foo() { yield 0; } };", None),
         ("class A { *foo() { } };", None),
+        ("() => {}", None),
     ];
 
     let fail = vec![
