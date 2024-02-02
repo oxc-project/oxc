@@ -6,7 +6,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -104,7 +104,8 @@ impl TypeScriptFixtures {
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         if !errors.is_empty() {
-            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+            let handler =
+                GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
             let mut output = String::new();
             for error in errors {
                 let error = error.with_source_code(NamedSource::new(
