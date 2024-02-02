@@ -16,13 +16,26 @@ impl EarlyErrorTypeScript {
     pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         let kind = node.kind();
 
-        // should be removed when add more matches.
-        #[allow(clippy::single_match)]
         match kind {
+            AstKind::VariableDeclarator(decl) => check_variable_declarator(decl, ctx),
             AstKind::SimpleAssignmentTarget(target) => check_simple_assignment_target(target, ctx),
             AstKind::FormalParameters(params) => check_formal_parameters(params, ctx),
             _ => {}
         }
+    }
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Unexpected `?` operator")]
+    #[diagnostic()]
+    struct UnexpectedOptional(#[label] Span);
+    if decl.id.optional {
+        let start = decl.id.span().end;
+        let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
+        let offset = start + offset as u32;
+        ctx.error(UnexpectedOptional(Span::new(offset, offset)));
     }
 }
 
