@@ -14,6 +14,7 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+mod source;
 mod string;
 mod string_builder;
 mod template;
@@ -23,25 +24,30 @@ mod typescript;
 mod unicode;
 
 use rustc_hash::FxHashMap;
-use std::{collections::VecDeque, str::Chars};
+use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Error;
 use oxc_span::{SourceType, Span};
 
-use self::{byte_handlers::handle_byte, string_builder::AutoCow, trivia_builder::TriviaBuilder};
+use self::{
+    byte_handlers::handle_byte,
+    source::{Source, SourcePosition},
+    string_builder::AutoCow,
+    trivia_builder::TriviaBuilder,
+};
 pub use self::{
     kind::Kind,
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use crate::{diagnostics, MAX_LEN};
+use crate::diagnostics;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
-    /// Remaining chars to be tokenized
-    chars: Chars<'a>,
+    /// Current position in source
+    position: SourcePosition<'a>,
 
     token: Token,
 
@@ -55,18 +61,31 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
+/// Wrapper around `Token`.
+/// TODO: This serves no purpose and can be replaced with `Token`.
+struct LexerCurrent {
+    token: Token,
+}
+
+/// Lookahead record.
+struct Lookahead<'a> {
+    position: SourcePosition<'a>,
+    token: Token,
+}
+
 pub struct Lexer<'a> {
     allocator: &'a Allocator,
 
-    source: &'a str,
+    // Wrapper around source text. Must not be changed after initialization.
+    source: Source<'a>,
 
     source_type: SourceType,
 
-    current: LexerCheckpoint<'a>,
+    current: LexerCurrent,
 
     pub(crate) errors: Vec<Error>,
 
-    lookahead: VecDeque<LexerCheckpoint<'a>>,
+    lookahead: VecDeque<Lookahead<'a>>,
 
     context: LexerContext,
 
@@ -82,16 +101,12 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(allocator: &'a Allocator, mut source: &'a str, source_type: SourceType) -> Self {
-        // If source exceeds size limit, substitute a short source which will fail to parse.
-        // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
-        if source.len() > MAX_LEN {
-            source = "\0";
-        }
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        let source = Source::new(source_text);
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
-        let current = LexerCheckpoint { chars: source.chars(), token, errors_pos: 0 };
+        let current = LexerCurrent { token };
         Self {
             allocator,
             source,
@@ -108,14 +123,14 @@ impl<'a> Lexer<'a> {
 
     /// Remaining string from `Chars`
     pub fn remaining(&self) -> &'a str {
-        self.current.chars.as_str()
+        self.source.remaining()
     }
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
-            chars: self.current.chars.clone(),
+            position: self.source.position(),
             token: self.current.token,
             errors_pos: self.errors.len(),
         }
@@ -124,7 +139,8 @@ impl<'a> Lexer<'a> {
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
-        self.current = checkpoint;
+        self.source.set_position(checkpoint.position);
+        self.current.token = checkpoint.token;
         self.lookahead.clear();
     }
 
@@ -137,28 +153,25 @@ impl<'a> Lexer<'a> {
             return self.lookahead[n - 1].token;
         }
 
-        let checkpoint = self.checkpoint();
+        let token = self.current.token;
+        let position = self.source.position();
 
         if let Some(checkpoint) = self.lookahead.back() {
-            self.current = checkpoint.clone();
+            self.source.set_position(checkpoint.position);
         }
 
-        // reset the current token for `read_next_token`,
-        // otherwise it will contain the token from
-        // `self.current = checkpoint`
+        // Reset the current token for `read_next_token`
+        // TODO: Is this still required?
         self.current.token = Token::default();
 
         for _i in self.lookahead.len()..n {
             let kind = self.read_next_token();
             let peeked = self.finish_next(kind);
-            self.lookahead.push_back(LexerCheckpoint {
-                chars: self.current.chars.clone(),
-                token: peeked,
-                errors_pos: self.errors.len(),
-            });
+            self.lookahead.push_back(Lookahead { position: self.source.position(), token: peeked });
         }
 
-        self.current = checkpoint;
+        self.current.token = token;
+        self.source.set_position(position);
 
         self.lookahead[n - 1].token
     }
@@ -171,8 +184,7 @@ impl<'a> Lexer<'a> {
     /// Main entry point
     pub fn next_token(&mut self) -> Token {
         if let Some(checkpoint) = self.lookahead.pop_front() {
-            self.current.chars = checkpoint.chars;
-            self.current.errors_pos = checkpoint.errors_pos;
+            self.source.set_position(checkpoint.position);
             return checkpoint.token;
         }
         let kind = self.read_next_token();
@@ -197,14 +209,7 @@ impl<'a> Lexer<'a> {
     #[inline]
     #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
-        // Offset = current position of `chars` relative to start of `source`.
-        // Previously was `self.source.len() - self.current.chars.as_str().len()`,
-        // but that was slower because `std::str::Chars` internally is a current pointer + end pointer,
-        // whereas `&str` internally is a start pointer and len.
-        // So comparing `len()` of the two requires an extra memory read, and addition operation.
-        // https://godbolt.org/z/v46MWddTM
-        // This function is on hot path, so saving even a single instruction makes a measurable difference.
-        (self.current.chars.as_str().as_ptr() as usize - self.source.as_ptr() as usize) as u32
+        self.source.offset()
     }
 
     /// Get the current unterminated token range
@@ -215,27 +220,27 @@ impl<'a> Lexer<'a> {
     /// Consume the current char if not at EOF
     #[inline]
     fn next_char(&mut self) -> Option<char> {
-        self.current.chars.next()
+        self.source.next_char()
     }
 
     /// Consume the current char
     #[inline]
     fn consume_char(&mut self) -> char {
-        self.current.chars.next().unwrap()
+        self.source.next_char().unwrap()
     }
 
     /// Peek the next char without advancing the position
     #[inline]
     fn peek(&self) -> Option<char> {
-        self.current.chars.clone().next()
+        self.source.peek_char()
     }
 
     /// Peek the next next char without advancing the position
     #[inline]
     fn peek2(&self) -> Option<char> {
-        let mut chars = self.current.chars.clone();
-        chars.next();
-        chars.next()
+        let mut source = self.source.clone();
+        source.next_char();
+        source.next_char()
     }
 
     /// Peek the next character, and advance the current position if it matches
@@ -243,7 +248,7 @@ impl<'a> Lexer<'a> {
     fn next_eq(&mut self, c: char) -> bool {
         let matched = self.peek() == Some(c);
         if matched {
-            self.current.chars.next();
+            self.source.next_char().unwrap();
         }
         matched
     }
@@ -269,14 +274,13 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.current.token.start = offset;
 
-            let remaining = self.current.chars.as_str();
-            if remaining.is_empty() {
+            let byte = if let Some(byte) = self.source.peek_byte() {
+                byte
+            } else {
                 return Kind::Eof;
-            }
+            };
 
-            let byte = remaining.as_bytes()[0];
-            // SAFETY: Check for `remaining.is_empty()` ensures not at end of file,
-            // and `byte` is the byte at current position of `self.current.chars`.
+            // SAFETY: `byte` is byte value at current position in source
             let kind = unsafe { handle_byte(byte, self) };
             if kind != Kind::Skip {
                 return kind;

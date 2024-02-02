@@ -250,6 +250,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
             checkpoint;
