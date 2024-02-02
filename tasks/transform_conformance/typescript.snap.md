@@ -1,7 +1,8 @@
 # typescript/tests/cases/conformance/enums/awaitAndYield.ts
 ```error
+
   × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/enums/awaitAndYield.ts:4:1]
+   ╭─[typescript/tests/cases/conformance/enums/awaitAndYield.ts:5:15]
  4 │     enum E {
  5 │         foo = await x,
    ·               ─────
@@ -477,8 +478,9 @@ var E = (E => {
 
 # typescript/tests/cases/conformance/enums/enumErrors.ts
 ```error
+
   × Expected `,` but found `;`
-    ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:47:1]
+    ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
  47 │ 
  48 │     postSemicolon;
     ·                  ┬

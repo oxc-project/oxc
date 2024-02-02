@@ -4,8 +4,8 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler};
-use oxc_diagnostics::{DiagnosticService, GraphicalTheme};
+use oxc_diagnostics::miette::NamedSource;
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme};
 use serde_json::Value;
 
 use crate::{
