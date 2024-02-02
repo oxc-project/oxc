@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 10/10 (100.00%)
 Positive Passed: 10/10 (100.00%)
-Negative Passed: 5/5 (100.00%)
+Negative Passed: 6/6 (100.00%)
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
@@ -21,6 +21,52 @@ Negative Passed: 5/5 (100.00%)
  2 │   set x: (v: number) => {}
    ·        ─
  3 │ }
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:1:1]
+ 1 │ const a? = "A"
+   ·        ▲
+ 2 │ const [b]? = ["B"]
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:1:1]
+ 1 │ const a? = "A"
+ 2 │ const [b]? = ["B"]
+   ·          ▲
+ 3 │ const { c }? = { c: "C" }
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:2:1]
+ 2 │ const [b]? = ["B"]
+ 3 │ const { c }? = { c: "C" }
+   ·            ▲
+ 4 │ 
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:4:1]
+ 4 │ 
+ 5 │ const d     ? = "A"
+   ·             ▲
+ 6 │ const [e, f]      ? = ["B"]
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:5:1]
+ 5 │ const d     ? = "A"
+ 6 │ const [e, f]      ? = ["B"]
+   ·                   ▲
+ 7 │ const { g, h }       ? = { c: "C" }
+   ╰────
+
+  × Unexpected `?` operator
+   ╭─[fail/oxc-2253.ts:6:1]
+ 6 │ const [e, f]      ? = ["B"]
+ 7 │ const { g, h }       ? = { c: "C" }
+   ·                      ▲
    ╰────
 
   × Empty parenthesized expression
