@@ -72,7 +72,7 @@ impl<'a> Lexer<'a> {
         if token.escaped {
             return self.escaped_templates[&token.start];
         }
-        let raw = &self.source[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[token.start as usize..token.end as usize];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
