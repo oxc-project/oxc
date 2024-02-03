@@ -24,6 +24,7 @@ use self::{
 
 /// ESLint Config
 /// <https://eslint.org/docs/latest/use/configure/configuration-files-new#configuration-objects>
+#[derive(Debug)]
 pub struct ESLintConfig {
     rules: Vec<ESLintRuleConfig>,
     settings: ESLintSettings,
@@ -39,19 +40,7 @@ pub struct ESLintRuleConfig {
 }
 
 impl ESLintConfig {
-    pub fn new(path: &Path) -> Result<Self, Report> {
-        let json = Self::read_json(path)?;
-        let rules = parse_rules(&json)?;
-        let settings = parse_settings_from_root(&json);
-        let env = parse_env_from_root(&json);
-        Ok(Self { rules, settings, env })
-    }
-
-    pub fn properties(self) -> (ESLintSettings, ESLintEnv) {
-        (self.settings, self.env)
-    }
-
-    fn read_json(path: &Path) -> Result<serde_json::Value, Error> {
+    pub fn from_file(path: &Path) -> Result<Self, Report> {
         let mut string = std::fs::read_to_string(path).map_err(|e| {
             FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))])
         })?;
@@ -60,7 +49,7 @@ impl ESLintConfig {
         json_strip_comments::strip(&mut string)
             .map_err(|_| FailedToParseJsonc(path.to_path_buf()))?;
 
-        serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
+        let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let guess = mime_guess::from_path(path);
             let err = match guess.first() {
                 // syntax error
@@ -76,8 +65,22 @@ impl ESLintConfig {
                 path.to_path_buf(),
                 err,
             ))])
-            .into()
-        })
+        })?;
+
+        let config = Self::from_value(&json)?;
+        Ok(config)
+    }
+
+    pub fn from_value(value: &Value) -> Result<Self, Report> {
+        let rules = parse_rules(value)?;
+        let settings = parse_settings_from_root(value);
+        let env = parse_env_from_root(value);
+
+        Ok(Self { rules, settings, env })
+    }
+
+    pub fn properties(self) -> (ESLintSettings, ESLintEnv) {
+        (self.settings, self.env)
     }
 
     #[allow(clippy::option_if_let_else)]
@@ -369,9 +372,41 @@ mod test {
     use std::env;
 
     #[test]
-    fn test_parse_rules() {
+    fn test_parse_from_file() {
         let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
-        let config = ESLintConfig::new(&fixture_path).unwrap();
+        let config = ESLintConfig::from_file(&fixture_path).unwrap();
         assert!(!config.rules.is_empty());
+    }
+
+    #[test]
+    fn test_parse_from_value() {
+        let config = ESLintConfig::from_value(&serde_json::json!({
+            "rules": {  "no-console": "off"  }
+        }))
+        .unwrap();
+        assert!(!config.rules.is_empty());
+    }
+
+    // TODO: test
+    fn test_parse_rules() {}
+    // TODO: test
+    fn test_parse_settings() {}
+
+    #[test]
+    fn test_parse_env() {
+        let config = ESLintConfig::from_value(&serde_json::json!({
+            "env": { "browser": true, "node": true, "es6": false }
+        }))
+        .unwrap();
+        assert_eq!(config.env.len(), 2);
+        assert!(config.env.contains(&"browser".to_string()));
+        assert!(config.env.contains(&"node".to_string()));
+        assert!(!config.env.contains(&"es6".to_string()));
+    }
+    #[test]
+    fn test_parse_env_default() {
+        let config = ESLintConfig::from_value(&serde_json::json!({})).unwrap();
+        assert_eq!(config.env.len(), 1);
+        assert_eq!(config.env.first(), Some(&"builtin".to_string()));
     }
 }
