@@ -388,9 +388,9 @@ mod test {
     }
 
     // TODO: test
-    fn test_parse_rules() {}
+    // fn test_parse_rules() {}
     // TODO: test
-    fn test_parse_settings() {}
+    // fn test_parse_settings() {}
 
     #[test]
     fn test_parse_env() {
