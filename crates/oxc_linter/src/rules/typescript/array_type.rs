@@ -2,7 +2,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
-use oxc_ast::{ast::{TSArrayType, TSType, TSTypeOperator}, AstKind};
+use oxc_ast::{ast::{TSType, TSTypeName, TSTypeOperator, TSTypeReference}, AstKind};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_macros::declare_oxc_lint;
@@ -99,7 +99,7 @@ impl Rule for ArrayType {
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let default_config = &self.default;
-        let readonly_config = &self.readonly.clone().unwrap_or(default_config.clone());
+        let readonly_config: &ArrayOption = &self.readonly.clone().unwrap_or(default_config.clone());
 
         match node.kind() {
             AstKind::TSTypeAnnotation(ts_type_annotation) => {
@@ -116,7 +116,7 @@ impl Rule for ArrayType {
                 if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_type_annotation.type_annotation {
                     if let TSTypeOperator::Readonly = &ts_operator_type.operator {
                     if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
-                            check_and_report_error_generic(
+                        check_and_report_error_generic(
                                 readonly_config,
                                 ts_operator_type.span,
                                 &array_type.element_type,
@@ -127,9 +127,13 @@ impl Rule for ArrayType {
                     }
                 }
 
-                // Array<string> 泛型
                 if let TSType::TSTypeReference(ts_type_reference) = &ts_type_annotation.type_annotation {
-                    println!("{:#?}", ts_type_reference);
+                    check_and_report_error_array(
+                        default_config,
+                        readonly_config, 
+                        ts_type_reference, 
+                        ctx,
+                    );
                 }
             },
             _ => {}
@@ -137,9 +141,29 @@ impl Rule for ArrayType {
     }
 }
 
+
+fn type_needs_parentheses(type_param: &TSType) -> bool {
+    match type_param {
+        TSType::TSTypeReference(node) => {
+            // TODO: 
+            println!("node===> {:#?}", node);
+            // return type_needs_parentheses(ts_type_ref.type_name);
+            true
+
+        },
+        TSType::TSUnionType(_) => true,
+        TSType::TSFunctionType(_) => true,
+        TSType::TSIntersectionType(_) => true,
+        TSType::TSTypeOperatorType(_) => true,
+        TSType::TSInferType(_) => true,
+        TSType::TSConstructorType(_) => true,
+        _ => false,
+    }
+}
+
 fn check_and_report_error_generic(
     config: &ArrayOption,
-    type_annotation_span: Span,
+    type_reference_span: Span,
     element_type: &TSType, 
     ctx: &LintContext,
     is_readonly: bool,
@@ -163,34 +187,134 @@ fn check_and_report_error_generic(
             readonly_prefix.to_string(),
             class_name.to_string(),
             message_type.to_string(),
-            type_annotation_span,
+            type_reference_span,
         )
     } else {
         ArrayTypeDiagnostic::ErrorStringGenericSimple(
             readonly_prefix.to_string(),
             class_name.to_string(),
             message_type.to_string(),
-            type_annotation_span,
+            type_reference_span,
         )
     };
-    let element_type_span = get_element_type_span(&element_type);
+    let element_type_span = get_ts_element_type_span(&element_type);
     let Some(element_type_span) = element_type_span else { return };
 
     ctx.diagnostic_with_fix(diagnostic, || {
-        let element_type_span = &source_text[element_type_span.start as usize..element_type_span.end as usize];
+        let type_text = &source_text[element_type_span.start as usize..element_type_span.end as usize];
         let array_type_identifier = if is_readonly { "ReadonlyArray" } else { "Array" };
         
         Fix::new(
-            array_type_identifier.to_string() + "<" + element_type_span + ">", 
-            Span { start: type_annotation_span.start, end: type_annotation_span.end }
+            array_type_identifier.to_string() + "<" + type_text + ">", 
+            Span { start: type_reference_span.start, end: type_reference_span.end }
         )
     })
+}
+
+fn check_and_report_error_array(
+    default_config: &ArrayOption,
+    readonly_config: &ArrayOption,
+    ts_type_reference: &TSTypeReference,
+    ctx: &LintContext,
+) {
+    let TSTypeName::IdentifierReference(ident_ref_type_name) = &ts_type_reference.type_name else { return };
+
+    if ident_ref_type_name.name.as_str() != "ReadonlyArray" && ident_ref_type_name.name.as_str() != "Array" {
+        return;
+    }
+    let is_readonly_array_type = ident_ref_type_name.name == "ReadonlyArray";
+    let config = if is_readonly_array_type { readonly_config } else { default_config };
+    if let ArrayOption::Generic = config {
+        return;
+    }
+    let readonly_prefix: &str = if is_readonly_array_type { "readonly " } else { "" };
+    let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
+    let type_params = &ts_type_reference.type_parameters;
+
+    if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
+        let diagnostic = if let ArrayOption::Array = config {
+            ArrayTypeDiagnostic::ErrorStringArray(
+                readonly_prefix.to_string(),
+                class_name.to_string(),
+                "any".to_string(),
+                ts_type_reference.span,
+            )
+        } else {
+            ArrayTypeDiagnostic::ErrorStringArraySimple(
+                readonly_prefix.to_string(),
+                ident_ref_type_name.name.to_string(),
+                "any".to_string(),
+                ts_type_reference.span,
+            )
+        };
+        ctx.diagnostic_with_fix(diagnostic, || {
+            Fix::new(
+                readonly_prefix.to_string() + "any[]", 
+                ts_type_reference.span,
+            )
+        });
+        return;
+    }
+    if type_params.as_ref().unwrap().params.len() != 1 {
+        return;
+    }
+    let first_type_param = type_params.as_ref().unwrap().params.get(0).unwrap();
+    if let ArrayOption::ArraySimple = config {
+        if !is_simple_type(first_type_param) {
+            return;
+        }
+    }
+
+    let type_parens = type_needs_parentheses(first_type_param);
+    // TODO: support example: type Foo = ReadonlyArray<object>[]; -> type Foo = (readonly object[])[];
+    // let mut parent_parens: bool = readonly_prefix != "";
+    // if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+    //     if let AstKind::TSTypeAnnotation(parent_node) = parent.kind() {}
+    // } else {
+    //     parent_parens = false
+    // };
+    let parent_parens = false;
+        
+    let element_type_span = get_ts_element_type_span(&first_type_param);
+    let Some(element_type_span) = element_type_span else { return };
+
+    let type_text = &ctx.source_text()[element_type_span.start as usize..element_type_span.end as usize];
+
+    let mut start = String::from(if parent_parens {"("} else {""});
+    start.push_str(readonly_prefix);
+    start.push_str(if type_parens {"("} else {""});
+
+    let mut end = String::from(if type_parens {")"} else {""});
+    end.push_str("[]");
+    end.push_str(if parent_parens {")"} else {""});
+
+    let message_type = get_message_type(first_type_param, ctx.source_text());
+    let diagnostic = if let ArrayOption::Array = config {
+            ArrayTypeDiagnostic::ErrorStringArray(
+                readonly_prefix.to_string(),
+                class_name.to_string(),
+                message_type.to_string(),
+                ts_type_reference.span,
+            )
+        } else {
+            ArrayTypeDiagnostic::ErrorStringArraySimple(
+                readonly_prefix.to_string(),
+                ident_ref_type_name.name.to_string(),
+                message_type.to_string(),
+                ts_type_reference.span,
+            )
+        };
+        ctx.diagnostic_with_fix(diagnostic, || {
+            Fix::new(
+                start + type_text + end.as_str(), 
+                ts_type_reference.span,
+            )
+        });
 }
 
 // Check whatever node can be considered as simple type
 fn is_simple_type(element_type: &TSType) -> bool {
     match element_type {
-        // TODO: miss TSThisType Identifier
         TSType::TSAnyKeyword(_) => true,
         TSType::TSBooleanKeyword(_) => true,
         TSType::TSNeverKeyword(_) => true,
@@ -205,7 +329,9 @@ fn is_simple_type(element_type: &TSType) -> bool {
         TSType::TSArrayType(_) => true,
         TSType::TSUndefinedKeyword(_) => true,
         TSType::TSQualifiedName(_) => true,
-        TSType::TSTypeReference(_) => {
+        TSType::TSThisKeyword(_) => true,
+        TSType::TSTypeReference(node) => {
+            println!("TSTypeReference ===> {:#?}", node);
             // TODO:
             true
         },
@@ -216,18 +342,49 @@ fn is_simple_type(element_type: &TSType) -> bool {
 
 fn get_message_type<'a>(element_type: &'a TSType, source_text: &'a str) -> &'a str {
     if is_simple_type(element_type) {
-        let element_type_span = get_element_type_span(element_type);
+        let element_type_span = get_ts_element_type_span(element_type);
         let Some(element_type_span) = element_type_span else { return "T" };
         return &source_text[element_type_span.start as usize..element_type_span.end as usize];
     }
     "T"
 }
 
-fn get_element_type_span(element_type: &TSType) -> Option<Span> {
-    match element_type {
-        // TODO: add more type
+fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
+    match ts_type {
+        TSType::TSAnyKeyword(t) => Some(t.span),
         TSType::TSNumberKeyword(t) => Some(t.span),
         TSType::TSStringKeyword(t) => Some(t.span),
+        TSType::TSBigIntKeyword(t) => Some(t.span),
+        TSType::TSBooleanKeyword(t) => Some(t.span),
+        TSType::TSNeverKeyword(t) => Some(t.span),
+        TSType::TSObjectKeyword(t) => Some(t.span),
+        TSType::TSSymbolKeyword(t) => Some(t.span),
+        TSType::TSUnknownKeyword(t) => Some(t.span),
+        TSType::TSVoidKeyword(t) => Some(t.span),
+        TSType::TSNullKeyword(t) => Some(t.span),
+        TSType::TSThisKeyword(t) => Some(t.span),
+        TSType::TSUndefinedKeyword(t) => Some(t.span),
+
+        TSType::TSArrayType(t) => Some(t.span),
+        TSType::TSConditionalType(t) => Some(t.span),
+        TSType::TSConstructorType(t) => Some(t.span),
+        TSType::TSFunctionType(t) => Some(t.span),
+        TSType::TSImportType(t) => Some(t.span),
+        TSType::TSIndexedAccessType(t) => Some(t.span),
+        TSType::TSInferType(t) => Some(t.span),
+        TSType::TSIntersectionType(t) => Some(t.span),
+        TSType::TSLiteralType(t) => Some(t.span),
+        TSType::TSMappedType(t) => Some(t.span),
+        TSType::TSQualifiedName(t) => Some(t.span),
+        TSType::TSTemplateLiteralType(t) => Some(t.span),
+        TSType::TSTupleType(t) => Some(t.span),
+        TSType::TSTypeLiteral(t) => Some(t.span),
+        TSType::TSTypeOperatorType(t) => Some(t.span),
+        TSType::TSTypePredicate(t) => Some(t.span),
+        TSType::TSTypeQuery(t) => Some(t.span),
+        TSType::TSTypeReference(t) => Some(t.span),
+        TSType::TSUnionType(t) => Some(t.span),
+
         _ => None,
     }
 }
@@ -235,18 +392,76 @@ fn get_element_type_span(element_type: &TSType) -> Option<Span> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
-        ("let a: number[] = [];", None),
-        // ("const y: readonly string[] = ['a', 'b'];", None),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array" }])))
+        ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
+        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
+        // ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
+        // ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
+        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
+        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
+        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
+        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
+        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
+        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
+        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
+        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "generic",}]))),
+        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic",}]))),
+        // ("let a: Array<bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: readonly bigint[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: readonly (string | bigint)[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
+        // ("let a: Array<bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
+        // ("let a: Array<string | bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
+        // ("let a: readonly bigint[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
+        // ("let a: ReadonlyArray<string | bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
     ];
     let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
         // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "generic" }]))),
     ];
     let fix = vec![
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
+
         ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
         ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
+        ("let x: Array<undefined> = [undefined] as undefined[];", "let x: undefined[] = [undefined] as undefined[];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+        ("let z: Array = [3, '4'];", "let z: any[] = [3, '4'];", Some(serde_json::json!([{ "default": "array-simple" }]))),
     ];
 
     Tester::new(ArrayType::NAME, pass, fail).expect_fix(fix).test();
