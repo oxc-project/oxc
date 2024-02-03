@@ -158,6 +158,7 @@ dependencies = [
 [[package]]
 name = "brotlic"
 version = "0.8.2"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f552f56f302af0006c32b50bfa2bdb4696fd6ba33c3ab9f6225fefdb1efdc680"
 dependencies = [
@@ -1706,7 +1707,8 @@ dependencies = [
  "bitflags 2.4.2",
  "indexmap",
  "insta",
- "itertools 0.12.1",
+ "itertools 0.12.0",
+ "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
@@ -2332,18 +2334,7 @@ dependencies = [
 name = "serde_derive"
 version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33c85360c95e7d137454dc81d9a4ed2b8efd8fbe19cee57357b32b9771fccb67"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.48",
-]
-
-[[package]]
-name = "serde_derive_internals"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e578a843d40b4189a4d66bba51d7684f57da5bd7c304c64e14bd63efbef49509"
+checksum = "46fe8f8603d81ba86327b23a2e9cdf49e1255fb94a4c5f297f6ee0547178ea2c"
 dependencies = [
  "proc-macro2",
  "quote",
