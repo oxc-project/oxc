@@ -63,12 +63,6 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
-/// Wrapper around `Token`.
-/// TODO: This serves no purpose and can be replaced with `Token`.
-struct LexerCurrent {
-    token: Token,
-}
-
 #[derive(Debug, Clone, Copy)]
 struct Lookahead<'a> {
     position: SourcePosition<'a>,
@@ -83,7 +77,7 @@ pub struct Lexer<'a> {
 
     source_type: SourceType,
 
-    current: LexerCurrent,
+    token: Token,
 
     pub(crate) errors: Vec<Error>,
 
@@ -108,12 +102,11 @@ impl<'a> Lexer<'a> {
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
-        let current = LexerCurrent { token };
         Self {
             allocator,
             source,
             source_type,
-            current,
+            token,
             errors: vec![],
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
@@ -133,7 +126,7 @@ impl<'a> Lexer<'a> {
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
             position: self.source.position(),
-            token: self.current.token,
+            token: self.token,
             errors_pos: self.errors.len(),
         }
     }
@@ -148,7 +141,7 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees `checkpoint` was created from this `Lexer`,
         // and therefore `checkpoint.position` was created from `self.source`.
         self.source.set_position(checkpoint.position);
-        self.current.token = checkpoint.token;
+        self.token = checkpoint.token;
         self.lookahead.clear();
     }
 
@@ -176,11 +169,11 @@ impl<'a> Lexer<'a> {
             self.lookahead.push_back(Lookahead { position: self.source.position(), token: peeked });
         }
 
-        // Call to `finish_next` in loop above leaves `self.current.token = Token::default()`.
-        // Only circumstance in which `self.current.token` wouldn't have been default at start of this
+        // Call to `finish_next` in loop above leaves `self.token = Token::default()`.
+        // Only circumstance in which `self.token` wouldn't have been default at start of this
         // function is if we were at very start of file, before any tokens have been read, when
         // `token.is_on_new_line` is `true`. But `lookahead` isn't called before the first token is
-        // read, so that's not possible. So no need to restore `self.current.token` here.
+        // read, so that's not possible. So no need to restore `self.token` here.
         // It's already in same state as it was at start of this function.
 
         // SAFETY: `position` was created above from `self.source`. `self.source` never changes.
@@ -208,11 +201,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.current.token.kind = kind;
-        self.current.token.end = self.offset();
-        debug_assert!(self.current.token.start <= self.current.token.end);
-        let token = self.current.token;
-        self.current.token = Token::default();
+        self.token.kind = kind;
+        self.token.end = self.offset();
+        debug_assert!(self.token.start <= self.token.end);
+        let token = self.token;
+        self.token = Token::default();
         token
     }
 
@@ -230,7 +223,7 @@ impl<'a> Lexer<'a> {
 
     /// Get the current unterminated token range
     fn unterminated_range(&self) -> Span {
-        Span::new(self.current.token.start, self.offset())
+        Span::new(self.token.start, self.offset())
     }
 
     /// Consume the current char if not at EOF
@@ -286,7 +279,7 @@ impl<'a> Lexer<'a> {
     fn read_next_token(&mut self) -> Kind {
         loop {
             let offset = self.offset();
-            self.current.token.start = offset;
+            self.token.start = offset;
 
             let byte = if let Some(byte) = self.source.peek_byte() {
                 byte

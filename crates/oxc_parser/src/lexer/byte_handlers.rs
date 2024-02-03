@@ -148,14 +148,14 @@ ascii_byte_handler!(SPS(lexer) {
 // <VT> <FF> Irregular Whitespace
 ascii_byte_handler!(ISP(lexer) {
     lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.current.token.start, lexer.offset());
+    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start, lexer.offset());
     Kind::Skip
 });
 
 // '\r' '\n'
 ascii_byte_handler!(LIN(lexer) {
     lexer.consume_char();
-    lexer.current.token.is_on_new_line = true;
+    lexer.token.is_on_new_line = true;
     Kind::Skip
 });
 
@@ -188,7 +188,7 @@ ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
     // HashbangComment ::
     //     `#!` SingleLineCommentChars?
-    if lexer.current.token.start == 0 && lexer.next_eq('!') {
+    if lexer.token.start == 0 && lexer.next_eq('!') {
         lexer.read_hashbang_comment()
     } else {
         lexer.private_identifier()

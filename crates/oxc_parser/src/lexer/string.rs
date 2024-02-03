@@ -42,8 +42,8 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_strings.insert(self.current.token.start, s);
-        self.current.token.escaped = true;
+        self.escaped_strings.insert(self.token.start, s);
+        self.token.escaped = true;
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {

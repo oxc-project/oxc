@@ -8,7 +8,7 @@ impl<'a> Lexer<'a> {
             Kind::ShiftLeftEq => 3,
             _ => unreachable!(),
         };
-        self.current.token.start = self.offset() - offset;
+        self.token.start = self.offset() - offset;
         self.source.back(offset as usize - 1);
         let kind = Kind::LAngle;
         self.lookahead.clear();
