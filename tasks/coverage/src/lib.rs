@@ -83,18 +83,22 @@ impl AppArgs {
 
     // Generate v8 test262 status file, which is used to skip failed tests
     // see https://chromium.googlesource.com/v8/v8/+/refs/heads/main/test/test262/test262.status
+    #[allow(clippy::missing_panics_doc)]
     pub fn run_sync_v8_test262_status(&self) {
-       let res =  agent()
+        let res = agent()
             .get("http://raw.githubusercontent.com/v8/v8/main/test/test262/test262.status")
             .timeout(Duration::from_secs(10))
-            .call().expect("Get v8 test262 status failed")
-            .into_string().expect("Get v8 test262 status failed");
+            .call()
+            .expect("Get v8 test262 status failed")
+            .into_string()
+            .expect("Get v8 test262 status failed");
         let mut content = String::new();
         regex::Regex::new(r"'(.+)': \[FAIL\]").unwrap().captures_iter(&res).for_each(|caps| {
             content.push_str(caps.get(1).unwrap().as_str());
-            content.push_str("\n");
+            content.push('\n');
         });
-        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), content).expect("Write v8 test262 status failed");
+        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), content)
+            .expect("Write v8 test262 status failed");
     }
 
     pub fn run_minifier(&self) {

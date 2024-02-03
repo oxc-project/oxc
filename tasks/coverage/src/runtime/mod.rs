@@ -1,5 +1,8 @@
 use std::{
-    collections::HashSet, fs, path::{Path, PathBuf}, time::Duration
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+    time::Duration,
 };
 
 use oxc_tasks_common::{agent, project_root};
@@ -25,7 +28,7 @@ lazy_static::lazy_static! {
             .expect("Failed to read v8_test262.status")
             .lines()
             .for_each(|line| {
-                set.insert(line.replace(".*", "").replace("*", ""));
+                set.insert(line.replace(".*", "").replace('*', ""));
             });
         set
     };
