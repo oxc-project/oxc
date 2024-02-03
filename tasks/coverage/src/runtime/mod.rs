@@ -1,6 +1,5 @@
 use std::{
-    path::{Path, PathBuf},
-    time::Duration,
+    collections::HashSet, fs, path::{Path, PathBuf}, time::Duration
 };
 
 use oxc_tasks_common::{agent, project_root};
@@ -16,6 +15,21 @@ use crate::{
     suite::{Case, TestResult},
     test262::{Test262Case, TestFlag},
 };
+
+pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "tasks/coverage/src/runtime/v8_test262.status";
+
+lazy_static::lazy_static! {
+    static ref V8_TEST_262_FAILED_TESTS: HashSet<String> = {
+        let mut set = HashSet::default();
+        fs::read_to_string(project_root().join(V8_TEST_262_FAILED_TESTS_PATH))
+            .expect("Failed to read v8_test262.status")
+            .lines()
+            .for_each(|line| {
+                set.insert(line.replace(".*", "").replace("*", ""));
+            });
+        set
+    };
+}
 
 static SKIP_EVALUATING_FEATURES: Set<&'static str> = phf_set! {
   // Node's version of V8 doesn't implement these
@@ -91,6 +105,8 @@ impl Case for CodegenRuntimeTest262Case {
             || base_path.starts_with("built-ins")
             || base_path.starts_with("staging")
             || base_path.starts_with("intl402")
+            // skip v8 test-262 failed tests
+            || V8_TEST_262_FAILED_TESTS.iter().any(|test| base_path.contains(test))
             || self
                 .base
                 .meta()
@@ -182,7 +198,7 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(50))
             .send_json(json)
             .map_err(|err| err.to_string())
             .and_then(|res| res.into_string().map_err(|err| err.to_string()))
