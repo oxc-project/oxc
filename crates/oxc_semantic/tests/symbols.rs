@@ -63,7 +63,6 @@ fn test_var_read_write() {
     .test();
 }
 
-#[ignore = "type aliases currently aren't in the symbol table"]
 #[test]
 fn test_types_simple() {
     let test = SemanticTester::ts(
