@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{ast_util::get_name_from_property_key, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -125,15 +125,13 @@ trait GetMethod {
 impl GetMethod for ClassElement<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
-            ClassElement::MethodDefinition(def) => {
-                get_name_from_property_key(&def.key).map(|name| Method {
-                    name,
-                    r#static: def.r#static,
-                    call_signature: false,
-                    kind: get_kind_from_key(&def.key),
-                    span: Span::new(def.span.start, def.key.span().end),
-                })
-            }
+            ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
+                name,
+                r#static: def.r#static,
+                call_signature: false,
+                kind: get_kind_from_key(&def.key),
+                span: Span::new(def.span.start, def.key.span().end),
+            }),
             _ => None,
         }
     }
@@ -142,15 +140,13 @@ impl GetMethod for ClassElement<'_> {
 impl GetMethod for TSSignature<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
-            TSSignature::TSMethodSignature(sig) => {
-                get_name_from_property_key(&sig.key).map(|name| Method {
-                    name,
-                    r#static: false,
-                    call_signature: false,
-                    kind: get_kind_from_key(&sig.key),
-                    span: sig.key.span(),
-                })
-            }
+            TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
+                name,
+                r#static: false,
+                call_signature: false,
+                kind: get_kind_from_key(&sig.key),
+                span: sig.key.span(),
+            }),
             TSSignature::TSCallSignatureDeclaration(sig) => Some(Method {
                 name: Atom::from("call"),
                 r#static: false,
