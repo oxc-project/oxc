@@ -201,7 +201,7 @@ async fn request_run_code(json: impl serde::Serialize + Send + 'static) -> Resul
     tokio::spawn(async move {
         agent()
             .post("http://localhost:32055/run")
-            .timeout(Duration::from_secs(50))
+            .timeout(Duration::from_secs(10))
             .send_json(json)
             .map_err(|err| err.to_string())
             .and_then(|res| res.into_string().map_err(|err| err.to_string()))

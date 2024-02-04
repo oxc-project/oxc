@@ -92,12 +92,20 @@ impl AppArgs {
             .expect("Get v8 test262 status failed")
             .into_string()
             .expect("Get v8 test262 status failed");
-        let mut content = String::new();
-        regex::Regex::new(r"'(.+)': \[FAIL\]").unwrap().captures_iter(&res).for_each(|caps| {
-            content.push_str(caps.get(1).unwrap().as_str());
-            content.push('\n');
-        });
-        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), content)
+
+        let mut tests = vec![];
+        regex::Regex::new(r"'(.+)': \[(FAIL|SKIP)\]").unwrap().captures_iter(&res).for_each(
+            |caps| {
+                if let Some(name) = caps.get(1).map(|f| f.as_str()) {
+                    if !name.eq("*") {
+                        tests.push(name);
+                    }
+                }
+            },
+        );
+        tests.sort_unstable();
+
+        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
             .expect("Write v8 test262 status failed");
     }
 
