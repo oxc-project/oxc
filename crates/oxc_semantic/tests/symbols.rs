@@ -87,3 +87,14 @@ fn test_types_simple() {
         .has_number_of_references(1)
         .test();
 }
+
+#[test]
+fn test_member_expression_reference() {
+    let test = SemanticTester::ts(
+        "
+        const a = { b: { c: 1 } };
+        a.b.c = 2;
+    ",
+    );
+    test.has_root_symbol("a").has_number_of_references(1).has_number_of_writes(1).test();
+}

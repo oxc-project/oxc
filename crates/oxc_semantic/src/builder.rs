@@ -1847,7 +1847,7 @@ impl<'a> SemanticBuilder<'a> {
                 ) => {
                     break;
                 }
-                (_, AstKind::ParenthesizedExpression(_)) => {
+                (_, AstKind::ParenthesizedExpression(_) | AstKind::MemberExpression(_)) => {
                     // continue up tree
                 }
                 _ => {
