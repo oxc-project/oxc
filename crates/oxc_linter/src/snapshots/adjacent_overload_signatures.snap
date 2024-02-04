@@ -360,17 +360,6 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:2:9]
- 1 │ class Test {
- 2 │         #private(): void;
-   ·         ────────
- 3 │         '#private'(): void;
- 4 │         #private(arg: number): void {}
-   ·         ────────
- 5 │         '#private'(arg: number): void {}
-   ╰────
-
-  ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
  2 │         #private(): void;
  3 │         '#private'(): void;
