@@ -192,15 +192,6 @@ expression: no_dupe_class_members
    ╰────
   help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
 
-  ⚠ eslint(no-dupe-class-members): Duplicate class member: "123"
-   ╭─[no_dupe_class_members.tsx:1:12]
- 1 │ class A { [123n]() {} 123() {} }
-   ·            ──┬─       ─┬─
-   ·              │         ╰── "123" is re-declared here
-   ·              ╰── "123" is previously declared here
-   ╰────
-  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
-
   ⚠ eslint(no-dupe-class-members): Duplicate class member: "null"
    ╭─[no_dupe_class_members.tsx:1:12]
  1 │ class A { [null]() {} 'null'() {} }

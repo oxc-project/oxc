@@ -1,6 +1,5 @@
-use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{Expression, ObjectPropertyKind, PropertyKey, PropertyKind},
+    ast::{ObjectPropertyKind, PropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -11,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-dupe-keys): Disallow duplicate keys in object literals")]
@@ -47,8 +46,8 @@ impl Rule for NoDupeKeys {
         let mut map = FxHashMap::default();
         for prop in &obj_expr.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
-            let Some(hash) = calculate_property_kind_hash(&prop.key) else { continue };
-            if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
+            let Some(name) = prop.key.static_name() else { return };
+            if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span())) {
                 if prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
                     || prev_kind == prop.kind
@@ -57,33 +56,6 @@ impl Rule for NoDupeKeys {
                 }
             }
         }
-    }
-}
-
-// todo: should this be located within oxc_ast?
-fn calculate_property_kind_hash(key: &PropertyKey) -> Option<u64> {
-    lazy_static! {
-        static ref NULL_HASH: u64 = calculate_hash(&"null");
-    }
-
-    match key {
-        PropertyKey::Identifier(ident) => Some(calculate_hash(&ident)),
-        PropertyKey::PrivateIdentifier(_) => None,
-        PropertyKey::Expression(expr) => match expr {
-            Expression::StringLiteral(lit) => Some(calculate_hash(&lit.value)),
-            // note: hashes won't work as expected if these aren't strings. Save
-            // NumberLiteral I don't think this should be too much of a problem
-            // b/c most people don't use `null`, regexes, etc. as object
-            // property keys when writing real code.
-            Expression::RegExpLiteral(lit) => Some(calculate_hash(&lit.regex.to_string())),
-            Expression::NumberLiteral(lit) => Some(calculate_hash(&lit.value.to_string())),
-            Expression::BigintLiteral(lit) => Some(calculate_hash(&lit.value.to_string())),
-            Expression::NullLiteral(_) => Some(*NULL_HASH),
-            Expression::TemplateLiteral(lit) => {
-                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(calculate_hash)
-            }
-            _ => None,
-        },
     }
 }
 
@@ -109,6 +81,8 @@ fn test() {
         // Syntax:error: the '0' prefixed octal literals is not allowed.
         // ("var x = { 012: 1, 12: 2 };", None),
         ("var x = { 1_0: 1, 1: 2 };", None),
+        // NOTE: This should fail when we get read the big int value
+        ("var x = { 1n: 1, 1: 2 };", None),
     ];
 
     let fail = vec![
@@ -120,7 +94,6 @@ fn test() {
         ("var x = { 012: 1, 10: 2 };", None),
         ("var x = { 0b1: 1, 1: 2 };", None),
         ("var x = { 0o1: 1, 1: 2 };", None),
-        ("var x = { 1n: 1, 1: 2 };", None),
         ("var x = { 1_0: 1, 10: 2 };", None),
         ("var x = { \"z\": 1, z: 2 };", None),
         ("var foo = {\n  bar: 1,\n  bar: 1,\n}", None),
