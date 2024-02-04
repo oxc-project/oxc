@@ -5,7 +5,6 @@
     clippy::unused_self,
 )]
 
-use num_bigint::BigInt;
 use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
@@ -136,8 +135,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, value: BigInt, base: BigintBase) -> BigintLiteral {
-        BigintLiteral { span, value, base }
+    pub fn bigint_literal(&self, span: Span, raw: Atom, base: BigintBase) -> BigintLiteral {
+        BigintLiteral { span, raw, base }
     }
 
     pub fn template_literal(

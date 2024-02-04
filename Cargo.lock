@@ -1368,7 +1368,6 @@ version = "0.6.0"
 dependencies = [
  "bitflags 2.4.2",
  "num-bigint",
- "num-traits",
  "oxc_allocator",
  "oxc_index",
  "oxc_span",
@@ -1425,7 +1424,6 @@ name = "oxc_codegen"
 version = "0.6.0"
 dependencies = [
  "bitflags 2.4.2",
- "num-bigint",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1531,7 +1529,6 @@ dependencies = [
  "lazy_static",
  "memchr",
  "mime_guess",
- "num-traits",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",

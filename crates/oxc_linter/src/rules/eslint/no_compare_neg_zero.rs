@@ -58,7 +58,6 @@ impl NoCompareNegZero {
 }
 
 fn is_neg_zero(expr: &Expression) -> bool {
-    use num_traits::Zero;
     let Expression::UnaryExpression(unary) = expr.get_inner_expression() else {
         return false;
     };
@@ -67,7 +66,7 @@ fn is_neg_zero(expr: &Expression) -> bool {
     }
     match &unary.argument {
         Expression::NumberLiteral(number) => number.value == 0.0,
-        Expression::BigintLiteral(bigint) => bigint.value.is_zero(),
+        Expression::BigintLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
 }
