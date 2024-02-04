@@ -45,8 +45,10 @@ impl TestFiles {
         let files = [
             // TypeScript syntax (2.81MB)
             "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
-            // Realword tsx (1.0M)
+            // Real world app tsx (1.0M)
             "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx",
+            // Real world content-heavy app jsx (3K)
+            "https://raw.githubusercontent.com/radix-ui/website/main/components/marketing/AdoptionSection.tsx",
             // Heavy with classes (554K)
             "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
             // ES5 (3.9M)
@@ -80,7 +82,12 @@ impl TestFile {
 
         let segments = url.path_segments().ok_or_else(|| "lib url has no segments".to_string())?;
 
-        let filename = segments.last().ok_or_else(|| "lib url has no segments".to_string())?;
+        let mut filename = segments.last().ok_or_else(|| "lib url has no segments".to_string())?;
+
+        // Radix-ui example file has ext `.tsx`, but only actually contains JSX
+        if filename == "AdoptionSection.tsx" {
+            filename = "AdoptionSection.jsx";
+        }
 
         let file = project_root().join("target").join(filename);
 
