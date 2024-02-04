@@ -105,6 +105,10 @@ impl<'a> SymbolTester<'a> {
         self.has_number_of_references_where(ref_count, Reference::is_write)
     }
 
+    pub fn has_number_of_member_modified(self, ref_count: usize) -> Self {
+        self.has_number_of_references_where(ref_count, Reference::is_member_modified)
+    }
+
     pub fn has_number_of_references(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, |_| true)
     }

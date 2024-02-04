@@ -94,7 +94,14 @@ fn test_member_expression_reference() {
         "
         const a = { b: { c: 1 } };
         a.b.c = 2;
+        a.b ++
+        console.log(a.b = 1);
     ",
     );
-    test.has_root_symbol("a").has_number_of_references(1).has_number_of_writes(1).test();
+    test.has_root_symbol("a")
+        .has_number_of_references(3)
+        .has_number_of_reads(3)
+        .has_number_of_writes(0)
+        .has_number_of_member_modified(3)
+        .test();
 }

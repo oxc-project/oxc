@@ -57,6 +57,11 @@ impl Reference {
         self.flag.is_write()
     }
 
+    /// Returns `true` if the identifier was member modified to. This is not mutually
+    pub fn is_member_modified(&self) -> bool {
+        self.flag.is_member_modified()
+    }
+
     pub fn is_type(&self) -> bool {
         self.flag.is_type()
     }

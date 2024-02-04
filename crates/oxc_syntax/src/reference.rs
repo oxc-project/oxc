@@ -32,6 +32,8 @@ bitflags! {
         const Write = 1 << 1;
         // Used in type definitions.
         const Type = 1 << 2;
+        // Used in member modification, e.g `a.b = 1`.
+        const MemberModified = 1 << 3;
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
@@ -62,6 +64,11 @@ impl ReferenceFlag {
     /// The identifier is written to. It may also be read from.
     pub const fn is_write(&self) -> bool {
         self.intersects(Self::Write)
+    }
+
+    /// The identifier is property modified to. It may also be read from.
+    pub const fn is_member_modified(&self) -> bool {
+        self.intersects(Self::MemberModified)
     }
 
     /// The identifier is only written to. It is not read from in this reference.

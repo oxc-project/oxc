@@ -1811,6 +1811,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(_)
         ));
 
+        let mut is_member_expression = false;
         for (curr, parent) in self
             .nodes
             .iter_parents(self.current_node_id)
@@ -1820,25 +1821,37 @@ impl<'a> SemanticBuilder<'a> {
                 // lhs of assignment expression
                 (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                     debug_assert!(!flags.is_read());
-                    flags = ReferenceFlag::write();
+                    if is_member_expression {
+                        flags |= ReferenceFlag::MemberModified;
+                    } else {
+                        flags = ReferenceFlag::write();
+                    };
                     // a lhs expr will not propagate upwards into a rhs
                     // expression, sow e can safely break
                     break;
                 }
                 (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
-                    flags |= if expr.operator == AssignmentOperator::Assign {
+                    flags |= if is_member_expression {
+                        ReferenceFlag::MemberModified
+                    } else if expr.operator == AssignmentOperator::Assign {
                         ReferenceFlag::write()
                     } else {
                         ReferenceFlag::read_write()
                     };
                     break;
                 }
-                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
-                    flags |= ReferenceFlag::write();
-                    // continue up tree
-                }
-                (_, AstKind::UpdateExpression(_)) => {
-                    flags |= ReferenceFlag::Write;
+                (
+                    _,
+                    AstKind::SimpleAssignmentTarget(_)
+                    | AstKind::AssignmentTarget(_)
+                    | AstKind::UpdateExpression(_),
+                ) => {
+                    flags |= if is_member_expression {
+                        ReferenceFlag::MemberModified
+                    } else {
+                        ReferenceFlag::write()
+                    };
+                    continue;
                     // continue up tree
                 }
                 (
@@ -1847,8 +1860,14 @@ impl<'a> SemanticBuilder<'a> {
                 ) => {
                     break;
                 }
-                (_, AstKind::ParenthesizedExpression(_) | AstKind::MemberExpression(_)) => {
+                (_, AstKind::ParenthesizedExpression(_))
+                | (AstKind::MemberExpression(_), AstKind::MemberExpression(_)) => {
                     // continue up tree
+                    continue;
+                }
+                (AstKind::IdentifierReference(_), AstKind::MemberExpression(_)) => {
+                    flags |= ReferenceFlag::Read;
+                    is_member_expression = true;
                 }
                 _ => {
                     flags |= ReferenceFlag::Read;
