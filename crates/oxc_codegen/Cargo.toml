@@ -24,8 +24,7 @@ oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 
-bitflags   = { workspace = true }
-num-bigint = { workspace = true }
+bitflags = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

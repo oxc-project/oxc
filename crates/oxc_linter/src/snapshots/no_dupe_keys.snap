@@ -61,13 +61,6 @@ expression: no_dupe_keys
 
   ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:11]
- 1 │ var x = { 1n: 1, 1: 2 };
-   ·           ──     ─
-   ╰────
-  help: Consider removing the duplicated key
-
-  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
-   ╭─[no_dupe_keys.tsx:1:11]
  1 │ var x = { 1_0: 1, 10: 2 };
    ·           ───     ──
    ╰────

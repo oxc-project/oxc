@@ -2,7 +2,7 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::{cmp::Ordering, mem, ops::Not};
+use std::{cmp::Ordering, mem};
 
 use num_bigint::BigInt;
 #[allow(clippy::wildcard_imports)]
@@ -674,13 +674,12 @@ impl<'a> Compressor<'a> {
                         );
                         return Some(self.ast.literal_number_expression(literal));
                     }
-                    Expression::BigintLiteral(big_int_literal) => {
-                        use std::ops::Neg;
-
-                        let value = big_int_literal.value.clone().neg();
-                        let literal =
-                            self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
-                        return Some(self.ast.literal_bigint_expression(literal));
+                    Expression::BigintLiteral(_big_int_literal) => {
+                        // let value = big_int_literal.value.clone().neg();
+                        // let literal =
+                        // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
+                        // return Some(self.ast.literal_bigint_expression(literal));
+                        return None;
                     }
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
@@ -705,11 +704,12 @@ impl<'a> Compressor<'a> {
                             return Some(self.ast.literal_number_expression(literal));
                         }
                     }
-                    Expression::BigintLiteral(big_int_literal) => {
-                        let value = big_int_literal.value.clone().not();
-                        let leteral =
-                            self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
-                        return Some(self.ast.literal_bigint_expression(leteral));
+                    Expression::BigintLiteral(_big_int_literal) => {
+                        // let value = big_int_literal.value.clone().not();
+                        // let leteral =
+                        // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
+                        // return Some(self.ast.literal_bigint_expression(leteral));
+                        return None;
                     }
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {

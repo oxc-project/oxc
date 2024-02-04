@@ -247,13 +247,11 @@ impl<'a> Expression<'a> {
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
     pub fn get_boolean_value(&self) -> Option<bool> {
-        use num_traits::Zero;
-
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
             Self::NumberLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigintLiteral(lit) => Some(!lit.value.is_zero()),
+            Self::BigintLiteral(lit) => Some(!lit.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
             _ => None,
@@ -453,7 +451,7 @@ impl<'a> PropertyKey<'a> {
                 Expression::StringLiteral(lit) => Some(lit.value.clone()),
                 Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
                 Expression::NumberLiteral(lit) => Some(Atom::from(lit.value.to_string())),
-                Expression::BigintLiteral(lit) => Some(Atom::from(lit.value.to_string())),
+                Expression::BigintLiteral(lit) => Some(lit.raw.clone()),
                 Expression::NullLiteral(_) => Some("null".into()),
                 Expression::TemplateLiteral(lit) => {
                     lit.expressions.is_empty().then(|| lit.quasi()).flatten().cloned()

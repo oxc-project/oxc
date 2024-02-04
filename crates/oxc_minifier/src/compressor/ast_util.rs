@@ -390,7 +390,10 @@ pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
                 None
             }
         }
-        Expression::BigintLiteral(bigint_literal) => Some(bigint_literal.value.clone()),
+        Expression::BigintLiteral(_bigint_literal) => {
+            // TODO: evaluate the bigint value
+            None
+        }
         Expression::BooleanLiteral(bool_literal) => {
             if bool_literal.value {
                 Some(BigInt::one())
@@ -465,7 +468,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::NullLiteral(_) => Some(false),
         Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
         Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
-        Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.value.is_zero()),
+        Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
@@ -581,7 +584,7 @@ pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
             Some(Cow::Owned(number_literal.value.to_string()))
         }
         Expression::BigintLiteral(big_int_literal) => {
-            Some(Cow::Owned(format!("{}n", big_int_literal.value)))
+            Some(Cow::Owned(big_int_literal.raw.to_string()))
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
         Expression::BooleanLiteral(bool_literal) => {
