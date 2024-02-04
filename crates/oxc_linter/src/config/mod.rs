@@ -381,16 +381,53 @@ mod test {
     #[test]
     fn test_parse_from_value() {
         let config = ESLintConfig::from_value(&serde_json::json!({
-            "rules": {  "no-console": "off"  }
+            "rules": { "no-console": "off" }
         }))
         .unwrap();
         assert!(!config.rules.is_empty());
     }
 
-    // TODO: test
-    // fn test_parse_rules() {}
-    // TODO: test
-    // fn test_parse_settings() {}
+    #[test]
+    fn test_parse_rules() {
+        // TODO: Should support `"xxx": 0` form(only `"xxx": [0]` is supported)
+        let config = ESLintConfig::from_value(&serde_json::json!({
+            "rules": {
+                "no-console": "off",
+                "foo/no-unused-vars": [1],
+                "dummy": ["error", "arg1", "args2"],
+            }
+        }))
+        .unwrap();
+        let mut rules = config.rules.iter();
+
+        let r1 = rules.next().unwrap();
+        assert_eq!(r1.rule_name, "no-console");
+        assert_eq!(r1.plugin_name, "eslint");
+        assert!(r1.severity.is_allow());
+        assert!(r1.config.is_none());
+
+        let r2 = rules.next().unwrap();
+        assert_eq!(r2.rule_name, "no-unused-vars");
+        assert_eq!(r2.plugin_name, "foo");
+        assert!(r2.severity.is_warn_deny());
+        assert!(r2.config.is_none());
+
+        let r3 = rules.next().unwrap();
+        assert_eq!(r3.rule_name, "dummy");
+        assert_eq!(r3.plugin_name, "eslint");
+        assert!(r3.severity.is_warn_deny());
+        assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
+    }
+
+    // TODO: Add?
+    // #[test]
+    // fn test_override_rules() {
+    // }
+
+    // TODO: Add!
+    // #[test]
+    // fn test_parse_settings() {
+    // }
 
     #[test]
     fn test_parse_env() {
