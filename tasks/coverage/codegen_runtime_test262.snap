@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
-AST Parsed     : 19663/19663 (100.00%)
-Positive Passed: 19248/19663 (97.89%)
+AST Parsed     : 19408/19408 (100.00%)
+Positive Passed: 19163/19408 (98.74%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -100,13 +100,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 Expect to run correctly: "annexB/language/eval-code/indirect/global-switch-dflt-eval-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/function-code/block-decl-func-skip-arguments.js"
-But got a runtime error: Test262Error: Expected SameValue(«function arguments() {
-		}», «[object Arguments]») to be true
-
-Expect to run correctly: "annexB/language/function-code/block-decl-nested-blocks-with-fun-decl.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
-
 Expect to run correctly: "annexB/language/global-code/block-decl-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
@@ -131,276 +124,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable
 Expect to run correctly: "annexB/language/global-code/switch-dflt-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-named-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-func-expr-nameless-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/gen-meth-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-func-decl-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-lex-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-fn-body-cntns-arguments-var-bind-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/meth-no-pre-existing-arguments-bindings-are-present-declare-arguments.js"
-But got a runtime error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/direct/non-definable-function-with-function.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "language/eval-code/direct/non-definable-function-with-variable.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «undefined») to be true
-
 Expect to run correctly: "language/eval-code/direct/non-definable-global-function.js"
 But got a runtime error: Test262Error: Expected true but got false
 
@@ -422,12 +145,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/eval-code/indirect/non-definable-function-with-function.js"
-But got a runtime error: Test262Error: declaration preceding Expected SameValue(«[object Object]», «undefined») to be true
-
-Expect to run correctly: "language/eval-code/indirect/non-definable-function-with-variable.js"
-But got a runtime error: Test262Error: declaration preceding Expected SameValue(«[object Object]», «undefined») to be true
-
 Expect to run correctly: "language/eval-code/indirect/non-definable-global-function.js"
 But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -448,6 +165,9 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 
 Expect to run correctly: "language/eval-code/indirect/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
+
+Expect to run correctly: "language/expressions/addition/S11.6.1_A4_T9.js"
+But got a runtime error: Test262Error: #2: (-Number.MAX_VALUE + Number.MAX_VALUE) + Number.MAX_VALUE === -Number.MAX_VALUE + (Number.MAX_VALUE + Number.MAX_VALUE). Actual: -1.7976931348623157e+3081.7976931348623157e+3081.7976931348623157e+308
 
 Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T1.js"
 But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
@@ -533,12 +253,6 @@ But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be tr
 Expect to run correctly: "language/expressions/assignment/fn-name-lhs-cover.js"
 But got a runtime error: Test262Error: descriptor value should be ; object value should be 
 
-Expect to run correctly: "language/expressions/async-generator/generator-created-after-decl-inst.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
-
-Expect to run correctly: "language/expressions/call/eval-spread.js"
-But got a runtime error: Test262Error: Expected SameValue(«local», «1») to be true
-
 Expect to run correctly: "language/expressions/class/cpn-class-expr-accessors-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
 
@@ -575,35 +289,8 @@ But got a runtime error: TypeError: c[(intermediate value)] is not a function
 Expect to run correctly: "language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-function-expression.js"
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
-Expect to run correctly: "language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
 Expect to run correctly: "language/expressions/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
-
-Expect to run correctly: "language/expressions/class/elements/syntax/valid/grammar-field-accessor.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
+But got a runtime error: SyntaxError: Unexpected identifier
 
 Expect to run correctly: "language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval-indirect.js"
 But got a runtime error: TypeError: _eval is not a constructor
@@ -622,171 +309,6 @@ But got a runtime error: TypeError: _eval is not a constructor
 
 Expect to run correctly: "language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval.js"
 But got a runtime error: TypeError: eval is not a constructor
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.10_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.10_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.10_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.11_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.11_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.11_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.1_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.1_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.1_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 6. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.2_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.2_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.2_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.3_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.3_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.3_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.4_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.4_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.4_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.6_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 16. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.6_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 16. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.6_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 16. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.7_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.7_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.7_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.8_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.8_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.8_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.9_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.9_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A5.9_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.10_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 5
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.11_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 5
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.1_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 12
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.2_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 5
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.3_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 3
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.4_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 4
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.5_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 4
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.6_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 8
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.7_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 4
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.8_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 4
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A6.9_T1.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 1
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.10_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.11_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.1_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.2_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.3_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.4_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.5_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.6_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.7_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.8_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/expressions/compound-assignment/S11.13.2_A7.9_T4.js"
-But got a runtime error: Test262Error: Expected true but got false
 
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
@@ -866,6 +388,24 @@ But got a runtime error: Test262Error: constructor is %Promise% Expected SameVal
 Expect to run correctly: "language/expressions/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
 
+Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T2.js"
+But got a runtime error: Test262Error: #1.2: 1 % 1 === + 0. Actual: -0
+
+Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T5.js"
+But got a runtime error: Test262Error: #5.2: 0 % Infinity === + 0. Actual: -0
+
+Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T6.js"
+But got a runtime error: Test262Error: #1.2: 0 % 1 === + 0. Actual: -0
+
+Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T2.js"
+But got a runtime error: Test262Error: #5.2: 0 * 0 === + 0. Actual: -0
+
+Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T7.js"
+But got a runtime error: Test262Error: #2.2: -0.1 * Number.MIN_VALUE === -0. Actual: +0
+
+Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T8.js"
+But got a runtime error: Test262Error: #2: (Number.MAX_VALUE * 1.1) * 0.9 !== Number.MAX_VALUE * (1.1 * 0.9)
+
 Expect to run correctly: "language/expressions/object/__proto__-permitted-dup-shorthand.js"
 But got a runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
 
@@ -878,62 +418,14 @@ But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») 
 Expect to run correctly: "language/expressions/object/cpn-obj-lit-computed-property-name-from-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
 
-Expect to run correctly: "language/expressions/postfix-decrement/S11.3.2_A5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-decrement/S11.3.2_A5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-decrement/S11.3.2_A5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-decrement/S11.3.2_A6_T3.js"
-But got a runtime error: Test262Error: Expected true but got false
-
 Expect to run correctly: "language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
-
-Expect to run correctly: "language/expressions/postfix-increment/S11.3.1_A5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-increment/S11.3.1_A5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-increment/S11.3.1_A5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/postfix-increment/S11.3.1_A6_T3.js"
-But got a runtime error: Test262Error: Expected true but got false
 
 Expect to run correctly: "language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/prefix-decrement/S11.4.5_A5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-decrement/S11.4.5_A5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-decrement/S11.4.5_A5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 1. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-decrement/S11.4.5_A6_T3.js"
-But got a runtime error: Test262Error: Expected true but got false
-
 Expect to run correctly: "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
-
-Expect to run correctly: "language/expressions/prefix-increment/S11.4.4_A5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-increment/S11.4.4_A5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-increment/S11.4.4_A5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 3. Actual: undefined
-
-Expect to run correctly: "language/expressions/prefix-increment/S11.4.4_A6_T3.js"
-But got a runtime error: Test262Error: Expected true but got false
 
 Expect to run correctly: "language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
@@ -948,7 +440,10 @@ Expect to run correctly: "language/module-code/eval-self-once.js"
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
 
 Expect to run correctly: "language/module-code/import-attributes/allow-nlt-before-with.js"
-But got a runtime error: SyntaxError: The requested module './ensure-linking-error_FIXTURE.js' does not provide an export named 'nonExistent'
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/module-code/import-attributes/import-attribute-empty.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
 
 Expect to run correctly: "language/module-code/instn-iee-bndng-cls.js"
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
@@ -1019,8 +514,11 @@ But got a runtime error: Test262Error: Expected a ReferenceError to be thrown bu
 Expect to run correctly: "language/module-code/verify-dfs.js"
 But got a runtime error: Test262Error: Expected SameValue(«B», «A») to be true
 
-Expect to run correctly: "language/statements/async-generator/generator-created-after-decl-inst.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object AsyncGenerator]», «[object AsyncGenerator]») to be false
+Expect to run correctly: "language/statements/async-generator/yield-star-promise-not-unwrapped.js"
+But got a runtime error: Test262Error: yield* should not unwrap promises from manually-implemented async iterators Expected SameValue(«unwrapped value», «[object Promise]») to be true
+
+Expect to run correctly: "language/statements/async-generator/yield-star-return-then-getter-ticks.js"
+But got a runtime error: Test262Error: Expected [start, tick 1, tick 2, get then, tick 3, get return, get then] and [start, tick 1, get then, tick 2, get return, get then, tick 3] to have the same contents. Ticks for return with thenable getter
 
 Expect to run correctly: "language/statements/class/cpn-class-decl-accessors-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
@@ -1058,47 +556,8 @@ But got a runtime error: TypeError: c[(intermediate value)] is not a function
 Expect to run correctly: "language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-function-expression.js"
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
-Expect to run correctly: "language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/class-element-decorator-call-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-decorator-member-expr.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/class-element-decorator-member-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/class-element-decorator-parenthesized-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
-Expect to run correctly: "language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js"
-But got a runtime error: SyntaxError: Invalid or unexpected token
-
 Expect to run correctly: "language/statements/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
-
-Expect to run correctly: "language/statements/class/elements/syntax/valid/grammar-field-accessor.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
+But got a runtime error: SyntaxError: Unexpected identifier
 
 Expect to run correctly: "language/statements/class/subclass/default-constructor-spread-override.js"
 But got a runtime error: Test262Error: @@iterator invoked
@@ -1243,6 +702,9 @@ But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to 
 
 Expect to run correctly: "language/statements/generators/generator-created-after-decl-inst.js"
 But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
+
+Expect to run correctly: "language/statements/return/S12.9_A4.js"
+But got a runtime error: Test262Error: #1: return Expression yields to Return (return, GetValue(Evaluate Expression), empty)
 
 Expect to run correctly: "language/statements/variable/binding-resolution.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true
