@@ -97,10 +97,10 @@ impl Rule for ArrayType {
             }),
         }))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption = &self.readonly.clone().unwrap_or(default_config.clone());
-
         match node.kind() {
             AstKind::TSTypeAnnotation(ts_type_annotation) => {
                 if let TSType::TSArrayType(array_type) = &ts_type_annotation.type_annotation {
@@ -136,20 +136,86 @@ impl Rule for ArrayType {
                     );
                 }
             },
+            AstKind::TSTypeAliasDeclaration(ts_type_annotation) => {
+                if let TSType::TSArrayType(array_type) = &ts_type_annotation.type_annotation {
+                    check_and_report_error_generic(
+                        default_config,
+                        array_type.span,
+                        &array_type.element_type,
+                        ctx,
+                        false,
+                    );
+                }
+
+                if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_type_annotation.type_annotation {
+                    if let TSTypeOperator::Readonly = &ts_operator_type.operator {
+                    if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
+                        check_and_report_error_generic(
+                                readonly_config,
+                                ts_operator_type.span,
+                                &array_type.element_type,
+                                ctx,
+                                true,
+                            );
+                        }
+                    }
+                }
+
+                if let TSType::TSTypeReference(ts_type_reference) = &ts_type_annotation.type_annotation {
+                    check_and_report_error_array(
+                        default_config,
+                        readonly_config, 
+                        ts_type_reference, 
+                        ctx,
+                    );
+                }
+            },
+            AstKind::TSAsExpression(ts_as_expression) => {
+                if let TSType::TSArrayType(array_type) = &ts_as_expression.type_annotation {
+                    check_and_report_error_generic(
+                        default_config,
+                        array_type.span,
+                        &array_type.element_type,
+                        ctx,
+                        false,
+                    );
+                }
+
+                if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_as_expression.type_annotation {
+                    if let TSTypeOperator::Readonly = &ts_operator_type.operator {
+                    if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
+                        check_and_report_error_generic(
+                                readonly_config,
+                                ts_operator_type.span,
+                                &array_type.element_type,
+                                ctx,
+                                true,
+                            );
+                        }
+                    }
+                }
+
+                if let TSType::TSTypeReference(ts_type_reference) = &ts_as_expression.type_annotation {
+                    check_and_report_error_array(
+                        default_config,
+                        readonly_config, 
+                        ts_type_reference, 
+                        ctx,
+                    );
+                }
+            },
             _ => {}
         }
     }
 }
 
-
 fn type_needs_parentheses(type_param: &TSType) -> bool {
     match type_param {
         TSType::TSTypeReference(node) => {
-            // TODO: 
-            println!("node===> {:#?}", node);
-            // return type_needs_parentheses(ts_type_ref.type_name);
+            if let TSTypeName::IdentifierReference(identifier_reference) = &node.type_name {
+                return identifier_reference.name.as_str() == "ReadonlyArray";
+            }
             true
-
         },
         TSType::TSUnionType(_) => true,
         TSType::TSFunctionType(_) => true,
@@ -164,7 +230,7 @@ fn type_needs_parentheses(type_param: &TSType) -> bool {
 fn check_and_report_error_generic(
     config: &ArrayOption,
     type_reference_span: Span,
-    element_type: &TSType, 
+    type_param: &TSType, 
     ctx: &LintContext,
     is_readonly: bool,
 ) {
@@ -172,7 +238,7 @@ fn check_and_report_error_generic(
         return;
     }
     if let ArrayOption::ArraySimple = config {
-        if is_simple_type(element_type) {
+        if is_simple_type(type_param) {
             return;
         }
     }
@@ -180,7 +246,7 @@ fn check_and_report_error_generic(
 
     let readonly_prefix = if is_readonly { "readonly " } else { "" };
     let class_name = if is_readonly { "ReadonlyArray" } else { "Array" };
-    let message_type = get_message_type(element_type, &source_text);
+    let message_type = get_message_type(type_param, &source_text);
 
     let diagnostic = if let ArrayOption::Generic = config {
         ArrayTypeDiagnostic::ErrorStringGeneric(
@@ -197,7 +263,7 @@ fn check_and_report_error_generic(
             type_reference_span,
         )
     };
-    let element_type_span = get_ts_element_type_span(&element_type);
+    let element_type_span = get_ts_element_type_span(&type_param);
     let Some(element_type_span) = element_type_span else { return };
 
     ctx.diagnostic_with_fix(diagnostic, || {
@@ -313,8 +379,8 @@ fn check_and_report_error_array(
 }
 
 // Check whatever node can be considered as simple type
-fn is_simple_type(element_type: &TSType) -> bool {
-    match element_type {
+fn is_simple_type(ts_type: &TSType) -> bool {
+    match ts_type {
         TSType::TSAnyKeyword(_) => true,
         TSType::TSBooleanKeyword(_) => true,
         TSType::TSNeverKeyword(_) => true,
@@ -331,18 +397,34 @@ fn is_simple_type(element_type: &TSType) -> bool {
         TSType::TSQualifiedName(_) => true,
         TSType::TSThisKeyword(_) => true,
         TSType::TSTypeReference(node) => {
-            println!("TSTypeReference ===> {:#?}", node);
-            // TODO:
-            true
+            let type_name = TSTypeName::get_first_name(&node.type_name);
+            if type_name.name.as_str() == "Array" {
+                if node.type_parameters.is_none() {
+                    return true;
+                }
+                if node.type_parameters.as_ref().unwrap().params.len() == 1 {
+                    return is_simple_type(node.type_parameters.as_ref().unwrap().params.get(0).unwrap());
+                }
+            } else {
+                if node.type_parameters.is_some() {
+                    return false;
+                }
+                if let TSTypeName::IdentifierReference(_) = &node.type_name {
+                    return true;
+                }
+                return false
+            }
+            false
         },
         _ => false,
     }
 
 }
 
-fn get_message_type<'a>(element_type: &'a TSType, source_text: &'a str) -> &'a str {
-    if is_simple_type(element_type) {
-        let element_type_span = get_ts_element_type_span(element_type);
+// Get the type name from the type node. for example: `Array<string>` -> `string`
+fn get_message_type<'a>(type_param: &'a TSType, source_text: &'a str) -> &'a str {
+    if is_simple_type(type_param) {
+        let element_type_span = get_ts_element_type_span(type_param);
         let Some(element_type_span) = element_type_span else { return "T" };
         return &source_text[element_type_span.start as usize..element_type_span.end as usize];
     }
@@ -392,76 +474,455 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
-        ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
-        ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
-        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
-        // ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "array-simple" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
-        // ("let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array", "readonly": "generic" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
-        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "array-simple" }]))),
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "array-simple", "readonly": "generic" }]))),
-        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "generic" }]))),
-        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-        // ("let a: Array<string | number> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-        // ("let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "generic",}]))),
-        // ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{ "default": "generic",}]))),
-        // ("let a: Array<bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: readonly bigint[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: readonly (string | bigint)[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array" }]))),
-        // ("let a: Array<bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-        // ("let a: Array<string | bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-        // ("let a: readonly bigint[] = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-        // ("let a: ReadonlyArray<string | bigint> = [];", Some(serde_json::json!([{ "default": "generic", "readonly": "array-simple" }]))),
-    ];
-    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
-        // ("let a: number[] = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-    ];
-    let fix = vec![
-        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
-        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{ "default": "array" }]))),
 
-        ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{ "default": "generic" }]))),
-        ("let x: Array<undefined> = [undefined] as undefined[];", "let x: undefined[] = [undefined] as undefined[];", Some(serde_json::json!([{ "default": "array-simple" }]))),
-        ("let z: Array = [3, '4'];", "let z: any[] = [3, '4'];", Some(serde_json::json!([{ "default": "array-simple" }]))),
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: Array<bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: readonly bigint[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: readonly (string | bigint)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: Array<bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: Array<string | bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: readonly bigint[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<string | bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a = new Array();", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: { foo: Bar[] }[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("function foo(a: Array<Bar>): Array<Bar> {}", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let yy: number[][] = [[4, 5], [6]];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("function fooFunction(foo: Array<ArrayClass<string>>) {
+            return foo.map(e => e.foo);
+        }", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        function bazFunction(baz: Arr<ArrayClass<String>>) {
+        return baz.map(e => e.baz);
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let fooVar: Array<(c: number) => number>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type fooUnion = Array<string | number | boolean>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type fooIntersection = Array<string & number>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        namespace fooName {
+        type BarType = { bar: string };
+        type BazType<T> = Arr<T>;
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        interface FooInterface {
+        '.bar': { baz: string[] };
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let yy: number[][] = [[4, 5], [6]];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let ya = [[1, '2']] as [number, string][];", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        function barFunction(bar: ArrayClass<String>[]) {
+        return bar.map(e => e.bar);
+        }
+            ", Some(serde_json::json!([{"default":"array"}]))),
+        ("function bazFunction(baz: Arr<ArrayClass<String>>) {
+        return baz.map(e => e.baz);
+        }", Some(serde_json::json!([{"default":"array"}]))),
+        ("let barVar: ((c: number) => number)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type barUnion = (string | number | boolean)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type barIntersection = (string & number)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        interface FooInterface {
+        '.bar': { baz: string[] };
+        }", Some(serde_json::json!([{"default":"array"}]))),
+        ("type Unwrap<T> = T extends (infer E)[] ? E : T;", Some(serde_json::json!([{"default":"array"}]))),
+        ("let xx: Array<Array<number>> = [[1, 2], [3]];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type Arr<T> = Array<T>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("function fooFunction(foo: Array<ArrayClass<string>>) { return foo.map(e => e.foo); }", Some(serde_json::json!([{"default":"generic"}]))),
+        ("function bazFunction(baz: Arr<ArrayClass<String>>) { return baz.map(e => e.baz) }", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let fooVar: Array<(c: number) => number>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type fooUnion = Array<string | number | boolean>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type fooIntersection = Array<string & number>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type Unwrap<T> = T extends Array<infer E> ? E : T;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: ReadonlyArray<number[]> = [[]];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: readonly Array<number>[] = [[]];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+    ];
+    
+        let fail = vec![
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: Array<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: bigint[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | bigint)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | bigint)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly bigint[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly (string | bigint)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: { foo: Array<Bar> }[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<{ foo: Bar[] }> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("let a: Array<{ foo: Foo | Bar[] }> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("function foo(a: Array<Bar>): Array<Bar> {}", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array<undefined> = [undefined] as undefined[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let ya = [[1, '2']] as [number, string][];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type Arr<T> = Array<T>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        xyz: this[];
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        function barFunction(bar: ArrayClass<String>[]) {
+        return bar.map(e => e.bar);
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let barVar: ((c: number) => number)[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type barUnion = (string | number | boolean)[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type barIntersection = (string & number)[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("let v: Array<fooName.BarType> = [{ bar: 'bar' }];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("let w: fooName.BazType<string>[] = [['baz']];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<undefined> = [undefined] as undefined[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let z: Array = [3, '4'];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type Arr<T> = Array<T>;", Some(serde_json::json!([{"default":"array"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        }
+            ", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        function fooFunction(foo: Array<ArrayClass<string>>) {
+        return foo.map(e => e.foo);
+        }
+            ", Some(serde_json::json!([{"default":"array"}]))),
+        ("let fooVar: Array<(c: number) => number>;", Some(serde_json::json!([{"default":"array"}]))),
+        ("type fooUnion = Array<string | number | boolean>;", Some(serde_json::json!([{"default":"array"}]))),
+        ("type fooIntersection = Array<string & number>;", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array;", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array<>;", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<number> = [1] as number[];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let y: string[] = <Array<string>>['2'];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let ya = [[1, '2']] as [number, string][];", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        function barFunction(bar: ArrayClass<String>[]) {
+        return bar.map(e => e.bar);
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let barVar: ((c: number) => number)[];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type barUnion = (string | number | boolean)[];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type barIntersection = (string & number)[];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        interface FooInterface {
+        '.bar': { baz: string[] };
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("type Unwrap<T> = T extends Array<infer E> ? E : T;", Some(serde_json::json!([{"default":"array"}]))),
+        // ("type Unwrap<T> = T extends (infer E)[] ? E : T;", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("type Foo = ReadonlyArray<object>[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("const foo: Array<new (...args: any[]) => void> = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("const foo: ReadonlyArray<new (...args: any[]) => void> = [];", Some(serde_json::json!([{"default":"array"}]))),
+    ];
+
+    let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"array-simple"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: Array<string | number> = [];", "let a: (string | number)[] = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array","readonly":"generic"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"array-simple"}]))),
+        ("let a: Array<number> = [];", "let a: number[] = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"array-simple","readonly":"generic"}]))),
+        ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: ReadonlyArray<string | number> = [];", "let a: readonly (string | number)[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array"}]))),
+        ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<number> = [];", "let a: readonly number[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: number[] = [];", "let a: Array<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: (string | number)[] = [];", "let a: Array<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly number[] = [];", "let a: ReadonlyArray<number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly (string | number)[] = [];", "let a: ReadonlyArray<string | number> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: bigint[] = [];", "let a: Array<bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | bigint)[] = [];", "let a: Array<string | bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: ReadonlyArray<bigint> = [];", "let a: readonly bigint[] = [];", Some(serde_json::json!([{"default":"generic","readonly":"array-simple"}]))),
+        ("let a: (string | bigint)[] = [];", "let a: Array<string | bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly bigint[] = [];", "let a: ReadonlyArray<bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: readonly (string | bigint)[] = [];", "let a: ReadonlyArray<string | bigint> = [];", Some(serde_json::json!([{"default":"generic","readonly":"generic"}]))),
+        ("let a: { foo: Array<Bar> }[] = [];", "let a: { foo: Bar[] }[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let a: Array<{ foo: Bar[] }> = [];", "let a: Array<{ foo: Array<Bar> }> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("let a: Array<{ foo: Foo | Bar[] }> = [];", "let a: Array<{ foo: Foo | Array<Bar> }> = [];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("function foo(a: Array<Bar>): Array<Bar> {}", "function foo(a: Bar[]): Bar[] {}", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array<undefined> = [undefined] as undefined[];", "let x: undefined[] = [undefined] as undefined[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("let y: string[] = <Array<string>>['2'];", "let y: string[] = <string[]>['2'];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let z: Array = [3, '4'];", "let z: any[] = [3, '4'];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let ya = [[1, '2']] as [number, string][];", "let ya = [[1, '2']] as Array<[number, string]>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type Arr<T> = Array<T>;", "type Arr<T> = T[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", "
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Array<Arr<string>>>> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        xyz: this[];
+        }
+            ", "
+        interface ArrayClass<T> {
+        foo: T[];
+        bar: T[];
+        baz: Arr<T>;
+        xyz: this[];
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("
+        function barFunction(bar: ArrayClass<String>[]) {
+        return bar.map(e => e.bar);
+        }
+            ", "
+        function barFunction(bar: Array<ArrayClass<String>>) {
+        return bar.map(e => e.bar);
+        }
+            ", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let barVar: ((c: number) => number)[];", "let barVar: Array<(c: number) => number>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type barUnion = (string | number | boolean)[];", "type barUnion = Array<string | number | boolean>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("type barIntersection = (string & number)[];", "type barIntersection = Array<string & number>;", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("let v: Array<fooName.BarType> = [{ bar: 'bar' }];", "let v: fooName.BarType[] = [{ bar: 'bar' }];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        // ("let w: fooName.BazType<string>[] = [['baz']];", "let w: Array<fooName.BazType<string>> = [['baz']];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<undefined> = [undefined] as undefined[];", "let x: undefined[] = [undefined] as undefined[];", Some(serde_json::json!([{"default":"array"}]))),
+        // ("let y: string[] = <Array<string>>['2'];", "let y: string[] = <string[]>['2'];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let z: Array = [3, '4'];", "let z: any[] = [3, '4'];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type Arr<T> = Array<T>;", "type Arr<T> = T[];", Some(serde_json::json!([{"default":"array"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", "
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Arr<string>[][]> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        }
+            ", "
+        interface ArrayClass<T> {
+        foo: T[];
+        bar: T[];
+        baz: Arr<T>;
+        }
+            ", Some(serde_json::json!([{"default":"array"}]))),
+        ("
+        function fooFunction(foo: Array<ArrayClass<string>>) {
+        return foo.map(e => e.foo);
+        }
+            ", "
+        function fooFunction(foo: ArrayClass<string>[]) {
+        return foo.map(e => e.foo);
+        }
+            ", Some(serde_json::json!([{"default":"array"}]))),
+        ("let fooVar: Array<(c: number) => number>;", "let fooVar: ((c: number) => number)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type fooUnion = Array<string | number | boolean>;", "type fooUnion = (string | number | boolean)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("type fooIntersection = Array<string & number>;", "type fooIntersection = (string & number)[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array;", "let x: any[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array<>;", "let x: any[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("let x: Array;", "let x: any[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<>;", "let x: any[];", Some(serde_json::json!([{"default":"array-simple"}]))),
+        ("let x: Array<number> = [1] as number[];", "let x: Array<number> = [1] as Array<number>;", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("let y: string[] = <Array<string>>['2'];", "let y: Array<string> = <Array<string>>['2'];", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let ya = [[1, '2']] as [number, string][];", "let ya = [[1, '2']] as Array<[number, string]>;", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];
+        //     ", "
+        // // Ignore user defined aliases
+        // let yyyy: Arr<Array<Array<Arr<string>>>> = [[[['2']]]];
+        //     ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: T[];
+        baz: Arr<T>;
+        }
+            ", "
+        interface ArrayClass<T> {
+        foo: Array<T>;
+        bar: Array<T>;
+        baz: Arr<T>;
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        function barFunction(bar: ArrayClass<String>[]) {
+        return bar.map(e => e.bar);
+        }
+            ", "
+        function barFunction(bar: Array<ArrayClass<String>>) {
+        return bar.map(e => e.bar);
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        ("let barVar: ((c: number) => number)[];", "let barVar: Array<(c: number) => number>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type barUnion = (string | number | boolean)[];", "type barUnion = Array<string | number | boolean>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("type barIntersection = (string & number)[];", "type barIntersection = Array<string & number>;", Some(serde_json::json!([{"default":"generic"}]))),
+        ("
+        interface FooInterface {
+        '.bar': { baz: string[] };
+        }
+            ", "
+        interface FooInterface {
+        '.bar': { baz: Array<string> };
+        }
+            ", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("type Unwrap<T> = T extends Array<infer E> ? E : T;", "type Unwrap<T> = T extends (infer E)[] ? E : T;", Some(serde_json::json!([{"default":"array"}]))),
+        // ("type Unwrap<T> = T extends (infer E)[] ? E : T;", "type Unwrap<T> = T extends Array<infer E> ? E : T;", Some(serde_json::json!([{"default":"generic"}]))),
+        // ("type Foo = ReadonlyArray<object>[];", "type Foo = (readonly object[])[];", Some(serde_json::json!([{"default":"array"}]))),
+        ("const foo: Array<new (...args: any[]) => void> = [];", "const foo: (new (...args: any[]) => void)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
+        ("const foo: ReadonlyArray<new (...args: any[]) => void> = [];", "const foo: readonly (new (...args: any[]) => void)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
     ];
 
     Tester::new(ArrayType::NAME, pass, fail).expect_fix(fix).test();
