@@ -45,6 +45,8 @@ impl TestFiles {
         let files = [
             // TypeScript syntax (2.81MB)
             "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
+            // Realword tsx (1.0M)
+            "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx",
             // Heavy with classes (554K)
             "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
             // ES5 (3.9M)
