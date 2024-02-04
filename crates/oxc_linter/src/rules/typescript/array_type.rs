@@ -101,111 +101,61 @@ impl Rule for ArrayType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption = &self.readonly.clone().unwrap_or(default_config.clone());
+
         match node.kind() {
             AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                if let TSType::TSArrayType(array_type) = &ts_type_annotation.type_annotation {
-                    check_and_report_error_generic(
-                        default_config,
-                        array_type.span,
-                        &array_type.element_type,
-                        ctx,
-                        false,
-                    );
-                }
-
-                if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_type_annotation.type_annotation {
-                    if let TSTypeOperator::Readonly = &ts_operator_type.operator {
-                    if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
-                        check_and_report_error_generic(
-                                readonly_config,
-                                ts_operator_type.span,
-                                &array_type.element_type,
-                                ctx,
-                                true,
-                            );
-                        }
-                    }
-                }
-
-                if let TSType::TSTypeReference(ts_type_reference) = &ts_type_annotation.type_annotation {
-                    check_and_report_error_array(
-                        default_config,
-                        readonly_config, 
-                        ts_type_reference, 
-                        ctx,
-                    );
-                }
+                check(&ts_type_annotation.type_annotation, default_config, readonly_config, ctx);
             },
-            AstKind::TSTypeAliasDeclaration(ts_type_annotation) => {
-                if let TSType::TSArrayType(array_type) = &ts_type_annotation.type_annotation {
-                    check_and_report_error_generic(
-                        default_config,
-                        array_type.span,
-                        &array_type.element_type,
-                        ctx,
-                        false,
-                    );
-                }
-
-                if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_type_annotation.type_annotation {
-                    if let TSTypeOperator::Readonly = &ts_operator_type.operator {
-                    if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
-                        check_and_report_error_generic(
-                                readonly_config,
-                                ts_operator_type.span,
-                                &array_type.element_type,
-                                ctx,
-                                true,
-                            );
-                        }
-                    }
-                }
-
-                if let TSType::TSTypeReference(ts_type_reference) = &ts_type_annotation.type_annotation {
-                    check_and_report_error_array(
-                        default_config,
-                        readonly_config, 
-                        ts_type_reference, 
-                        ctx,
-                    );
-                }
+            // for example: type barUnion = (string | number | boolean)[];
+            AstKind::TSTypeAliasDeclaration(ts_alias_annotation) => {
+                check(&ts_alias_annotation.type_annotation, default_config, readonly_config, ctx);
             },
+            // for example: let ya = [[1, '2']] as [number, string][];
             AstKind::TSAsExpression(ts_as_expression) => {
-                if let TSType::TSArrayType(array_type) = &ts_as_expression.type_annotation {
-                    check_and_report_error_generic(
-                        default_config,
-                        array_type.span,
-                        &array_type.element_type,
-                        ctx,
-                        false,
-                    );
-                }
-
-                if let TSType::TSTypeOperatorType(ts_operator_type) = &ts_as_expression.type_annotation {
-                    if let TSTypeOperator::Readonly = &ts_operator_type.operator {
-                    if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
-                        check_and_report_error_generic(
-                                readonly_config,
-                                ts_operator_type.span,
-                                &array_type.element_type,
-                                ctx,
-                                true,
-                            );
-                        }
-                    }
-                }
-
-                if let TSType::TSTypeReference(ts_type_reference) = &ts_as_expression.type_annotation {
-                    check_and_report_error_array(
-                        default_config,
-                        readonly_config, 
-                        ts_type_reference, 
-                        ctx,
-                    );
-                }
+                check(&ts_as_expression.type_annotation, default_config, readonly_config, ctx);
             },
             _ => {}
         }
+    }
+}
+
+fn check(
+    type_annotation: &TSType,
+    default_config: &ArrayOption,
+    readonly_config: &ArrayOption,
+    ctx: &LintContext,
+) {
+    if let TSType::TSArrayType(array_type) = &type_annotation {
+        check_and_report_error_generic(
+            default_config,
+            array_type.span,
+            &array_type.element_type,
+            ctx,
+            false,
+        );
+    }
+
+    if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation {
+        if let TSTypeOperator::Readonly = &ts_operator_type.operator {
+        if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
+            check_and_report_error_generic(
+                    readonly_config,
+                    ts_operator_type.span,
+                    &array_type.element_type,
+                    ctx,
+                    true,
+                );
+            }
+        }
+    }
+
+    if let TSType::TSTypeReference(ts_type_reference) = &type_annotation {
+        check_and_report_error_array(
+            default_config,
+            readonly_config, 
+            ts_type_reference, 
+            ctx,
+        );
     }
 }
 
