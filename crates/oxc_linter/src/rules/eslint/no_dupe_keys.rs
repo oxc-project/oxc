@@ -81,6 +81,8 @@ fn test() {
         // Syntax:error: the '0' prefixed octal literals is not allowed.
         // ("var x = { 012: 1, 12: 2 };", None),
         ("var x = { 1_0: 1, 1: 2 };", None),
+        // NOTE: This should fail when we get read the big int value
+        ("var x = { 1n: 1, 1: 2 };", None),
     ];
 
     let fail = vec![
@@ -92,7 +94,6 @@ fn test() {
         ("var x = { 012: 1, 10: 2 };", None),
         ("var x = { 0b1: 1, 1: 2 };", None),
         ("var x = { 0o1: 1, 1: 2 };", None),
-        ("var x = { 1n: 1, 1: 2 };", None),
         ("var x = { 1_0: 1, 10: 2 };", None),
         ("var x = { \"z\": 1, z: 2 };", None),
         ("var foo = {\n  bar: 1,\n  bar: 1,\n}", None),

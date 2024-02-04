@@ -6,7 +6,6 @@ use std::{
 };
 
 use bitflags::bitflags;
-use num_bigint::BigInt;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
 #[cfg(feature = "serde")]
@@ -107,16 +106,21 @@ impl<'a> Hash for NumberLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
-    pub value: BigInt,
+    pub raw: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub base: BigintBase,
+}
+
+impl BigintLiteral {
+    pub fn is_zero(&self) -> bool {
+        self.raw == "0n"
+    }
 }
 
 #[derive(Debug, Clone, Hash)]

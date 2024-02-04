@@ -539,7 +539,7 @@ impl<'a> AstKind<'a> {
             Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
-            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.value).into(),
+            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
