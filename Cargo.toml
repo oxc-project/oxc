@@ -97,6 +97,7 @@ ignore                    = { version = "0.4.22" }
 itertools                 = { version = "0.12.1" }
 jemallocator              = { version = "0.5.4" }
 lazy_static               = { version = "1.4.0" }
+memchr                    = { version = "2.7.1" }
 miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
 mimalloc                  = { version = "0.1.39" }
 num-bigint                = { version = "0.4.4" }

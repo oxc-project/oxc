@@ -117,6 +117,16 @@ impl<'a> Source<'a> {
         }
     }
 
+    /// Get remaining source text as `&[u8]`.
+    pub(super) fn remaining_bytes(&self) -> &'a [u8] {
+        let len = self.end as usize - self.ptr as usize;
+        // SAFETY:
+        // `start` and `end` are created from a `&str` in `Source::new` so span a single allocation.
+        // Invariant of `Source` is that `ptr` is always >= `start` and <= `end`,
+        // so a slice spanning `ptr` to `end` will always be part of of a single allocation.
+        unsafe { slice::from_raw_parts(self.ptr, len) }
+    }
+
     /// Return whether at end of source.
     #[inline]
     pub(super) fn is_eof(&self) -> bool {
@@ -156,6 +166,11 @@ impl<'a> Source<'a> {
                 && (pos.ptr == self.end || !is_utf8_cont_byte(read_u8(pos.ptr)))
         );
         self.ptr = pos.ptr;
+    }
+
+    /// Set current position to end of source.
+    pub(super) fn set_eof(&mut self) {
+        self.ptr = self.end;
     }
 
     /// Get current position in source, relative to start of source.
@@ -369,6 +384,32 @@ impl<'a> Source<'a> {
         // addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
         debug_assert!(self.ptr >= self.start && self.ptr < self.end);
         read_u8(self.ptr)
+    }
+
+    /// Eat until any of the three bytes. Returns the byte that was found. If
+    /// none of the bytes are found, returns `None` without advancing the
+    /// position.
+    ///
+    /// # Panic
+    /// Panics if:
+    /// * any of the provided bytes are a UTF-8 continuation byte (0x80-0xBF)
+    #[inline]
+    pub(super) fn eat_until_byte3(&mut self, b1: u8, b2: u8, b3: u8) -> Option<u8> {
+        let continuation_range = 0x80..=0xBF;
+        assert!(
+            !continuation_range.contains(&b1)
+                && !continuation_range.contains(&b2)
+                && !continuation_range.contains(&b3)
+        );
+
+        memchr::memchr3(b1, b2, b3, self.remaining_bytes()).map(|i| {
+            // SAFETY: The index must be in the slice's range and bytes can only
+            // be found on valid UTF-8 character boundaries.
+            self.ptr = unsafe { self.ptr.add(i) };
+
+            // SAFETY: There must be a byte at the index if memchr said so.
+            unsafe { self.peek_byte_unchecked() }
+        })
     }
 }
 

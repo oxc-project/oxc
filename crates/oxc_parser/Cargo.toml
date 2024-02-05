@@ -28,6 +28,7 @@ oxc_index       = { workspace = true }
 assert-unchecked = { workspace = true }
 bitflags         = { workspace = true }
 rustc-hash       = { workspace = true }
+memchr           = { workspace = true }
 num-bigint       = { workspace = true }
 
 [dev-dependencies]

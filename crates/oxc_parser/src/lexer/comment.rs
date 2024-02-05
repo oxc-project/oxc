@@ -8,15 +8,25 @@ impl<'a> Lexer<'a> {
     #[allow(clippy::cast_possible_truncation)]
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
         let start = self.token.start;
-        while let Some(c) = self.next_char() {
-            if is_line_terminator(c) {
-                self.token.is_on_new_line = true;
-                self.trivia_builder
-                    .add_single_line_comment(start, self.offset() - c.len_utf8() as u32);
-                return Kind::Skip;
+
+        // The first byte of the UTF-8 encoding of U+2028 and U+2029.
+        let ps_ls_start_byte = 0xE2;
+
+        while let Some(byte) = self.source.eat_until_byte3(b'\n', b'\r', ps_ls_start_byte) {
+            // Handle ambiguity between PS/LS and some other UTF-8 character.
+            if byte == ps_ls_start_byte && !matches!(self.peek(), Some('\u{2028}' | '\u{2029}')) {
+                self.consume_char();
+                continue;
             }
+
+            self.token.is_on_new_line = true;
+            self.trivia_builder.add_single_line_comment(start, self.offset());
+            self.consume_char();
+            return Kind::Skip;
         }
+
         // EOF
+        self.source.set_eof();
         self.trivia_builder.add_single_line_comment(start, self.offset());
         Kind::Skip
     }
