@@ -25,8 +25,7 @@ jobs:
     name: Benchmark
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v4
+      - uses: ./.github/actions/checkout
 
       - name: Install Rust
         uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation

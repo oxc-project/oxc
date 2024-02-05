@@ -1,0 +1,12 @@
+name: Checkout
+
+description: Git checkout with better defaults
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        show-progress: false

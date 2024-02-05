@@ -1,6 +1,6 @@
 name: Update implementation status of all linter plugins
 
-on: 
+on:
   push:
     branches:
       - main
@@ -12,8 +12,7 @@ jobs:
   lint_rules:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v4
+      - uses: ./.github/actions/checkout
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

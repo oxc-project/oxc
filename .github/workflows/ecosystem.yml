@@ -27,7 +27,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: ./.github/actions/checkout
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -61,6 +61,7 @@ jobs:
       - name: Clone ${{ matrix.repository }}
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           show-progress: false
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref }}

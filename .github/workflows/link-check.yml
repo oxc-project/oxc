@@ -23,8 +23,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: ./.github/actions/checkout
 
       - name: Check Links
         uses: lycheeverse/lychee-action@master
