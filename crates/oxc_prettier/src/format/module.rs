@@ -59,7 +59,8 @@ fn print_semicolon_after_export_declaration<'a>(
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
         },
         ModuleDeclaration::ExportAllDeclaration(_)
-        | ModuleDeclaration::ExportNamedDeclaration(_) => Some(ss!(";")),
+        | ModuleDeclaration::ExportNamedDeclaration(_)
+        | ModuleDeclaration::TSExportAssignment(_) => Some(ss!(";")),
         _ => None,
     }
 }

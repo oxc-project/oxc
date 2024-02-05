@@ -1079,7 +1079,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
 
 impl<'a> Format<'a> for TSExportAssignment<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, ss!(" = "), self.expression.format(p))
     }
 }
 
