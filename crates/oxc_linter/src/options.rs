@@ -179,7 +179,8 @@ impl LintOptions {
     pub fn derive_rules_and_settings_and_env(
         &self,
     ) -> Result<(Vec<RuleEnum>, ESLintSettings, ESLintEnv), Error> {
-        let config = self.config_path.as_ref().map(|path| ESLintConfig::new(path)).transpose()?;
+        let config =
+            self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
