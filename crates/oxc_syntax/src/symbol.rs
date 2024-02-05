@@ -29,8 +29,6 @@ bitflags! {
         const BlockScopedVariable     = 1 << 1;
         /// A const variable (const)
         const ConstVariable           = 1 << 2;
-        /// Is this symbol inside an import declaration
-        const Import                  = 1 << 3;
         /// Is this symbol inside an export declaration
         const Export                  = 1 << 4;
         const Class                   = 1 << 5;
