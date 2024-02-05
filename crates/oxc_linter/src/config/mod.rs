@@ -1,6 +1,7 @@
 mod env;
 pub mod errors;
 mod settings;
+mod settings2;
 
 use std::path::Path;
 
@@ -16,8 +17,8 @@ pub use self::{
 };
 use self::{
     errors::{
-        FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseJsonc,
-        FailedToParseRuleValueError,
+        FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
+        FailedToParseJsonc, FailedToParseRuleValueError,
     },
     settings::CustomComponents,
 };
@@ -74,7 +75,12 @@ impl ESLintConfig {
     pub fn from_value(value: &Value) -> Result<Self, Report> {
         let rules = parse_rules(value)?;
         let settings = parse_settings_from_root(value);
-        let env = parse_env_from_root(value);
+        let env = ESLintEnv::parse(value.get("env")).map_err(|_| {
+            FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
+                "env",
+                "Invalid env property",
+            ))])
+        })?;
 
         Ok(Self { rules, settings, env })
     }
@@ -294,28 +300,6 @@ fn parse_custom_components(
     setting
 }
 
-fn parse_env_from_root(root_json: &Value) -> ESLintEnv {
-    let Value::Object(root_object) = root_json else { return ESLintEnv::default() };
-
-    let Some(env_value) = root_object.get("env") else { return ESLintEnv::default() };
-
-    let env_object = match env_value {
-        Value::Object(env_object) => env_object,
-        _ => return ESLintEnv::default(),
-    };
-
-    let mut result = vec![];
-    for (k, v) in env_object {
-        if let Value::Bool(v) = v {
-            if *v {
-                result.push(String::from(k));
-            }
-        }
-    }
-
-    ESLintEnv::new(result)
-}
-
 fn parse_rule_name(name: &str) -> (&str, &str) {
     if let Some((category, name)) = name.split_once('/') {
         let category = category.trim_start_matches('@');
@@ -493,4 +477,21 @@ mod test {
         assert_eq!(config.env.len(), 1);
         assert_eq!(config.env.first(), Some(&"builtin".to_string()));
     }
+
+    // #[test]
+    // fn test_debug() {
+    //     use serde::Deserialize;
+
+    //     let value = serde_json::json!({});
+    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("{settings:#?}");
+
+    //     let value = serde_json::json!({ "jsx-a11y": {} });
+    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("{settings:#?}");
+
+    //     let value = serde_json::json!({ "jsx-a11y": { "polymorphicPropName": "as", "components": { "Foo": "input", "Bar": "textarea" } } });
+    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("{settings:#?}");
+    // }
 }
