@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
 Positive Passed: 2086/2096 (99.52%)
-Negative Passed: 1358/1500 (90.53%)
+Negative Passed: 1360/1500 (90.67%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -61,7 +61,6 @@ Expect Syntax Error: "typescript/class/declare-readonly-field-initializer-w-anno
 Expect Syntax Error: "typescript/class/duplicate-modifier-1/input.ts"
 Expect Syntax Error: "typescript/class/duplicate-modifier-2/input.ts"
 Expect Syntax Error: "typescript/class/duplicates-accessibility/input.ts"
-Expect Syntax Error: "typescript/class/empty-type-parameters/input.ts"
 Expect Syntax Error: "typescript/class/generator-method-with-modifiers/input.ts"
 Expect Syntax Error: "typescript/class/index-signature-errors/input.ts"
 Expect Syntax Error: "typescript/class/invalid-modifiers-order/input.ts"
@@ -92,7 +91,6 @@ Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/export/double-declare/input.ts"
 Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
-Expect Syntax Error: "typescript/function/empty-type-parameters/input.ts"
 Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
@@ -9733,6 +9731,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Type parameter list cannot be empty.
+   ╭─[typescript/class/empty-type-parameters/input.ts:1:8]
+ 1 │ class C<> {}
+   ·        ──
+   ╰────
+
   × Expected `{` but found `EOF`
    ╭─[typescript/class/extends-empty/input.ts:2:1]
  2 │ }
@@ -9878,6 +9882,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/export/declare-invalid/input.ts:1:16]
  1 │ export declare foo;
    ·                ───
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/function/empty-type-parameters/input.ts:1:13]
+ 1 │ function foo<>() {}
+   ·             ──
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
