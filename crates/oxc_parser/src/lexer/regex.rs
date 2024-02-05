@@ -11,7 +11,7 @@ impl<'a> Lexer<'a> {
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
     pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags) {
-        self.current.token.start = self.offset()
+        self.token.start = self.offset()
             - match kind {
                 Kind::Slash => 1,
                 Kind::SlashEq => 2,

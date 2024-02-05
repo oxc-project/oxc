@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
-        self.current.token.start = self.offset() - 1;
+        self.token.start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
         self.finish_next(kind)
@@ -63,16 +63,15 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_templates
-            .insert(self.current.token.start, is_valid_escape_sequence.then(|| s));
-        self.current.token.escaped = true;
+        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then(|| s));
+        self.token.escaped = true;
     }
 
     pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
         if token.escaped {
             return self.escaped_templates[&token.start];
         }
-        let raw = &self.source[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[token.start as usize..token.end as usize];
         Some(match token.kind {
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"

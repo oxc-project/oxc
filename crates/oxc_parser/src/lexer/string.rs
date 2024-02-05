@@ -42,8 +42,8 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_strings.insert(self.current.token.start, s);
-        self.current.token.escaped = true;
+        self.escaped_strings.insert(self.token.start, s);
+        self.token.escaped = true;
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
@@ -51,7 +51,7 @@ impl<'a> Lexer<'a> {
             return self.escaped_strings[&token.start];
         }
 
-        let raw = &self.source[token.start as usize..token.end as usize];
+        let raw = &self.source.whole()[token.start as usize..token.end as usize];
         match token.kind {
             Kind::Str => {
                 &raw[1..raw.len() - 1] // omit surrounding quotes

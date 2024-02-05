@@ -40,10 +40,7 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
         if self.next_eq('-') {
             // SingleLineHTMLCloseComment `-->` in script mode
-            if self.current.token.is_on_new_line
-                && self.source_type.is_script()
-                && self.next_eq('>')
-            {
+            if self.token.is_on_new_line && self.source_type.is_script() && self.next_eq('>') {
                 None
             } else {
                 Some(Kind::Minus2)
