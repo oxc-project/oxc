@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
 Positive Passed: 2086/2096 (99.52%)
-Negative Passed: 1360/1500 (90.67%)
+Negative Passed: 1361/1500 (90.73%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -36,7 +36,6 @@ Expect Syntax Error: "es2020/dynamic-import-createImportExpression-false/invalid
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/rest-parameter/invalid-setter-rest/input.js"
 Expect Syntax Error: "typescript/arrow-function/async-rest-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
@@ -9459,6 +9458,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0278/input.js:1:18]
  1 │ class A {static [static](){};}
    ·                  ──────
+   ╰────
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[esprima/rest-parameter/invalid-setter-rest/input.js:1:13]
+ 1 │ x = { set f(...y) {} }
+   ·             ────
    ╰────
 
   × Invalid Unicode escape sequence

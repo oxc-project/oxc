@@ -5,7 +5,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
 use super::list::ObjectExpressionProperties;
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
+use crate::{lexer::Kind, list::SeparatedList, Parser};
 
 impl<'a> Parser<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -217,9 +217,6 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
-        if method.params.parameters_count() != 0 {
-            self.error(diagnostics::GetterParameters(method.params.span));
-        }
         let value = self.ast.function_expression(method);
         Ok(self.ast.object_property(
             self.end_span(span),
@@ -240,10 +237,6 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Set)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
-
-        if method.params.parameters_count() != 1 {
-            self.error(diagnostics::SetterParameters(method.params.span));
-        }
 
         Ok(self.ast.object_property(
             self.end_span(span),
