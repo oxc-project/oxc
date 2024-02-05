@@ -222,6 +222,7 @@ pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
         return ESLintSettings::new(
             jsx_a11y_setting,
             nextjs_setting,
+            // TODO: These should be inside of react_setting
             link_components_setting,
             form_components_setting,
         );
