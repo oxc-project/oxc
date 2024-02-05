@@ -1642,8 +1642,18 @@ impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
-                self.current_symbol_flags |= Self::symbol_flag_from_module_declaration(decl);
-                decl.bind(self);
+                if !matches!(decl, ModuleDeclaration::ImportDeclaration(_)) {
+                    self.current_symbol_flags |= SymbolFlags::Export;
+                }
+            }
+            AstKind::ImportSpecifier(specifier) => {
+                specifier.bind(self);
+            }
+            AstKind::ImportDefaultSpecifier(specifier) => {
+                specifier.bind(self);
+            }
+            AstKind::ImportNamespaceSpecifier(specifier) => {
+                specifier.bind(self);
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
@@ -1750,7 +1760,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.class_table_builder.pop_class();
             }
             AstKind::ModuleDeclaration(decl) => {
-                self.current_symbol_flags -= Self::symbol_flag_from_module_declaration(decl);
+                if !matches!(decl, ModuleDeclaration::ImportDeclaration(_)) {
+                    self.current_symbol_flags -= SymbolFlags::Export;
+                }
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) | AstKind::Function(_) => {
@@ -1884,14 +1896,6 @@ impl<'a> SemanticBuilder<'a> {
                 );
                 self.declare_reference(reference);
             }
-        }
-    }
-
-    fn symbol_flag_from_module_declaration(module: &ModuleDeclaration) -> SymbolFlags {
-        if matches!(module, ModuleDeclaration::ImportDeclaration(_)) {
-            SymbolFlags::Import
-        } else {
-            SymbolFlags::Export
         }
     }
 }

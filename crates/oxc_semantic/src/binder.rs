@@ -274,25 +274,11 @@ impl<'a> Binder for CatchClause<'a> {
     }
 }
 
-impl<'a> Binder for ModuleDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
-        self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(
-                ident.span,
-                &ident.name,
-                SymbolFlags::ImportBinding,
-                SymbolFlags::ImportBindingExcludes,
-            );
-            ident.symbol_id.set(Some(symbol_id));
-        });
-    }
-}
-
 fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut SemanticBuilder) {
     let symbol_id = builder.declare_symbol(
         ident.span,
         &ident.name,
-        SymbolFlags::ImportBinding,
+        SymbolFlags::Import | SymbolFlags::ImportBinding,
         SymbolFlags::ImportBindingExcludes,
     );
     ident.symbol_id.set(Some(symbol_id));
