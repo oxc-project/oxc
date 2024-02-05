@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -37,16 +37,12 @@ declare_oxc_lint!(
 
 impl Rule for RequireYield {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-
-        if node.flags().has_yield() {
-            return;
-        }
-
-        if let AstKind::Function(func) = kind {
-            if func.generator && func.body.as_ref().is_some_and(|body| !body.statements.is_empty())
+        if let AstKind::Function(func) = node.kind() {
+            if !node.flags().has_yield()
+                && func.generator
+                && func.body.as_ref().is_some_and(|body| !body.statements.is_empty())
             {
-                let span = func.id.as_ref().map_or_else(|| kind.span(), |ident| ident.span);
+                let span = func.id.as_ref().map_or_else(|| func.span, |ident| ident.span);
                 ctx.diagnostic(RequireYieldDiagnostic(span));
             }
         }
@@ -58,25 +54,26 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function foo() { return 0; }", None),
-        ("function* foo() { yield 0; }", None),
-        ("function* foo() { }", None),
-        ("(function* foo() { yield 0; })();", None),
-        ("(function* foo() { })();", None),
-        ("var obj = { *foo() { yield 0; } };", None),
-        ("var obj = { *foo() { } };", None),
-        ("class A { *foo() { yield 0; } };", None),
-        ("class A { *foo() { } };", None),
-        ("() => {}", None),
+        "function foo() { return 0; }",
+        "function* foo() { yield 0; }",
+        "function* foo() { }",
+        "(function* foo() { yield 0; })();",
+        "(function* foo() { })();",
+        "function* foo() { while (true) { yield 0; } }",
+        "var obj = { *foo() { yield 0; } };",
+        "var obj = { *foo() { } };",
+        "class A { *foo() { yield 0; } };",
+        "class A { *foo() { } };",
+        "() => {}",
     ];
 
     let fail = vec![
-        ("function* foo() { return 0; }", None),
-        ("(function* foo() { return 0; })();", None),
-        ("var obj = { *foo() { return 0; } }", None),
-        ("class A { *foo() { return 0; } }", None),
-        ("function* foo() { function* bar() { yield 0; } }", None),
-        ("function* foo() { function* bar() { return 0; } yield 0; }", None),
+        "function* foo() { return 0; }",
+        "(function* foo() { return 0; })();",
+        "var obj = { *foo() { return 0; } }",
+        "class A { *foo() { return 0; } }",
+        "function* foo() { function* bar() { yield 0; } }",
+        "function* foo() { function* bar() { return 0; } yield 0; }",
     ];
 
     Tester::new(RequireYield::NAME, pass, fail).test_and_snapshot();
