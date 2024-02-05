@@ -1079,16 +1079,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
 
 impl<'a> Format<'a> for TSExportAssignment<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(ss!(" = "));
-        parts.push(self.expression.format(p));
-
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
-        }
-
-        Doc::Array(parts)
+        array!(p, ss!(" = "), self.expression.format(p))
     }
 }
 
