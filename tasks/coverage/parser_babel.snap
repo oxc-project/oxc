@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
 Positive Passed: 2086/2096 (99.52%)
-Negative Passed: 1355/1500 (90.33%)
+Negative Passed: 1358/1500 (90.53%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -138,9 +138,6 @@ Expect Syntax Error: "typescript/types/const-type-parameters-invalid-babel-7/inp
 Expect Syntax Error: "typescript/types/import-type-declaration-error/input.ts"
 Expect Syntax Error: "typescript/types/import-type-dynamic-errors/input.ts"
 Expect Syntax Error: "typescript/types/intrinsic-keyword-error/input.ts"
-Expect Syntax Error: "typescript/types/no-annotation-in-destructuring/input.ts"
-Expect Syntax Error: "typescript/types/no-optional-in-destructuring/input.ts"
-Expect Syntax Error: "typescript/types/no-optional-in-destructuring-in-params/input.ts"
 Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
@@ -10414,6 +10411,24 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/types/mapped-as-invalid/input.ts:1:33]
  1 │ type Foo<T> = { [K in keyof T as]: T[K] };
    ·                                 ─
+   ╰────
+
+  × Unexpected type annotation
+   ╭─[typescript/types/no-annotation-in-destructuring/input.ts:1:7]
+ 1 │ let [a: number] = b;
+   ·       ────────
+   ╰────
+
+  × Unexpected type annotation
+   ╭─[typescript/types/no-optional-in-destructuring/input.ts:1:7]
+ 1 │ let [a: number] = b;
+   ·       ────────
+   ╰────
+
+  × Unexpected type annotation
+   ╭─[typescript/types/no-optional-in-destructuring-in-params/input.ts:1:14]
+ 1 │ function f([a: number]) {}
+   ·              ────────
    ╰────
 
   × Expected `,` but found `:`
