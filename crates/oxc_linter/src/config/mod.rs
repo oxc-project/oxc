@@ -419,15 +419,15 @@ mod test {
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
     }
+    #[test]
+    fn test_parse_rules_default() {
+        let config = ESLintConfig::from_value(&serde_json::json!({})).unwrap();
+        assert!(config.rules.is_empty());
+    }
 
-    // TODO: Add?
-    // #[test]
-    // fn test_override_rules() {
-    // }
-
-    // TODO: Add!
     // #[test]
     // fn test_parse_settings() {
+    //     // TODO: ...
     // }
 
     #[test]
