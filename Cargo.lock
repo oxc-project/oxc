@@ -830,9 +830,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.2.1"
+version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "433de089bd45971eecf4668ee0ee8f4cec17db4f8bd8f7bc3197a6ce37aa7d9b"
+checksum = "824b2ae422412366ba479e8111fd301f7b5faece8149317bb81925979a53f520"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -945,9 +945,9 @@ dependencies = [
 
 [[package]]
 name = "json-strip-comments"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a138532317bbcfd1bb99baab0fd89f4391b4975b3c0a4e1ccb074912e940ee1"
+checksum = "c3d129799327c8f80861e467c59b825ba24c277dba6ad0d71a141dc98f9e04ee"
 
 [[package]]
 name = "language-tags"
@@ -1666,9 +1666,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "1.2.2"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cee5ab0cc7527aa402272a810615b9412985529a6124504fab03da76c7882f60"
+checksum = "5f5e996f6de37fbca3e90b6f43077a9370d27f86e8542d2166521baf61df8973"
 dependencies = [
  "dashmap",
  "dunce",

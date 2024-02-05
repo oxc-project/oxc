@@ -29,7 +29,7 @@ oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_codegen     = { workspace = true }
 oxc_index       = { workspace = true }
-oxc_resolver    = { version = "1.2.2" }
+oxc_resolver    = { version = "1.3.0" }
 
 rayon         = { workspace = true }
 lazy_static   = { workspace = true }                        # used in oxc_macros
@@ -48,7 +48,7 @@ url           = { workspace = true }
 rust-lapper         = "1.1.0"
 once_cell           = "1.19.0"
 memchr              = "2.7.1"
-json-strip-comments = "1.0.1"
+json-strip-comments = "1.0.2"
 
 [dev-dependencies]
 insta = { workspace = true }
