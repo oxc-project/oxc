@@ -425,10 +425,34 @@ mod test {
         assert!(config.rules.is_empty());
     }
 
-    // #[test]
-    // fn test_parse_settings() {
-    //     // TODO: ...
-    // }
+    #[test]
+    fn test_parse_settings() {
+        let config = ESLintConfig::from_value(&serde_json::json!({
+            "settings": {
+                "jsx-a11y": {
+                    "polymorphicPropName": "role",
+                    "components": {
+                        "Link": "Anchor",
+                        "Link2": "Anchor2"
+                    }
+                },
+                "next": {
+                    "rootDir": "app"
+                }
+            }
+        }))
+        .unwrap();
+        assert_eq!(config.settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
+        assert_eq!(config.settings.jsx_a11y.components.get("Link"), Some(&"Anchor".to_string()));
+        assert!(config.settings.nextjs.root_dir.contains(&"app".to_string()));
+    }
+    #[test]
+    fn test_parse_settings_default() {
+        let config = ESLintConfig::from_value(&serde_json::json!({})).unwrap();
+        assert!(config.settings.jsx_a11y.polymorphic_prop_name.is_none());
+        assert!(config.settings.jsx_a11y.components.is_empty());
+        assert!(config.settings.nextjs.root_dir.is_empty());
+    }
 
     #[test]
     fn test_parse_env() {
