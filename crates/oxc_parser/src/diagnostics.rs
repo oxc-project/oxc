@@ -253,16 +253,6 @@ pub struct IllegalNewline(
 pub struct OptionalChainTaggedTemplate(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("A 'get' accessor must not have any formal parameters.")]
-#[diagnostic()]
-pub struct GetterParameters(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("A 'set' accessor must have exactly one parameter.")]
-#[diagnostic()]
-pub struct SetterParameters(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("TS2681: A constructor cannot have a `this` parameter.")]
 #[diagnostic()]
 pub struct TSConstructorThisParameter(#[label] pub Span);

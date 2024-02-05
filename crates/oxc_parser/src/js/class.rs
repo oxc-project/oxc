@@ -361,14 +361,6 @@ impl<'a> Parser<'a> {
 
         let value = self.parse_method(r#async, generator)?;
 
-        if kind == MethodDefinitionKind::Get && value.params.parameters_count() != 0 {
-            self.error(diagnostics::GetterParameters(value.params.span));
-        }
-
-        if kind == MethodDefinitionKind::Set && value.params.parameters_count() != 1 {
-            self.error(diagnostics::SetterParameters(value.params.span));
-        }
-
         if kind == MethodDefinitionKind::Constructor {
             if let Some(this_param) = &value.this_param {
                 // class Foo { constructor(this: number) {} }
