@@ -1641,10 +1641,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::ModuleDeclaration(decl) => {
-                if !matches!(decl, ModuleDeclaration::ImportDeclaration(_)) {
-                    self.current_symbol_flags |= SymbolFlags::Export;
-                }
+            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+                self.current_symbol_flags |= SymbolFlags::Export;
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1759,10 +1757,8 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ModuleDeclaration(decl) => {
-                if !matches!(decl, ModuleDeclaration::ImportDeclaration(_)) {
-                    self.current_symbol_flags -= SymbolFlags::Export;
-                }
+            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) | AstKind::Function(_) => {
