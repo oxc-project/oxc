@@ -762,10 +762,7 @@ fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
 
     if class.is_declaration()
         && class.id.is_none()
-        && !matches!(
-            ctx.nodes.parent_kind(node.id()),
-            Some(AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_)))
-        )
+        && !matches!(ctx.nodes.parent_kind(node.id()), Some(AstKind::ExportDefaultDeclaration(_)))
     {
         let start = class.span.start;
         ctx.error(RequireClassName(Span::new(start, start + 5)));
