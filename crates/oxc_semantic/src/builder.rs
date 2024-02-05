@@ -229,6 +229,12 @@ impl<'a> SemanticBuilder<'a> {
         if self.current_scope_flags().is_function() {
             *self.nodes.get_node_mut(self.scope.get_node_id(self.current_scope_id)).flags_mut() |=
                 flag;
+        } else {
+            for scope_id in self.scope.ancestors(self.current_scope_id) {
+                if self.scope.get_flags(scope_id).is_function() {
+                    *self.nodes.get_node_mut(self.scope.get_node_id(scope_id)).flags_mut() |= flag;
+                }
+            }
         }
     }
 

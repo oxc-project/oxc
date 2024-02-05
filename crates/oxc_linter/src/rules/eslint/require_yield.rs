@@ -60,6 +60,7 @@ fn test() {
     let pass = vec![
         ("function foo() { return 0; }", None),
         ("function* foo() { yield 0; }", None),
+        ("function* foo() { while (true) { yield 0; } }", None),
         ("function* foo() { }", None),
         ("(function* foo() { yield 0; })();", None),
         ("(function* foo() { })();", None),
