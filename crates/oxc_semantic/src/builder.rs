@@ -226,16 +226,23 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
+        if let Some(node_id) = self.get_function_node_id() {
+            *self.nodes.get_node_mut(node_id).flags_mut() |= flag;
+        }
+    }
+
+    fn get_function_node_id(&self) -> Option<AstNodeId> {
         if self.current_scope_flags().is_function() {
-            *self.nodes.get_node_mut(self.scope.get_node_id(self.current_scope_id)).flags_mut() |=
-                flag;
-        } else {
-            for scope_id in self.scope.ancestors(self.current_scope_id) {
-                if self.scope.get_flags(scope_id).is_function() {
-                    *self.nodes.get_node_mut(self.scope.get_node_id(scope_id)).flags_mut() |= flag;
-                }
+            return Some(self.scope.get_node_id(self.current_scope_id));
+        }
+
+        for scope_id in self.scope.ancestors(self.current_scope_id) {
+            if self.scope.get_flags(scope_id).is_function() {
+                return Some(self.scope.get_node_id(scope_id));
             }
         }
+
+        None
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
