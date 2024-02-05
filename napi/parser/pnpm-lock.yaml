@@ -1,17 +1,21 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 devDependencies:
   '@napi-rs/cli':
-    specifier: ^2.15.2
-    version: 2.15.2
+    specifier: ^2.18.0
+    version: 2.18.0
   flatbuffers:
     specifier: ^23.5.26
     version: 23.5.26
 
 packages:
 
-  /@napi-rs/cli@2.15.2:
-    resolution: {integrity: sha512-80tBCtCnEhAmFtB9oPM0FL74uW7fAmtpeqjvERH7Q1z/aZzCAs/iNfE7U3ehpwg9Q07Ob2Eh/+1guyCdX/p24w==}
+  /@napi-rs/cli@2.18.0:
+    resolution: {integrity: sha512-lfSRT7cs3iC4L+kv9suGYQEezn5Nii7Kpu+THsYVI0tA1Vh59LH45p4QADaD7hvIkmOz79eEGtoKQ9nAkAPkzA==}
     engines: {node: '>= 10'}
     hasBin: true
     dev: true

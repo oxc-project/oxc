@@ -38,7 +38,7 @@ function generateNativePackage(target) {
   const platform = triple[0];
   const arch = triple[1];
   const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] }
-  const manifest = JSON.stringify({
+  const manifest = {
     name: packageName,
     version,
     author,
@@ -49,11 +49,11 @@ function generateNativePackage(target) {
     os: [platform],
     cpu: [arch],
     ...libc
-  });
+  };
 
   const manifestPath = resolve(packageRoot, "package.json");
   console.log(`Create manifest ${manifestPath}`);
-  fs.writeFileSync(manifestPath, manifest);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
   // Copy the binary
   const ext = platform === "win32" ? ".exe" : "";

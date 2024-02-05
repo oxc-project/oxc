@@ -17,7 +17,7 @@ function isMusl() {
   // For Node 10
   if (!process.report || typeof process.report.getReport !== 'function') {
     try {
-      const lddPath = require('child_process').execSync('which ldd').toString().trim();
+      const lddPath = require('child_process').execSync('which ldd').toString().trim()
       return readFileSync(lddPath, 'utf8').includes('musl')
     } catch (e) {
       return true
@@ -232,6 +232,49 @@ switch (platform) {
             nativeBinding = require('./parser.linux-arm-gnueabihf.node')
           } else {
             nativeBinding = require('@oxc-parser/binding-linux-arm-gnueabihf')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'riscv64':
+        if (isMusl()) {
+          localFileExisted = existsSync(
+            join(__dirname, 'parser.linux-riscv64-musl.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./parser.linux-riscv64-musl.node')
+            } else {
+              nativeBinding = require('@oxc-parser/binding-linux-riscv64-musl')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        } else {
+          localFileExisted = existsSync(
+            join(__dirname, 'parser.linux-riscv64-gnu.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./parser.linux-riscv64-gnu.node')
+            } else {
+              nativeBinding = require('@oxc-parser/binding-linux-riscv64-gnu')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        }
+        break
+      case 's390x':
+        localFileExisted = existsSync(
+          join(__dirname, 'parser.linux-s390x-gnu.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./parser.linux-s390x-gnu.node')
+          } else {
+            nativeBinding = require('@oxc-parser/binding-linux-s390x-gnu')
           }
         } catch (e) {
           loadError = e
