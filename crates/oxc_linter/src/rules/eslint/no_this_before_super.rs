@@ -43,31 +43,14 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoThisBeforeSuper,
-    nursery
+    correctness
 );
 
-impl NoThisBeforeSuper {
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-            if let AstKind::MethodDefinition(mdef) = parent.kind() {
-                if matches!(mdef.kind, MethodDefinitionKind::Constructor) {
-                    let parent_2 = ctx.nodes().parent_node(parent.id());
-                    if let Some(parent_2) = parent_2 {
-                        let parent_3 = ctx.nodes().parent_node(parent_2.id());
-                        if let Some(parent_3) = parent_3 {
-                            if let AstKind::Class(c) = parent_3.kind() {
-                                if let Some(super_class) = &c.super_class {
-                                    return !matches!(super_class, Expression::NullLiteral(_));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        false
-    }
+#[derive(Default, Copy, Clone, Debug)]
+enum DefinitelyCallsThisBeforeSuper {
+    #[default]
+    No,
+    Yes,
 }
 
 impl Rule for NoThisBeforeSuper {
@@ -159,17 +142,30 @@ impl Rule for NoThisBeforeSuper {
             }
         }
     }
-
-    fn from_configuration(_value: serde_json::Value) -> Self {
-        Self
-    }
 }
 
-#[derive(Default, Copy, Clone, Debug)]
-enum DefinitelyCallsThisBeforeSuper {
-    #[default]
-    No,
-    Yes,
+impl NoThisBeforeSuper {
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+            if let AstKind::MethodDefinition(mdef) = parent.kind() {
+                if matches!(mdef.kind, MethodDefinitionKind::Constructor) {
+                    let parent_2 = ctx.nodes().parent_node(parent.id());
+                    if let Some(parent_2) = parent_2 {
+                        let parent_3 = ctx.nodes().parent_node(parent_2.id());
+                        if let Some(parent_3) = parent_3 {
+                            if let AstKind::Class(c) = parent_3.kind() {
+                                if let Some(super_class) = &c.super_class {
+                                    return !matches!(super_class, Expression::NullLiteral(_));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
 }
 
 #[test]
