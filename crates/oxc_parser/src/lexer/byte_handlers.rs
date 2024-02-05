@@ -6,9 +6,8 @@ use crate::diagnostics;
 ///
 /// SAFETY:
 /// * Lexer must not be at end of file.
-/// * `byte` must be next byte of source code, corresponding to current position
-///   of `lexer.current.chars`.
-/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!` macro.
+/// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
+/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
 pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
     BYTE_HANDLERS[byte as usize](lexer)
 }
@@ -82,7 +81,7 @@ macro_rules! byte_handler {
 ///
 /// These assertions produce no runtime code, but hint to the compiler that it can assume that
 /// next char is ASCII, and it uses that information to optimize the rest of the handler.
-/// e.g. `lexer.current.chars.next()` becomes just a single assembler instruction.
+/// e.g. `lexer.consume_char()` becomes just a single assembler instruction.
 /// Without the assertions, the compiler is unable to deduce the next char is ASCII, due to
 /// the indirection of the `BYTE_HANDLERS` jump table.
 ///
@@ -108,8 +107,8 @@ macro_rules! byte_handler {
 ///     unsafe {
 ///       use assert_unchecked::assert_unchecked;
 ///       let s = lexer.current.chars.as_str();
-///       assert_unchecked!(!s.is_empty());
-///       assert_unchecked!(s.as_bytes()[0] < 128);
+///       assert_unchecked!(!lexer.source.is_eof());
+///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
 ///     {
 ///       lexer.consume_char();
@@ -125,9 +124,8 @@ macro_rules! ascii_byte_handler {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
                 use assert_unchecked::assert_unchecked;
-                let s = $lex.current.chars.as_str();
-                assert_unchecked!(!s.is_empty());
-                assert_unchecked!(s.as_bytes()[0] < 128);
+                assert_unchecked!(!$lex.source.is_eof());
+                assert_unchecked!($lex.source.peek_byte_unchecked() < 128);
             }
             $body
         });
@@ -150,14 +148,14 @@ ascii_byte_handler!(SPS(lexer) {
 // <VT> <FF> Irregular Whitespace
 ascii_byte_handler!(ISP(lexer) {
     lexer.consume_char();
-    lexer.trivia_builder.add_irregular_whitespace(lexer.current.token.start, lexer.offset());
+    lexer.trivia_builder.add_irregular_whitespace(lexer.token.start, lexer.offset());
     Kind::Skip
 });
 
 // '\r' '\n'
 ascii_byte_handler!(LIN(lexer) {
     lexer.consume_char();
-    lexer.current.token.is_on_new_line = true;
+    lexer.token.is_on_new_line = true;
     Kind::Skip
 });
 
@@ -190,7 +188,7 @@ ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
     // HashbangComment ::
     //     `#!` SingleLineCommentChars?
-    if lexer.current.token.start == 0 && lexer.next_eq('!') {
+    if lexer.token.start == 0 && lexer.next_eq('!') {
         lexer.read_hashbang_comment()
     } else {
         lexer.private_identifier()
