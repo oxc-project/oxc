@@ -278,7 +278,7 @@ fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut 
     let symbol_id = builder.declare_symbol(
         ident.span,
         &ident.name,
-        SymbolFlags::Import | SymbolFlags::ImportBinding,
+        SymbolFlags::ImportBinding,
         SymbolFlags::ImportBindingExcludes,
     );
     ident.symbol_id.set(Some(symbol_id));
