@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1036/4879 (21.23%)
+Negative Passed: 1038/4879 (21.27%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -306,7 +306,6 @@ Expect Syntax Error: "compiler/classStaticPropertyAccess.ts"
 Expect Syntax Error: "compiler/classTypeParametersInStatics.ts"
 Expect Syntax Error: "compiler/classUsedBeforeInitializedVariables.ts"
 Expect Syntax Error: "compiler/classWithDuplicateIdentifier.ts"
-Expect Syntax Error: "compiler/classWithEmptyTypeParameter.ts"
 Expect Syntax Error: "compiler/classWithMultipleBaseClasses.ts"
 Expect Syntax Error: "compiler/classWithOverloadImplementationOfWrongName.ts"
 Expect Syntax Error: "compiler/classWithOverloadImplementationOfWrongName2.ts"
@@ -3100,7 +3099,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName9.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts"
@@ -4820,6 +4818,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  94 │     }
     ╰────
   help: Try insert a semicolon here
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/classWithEmptyTypeParameter.ts:1:8]
+ 1 │ class C<> {
+   ·        ──
+ 2 │ }
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[compiler/collisionArgumentsClassConstructor.ts:3:31]
@@ -8147,6 +8152,70 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ @<[[import(obju2c77,
    ·  ─
    ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │   constructor<> () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:3:14]
+ 2 │   constructor<>() { }
+ 3 │   constructor<> () { }
+   ·              ──
+ 4 │   constructor <>() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:4:15]
+ 3 │   constructor<> () { }
+ 4 │   constructor <>() { }
+   ·               ──
+ 5 │   constructor <> () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:5:15]
+ 4 │   constructor <>() { }
+ 5 │   constructor <> () { }
+   ·               ──
+ 6 │   constructor< >() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:6:14]
+ 5 │   constructor <> () { }
+ 6 │   constructor< >() { }
+   ·              ───
+ 7 │   constructor< > () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:7:14]
+ 6 │   constructor< >() { }
+ 7 │   constructor< > () { }
+   ·              ───
+ 8 │   constructor < >() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[compiler/parserConstructorDeclaration12.ts:8:15]
+ 7 │   constructor< > () { }
+ 8 │   constructor < >() { }
+   ·               ───
+ 9 │   constructor < > () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+    ╭─[compiler/parserConstructorDeclaration12.ts:9:15]
+  8 │   constructor < >() { }
+  9 │   constructor < > () { }
+    ·               ───
+ 10 │ }
+    ╰────
 
   × Multiple constructor implementations are not allowed.
    ╭─[compiler/parserConstructorDeclaration12.ts:2:3]
@@ -16200,6 +16269,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ a = (() => { } || a)
    ·                ─┬
    ·                 ╰── `,` expected
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

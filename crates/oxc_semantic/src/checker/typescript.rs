@@ -21,8 +21,24 @@ impl EarlyErrorTypeScript {
             AstKind::SimpleAssignmentTarget(target) => check_simple_assignment_target(target, ctx),
             AstKind::FormalParameters(params) => check_formal_parameters(params, ctx),
             AstKind::ArrayPattern(pattern) => check_array_pattern(pattern, ctx),
+            AstKind::TSTypeParameterDeclaration(declaration) => {
+                check_ts_type_parameter_declaration(declaration, ctx);
+            }
             _ => {}
         }
+    }
+}
+
+fn check_ts_type_parameter_declaration(
+    declaration: &TSTypeParameterDeclaration<'_>,
+    ctx: &SemanticBuilder<'_>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Type parameter list cannot be empty.")]
+    #[diagnostic()]
+    struct EmptyTypeParameterList(#[label] Span);
+    if declaration.params.is_empty() {
+        ctx.error(EmptyTypeParameterList(declaration.span));
     }
 }
 
