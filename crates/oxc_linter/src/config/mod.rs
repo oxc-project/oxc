@@ -438,13 +438,33 @@ mod test {
                 },
                 "next": {
                     "rootDir": "app"
-                }
+                },
+                "formComponents": [
+                    "CustomForm",
+                    {"name": "SimpleForm", "formAttribute": "endpoint"},
+                    {"name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"]},
+                ],
+                "linkComponents": [
+                    "Hyperlink",
+                    {"name": "MyLink", "linkAttribute": "to"},
+                    {"name": "Link", "linkAttribute": ["to", "href"]},
+                ]
             }
         }))
         .unwrap();
         assert_eq!(config.settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(config.settings.jsx_a11y.components.get("Link"), Some(&"Anchor".to_string()));
         assert!(config.settings.nextjs.root_dir.contains(&"app".to_string()));
+        assert_eq!(config.settings.form_components.get("CustomForm"), Some(&vec![]));
+        assert_eq!(
+            config.settings.form_components.get("SimpleForm"),
+            Some(&vec!["endpoint".to_string()])
+        );
+        assert_eq!(
+            config.settings.form_components.get("Form"),
+            Some(&vec!["registerEndpoint".to_string(), "loginEndpoint".to_string()])
+        );
+        assert_eq!(config.settings.link_components.len(), 3);
     }
     #[test]
     fn test_parse_settings_default() {
@@ -452,6 +472,8 @@ mod test {
         assert!(config.settings.jsx_a11y.polymorphic_prop_name.is_none());
         assert!(config.settings.jsx_a11y.components.is_empty());
         assert!(config.settings.nextjs.root_dir.is_empty());
+        assert!(config.settings.form_components.is_empty());
+        assert!(config.settings.link_components.is_empty());
     }
 
     #[test]
