@@ -2084,6 +2084,9 @@ impl MethodDefinitionKind {
     pub fn is_method(&self) -> bool {
         matches!(self, Self::Method)
     }
+    pub fn is_set(&self) -> bool {
+        matches!(self, Self::Set)
+    }
 }
 
 #[derive(Debug, Clone, Hash)]

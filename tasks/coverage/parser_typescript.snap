@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1038/4879 (21.27%)
+Negative Passed: 1040/4879 (21.32%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -33,7 +33,6 @@ Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
 Expect Syntax Error: "compiler/accessorDeclarationEmitVisibilityErrors.ts"
 Expect Syntax Error: "compiler/accessorInferredReturnTypeErrorInReturnStatement.ts"
 Expect Syntax Error: "compiler/accessorWithInitializer.ts"
-Expect Syntax Error: "compiler/accessorWithRestParam.ts"
 Expect Syntax Error: "compiler/accessorWithoutBody1.ts"
 Expect Syntax Error: "compiler/accessorWithoutBody2.ts"
 Expect Syntax Error: "compiler/accessorsInAmbientContext.ts"
@@ -3173,7 +3172,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration11.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts"
@@ -4096,6 +4094,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │     set X(public v) { }
  5 │     static set X(public v2) { }
    ·                  ─────────
+ 6 │ }
+   ╰────
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[compiler/accessorWithRestParam.ts:4:11]
+ 3 │ class C {
+ 4 │     set X(...v) { }
+   ·           ────
+ 5 │     static set X(...v2) { }
+   ╰────
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[compiler/accessorWithRestParam.ts:5:18]
+ 4 │     set X(...v) { }
+ 5 │     static set X(...v2) { }
+   ·                  ─────
  6 │ }
    ╰────
 
@@ -17148,6 +17162,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ class C {
  3 │    set Foo(public a: number) { }
    ·            ────────────────
+ 4 │ }
+   ╰────
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts:3:12]
+ 2 │ class C {
+ 3 │    set Foo(...a) { }
+   ·            ────
  4 │ }
    ╰────
 
