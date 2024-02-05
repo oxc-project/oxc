@@ -929,7 +929,47 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 
 impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+
+        if self.is_export {
+            parts.push(ss!("export "));
+        }
+
+        parts.push(ss!("import "));
+
+        if self.import_kind == ImportOrExportKind::Type {
+            parts.push(ss!("type "));
+        }
+
+        parts.push(format!(p, self.id));
+        parts.push(ss!(" = "));
+        parts.push(format!(p, self.module_reference));
+
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
+        }
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSModuleReference<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSModuleReference::TypeName(v) => v.format(p),
+            TSModuleReference::ExternalModuleReference(v) => v.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSTypeName<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSExternalModuleReference {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, ss!("require("), format!(p, self.expression), ss!(")"))
     }
 }
 
