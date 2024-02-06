@@ -644,6 +644,51 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        let kind = AstKind::ExportNamedDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        if let Some(decl) = &decl.declaration {
+            self.current_symbol_flags |= SymbolFlags::Export;
+            self.visit_declaration(decl);
+            self.current_symbol_flags &= !SymbolFlags::Export;
+        }
+        if let Some(ref source) = decl.source {
+            self.visit_string_literal(source);
+        }
+        for specifier in &decl.specifiers {
+            let ModuleExportName::Identifier(ident) = &specifier.local else { continue };
+            let Some(symbol_id) = self.scope.resolve_binding(self.current_scope_id, &ident.name)
+            else {
+                continue;
+            };
+            self.symbols.flags[symbol_id].insert(SymbolFlags::Export);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
+        let kind = AstKind::ExportDefaultDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        match &decl.declaration {
+            ExportDefaultDeclarationKind::Expression(expr) => {
+                if let Expression::Identifier(ident) = expr {
+                    if let Some(symbol_id) =
+                        self.scope.resolve_binding(self.current_scope_id, &ident.name)
+                    {
+                        self.symbols.flags[symbol_id].insert(SymbolFlags::Export);
+                    }
+                }
+                self.visit_expression(expr);
+            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                self.visit_function(func, None);
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => self.visit_class(class),
+            _ => {}
+        }
+        self.leave_node(kind);
+    }
+
     fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         let kind = AstKind::ExpressionStatement(self.alloc(stmt));
         self.enter_node(kind);

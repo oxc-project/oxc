@@ -125,6 +125,7 @@ impl ModuleRecordBuilder {
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
             if ee.module_request.is_none() {
+                // https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#table-export-forms-mapping-to-exportentry-records
                 let local_name = match &ee.local_name {
                     ExportLocalName::Name(name) => Some(name),
                     _ => None,
@@ -275,9 +276,18 @@ impl ModuleRecordBuilder {
         self.add_default_export(exported_name.span());
 
         let id = match &decl.declaration {
-            ExportDefaultDeclarationKind::Expression(_) => None,
-            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
-            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
+            ExportDefaultDeclarationKind::Expression(expr) => match expr {
+                Expression::Identifier(ident) => {
+                    Some(NameSpan::new(ident.name.clone(), ident.span))
+                }
+                _ => None,
+            },
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                func.id.as_ref().map(|ident| NameSpan::new(ident.name.clone(), ident.span))
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+                class.id.as_ref().map(|ident| NameSpan::new(ident.name.clone(), ident.span))
+            }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => return,
         };
@@ -285,14 +295,14 @@ impl ModuleRecordBuilder {
             export_name: ExportExportName::Default(exported_name.span()),
             local_name: id.as_ref().map_or_else(
                 || ExportLocalName::Default(exported_name.span()),
-                |ident| ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span)),
+                |ns| ExportLocalName::Name(ns.clone()),
             ),
             span: decl.declaration.span(),
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
         if let Some(id) = id {
-            self.add_export_binding(id.name.clone(), id.span);
+            self.add_export_binding(id.name().clone(), id.span());
         }
     }
 

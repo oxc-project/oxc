@@ -1,7 +1,10 @@
 mod class_tester;
 mod expect;
 mod symbol_tester;
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
@@ -37,9 +40,15 @@ impl<'a> SemanticTester<'a> {
     }
 
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { allocator: Allocator::default(), source_type, source_text, source_path: PathBuf::new() }
+        Self {
+            allocator: Allocator::default(),
+            source_type,
+            source_text,
+            source_path: PathBuf::new(),
+        }
     }
 
+    #[must_use]
     pub fn with_source_path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.source_path = path.as_ref().to_path_buf();
         self

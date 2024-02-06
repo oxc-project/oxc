@@ -69,7 +69,12 @@ pub struct ModuleRecord {
 impl std::fmt::Debug for ModuleRecord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // recursively formatting loaded modules can crash when the module graph is cyclic
-        let loaded_modules = self.loaded_modules.iter().map(|entry| (entry.key().to_string())).reduce(|acc, key| format!("{}, {}", acc, key)).unwrap_or_default();
+        let loaded_modules = self
+            .loaded_modules
+            .iter()
+            .map(|entry| (entry.key().to_string()))
+            .reduce(|acc, key| format!("{acc}, {key}"))
+            .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
             .field("resolved_absolute_path", &self.resolved_absolute_path)

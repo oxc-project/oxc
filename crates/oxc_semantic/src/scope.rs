@@ -119,13 +119,11 @@ impl ScopeTree {
     }
 
     /// Resolve a symbol binding by name.
-    /// 
+    ///
     /// Symbols are resolved by searching up the scope tree, starting at
     /// the specified scope.
     pub fn resolve_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
-        self.ancestors(scope_id)
-            .filter_map(|scope_id| self.get_binding(scope_id, name))
-            .next()
+        self.ancestors(scope_id).find_map(|scope_id| self.get_binding(scope_id, name))
     }
 
     pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {

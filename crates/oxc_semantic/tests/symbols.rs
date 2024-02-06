@@ -23,6 +23,12 @@ fn test_class_simple() {
         .has_root_symbol("Foo")
         .has_number_of_reads(1)
         .test();
+
+    SemanticTester::js("class Foo {}; export default Foo")
+        .has_root_symbol("Foo")
+        .is_exported()
+        .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
+        .test();
 }
 
 #[test]

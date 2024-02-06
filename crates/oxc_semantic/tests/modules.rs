@@ -2,7 +2,7 @@ mod util;
 
 use oxc_semantic::SymbolFlags;
 use oxc_span::Atom;
-use oxc_syntax::module_record::{self, ExportLocalName, NameSpan};
+use oxc_syntax::module_record::ExportLocalName;
 pub use util::SemanticTester;
 
 #[test]
@@ -42,24 +42,19 @@ fn test_named_exports() {
 
 #[test]
 fn test_default_export() {
-    // SemanticTester::js(
-    //     "
-    //     export default function foo(a, b) {
-    //         let c = a + b;
-    //         return c / 2
-    //     }
-    //     ",
-    // ).has_some_symbol("foo")
-    // .contains_flags(SymbolFlags::Export | SymbolFlags::Function | SymbolFlags::BlockScopedVariable)
-    // .is_exported()
-    // .test();
-
     let tester = SemanticTester::js(
         "
         const foo = 1;
         export default foo;
         ",
     );
+    tester
+        .has_root_symbol("foo")
+        .is_exported()
+        .contains_flags(
+            SymbolFlags::BlockScopedVariable | SymbolFlags::Export | SymbolFlags::ConstVariable,
+        )
+        .test();
     let semantic = tester.build();
     let module_record = semantic.module_record();
 
@@ -67,12 +62,8 @@ fn test_default_export() {
 
     assert!(module_record.export_default.is_some());
     assert!(module_record.local_export_entries.len() == 1);
-    let foo = &module_record.local_export_entries[0];
+    let local_exports = &module_record.local_export_entries[0];
     assert!(
-        matches!(&foo.local_name, ExportLocalName::Name(namespan) if namespan.name() == &"foo")
+        matches!(&local_exports.local_name, ExportLocalName::Name(namespan) if namespan.name() == &"foo")
     );
-    // .has_some_symbol("foo")
-    // .contains_flags(SymbolFlags::Export | SymbolFlags::BlockScopedVariable)
-    // .is_exported()
-    // .test();
 }

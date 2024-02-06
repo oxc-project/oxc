@@ -1,6 +1,9 @@
 use std::rc::Rc;
 
-use oxc_diagnostics::{miette::miette, Error};
+use oxc_diagnostics::{
+    miette::{diagnostic, miette, LabeledSpan, MietteDiagnostic, NamedSource},
+    Error, Report,
+};
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
 use oxc_span::Atom;
 
@@ -64,12 +67,12 @@ impl<'a> SymbolTester<'a> {
                 if found_flags.contains(flags) {
                     Ok(symbol_id)
                 } else {
-                    Err(miette!(
-                        "Expected {} to contain flags {:?}, but it had {:?}",
-                        self.target_symbol_name,
-                        flags,
-                        found_flags
-                    ))
+                    Err(self.decorate_diagnostic(diagnostic!(
+                        "Expected {target_symbol_name} to contain flags {flags:?}, but it had {found_flags:?}",
+                        target_symbol_name = &self.target_symbol_name,
+                        flags = flags,
+                        found_flags = found_flags,
+                    )))
                 }
             }
             err => err,
@@ -126,7 +129,7 @@ impl<'a> SymbolTester<'a> {
                 if num_accepted == ref_count {
                     Ok(symbol_id)
                 } else {
-                    Err(miette!("Expected to find {ref_count} acceptable references, but only found {num_accepted}"))
+                    Err(self.decorate_diagnostic(diagnostic!("Expected to find {ref_count} acceptable references, but only found {num_accepted}")))
                 }
             }
             e => e,
@@ -144,7 +147,7 @@ impl<'a> SymbolTester<'a> {
                 {
                     Ok(symbol_id)
                 } else {
-                    Err(miette!("Expected {binding} to be exported."))
+                    Err(self.decorate_diagnostic(diagnostic!("Expected {binding} to be exported.")))
                 }
             }
             e => e,
@@ -162,7 +165,7 @@ impl<'a> SymbolTester<'a> {
                 if scope_flags.contains(expected_flags) {
                     Ok(symbol_id)
                 } else {
-                    Err(miette!("Binding {target_name} is not in a scope with expected flags.\n\tExpected: {expected_flags:?}\n\tActual: {scope_flags:?}"))
+                    Err(self.decorate_diagnostic(diagnostic!("Binding {target_name} is not in a scope with expected flags.\n\tExpected: {expected_flags:?}\n\tActual: {scope_flags:?}")))
                 }
             }
             e => e,
@@ -178,7 +181,7 @@ impl<'a> SymbolTester<'a> {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
                 let scope_flags = self.semantic.scopes().get_flags(scope_id);
                 if scope_flags.contains(excluded_flags) {
-                    Err(miette!("Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}"))
+                    Err(self.decorate_diagnostic(diagnostic!("Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}")))
                 } else {
                     Ok(symbol_id)
                 }
@@ -192,8 +195,26 @@ impl<'a> SymbolTester<'a> {
     /// assertions failed.
     pub fn test(self) {
         let res: Result<_, _> = self.into();
+        res.expect("Test failed");
+    }
 
-        res.unwrap();
+    fn decorate_diagnostic<D: Into<MietteDiagnostic>>(&self, diagnostic: D) -> Report {
+        let symbol_id = self.test_result.as_ref().expect("decorate_diagnostic should only be called when the first test fails so that self.test_result contains a symbol_id.");
+        let symbol_name = &self.target_symbol_name;
+        let where_declared = self.semantic.symbols().get_span(*symbol_id);
+        let diagnostic = diagnostic.into().with_label(LabeledSpan::new_with_span(
+            Some(format!("Symbol '{symbol_name}' is declared here")),
+            where_declared,
+        ));
+        let mut report = Report::from(diagnostic);
+        if let Some(filepath) = self.parent.source_path.to_str() {
+            let source = NamedSource::new(filepath, self.parent.source_text.to_string());
+            report = report.with_source_code(source);
+        } else {
+            report = report.with_source_code(self.parent.source_text.to_string());
+        }
+
+        report
     }
 }
 
