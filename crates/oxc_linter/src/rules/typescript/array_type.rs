@@ -191,13 +191,11 @@ fn check_and_report_error_generic(
     ctx: &LintContext,
     is_readonly: bool,
 ) {
-    if let ArrayOption::Array = config {
+    if matches!(config, ArrayOption::Array) {
         return;
     }
-    if let ArrayOption::ArraySimple = config {
-        if is_simple_type(type_param) {
-            return;
-        }
+    if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
+        return;
     }
     let source_text = ctx.source_text().to_string();
 
