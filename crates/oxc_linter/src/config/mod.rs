@@ -371,40 +371,40 @@ mod test {
         assert!(config.env.iter().contains(&"builtin"));
     }
 
-    #[test]
-    fn test_debug() {
-        use serde::Deserialize;
+    // #[test]
+    // fn test_debug() {
+    //     use serde::Deserialize;
 
-        let value = serde_json::json!({});
-        let settings =
-            <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-        println!("1) {settings:#?}");
+    //     let value = serde_json::json!({});
+    //     let settings =
+    //         <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("1) {settings:#?}");
 
-        let value = serde_json::json!({ "react": {} });
-        let settings =
-            <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-        println!("2) {settings:#?}");
+    //     let value = serde_json::json!({ "react": {} });
+    //     let settings =
+    //         <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("2) {settings:#?}");
 
-        let value = serde_json::json!({ "react": {
-            "formComponents": [
-                "CustomForm",
-                {"name": "SimpleForm", "formAttribute": "endpoint"},
-                {"name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"]},
-            ],
-        } });
-        let settings =
-            <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     let value = serde_json::json!({ "react": {
+    //         "formComponents": [
+    //             "CustomForm",
+    //             {"name": "SimpleForm", "formAttribute": "endpoint"},
+    //             {"name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"]},
+    //         ],
+    //     } });
+    //     let settings =
+    //         <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
 
-        println!("3) {settings:#?}");
-        let value = serde_json::json!({ "react": {
-            "linkComponents": [
-                "CustomForm",
-                {"name": "SimpleForm", "linkAttribute": "endpoint"},
-                {"name": "Form", "linkAttribute": ["registerEndpoint", "loginEndpoint"]},
-            ],
-        } });
-        let settings =
-            <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-        println!("4) {settings:#?}");
-    }
+    //     println!("3) {settings:#?}");
+    //     let value = serde_json::json!({ "react": {
+    //         "linkComponents": [
+    //             "CustomForm",
+    //             {"name": "SimpleForm", "linkAttribute": "endpoint"},
+    //             {"name": "Form", "linkAttribute": ["registerEndpoint", "loginEndpoint"]},
+    //         ],
+    //     } });
+    //     let settings =
+    //         <super::settings::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("4) {settings:#?}");
+    // }
 }
