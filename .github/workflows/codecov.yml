@@ -22,14 +22,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true # Pull submodules for `cargo coverage`
+
+      - name: Clone submodules
+        uses: ./.github/actions/clone-submodules
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
 
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
@@ -64,7 +67,7 @@ jobs:
 
       - name: Upload to codecov.io
         if: env.CODECOV_TOKEN
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

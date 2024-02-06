@@ -1,4 +1,4 @@
-use oxc_ast::{ast::ModuleDeclaration, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -91,10 +91,8 @@ impl Rule for NoInnerDeclarations {
                 parent_kind,
                 AstKind::Program(_)
                     | AstKind::StaticBlock(_)
-                    | AstKind::ModuleDeclaration(
-                        ModuleDeclaration::ExportNamedDeclaration(_)
-                            | ModuleDeclaration::ExportDefaultDeclaration(_)
-                    )
+                    | AstKind::ExportNamedDeclaration(_)
+                    | AstKind::ExportDefaultDeclaration(_)
                     | AstKind::ForStatementInit(_)
                     | AstKind::ForInStatement(_)
                     | AstKind::ForOfStatement(_)

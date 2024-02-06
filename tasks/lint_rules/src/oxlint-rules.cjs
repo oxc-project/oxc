@@ -42,7 +42,11 @@ const readAllImplementedRuleNames = async () => {
   throw new Error("Failed to find the end of the rules list");
 };
 
-const NOT_SUPPORTED_RULE_NAMES = new Set([]);
+const NOT_SUPPORTED_RULE_NAMES = new Set([
+  "eslint/no-dupe-args", // superseded by strict mode
+  "eslint/no-octal", // superseded by strict mode
+  "eslint/no-with" // superseded by strict mode
+]);
 
 /**
  * @typedef {{

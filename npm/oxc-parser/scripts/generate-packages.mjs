@@ -14,6 +14,11 @@ console.log('PACKAGES_ROOT', PACKAGES_ROOT);
 console.log('BINARY_ROOT', BINARY_ROOT);
 console.log('MANIFEST_PATH', MANIFEST_PATH);
 
+const LIBC_MAPPING = {
+  "gnu": "glibc",
+  "musl": "musl",
+}
+
 const rootManifest = JSON.parse(
   fs.readFileSync(MANIFEST_PATH).toString("utf-8")
 );
@@ -21,7 +26,6 @@ const rootManifest = JSON.parse(
 function package_name(target) {
   return `@oxc-parser/binding-${target}`
 }
-
 function generateNativePackage(target) {
   const binaryName = `parser.${target}.node`;
 
@@ -38,23 +42,24 @@ function generateNativePackage(target) {
   fs.mkdirSync(packageRoot);
 
   // Generate the package.json manifest
-  const { version, license, repository } = rootManifest;
+  const { version, author, license, homepage, bugs, repository } = rootManifest;
 
-  const [os, cpu, third] = target.split("-");
+  const triple = target.split("-");
+  const platform = triple[0];
+  const arch = triple[1];
+  const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] }
   const manifest = {
     name: package_name(target),
     version,
-    main: binaryName,
-    files: [binaryName],
-    os: [os],
-    cpu: [cpu],
+    author,
     license,
-    repository
+    homepage,
+    bugs,
+    repository,
+    os: [platform],
+    cpu: [arch],
+    ...libc
   };
-
-  if (cpu == "linux" && third == "gnu") {
-    manifest.libc = ["glibc"];
-  }
 
   const manifestPath = resolve(packageRoot, "package.json");
   console.log(`Create manifest ${manifestPath}`);
@@ -94,11 +99,14 @@ function writeManifest() {
   }
 }
 
+// NOTE: Must update npm/oxc-parser/package.json
 const TARGETS = [
   "win32-x64-msvc",
   "win32-arm64-msvc",
   "linux-x64-gnu",
   "linux-arm64-gnu",
+  "linux-x64-musl",
+  "linux-arm64-musl",
   "darwin-x64",
   "darwin-arm64",
 ];

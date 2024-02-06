@@ -38,9 +38,8 @@ rc_mutex                        = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment      = "warn"
 undocumented_unsafe_blocks      = "warn"
-# I want to write the best Rust code so both pedantic and nursery is enabled.
+# I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
-nursery  = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 # Allowed rules
 # pedantic
@@ -62,18 +61,18 @@ missing_const_for_fn = "allow"
 
 [workspace.dependencies]
 # publish = true
-oxc             = { version = "0.5.0", path = "crates/oxc" }
-oxc_allocator   = { version = "0.5.0", path = "crates/oxc_allocator" }
-oxc_ast         = { version = "0.5.0", path = "crates/oxc_ast" }
-oxc_codegen     = { version = "0.5.0", path = "crates/oxc_codegen" }
-oxc_diagnostics = { version = "0.5.0", path = "crates/oxc_diagnostics" }
-oxc_index       = { version = "0.5.0", path = "crates/oxc_index" }
-oxc_minifier    = { version = "0.5.0", path = "crates/oxc_minifier" }
-oxc_parser      = { version = "0.5.0", path = "crates/oxc_parser" }
-oxc_semantic    = { version = "0.5.0", path = "crates/oxc_semantic" }
-oxc_span        = { version = "0.5.0", path = "crates/oxc_span" }
-oxc_syntax      = { version = "0.5.0", path = "crates/oxc_syntax" }
-oxc_transformer = { version = "0.5.0", path = "crates/oxc_transformer" }
+oxc             = { version = "0.6.0", path = "crates/oxc" }
+oxc_allocator   = { version = "0.6.0", path = "crates/oxc_allocator" }
+oxc_ast         = { version = "0.6.0", path = "crates/oxc_ast" }
+oxc_codegen     = { version = "0.6.0", path = "crates/oxc_codegen" }
+oxc_diagnostics = { version = "0.6.0", path = "crates/oxc_diagnostics" }
+oxc_index       = { version = "0.6.0", path = "crates/oxc_index" }
+oxc_minifier    = { version = "0.6.0", path = "crates/oxc_minifier" }
+oxc_parser      = { version = "0.6.0", path = "crates/oxc_parser" }
+oxc_semantic    = { version = "0.6.0", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.6.0", path = "crates/oxc_span" }
+oxc_syntax      = { version = "0.6.0", path = "crates/oxc_syntax" }
+oxc_transformer = { version = "0.6.0", path = "crates/oxc_transformer" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }
@@ -88,7 +87,6 @@ assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
 bumpalo                   = { version = "3.14.0" }
-compact_str               = { version = "0.7.1" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.11" }
@@ -123,7 +121,7 @@ unicode-id-start          = { version = "1.1.2" }
 ureq                      = { version = "2.9.1", default-features = false, features = ["tls", "json"] }
 url                       = { version = "2.5.0" }
 walkdir                   = { version = "2.4.0" }
-indexmap                  = { version = "2.2.1" }
+indexmap                  = { version = "2.2.2" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }

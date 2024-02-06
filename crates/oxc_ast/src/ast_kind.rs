@@ -113,6 +113,9 @@ pub enum AstKind<'a> {
     ImportSpecifier(&'a ImportSpecifier),
     ImportDefaultSpecifier(&'a ImportDefaultSpecifier),
     ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier),
+    ExportDefaultDeclaration(&'a ExportDefaultDeclaration<'a>),
+    ExportNamedDeclaration(&'a ExportNamedDeclaration<'a>),
+    ExportAllDeclaration(&'a ExportAllDeclaration<'a>),
 
     // JSX
     // Please make sure to add these to `is_jsx` below.
@@ -430,6 +433,9 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ImportSpecifier(x) => x.span,
             Self::ImportDefaultSpecifier(x) => x.span,
             Self::ImportNamespaceSpecifier(x) => x.span,
+            Self::ExportDefaultDeclaration(x) => x.span,
+            Self::ExportNamedDeclaration(x) => x.span,
+            Self::ExportAllDeclaration(x) => x.span,
 
             Self::JSXOpeningElement(x) => x.span,
             Self::JSXClosingElement(x) => x.span,
@@ -539,7 +545,7 @@ impl<'a> AstKind<'a> {
             Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
-            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.value).into(),
+            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
@@ -615,6 +621,9 @@ impl<'a> AstKind<'a> {
             Self::ImportSpecifier(_) => "ImportSpecifier".into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
+            Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
+            Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
+            Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
             Self::JSXElementName(_) => "JSXElementName".into(),

@@ -42,11 +42,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true # Pull submodules for `cargo coverage`
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
+
+      - name: Clone submodules
+        uses: ./.github/actions/clone-submodules
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v1
@@ -54,13 +55,16 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
-      - run: cargo coverage
-      - run: cargo run --release -p oxc_transform_conformance -- --exec
-      - run: cargo run --release -p oxc_prettier_conformance
-      # - run: cargo minsize
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Coverage
+        run: just coverage
 
       - name: Check for snapshot diff
         run: git diff --exit-code

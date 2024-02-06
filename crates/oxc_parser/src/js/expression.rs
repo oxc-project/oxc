@@ -309,11 +309,12 @@ impl<'a> Parser<'a> {
             _ => return Err(self.unexpected()),
         };
         let token = self.cur_token();
-        let src = self.cur_src().strip_suffix('n').unwrap();
-        let value = parse_big_int(src, token.kind)
+        let raw = self.cur_src();
+        let src = raw.strip_suffix('n').unwrap();
+        let _value = parse_big_int(src, token.kind)
             .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
         self.bump_any();
-        Ok(self.ast.bigint_literal(self.end_span(span), value, base))
+        Ok(self.ast.bigint_literal(self.end_span(span), Atom::from(raw), base))
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral {

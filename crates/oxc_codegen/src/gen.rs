@@ -654,6 +654,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 p.print(b'\'');
                 p.print_str(self.source.value.as_bytes());
                 p.print(b'\'');
+                if self.with_clause.is_some() {
+                    p.print_hard_space();
+                }
                 self.with_clause.gen(p, ctx);
                 p.print_semicolon_after_statement();
                 return;
@@ -718,6 +721,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
             p.print_str(b" from ");
         }
         self.source.gen(p, ctx);
+        if self.with_clause.is_some() {
+            p.print_hard_space();
+        }
         self.with_clause.gen(p, ctx);
         p.print_semicolon_after_statement();
     }
@@ -734,6 +740,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<WithClause<'a>> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.attributes_keyword.gen(p, ctx);
+        p.print_soft_space();
         p.print_block(&self.with_entries, Separator::Comma, ctx);
     }
 }
@@ -815,6 +822,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
         p.print_str(b" from ");
         self.source.gen(p, ctx);
+        if self.with_clause.is_some() {
+            p.print_hard_space();
+        }
         self.with_clause.gen(p, ctx);
 
         p.print_semicolon_after_statement();
@@ -1052,13 +1062,11 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
 
 impl<const MINIFY: bool> Gen<MINIFY> for BigintLiteral {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        use num_bigint::Sign;
-
-        if self.value.sign() == Sign::Minus {
-            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        if self.raw.contains('_') {
+            p.print_str(self.raw.replace('_', "").as_bytes());
+        } else {
+            p.print_str(self.raw.as_bytes());
         }
-        p.print_str(self.value.to_string().as_bytes());
-        p.print(b'n');
     }
 }
 
@@ -1371,11 +1379,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
         if self.computed {
             p.print(b'[');
         }
-        self.key.gen(p, ctx);
+        if !self.shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print(b']');
         }
-        p.print_colon();
+        if !self.shorthand {
+            p.print_colon();
+        }
         self.value.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -2180,11 +2192,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
         if self.computed {
             p.print(b'[');
         }
-        self.key.gen(p, ctx);
+        if !self.shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print(b']');
         }
-        p.print(b':');
+        if !self.shorthand {
+            p.print_colon();
+        }
         self.value.gen(p, ctx);
     }
 }

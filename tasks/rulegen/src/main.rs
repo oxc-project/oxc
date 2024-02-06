@@ -50,6 +50,9 @@ const JSDOC_TEST_PATH: &str =
 const REACT_PERF_TEST_PATH: &str =
     "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/main/tests/lib/rules";
 
+const NODE_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
+
 struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
@@ -437,6 +440,7 @@ pub enum RuleKind {
     DeepScan,
     NextJS,
     JSDoc,
+    Node,
 }
 
 impl RuleKind {
@@ -452,6 +456,7 @@ impl RuleKind {
             "deepscan" => Self::DeepScan,
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
+            "n" => Self::Node,
             _ => Self::ESLint,
         }
     }
@@ -471,6 +476,7 @@ impl Display for RuleKind {
             Self::Oxc => write!(f, "oxc"),
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
+            Self::Node => write!(f, "eslint-plugin-n"),
         }
     }
 }
@@ -495,6 +501,7 @@ fn main() {
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
+        RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc | RuleKind::DeepScan => String::new(),
     };
 

@@ -10,6 +10,7 @@ use crate::{
     Context, Parser,
 };
 
+#[derive(Clone, Copy)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
@@ -254,7 +255,9 @@ impl<'a> Parser<'a> {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
             checkpoint;
 
-        self.lexer.rewind(lexer);
+        // SAFETY: Parser only ever creates a single `Lexer`,
+        // therefore all checkpoints must be created from it.
+        unsafe { self.lexer.rewind(lexer) };
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_lens);

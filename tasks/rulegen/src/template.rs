@@ -41,6 +41,7 @@ impl<'a> Template<'a> {
             RuleKind::DeepScan => Path::new("crates/oxc_linter/src/rules/deepscan"),
             RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
             RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
+            RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
         };
 
         std::fs::create_dir_all(path)?;

@@ -12,7 +12,7 @@ use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -107,19 +107,19 @@ pub trait Suite<T: Case> {
 
         let mut paths = get_paths();
 
-        // Initialize git submodule if it is empty.
-        if paths.is_empty() {
+        // Initialize git submodule if it is empty and no filter is provided
+        if paths.is_empty() && args.filter.is_none() {
             println!("-------------------------------------------------------");
             println!("git submodule is empty for {name}");
-            println!("Running `git submodule update --init`");
+            println!("Running `just submodules` to clone the submodules");
             println!("This may take a while.");
             println!("-------------------------------------------------------");
-            Command::new("git")
-                .args(["submodule", "update", "--init", "--progress"])
+            Command::new("just")
+                .args(["submodules"])
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
                 .output()
-                .expect("failed to execute `git submodule update --init`");
+                .expect("failed to execute `just submodules`");
             paths = get_paths();
         }
 
@@ -331,7 +331,8 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let result = if errors.is_empty() {
             Ok(String::new())
         } else {
-            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+            let handler =
+                GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
             let mut output = String::new();
             for error in errors {
                 let error = error.with_source_code(NamedSource::new(
@@ -339,7 +340,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     source_text.to_string(),
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
-                output.push('\n');
             }
             Err(output)
         };
