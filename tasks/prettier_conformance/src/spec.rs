@@ -32,7 +32,7 @@ impl SpecParser {
 impl VisitMut<'_> for SpecParser {
     fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
         let Some(ident) = expr.callee.get_identifier_reference() else { return };
-        if ident.name != "run_spec" {
+        if ident.name != "runFormatTest" {
             return;
         }
         let mut parsers = vec![];
@@ -44,35 +44,20 @@ impl VisitMut<'_> for SpecParser {
                 return;
             };
 
-            match argument_expr {
-                Expression::ArrayExpression(arr_expr) => {
-                    parsers = arr_expr
-                        .elements
-                        .iter()
-                        .filter_map(|el| {
-                            if let ArrayExpressionElement::Expression(Expression::StringLiteral(
-                                literal,
-                            )) = el
-                            {
-                                return Some(literal.value.to_string());
-                            }
-                            None
-                        })
-                        .collect::<Vec<String>>();
-                }
-                // There are some files define `parsers` as `const parsers = [parser_1, parser_2]` in prettier, just read the init part is enough now.
-                // https://github.com/prettier/prettier/blob/83400d19b4b60094914b3f7a397260cac9471d1e/tests/format/js/object-property-ignore/jsfmt.spec.js#L1
-                Expression::Identifier(_) => {
-                    let start = "const parse";
-                    let end = "];";
-                    let start = self.source_text.find(start).unwrap() + start.len();
-                    let end = self.source_text.find(end).unwrap();
-                    parsers = self.source_text[start..end]
-                        .split(',')
-                        .map(|item| item.trim().trim_matches('"').to_string())
-                        .collect::<Vec<String>>();
-                }
-                _ => {}
+            if let Expression::ArrayExpression(arr_expr) = argument_expr {
+                parsers = arr_expr
+                    .elements
+                    .iter()
+                    .filter_map(|el| {
+                        if let ArrayExpressionElement::Expression(Expression::StringLiteral(
+                            literal,
+                        )) = el
+                        {
+                            return Some(literal.value.to_string());
+                        }
+                        None
+                    })
+                    .collect::<Vec<String>>();
             }
         } else {
             return;
