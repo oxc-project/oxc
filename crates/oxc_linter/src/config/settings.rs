@@ -1,74 +1,143 @@
 use rustc_hash::FxHashMap;
+use serde::Deserialize;
 
 /// The `settings` field from ESLint config
-///
 /// An object containing name-value pairs of information that should be available to all rules
-#[derive(Debug, Clone)]
+///
+/// TS type is `Object`
+/// https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L53
+/// But each plugin extends this with their own properties.
+#[derive(Debug, Deserialize, Default)]
 pub struct ESLintSettings {
-    pub jsx_a11y: JsxA11y,
-    pub nextjs: Nextjs,
-    pub link_components: CustomComponents,
-    pub form_components: CustomComponents,
+    #[serde(default)]
+    #[serde(rename = "jsx-a11y")]
+    pub jsx_a11y: ESLintSettingsJSXA11y,
+    #[serde(default)]
+    pub next: ESLintSettingsNext,
+    #[serde(default)]
+    pub react: ESLintSettingsReact,
 }
 
-impl Default for ESLintSettings {
-    fn default() -> Self {
-        Self {
-            jsx_a11y: JsxA11y { polymorphic_prop_name: None, components: FxHashMap::default() },
-            nextjs: Nextjs { root_dir: vec![] },
-            link_components: FxHashMap::default(),
-            form_components: FxHashMap::default(),
+/// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations
+#[derive(Debug, Deserialize, Default)]
+pub struct ESLintSettingsJSXA11y {
+    #[serde(rename = "polymorphicPropName")]
+    pub polymorphic_prop_name: Option<String>,
+    #[serde(default)]
+    pub components: FxHashMap<String, String>,
+}
+
+/// https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin
+#[derive(Debug, Deserialize, Default)]
+pub struct ESLintSettingsNext {
+    #[serde(default)]
+    #[serde(rename = "rootDir")]
+    root_dir: OneOrMany<String>,
+}
+
+impl ESLintSettingsNext {
+    pub fn get_root_dirs(&self) -> Vec<String> {
+        match &self.root_dir {
+            OneOrMany::One(val) => vec![val.clone()],
+            OneOrMany::Many(vec) => vec.clone(),
         }
     }
 }
 
-impl ESLintSettings {
-    pub fn new(
-        jsx_a11y: JsxA11y,
-        nextjs: Nextjs,
-        link_components: CustomComponents,
-        form_components: CustomComponents,
-    ) -> Self {
-        Self { jsx_a11y, nextjs, link_components, form_components }
+/// https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-
+#[derive(Debug, Deserialize, Default)]
+pub struct ESLintSettingsReact {
+    // TODO: More properties should be added
+    #[serde(default)]
+    #[serde(rename = "formComponents")]
+    form_components: Vec<FormComponent>,
+    #[serde(default)]
+    #[serde(rename = "linkComponents")]
+    link_components: Vec<LinkComponent>,
+}
+
+impl ESLintSettingsReact {
+    pub fn get_form_component_attr(&self, name: &str) -> Option<Vec<String>> {
+        for item in &self.form_components {
+            let comp = match item {
+                FormComponent::NameOnly(name) => (name, vec![]),
+                FormComponent::ObjectWithOneAttr { name, form_attribute } => {
+                    (name, vec![form_attribute.to_string()])
+                }
+                FormComponent::ObjectWithMaynAttrs { name, form_attribute } => {
+                    (name, form_attribute.clone())
+                }
+            };
+            if comp.0 == name {
+                return Some(comp.1);
+            }
+        }
+
+        None
+    }
+
+    pub fn get_link_component_attr(&self, name: &str) -> Option<Vec<String>> {
+        for item in &self.link_components {
+            let comp = match item {
+                LinkComponent::NameOnly(name) => (name, vec![]),
+                LinkComponent::ObjectWithOneAttr { name, link_attribute } => {
+                    (name, vec![link_attribute.to_string()])
+                }
+                LinkComponent::ObjectWithMaynAttrs { name, link_attribute } => {
+                    (name, link_attribute.clone())
+                }
+            };
+            if comp.0 == name {
+                return Some(comp.1);
+            }
+        }
+
+        None
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct JsxA11y {
-    pub polymorphic_prop_name: Option<String>,
-    pub components: FxHashMap<String, String>,
+// Deserialize helper types
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+enum OneOrMany<T> {
+    One(T),
+    Many(Vec<T>),
 }
-
-impl JsxA11y {
-    pub fn new(
-        polymorphic_prop_name: Option<String>,
-        components: FxHashMap<String, String>,
-    ) -> Self {
-        Self { polymorphic_prop_name, components }
-    }
-
-    pub fn set_components(&mut self, components: FxHashMap<String, String>) {
-        self.components = components;
-    }
-
-    pub fn set_polymorphic_prop_name(&mut self, name: Option<String>) {
-        self.polymorphic_prop_name = name;
+impl<T> Default for OneOrMany<T> {
+    fn default() -> Self {
+        OneOrMany::Many(Vec::new())
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Nextjs {
-    pub root_dir: Vec<String>,
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+enum FormComponent {
+    NameOnly(String),
+    ObjectWithOneAttr {
+        name: String,
+        #[serde(rename = "formAttribute")]
+        form_attribute: String,
+    },
+    ObjectWithMaynAttrs {
+        name: String,
+        #[serde(rename = "formAttribute")]
+        form_attribute: Vec<String>,
+    },
 }
 
-impl Nextjs {
-    pub fn new(root_dir: Vec<String>) -> Self {
-        Self { root_dir }
-    }
-
-    pub fn set_root_dir(&mut self, root_dir: Vec<String>) {
-        self.root_dir = root_dir;
-    }
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+enum LinkComponent {
+    NameOnly(String),
+    ObjectWithOneAttr {
+        name: String,
+        #[serde(rename = "linkAttribute")]
+        link_attribute: String,
+    },
+    ObjectWithMaynAttrs {
+        name: String,
+        #[serde(rename = "linkAttribute")]
+        link_attribute: Vec<String>,
+    },
 }
-
-pub type CustomComponents = FxHashMap<String, Vec<String>>;

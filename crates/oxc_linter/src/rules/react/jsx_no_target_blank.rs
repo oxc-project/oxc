@@ -72,7 +72,7 @@ impl JsxNoTargetBlank {
         if tag_name == "a" {
             return true;
         }
-        return ctx.settings().link_components.get(tag_name).is_some();
+        return ctx.settings().react.get_link_component_attr(tag_name).is_some();
     }
     fn check_is_forms(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.forms {
@@ -81,7 +81,7 @@ impl JsxNoTargetBlank {
         if tag_name == "form" {
             return true;
         }
-        return ctx.settings().form_components.get(tag_name).is_some();
+        return ctx.settings().react.get_form_component_attr(tag_name).is_some();
     }
 }
 
@@ -142,16 +142,16 @@ impl Rule for JsxNoTargetBlank {
                                     }
                                 } else if attribute_name == "href"
                                     || attribute_name == "action"
-                                    || ctx.settings().link_components.get(tag_name).map_or(
+                                    || ctx.settings().react.get_link_component_attr(tag_name).map_or(
                                         false,
                                         |link_attribute| {
                                             link_attribute.contains(&attribute_name.to_string())
                                         },
                                     )
-                                    || ctx.settings().form_components.get(tag_name).map_or(
+                                    || ctx.settings().react.get_form_component_attr(tag_name).map_or(
                                         false,
-                                        |link_attribute| {
-                                            link_attribute.contains(&attribute_name.to_string())
+                                        |form_attribute| {
+                                            form_attribute.contains(&attribute_name.to_string())
                                         },
                                     )
                                 {

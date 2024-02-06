@@ -1,28 +1,21 @@
 mod env;
 pub mod errors;
 mod settings;
-mod settings2;
 
 use std::path::Path;
 
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
 
-pub use self::{
-    env::ESLintEnv,
-    settings::{ESLintSettings, JsxA11y, Nextjs},
+use self::errors::{
+    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
+    FailedToParseJsonc, FailedToParseRuleValueError,
 };
-use self::{
-    errors::{
-        FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
-        FailedToParseJsonc, FailedToParseRuleValueError,
-    },
-    settings::CustomComponents,
-};
+pub use self::{env::ESLintEnv, settings::ESLintSettings};
 
 /// ESLint Config
 /// <https://eslint.org/docs/latest/use/configure/configuration-files-new#configuration-objects>
@@ -76,8 +69,17 @@ impl ESLintConfig {
     // TODO: Try deserialize
     pub fn from_value(value: &Value) -> Result<Self, Report> {
         let rules = parse_rules(value)?;
-        let settings = parse_settings_from_root(value);
 
+        let settings = if let Some(settings_value) = value.get("settings") {
+            <ESLintSettings as Deserialize>::deserialize(settings_value).map_err(|_| {
+                FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
+                    "settings",
+                    "Invalid env property",
+                ))])
+            })?
+        } else {
+            ESLintSettings::default()
+        };
         let env = if let Some(env_value) = value.get("env") {
             <ESLintEnv as Deserialize>::deserialize(env_value).map_err(|_| {
                 FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
@@ -183,128 +185,6 @@ fn parse_rules(root_json: &Value) -> Result<Vec<ESLintRuleConfig>, Error> {
             })
         })
         .collect::<Result<Vec<_>, Error>>()
-}
-
-fn parse_settings_from_root(root_json: &Value) -> ESLintSettings {
-    let Value::Object(root_object) = root_json else { return ESLintSettings::default() };
-
-    let Some(settings_value) = root_object.get("settings") else {
-        return ESLintSettings::default();
-    };
-
-    parse_settings(settings_value)
-}
-
-pub fn parse_settings(setting_value: &Value) -> ESLintSettings {
-    if let Value::Object(settings_object) = setting_value {
-        let mut jsx_a11y_setting = JsxA11y::new(None, FxHashMap::default());
-        let mut nextjs_setting = Nextjs::new(vec![]);
-        if let Some(Value::Object(jsx_a11y)) = settings_object.get("jsx-a11y") {
-            if let Some(Value::Object(components)) = jsx_a11y.get("components") {
-                let components_map: FxHashMap<String, String> = components
-                    .iter()
-                    .map(|(key, value)| (String::from(key), String::from(value.as_str().unwrap())))
-                    .collect();
-
-                jsx_a11y_setting.set_components(components_map);
-            }
-
-            if let Some(Value::String(polymorphic_prop_name)) = jsx_a11y.get("polymorphicPropName")
-            {
-                jsx_a11y_setting
-                    .set_polymorphic_prop_name(Some(String::from(polymorphic_prop_name)));
-            }
-        }
-
-        if let Some(Value::Object(nextjs)) = settings_object.get("next") {
-            if let Some(Value::String(root_dir)) = nextjs.get("rootDir") {
-                nextjs_setting.set_root_dir(vec![String::from(root_dir)]);
-            }
-            if let Some(Value::Array(root_dir)) = nextjs.get("rootDir") {
-                nextjs_setting.set_root_dir(
-                    root_dir.iter().map(|v| v.as_str().unwrap().to_string()).collect(),
-                );
-            }
-        }
-
-        let link_components_setting =
-            parse_custom_components(settings_object, &CustomComponentEnum::LinkComponents);
-        let form_components_setting =
-            parse_custom_components(settings_object, &CustomComponentEnum::FormComponents);
-
-        return ESLintSettings::new(
-            jsx_a11y_setting,
-            nextjs_setting,
-            // TODO: These should be inside of react_setting
-            link_components_setting,
-            form_components_setting,
-        );
-    }
-
-    ESLintSettings::default()
-}
-
-enum CustomComponentEnum {
-    LinkComponents,
-    FormComponents,
-}
-
-fn parse_custom_components(
-    settings_object: &Map<String, Value>,
-    components_type: &CustomComponentEnum,
-) -> CustomComponents {
-    fn parse_obj(obj: &Map<String, Value>, attribute_name: &str, setting: &mut CustomComponents) {
-        if let Some(Value::String(name)) = obj.get("name") {
-            let mut arr: Vec<String> = vec![];
-            if let Some(Value::String(attribute)) = obj.get(attribute_name) {
-                arr.push(attribute.to_string());
-            } else if let Some(Value::Array(attributes)) = obj.get(attribute_name) {
-                for attribute in attributes {
-                    if let Value::String(attribute) = attribute {
-                        arr.push(attribute.to_string());
-                    }
-                }
-            }
-            setting.insert(name.to_string(), arr);
-        }
-    }
-
-    fn parse_component(
-        settings_object: &Map<String, Value>,
-        component_name: &str,
-        attribute_name: &str,
-        setting: &mut CustomComponents,
-    ) {
-        match settings_object.get(component_name) {
-            Some(Value::Array(component)) => {
-                for component in component {
-                    if let Value::String(name) = component {
-                        setting.insert(name.to_string(), [].to_vec());
-                        continue;
-                    }
-                    if let Value::Object(obj) = component {
-                        parse_obj(obj, attribute_name, setting);
-                    }
-                }
-            }
-            Some(Value::Object(obj)) => {
-                parse_obj(obj, attribute_name, setting);
-            }
-            _ => {}
-        };
-    }
-
-    let mut setting: CustomComponents = FxHashMap::default();
-
-    match components_type {
-        CustomComponentEnum::FormComponents => {
-            parse_component(settings_object, "formComponents", "formAttribute", &mut setting);
-        }
-        CustomComponentEnum::LinkComponents => {
-            parse_component(settings_object, "linkComponents", "linkAttribute", &mut setting);
-        }
-    }
-    setting
 }
 
 fn parse_rule_name(name: &str) -> (&str, &str) {
@@ -447,26 +327,27 @@ mod test {
         .unwrap();
         assert_eq!(config.settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(config.settings.jsx_a11y.components.get("Link"), Some(&"Anchor".to_string()));
-        assert!(config.settings.nextjs.root_dir.contains(&"app".to_string()));
-        assert_eq!(config.settings.form_components.get("CustomForm"), Some(&vec![]));
+        assert!(config.settings.next.get_root_dirs().contains(&"app".to_string()));
+        assert_eq!(config.settings.react.get_form_component_attr("CustomForm"), Some(vec![]));
         assert_eq!(
-            config.settings.form_components.get("SimpleForm"),
-            Some(&vec!["endpoint".to_string()])
+            config.settings.react.get_form_component_attr("SimpleForm"),
+            Some(vec!["endpoint".to_string()])
         );
         assert_eq!(
-            config.settings.form_components.get("Form"),
-            Some(&vec!["registerEndpoint".to_string(), "loginEndpoint".to_string()])
+            config.settings.react.get_form_component_attr("Form"),
+            Some(vec!["registerEndpoint".to_string(), "loginEndpoint".to_string()])
         );
-        assert_eq!(config.settings.link_components.len(), 3);
+        assert_eq!(
+            config.settings.react.get_link_component_attr("Link"),
+            Some(vec!["to".to_string(), "href".to_string()])
+        );
+        assert_eq!(config.settings.react.get_link_component_attr("Noop"), None);
     }
     #[test]
     fn test_parse_settings_default() {
         let config = ESLintConfig::from_value(&serde_json::json!({})).unwrap();
         assert!(config.settings.jsx_a11y.polymorphic_prop_name.is_none());
         assert!(config.settings.jsx_a11y.components.is_empty());
-        assert!(config.settings.nextjs.root_dir.is_empty());
-        assert!(config.settings.form_components.is_empty());
-        assert!(config.settings.link_components.is_empty());
     }
 
     #[test]
