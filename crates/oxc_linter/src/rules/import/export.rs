@@ -247,7 +247,9 @@ fn test() {
         let fail = vec![
             (r#"let foo; export { foo }; export * from "./export-all""#),
             // (r#"export * from "./malformed.js""#),
-            (r#"export * from "./default-export""#),
+            // This case has been comment out in eslint-plugin-import
+            // https://github.com/import-js/eslint-plugin-import/blob/7a21f7e10f18c04473faadca94928af6b8e28009/tests/src/rules/export.js#L101-L109
+            // (r#"export * from "./default-export""#),
             (r#"let foo; export { foo as "foo" }; export * from "./export-all""#),
             ("
                 export type Foo = string;
