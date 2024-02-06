@@ -108,3 +108,8 @@ fn module_decl() {
     test("import {} from './foo.js' with {}", "import './foo.js' with {\n};\n");
     test("export * from './foo.js' with {}", "export * from './foo.js' with {\n};\n");
 }
+
+#[test]
+fn new_expr() {
+    test("new (foo()).bar();", "new (foo()).bar();\n");
+}

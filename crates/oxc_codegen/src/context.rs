@@ -4,7 +4,8 @@ bitflags! {
     #[derive(Debug, Clone, Copy)]
     pub struct Context: u8 {
         /// [In]
-        const In = 1 << 0;
+        const In          = 1 << 0;
+        const FORBID_CALL = 1 << 1;
     }
 }
 
@@ -21,9 +22,20 @@ impl Context {
     }
 
     #[inline]
+    pub fn has_forbid_call(self) -> bool {
+        self.contains(Self::FORBID_CALL)
+    }
+
+    #[inline]
     #[must_use]
     pub fn and_in(self, include: bool) -> Self {
         self.and(Self::In, include)
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn and_forbid_call(self, include: bool) -> Self {
+        self.and(Self::FORBID_CALL, include)
     }
 
     #[inline]
