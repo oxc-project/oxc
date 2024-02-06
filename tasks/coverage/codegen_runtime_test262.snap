@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
-AST Parsed     : 19408/19408 (100.00%)
-Positive Passed: 19163/19408 (98.74%)
+AST Parsed     : 19407/19407 (100.00%)
+Positive Passed: 19232/19407 (99.10%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -166,90 +166,6 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/eval-code/indirect/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/expressions/addition/S11.6.1_A4_T9.js"
-But got a runtime error: Test262Error: #2: (-Number.MAX_VALUE + Number.MAX_VALUE) + Number.MAX_VALUE === -Number.MAX_VALUE + (Number.MAX_VALUE + Number.MAX_VALUE). Actual: -1.7976931348623157e+3081.7976931348623157e+3081.7976931348623157e+308
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T1.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T2.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A5_T3.js"
-But got a runtime error: Test262Error: #1: innerScope.x === 2. Actual: undefined
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A6_T1.js"
-But got a runtime error: Test262Error: #1: innerX === undefined. Actual: 1
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A6_T2.js"
-But got a runtime error: Test262Error: #1: innerX === 2. Actual: 1
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A6_T3.js"
-But got a runtime error: Test262Error: #1: scope.x === 2. Actual: 1
-
-Expect to run correctly: "language/expressions/assignment/S11.13.1_A7_T3.js"
-But got a runtime error: Test262Error: Expected a DummyError but got a Test262Error
-
-Expect to run correctly: "language/expressions/assignment/destructuring/iterator-destructuring-property-reference-target-evaluation-order.js"
-But got a runtime error: Test262Error: Expected [source, iterator, target, target-key, iterator-step, iterator-done, target-key-tostring, set] and [source, iterator, target, target-key, target-key-tostring, iterator-step, iterator-done, set] to have the same contents. 
-
-Expect to run correctly: "language/expressions/assignment/destructuring/keyed-destructuring-property-reference-target-evaluation-order.js"
-But got a runtime error: Test262Error: Expected [source, source-key, source-key-tostring, target, target-key, get, target-key-tostring, set] and [source, source-key, source-key-tostring, target, target-key, target-key-tostring, get, set] to have the same contents. 
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-rtrn-close-err.js"
-But got a runtime error: TypeError: undefined is not a function
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-rtrn-close-null.js"
-But got a runtime error: TypeError: undefined is not a function
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-rtrn-close.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-thrw-close-err.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-iter-thrw-close.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-lref-err.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-array-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-array-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-array-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-array.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-obj-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-obj-undefined-hole.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-obj-undefined-own.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-nested-obj.js"
-But got a runtime error: Test262Error: Expected SameValue(«3», «2») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-put-prop-ref-no-get.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-put-prop-ref.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/expressions/assignment/dstr/array-rest-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
 Expect to run correctly: "language/expressions/assignment/fn-name-lhs-cover.js"
 But got a runtime error: Test262Error: descriptor value should be ; object value should be 
 
@@ -349,6 +265,24 @@ But got a runtime error: Test262Error: p1 constructor is %Promise% Expected Same
 Expect to run correctly: "language/expressions/dynamic-import/eval-self-once-module.js"
 But got a runtime error: Test262Error: global property was defined and incremented only once Expected SameValue(«2», «1») to be true
 
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-get-with-error.js"
+But got a runtime error: Test262Error: Expected an error, but observed no error
+
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-abrupt.js"
+But got a runtime error: Test262Error: Expected promise to be rejected, but promise was fulfilled.
+
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-enumerable.js"
+But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
+
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-non-object.js"
+But got a runtime error: Test262Error: Promise for null was not rejected.
+
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-abrupt.js"
+But got a runtime error: Test262Error: Expected promise to be rejected, but it was fulfilled
+
+Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-non-string.js"
+But got a runtime error: Test262Error: Promise for undefined was not rejected.
+
 Expect to run correctly: "language/expressions/dynamic-import/imported-self-update.js"
 But got a runtime error: Test262Error: updated value, direct binding Expected SameValue(«0», «1») to be true
 
@@ -385,29 +319,8 @@ But got a runtime error: SyntaxError: Cannot use new with import
 Expect to run correctly: "language/expressions/dynamic-import/usage-from-eval.js"
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
-Expect to run correctly: "language/expressions/generators/generator-created-after-decl-inst.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T2.js"
-But got a runtime error: Test262Error: #1.2: 1 % 1 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T5.js"
-But got a runtime error: Test262Error: #5.2: 0 % Infinity === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/modulus/S11.5.3_A4_T6.js"
-But got a runtime error: Test262Error: #1.2: 0 % 1 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T2.js"
-But got a runtime error: Test262Error: #5.2: 0 * 0 === + 0. Actual: -0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T7.js"
-But got a runtime error: Test262Error: #2.2: -0.1 * Number.MIN_VALUE === -0. Actual: +0
-
-Expect to run correctly: "language/expressions/multiplication/S11.5.1_A4_T8.js"
-But got a runtime error: Test262Error: #2: (Number.MAX_VALUE * 1.1) * 0.9 !== Number.MAX_VALUE * (1.1 * 0.9)
-
 Expect to run correctly: "language/expressions/object/__proto__-permitted-dup-shorthand.js"
-But got a runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
+But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
 
 Expect to run correctly: "language/expressions/object/cpn-obj-lit-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
@@ -436,11 +349,38 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/global-code/decl-var.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
+Expect to run correctly: "language/import/import-attributes/json-extensibility-array.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-extensibility-object.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-idempotency.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-array.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-boolean.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-null.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-number.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-object.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-value-string.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
+Expect to run correctly: "language/import/import-attributes/json-via-namespace.js"
+But got a runtime error: SyntaxError: Unexpected token 'with'
+
 Expect to run correctly: "language/module-code/eval-self-once.js"
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
-
-Expect to run correctly: "language/module-code/import-attributes/allow-nlt-before-with.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
 
 Expect to run correctly: "language/module-code/import-attributes/import-attribute-empty.js"
 But got a runtime error: SyntaxError: Unexpected token 'with'
@@ -577,120 +517,6 @@ But got a runtime error: ReferenceError: Must call super constructor in derived 
 Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-for-of-arrow.js"
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-array.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-hole.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-own.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj.js"
-But got a runtime error: Test262Error: Expected SameValue(«3», «2») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-put-prop-ref-no-get.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-put-prop-ref.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-func-decl-dstr-array-rest-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-array-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-array-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-array.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-hole.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-own.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj.js"
-But got a runtime error: Test262Error: Expected SameValue(«3», «2») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-put-prop-ref-no-get.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-put-prop-ref.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-await-of/async-gen-decl-dstr-array-rest-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-rtrn-close-err.js"
-But got a runtime error: TypeError: undefined is not a function
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-rtrn-close-null.js"
-But got a runtime error: TypeError: undefined is not a function
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-rtrn-close.js"
-But got a runtime error: Test262Error: 
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-thrw-close-err.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-iter-thrw-close.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-lref-err.js"
-But got a runtime error: Test262Error: Expected SameValue(«1», «0») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-array-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-array-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-array-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «86») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-array.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-obj-null.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «null») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-obj-undefined-hole.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-obj-undefined-own.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-nested-obj.js"
-But got a runtime error: Test262Error: Expected SameValue(«3», «2») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-put-prop-ref-no-get.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-put-prop-ref.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-yield-expr.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
-Expect to run correctly: "language/statements/for-of/dstr/array-rest-yield-ident-valid.js"
-But got a runtime error: Test262Error: Expected SameValue(«2», «3») to be true
-
 Expect to run correctly: "language/statements/for-of/head-lhs-async-escaped.js"
 But got a runtime error: SyntaxError: The left-hand side of a for-of loop may not be 'async'.
 
@@ -699,13 +525,4 @@ But got a runtime error: SyntaxError: The left-hand side of a for-of loop may no
 
 Expect to run correctly: "language/statements/for-of/string-astral-truncated.js"
 But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true
-
-Expect to run correctly: "language/statements/generators/generator-created-after-decl-inst.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Generator]», «[object Generator]») to be false
-
-Expect to run correctly: "language/statements/return/S12.9_A4.js"
-But got a runtime error: Test262Error: #1: return Expression yields to Return (return, GetValue(Evaluate Expression), empty)
-
-Expect to run correctly: "language/statements/variable/binding-resolution.js"
-But got a runtime error: Test262Error: Expected SameValue(«undefined», «true») to be true
 

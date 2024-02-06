@@ -1638,7 +1638,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
         p.print(b'[');
         p.print_list(&self.elements, ctx);
         if let Some(target) = &self.rest {
-            p.print_comma();
+            if !self.elements.is_empty() {
+                p.print_comma();
+            }
             p.print_ellipsis();
             target.gen(p, ctx);
         }
