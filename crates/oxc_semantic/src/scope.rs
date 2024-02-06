@@ -99,7 +99,7 @@ impl ScopeTree {
         self.parent_ids[scope_id]
     }
 
-    /// Get a variable binding by name that was declared in the top-level scope
+    /// Get a variable binding by name that was declared in the top-level scope.
     pub fn get_root_binding(&self, name: &Atom) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
@@ -108,12 +108,24 @@ impl ScopeTree {
         self.bindings[scope_id].get(name).is_some()
     }
 
+    /// Get a symbol binding by name in a scope. Does not search parent scopes.
     pub fn get_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
         self.bindings[scope_id].get(name).copied()
     }
 
+    /// Get all symbol bindings in a scope.
     pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
         &self.bindings[scope_id]
+    }
+
+    /// Resolve a symbol binding by name.
+    /// 
+    /// Symbols are resolved by searching up the scope tree, starting at
+    /// the specified scope.
+    pub fn resolve_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
+        self.ancestors(scope_id)
+            .filter_map(|scope_id| self.get_binding(scope_id, name))
+            .next()
     }
 
     pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {

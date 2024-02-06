@@ -1,7 +1,7 @@
 mod class_tester;
 mod expect;
 mod symbol_tester;
-use std::{path::PathBuf, sync::Arc};
+use std::{path::{Path, PathBuf}, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
@@ -18,6 +18,7 @@ pub struct SemanticTester<'a> {
     allocator: Allocator,
     source_type: SourceType,
     source_text: &'a str,
+    source_path: PathBuf,
 }
 
 impl<'a> SemanticTester<'a> {
@@ -36,7 +37,12 @@ impl<'a> SemanticTester<'a> {
     }
 
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { allocator: Allocator::default(), source_type, source_text }
+        Self { allocator: Allocator::default(), source_type, source_text, source_path: PathBuf::new() }
+    }
+
+    pub fn with_source_path<P: AsRef<Path>>(mut self, path: P) -> Self {
+        self.source_path = path.as_ref().to_path_buf();
+        self
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
@@ -82,7 +88,7 @@ impl<'a> SemanticTester<'a> {
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
-            .build_module_record(PathBuf::new(), program)
+            .build_module_record(self.source_path.clone(), program)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {

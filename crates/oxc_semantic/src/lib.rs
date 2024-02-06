@@ -18,7 +18,7 @@ use std::{rc::Rc, sync::Arc};
 pub use petgraph;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
-use class::ClassTable;
+pub use class::{ClassTable, Element};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;

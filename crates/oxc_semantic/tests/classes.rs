@@ -21,7 +21,8 @@ fn test_class_simple() {
     .has_class("Foo")
     .has_number_of_elements(5)
     .has_method("a")
-    .has_property("privateProperty");
+    .has_private_property("privateProperty")
+    .has_property("publicProperty");
 }
 
 #[test]

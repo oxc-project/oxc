@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use oxc_ast::AstKind;
-use oxc_semantic::Semantic;
-use oxc_syntax::class::ClassId;
+use oxc_semantic::{Element, Semantic};
+use oxc_syntax::class::{ClassId, ElementKind};
 
 pub struct ClassTester<'a> {
     /// Reference to semantic analysis results, from [`SemanticTester`]
@@ -34,26 +34,37 @@ impl<'a> ClassTester<'a> {
     }
 
     pub fn has_property(&self, name: &str) -> &Self {
-        let property = self.semantic.classes().elements[self.class_id]
-            .iter()
-            .find(|p| p.kind.is_property() && p.name == name);
-        debug_assert!(property.is_some(), "Expected property `{name}` not found");
+        self.get_property_of_kind(name, ElementKind::Property);
+        self
+    }
+
+    pub fn has_private_property(&self, name: &str) -> &Self {
+        let property = self.get_property_of_kind(name, ElementKind::Property);
+        debug_assert!(property.is_private, "Found property {name} but it is not private");
         self
     }
 
     pub fn has_method(&self, name: &str) -> &Self {
-        let method = self.semantic.classes().elements[self.class_id]
-            .iter()
-            .find(|m| m.kind.is_method() && m.name == name);
-        debug_assert!(method.is_some(), "Expected method `{name}` not found");
+        self.get_property_of_kind(name, ElementKind::Method);
         self
     }
 
     pub fn has_accessor(&self, name: &str) -> &Self {
-        let method = self.semantic.classes().elements[self.class_id]
-            .iter()
-            .find(|m| m.kind.is_accessor() && m.name == name);
-        debug_assert!(method.is_some(), "Expected accessor `{name}` not found");
+        self.get_property_of_kind(name, ElementKind::Accessor);
         self
+    }
+
+    fn get_property_of_kind(&self, name: &str, kind: ElementKind) -> &Element {
+        let property =
+            self.semantic.classes().elements[self.class_id].iter().find(|m| m.name == name);
+        debug_assert!(property.is_some(), "Expected accessor `{name}` not found");
+
+        let property = property.unwrap();
+        debug_assert!(
+            property.kind.contains(kind),
+            "Found property `{name}` but it is not of kind {kind:?}"
+        );
+
+        property
     }
 }
