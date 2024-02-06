@@ -36,24 +36,24 @@ pub enum ArrayTypeDiagnostic {
     #[error("Array type using '{0}{2}[]' is forbidden. Use '{1}<{2}>' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
-    ErrorStringGeneric(String, String, String, #[label] Span),
+    Generic(String, String, String, #[label] Span),
 
     #[error(
         "Array type using '{0}{2}[]' is forbidden for non-simple types. Use '{1}<{2}>' instead."
     )]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
-    ErrorStringGenericSimple(String, String, String, #[label] Span),
+    GenericSimple(String, String, String, #[label] Span),
 
     #[error("Array type using '{1}<{2}>' is forbidden. Use '{0}{2}[]' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
-    ErrorStringArray(String, String, String, #[label] Span),
+    Array(String, String, String, #[label] Span),
 
     #[error("Array type using '{1}<{2}>' is forbidden for simple types. Use '{0}{2}[]' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
-    ErrorStringArraySimple(String, String, String, #[label] Span),
+    ArraySimple(String, String, String, #[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -191,13 +191,11 @@ fn check_and_report_error_generic(
     ctx: &LintContext,
     is_readonly: bool,
 ) {
-    if let ArrayOption::Array = config {
+    if matches!(config, ArrayOption::Array) {
         return;
     }
-    if let ArrayOption::ArraySimple = config {
-        if is_simple_type(type_param) {
-            return;
-        }
+    if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
+        return;
     }
     let source_text = ctx.source_text().to_string();
 
@@ -206,20 +204,20 @@ fn check_and_report_error_generic(
     let message_type = get_message_type(type_param, &source_text);
 
     let diagnostic = match config {
-        ArrayOption::Generic => ArrayTypeDiagnostic::ErrorStringGeneric(
+        ArrayOption::Generic => ArrayTypeDiagnostic::Generic(
             readonly_prefix.to_string(),
             class_name.to_string(),
             message_type.to_string(),
             type_reference_span,
         ),
-        _ => ArrayTypeDiagnostic::ErrorStringGenericSimple(
+        _ => ArrayTypeDiagnostic::GenericSimple(
             readonly_prefix.to_string(),
             class_name.to_string(),
             message_type.to_string(),
             type_reference_span,
         ),
     };
-    let element_type_span = get_ts_element_type_span(&type_param);
+    let element_type_span = get_ts_element_type_span(type_param);
     let Some(element_type_span) = element_type_span else { return };
 
     ctx.diagnostic_with_fix(diagnostic, || {
@@ -251,7 +249,7 @@ fn check_and_report_error_array(
     }
     let is_readonly_array_type = ident_ref_type_name.name == "ReadonlyArray";
     let config = if is_readonly_array_type { readonly_config } else { default_config };
-    if let ArrayOption::Generic = config {
+    if matches!(config, ArrayOption::Generic) {
         return;
     }
     let readonly_prefix: &str = if is_readonly_array_type { "readonly " } else { "" };
@@ -260,13 +258,13 @@ fn check_and_report_error_array(
 
     if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
         let diagnostic = match config {
-            ArrayOption::Array => ArrayTypeDiagnostic::ErrorStringArray(
+            ArrayOption::Array => ArrayTypeDiagnostic::Array(
                 readonly_prefix.to_string(),
                 class_name.to_string(),
                 "any".to_string(),
                 ts_type_reference.span,
             ),
-            _ => ArrayTypeDiagnostic::ErrorStringArraySimple(
+            _ => ArrayTypeDiagnostic::ArraySimple(
                 readonly_prefix.to_string(),
                 ident_ref_type_name.name.to_string(),
                 "any".to_string(),
@@ -281,7 +279,7 @@ fn check_and_report_error_array(
     if type_params.as_ref().unwrap().params.len() != 1 {
         return;
     }
-    let first_type_param = type_params.as_ref().unwrap().params.get(0).unwrap();
+    let first_type_param = type_params.as_ref().unwrap().params.first().unwrap();
     if matches!(config, ArrayOption::ArraySimple) && !is_simple_type(first_type_param) {
         return;
     }
@@ -312,13 +310,13 @@ fn check_and_report_error_array(
 
     let message_type = get_message_type(first_type_param, ctx.source_text());
     let diagnostic = match config {
-        ArrayOption::Array => ArrayTypeDiagnostic::ErrorStringArray(
+        ArrayOption::Array => ArrayTypeDiagnostic::Array(
             readonly_prefix.to_string(),
             class_name.to_string(),
             message_type.to_string(),
             ts_type_reference.span,
         ),
-        _ => ArrayTypeDiagnostic::ErrorStringArraySimple(
+        _ => ArrayTypeDiagnostic::ArraySimple(
             readonly_prefix.to_string(),
             ident_ref_type_name.name.to_string(),
             message_type.to_string(),
@@ -356,7 +354,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
                 }
                 if node.type_parameters.as_ref().unwrap().params.len() == 1 {
                     return is_simple_type(
-                        node.type_parameters.as_ref().unwrap().params.get(0).unwrap(),
+                        node.type_parameters.as_ref().unwrap().params.first().unwrap(),
                     );
                 }
             } else {
