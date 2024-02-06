@@ -1254,7 +1254,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
+        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
+        let ctx = ctx.and_forbid_call(false);
+        p.wrap(wrap, |p| {
             self.callee.gen_expr(p, self.precedence(), ctx);
             if self.optional {
                 p.print_str(b"?.");
@@ -1800,7 +1802,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > self.precedence(), |p| {
             p.print_str(b"new ");
-            self.callee.gen_expr(p, self.precedence(), ctx);
+            self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
             p.wrap(true, |p| {
                 p.print_list(&self.arguments, ctx);
             });
