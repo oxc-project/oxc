@@ -875,5 +875,5 @@ fn test() {
         ("const foo: ReadonlyArray<new (...args: any[]) => void> = [];", "const foo: readonly (new (...args: any[]) => void)[] = [];", Some(serde_json::json!([{"default":"array"}]))),
     ];
 
-    Tester::new(ArrayType::NAME, pass, fail).expect_fix(fix).test();
+    Tester::new(ArrayType::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
