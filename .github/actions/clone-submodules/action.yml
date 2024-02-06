@@ -27,4 +27,4 @@ runs:
       with:
         repository: prettier/prettier
         path: tasks/prettier_conformance/prettier
-        ref: ff83d55d05e92ceef10ec0cb1c0272ab894a00a0
+        ref: 7142cf354cce2558f41574f44b967baf11d5b603 # v3.2.5
