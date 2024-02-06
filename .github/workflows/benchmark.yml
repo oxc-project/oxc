@@ -7,6 +7,7 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '!crates/oxc_codegen'
       - '!.github/workflows/benchmark.yml'
   push:
     branches:
@@ -14,6 +15,7 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '!crates/oxc_codegen'
       - '!.github/workflows/benchmark.yml'
 
 concurrency:
