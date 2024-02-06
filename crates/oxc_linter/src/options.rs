@@ -107,7 +107,7 @@ impl LintOptions {
 
     #[must_use]
     pub fn with_env(mut self, env: Vec<String>) -> Self {
-        self.env = ESLintEnv::new(env);
+        self.env = ESLintEnv::from_vec(env);
         self
     }
 }

@@ -7,6 +7,7 @@ use std::path::Path;
 
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Deserialize;
 use serde_json::{Map, Value};
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
@@ -72,15 +73,21 @@ impl ESLintConfig {
         Ok(config)
     }
 
+    // TODO: Try deserialize
     pub fn from_value(value: &Value) -> Result<Self, Report> {
         let rules = parse_rules(value)?;
         let settings = parse_settings_from_root(value);
-        let env = ESLintEnv::parse(value.get("env")).map_err(|_| {
-            FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
-                "env",
-                "Invalid env property",
-            ))])
-        })?;
+
+        let env = if let Some(env_value) = value.get("env") {
+            <ESLintEnv as Deserialize>::deserialize(env_value).map_err(|_| {
+                FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
+                    "env",
+                    "Invalid env property",
+                ))])
+            })?
+        } else {
+            ESLintEnv::default()
+        };
 
         Ok(Self { rules, settings, env })
     }
@@ -353,6 +360,8 @@ fn resolve_rule_value(value: &serde_json::Value) -> Result<(AllowWarnDeny, Optio
 
 #[cfg(test)]
 mod test {
+    use itertools::Itertools;
+
     use super::ESLintConfig;
     use std::env;
 
@@ -466,16 +475,17 @@ mod test {
             "env": { "browser": true, "node": true, "es6": false }
         }))
         .unwrap();
-        assert_eq!(config.env.len(), 2);
-        assert!(config.env.contains(&"browser".to_string()));
-        assert!(config.env.contains(&"node".to_string()));
-        assert!(!config.env.contains(&"es6".to_string()));
+        assert_eq!(config.env.iter().count(), 2);
+        assert!(config.env.iter().contains(&"browser"));
+        assert!(config.env.iter().contains(&"node"));
+        assert!(!config.env.iter().contains(&"es6"));
+        assert!(!config.env.iter().contains(&"builtin"));
     }
     #[test]
     fn test_parse_env_default() {
         let config = ESLintConfig::from_value(&serde_json::json!({})).unwrap();
-        assert_eq!(config.env.len(), 1);
-        assert_eq!(config.env.first(), Some(&"builtin".to_string()));
+        assert_eq!(config.env.iter().count(), 1);
+        assert!(config.env.iter().contains(&"builtin"));
     }
 
     // #[test]
@@ -483,15 +493,35 @@ mod test {
     //     use serde::Deserialize;
 
     //     let value = serde_json::json!({});
-    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-    //     println!("{settings:#?}");
+    //     let settings =
+    //         <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("1) {settings:#?}");
 
-    //     let value = serde_json::json!({ "jsx-a11y": {} });
-    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-    //     println!("{settings:#?}");
+    //     let value = serde_json::json!({ "react": {} });
+    //     let settings =
+    //         <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("2) {settings:#?}");
 
-    //     let value = serde_json::json!({ "jsx-a11y": { "polymorphicPropName": "as", "components": { "Foo": "input", "Bar": "textarea" } } });
-    //     let settings = <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
-    //     println!("{settings:#?}");
+    //     let value = serde_json::json!({ "react": {
+    //         "formComponents": [
+    //             "CustomForm",
+    //             {"name": "SimpleForm", "formAttribute": "endpoint"},
+    //             {"name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"]},
+    //         ],
+    //     } });
+    //     let settings =
+    //         <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+
+    //     println!("3) {settings:#?}");
+    //     let value = serde_json::json!({ "react": {
+    //         "linkComponents": [
+    //             "CustomForm",
+    //             {"name": "SimpleForm", "linkAttribute": "endpoint"},
+    //             {"name": "Form", "linkAttribute": ["registerEndpoint", "loginEndpoint"]},
+    //         ],
+    //     } });
+    //     let settings =
+    //         <super::settings2::ESLintSettings as Deserialize>::deserialize(value).unwrap();
+    //     println!("4) {settings:#?}");
     // }
 }
