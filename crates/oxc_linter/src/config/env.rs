@@ -19,7 +19,7 @@ impl ESLintEnv {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &str> + '_ {
-       self.0.iter().filter(|(_, v)| **v).map(|(k, _)| k.as_str())
+        self.0.iter().filter(|(_, v)| **v).map(|(k, _)| k.as_str())
     }
 }
 
