@@ -67,11 +67,11 @@ jobs:
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
 
-          - os: macos-14
+          - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
 
-          - os: macos-14
+          - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
 
@@ -138,12 +138,8 @@ jobs:
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
-
-      - name: Move download artifacts from directories to root
-        shell: bash
-        run: |
-          mv binaries-*/*.zip .
-          mv binaries-*/*.gz .
+        with:
+          merge-multiple: true
 
       - name: Unzip
         uses: montudor/action-zip@v1
@@ -193,7 +189,7 @@ jobs:
           - os: ubuntu-latest
           - os: ubuntu-latest
             container: node:18-alpine # musl
-          - os: macos-14
+          - os: macos-latest
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
