@@ -196,3 +196,50 @@ jobs:
       - name: Install Rust
         uses: ./.github/actions/rustup
       - run: cargo test --quiet
+
+  conformance:
+    name: Conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+
+      - name: Install Rust Toolchain
+        if: steps.filter.outputs.src == 'true'
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: 'conformance'
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Clone submodules
+        if: steps.filter.outputs.src == 'true'
+        uses: ./.github/actions/clone-submodules
+
+      - name: Set up Bun
+        if: steps.filter.outputs.src == 'true'
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install Node.js
+        if: steps.filter.outputs.src == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install just
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Coverage and check diff
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          just coverage
+          git diff --exit-code
