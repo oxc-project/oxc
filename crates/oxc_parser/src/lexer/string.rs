@@ -12,9 +12,12 @@ impl<'a> Lexer<'a> {
 
             if offset == capacity {
                 // no delimiter found in this 32 bytes
+                self.source.advance(offset);
                 continue;
             }
-            match self.source.nth(offset) {
+            let matched = self.source.nth(offset);
+            self.source.advance(offset);
+            match matched {
                 b'\r' | b'\n' => {
                     self.error(diagnostics::UnterminatedString(self.unterminated_range()));
                     return Kind::Undetermined;
