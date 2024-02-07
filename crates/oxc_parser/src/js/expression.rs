@@ -19,10 +19,10 @@ use crate::{
     diagnostics,
     lexer::{parse_big_int, parse_float, parse_int, Kind},
     list::SeparatedList,
-    Context, Parser,
+    Context, ParserImpl,
 };
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_paren_expression(&mut self) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
         let expression = self.parse_expression()?;
@@ -977,7 +977,7 @@ impl<'a> Parser<'a> {
                 let pos = self.cur_token().start;
                 if !self.state.not_parenthesized_arrow.contains(&pos) {
                     if let Ok((type_parameters, params, return_type, r#async, span)) =
-                        self.try_parse(Parser::parse_parenthesized_arrow_function_head)
+                        self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
                     {
                         return self.parse_arrow_function_body(
                             span,

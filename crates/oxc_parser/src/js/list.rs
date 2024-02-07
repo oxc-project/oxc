@@ -12,7 +12,7 @@ use crate::{
     diagnostics,
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Parser,
+    ParserImpl,
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -31,7 +31,7 @@ pub struct ObjectExpressionProperties<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), trailing_comma: None }
     }
 
@@ -43,7 +43,7 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = match p.cur_kind() {
             Kind::Dot3 => p.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
             _ => p.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
@@ -65,7 +65,7 @@ pub struct ObjectPatternProperties<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), rest: None }
     }
 
@@ -77,7 +77,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         if p.cur_kind() == Kind::Dot3 {
             let rest = p.parse_rest_element()?;
             if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
@@ -101,7 +101,7 @@ pub struct ArrayExpressionList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), trailing_comma: None }
     }
 
@@ -113,7 +113,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         Kind::RBrack
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = match p.cur_kind() {
             Kind::Comma => Ok(p.parse_elision()),
             Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
@@ -136,7 +136,7 @@ pub struct ArrayPatternList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), rest: None }
     }
 
@@ -148,7 +148,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
         Kind::RBrack
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         match p.cur_kind() {
             Kind::Comma => {
                 self.elements.push(None);
@@ -175,7 +175,7 @@ pub struct CallArguments<'a> {
 }
 
 impl<'a> SeparatedList<'a> for CallArguments<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), rest_element_with_trilling_comma: None }
     }
 
@@ -187,7 +187,7 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
         Kind::RParen
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = if p.at(Kind::Dot3) {
             let result = p.parse_spread_element().map(Argument::SpreadElement);
             if p.at(Kind::Comma) {
@@ -209,7 +209,7 @@ pub struct SequenceExpressionList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 
@@ -223,7 +223,7 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 
     // read everything as expression and map to it to either
     // ParenthesizedExpression or ArrowFormalParameters later
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = p.parse_assignment_expression_base()?;
         self.elements.push(element);
         Ok(())
@@ -238,7 +238,7 @@ pub struct FormalParameterList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), rest: None, this_param: None }
     }
 
@@ -251,7 +251,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
     }
 
     // Section 15.1 Parameter Lists
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         p.eat_decorators()?;
 
@@ -295,7 +295,7 @@ pub struct AssertEntries<'a> {
 }
 
 impl<'a> SeparatedList<'a> for AssertEntries<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), keys: FxHashMap::default() }
     }
 
@@ -307,7 +307,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         let key = match p.cur_kind() {
             Kind::Str => ImportAttributeKey::StringLiteral(p.parse_literal_string()?),
@@ -333,7 +333,7 @@ pub struct ExportNamedSpecifiers<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 
@@ -345,7 +345,7 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let specifier_span = p.start_span();
         let peek_kind = p.peek_kind();
 
@@ -396,13 +396,13 @@ pub struct ClassElements<'a> {
 }
 
 impl<'a> ClassElements<'a> {
-    pub(crate) fn new(p: &Parser<'a>) -> Self {
+    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec(), private_bound_identifiers: FxHashMap::default() }
     }
 
     fn detect_private_name_conflict(
         &self,
-        p: &mut Parser,
+        p: &mut ParserImpl,
         private_ident: &PrivateIdentifier,
         r#static: bool,
         kind: Option<MethodDefinitionKind>,
@@ -430,7 +430,7 @@ impl<'a> ClassElements<'a> {
 
     fn on_declare_private_property(
         &mut self,
-        p: &mut Parser,
+        p: &mut ParserImpl,
         private_ident: &PrivateIdentifier,
         r#static: bool,
         kind: Option<MethodDefinitionKind>,
@@ -453,7 +453,7 @@ impl<'a> NormalList<'a> for ClassElements<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         // skip empty class element `;`
         while p.at(Kind::Semicolon) {
             p.bump_any();
@@ -482,7 +482,7 @@ pub struct SwitchCases<'a> {
 }
 
 impl<'a> SwitchCases<'a> {
-    pub(crate) fn new(p: &Parser<'a>) -> Self {
+    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 }
@@ -496,7 +496,7 @@ impl<'a> NormalList<'a> for SwitchCases<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = p.parse_switch_case()?;
         self.elements.push(element);
         Ok(())
@@ -508,7 +508,7 @@ pub struct ImportSpecifierList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { import_specifiers: p.ast.new_vec() }
     }
 
@@ -520,7 +520,7 @@ impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let import_specifier = p.parse_import_specifier()?;
         let specifier = ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
         self.import_specifiers.push(specifier);
