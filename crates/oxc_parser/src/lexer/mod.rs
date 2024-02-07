@@ -16,6 +16,8 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
+mod simd;
 mod source;
 mod string;
 mod string_builder;

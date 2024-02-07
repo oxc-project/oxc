@@ -1,3 +1,4 @@
+use super::simd::{Position, STRING_LITERAL_LOOKUP_TABLE};
 use super::{AutoCow, Kind, Lexer, Span, Token};
 use crate::diagnostics;
 
@@ -5,20 +6,27 @@ impl<'a> Lexer<'a> {
     /// 12.9.4 String Literals
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
-        loop {
-            match self.next_char() {
-                None | Some('\r' | '\n') => {
+        while self.source.remaining_len() >= 32 {
+            let Position { offset, capacity } =
+                STRING_LITERAL_LOOKUP_TABLE.match_vectored(&self.source);
+
+            if offset == capacity {
+                // no delimiter found in this 32 bytes
+                continue;
+            }
+            match self.source.nth(offset) {
+                b'\r' | b'\n' => {
                     self.error(diagnostics::UnterminatedString(self.unterminated_range()));
                     return Kind::Undetermined;
                 }
-                Some(c @ ('"' | '\'')) => {
-                    if c == delimiter {
+                c @ (b'"' | b'\'') => {
+                    if c as char == delimiter {
                         self.save_string(builder.has_escape(), builder.finish_without_push(self));
                         return Kind::Str;
                     }
-                    builder.push_matching(c);
+                    builder.push_matching(c as char);
                 }
-                Some('\\') => {
+                b'\\' => {
                     let start = self.offset() - 1;
                     let text = builder.get_mut_string_without_current_ascii_char(self);
                     let mut is_valid_escape_sequence = true;
@@ -28,11 +36,13 @@ impl<'a> Lexer<'a> {
                         self.error(diagnostics::InvalidEscapeSequence(range));
                     }
                 }
-                Some(c) => {
-                    builder.push_matching(c);
+                c => {
+                    builder.push_matching(c as char);
                 }
             }
         }
+        // add padding to the end of the source
+        todo!()
     }
 
     /// Save the string if it is escaped

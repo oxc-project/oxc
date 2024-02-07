@@ -100,6 +100,34 @@ impl<'a> Source<'a> {
         }
     }
 
+    /// Get the length of the remaining source text.
+    #[inline]
+    pub(super) fn remaining_len(&self) -> usize {
+        self.end as usize - self.ptr as usize
+    }
+
+    /// Converts remaining to a raw pointer.
+    #[inline]
+    pub(super) fn as_ptr(&self) -> *const u8 {
+        self.ptr
+    }
+
+    /// Advance the internal cursor of the slice.
+    #[inline]
+    pub(super) fn advance(&mut self, advance: usize) {
+        debug_assert!(self.remaining_len() >= advance, "advancing past end of source");
+        unsafe {
+            self.ptr = self.ptr.add(advance);
+        }
+    }
+
+    /// Get the nth byte from ptr of the source text
+    #[inline]
+    pub(super) fn nth(&self, nth: usize) -> u8 {
+        debug_assert!(self.remaining_len() >= nth, "nth byte out of bounds");
+        unsafe { *self.ptr.add(nth) }
+    }
+
     /// Get remaining source text as `&str`.
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
@@ -110,7 +138,7 @@ impl<'a> Source<'a> {
         // Invariant of `Source` is that `ptr` is always on a UTF-8 character boundary,
         // so slice from `ptr` to `end` will always be a valid UTF-8 string.
         unsafe {
-            let len = self.end as usize - self.ptr as usize;
+            let len = self.remaining_len();
             let slice = slice::from_raw_parts(self.ptr, len);
             debug_assert!(slice.is_empty() || !is_utf8_cont_byte(slice[0]));
             str::from_utf8_unchecked(slice)

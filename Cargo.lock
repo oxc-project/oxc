@@ -1593,8 +1593,10 @@ version = "0.6.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.4.2",
+ "itertools 0.12.1",
  "miette",
  "num-bigint",
+ "once_cell",
  "ouroboros",
  "oxc_allocator",
  "oxc_ast",
