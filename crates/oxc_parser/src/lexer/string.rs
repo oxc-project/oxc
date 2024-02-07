@@ -7,10 +7,10 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         while self.source.remaining_len() >= 32 {
-            let Position { offset, capacity } =
+            let Position { offset, segment } =
                 STRING_LITERAL_LOOKUP_TABLE.match_vectored(&self.source);
 
-            if offset == capacity {
+            if offset == segment {
                 // no delimiter found in this 32 bytes
                 self.source.advance(offset);
                 continue;

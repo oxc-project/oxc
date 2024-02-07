@@ -35,7 +35,7 @@ impl LookupTable {
         debug_assert!(source.remaining_len() >= 32, "source length must be at least 32 bytes");
         unsafe {
             let ptr = source.as_ptr();
-            Position { offset: self.match_delimiters_32_avx(ptr), capacity: 32 }
+            Position { offset: self.match_delimiters_32_avx(ptr), segment: 32 }
         }
     }
 

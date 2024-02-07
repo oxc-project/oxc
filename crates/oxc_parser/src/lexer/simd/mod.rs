@@ -10,6 +10,8 @@ pub(crate) static STRING_LITERAL_LOOKUP_TABLE: Lazy<avx2::LookupTable> =
     Lazy::new(|| avx2::LookupTable::new(&[b'\r', b'\n', b'"', b'\'', b'\\']));
 
 pub(crate) struct Position {
+    // the offset of the first found delimiter
     pub(crate) offset: usize,
-    pub(crate) capacity: usize,
+    // the maximum length of each segment, in avx2, it's 32 bytes
+    pub(crate) segment: usize,
 }
