@@ -49,7 +49,7 @@ impl LookupTable {
         let bits = _mm256_and_si256(_mm256_shuffle_epi8(self.arf, cols), rbms);
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());
         let r = _mm256_movemask_epi8(v) as u32;
-        r.leading_ones() as usize
+        r.trailing_ones() as usize
     }
 }
 
