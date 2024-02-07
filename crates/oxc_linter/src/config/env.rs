@@ -31,4 +31,28 @@ impl Default for ESLintEnv {
     }
 }
 
-// TODO: Move tests to here
+#[cfg(test)]
+mod test {
+    use super::ESLintEnv;
+    use itertools::Itertools;
+    use serde::Deserialize;
+
+    #[test]
+    fn test_parse_env() {
+        let env = ESLintEnv::deserialize(&serde_json::json!({
+            "browser": true, "node": true, "es6": false
+        }))
+        .unwrap();
+        assert_eq!(env.iter().count(), 2);
+        assert!(env.iter().contains(&"browser"));
+        assert!(env.iter().contains(&"node"));
+        assert!(!env.iter().contains(&"es6"));
+        assert!(!env.iter().contains(&"builtin"));
+    }
+    #[test]
+    fn test_parse_env_default() {
+        let env = ESLintEnv::default();
+        assert_eq!(env.iter().count(), 1);
+        assert!(env.iter().contains(&"builtin"));
+    }
+}
