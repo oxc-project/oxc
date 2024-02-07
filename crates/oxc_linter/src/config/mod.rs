@@ -8,7 +8,6 @@ use std::path::Path;
 use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
-use serde_json::Value;
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
 
@@ -58,17 +57,13 @@ impl ESLintConfig {
             ))])
         })?;
 
-        let config = Self::from_value(&json)?;
-        Ok(config)
-    }
-
-    pub fn from_value(value: &Value) -> Result<Self, Report> {
-        let config = ESLintConfig::deserialize(value).map_err(|_err| {
+        let config = Self::deserialize(&json).map_err(|_err| {
             FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
                 "TODO: How to get &str here from _err...?",
                 "Invalid property",
             ))])
         })?;
+
         Ok(config)
     }
 
@@ -146,18 +141,19 @@ impl ESLintConfig {
 #[cfg(test)]
 mod test {
     use super::ESLintConfig;
+    use serde::Deserialize;
     use std::env;
 
     #[test]
-    fn test_parse_from_file() {
+    fn test_from_file() {
         let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
         let config = ESLintConfig::from_file(&fixture_path).unwrap();
         assert!(!config.rules.is_empty());
     }
 
     #[test]
-    fn test_parse_from_value() {
-        let config = ESLintConfig::from_value(&serde_json::json!({
+    fn test_deserialize() {
+        let config = ESLintConfig::deserialize(&serde_json::json!({
             "rules": {
                 "no-console": "off",
                 "no-debugger": 2,

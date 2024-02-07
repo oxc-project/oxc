@@ -186,10 +186,9 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
-        let lint_settings: ESLintSettings =
-            settings.as_ref().map_or_else(ESLintSettings::default, |v| {
-                <ESLintSettings as Deserialize>::deserialize(v).unwrap()
-            });
+        let lint_settings: ESLintSettings = settings
+            .as_ref()
+            .map_or_else(ESLintSettings::default, |v| ESLintSettings::deserialize(v).unwrap());
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
