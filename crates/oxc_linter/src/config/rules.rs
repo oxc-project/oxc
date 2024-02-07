@@ -36,7 +36,7 @@ impl<'de> Deserialize<'de> for ESLintRules {
             type Value = ESLintRules;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("Map of ServerityConf or [SeverityConf, ...any[]]")
+                formatter.write_str("Map of SeverityConf or [SeverityConf, ...any[]]")
             }
 
             fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
@@ -109,7 +109,7 @@ fn parse_rule_value(
 
         _ => Err(FailedToParseRuleValueError(
             value.to_string(),
-            "Type should be `SeverityConf | [ServerityConf, ...any[]]`",
+            "Type should be `SeverityConf | [SeverityConf, ...any[]]`",
         )
         .into()),
     }
