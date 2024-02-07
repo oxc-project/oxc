@@ -32,6 +32,9 @@ impl SpecParser {
 impl VisitMut<'_> for SpecParser {
     fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
         let Some(ident) = expr.callee.get_identifier_reference() else { return };
+        // The `runFormatTest` function used on prettier's test cases. We need to collect all `run_spec` calls
+        // And then parse the arguments to get the options and parsers
+        // Finally we use this information to generate the snapshot tests
         if ident.name != "runFormatTest" {
             return;
         }
