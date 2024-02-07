@@ -28,7 +28,7 @@ submodules:
   just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 17ba9aea47e496f5b2bc6ce7405b3f32e3cfbf7a
   just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git eccbd203383487f6957dcf086aa83d773691560b
   just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git 64d2eeea7b9c7f1a79edf42cb99f302535136a2e
-  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git ff83d55d05e92ceef10ec0cb1c0272ab894a00a0
+  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list

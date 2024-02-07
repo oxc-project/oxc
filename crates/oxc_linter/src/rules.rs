@@ -100,6 +100,7 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
+    pub mod array_type;
     pub mod ban_ts_comment;
     pub mod ban_types;
     pub mod no_duplicate_enum_values;
@@ -389,6 +390,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::array_type,
     typescript::ban_ts_comment,
     typescript::ban_types,
     typescript::no_duplicate_enum_values,
