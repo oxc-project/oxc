@@ -157,6 +157,11 @@ impl TestRunner {
                 .collect();
 
             self.spec.parse(&spec_path);
+            debug_assert!(
+                !self.spec.calls.is_empty(),
+                "There is no `runFormatTest()` in {}, please check if it is correct?",
+                spec_path.to_string_lossy()
+            );
             total += inputs.len();
             inputs.sort_unstable();
             self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
@@ -201,7 +206,7 @@ impl TestRunner {
                 expected.contains(&snapshot)
             });
 
-            if !result {
+            if self.spec.calls.is_empty() || !result {
                 let mut dir_info = String::new();
                 if write_dir_info {
                     dir_info.push_str(
