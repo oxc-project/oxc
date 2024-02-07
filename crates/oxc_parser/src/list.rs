@@ -1,6 +1,6 @@
 use oxc_diagnostics::Result;
 
-use crate::{lexer::Kind, Parser};
+use crate::{lexer::Kind, ParserImpl};
 
 pub trait NormalList<'a> {
     /// Open element, e.g.. `{` `[` `(`
@@ -9,10 +9,10 @@ pub trait NormalList<'a> {
     /// Close element, e.g.. `}` `]` `)`
     fn close(&self) -> Kind;
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()>;
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()>;
 
     /// Main entry point, parse the list
-    fn parse(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         p.expect(self.open())?;
         while !p.at(self.close()) && !p.at(Kind::Eof) {
             self.parse_element(p)?;
@@ -23,9 +23,9 @@ pub trait NormalList<'a> {
 }
 
 pub trait SeparatedList<'a>: Sized {
-    fn new(p: &Parser<'a>) -> Self;
+    fn new(p: &ParserImpl<'a>) -> Self;
 
-    fn parse(p: &mut Parser<'a>) -> Result<Self> {
+    fn parse(p: &mut ParserImpl<'a>) -> Result<Self> {
         let mut list = Self::new(p);
         list.parse_list(p)?;
         Ok(list)
@@ -42,10 +42,10 @@ pub trait SeparatedList<'a>: Sized {
         Kind::Comma
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()>;
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()>;
 
     /// Main entry point, parse the list
-    fn parse_list(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_list(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         p.expect(self.open())?;
 
         let mut first = true;

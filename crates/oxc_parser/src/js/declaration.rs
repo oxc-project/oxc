@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use crate::{diagnostics, lexer::Kind, Parser, StatementContext};
+use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
 
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {
@@ -23,7 +23,7 @@ impl VariableDeclarationContext {
     }
 }
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
         let span = self.start_span();
         let peeked = self.peek_kind();

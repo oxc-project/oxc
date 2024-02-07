@@ -7,9 +7,9 @@ use super::{
     function::FunctionKind,
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
 };
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
     /// `ImportCall` : import ( `AssignmentExpression` )
     pub(crate) fn parse_import_expression(&mut self, span: Span) -> Result<Expression<'a>> {
