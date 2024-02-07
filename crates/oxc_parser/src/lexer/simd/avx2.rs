@@ -3,9 +3,10 @@ use core::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
 
-use super::Position;
 use crate::lexer::source::Source;
 use itertools::Itertools;
+
+pub(crate) const ALIGNMENT: usize = 32;
 
 pub struct LookupTable {
     table: __m256i, // for cols lookup
@@ -31,12 +32,14 @@ impl LookupTable {
     // match 32 bytes at a time, return the position of the first found delimiter
     // source length must be at least 32 bytes
     #[inline]
-    pub fn match_vectored(&self, source: &Source) -> Position {
-        debug_assert!(source.remaining_len() >= 32, "source length must be at least 32 bytes");
-        unsafe {
-            let ptr = source.as_ptr();
-            Position { offset: self.match_delimiters_32_avx(ptr), segment: 32 }
-        }
+    pub fn match_vectored(&self, source: &Source) -> usize {
+        debug_assert!(
+            source.remaining_len() >= ALIGNMENT,
+            "source length must be at least {} bytes",
+            ALIGNMENT
+        );
+        let ptr = source.as_ptr();
+        unsafe { self.match_delimiters_32_avx(ptr) }
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter

@@ -1,4 +1,4 @@
-use super::simd::{Position, STRING_LITERAL_LOOKUP_TABLE};
+use super::simd::{string_literal_lookup, Position};
 use super::{AutoCow, Kind, Lexer, Span, Token};
 use crate::diagnostics;
 
@@ -7,10 +7,9 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         while self.source.remaining_len() >= 32 {
-            let Position { offset, segment } =
-                STRING_LITERAL_LOOKUP_TABLE.match_vectored(&self.source);
+            let Position { offset, alignment } = string_literal_lookup(&self.source);
 
-            if offset == segment {
+            if offset == alignment {
                 // no delimiter found in this 32 bytes
                 self.source.advance(offset);
                 continue;
