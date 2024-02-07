@@ -8,9 +8,9 @@ use crate::lexer::source::Source;
 use itertools::Itertools;
 
 pub struct LookupTable {
-    table: __m256i,
-    arf: __m256i,
-    lsh: __m256i,
+    table: __m256i, // for cols lookup
+    arf: __m256i,   // for rows lookup
+    lsh: __m256i,   // for shifting
 }
 
 impl LookupTable {
