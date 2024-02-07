@@ -80,6 +80,7 @@ impl LookupTable {
 //     `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
 //  7  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 //     p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
+#[inline]
 #[allow(clippy::cast_possible_truncation)]
 unsafe fn tabulate(delimiters: &[u8]) -> __m256i {
     let mut table = [false; 128];
