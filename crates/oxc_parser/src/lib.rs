@@ -263,6 +263,7 @@ impl<'a> ParserImpl<'a> {
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
+    #[inline]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
@@ -301,6 +302,7 @@ impl<'a> ParserImpl<'a> {
     ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
+    #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
