@@ -255,9 +255,7 @@ impl<'a> ParserImpl<'a> {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
             checkpoint;
 
-        // SAFETY: Parser only ever creates a single `Lexer`,
-        // therefore all checkpoints must be created from it.
-        unsafe { self.lexer.rewind(lexer) };
+        self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_lens);
