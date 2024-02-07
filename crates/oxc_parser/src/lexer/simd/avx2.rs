@@ -17,6 +17,8 @@ pub struct LookupTable {
 impl LookupTable {
     #[allow(non_snake_case, overflowing_literals)]
     pub fn new(delimiters: &[u8]) -> Self {
+        // SAFETY:
+        // delimiters must be an ASCII character and checked by `tabulate`
         unsafe {
             let table = tabulate(delimiters);
             let arf = _mm256_setr_epi8(
@@ -35,16 +37,23 @@ impl LookupTable {
     pub fn match_vectored(&self, source: &Source) -> usize {
         debug_assert!(
             source.remaining_len() >= ALIGNMENT,
-            "source length must be at least {} bytes",
-            ALIGNMENT
+            "source length must be at least {ALIGNMENT} bytes",
         );
         let ptr = source.as_ptr();
+        // SAFETY:
+        // we have checked that the source length is at least 32 bytes
         unsafe { self.match_delimiters_32_avx(ptr) }
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    #[allow(non_snake_case, overflowing_literals)]
+    #[allow(
+        non_snake_case,
+        overflowing_literals,
+        clippy::cast_sign_loss,
+        clippy::ptr_as_ptr,
+        clippy::cast_ptr_alignment
+    )]
     unsafe fn match_delimiters_32_avx(&self, ptr: *const u8) -> usize {
         let data = _mm256_lddqu_si256(ptr as *const _);
         let rbms = _mm256_shuffle_epi8(self.table, data);

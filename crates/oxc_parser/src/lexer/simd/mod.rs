@@ -1,13 +1,14 @@
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub(crate) mod avx2;
+mod avx2;
 #[cfg(target_arch = "aarch64")]
-pub(crate) mod neon;
+mod neon;
+mod swar;
 
 use crate::lexer::source::Source;
 use once_cell::sync::Lazy;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-static STRING_LITERAL_LOOKUP_TABLE: Lazy<avx2::LookupTable> =
+static AVX2_STRING_LITERAL_LOOKUP_TABLE: Lazy<avx2::LookupTable> =
     Lazy::new(|| avx2::LookupTable::new(&[b'\r', b'\n', b'"', b'\'', b'\\']));
 
 pub(crate) struct Position {
@@ -22,7 +23,7 @@ pub(crate) fn string_literal_lookup(source: &Source) -> Position {
     {
         if cfg!(target_feature = "avx2") {
             return Position {
-                offset: STRING_LITERAL_LOOKUP_TABLE.match_vectored(source),
+                offset: AVX2_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source),
                 alignment: avx2::ALIGNMENT,
             };
         }
