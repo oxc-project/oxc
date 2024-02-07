@@ -6,7 +6,7 @@ impl<'a> Lexer<'a> {
     /// 12.9.4 String Literals
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
-        while self.source.remaining_len() >= 32 {
+        while !self.source.is_eof() {
             let Position { offset, alignment } = string_literal_lookup(&self.source);
 
             if offset == alignment {
