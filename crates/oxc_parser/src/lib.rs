@@ -116,10 +116,70 @@ pub struct ParserReturn<'a> {
     pub panicked: bool,
 }
 
+/// Parser options
+#[derive(Clone, Copy)]
+struct ParserOptions {
+    pub allow_return_outside_function: bool,
+    pub preserve_parens: bool,
+}
+
+impl Default for ParserOptions {
+    fn default() -> Self {
+        Self { allow_return_outside_function: false, preserve_parens: true }
+    }
+}
+
 /// Recursive Descent Parser for ECMAScript and TypeScript
 ///
 /// See [`Parser::parse`] for entry function.
 pub struct Parser<'a> {
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    source_type: SourceType,
+    options: ParserOptions,
+}
+
+impl<'a> Parser<'a> {
+    /// Create a new parser
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        let options = ParserOptions::default();
+        Self { allocator, source_text, source_type, options }
+    }
+
+    /// Allow return outside of function
+    ///
+    /// By default, a return statement at the top level raises an error.
+    /// Set this to true to accept such code.
+    #[must_use]
+    pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
+        self.options.allow_return_outside_function = allow;
+        self
+    }
+
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by (non-standard)
+    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
+    #[must_use]
+    pub fn preserve_parens(mut self, allow: bool) -> Self {
+        self.options.preserve_parens = allow;
+        self
+    }
+
+    /// Main entry point
+    ///
+    /// Returns an empty `Program` on unrecoverable error,
+    /// Recoverable errors are stored inside `errors`.
+    pub fn parse(self) -> ParserReturn<'a> {
+        let parser =
+            ParserImpl::new(self.allocator, self.source_text, self.source_type, self.options);
+        parser.parse()
+    }
+}
+
+/// Implementation of parser.
+/// `Parser` is just a public wrapper, the guts of the implementation is in this type.
+struct ParserImpl<'a> {
     lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
@@ -152,9 +212,14 @@ pub struct Parser<'a> {
     preserve_parens: bool,
 }
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     /// Create a new parser
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParserOptions,
+    ) -> Self {
         Self {
             lexer: Lexer::new(allocator, source_text, source_type),
             source_type,
@@ -163,30 +228,10 @@ impl<'a> Parser<'a> {
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(allocator),
-            ctx: Self::default_context(source_type),
+            ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            preserve_parens: true,
+            preserve_parens: options.preserve_parens,
         }
-    }
-
-    /// Allow return outside of function
-    ///
-    /// By default, a return statement at the top level raises an error.
-    /// Set this to true to accept such code.
-    #[must_use]
-    pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
-        self.ctx = self.ctx.and_return(allow);
-        self
-    }
-
-    /// Emit `ParenthesizedExpression` in AST.
-    ///
-    /// If this option is true, parenthesized expressions are represented by (non-standard)
-    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
-    #[must_use]
-    pub fn preserve_parens(mut self, allow: bool) -> Self {
-        self.preserve_parens = allow;
-        self
     }
 
     /// Main entry point
@@ -228,13 +273,16 @@ impl<'a> Parser<'a> {
         Ok(self.ast.program(span, self.source_type, directives, hashbang, statements))
     }
 
-    fn default_context(source_type: SourceType) -> Context {
-        let ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        match source_type.module_kind() {
-            ModuleKind::Script => ctx,
+    fn default_context(source_type: SourceType, options: ParserOptions) -> Context {
+        let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
+        if source_type.module_kind() == ModuleKind::Module {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
-            ModuleKind::Module => ctx.and_await(true),
+            ctx = ctx.and_await(true);
         }
+        if options.allow_return_outside_function {
+            ctx = ctx.and_return(true);
+        }
+        ctx
     }
 
     /// Check for Flow declaration if the file cannot be parsed.

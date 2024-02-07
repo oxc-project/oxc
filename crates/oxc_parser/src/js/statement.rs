@@ -8,9 +8,9 @@ use super::{
     grammar::CoverGrammar,
     list::SwitchCases,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, Parser, StatementContext};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     // Section 12
     // The InputElementHashbangOrRegExp goal is used at the start of a Script
     // or Module.
@@ -283,7 +283,7 @@ impl<'a> Parser<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let init_expression = self.without_context(Context::In, Parser::parse_expression)?;
+        let init_expression = self.without_context(Context::In, ParserImpl::parse_expression)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
@@ -359,7 +359,7 @@ impl<'a> Parser<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.with_context(Context::In, Parser::parse_expression)?)
+            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
         } else {
             None
         };
@@ -367,7 +367,7 @@ impl<'a> Parser<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.with_context(Context::In, Parser::parse_expression)?)
+            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
@@ -433,7 +433,7 @@ impl<'a> Parser<'a> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.with_context(Context::In, Parser::parse_expression)?;
+            let expr = self.with_context(Context::In, ParserImpl::parse_expression)?;
             self.asi()?;
             Some(expr)
         };

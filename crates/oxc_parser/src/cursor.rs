@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{
     diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
-    Context, Parser,
+    Context, ParserImpl,
 };
 
 #[derive(Clone, Copy)]
@@ -18,7 +18,7 @@ pub struct ParserCheckpoint<'a> {
     errors_pos: usize,
 }
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn start_span(&self) -> Span {
         let token = self.cur_token();
         Span::new(token.start, 0)
@@ -266,7 +266,7 @@ impl<'a> Parser<'a> {
     /// # Errors
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut Parser<'a>) -> Result<T>,
+        func: impl FnOnce(&mut ParserImpl<'a>) -> Result<T>,
     ) -> Result<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
@@ -278,7 +278,7 @@ impl<'a> Parser<'a> {
         result
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut Parser<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);

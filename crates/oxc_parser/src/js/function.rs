@@ -6,7 +6,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::FormalParameterList;
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser, StatementContext};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -41,7 +41,7 @@ impl FunctionKind {
     }
 }
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)

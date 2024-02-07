@@ -4,7 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, Parser, StatementContext};
+use crate::{diagnostics, lexer::Kind, list::NormalList, ParserImpl, StatementContext};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
@@ -12,7 +12,7 @@ type Extends<'a> =
 type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
 
 /// Section 15.7 Class Definitions
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     // `start_span` points at the start of all decoractors and `class` keyword.
     pub(crate) fn parse_class_statement(
         &mut self,

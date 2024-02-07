@@ -4,9 +4,9 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 
 use super::list::{ArrayPatternList, ObjectPatternProperties};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     /// Destructuring Binding Patterns
     /// `LexicalBinding`
     ///     `BindingIdentifier` `Initializer_opt`

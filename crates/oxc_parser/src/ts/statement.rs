@@ -14,10 +14,10 @@ use crate::{
     },
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Parser, StatementContext,
+    ParserImpl, StatementContext,
 };
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     /** ------------------- Enum ------------------ */
 
     pub(crate) fn is_at_enum_declaration(&mut self) -> bool {

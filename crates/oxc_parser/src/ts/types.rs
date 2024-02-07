@@ -12,7 +12,7 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Context, Parser,
+    Context, ParserImpl,
 };
 
 bitflags! {
@@ -105,7 +105,7 @@ impl ModifierFlags {
     }
 }
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> Result<TSType<'a>> {
         if self.is_at_constructor_type() {
             return self.parse_ts_constructor_type();
@@ -323,8 +323,8 @@ impl<'a> Parser<'a> {
             ));
         }
 
-        let mut left =
-            self.without_context(Context::DisallowConditionalTypes, Parser::parse_ts_basic_type)?;
+        let mut left = self
+            .without_context(Context::DisallowConditionalTypes, ParserImpl::parse_ts_basic_type)?;
 
         while !self.cur_token().is_on_new_line && self.eat(Kind::LBrack) {
             if self.eat(Kind::RBrack) {
@@ -828,7 +828,7 @@ impl<'a> Parser<'a> {
         let parameter_span = self.start_span();
         let name = self.parse_binding_identifier()?;
 
-        let constraint = self.try_parse(Parser::parse_constraint_of_infer_type).unwrap_or(None);
+        let constraint = self.try_parse(ParserImpl::parse_constraint_of_infer_type).unwrap_or(None);
 
         let type_parameter = self.ast.ts_type_parameter(
             self.end_span(parameter_span),
