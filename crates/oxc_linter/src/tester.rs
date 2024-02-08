@@ -6,12 +6,10 @@ use std::{
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::NamedSource;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme};
+use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{
-    config::parse_settings, rules::RULES, ESLintSettings, Fixer, LintOptions, LintService, Linter,
-    RuleEnum,
-};
+use crate::{rules::RULES, ESLintSettings, Fixer, LintOptions, LintService, Linter, RuleEnum};
 
 #[derive(Eq, PartialEq)]
 enum TestResult {
@@ -188,8 +186,9 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
-        let lint_settings: ESLintSettings =
-            settings.as_ref().map_or_else(ESLintSettings::default, parse_settings);
+        let lint_settings: ESLintSettings = settings
+            .as_ref()
+            .map_or_else(ESLintSettings::default, |v| ESLintSettings::deserialize(v).unwrap());
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
