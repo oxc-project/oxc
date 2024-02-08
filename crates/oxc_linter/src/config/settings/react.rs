@@ -13,25 +13,25 @@ pub struct ESLintSettingsReact {
 }
 
 impl ESLintSettingsReact {
-    pub fn get_form_component_attr(&self, name: &str) -> Option<Vec<String>> {
-        get_component_attr_by_name(&self.form_components, name)
+    pub fn get_form_component_attrs(&self, name: &str) -> Option<Vec<String>> {
+        get_component_attrs_by_name(&self.form_components, name)
     }
 
-    pub fn get_link_component_attr(&self, name: &str) -> Option<Vec<String>> {
-        get_component_attr_by_name(&self.link_components, name)
+    pub fn get_link_component_attrs(&self, name: &str) -> Option<Vec<String>> {
+        get_component_attrs_by_name(&self.link_components, name)
     }
 }
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(String),
     ObjectWithOneAttr {
         name: String,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
-        attributes: String,
+        attribute: String,
     },
     ObjectWithMaynAttrs {
         name: String,
@@ -40,15 +40,15 @@ enum CustomComponent {
     },
 }
 
-fn get_component_attr_by_name(
+fn get_component_attrs_by_name(
     components: &Vec<CustomComponent>,
     name: &str,
 ) -> Option<Vec<String>> {
     for item in components {
         let comp = match item {
             CustomComponent::NameOnly(name) => (name, vec![]),
-            CustomComponent::ObjectWithOneAttr { name, attributes } => {
-                (name, vec![attributes.to_string()])
+            CustomComponent::ObjectWithOneAttr { name, attribute } => {
+                (name, vec![attribute.to_string()])
             }
             CustomComponent::ObjectWithMaynAttrs { name, attributes } => (name, attributes.clone()),
         };

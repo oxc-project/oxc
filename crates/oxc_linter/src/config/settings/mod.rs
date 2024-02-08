@@ -58,20 +58,20 @@ mod test {
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(settings.jsx_a11y.components.get("Link"), Some(&"Anchor".to_string()));
         assert!(settings.next.get_root_dirs().contains(&"app".to_string()));
-        assert_eq!(settings.react.get_form_component_attr("CustomForm"), Some(vec![]));
+        assert_eq!(settings.react.get_form_component_attrs("CustomForm"), Some(vec![]));
         assert_eq!(
-            settings.react.get_form_component_attr("SimpleForm"),
+            settings.react.get_form_component_attrs("SimpleForm"),
             Some(vec!["endpoint".to_string()])
         );
         assert_eq!(
-            settings.react.get_form_component_attr("Form"),
+            settings.react.get_form_component_attrs("Form"),
             Some(vec!["registerEndpoint".to_string(), "loginEndpoint".to_string()])
         );
         assert_eq!(
-            settings.react.get_link_component_attr("Link"),
+            settings.react.get_link_component_attrs("Link"),
             Some(vec!["to".to_string(), "href".to_string()])
         );
-        assert_eq!(settings.react.get_link_component_attr("Noop"), None);
+        assert_eq!(settings.react.get_link_component_attrs("Noop"), None);
     }
 
     #[test]
