@@ -4,7 +4,7 @@ use crate::{
     binaryish::{BinaryishLeft, BinaryishOperator},
     comments::CommentFlags,
     doc::{Doc, DocBuilder, Group},
-    group, line, ss, Format, Prettier,
+    group, line, space, ss, Format, Prettier,
 };
 
 pub(super) fn print_binaryish_expression<'a>(
@@ -38,26 +38,36 @@ fn print_binaryish_expressions<'a>(
         parts.push(group!(p, left.format(p)));
     }
     let should_inline = should_inline_logical_expression(right);
-    let mut right_parts = p.vec();
-    right_parts.push(ss!(operator.as_str()));
-    right_parts.push(if should_inline { ss!(" ") } else { line!() });
-    right_parts.push(right.format(p));
+    let line_before_operator = false;
+
+    let right = if should_inline {
+        p.vec()
+    } else {
+        let mut parts = p.vec();
+        if line_before_operator {
+            parts.push(line!());
+        }
+        parts.push(ss!(operator.as_str()));
+        parts.push(if line_before_operator { space!() } else { line!() });
+        parts.push(right.format(p));
+        parts
+    };
 
     let should_break = p.has_comment(left.span(), CommentFlags::Trailing | CommentFlags::Line);
+    let should_group = false;
 
-    parts.push(ss!(" "));
-    if should_break {
-        let group = Doc::Group(Group::new(right_parts, should_break));
+    if !line_before_operator {
+        parts.push(space!());
+    }
+
+    if should_group {
+        let group = Doc::Group(Group::new(right, should_break));
         parts.push(group);
     } else {
-        parts.push(Doc::Array(right_parts));
+        parts.push(Doc::Array(right));
     }
 
-    if operator.is_binary() {
-        Doc::Group(Group::new(parts, false))
-    } else {
-        Doc::Array(parts)
-    }
+    Doc::Array(parts)
 }
 
 pub(super) fn should_inline_logical_expression(expr: &Expression) -> bool {
