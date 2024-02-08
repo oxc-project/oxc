@@ -1,6 +1,6 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
-use crate::MAX_LEN;
+use crate::{UniquePromise, MAX_LEN};
 
 use std::{marker::PhantomData, slice, str};
 
@@ -72,7 +72,11 @@ pub(super) struct Source<'a> {
 
 impl<'a> Source<'a> {
     /// Create `Source` from `&str`.
-    pub(super) fn new(mut source_text: &'a str) -> Self {
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Source` can exist
+    /// on a single thread at one time.
+    #[allow(clippy::needless_pass_by_value)]
+    pub(super) fn new(mut source_text: &'a str, _unique: UniquePromise) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
         if source_text.len() > MAX_LEN {

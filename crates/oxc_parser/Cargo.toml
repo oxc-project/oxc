@@ -35,3 +35,7 @@ oxc_ast    = { workspace = true, features = ["serde"] }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 serde_json = { workspace = true }
 ouroboros  = "0.18.3"                                                # for `multi-thread` example
+
+[features]
+# Expose Lexer for benchmarks
+benchmarking = []

@@ -71,7 +71,13 @@ mod jsx;
 mod ts;
 
 mod diagnostics;
+
+// Expose lexer only in benchmarks
+#[cfg(not(feature = "benchmarking"))]
 mod lexer;
+#[cfg(feature = "benchmarking")]
+#[doc(hidden)]
+pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
@@ -83,12 +89,6 @@ use crate::{
     lexer::{Kind, Lexer, Token},
     state::ParserState,
 };
-
-// Expose lexer for benchmarks
-#[doc(hidden)]
-pub mod __lexer {
-    pub use super::lexer::{Kind, Lexer, Token};
-}
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
@@ -165,17 +165,63 @@ impl<'a> Parser<'a> {
         self.options.preserve_parens = allow;
         self
     }
+}
 
-    /// Main entry point
+mod parser_parse {
+    use super::*;
+
+    /// `UniquePromise` is a way to use the type system to enforce the invariant that only
+    /// a single `ParserImpl`, `Lexer` and `lexer::Source` can exist at any time on a thread.
+    /// This constraint is required to guarantee the soundness of some methods of these types
+    /// e.g. `Source::set_position`.
     ///
-    /// Returns an empty `Program` on unrecoverable error,
-    /// Recoverable errors are stored inside `errors`.
-    pub fn parse(self) -> ParserReturn<'a> {
-        let parser =
-            ParserImpl::new(self.allocator, self.source_text, self.source_type, self.options);
-        parser.parse()
+    /// `ParserImpl::new`, `Lexer::new` and `lexer::Source::new` all require a `UniquePromise`
+    /// to be provided to them. `UniquePromise::new` is not visible outside this module, so only
+    /// `Parser::parse` can create one, and it only calls `ParserImpl::new` once.
+    /// This enforces the invariant throughout the entire parser.
+    ///
+    /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
+    ///
+    /// `UniquePromise::new_for_tests` is a backdoor for unit tests and benchmarks, so they can create a
+    /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
+    pub(crate) struct UniquePromise {
+        _dummy: (),
+    }
+
+    impl UniquePromise {
+        #[inline]
+        fn new() -> Self {
+            Self { _dummy: () }
+        }
+
+        /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
+        /// This function must NOT be exposed outside of tests and benchmarks,
+        /// as it allows circumventing safety invariants of the parser.
+        #[cfg(any(test, feature = "benchmarking"))]
+        pub fn new_for_tests() -> Self {
+            Self { _dummy: () }
+        }
+    }
+
+    impl<'a> Parser<'a> {
+        /// Main entry point
+        ///
+        /// Returns an empty `Program` on unrecoverable error,
+        /// Recoverable errors are stored inside `errors`.
+        pub fn parse(self) -> ParserReturn<'a> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            parser.parse()
+        }
     }
 }
+use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
@@ -213,15 +259,20 @@ struct ParserImpl<'a> {
 }
 
 impl<'a> ParserImpl<'a> {
-    /// Create a new parser
+    /// Create a new `ParserImpl`.
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
+    /// on a single thread at one time.
+    #[inline]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         options: ParserOptions,
+        unique: UniquePromise,
     ) -> Self {
         Self {
-            lexer: Lexer::new(allocator, source_text, source_type),
+            lexer: Lexer::new(allocator, source_text, source_type, unique),
             source_type,
             source_text,
             errors: vec![],
@@ -234,10 +285,24 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for unit tests.
+    /// This function must NOT be exposed in public API as it breaks safety invariants.
+    #[cfg(test)]
+    fn new_for_tests(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParserOptions,
+    ) -> Self {
+        let unique = UniquePromise::new_for_tests();
+        Self::new(allocator, source_text, source_type, options, unique)
+    }
+
     /// Main entry point
     ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
+    #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),

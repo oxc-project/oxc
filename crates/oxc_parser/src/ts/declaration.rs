@@ -85,7 +85,8 @@ mod test_is_declaration {
     fn run_check(source: &str, expected: bool) {
         let alloc = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let mut parser = ParserImpl::new(&alloc, source, source_type, ParserOptions::default());
+        let mut parser =
+            ParserImpl::new_for_tests(&alloc, source, source_type, ParserOptions::default());
         // Get the parser to the first token.
         parser.bump_any();
         assert_eq!(expected, parser.at_start_of_ts_declaration());
