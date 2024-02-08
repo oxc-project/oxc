@@ -57,10 +57,9 @@ impl ESLintConfig {
             ))])
         })?;
 
-        let config = Self::deserialize(&json).map_err(|_err| {
+        let config = Self::deserialize(&json).map_err(|err| {
             FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
-                "TODO: How to get &str here from _err...?",
-                "Invalid property",
+                err.to_string(),
             ))])
         })?;
 

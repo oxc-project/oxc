@@ -16,9 +16,9 @@ pub struct FailedToParseConfigJsonError(pub PathBuf, pub String);
 pub struct FailedToParseConfigError(#[related] pub Vec<Report>);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Failed to parse config at {0:?} with error {1:?}")]
+#[error("Failed to parse config with error {0:?}")]
 #[diagnostic()]
-pub struct FailedToParseConfigPropertyError(pub &'static str, pub &'static str);
+pub struct FailedToParseConfigPropertyError(pub String);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Failed to rule value {0:?} with error {1:?}")]
