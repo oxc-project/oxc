@@ -24,7 +24,7 @@ use std::{io::Write, rc::Rc, sync::Arc};
 use oxc_diagnostics::Report;
 
 use crate::{
-    config::{ESLintEnv, ESLintSettings, JsxA11y},
+    config::{ESLintEnv, ESLintSettings},
     fixer::Fix,
     fixer::{Fixer, Message},
     rule::RuleCategory,
