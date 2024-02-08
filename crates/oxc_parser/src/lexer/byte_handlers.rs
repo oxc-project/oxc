@@ -1,4 +1,4 @@
-use super::{AutoCow, Kind, Lexer, LexerContext};
+use super::{Kind, Lexer, LexerContext};
 use crate::diagnostics;
 
 #[allow(clippy::unnecessary_safety_comment)]
@@ -137,7 +137,10 @@ macro_rules! ascii_byte_handler {
 /// (`a`-`z`, `A`-`Z`, `$` or `_`).
 ///
 /// Macro calls `Lexer::identifier_name_handler` to get the text of the identifier,
-/// and slices off first character.
+/// minus its first character.
+///
+/// `Lexer::identifier_name_handler` is an unsafe function, but if byte being consumed is ASCII,
+/// its requirements are met.
 ///
 /// # SAFETY
 /// Only use this macro to define byte handlers for ASCII characters.
@@ -156,7 +159,8 @@ macro_rules! ascii_byte_handler {
 /// const L_G: ByteHandler = {
 ///   #[allow(non_snake_case)]
 ///   fn L_G(lexer: &mut Lexer) -> Kind {
-///     let id_without_first_char = &lexer.identifier_name_handler()[1..];
+///     // SAFETY: This macro is only used for ASCII characters
+///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
 ///     match id_without_first_char {
 ///       "et" => Kind::Get,
 ///       "lobal" => Kind::Global,
@@ -169,7 +173,8 @@ macro_rules! ascii_byte_handler {
 macro_rules! ascii_identifier_handler {
     ($id:ident($str:ident) $body:expr) => {
         byte_handler!($id(lexer) {
-            let $str = &lexer.identifier_name_handler()[1..];
+            // SAFETY: This macro is only used for ASCII characters
+            let $str = unsafe { lexer.identifier_name_handler() };
             $body
         });
     };
@@ -439,12 +444,7 @@ ascii_byte_handler!(BTO(lexer) {
 
 // \
 ascii_byte_handler!(ESC(lexer) {
-    let mut builder = AutoCow::new(lexer);
-    lexer.consume_char();
-    builder.force_allocation_without_current_ascii_char(lexer);
-    lexer.identifier_unicode_escape_sequence(&mut builder, true);
-    let text = lexer.identifier_name(builder);
-    Kind::match_keyword(text)
+    lexer.identifier_backslash_handler()
 });
 
 // ]
