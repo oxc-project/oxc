@@ -252,7 +252,7 @@ impl<'a> Prettier<'a> {
 
     fn check_object_expression(&self, obj_expr: &ObjectExpression<'a>) -> bool {
         let mut arrow_expr = None;
-        for kind in self.nodes.iter().rev() {
+        for kind in self.stack.iter().rev() {
             if let AstKind::ArrowExpression(e) = kind {
                 e.get_expression();
                 arrow_expr = Some(e);
@@ -295,7 +295,7 @@ impl<'a> Prettier<'a> {
         if ident.name != "let" {
             return false;
         }
-        for kind in self.nodes.iter().rev() {
+        for kind in self.stack.iter().rev() {
             if let AstKind::ForOfStatement(stmt) = kind {
                 if let ForStatementLeft::AssignmentTarget(
                     AssignmentTarget::SimpleAssignmentTarget(
@@ -325,7 +325,7 @@ impl<'a> Prettier<'a> {
         if !matches!(&expr.object, Expression::Identifier(ident) if ident.name == "let") {
             return false;
         }
-        let Some(statement) = self.nodes.iter().rev().find(|node| {
+        let Some(statement) = self.stack.iter().rev().find(|node| {
             matches!(
                 node,
                 AstKind::ExpressionStatement(_)
@@ -360,7 +360,7 @@ impl<'a> Prettier<'a> {
     }
 
     fn check_object_function_class(&self, span: Span) -> bool {
-        for ast_kind in self.nodes.iter().rev() {
+        for ast_kind in self.stack.iter().rev() {
             if let AstKind::ExpressionStatement(e) = ast_kind {
                 if Self::starts_with_no_lookahead_token(&e.expression, span) {
                     return true;
@@ -524,9 +524,9 @@ impl<'a> Prettier<'a> {
         }
 
         let lhs = Self::get_left_side_path_name(kind);
-        self.nodes.push(lhs);
+        self.stack.push(lhs);
         let result = self.should_wrap_function_for_export_default();
-        self.nodes.pop();
+        self.stack.pop();
         result
     }
 
@@ -563,7 +563,7 @@ impl<'a> Prettier<'a> {
 
     fn is_path_in_for_statement_initializer(&self, span: Span) -> bool {
         let mut node = Some(span);
-        let mut parents = self.nodes.iter().rev();
+        let mut parents = self.stack.iter().rev();
         while let Some(n) = node {
             let parent = parents.next();
             if let Some(AstKind::ForStatement(stmt)) = parent {
