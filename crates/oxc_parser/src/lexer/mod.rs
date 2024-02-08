@@ -25,6 +25,7 @@ mod token;
 mod trivia_builder;
 mod typescript;
 mod unicode;
+mod whitespace;
 
 use rustc_hash::FxHashMap;
 use std::collections::VecDeque;
