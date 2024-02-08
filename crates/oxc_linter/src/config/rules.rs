@@ -12,8 +12,6 @@ use std::ops::Deref;
 ///   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 ///   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 /// https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12
-///
-/// Here we deserialize it as a Vec of props AllowWarnDeny
 #[derive(Debug, Clone, Default)]
 pub struct ESLintRules(Vec<ESLintRule>);
 
@@ -25,7 +23,10 @@ pub struct ESLintRule {
     pub config: Option<serde_json::Value>,
 }
 
-// Manulally implement Deserialize because the type is a bit complex...
+// Manually implement Deserialize because the type is a bit complex...
+// - Handle single value form and array form
+// - SeverityConf into AllowWarnDeny
+// - Align plugin names
 impl<'de> Deserialize<'de> for ESLintRules {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
