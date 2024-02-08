@@ -5,50 +5,20 @@ use serde::Deserialize;
 pub struct ESLintSettingsReact {
     #[serde(default)]
     #[serde(rename = "formComponents")]
-    form_components: Vec<FormComponent>,
+    form_components: Vec<CustomComponent>,
     #[serde(default)]
     #[serde(rename = "linkComponents")]
-    link_components: Vec<LinkComponent>,
+    link_components: Vec<CustomComponent>,
     // TODO: More properties should be added
 }
 
 impl ESLintSettingsReact {
     pub fn get_form_component_attr(&self, name: &str) -> Option<Vec<String>> {
-        for item in &self.form_components {
-            let comp = match item {
-                FormComponent::NameOnly(name) => (name, vec![]),
-                FormComponent::ObjectWithOneAttr { name, form_attribute } => {
-                    (name, vec![form_attribute.to_string()])
-                }
-                FormComponent::ObjectWithMaynAttrs { name, form_attribute } => {
-                    (name, form_attribute.clone())
-                }
-            };
-            if comp.0 == name {
-                return Some(comp.1);
-            }
-        }
-
-        None
+        get_component_attr_by_name(&self.form_components, name)
     }
 
     pub fn get_link_component_attr(&self, name: &str) -> Option<Vec<String>> {
-        for item in &self.link_components {
-            let comp = match item {
-                LinkComponent::NameOnly(name) => (name, vec![]),
-                LinkComponent::ObjectWithOneAttr { name, link_attribute } => {
-                    (name, vec![link_attribute.to_string()])
-                }
-                LinkComponent::ObjectWithMaynAttrs { name, link_attribute } => {
-                    (name, link_attribute.clone())
-                }
-            };
-            if comp.0 == name {
-                return Some(comp.1);
-            }
-        }
-
-        None
+        get_component_attr_by_name(&self.link_components, name)
     }
 }
 
@@ -56,35 +26,37 @@ impl ESLintSettingsReact {
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
-enum FormComponent {
+enum CustomComponent {
     NameOnly(String),
     ObjectWithOneAttr {
         name: String,
-        #[serde(rename = "formAttribute")]
-        form_attribute: String,
+        #[serde(alias = "formAttribute", alias = "linkAttribute")]
+        attributes: String,
     },
     ObjectWithMaynAttrs {
         name: String,
-        #[serde(rename = "formAttribute")]
-        form_attribute: Vec<String>,
+        #[serde(alias = "formAttribute", alias = "linkAttribute")]
+        attributes: Vec<String>,
     },
 }
 
-// It seems above and below are almost the same,
-// but original code uses different names. So keep it as is.
+fn get_component_attr_by_name(
+    components: &Vec<CustomComponent>,
+    name: &str,
+) -> Option<Vec<String>> {
+    for item in components {
+        let comp = match item {
+            CustomComponent::NameOnly(name) => (name, vec![]),
+            CustomComponent::ObjectWithOneAttr { name, attributes } => {
+                (name, vec![attributes.to_string()])
+            }
+            CustomComponent::ObjectWithMaynAttrs { name, attributes } => (name, attributes.clone()),
+        };
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(untagged)]
-enum LinkComponent {
-    NameOnly(String),
-    ObjectWithOneAttr {
-        name: String,
-        #[serde(rename = "linkAttribute")]
-        link_attribute: String,
-    },
-    ObjectWithMaynAttrs {
-        name: String,
-        #[serde(rename = "linkAttribute")]
-        link_attribute: Vec<String>,
-    },
+        if comp.0 == name {
+            return Some(comp.1);
+        }
+    }
+
+    None
 }
