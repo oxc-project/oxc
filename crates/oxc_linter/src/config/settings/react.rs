@@ -33,7 +33,7 @@ enum CustomComponent {
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
         attribute: String,
     },
-    ObjectWithMaynAttrs {
+    ObjectWithManyAttrs {
         name: String,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
         attributes: Vec<String>,
@@ -50,7 +50,7 @@ fn get_component_attrs_by_name(
             CustomComponent::ObjectWithOneAttr { name, attribute } => {
                 (name, vec![attribute.to_string()])
             }
-            CustomComponent::ObjectWithMaynAttrs { name, attributes } => (name, attributes.clone()),
+            CustomComponent::ObjectWithManyAttrs { name, attributes } => (name, attributes.clone()),
         };
 
         if comp.0 == name {
