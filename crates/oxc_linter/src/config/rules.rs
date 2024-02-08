@@ -25,6 +25,7 @@ pub struct ESLintRule {
     pub config: Option<serde_json::Value>,
 }
 
+// Manulally implement Deserialize because the type is a bit complex...
 impl<'de> Deserialize<'de> for ESLintRules {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -36,7 +37,7 @@ impl<'de> Deserialize<'de> for ESLintRules {
             type Value = ESLintRules;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("Map of SeverityConf or [SeverityConf, ...any[]]")
+                formatter.write_str("Record<string, SeverityConf | [SeverityConf, ...any[]]>")
             }
 
             fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
@@ -95,7 +96,6 @@ fn parse_rule_value(
 
             // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-
             // e.g. ["warn"], [0]
             let config = if v.len() == 1 {
                 None

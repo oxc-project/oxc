@@ -11,14 +11,13 @@ pub struct ESLintEnv(FxHashMap<String, bool>);
 
 impl ESLintEnv {
     pub fn from_vec(env: Vec<String>) -> Self {
-        let mut map = FxHashMap::default();
-        for e in env {
-            map.insert(e, true);
-        }
+        let map = env.into_iter().map(|key| (key, true)).collect();
+
         Self(map)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &str> + '_ {
+        // Filter out false values
         self.0.iter().filter(|(_, v)| **v).map(|(k, _)| k.as_str())
     }
 }
@@ -27,6 +26,7 @@ impl Default for ESLintEnv {
     fn default() -> Self {
         let mut map = FxHashMap::default();
         map.insert("builtin".to_string(), true);
+
         Self(map)
     }
 }

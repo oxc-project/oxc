@@ -47,13 +47,14 @@ impl ESLintSettingsNext {
 /// https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-
 #[derive(Debug, Deserialize, Default)]
 pub struct ESLintSettingsReact {
-    // TODO: More properties should be added
     #[serde(default)]
     #[serde(rename = "formComponents")]
     form_components: Vec<FormComponent>,
     #[serde(default)]
     #[serde(rename = "linkComponents")]
     link_components: Vec<LinkComponent>,
+
+    // TODO: More properties should be added
 }
 
 impl ESLintSettingsReact {
@@ -125,6 +126,9 @@ enum FormComponent {
         form_attribute: Vec<String>,
     },
 }
+
+// It seems above and below are almost the same,
+// but original code uses different names. So keep it as is.
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(untagged)]
