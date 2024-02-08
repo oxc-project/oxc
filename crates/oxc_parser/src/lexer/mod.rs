@@ -288,8 +288,24 @@ impl<'a> Lexer<'a> {
     /// Whitespace and line terminators are skipped
     fn read_next_token(&mut self) -> Kind {
         loop {
-            let offset = self.offset();
-            self.token.start = offset;
+            if self.source.is_eof() {
+                self.token.start = self.offset();
+                return Kind::Eof;
+            }
+
+            // A single space between tokens is common, so consume one it if it's there.
+            // This is implemented to be branchless.
+            // SAFETY: We just checked not at EOF, so safe to peek and consume a byte.
+            // `advance_by` can only be 0 or 1.
+            // It's only 1 if next byte is an ASCII space, so then safe to advance past it.
+            // So either way, we're guaranteed to end up on a UTF-8 character boundary.
+            unsafe {
+                let byte = self.source.peek_byte_unchecked();
+                let advance_by = usize::from(byte == b' ');
+                self.source.set_position(self.source.position().add(advance_by));
+            }
+
+            self.token.start = self.offset();
 
             let byte = if let Some(byte) = self.source.peek_byte() {
                 byte
