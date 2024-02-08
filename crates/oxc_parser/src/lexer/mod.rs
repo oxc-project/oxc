@@ -137,7 +137,7 @@ impl<'a> Lexer<'a> {
         Self::new(allocator, source_text, source_type, unique)
     }
 
-    /// Remaining string from `Chars`
+    /// Remaining string from `Source`
     pub fn remaining(&self) -> &'a str {
         self.source.remaining()
     }
