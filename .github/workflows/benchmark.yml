@@ -7,16 +7,16 @@ on:
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
       - '!crates/oxc_codegen'
-      - '!.github/workflows/benchmark.yml'
   push:
     branches:
       - main
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
+      - '.github/workflows/benchmark.yml'
       - '!crates/oxc_codegen'
-      - '!.github/workflows/benchmark.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -29,11 +29,15 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: moonrepo/setup-rust@v1 # Cache everything to speed up compilation
         with:
-          cache-base: main
+          progress: false
+          persist-credentials: false
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: 'benchmark'
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
@@ -42,8 +46,18 @@ jobs:
 
       - name: Build Benchmark
         env:
-          RUSTFLAGS: "-C debuginfo=2 -C strip=none"
-        run: cargo codspeed build --features codspeed -p oxc_benchmark
+          RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
+        shell: bash
+        run: |
+          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier
+          mkdir -p target/codspeed/oxc_benchmark/
+          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
+          mv target/release/deps/parser-* target/codspeed/oxc_benchmark
+          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark
+          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
+          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
+          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
+          rm -rf target/codspeed/oxc_benchmark/*.d
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v2

@@ -19,6 +19,10 @@ bench   = false
 doctest = false
 
 [[bench]]
+name    = "lexer"
+harness = false
+
+[[bench]]
 name    = "parser"
 harness = false
 
@@ -41,10 +45,6 @@ harness = false
 
 [[bench]]
 name    = "minifier"
-harness = false
-
-[[bench]]
-name    = "lexer"
 harness = false
 
 [dependencies]
