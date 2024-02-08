@@ -29,6 +29,7 @@ assert-unchecked = { workspace = true }
 bitflags         = { workspace = true }
 rustc-hash       = { workspace = true }
 num-bigint       = { workspace = true }
+seq-macro        = { workspace = true }
 
 [dev-dependencies]
 oxc_ast    = { workspace = true, features = ["serde"] }

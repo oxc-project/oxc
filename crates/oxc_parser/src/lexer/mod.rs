@@ -16,6 +16,7 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+mod search;
 mod source;
 mod string;
 mod string_builder;
