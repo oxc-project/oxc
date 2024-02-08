@@ -153,14 +153,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
-    ///
-    /// # SAFETY
-    /// `checkpoint` must have been created from this `Lexer`.
-    #[allow(clippy::missing_safety_doc)] // Clippy is wrong!
-    pub unsafe fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
-        // SAFETY: Caller guarantees `checkpoint` was created from this `Lexer`,
-        // and therefore `checkpoint.position` was created from `self.source`.
         self.source.set_position(checkpoint.position);
         self.token = checkpoint.token;
         self.lookahead.clear();
@@ -178,10 +172,7 @@ impl<'a> Lexer<'a> {
         let position = self.source.position();
 
         if let Some(lookahead) = self.lookahead.back() {
-            // SAFETY: `self.lookahead` only contains lookaheads created by this `Lexer`.
-            // `self.source` never changes, so `lookahead.position` must have been created
-            // from `self.source`.
-            unsafe { self.source.set_position(lookahead.position) };
+            self.source.set_position(lookahead.position);
         }
 
         for _i in self.lookahead.len()..n {
@@ -197,8 +188,7 @@ impl<'a> Lexer<'a> {
         // read, so that's not possible. So no need to restore `self.token` here.
         // It's already in same state as it was at start of this function.
 
-        // SAFETY: `position` was created above from `self.source`. `self.source` never changes.
-        unsafe { self.source.set_position(position) };
+        self.source.set_position(position);
 
         self.lookahead[n - 1].token
     }
@@ -211,10 +201,7 @@ impl<'a> Lexer<'a> {
     /// Main entry point
     pub fn next_token(&mut self) -> Token {
         if let Some(lookahead) = self.lookahead.pop_front() {
-            // SAFETY: `self.lookahead` only contains lookaheads created by this `Lexer`.
-            // `self.source` never changes, so `lookahead.position` must have been created
-            // from `self.source`.
-            unsafe { self.source.set_position(lookahead.position) };
+            self.source.set_position(lookahead.position);
             return lookahead.token;
         }
         let kind = self.read_next_token();

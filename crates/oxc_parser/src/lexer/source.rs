@@ -140,14 +140,17 @@ impl<'a> Source<'a> {
     }
 
     /// Move current position.
-    ///
-    /// # SAFETY
-    /// `pos` must be created from this `Source`, not another `Source`.
-    /// If this is the case, the invariants of `Source` are guaranteed to be upheld.
     #[inline]
-    pub(super) unsafe fn set_position(&mut self, pos: SourcePosition) {
-        // `SourcePosition` always upholds the invariants of `Source`,
-        // as long as it's created from this `Source`.
+    pub(super) fn set_position(&mut self, pos: SourcePosition) {
+        // `SourcePosition` always upholds the invariants of `Source`, as long as it's created
+        // from this `Source`. `SourcePosition`s can only be created from a `Source`.
+        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
+        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
+        // `Source` originated on another thread can "jump" onto this one.
+        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
+        // from this `Source`.
+        // This guarantee is what allows this function to be safe.
+
         // SAFETY: `read_u8`'s contract is upheld by:
         // * The preceding checks that `pos.ptr` >= `self.start` and < `self.end`.
         // * `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
@@ -157,7 +160,8 @@ impl<'a> Source<'a> {
         debug_assert!(
             pos.ptr >= self.start
                 && pos.ptr <= self.end
-                && (pos.ptr == self.end || !is_utf8_cont_byte(read_u8(pos.ptr)))
+                // SAFETY: See above
+                && (pos.ptr == self.end || !is_utf8_cont_byte(unsafe { read_u8(pos.ptr) }))
         );
         self.ptr = pos.ptr;
     }
