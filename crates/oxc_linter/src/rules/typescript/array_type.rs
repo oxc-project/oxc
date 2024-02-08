@@ -33,24 +33,24 @@ declare_oxc_lint!(
 
 #[derive(Debug, Diagnostic, Error)]
 pub enum ArrayTypeDiagnostic {
-    #[error("Array type using '{0}{2}[]' is forbidden. Use '{1}<{2}>' instead.")]
+    #[error("typescript-eslint(array-type): Array type using '{0}{2}[]' is forbidden. Use '{1}<{2}>' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
     Generic(String, String, String, #[label] Span),
 
     #[error(
-        "Array type using '{0}{2}[]' is forbidden for non-simple types. Use '{1}<{2}>' instead."
+        "typescript-eslint(array-type): Array type using '{0}{2}[]' is forbidden for non-simple types. Use '{1}<{2}>' instead."
     )]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
     GenericSimple(String, String, String, #[label] Span),
 
-    #[error("Array type using '{1}<{2}>' is forbidden. Use '{0}{2}[]' instead.")]
+    #[error("typescript-eslint(array-type): Array type using '{1}<{2}>' is forbidden. Use '{0}{2}[]' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
     Array(String, String, String, #[label] Span),
 
-    #[error("Array type using '{1}<{2}>' is forbidden for simple types. Use '{0}{2}[]' instead.")]
+    #[error("typescript-eslint(array-type): Array type using '{1}<{2}>' is forbidden for simple types. Use '{0}{2}[]' instead.")]
     #[diagnostic(severity(warning))]
     // readonlyPrefix className type
     ArraySimple(String, String, String, #[label] Span),
