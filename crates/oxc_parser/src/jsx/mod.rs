@@ -7,9 +7,9 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 
-use crate::{diagnostics, lexer::Kind, Context, Parser};
+use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Result<Expression<'a>> {
         if self.peek_at(Kind::RAngle) {
             self.parse_jsx_fragment(false).map(Expression::JSXFragment)

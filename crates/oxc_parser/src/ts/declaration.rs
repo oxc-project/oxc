@@ -1,6 +1,6 @@
-use crate::{lexer::Kind, Parser};
+use crate::{lexer::Kind, ParserImpl};
 
-impl<'a> Parser<'a> {
+impl<'a> ParserImpl<'a> {
     /// Check if the parser is at a start of a declaration
     fn at_start_of_ts_declaration_worker(&mut self) -> bool {
         loop {
@@ -80,11 +80,12 @@ mod test_is_declaration {
     use oxc_span::SourceType;
 
     use super::*;
+    use crate::ParserOptions;
 
     fn run_check(source: &str, expected: bool) {
         let alloc = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let mut parser = Parser::new(&alloc, source, source_type);
+        let mut parser = ParserImpl::new(&alloc, source, source_type, ParserOptions::default());
         // Get the parser to the first token.
         parser.bump_any();
         assert_eq!(expected, parser.at_start_of_ts_declaration());
