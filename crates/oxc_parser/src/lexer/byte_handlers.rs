@@ -203,8 +203,7 @@ ascii_byte_handler!(ISP(lexer) {
 // '\r' '\n'
 ascii_byte_handler!(LIN(lexer) {
     lexer.consume_char();
-    lexer.token.is_on_new_line = true;
-    Kind::Skip
+    lexer.line_break_handler()
 });
 
 // !
