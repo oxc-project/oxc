@@ -44,7 +44,7 @@ pub use self::{
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use crate::diagnostics;
+use crate::{diagnostics, UniquePromise};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
@@ -97,8 +97,17 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
-        let source = Source::new(source_text);
+    /// Create new `Lexer`.
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
+    /// on a single thread at one time.
+    pub(super) fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        unique: UniquePromise,
+    ) -> Self {
+        let source = Source::new(source_text, unique);
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
@@ -114,6 +123,18 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
         }
+    }
+
+    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
+    /// This function must NOT be exposed in public API as it breaks safety invariants.
+    #[cfg(feature = "benchmarking")]
+    pub fn new_for_benchmarks(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+    ) -> Self {
+        let unique = UniquePromise::new_for_tests();
+        Self::new(allocator, source_text, source_type, unique)
     }
 
     /// Remaining string from `Chars`
