@@ -21,43 +21,49 @@ pub enum ObjectLike<'a, 'b> {
 impl<'a, 'b> ObjectLike<'a, 'b> {
     fn len(&self) -> usize {
         match self {
-            ObjectLike::Expression(object) => object.properties.len(),
-            ObjectLike::AssignmentTarget(object) => object.properties.len(),
-            ObjectLike::Pattern(object) => object.properties.len(),
+            Self::Expression(expr) => expr.properties.len(),
+            Self::AssignmentTarget(target) => target.properties.len(),
+            Self::Pattern(object) => object.properties.len(),
+        }
+    }
+
+    fn has_rest(&self) -> bool {
+        match self {
+            Self::Expression(expr) => false,
+            Self::AssignmentTarget(target) => target.rest.is_some(),
+            Self::Pattern(object) => object.rest.is_some(),
         }
     }
 
     fn is_empty(&self) -> bool {
         match self {
-            ObjectLike::Expression(object) => object.properties.is_empty(),
-            ObjectLike::AssignmentTarget(object) => object.is_empty(),
-            ObjectLike::Pattern(object) => object.is_empty(),
+            Self::Expression(object) => object.properties.is_empty(),
+            Self::AssignmentTarget(object) => object.is_empty(),
+            Self::Pattern(object) => object.is_empty(),
         }
     }
 
     fn is_object_pattern(&self) -> bool {
-        matches!(self, ObjectLike::Pattern(_))
+        matches!(self, Self::Pattern(_))
     }
 
     fn span(&self) -> Span {
         match self {
-            ObjectLike::Expression(object) => object.span,
-            ObjectLike::AssignmentTarget(object) => object.span,
-            ObjectLike::Pattern(object) => object.span,
+            Self::Expression(object) => object.span,
+            Self::AssignmentTarget(object) => object.span,
+            Self::Pattern(object) => object.span,
         }
     }
 
     fn iter(&'b self, p: &'b mut Prettier<'a>) -> Box<dyn Iterator<Item = Doc<'a>> + 'b> {
         match self {
-            ObjectLike::Expression(object) => {
+            Self::Expression(object) => {
                 Box::new(object.properties.iter().map(|prop| prop.format(p)))
             }
-            ObjectLike::AssignmentTarget(object) => {
+            Self::AssignmentTarget(object) => {
                 Box::new(object.properties.iter().map(|prop| prop.format(p)))
             }
-            ObjectLike::Pattern(object) => {
-                Box::new(object.properties.iter().map(|prop| prop.format(p)))
-            }
+            Self::Pattern(object) => Box::new(object.properties.iter().map(|prop| prop.format(p))),
         }
     }
 }
@@ -78,34 +84,40 @@ pub(super) fn print_object_properties<'a>(
         parts.push(ss!("{"));
         parts.push(Doc::Indent({
             let len = object.len();
+            let has_rest = object.has_rest();
             let mut indent_parts = p.vec();
             indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
             for (i, doc) in object.iter(p).enumerate() {
                 indent_parts.push(doc);
-                if i < len - 1 {
-                    indent_parts.push(ss!(","));
-                    indent_parts.push(line!());
+                if i == len - 1 && !has_rest {
+                    break;
                 }
+                indent_parts.push(ss!(","));
+                indent_parts.push(line!());
             }
             match object {
-                ObjectLike::Expression(object) => {}
-                ObjectLike::AssignmentTarget(object) => {
-                    if let Some(rest) = &object.rest {
+                ObjectLike::Expression(_) => {}
+                ObjectLike::AssignmentTarget(target) => {
+                    if let Some(rest) = &target.rest {
                         indent_parts.push(ss!("..."));
                         indent_parts.push(rest.format(p));
                     }
                 }
                 ObjectLike::Pattern(object) => {
                     if let Some(rest) = &object.rest {
-                        indent_parts.push(ss!(","));
-                        indent_parts.push(line!());
                         indent_parts.push(rest.format(p));
                     }
                 }
             }
             indent_parts
         }));
-        if p.should_print_es5_comma() {
+        if p.should_print_es5_comma()
+            && match object {
+                ObjectLike::Expression(expr) => true,
+                ObjectLike::AssignmentTarget(target) => true,
+                ObjectLike::Pattern(pattern) => pattern.rest.is_none(),
+            }
+        {
             parts.push(if_break!(p, ",", "", None));
         }
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });

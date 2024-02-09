@@ -1,4 +1,4 @@
-Compatibility: 235/562 (41.81%)
+Compatibility: 236/562 (41.99%)
 
 # Failed
 
@@ -378,9 +378,6 @@ Compatibility: 235/562 (41.81%)
 ### require-amd
 * require-amd/named-amd-module.js
 * require-amd/require.js
-
-### rest
-* rest/trailing-commas.js
 
 ### return
 * return/binaryish.js
