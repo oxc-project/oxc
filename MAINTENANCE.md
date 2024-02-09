@@ -28,19 +28,19 @@ Manually edit all versions specified by `[workspace.dependencies]` in Cargo.toml
 also manually edit each of the crates version.
 
 ```bash
-sed -i '' 's/0.5.0/0.6.0/' Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_allocator/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_ast/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_codegen/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_diagnostics/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_index/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_minifier/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_parser/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_semantic/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_span/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_syntax/Cargo.toml
-sed -i '' 's/0.5.0/0.6.0/' crates/oxc_transformer/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_allocator/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_ast/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_codegen/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_diagnostics/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_index/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_minifier/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_parser/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_semantic/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_span/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_syntax/Cargo.toml
+sed -i '' 's/0.6.0/0.7.0/' crates/oxc_transformer/Cargo.toml
 
 cargo build
 git add .
