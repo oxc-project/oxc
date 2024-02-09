@@ -132,6 +132,49 @@ macro_rules! ascii_byte_handler {
     };
 }
 
+#[allow(clippy::unnecessary_safety_comment)]
+/// Macro for defining byte handler for an ASCII character which is start of an identifier
+/// (`a`-`z`, `A`-`Z`, `$` or `_`).
+///
+/// Macro calls `Lexer::identifier_name_handler` to get the text of the identifier,
+/// and slices off first character.
+///
+/// # SAFETY
+/// Only use this macro to define byte handlers for ASCII characters.
+///
+/// ```
+/// ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
+///   "et" => Kind::Get,
+///   "lobal" => Kind::Global,
+///   _ => Kind::Ident,
+/// });
+/// ```
+///
+/// expands to:
+///
+/// ```
+/// const L_G: ByteHandler = {
+///   #[allow(non_snake_case)]
+///   fn L_G(lexer: &mut Lexer) -> Kind {
+///     let id_without_first_char = &lexer.identifier_name_handler()[1..];
+///     match id_without_first_char {
+///       "et" => Kind::Get,
+///       "lobal" => Kind::Global,
+///       _ => Kind::Ident,
+///     }
+///   }
+///   L_G
+/// };
+/// ```
+macro_rules! ascii_identifier_handler {
+    ($id:ident($str:ident) $body:expr) => {
+        byte_handler!($id(lexer) {
+            let $str = &lexer.identifier_name_handler()[1..];
+            $body
+        });
+    };
+}
+
 // `\0` `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
@@ -196,8 +239,7 @@ ascii_byte_handler!(HAS(lexer) {
 });
 
 // `A..=Z`, `a..=z` (except special cases below), `_`, `$`
-ascii_byte_handler!(IDT(lexer) {
-    lexer.identifier_name_handler();
+ascii_identifier_handler!(IDT(_id_without_first_char) {
     Kind::Ident
 });
 
@@ -461,7 +503,7 @@ ascii_byte_handler!(TLD(lexer) {
     Kind::Tilde
 });
 
-ascii_byte_handler!(L_A(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_A(id_without_first_char) match id_without_first_char {
     "wait" => Kind::Await,
     "sync" => Kind::Async,
     "bstract" => Kind::Abstract,
@@ -473,14 +515,14 @@ ascii_byte_handler!(L_A(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_B(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char {
     "reak" => Kind::Break,
     "oolean" => Kind::Boolean,
     "igint" => Kind::BigInt,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_C(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char {
     "onst" => Kind::Const,
     "lass" => Kind::Class,
     "ontinue" => Kind::Continue,
@@ -490,7 +532,7 @@ ascii_byte_handler!(L_C(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_D(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char {
     "o" => Kind::Do,
     "elete" => Kind::Delete,
     "eclare" => Kind::Declare,
@@ -499,7 +541,7 @@ ascii_byte_handler!(L_D(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_E(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char {
     "lse" => Kind::Else,
     "num" => Kind::Enum,
     "xport" => Kind::Export,
@@ -507,7 +549,7 @@ ascii_byte_handler!(L_E(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_F(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char {
     "unction" => Kind::Function,
     "alse" => Kind::False,
     "or" => Kind::For,
@@ -516,13 +558,13 @@ ascii_byte_handler!(L_F(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_G(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
     "et" => Kind::Get,
     "lobal" => Kind::Global,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_I(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_I(id_without_first_char) match id_without_first_char {
     "f" => Kind::If,
     "nstanceof" => Kind::Instanceof,
     "n" => Kind::In,
@@ -535,23 +577,23 @@ ascii_byte_handler!(L_I(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_K(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_K(id_without_first_char) match id_without_first_char {
     "eyof" => Kind::KeyOf,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_L(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_L(id_without_first_char) match id_without_first_char {
     "et" => Kind::Let,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_M(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char {
     "eta" => Kind::Meta,
     "odule" => Kind::Module,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_N(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char {
     "ull" => Kind::Null,
     "ew" => Kind::New,
     "umber" => Kind::Number,
@@ -560,7 +602,7 @@ ascii_byte_handler!(L_N(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_O(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char {
     "f" => Kind::Of,
     "bject" => Kind::Object,
     "ut" => Kind::Out,
@@ -568,7 +610,7 @@ ascii_byte_handler!(L_O(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_P(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char {
     "ackage" => Kind::Package,
     "rivate" => Kind::Private,
     "rotected" => Kind::Protected,
@@ -576,14 +618,14 @@ ascii_byte_handler!(L_P(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_R(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_R(id_without_first_char) match id_without_first_char {
     "eturn" => Kind::Return,
     "equire" => Kind::Require,
     "eadonly" => Kind::Readonly,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_S(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_S(id_without_first_char) match id_without_first_char {
     "et" => Kind::Set,
     "uper" => Kind::Super,
     "witch" => Kind::Switch,
@@ -594,7 +636,7 @@ ascii_byte_handler!(L_S(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_T(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_T(id_without_first_char) match id_without_first_char {
     "his" => Kind::This,
     "rue" => Kind::True,
     "hrow" => Kind::Throw,
@@ -605,7 +647,7 @@ ascii_byte_handler!(L_T(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_U(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_U(id_without_first_char) match id_without_first_char {
     "ndefined" => Kind::Undefined,
     "sing" => Kind::Using,
     "nique" => Kind::Unique,
@@ -613,19 +655,19 @@ ascii_byte_handler!(L_U(lexer) match &lexer.identifier_name_handler()[1..] {
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_V(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_V(id_without_first_char) match id_without_first_char {
     "ar" => Kind::Var,
     "oid" => Kind::Void,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_W(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_W(id_without_first_char) match id_without_first_char {
     "hile" => Kind::While,
     "ith" => Kind::With,
     _ => Kind::Ident,
 });
 
-ascii_byte_handler!(L_Y(lexer) match &lexer.identifier_name_handler()[1..] {
+ascii_identifier_handler!(L_Y(id_without_first_char) match id_without_first_char {
     "ield" => Kind::Yield,
     _ => Kind::Ident,
 });
