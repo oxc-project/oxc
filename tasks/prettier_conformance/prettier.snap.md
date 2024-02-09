@@ -1,4 +1,4 @@
-Compatibility: 239/562 (42.53%)
+Compatibility: 219/562 (38.97%)
 
 # Failed
 
@@ -43,6 +43,9 @@ Compatibility: 239/562 (42.53%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
+* assignment/issue-1419.js
+* assignment/issue-2482-1.js
+* assignment/issue-2482-2.js
 * assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
@@ -59,6 +62,7 @@ Compatibility: 239/562 (42.53%)
 
 ### async
 * async/conditional-expression.js
+* async/exponentiation.js
 * async/inline-await.js
 * async/nested.js
 
@@ -66,12 +70,21 @@ Compatibility: 239/562 (42.53%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
+* binary-expressions/equality.js
+* binary-expressions/exp.js
+* binary-expressions/if.js
+* binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
+* binary-expressions/math.js
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
+* binary-expressions/unary.js
+
+### binary_math
+* binary_math/parens.js
 
 ### break-calls
 * break-calls/break.js
@@ -93,6 +106,7 @@ Compatibility: 239/562 (42.53%)
 * chain-expression/issue-15785-3.js
 * chain-expression/issue-15916.js
 * chain-expression/test-3.js
+* chain-expression/test-4.js
 * chain-expression/test.js
 
 ### class-comment
@@ -102,8 +116,12 @@ Compatibility: 239/562 (42.53%)
 ### class-extends
 * class-extends/extends.js
 
+### class-static-block
+* class-static-block/with-line-breaks.js
+
 ### classes
 * classes/assignment.js
+* classes/binary.js
 * classes/empty.js
 * classes/method.js
 * classes/property.js
@@ -226,6 +244,7 @@ Compatibility: 239/562 (42.53%)
 * for/continue-and-break-comment-without-blocks.js
 
 ### function
+* function/function_expression.js
 * function/issue-10277.js
 
 ### function-comments
@@ -260,6 +279,9 @@ Compatibility: 239/562 (42.53%)
 ### import
 * import/comments.js
 * import/empty-import.js
+
+### in
+* in/arrow-function-invalid.js
 
 ### label
 * label/comment.js
@@ -348,6 +370,7 @@ Compatibility: 239/562 (42.53%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
+* objects/right-break.js
 
 ### optional-chaining
 * optional-chaining/chaining.js
@@ -367,6 +390,9 @@ Compatibility: 239/562 (42.53%)
 * preserve-line/comments.js
 * preserve-line/member-chain.js
 * preserve-line/parameter-list.js
+
+### private-in
+* private-in/private-in.js
 
 ### quote-props
 * quote-props/numeric-separator.js
@@ -464,8 +490,12 @@ Compatibility: 239/562 (42.53%)
 * try/catch.js
 * try/try.js
 
+### unary
+* unary/series.js
+
 ### unary-expression
 * unary-expression/comments.js
+* unary-expression/urnary_expression.js
 
 ### unicode
 * unicode/combining-characters.js
