@@ -86,3 +86,10 @@ expression: anchor_is_valid
    ╰────
   help: Use a `button` element instead of an `a` element.
 
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid):  The a element has `href` and `onClick`.
+   ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <Link href='#' onClick={() => void 0} />
+   ·  ────
+   ╰────
+  help: Use a `button` element instead of an `a` element.
+

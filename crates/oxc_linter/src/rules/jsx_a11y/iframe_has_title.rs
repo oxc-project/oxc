@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
     AstNode,
 };
 
@@ -71,7 +71,7 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let name = iden.name.as_str();
+        let Some(name) = get_element_type(ctx, jsx_el) else { return };
 
         if name != "iframe" {
             return;
@@ -127,29 +127,47 @@ fn test() {
 
     let pass = vec![
         // DEFAULT ELEMENT TESTS
-        (r"<div />;", None),
-        (r"<iframe title='Unique title' />", None),
-        (r"<iframe title={foo} />", None),
-        (r"<FooComponent />", None),
-        // TODO: When polymorphic components are supported
+        (r"<div />;", None, None),
+        (r"<iframe title='Unique title' />", None, None),
+        (r"<iframe title={foo} />", None, None),
+        (r"<FooComponent />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
-        // (r"<FooComponent title='Unique title' />", None),
+        (
+            r"<FooComponent title='Unique title' />",
+            None,
+            Some(serde_json::json!({
+              "jsx-a11y": {
+                "components": {
+                  "FooComponent": "iframe",
+                },
+              },
+            })),
+        ),
     ];
 
     let fail = vec![
         // DEFAULT ELEMENT TESTS
-        (r"<iframe />", None),
-        (r"<iframe {...props} />", None),
-        (r"<iframe title={undefined} />", None),
-        (r"<iframe title='' />", None),
-        (r"<iframe title={false} />", None),
-        (r"<iframe title={true} />", None),
-        (r"<iframe title={''} />", None),
-        (r"<iframe title={``} />", None),
-        (r"<iframe title={42} />", None),
-        // TODO: When polymorphic components are supported
+        (r"<iframe />", None, None),
+        (r"<iframe {...props} />", None, None),
+        (r"<iframe title={undefined} />", None, None),
+        (r"<iframe title='' />", None, None),
+        (r"<iframe title={false} />", None, None),
+        (r"<iframe title={true} />", None, None),
+        (r"<iframe title={''} />", None, None),
+        (r"<iframe title={``} />", None, None),
+        (r"<iframe title={42} />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
-        // (r"<FooComponent />", None),
+        (
+            r"<FooComponent />",
+            None,
+            Some(serde_json::json!({
+              "jsx-a11y": {
+                "components": {
+                  "FooComponent": "iframe",
+                },
+              },
+            })),
+        ),
     ];
 
     Tester::new(IframeHasTitle::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();

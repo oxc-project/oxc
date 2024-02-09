@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXIdentifier, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    utils::{get_element_type, has_jsx_prop_lowercase, parse_jsx_value},
     AstNode,
 };
 
@@ -47,7 +47,7 @@ impl Rule for NoAriaHiddenOnFocusable {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
         if let Some(aria_hidden_prop) = has_jsx_prop_lowercase(jsx_el, "aria-hidden") {
-            if is_aria_hidden_true(aria_hidden_prop) && is_focusable(jsx_el) {
+            if is_aria_hidden_true(aria_hidden_prop) && is_focusable(ctx, jsx_el) {
                 if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
                     ctx.diagnostic(NoAriaHiddenOnFocusableDiagnostic(boxed_attr.span));
                 }
@@ -84,10 +84,9 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 /// # Returns
 ///
 /// `true` if the element is focusable, `false` otherwise.
-fn is_focusable(element: &JSXOpeningElement) -> bool {
-    let tag_name = match &element.name {
-        JSXElementName::Identifier(JSXIdentifier { name, .. }) => name.as_str(),
-        _ => return false,
+fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
+    let Some(tag_name) = get_element_type(ctx, element) else {
+        return false;
     };
 
     if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(element, "tabIndex") {
@@ -96,7 +95,7 @@ fn is_focusable(element: &JSXOpeningElement) -> bool {
         }
     }
 
-    match tag_name {
+    match tag_name.as_str() {
         "a" | "area" => has_jsx_prop_lowercase(element, "href").is_some(),
         "button" | "input" | "select" | "textarea" => {
             has_jsx_prop_lowercase(element, "disabled").is_none()

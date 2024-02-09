@@ -1,4 +1,4 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_hidden_from_screen_reader, object_has_accessible_child},
+    utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
     AstNode,
 };
 
@@ -87,11 +87,14 @@ impl Rule for HeadingHasContent {
             return;
         };
 
-        let JSXElementName::Identifier(iden) = &jsx_el.name else {
+        // let JSXElementName::Identifier(iden) = &jsx_el.name else {
+        //     return;
+        // };
+
+        // let name = iden.name.as_str();
+        let Some(name) = &get_element_type(ctx, jsx_el) else {
             return;
         };
-
-        let name = iden.name.as_str();
 
         if !DEFAULT_COMPONENTS.iter().any(|&comp| comp == name)
             && !self
@@ -127,50 +130,61 @@ fn test() {
         }])
     }
 
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+          "jsx-a11y": {
+            "components": {
+              "CustomInput": "input",
+              "Title": "h1",
+              "Heading": "h2",
+            },
+          },
+        })
+    }
+
     let pass = vec![
         // DEFAULT ELEMENT TESTS
-        (r"<h1>Foo</h1>", None),
-        (r"<h2>Foo</h2>", None),
-        (r"<h3>Foo</h3>", None),
-        (r"<h4>Foo</h4>", None),
-        (r"<h5>Foo</h5>", None),
-        (r"<h6>Foo</h6>", None),
-        (r"<h6>123</h6>", None),
-        (r"<h1><Bar /></h1>", None),
-        (r"<h1>{foo}</h1>", None),
-        (r"<h1>{foo.bar}</h1>", None),
-        (r#"<h1 dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None),
-        (r"<h1 children={children} />", None),
+        (r"<h1>Foo</h1>", None, None),
+        (r"<h2>Foo</h2>", None, None),
+        (r"<h3>Foo</h3>", None, None),
+        (r"<h4>Foo</h4>", None, None),
+        (r"<h5>Foo</h5>", None, None),
+        (r"<h6>Foo</h6>", None, None),
+        (r"<h6>123</h6>", None, None),
+        (r"<h1><Bar /></h1>", None, None),
+        (r"<h1>{foo}</h1>", None, None),
+        (r"<h1>{foo.bar}</h1>", None, None),
+        (r#"<h1 dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None, None),
+        (r"<h1 children={children} />", None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS OPTION
-        (r"<Heading>Foo</Heading>", Some(components())),
-        (r"<Title>Foo</Title>", Some(components())),
-        (r"<Heading><Bar /></Heading>", Some(components())),
-        (r"<Heading>{foo}</Heading>", Some(components())),
-        (r"<Heading>{foo.bar}</Heading>", Some(components())),
-        (r#"<Heading dangerouslySetInnerHTML={{ __html: "foo" }} />"#, Some(components())),
-        (r"<Heading children={children} />", Some(components())),
-        (r"<h1 aria-hidden />", Some(components())),
-        // TODO: When polymorphic components are supported
+        (r"<Heading>Foo</Heading>", Some(components()), None),
+        (r"<Title>Foo</Title>", Some(components()), None),
+        (r"<Heading><Bar /></Heading>", Some(components()), None),
+        (r"<Heading>{foo}</Heading>", Some(components()), None),
+        (r"<Heading>{foo.bar}</Heading>", Some(components()), None),
+        (r#"<Heading dangerouslySetInnerHTML={{ __html: "foo" }} />"#, Some(components()), None),
+        (r"<Heading children={children} />", Some(components()), None),
+        (r"<h1 aria-hidden />", Some(components()), None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
-        // (r"<Heading>Foo</Heading>", None),
-        // (r#"<h1><CustomInput type="hidden" /></h1>"#, None),
+        (r"<Heading>Foo</Heading>", None, Some(settings())),
+        (r#"<h1><CustomInput type="hidden" /></h1>"#, None, None),
     ];
 
     let fail = vec![
         // DEFAULT ELEMENT TESTS
-        (r"<h1 />", None),
-        (r"<h1><Bar aria-hidden /></h1>", None),
-        (r"<h1>{undefined}</h1>", None),
-        (r"<h1><></></h1>", None),
-        (r#"<h1><input type="hidden" /></h1>"#, None),
+        (r"<h1 />", None, None),
+        (r"<h1><Bar aria-hidden /></h1>", None, None),
+        (r"<h1>{undefined}</h1>", None, None),
+        (r"<h1><></></h1>", None, None),
+        (r#"<h1><input type="hidden" /></h1>"#, None, None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS OPTION
-        (r"<Heading />", Some(components())),
-        (r"<Heading><Bar aria-hidden /></Heading>", Some(components())),
-        (r"<Heading>{undefined}</Heading>", Some(components())),
-        // TODO: When polymorphic components are supported
+        (r"<Heading />", Some(components()), None),
+        (r"<Heading><Bar aria-hidden /></Heading>", Some(components()), None),
+        (r"<Heading>{undefined}</Heading>", Some(components()), None),
         // CUSTOM ELEMENT TESTS FOR COMPONENTS SETTINGS
-        // (r"<Heading />", None),
-        // (r#"<h1><CustomInput type="hidden" /></h1>"#, None),
+        (r"<Heading />", None, Some(settings())),
+        // TODO: This should be failed but pass for now
+        // (r#"<h1><CustomInput type="hidden" /></h1>"#, None, Some(settings())),
     ];
 
     Tester::new(HeadingHasContent::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();

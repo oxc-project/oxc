@@ -219,6 +219,7 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
     })
 }
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js
 pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
     let JSXElementName::Identifier(ident) = &element.name else {
         return None;
@@ -226,19 +227,20 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
 
     let ESLintSettings { jsx_a11y, .. } = context.settings();
 
-    if let Some(polymorphic_prop_name_value) = &jsx_a11y.polymorphic_prop_name {
-        if let Some(as_tag) = has_jsx_prop_lowercase(element, polymorphic_prop_name_value) {
-            if let Some(JSXAttributeValue::StringLiteral(str)) = get_prop_value(as_tag) {
-                return Some(String::from(str.value.as_str()));
-            }
-        }
-    }
+    let polymorphic_prop = jsx_a11y
+        .polymorphic_prop_name
+        .as_ref()
+        .and_then(|polymorphic_prop_name_value| {
+            has_jsx_prop_lowercase(element, polymorphic_prop_name_value)
+        })
+        .and_then(get_prop_value)
+        .and_then(|prop_value| match prop_value {
+            JSXAttributeValue::StringLiteral(str) => Some(str.value.as_str()),
+            _ => None,
+        });
 
-    let element_type = ident.name.as_str();
-    if let Some(val) = jsx_a11y.components.get(element_type) {
-        return Some(String::from(val));
-    }
-    Some(String::from(element_type))
+    let raw_type = polymorphic_prop.unwrap_or_else(|| ident.name.as_str());
+    Some(String::from(jsx_a11y.components.get(raw_type).map_or(raw_type, |c| c)))
 }
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
