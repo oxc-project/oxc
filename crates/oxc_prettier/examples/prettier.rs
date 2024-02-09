@@ -4,7 +4,7 @@ use pico_args::Arguments;
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
-use oxc_prettier::{Prettier, PrettierOptions};
+use oxc_prettier::{Prettier, PrettierOptions, TrailingComma};
 use oxc_span::SourceType;
 
 // Instruction:
@@ -27,7 +27,7 @@ fn main() {
         &allocator,
         &source_text,
         ret.trivias,
-        PrettierOptions { semi, ..PrettierOptions::default() },
+        PrettierOptions { semi, trailing_comma: TrailingComma::All, ..PrettierOptions::default() },
     )
     .build(&ret.program);
     println!("{output}");
