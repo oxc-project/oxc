@@ -283,15 +283,17 @@ impl ModuleRecordBuilder {
         };
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(exported_name.span()),
-            local_name: id
-                .as_ref()
-                .map_or(ExportLocalName::Default(exported_name.span()), |ident| {
-                    ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span))
-                }),
+            local_name: id.as_ref().map_or_else(
+                || ExportLocalName::Default(exported_name.span()),
+                |ident| ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span)),
+            ),
             span: decl.declaration.span(),
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
+        if let Some(id) = id {
+            self.add_export_binding(id.name.clone(), id.span);
+        }
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration) {

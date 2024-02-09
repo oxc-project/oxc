@@ -5,7 +5,7 @@ use crate::{
     array,
     doc::{Doc, DocBuilder},
     format::assignment,
-    hardline, ss, Format, Prettier,
+    hardline, space, ss, Format, Prettier,
 };
 
 use super::assignment::AssignmentLikeNode;
@@ -15,13 +15,13 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
-        parts.push(ss!(" "));
+        parts.push(space!());
     }
 
     if let Some(super_class) = &class.super_class {
         parts.push(ss!("extends "));
         parts.push(super_class.format(p));
-        parts.push(ss!(" "));
+        parts.push(space!());
     }
 
     parts.push(class.body.format(p));

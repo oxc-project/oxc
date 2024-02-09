@@ -7,10 +7,10 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
     #[allow(clippy::cast_possible_truncation)]
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
-        let start = self.current.token.start;
+        let start = self.token.start;
         while let Some(c) = self.next_char() {
             if is_line_terminator(c) {
-                self.current.token.is_on_new_line = true;
+                self.token.is_on_new_line = true;
                 self.trivia_builder
                     .add_single_line_comment(start, self.offset() - c.len_utf8() as u32);
                 return Kind::Skip;
@@ -25,11 +25,11 @@ impl<'a> Lexer<'a> {
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
         while let Some(c) = self.next_char() {
             if c == '*' && self.next_eq('/') {
-                self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
+                self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
                 return Kind::Skip;
             }
             if is_line_terminator(c) {
-                self.current.token.is_on_new_line = true;
+                self.token.is_on_new_line = true;
             }
         }
         self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
@@ -43,7 +43,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        self.current.token.is_on_new_line = true;
+        self.token.is_on_new_line = true;
         Kind::HashbangComment
     }
 }

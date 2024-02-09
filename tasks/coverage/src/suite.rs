@@ -107,8 +107,8 @@ pub trait Suite<T: Case> {
 
         let mut paths = get_paths();
 
-        // Initialize git submodule if it is empty.
-        if paths.is_empty() {
+        // Initialize git submodule if it is empty and no filter is provided
+        if paths.is_empty() && args.filter.is_none() {
             println!("-------------------------------------------------------");
             println!("git submodule is empty for {name}");
             println!("Running `just submodules` to clone the submodules");

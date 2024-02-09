@@ -1062,13 +1062,11 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
 
 impl<const MINIFY: bool> Gen<MINIFY> for BigintLiteral {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        use num_bigint::Sign;
-
-        if self.value.sign() == Sign::Minus {
-            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        if self.raw.contains('_') {
+            p.print_str(self.raw.replace('_', "").as_bytes());
+        } else {
+            p.print_str(self.raw.as_bytes());
         }
-        p.print_str(self.value.to_string().as_bytes());
-        p.print(b'n');
     }
 }
 
@@ -1256,7 +1254,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
+        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
+        let ctx = ctx.and_forbid_call(false);
+        p.wrap(wrap, |p| {
             self.callee.gen_expr(p, self.precedence(), ctx);
             if self.optional {
                 p.print_str(b"?.");
@@ -1638,7 +1638,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
         p.print(b'[');
         p.print_list(&self.elements, ctx);
         if let Some(target) = &self.rest {
-            p.print_comma();
+            if !self.elements.is_empty() {
+                p.print_comma();
+            }
             p.print_ellipsis();
             target.gen(p, ctx);
         }
@@ -1802,7 +1804,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > self.precedence(), |p| {
             p.print_str(b"new ");
-            self.callee.gen_expr(p, self.precedence(), ctx);
+            self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
             p.wrap(true, |p| {
                 p.print_list(&self.arguments, ctx);
             });

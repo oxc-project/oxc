@@ -38,9 +38,8 @@ rc_mutex                        = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment      = "warn"
 undocumented_unsafe_blocks      = "warn"
-# I want to write the best Rust code so both pedantic and nursery is enabled.
+# I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
-nursery  = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 # Allowed rules
 # pedantic
@@ -88,7 +87,6 @@ assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
 bumpalo                   = { version = "3.14.0" }
-compact_str               = { version = "0.7.1" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.11" }
@@ -113,6 +111,7 @@ regex                     = { version = "1.10.3" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "1.0.0" }
 ropey                     = { version = "1.6.1" }
+seq-macro                 = { version = "0.3.5" }
 serde                     = { version = "1.0.196" }
 serde_json                = { version = "1.0.113" }
 syn                       = { version = "=1.0.109" }
@@ -123,7 +122,7 @@ unicode-id-start          = { version = "1.1.2" }
 ureq                      = { version = "2.9.1", default-features = false, features = ["tls", "json"] }
 url                       = { version = "2.5.0" }
 walkdir                   = { version = "2.4.0" }
-indexmap                  = { version = "2.2.1" }
+indexmap                  = { version = "2.2.2" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }

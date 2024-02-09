@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_safety_comment)]
+
 //! An Ecma-262 Lexer / Tokenizer
 //! Prior Arts:
 //!     * [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src)
@@ -14,6 +16,8 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+mod search;
+mod source;
 mod string;
 mod string_builder;
 mod template;
@@ -21,27 +25,33 @@ mod token;
 mod trivia_builder;
 mod typescript;
 mod unicode;
+mod whitespace;
 
 use rustc_hash::FxHashMap;
-use std::{collections::VecDeque, str::Chars};
+use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Error;
 use oxc_span::{SourceType, Span};
 
-use self::{byte_handlers::handle_byte, string_builder::AutoCow, trivia_builder::TriviaBuilder};
+use self::{
+    byte_handlers::handle_byte,
+    source::{Source, SourcePosition},
+    string_builder::AutoCow,
+    trivia_builder::TriviaBuilder,
+};
 pub use self::{
     kind::Kind,
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use crate::{diagnostics, MAX_LEN};
+use crate::{diagnostics, UniquePromise};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
-    /// Remaining chars to be tokenized
-    chars: Chars<'a>,
+    /// Current position in source
+    position: SourcePosition<'a>,
 
     token: Token,
 
@@ -55,18 +65,25 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Lookahead<'a> {
+    position: SourcePosition<'a>,
+    token: Token,
+}
+
 pub struct Lexer<'a> {
     allocator: &'a Allocator,
 
-    source: &'a str,
+    // Wrapper around source text. Must not be changed after initialization.
+    source: Source<'a>,
 
     source_type: SourceType,
 
-    current: LexerCheckpoint<'a>,
+    token: Token,
 
     pub(crate) errors: Vec<Error>,
 
-    lookahead: VecDeque<LexerCheckpoint<'a>>,
+    lookahead: VecDeque<Lookahead<'a>>,
 
     context: LexerContext,
 
@@ -82,21 +99,25 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(allocator: &'a Allocator, mut source: &'a str, source_type: SourceType) -> Self {
-        // If source exceeds size limit, substitute a short source which will fail to parse.
-        // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
-        if source.len() > MAX_LEN {
-            source = "\0";
-        }
+    /// Create new `Lexer`.
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
+    /// on a single thread at one time.
+    pub(super) fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        unique: UniquePromise,
+    ) -> Self {
+        let source = Source::new(source_text, unique);
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
-        let current = LexerCheckpoint { chars: source.chars(), token, errors_pos: 0 };
         Self {
             allocator,
             source,
             source_type,
-            current,
+            token,
             errors: vec![],
             lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
             context: LexerContext::Regular,
@@ -106,17 +127,29 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Remaining string from `Chars`
+    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
+    /// This function must NOT be exposed in public API as it breaks safety invariants.
+    #[cfg(feature = "benchmarking")]
+    pub fn new_for_benchmarks(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+    ) -> Self {
+        let unique = UniquePromise::new_for_tests();
+        Self::new(allocator, source_text, source_type, unique)
+    }
+
+    /// Remaining string from `Source`
     pub fn remaining(&self) -> &'a str {
-        self.current.chars.as_str()
+        self.source.remaining()
     }
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
-            chars: self.current.chars.clone(),
-            token: self.current.token,
+            position: self.source.position(),
+            token: self.token,
             errors_pos: self.errors.len(),
         }
     }
@@ -124,7 +157,8 @@ impl<'a> Lexer<'a> {
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
-        self.current = checkpoint;
+        self.source.set_position(checkpoint.position);
+        self.token = checkpoint.token;
         self.lookahead.clear();
     }
 
@@ -137,28 +171,26 @@ impl<'a> Lexer<'a> {
             return self.lookahead[n - 1].token;
         }
 
-        let checkpoint = self.checkpoint();
+        let position = self.source.position();
 
-        if let Some(checkpoint) = self.lookahead.back() {
-            self.current = checkpoint.clone();
+        if let Some(lookahead) = self.lookahead.back() {
+            self.source.set_position(lookahead.position);
         }
-
-        // reset the current token for `read_next_token`,
-        // otherwise it will contain the token from
-        // `self.current = checkpoint`
-        self.current.token = Token::default();
 
         for _i in self.lookahead.len()..n {
             let kind = self.read_next_token();
             let peeked = self.finish_next(kind);
-            self.lookahead.push_back(LexerCheckpoint {
-                chars: self.current.chars.clone(),
-                token: peeked,
-                errors_pos: self.errors.len(),
-            });
+            self.lookahead.push_back(Lookahead { position: self.source.position(), token: peeked });
         }
 
-        self.current = checkpoint;
+        // Call to `finish_next` in loop above leaves `self.token = Token::default()`.
+        // Only circumstance in which `self.token` wouldn't have been default at start of this
+        // function is if we were at very start of file, before any tokens have been read, when
+        // `token.is_on_new_line` is `true`. But `lookahead` isn't called before the first token is
+        // read, so that's not possible. So no need to restore `self.token` here.
+        // It's already in same state as it was at start of this function.
+
+        self.source.set_position(position);
 
         self.lookahead[n - 1].token
     }
@@ -170,21 +202,20 @@ impl<'a> Lexer<'a> {
 
     /// Main entry point
     pub fn next_token(&mut self) -> Token {
-        if let Some(checkpoint) = self.lookahead.pop_front() {
-            self.current.chars = checkpoint.chars;
-            self.current.errors_pos = checkpoint.errors_pos;
-            return checkpoint.token;
+        if let Some(lookahead) = self.lookahead.pop_front() {
+            self.source.set_position(lookahead.position);
+            return lookahead.token;
         }
         let kind = self.read_next_token();
         self.finish_next(kind)
     }
 
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.current.token.kind = kind;
-        self.current.token.end = self.offset();
-        debug_assert!(self.current.token.start <= self.current.token.end);
-        let token = self.current.token;
-        self.current.token = Token::default();
+        self.token.kind = kind;
+        self.token.end = self.offset();
+        debug_assert!(self.token.start <= self.token.end);
+        let token = self.token;
+        self.token = Token::default();
         token
     }
 
@@ -197,45 +228,36 @@ impl<'a> Lexer<'a> {
     #[inline]
     #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
-        // Offset = current position of `chars` relative to start of `source`.
-        // Previously was `self.source.len() - self.current.chars.as_str().len()`,
-        // but that was slower because `std::str::Chars` internally is a current pointer + end pointer,
-        // whereas `&str` internally is a start pointer and len.
-        // So comparing `len()` of the two requires an extra memory read, and addition operation.
-        // https://godbolt.org/z/v46MWddTM
-        // This function is on hot path, so saving even a single instruction makes a measurable difference.
-        (self.current.chars.as_str().as_ptr() as usize - self.source.as_ptr() as usize) as u32
+        self.source.offset()
     }
 
     /// Get the current unterminated token range
     fn unterminated_range(&self) -> Span {
-        Span::new(self.current.token.start, self.offset())
+        Span::new(self.token.start, self.offset())
     }
 
     /// Consume the current char if not at EOF
     #[inline]
     fn next_char(&mut self) -> Option<char> {
-        self.current.chars.next()
+        self.source.next_char()
     }
 
     /// Consume the current char
     #[inline]
     fn consume_char(&mut self) -> char {
-        self.current.chars.next().unwrap()
+        self.source.next_char().unwrap()
     }
 
     /// Peek the next char without advancing the position
     #[inline]
     fn peek(&self) -> Option<char> {
-        self.current.chars.clone().next()
+        self.source.peek_char()
     }
 
     /// Peek the next next char without advancing the position
     #[inline]
     fn peek2(&self) -> Option<char> {
-        let mut chars = self.current.chars.clone();
-        chars.next();
-        chars.next()
+        self.source.peek_char2()
     }
 
     /// Peek the next character, and advance the current position if it matches
@@ -243,7 +265,7 @@ impl<'a> Lexer<'a> {
     fn next_eq(&mut self, c: char) -> bool {
         let matched = self.peek() == Some(c);
         if matched {
-            self.current.chars.next();
+            self.source.next_char().unwrap();
         }
         matched
     }
@@ -267,20 +289,25 @@ impl<'a> Lexer<'a> {
     fn read_next_token(&mut self) -> Kind {
         loop {
             let offset = self.offset();
-            self.current.token.start = offset;
+            self.token.start = offset;
 
-            let remaining = self.current.chars.as_str();
-            if remaining.is_empty() {
+            let byte = if let Some(byte) = self.source.peek_byte() {
+                byte
+            } else {
                 return Kind::Eof;
-            }
+            };
 
-            let byte = remaining.as_bytes()[0];
-            // SAFETY: Check for `remaining.is_empty()` ensures not at end of file,
-            // and `byte` is the byte at current position of `self.current.chars`.
+            // SAFETY: `byte` is byte value at current position in source
             let kind = unsafe { handle_byte(byte, self) };
             if kind != Kind::Skip {
                 return kind;
             }
         }
     }
+}
+
+/// Call a closure while hinting to compiler that this branch is rarely taken.
+#[cold]
+pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
+    f()
 }

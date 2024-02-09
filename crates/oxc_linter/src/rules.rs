@@ -82,7 +82,7 @@ mod eslint {
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
-    // pub mod no_this_before_super;
+    pub mod no_this_before_super;
     pub mod no_undef;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -100,6 +100,7 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
+    pub mod array_type;
     pub mod ban_ts_comment;
     pub mod ban_types;
     pub mod no_duplicate_enum_values;
@@ -330,7 +331,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
-    // eslint::no_this_before_super,
+    eslint::no_this_before_super,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
@@ -390,6 +391,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::array_type,
     typescript::ban_ts_comment,
     typescript::ban_types,
     typescript::no_duplicate_enum_values,

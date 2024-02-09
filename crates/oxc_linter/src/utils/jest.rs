@@ -2,8 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
-        ModuleDeclaration, TemplateLiteral,
+        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier, TemplateLiteral,
     },
     AstKind,
 };
@@ -201,11 +200,8 @@ fn collect_ids_referenced_to_import<'a, 'b>(
         .filter_map(|(symbol_id, reference_ids)| {
             if ctx.symbols().get_flag(symbol_id).is_import_binding() {
                 let id = ctx.symbols().get_declaration(symbol_id);
-                let node = ctx.nodes().get_node(id);
-                let AstKind::ModuleDeclaration(module_decl) = node.kind() else {
-                    return None;
-                };
-                let ModuleDeclaration::ImportDeclaration(import_decl) = module_decl else {
+                let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(id)
+                else {
                     return None;
                 };
                 let name = ctx.symbols().get_name(symbol_id);

@@ -56,7 +56,7 @@ pub struct Prettier<'a> {
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
-    nodes: Vec<AstKind<'a>>,
+    stack: Vec<AstKind<'a>>,
 
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
@@ -81,7 +81,7 @@ impl<'a> Prettier<'a> {
             source_text,
             options,
             trivias: trivias.comments.into_iter().peekable(),
-            nodes: vec![],
+            stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
         }
@@ -97,30 +97,30 @@ impl<'a> Prettier<'a> {
     }
 
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        self.nodes.push(kind);
+        self.stack.push(kind);
     }
 
     fn leave_node(&mut self) {
-        self.nodes.pop();
+        self.stack.pop();
     }
 
     fn current_kind(&self) -> AstKind<'a> {
-        self.nodes[self.nodes.len() - 1]
+        self.stack[self.stack.len() - 1]
     }
 
     fn parent_kind(&self) -> AstKind<'a> {
-        self.nodes[self.nodes.len() - 2]
+        self.stack[self.stack.len() - 2]
     }
 
     fn parent_parent_kind(&self) -> Option<AstKind<'a>> {
-        let len = self.nodes.len();
-        (len >= 3).then(|| self.nodes[len - 3])
+        let len = self.stack.len();
+        (len >= 3).then(|| self.stack[len - 3])
     }
 
     #[allow(unused)]
     fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
-        let len = self.nodes.len();
-        (len > n).then(|| self.nodes[len - n - 1])
+        let len = self.stack.len();
+        (len > n).then(|| self.stack[len - n - 1])
     }
 
     /// A hack for erasing the lifetime requirement.

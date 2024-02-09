@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder, Separator},
-    group, if_break, indent, line, softline, ss, Format, Prettier,
+    group, if_break, indent, line, softline, space, ss, Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -59,7 +59,8 @@ fn print_semicolon_after_export_declaration<'a>(
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
         },
         ModuleDeclaration::ExportAllDeclaration(_)
-        | ModuleDeclaration::ExportNamedDeclaration(_) => Some(ss!(";")),
+        | ModuleDeclaration::ExportNamedDeclaration(_)
+        | ModuleDeclaration::TSExportAssignment(_) => Some(ss!(";")),
         _ => None,
     }
 }
@@ -74,7 +75,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
     if specifiers.is_empty() {
         parts.push(ss!(" {}"));
     } else {
-        parts.push(ss!(" "));
+        parts.push(space!());
 
         let mut specifiers_iter: VecDeque<_> = specifiers.iter().collect();
         if include_default {
@@ -112,11 +113,11 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
             } else {
                 parts.push(ss!("{"));
                 if p.options.bracket_spacing {
-                    parts.push(ss!(" "));
+                    parts.push(space!());
                 }
                 parts.extend(specifiers_iter.iter().map(|s| s.format(p)));
                 if p.options.bracket_spacing {
-                    parts.push(ss!(" "));
+                    parts.push(space!());
                 }
                 parts.push(ss!("}"));
             }

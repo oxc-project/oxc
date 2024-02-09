@@ -15,7 +15,7 @@
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
       "assignees": ["@Boshen"],
-      "ignoreDeps": ["textwrap", "owo-colors", "syn"]
+      "ignoreDeps": ["textwrap", "owo-colors", "syn", "miette", "ureq"]
     },
     {
       "groupName": "website npm packages",

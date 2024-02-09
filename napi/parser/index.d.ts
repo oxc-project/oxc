@@ -36,6 +36,10 @@ export function parseSync(sourceText: string, options?: ParserOptions | undefine
 /**
  * Returns a binary AST in flexbuffers format.
  * This is a POC API. Error handling is not done yet.
+ * # Panics
+ *
+ * * File extension is invalid
+ * * FlexbufferSerializer serialization error
  */
 export function parseSyncBuffer(sourceText: string, options?: ParserOptions | undefined | null): Buffer
 /**

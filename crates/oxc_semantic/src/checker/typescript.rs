@@ -20,8 +20,25 @@ impl EarlyErrorTypeScript {
             AstKind::VariableDeclarator(decl) => check_variable_declarator(decl, ctx),
             AstKind::SimpleAssignmentTarget(target) => check_simple_assignment_target(target, ctx),
             AstKind::FormalParameters(params) => check_formal_parameters(params, ctx),
+            AstKind::ArrayPattern(pattern) => check_array_pattern(pattern, ctx),
+            AstKind::TSTypeParameterDeclaration(declaration) => {
+                check_ts_type_parameter_declaration(declaration, ctx);
+            }
             _ => {}
         }
+    }
+}
+
+fn check_ts_type_parameter_declaration(
+    declaration: &TSTypeParameterDeclaration<'_>,
+    ctx: &SemanticBuilder<'_>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Type parameter list cannot be empty.")]
+    #[diagnostic()]
+    struct EmptyTypeParameterList(#[label] Span);
+    if declaration.params.is_empty() {
+        ctx.error(EmptyTypeParameterList(declaration.span));
     }
 }
 
@@ -99,5 +116,20 @@ fn check_simple_assignment_target<'a>(
                 ctx.error(UnexpectedAssignment(target.span()));
             }
         }
+    }
+}
+
+fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Unexpected type annotation")]
+    #[diagnostic()]
+    struct UnexpectedTypeAnnotation(#[label] Span);
+
+    for element in &pattern.elements {
+        let _ = element.as_ref().map(|element| {
+            if let Some(type_annotation) = &element.type_annotation {
+                ctx.error(UnexpectedTypeAnnotation(type_annotation.span));
+            }
+        });
     }
 }

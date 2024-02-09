@@ -72,7 +72,7 @@ impl JsxNoTargetBlank {
         if tag_name == "a" {
             return true;
         }
-        return ctx.settings().link_components.get(tag_name).is_some();
+        return ctx.settings().react.get_link_component_attrs(tag_name).is_some();
     }
     fn check_is_forms(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.forms {
@@ -81,7 +81,7 @@ impl JsxNoTargetBlank {
         if tag_name == "form" {
             return true;
         }
-        return ctx.settings().form_components.get(tag_name).is_some();
+        return ctx.settings().react.get_form_component_attrs(tag_name).is_some();
     }
 }
 
@@ -142,18 +142,20 @@ impl Rule for JsxNoTargetBlank {
                                     }
                                 } else if attribute_name == "href"
                                     || attribute_name == "action"
-                                    || ctx.settings().link_components.get(tag_name).map_or(
-                                        false,
-                                        |link_attribute| {
+                                    || ctx
+                                        .settings()
+                                        .react
+                                        .get_link_component_attrs(tag_name)
+                                        .map_or(false, |link_attribute| {
                                             link_attribute.contains(&attribute_name.to_string())
-                                        },
-                                    )
-                                    || ctx.settings().form_components.get(tag_name).map_or(
-                                        false,
-                                        |link_attribute| {
-                                            link_attribute.contains(&attribute_name.to_string())
-                                        },
-                                    )
+                                        })
+                                    || ctx
+                                        .settings()
+                                        .react
+                                        .get_form_component_attrs(tag_name)
+                                        .map_or(false, |form_attribute| {
+                                            form_attribute.contains(&attribute_name.to_string())
+                                        })
                                 {
                                     if let Some(val) = attribute.value.as_ref() {
                                         has_href_value = true;
@@ -487,20 +489,20 @@ fn test() {
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
-            Some(serde_json::json!({ "linkComponents": ["Link"] })),
+            Some(serde_json::json!({ "react": { "linkComponents": ["Link"] } })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
             Some(
-                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": "to" } }),
+                serde_json::json!({"react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] }}),
             ),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
             Some(
-                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": ["to"] } }),
+                serde_json::json!({ "react": { "linkComponents": [{ "name": "Link", "linkAttribute": ["to"] }] }}),
             ),
         ),
         (
@@ -681,13 +683,13 @@ fn test() {
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always"}])),
-            Some(serde_json::json!({ "linkComponents": ["Link"] })),
+            Some(serde_json::json!({ "react": { "linkComponents": ["Link"] } })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
             Some(
-                serde_json::json!({ "linkComponents": { "name": "Link", "linkAttribute": "to" } }),
+                serde_json::json!({ "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] } }),
             ),
         ),
         (

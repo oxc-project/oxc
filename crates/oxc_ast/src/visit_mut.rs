@@ -1381,9 +1381,16 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_export_all_declaration(&mut self, _decl: &mut ExportAllDeclaration<'a>) {}
+    fn visit_export_all_declaration(&mut self, decl: &mut ExportAllDeclaration<'a>) {
+        let kind = AstKind::ExportAllDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.visit_string_literal(&mut decl.source);
+        self.leave_node(kind);
+    }
 
     fn visit_export_default_declaration(&mut self, decl: &mut ExportDefaultDeclaration<'a>) {
+        let kind = AstKind::ExportDefaultDeclaration(self.alloc(decl));
+        self.enter_node(kind);
         match &mut decl.declaration {
             ExportDefaultDeclarationKind::Expression(expr) => self.visit_expression(expr),
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
@@ -1392,12 +1399,19 @@ pub trait VisitMut<'a>: Sized {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => self.visit_class(class),
             _ => {}
         }
+        self.leave_node(kind);
     }
 
     fn visit_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
+        let kind = AstKind::ExportNamedDeclaration(self.alloc(decl));
+        self.enter_node(kind);
         if let Some(decl) = &mut decl.declaration {
             self.visit_declaration(decl);
         }
+        if let Some(source) = &mut decl.source {
+            self.visit_string_literal(source);
+        }
+        self.leave_node(kind);
     }
 
     fn visit_enum_member(&mut self, member: &mut TSEnumMember<'a>) {

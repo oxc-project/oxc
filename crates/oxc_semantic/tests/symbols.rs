@@ -5,7 +5,14 @@ pub use util::SemanticTester;
 
 #[test]
 fn test_class_simple() {
-    SemanticTester::js("export class Foo {}")
+    SemanticTester::js("export class Foo {};")
+        .has_root_symbol("Foo")
+        .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
+        .has_number_of_references(0)
+        .is_exported()
+        .test();
+
+    SemanticTester::js("export default class Foo {};")
         .has_root_symbol("Foo")
         .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
         .has_number_of_references(0)
@@ -63,7 +70,6 @@ fn test_var_read_write() {
     .test();
 }
 
-#[ignore = "type aliases currently aren't in the symbol table"]
 #[test]
 fn test_types_simple() {
     let test = SemanticTester::ts(

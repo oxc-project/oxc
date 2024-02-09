@@ -78,8 +78,9 @@ impl EarlyErrorJavaScript {
             }
 
             AstKind::Class(class) => check_class(class, node, ctx),
-            AstKind::Super(sup) => check_super(sup, node, ctx),
+            AstKind::MethodDefinition(method) => check_method_definition(method, ctx),
             AstKind::ObjectProperty(prop) => check_object_property(prop, ctx),
+            AstKind::Super(sup) => check_super(sup, node, ctx),
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
             AstKind::ArrayPattern(pat) => check_array_pattern(pat, ctx),
@@ -761,10 +762,7 @@ fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
 
     if class.is_declaration()
         && class.id.is_none()
-        && !matches!(
-            ctx.nodes.parent_kind(node.id()),
-            Some(AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_)))
-        )
+        && !matches!(ctx.nodes.parent_kind(node.id()), Some(AstKind::ExportDefaultDeclaration(_)))
     {
         let start = class.span.start;
         ctx.error(RequireClassName(Span::new(start, start + 5)));
@@ -788,6 +786,48 @@ fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
             return ctx.error(DuplicateConstructor(prev_span, new_span));
         }
         prev_constructor = Some(new_span);
+    }
+}
+
+fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A 'set' accessor must have exactly one parameter.")]
+    #[diagnostic()]
+    struct SetterWithParameters(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A 'set' accessor cannot have rest parameter.")]
+    #[diagnostic()]
+    struct SetterWithRestParameter(#[label] Span);
+
+    function.params.rest.as_ref().map_or_else(
+        || {
+            if function.params.parameters_count() != 1 {
+                ctx.error(SetterWithParameters(function.params.span));
+            }
+        },
+        |rest| {
+            ctx.error(SetterWithRestParameter(rest.span));
+        },
+    );
+}
+
+fn check_getter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A 'get' accessor must not have any formal parameters.")]
+    #[diagnostic()]
+    pub struct GetterParameters(#[label] pub Span);
+
+    if !function.params.items.is_empty() {
+        ctx.error(GetterParameters(function.params.span));
+    }
+}
+
+fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuilder<'_>) {
+    match method.kind {
+        MethodDefinitionKind::Set => check_setter(&method.value, ctx),
+        MethodDefinitionKind::Get => check_getter(&method.value, ctx),
+        _ => {}
     }
 }
 
@@ -905,6 +945,14 @@ fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if any source text is matched by this production.
     if let Some(expr) = &prop.init {
         ctx.error(CoverInitializedName(expr.span()));
+    }
+
+    if let Expression::FunctionExpression(function) = &prop.value {
+        match prop.kind {
+            PropertyKind::Set => check_setter(function, ctx),
+            PropertyKind::Get => check_getter(function, ctx),
+            PropertyKind::Init => {}
+        }
     }
 }
 

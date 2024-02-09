@@ -1,4 +1,4 @@
-Compatibility: 238/562 (42.35%)
+Compatibility: 239/562 (42.53%)
 
 # Failed
 
@@ -113,7 +113,6 @@ Compatibility: 238/562 (42.35%)
 
 ### comments
 * comments/arrow.js
-* comments/assignment-pattern.js
 * comments/before-comma.js
 * comments/binary-expressions-block-comments.js
 * comments/binary-expressions-parens.js
