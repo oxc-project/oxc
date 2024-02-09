@@ -48,7 +48,9 @@ fn print_binaryish_expressions<'a>(
             parts.push(line!());
         }
         parts.push(ss!(operator.as_str()));
-        parts.push(if line_before_operator { space!() } else { line!() });
+        // FIXME:
+        // parts.push(if line_before_operator { space!() } else { line!() });
+        parts.push(space!());
         parts.push(right.format(p));
         parts
     };

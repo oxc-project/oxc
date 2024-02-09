@@ -1,9 +1,8 @@
-Compatibility: 219/562 (38.97%)
+Compatibility: 235/562 (41.81%)
 
 # Failed
 
 ### arrays
-* arrays/empty.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
 * arrays/numbers-with-holes.js
@@ -43,9 +42,7 @@ Compatibility: 219/562 (38.97%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
-* assignment/issue-1419.js
-* assignment/issue-2482-1.js
-* assignment/issue-2482-2.js
+* assignment/issue-2184.js
 * assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
@@ -61,8 +58,6 @@ Compatibility: 219/562 (38.97%)
 * assignment-comments/string.js
 
 ### async
-* async/conditional-expression.js
-* async/exponentiation.js
 * async/inline-await.js
 * async/nested.js
 
@@ -70,21 +65,14 @@ Compatibility: 219/562 (38.97%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
-* binary-expressions/equality.js
-* binary-expressions/exp.js
 * binary-expressions/if.js
-* binary-expressions/in_instanceof.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
-* binary-expressions/math.js
 * binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 * binary-expressions/unary.js
-
-### binary_math
-* binary_math/parens.js
 
 ### break-calls
 * break-calls/break.js
@@ -106,35 +94,31 @@ Compatibility: 219/562 (38.97%)
 * chain-expression/issue-15785-3.js
 * chain-expression/issue-15916.js
 * chain-expression/test-3.js
-* chain-expression/test-4.js
 * chain-expression/test.js
 
 ### class-comment
+* class-comment/class-property.js
 * class-comment/misc.js
 * class-comment/superclass.js
 
 ### class-extends
 * class-extends/extends.js
 
-### class-static-block
-* class-static-block/with-line-breaks.js
-
 ### classes
 * classes/assignment.js
-* classes/binary.js
 * classes/empty.js
 * classes/method.js
 * classes/property.js
 
 ### classes-private-fields
 * classes-private-fields/private_fields.js
+* classes-private-fields/with_comments.js
 
 ### comments
 * comments/arrow.js
 * comments/before-comma.js
 * comments/binary-expressions-block-comments.js
 * comments/binary-expressions-parens.js
-* comments/binary-expressions-single-comments.js
 * comments/binary-expressions.js
 * comments/blank.js
 * comments/break-continue-statements.js
@@ -244,7 +228,6 @@ Compatibility: 219/562 (38.97%)
 * for/continue-and-break-comment-without-blocks.js
 
 ### function
-* function/function_expression.js
 * function/issue-10277.js
 
 ### function-comments
@@ -280,9 +263,6 @@ Compatibility: 219/562 (38.97%)
 * import/comments.js
 * import/empty-import.js
 
-### in
-* in/arrow-function-invalid.js
-
 ### label
 * label/comment.js
 
@@ -309,11 +289,11 @@ Compatibility: 219/562 (38.97%)
 
 ### logical_expressions
 * logical_expressions/issue-7024.js
-* logical_expressions/logical_expression_operators.js
 
 ### member
 * member/conditional.js
 * member/expand.js
+* member/logical.js
 
 ### method-chain
 * method-chain/bracket_0-1.js
@@ -355,12 +335,8 @@ Compatibility: 219/562 (38.97%)
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
 
-### nullish-coalescing
-* nullish-coalescing/nullish_coalesing_operator.js
-
 ### object-prop-break-in
 * object-prop-break-in/short-keys.js
-* object-prop-break-in/test.js
 
 ### object-property-ignore
 * object-property-ignore/ignore.js
@@ -391,9 +367,6 @@ Compatibility: 219/562 (38.97%)
 * preserve-line/member-chain.js
 * preserve-line/parameter-list.js
 
-### private-in
-* private-in/private-in.js
-
 ### quote-props
 * quote-props/numeric-separator.js
 * quote-props/objects.js
@@ -413,6 +386,9 @@ Compatibility: 219/562 (38.97%)
 * return/binaryish.js
 * return/comment.js
 
+### return-outside-function
+* return-outside-function/return-outside-function.js
+
 ### sequence-break
 * sequence-break/break.js
 
@@ -429,6 +405,7 @@ Compatibility: 219/562 (38.97%)
 ### switch
 * switch/comments.js
 * switch/comments2.js
+* switch/switch.js
 
 ### template
 * template/call.js
@@ -490,16 +467,15 @@ Compatibility: 219/562 (38.97%)
 * try/catch.js
 * try/try.js
 
-### unary
-* unary/series.js
-
 ### unary-expression
 * unary-expression/comments.js
-* unary-expression/urnary_expression.js
 
 ### unicode
 * unicode/combining-characters.js
 * unicode/nbsp-jsx.js
+
+### while
+* while/indent.js
 
 ### yield
 * yield/jsx-without-parenthesis.js
