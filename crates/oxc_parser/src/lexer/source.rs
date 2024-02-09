@@ -362,7 +362,7 @@ impl<'a> Source<'a> {
     /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
     /// are *not* safe to call until one of above conditions is satisfied.
     #[inline]
-    unsafe fn next_byte_unchecked(&mut self) -> u8 {
+    pub(super) unsafe fn next_byte_unchecked(&mut self) -> u8 {
         // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
         // Methods of this type provide no way for `ptr` to be before `start` or after `end`.
         // Therefore always valid to read a byte from `ptr`, and incrementing `ptr` cannot result
