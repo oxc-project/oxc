@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::Span;
 
-use crate::{array, doc::Doc, indent, line, ss, Prettier};
+use crate::{array, doc::Doc, indent, line, space, ss, Prettier};
 
 pub(super) fn adjust_clause<'a>(
     p: &Prettier<'a>,
@@ -14,7 +14,7 @@ pub(super) fn adjust_clause<'a>(
     }
 
     if matches!(node, Statement::BlockStatement(_)) || force_space {
-        return array![p, ss!(" "), clause];
+        return array![p, space!(), clause];
     }
 
     indent![p, line!(), clause]
