@@ -2,8 +2,8 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::ast::{
     ArrowExpression, AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression,
-    ConditionalExpression, Expression, LogicalExpression, MemberExpression, NewExpression,
-    SequenceExpression, UnaryExpression, UpdateExpression, YieldExpression,
+    ConditionalExpression, Expression, ImportExpression, LogicalExpression, MemberExpression,
+    NewExpression, SequenceExpression, UnaryExpression, UpdateExpression, YieldExpression,
 };
 
 impl<'a> GetPrecedence for Expression<'a> {
@@ -92,6 +92,12 @@ impl<'a> GetPrecedence for UpdateExpression<'a> {
 }
 
 impl<'a> GetPrecedence for CallExpression<'a> {
+    fn precedence(&self) -> Precedence {
+        Precedence::Call
+    }
+}
+
+impl<'a> GetPrecedence for ImportExpression<'a> {
     fn precedence(&self) -> Precedence {
         Precedence::Call
     }

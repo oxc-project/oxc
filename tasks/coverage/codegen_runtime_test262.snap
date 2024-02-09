@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 19407/19407 (100.00%)
-Positive Passed: 19232/19407 (99.10%)
+Positive Passed: 19239/19407 (99.13%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -208,24 +208,6 @@ But got a runtime error: TypeError: c[(intermediate value)] is not a function
 Expect to run correctly: "language/expressions/class/elements/field-definition-accessor-no-line-terminator.js"
 But got a runtime error: SyntaxError: Unexpected identifier
 
-Expect to run correctly: "language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval-indirect.js"
-But got a runtime error: TypeError: _eval is not a constructor
-
-Expect to run correctly: "language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval.js"
-But got a runtime error: TypeError: eval is not a constructor
-
-Expect to run correctly: "language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval-indirect.js"
-But got a runtime error: TypeError: _eval is not a constructor
-
-Expect to run correctly: "language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval.js"
-But got a runtime error: TypeError: eval is not a constructor
-
-Expect to run correctly: "language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval-indirect.js"
-But got a runtime error: TypeError: _eval is not a constructor
-
-Expect to run correctly: "language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval.js"
-But got a runtime error: TypeError: eval is not a constructor
-
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
@@ -312,9 +294,6 @@ But got a runtime error: Test262Error: Expected SameValue(«function then() { [n
 
 Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-script-code-valid.js"
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
-
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/new-covered-expression-is-valid.js"
-But got a runtime error: SyntaxError: Cannot use new with import
 
 Expect to run correctly: "language/expressions/dynamic-import/usage-from-eval.js"
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
