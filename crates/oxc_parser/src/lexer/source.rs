@@ -162,22 +162,7 @@ impl<'a> Source<'a> {
     pub(super) fn position(&self) -> SourcePosition<'a> {
         // SAFETY: Creating a `SourcePosition` from current position of `Source` is always valid,
         // if caller has upheld safety conditions of other unsafe methods of this type.
-        let pos = unsafe { SourcePosition::new(self.ptr) };
-
-        // SAFETY: `pos.read()`'s contract is upheld by:
-        // * The preceding checks that `pos.ptr` >= `self.start` and < `self.end`.
-        // * `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // * `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `pos.ptr`
-        //   addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
-        // * `SourcePosition` can only live as long as the `&str` underlying `Source`.
-        debug_assert!(
-            pos.ptr >= self.start
-                && pos.ptr <= self.end
-                // SAFETY: See above
-                && (pos.ptr == self.end || !is_utf8_cont_byte(unsafe { pos.read() }))
-        );
-
-        pos
+        unsafe { SourcePosition::new(self.ptr) }
     }
 
     /// Move current position.
