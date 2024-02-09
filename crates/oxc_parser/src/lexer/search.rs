@@ -394,6 +394,7 @@ macro_rules! byte_search {
         $table.use_table();
 
         let mut pos = $start;
+        #[allow(unused_unsafe)] // Silence warnings if macro called in unsafe code
         loop {
             if pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
