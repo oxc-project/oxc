@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        ArrowExpression, ChainElement, Expression, Function, MemberExpression,
-        MethodDefinitionKind, ObjectProperty, PropertyKind,
+        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
+        PropertyKind,
     },
     AstKind,
 };
@@ -52,6 +52,30 @@ declare_oxc_lint!(
     GetterReturn,
     nursery
 );
+
+impl Rule for GetterReturn {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::Function(func) if !func.is_typescript_syntax() => {
+                self.run_diagnostic(node, ctx, func.span);
+            }
+            AstKind::ArrowExpression(expr) => {
+                self.run_diagnostic(node, ctx, expr.span);
+            }
+            _ => {}
+        }
+    }
+
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let allow_implicit = value
+            .get(0)
+            .and_then(|config| config.get("allowImplicit"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+
+        Self { allow_implicit }
+    }
+}
 
 impl GetterReturn {
     fn handle_member_expression<'a>(member_expression: &'a MemberExpression<'a>) -> bool {
@@ -263,29 +287,6 @@ enum DefinitelyReturnsOrThrows {
     Yes,
 }
 
-impl Rule for GetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::Function(Function { span, .. })
-            | AstKind::ArrowExpression(ArrowExpression { span, .. }) => {
-                self.run_diagnostic(node, ctx, *span);
-            }
-
-            _ => {}
-        }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_implicit = value
-            .get(0)
-            .and_then(|config| config.get("allowImplicit"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self { allow_implicit }
-    }
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -363,6 +364,7 @@ fn test() {
         ("foo.defineProperties(null, { bar: { get() {} } });", None),
         ("foo.create(null, { bar: { get() {} } });", None),
         ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
+        ("export abstract class Foo { protected abstract get foobar(): number; }", None),
     ];
 
     let fail = vec![
