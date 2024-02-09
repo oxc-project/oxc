@@ -72,7 +72,7 @@ pub(super) fn print_function_parameters<'a>(
     let mut printed = p.vec();
     for (i, param) in params.items.iter().enumerate() {
         printed.push(param.format(p));
-        if i == params.items.len() - 1 {
+        if i == params.items.len() - 1 && params.rest.is_none() {
             break;
         }
         printed.push(ss!(","));
@@ -87,9 +87,6 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if let Some(rest) = &params.rest {
-        if !params.items.is_empty() {
-            printed.push(ss!(", "));
-        }
         printed.push(rest.format(p));
     }
 
