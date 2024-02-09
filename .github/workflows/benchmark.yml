@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - bench-*
     paths:
       - '**/*.rs'
       - 'Cargo.lock'
