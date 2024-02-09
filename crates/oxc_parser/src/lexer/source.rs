@@ -534,7 +534,6 @@ impl<'a> SourcePosition<'a> {
     /// # SAFETY
     /// Caller must ensure `SourcePosition` is no later than 2 bytes before end of source text.
     /// i.e. if source length is 10, `self` must be on position 8 max.
-    #[allow(dead_code)]
     #[inline]
     pub(super) unsafe fn read2(self) -> [u8; 2] {
         // SAFETY:
