@@ -1,5 +1,6 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
+use super::search::SEARCH_BATCH_SIZE;
 use crate::{UniquePromise, MAX_LEN};
 
 use std::{marker::PhantomData, slice, str};
@@ -66,6 +67,10 @@ pub(super) struct Source<'a> {
     end: *const u8,
     /// Pointer to current position in source string
     ptr: *const u8,
+    /// Memory address past which not enough bytes remaining in source to process a batch of
+    /// `SEARCH_BATCH_SIZE` bytes in one go.
+    /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
+    end_for_batch_search_addr: usize,
     /// Marker for immutable borrow of source string
     _marker: PhantomData<&'a str>,
 }
@@ -89,7 +94,13 @@ impl<'a> Source<'a> {
         // for direct pointer equality with `ptr` to check if at end of file.
         let end = unsafe { start.add(source_text.len()) };
 
-        Self { start, end, ptr: start, _marker: PhantomData }
+        // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
+        // is very short, and has very low memory address (e.g. 16). If that's the case,
+        // `end_for_batch_search_addr` will be 0, so a test whether any non-null pointer is past end
+        // will always test positive, and disable batch search.
+        let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
+
+        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
     }
 
     /// Get entire source text as `&str`.
@@ -125,6 +136,19 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn is_eof(&self) -> bool {
         self.ptr == self.end
+    }
+
+    /// Get end address.
+    #[inline]
+    pub(super) fn end_addr(&self) -> usize {
+        self.end as usize
+    }
+
+    /// Get last memory address at which a batch of `Lexer::search::SEARCH_BATCH_SIZE` bytes
+    /// can be read without going out of bounds.
+    #[inline]
+    pub(super) fn end_for_batch_search_addr(&self) -> usize {
+        self.end_for_batch_search_addr
     }
 
     /// Get current position.
@@ -181,6 +205,40 @@ impl<'a> Source<'a> {
                 && (pos.ptr == self.end || !is_utf8_cont_byte(unsafe { pos.read() }))
         );
         self.ptr = pos.ptr;
+    }
+
+    /// Get string slice from a `SourcePosition` up to the current position of `Source`.
+    pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
+        assert!(pos.ptr <= self.ptr);
+        // SAFETY: The above assertion satisfies `str_from_pos_to_current_unchecked`'s requirements
+        unsafe { self.str_from_pos_to_current_unchecked(pos) }
+    }
+
+    /// Get string slice from a `SourcePosition` up to the current position of `Source`,
+    /// without checks.
+    ///
+    /// SAFETY:
+    /// `pos` must not be after current position of `Source`.
+    /// This is always the case if both:
+    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 2. `pos` has not been advanced with `SourcePosition::add`.
+    #[inline]
+    pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
+        // `SourcePosition`s can only be created from a `Source`.
+        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
+        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
+        // `Source` originated on another thread can "jump" onto this one.
+        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
+        // from this `Source`, therefore `pos.ptr` and `self.ptr` must both be within the same allocation
+        // and derived from the same original pointer.
+        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
+        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
+        // yield a valid UTF-8 string.
+        debug_assert!(pos.ptr <= self.ptr);
+        let len = self.ptr as usize - pos.addr();
+        let slice = slice::from_raw_parts(pos.ptr, len);
+        std::str::from_utf8_unchecked(slice)
     }
 
     /// Get current position in source, relative to start of source.
@@ -318,7 +376,6 @@ impl<'a> Source<'a> {
     ///
     /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
     /// are *not* safe to call until one of above conditions is satisfied.
-    #[allow(dead_code)]
     #[inline]
     unsafe fn next_byte_unchecked(&mut self) -> u8 {
         // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
@@ -422,6 +479,12 @@ impl<'a> SourcePosition<'a> {
         Self { ptr, _marker: PhantomData }
     }
 
+    /// Get memory address of `SourcePosition` as a `usize`.
+    #[inline]
+    pub(super) fn addr(self) -> usize {
+        self.ptr as usize
+    }
+
     /// Create new `SourcePosition` which is `n` bytes after this one.
     /// The provenance of the pointer `SourcePosition` contains is maintained.
     ///
@@ -430,7 +493,6 @@ impl<'a> SourcePosition<'a> {
     /// of `Source` this `SourcePosition` was created from.
     /// NB: It is legal to use `add` to create a `SourcePosition` which is *on* the end of `Source`,
     /// just not past it.
-    #[allow(dead_code)]
     #[inline]
     pub(super) unsafe fn add(self, n: usize) -> Self {
         Self::new(self.ptr.add(n))

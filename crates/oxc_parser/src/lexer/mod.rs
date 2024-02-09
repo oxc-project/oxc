@@ -16,6 +16,7 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+mod search;
 mod source;
 mod string;
 mod string_builder;
@@ -302,4 +303,10 @@ impl<'a> Lexer<'a> {
             }
         }
     }
+}
+
+/// Call a closure while hinting to compiler that this branch is rarely taken.
+#[cold]
+pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
+    f()
 }

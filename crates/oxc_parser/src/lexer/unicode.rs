@@ -1,4 +1,4 @@
-use super::{AutoCow, Kind, Lexer, Span};
+use super::{Kind, Lexer, Span};
 use crate::diagnostics;
 
 use oxc_allocator::String;
@@ -21,10 +21,9 @@ impl<'a> Lexer<'a> {
         let c = self.peek().unwrap();
         match c {
             c if is_identifier_start_unicode(c) => {
-                let mut builder = AutoCow::new(self);
-                let c = self.consume_char();
-                builder.push_matching(c);
-                self.identifier_name(builder);
+                let start_pos = self.source.position();
+                self.consume_char();
+                self.identifier_tail_after_unicode(start_pos);
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => {
@@ -51,7 +50,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     pub(super) fn identifier_unicode_escape_sequence(
         &mut self,
-        builder: &mut AutoCow<'a>,
+        str: &mut String<'a>,
         check_identifier_start: bool,
     ) {
         let start = self.offset();
@@ -98,7 +97,7 @@ impl<'a> Lexer<'a> {
             return;
         }
 
-        builder.push_different(ch);
+        str.push(ch);
     }
 
     /// String `UnicodeEscapeSequence`
