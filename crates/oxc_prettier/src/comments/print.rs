@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::{
     array,
     doc::{Doc, DocBuilder, Separator},
-    hardline, line, ss, Prettier,
+    hardline, line, space, Prettier,
 };
 
 use super::{Comment, CommentFlags, DanglingCommentsPrintOptions};
@@ -97,7 +97,7 @@ impl<'a> Prettier<'a> {
                     parts.push(line!());
                 }
             } else {
-                parts.push(ss!(" "));
+                parts.push(space!());
             };
         } else {
             parts.extend(hardline!());
@@ -164,7 +164,7 @@ impl<'a> Prettier<'a> {
         if !comment.is_block || previous.is_some_and(|c| c.has_line_suffix) {
             let suffix = {
                 let mut parts = self.vec();
-                parts.push(ss!(" "));
+                parts.push(space!());
                 parts.push(printed);
                 parts
             };
@@ -173,7 +173,7 @@ impl<'a> Prettier<'a> {
             return comment.with_line_suffix(true);
         }
 
-        let doc = array![self, ss!(" "), printed];
+        let doc = array![self, space!(), printed];
         parts.push(doc);
         comment.with_line_suffix(false)
     }

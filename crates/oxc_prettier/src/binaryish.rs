@@ -82,10 +82,6 @@ impl GetPrecedence for BinaryishOperator {
 }
 
 impl BinaryishOperator {
-    pub fn is_binary(self) -> bool {
-        matches!(self, Self::BinaryOperator(_))
-    }
-
     pub fn should_flatten(self, parent_op: Self) -> bool {
         if self.precedence() != parent_op.precedence() {
             return false;

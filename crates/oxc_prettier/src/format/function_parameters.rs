@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     doc::{Doc, DocBuilder, Group},
-    hardline, if_break, indent, line, softline, ss, Format, Prettier,
+    hardline, if_break, indent, line, softline, space, ss, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -77,7 +77,7 @@ pub(super) fn print_function_parameters<'a>(
         }
         printed.push(ss!(","));
         if should_hug_the_only_function_parameter(p, params) {
-            printed.push(ss!(" "));
+            printed.push(space!());
         } else if p.is_next_line_empty(param.span) {
             printed.extend(hardline!());
             printed.extend(hardline!());

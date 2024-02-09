@@ -33,7 +33,7 @@ use oxc_syntax::identifier::is_identifier_name;
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, Separator},
-    format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
+    format, group, hardline, indent, line, softline, space, ss, string, wrap, Prettier,
 };
 
 use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
@@ -165,7 +165,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
             if let Some(alternate) = &self.alternate {
                 let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
                 if else_on_same_line {
-                    parts.push(ss!(" "));
+                    parts.push(space!());
                 } else {
                     parts.extend(hardline!());
                 }
@@ -312,7 +312,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(do_body);
 
             if matches!(self.body, Statement::BlockStatement(_)) {
-                parts.push(ss!(" "));
+                parts.push(space!());
             } else {
                 parts.extend(hardline!());
             }
@@ -335,7 +335,7 @@ impl<'a> Format<'a> for ContinueStatement {
         parts.push(ss!("continue"));
 
         if let Some(label) = &self.label {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, label));
         }
 
@@ -349,7 +349,7 @@ impl<'a> Format<'a> for BreakStatement {
         parts.push(ss!("break"));
 
         if let Some(label) = &self.label {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, label));
         }
 
@@ -434,7 +434,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             }
 
             if is_only_one_block_statement {
-                consequent_parts.push(ss!(" "));
+                consequent_parts.push(space!());
             } else {
                 consequent_parts.extend(hardline!());
             }
@@ -478,7 +478,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
         parts.push(ss!("try "));
         parts.push(format!(p, self.block));
         if let Some(handler) = &self.handler {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, handler));
         }
         if let Some(finalizer) = &self.finalizer {
@@ -584,7 +584,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
 
             let mut parts = p.vec();
             parts.push(ss!(kind));
-            parts.push(ss!(" "));
+            parts.push(space!());
 
             let is_hardline = !p.parent_kind().is_iteration_statement()
                 && self.declarations.iter().all(|decl| decl.init.is_some());
@@ -1103,7 +1103,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         if let Some(decl) = &self.declaration {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(decl.format(p));
         } else {
             parts.push(module::print_module_specifiers(
@@ -1628,7 +1628,7 @@ impl<'a> Format<'a> for YieldExpression<'a> {
                 parts.push(ss!("*"));
             }
             if let Some(argument) = &self.argument {
-                parts.push(ss!(" "));
+                parts.push(space!());
                 parts.push(format!(p, argument));
             }
             Doc::Array(parts)
@@ -1654,7 +1654,7 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
             let mut parts = p.vec();
             parts.push(string!(p, self.operator.as_str()));
             if self.operator.is_keyword() {
-                parts.push(ss!(" "));
+                parts.push(space!());
             }
             parts.push(format!(p, self.argument));
             Doc::Array(parts)

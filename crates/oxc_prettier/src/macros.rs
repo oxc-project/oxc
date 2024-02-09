@@ -16,6 +16,13 @@ macro_rules! ss {
 }
 
 #[macro_export]
+macro_rules! space {
+    () => {{
+        Doc::Str(" ")
+    }};
+}
+
+#[macro_export]
 macro_rules! string {
     ($p:ident, $s:expr) => {{
         $p.str($s)

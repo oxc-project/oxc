@@ -11,7 +11,7 @@ use oxc_ast::{
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, IndentIfBreak},
-    group, indent, line, ss, Format, Prettier,
+    group, indent, line, space, Format, Prettier,
 };
 
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
@@ -25,7 +25,7 @@ pub(super) fn print_assignment_expression<'a>(
         p,
         AssignmentLikeNode::AssignmentExpression(assignment_expr),
         left_doc,
-        array![p, ss!(" "), Doc::Str(assignment_expr.operator.as_str())],
+        array![p, space!(), Doc::Str(assignment_expr.operator.as_str())],
         Some(&assignment_expr.right),
     )
 }
@@ -83,7 +83,7 @@ pub(super) fn print_assignment<'a>(
             group!(p, group!(p, left_doc), op, group!(p, indent!(p, line!(), right_doc)))
         }
         Layout::NeverBreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, ss!(" "), group!(p, right_doc))
+            group!(p, group!(p, left_doc), op, space!(), group!(p, right_doc))
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
@@ -104,7 +104,7 @@ pub(super) fn print_assignment<'a>(
             group!(p, group!(p, left_doc), op, after_op, right_doc)
         }
         Layout::BreakLhs => {
-            group!(p, left_doc, op, ss!(" "), group!(p, right_doc))
+            group!(p, left_doc, op, space!(), group!(p, right_doc))
         }
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
