@@ -1,4 +1,4 @@
-use super::{Kind, Lexer, LexerContext};
+use super::{Kind, Lexer};
 use crate::diagnostics;
 
 #[allow(clippy::unnecessary_safety_comment)]
@@ -21,7 +21,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
-    SPS, EXL, QOT, HAS, IDT, PRC, AMP, QOT, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
+    SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
     ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
     AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
     IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
@@ -220,14 +220,16 @@ ascii_byte_handler!(EXL(lexer) {
     }
 });
 
-// ' "
-ascii_byte_handler!(QOT(lexer) {
-    let c = lexer.consume_char();
-    if lexer.context == LexerContext::JsxAttributeValue {
-        lexer.read_jsx_string_literal(c)
-    } else {
-        lexer.read_string_literal(c)
-    }
+// "
+ascii_byte_handler!(QOD(lexer) {
+    // SAFETY: This function is only called for `"`
+    unsafe { lexer.read_string_literal_double_quote() }
+});
+
+// '
+ascii_byte_handler!(QOS(lexer) {
+    // SAFETY: This function is only called for `'`
+    unsafe { lexer.read_string_literal_single_quote() }
 });
 
 // #
