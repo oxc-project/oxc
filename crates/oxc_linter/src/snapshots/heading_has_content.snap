@@ -59,3 +59,10 @@ expression: heading_has_content
    ╰────
   help: Provide screen reader accessible content when using heading elements.
 
+  ⚠ eslint(heading-has-content): Headings must have content and the content must be accessible by a screen reader.
+   ╭─[heading_has_content.tsx:1:1]
+ 1 │ <Heading />
+   · ───────────
+   ╰────
+  help: Provide screen reader accessible content when using heading elements.
+

@@ -9,7 +9,12 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 enum AnchorIsValidDiagnostic {
@@ -108,10 +113,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for AnchorIsValid {
+    // TODO: Implement from_configuration() and test it
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else { return };
-            let name = ident.name.as_str();
+            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else { return };
             if name == "a" {
                 if let Option::Some(herf_attr) =
                     has_jsx_prop_lowercase(&jsx_el.opening_element, "href")
@@ -212,24 +219,24 @@ fn test() {
 
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-is-valid-test.js
     let pass = vec![
-        (r"<Anchor />", None),
-        (r"<a {...props} />", None),
-        (r"<a href='foo' />", None),
-        (r"<a href={foo} />", None),
-        (r"<a href='/foo' />", None),
-        (r"<a href='https://foo.bar.com' />", None),
-        (r"<div href='foo' />", None),
-        (r"<a href='javascript' />", None),
-        (r"<a href='javascriptFoo' />", None),
-        (r"<a href={`#foo`}/>", None),
-        (r"<a href={'foo'}/>", None),
-        (r"<a href={'javascript'}/>", None),
-        (r"<a href={`#javascript`}/>", None),
-        (r"<a href='#foo' />", None),
-        (r"<a href='#javascript' />", None),
-        (r"<a href='#javascriptFoo' />", None),
-        (r"<UX.Layout>test</UX.Layout>", None),
-        (r"<a href={this} />", None),
+        (r"<Anchor />", None, None),
+        (r"<a {...props} />", None, None),
+        (r"<a href='foo' />", None, None),
+        (r"<a href={foo} />", None, None),
+        (r"<a href='/foo' />", None, None),
+        (r"<a href='https://foo.bar.com' />", None, None),
+        (r"<div href='foo' />", None, None),
+        (r"<a href='javascript' />", None, None),
+        (r"<a href='javascriptFoo' />", None, None),
+        (r"<a href={`#foo`}/>", None, None),
+        (r"<a href={'foo'}/>", None, None),
+        (r"<a href={'javascript'}/>", None, None),
+        (r"<a href={`#javascript`}/>", None, None),
+        (r"<a href='#foo' />", None, None),
+        (r"<a href='#javascript' />", None, None),
+        (r"<a href='#javascriptFoo' />", None, None),
+        (r"<UX.Layout>test</UX.Layout>", None, None),
+        (r"<a href={this} />", None, None),
         // (r#"<Anchor {...props} />"#, Some(serde_json::json!(components))),
         // (r#"<Anchor href='foo' />"#, Some(serde_json::json!(components))),
         // (r#"<Anchor href={foo} />"#, Some(serde_json::json!(components))),
@@ -248,7 +255,13 @@ fn test() {
         // (r#"<Link href={`#foo`}/>"#, Some(serde_json::json!(components))),
         // (r#"<Link href={'foo'}/>"#, Some(serde_json::json!(components))),
         // (r#"<Link href='#foo' />"#, Some(serde_json::json!(components))),
-        (r"<Link href='#foo' />", None),
+        (
+            r"<Link href='#foo' />",
+            None,
+            Some(
+                serde_json::json!({ "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } }),
+            ),
+        ),
         // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft='foo' />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft={foo} />"#, Some(serde_json::json!(specialLink))),
@@ -284,16 +297,16 @@ fn test() {
         // (r#"<Anchor hrefLeft={'foo'}/>"#, Some(serde_json::json!(componentsAndSpecialLink))),
         // (r#"<Anchor hrefLeft='#foo' />"#, Some(serde_json::json!(componentsAndSpecialLink))),
         // (r#"<UX.Layout>test</UX.Layout>"#, Some(serde_json::json!(componentsAndSpecialLink))),
-        (r"<a {...props} onClick={() => void 0} />", None),
-        (r"<a href='foo' onClick={() => void 0} />", None),
-        (r"<a href={foo} onClick={() => void 0} />", None),
-        (r"<a href='/foo' onClick={() => void 0} />", None),
-        (r"<a href='https://foo.bar.com' onClick={() => void 0} />", None),
-        (r"<div href='foo' onClick={() => void 0} />", None),
-        (r"<a href={`#foo`} onClick={() => void 0} />", None),
-        (r"<a href={'foo'} onClick={() => void 0} />", None),
-        (r"<a href='#foo' onClick={() => void 0} />", None),
-        (r"<a href={this} onClick={() => void 0} />", None),
+        (r"<a {...props} onClick={() => void 0} />", None, None),
+        (r"<a href='foo' onClick={() => void 0} />", None, None),
+        (r"<a href={foo} onClick={() => void 0} />", None, None),
+        (r"<a href='/foo' onClick={() => void 0} />", None, None),
+        (r"<a href='https://foo.bar.com' onClick={() => void 0} />", None, None),
+        (r"<div href='foo' onClick={() => void 0} />", None, None),
+        (r"<a href={`#foo`} onClick={() => void 0} />", None, None),
+        (r"<a href={'foo'} onClick={() => void 0} />", None, None),
+        (r"<a href='#foo' onClick={() => void 0} />", None, None),
+        (r"<a href={this} onClick={() => void 0} />", None, None),
         // (r#"<Anchor {...props} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
         // (r#"<Anchor href='foo' onClick={() => void 0} />"#, Some(serde_json::json!(components))),
         // (r#"<Anchor href={foo} onClick={() => void 0} />"#, Some(serde_json::json!(components))),
@@ -460,18 +473,18 @@ fn test() {
     ];
 
     let fail = vec![
-        (r"<a />", None),
-        (r"<a href={undefined} />", None),
-        (r"<a href={null} />", None),
-        (r"<a href=' />;", None),
-        (r"<a href='#' />", None),
-        (r"<a href={'#'} />", None),
-        (r"<a href='javascript:void(0)' />", None),
-        (r"<a href={'javascript:void(0)'} />", None),
-        (r"<a onClick={() => void 0} />", None),
-        (r"<a href='#' onClick={() => void 0} />", None),
-        (r"<a href='javascript:void(0)' onClick={() => void 0} />", None),
-        (r"<a href={'javascript:void(0)'} onClick={() => void 0} />", None),
+        (r"<a />", None, None),
+        (r"<a href={undefined} />", None, None),
+        (r"<a href={null} />", None, None),
+        (r"<a href=' />;", None, None),
+        (r"<a href='#' />", None, None),
+        (r"<a href={'#'} />", None, None),
+        (r"<a href='javascript:void(0)' />", None, None),
+        (r"<a href={'javascript:void(0)'} />", None, None),
+        (r"<a onClick={() => void 0} />", None, None),
+        (r"<a href='#' onClick={() => void 0} />", None, None),
+        (r"<a href='javascript:void(0)' onClick={() => void 0} />", None, None),
+        (r"<a href={'javascript:void(0)'} onClick={() => void 0} />", None, None),
         // (r#"<Link />"#, Some(serde_json::json!(components))),
         // (r#"<Link href={undefined} />"#, Some(serde_json::json!(components))),
         // (r#"<Link href={null} />"#, Some(serde_json::json!(components))),
@@ -505,7 +518,13 @@ fn test() {
         // r#"<Anchor href={'javascript:void(0)'} onClick={() => void 0} />"#,
         // Some(serde_json::json!(components)),
         // ),
-        // (r#"<Link href='#' onClick={() => void 0} />"#, None),
+        (
+            r"<Link href='#' onClick={() => void 0} />",
+            None,
+            Some(
+                serde_json::json!({ "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } }),
+            ),
+        ),
         // (r#"<a hrefLeft={undefined} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft={null} />"#, Some(serde_json::json!(specialLink))),
         // (r#"<a hrefLeft=' />;"#, Some(serde_json::json!(specialLink))),

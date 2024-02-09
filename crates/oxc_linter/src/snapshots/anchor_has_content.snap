@@ -25,6 +25,13 @@ expression: anchor_has_content
   help: Provide screen reader accessible content when using `a` elements.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:2]
+ 1 │ <Link />
+   ·  ────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]
  1 │ <a aria-hidden ></a>
    · ────────────────────

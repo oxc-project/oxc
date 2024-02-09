@@ -17,7 +17,7 @@ use oxc_allocator::Vec;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
     AstNode,
 };
 
@@ -75,8 +75,7 @@ declare_oxc_lint!(
 impl Rule for AnchorHasContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let JSXElementName::Identifier(iden) = &jsx_el.opening_element.name else { return };
-            let name = iden.name.as_str();
+            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else { return };
             if name == "a" {
                 // check self attr
                 if has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-hidden").is_some() {
@@ -163,30 +162,36 @@ fn test() {
 
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-has-content-test.js
     let pass = vec![
-        (r"<div />;", None),
-        (r"<a>Foo</a>", None),
-        (r"<a><Bar /></a>", None),
-        (r"<a>{foo}</a>", None),
-        (r"<a>{foo.bar}</a>", None),
-        (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None),
-        (r"<a children={children} />", None),
-        // TODO:
-        // { code: '<Link>foo</Link>', settings: { 'jsx-a11y': { components: { Link: 'a' } } }, },
-        (r"<a title={title} />", None),
-        (r"<a aria-label={ariaLabel} />", None),
-        (r"<a title={title} aria-label={ariaLabel} />", None),
-        (r"<a><Bar aria-hidden />Foo</a>", None),
+        (r"<div />;", None, None),
+        (r"<a>Foo</a>", None, None),
+        (r"<a><Bar /></a>", None, None),
+        (r"<a>{foo}</a>", None, None),
+        (r"<a>{foo.bar}</a>", None, None),
+        (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None, None),
+        (r"<a children={children} />", None, None),
+        (
+            r"<Link>foo</Link>",
+            None,
+            Some(serde_json::json!({ "jsx-a11y": { "components": { "Link": "a" } } })),
+        ),
+        (r"<a title={title} />", None, None),
+        (r"<a aria-label={ariaLabel} />", None, None),
+        (r"<a title={title} aria-label={ariaLabel} />", None, None),
+        (r"<a><Bar aria-hidden />Foo</a>", None, None),
     ];
 
     let fail = vec![
-        (r"<a />", None),
-        (r"<a><Bar aria-hidden /></a>", None),
-        (r"<a>{undefined}</a>", None),
-        // TODO:
-        // { code: '<Link />', errors: [expectedError], settings: { 'jsx-a11y': { components: { Link: 'a' } } }, },
-        (r"<a aria-hidden ></a>", None),
-        (r"<a>{null}</a>", None),
-        (r"<a title />", None),
+        (r"<a />", None, None),
+        (r"<a><Bar aria-hidden /></a>", None, None),
+        (r"<a>{undefined}</a>", None, None),
+        (
+            r"<Link />",
+            None,
+            Some(serde_json::json!({ "jsx-a11y": { "components": { "Link": "a" } } })),
+        ),
+        (r"<a aria-hidden ></a>", None, None),
+        (r"<a>{null}</a>", None, None),
+        (r"<a title />", None, None),
     ];
 
     Tester::new(AnchorHasContent::NAME, pass, fail).test_and_snapshot();
