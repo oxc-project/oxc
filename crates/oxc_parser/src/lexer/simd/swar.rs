@@ -1,6 +1,7 @@
 use crate::lexer::source::Source;
 
-pub(crate) const ALIGNMENT: usize = core::mem::size_of::<usize>();
+const ALIGNMENT: usize = core::mem::size_of::<usize>();
+type Segment = [u8; ALIGNMENT];
 
 pub struct LookupTable {}
 
@@ -11,6 +12,11 @@ impl LookupTable {
 
     #[inline]
     pub fn match_vectored(&self, source: &Source) -> usize {
+        todo!()
+    }
+
+    #[inline]
+    fn match_delimiters_swar(&self, seg: Segment) -> usize {
         todo!()
     }
 }

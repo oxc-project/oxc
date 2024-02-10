@@ -6,7 +6,7 @@ use core::arch::x86_64::*;
 use crate::lexer::source::Source;
 use itertools::Itertools;
 
-pub(crate) const ALIGNMENT: usize = 32;
+const ALIGNMENT: usize = 32;
 
 pub struct LookupTable {
     table: __m256i, // for cols lookup
@@ -21,10 +21,12 @@ impl LookupTable {
         // delimiters must be an ASCII character and checked by `tabulate`
         unsafe {
             let table = tabulate(delimiters);
+            #[rustfmt::skip]
             let arf = _mm256_setr_epi8(
-                0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
+                0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             );
             let lsh = _mm256_set1_epi8(0x0f);
             Self { table, arf, lsh }
@@ -108,8 +110,9 @@ unsafe fn tabulate(delimiters: &[u8]) -> __m256i {
     let (e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11) =
         table_iter.next_tuple().unwrap();
     let (e12, e13, e14, e15) = table_iter.next_tuple().unwrap();
+    #[rustfmt::skip]
     _mm256_setr_epi8(
-        e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15, e00, e01,
-        e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15,
+        e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15,
+        e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15,
     )
 }
