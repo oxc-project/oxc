@@ -4994,13 +4994,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2017/async-functions/newline-before-arrow/input.js:1:6]
+  × No line break is allowed before '=>'.
+   ╭─[es2017/async-functions/newline-before-arrow/input.js:2:1]
  1 │ async x
-   ·      ─
  2 │ => x
+   · ──
    ╰────
-  help: Try insert a semicolon here
 
   × Constructor can't be an async method
    ╭─[es2017/async-functions/no-constructor/input.js:2:9]
