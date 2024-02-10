@@ -384,10 +384,7 @@ pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'
 
 /// Check if the given [IdentifierReference] is a global reference.
 /// Such as `window`, `document`, `globalThis`, etc.
-pub fn is_global_reference(
-    ident: &IdentifierReference,
-    ctx: &LintContext,
-) -> bool {
+pub fn is_global_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
     let symbol_table = ctx.semantic().symbols();
     let Some(reference_id) = ident.reference_id.get() else {
         return false;
