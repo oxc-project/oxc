@@ -36,6 +36,7 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayAssignmentTarget(array) => array.span,
         }
     }
+
     fn is_concisely_printed(&self) -> bool {
         match self {
             Self::ArrayExpression(array) => {
@@ -65,7 +66,7 @@ impl<'a, 'b> Array<'a, 'b> {
     }
 }
 
-pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     if array.len() == 0 {
         return print_empty_array_elements(p, array);
     }
@@ -131,12 +132,15 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     match array {
         Array::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
-                if i > 0 && i < array.elements.len() {
+                parts.push(element.format(p));
+                let is_last = i == array.elements.len() - 1;
+                if !is_last {
                     parts.push(ss!(","));
                     parts.push(line!());
+                    if !element.is_elision() && is_line_after_element_empty(p, element.span().end) {
+                        parts.push(softline!());
+                    }
                 }
-
-                parts.push(element.format(p));
             }
         }
         Array::TSTupleType(tuple) => {
@@ -212,7 +216,7 @@ where
                 parts.push(part);
 
                 if !is_last {
-                    if p.is_next_line_empty_after_index(element.span().end) {
+                    if is_line_after_element_empty(p, element.span().end) {
                         let mut space_parts = p.vec();
                         space_parts.extend(hardline!());
                         space_parts.extend(hardline!());
@@ -294,4 +298,23 @@ fn should_break(array: &Array) -> bool {
         Array::ArrayPattern(array) => false,
         Array::ArrayAssignmentTarget(array) => false,
     }
+}
+
+fn skip_comment(p: &Prettier<'_>, idx: u32) -> Option<u32> {
+    p.skip_inline_comment(p.skip_trailing_comment(Some(idx)))
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn skip_to_comma(p: &Prettier<'_>, current_idx: Option<u32>) -> Option<u32> {
+    let current_idx = current_idx?;
+    match p.source_text[current_idx as usize..].chars().next() {
+        Some(',') => Some(current_idx),
+        Some(c) => skip_to_comma(p, skip_comment(p, current_idx + c.len_utf8() as u32)),
+        None => None,
+    }
+}
+
+fn is_line_after_element_empty(p: &Prettier<'_>, index: u32) -> bool {
+    let Some(start_index) = skip_to_comma(p, Some(index)) else { return false };
+    p.is_next_line_empty_after_index(start_index)
 }

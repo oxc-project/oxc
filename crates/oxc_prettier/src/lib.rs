@@ -160,7 +160,7 @@ impl<'a> Prettier<'a> {
         while idx != old_idx {
             old_idx = idx;
             idx = self.skip_to_line_end(idx);
-            // idx = self.skip_inline_comment(idx);
+            idx = self.skip_inline_comment(idx);
             idx = self.skip_spaces(idx, /* backwards */ false);
         }
         idx = self.skip_trailing_comment(idx);
@@ -180,6 +180,12 @@ impl<'a> Prettier<'a> {
             return Some(start_index);
         }
         self.skip_everything_but_new_line(Some(start_index), /* backwards */ false)
+    }
+
+    #[allow(clippy::unused_self)]
+    fn skip_inline_comment(&self, start_index: Option<u32>) -> Option<u32> {
+        let start_index = start_index?;
+        Some(start_index)
     }
 
     fn skip_to_line_end(&self, start_index: Option<u32>) -> Option<u32> {
