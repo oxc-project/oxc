@@ -1,58 +1,7 @@
-use oxc_ast::ast::*;
-use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
 };
-
-use crate::{Doc, Format, Prettier};
-
-#[derive(Clone, Copy)]
-pub enum BinaryishLeft<'a, 'b> {
-    Expression(&'b Expression<'a>),
-    PrivateIdentifier(&'b PrivateIdentifier),
-}
-
-impl<'a, 'b> From<&'b Expression<'a>> for BinaryishLeft<'a, 'b> {
-    fn from(e: &'b Expression<'a>) -> Self {
-        Self::Expression(e)
-    }
-}
-
-impl<'a, 'b> From<&'b PrivateIdentifier> for BinaryishLeft<'a, 'b> {
-    fn from(e: &'b PrivateIdentifier) -> Self {
-        Self::PrivateIdentifier(e)
-    }
-}
-
-impl<'a, 'b> BinaryishLeft<'a, 'b> {
-    pub fn operator(&self) -> Option<BinaryishOperator> {
-        match self {
-            Self::Expression(Expression::BinaryExpression(e)) => {
-                Some(BinaryishOperator::BinaryOperator(e.operator))
-            }
-            Self::Expression(Expression::LogicalExpression(e)) => {
-                Some(BinaryishOperator::LogicalOperator(e.operator))
-            }
-            _ => None,
-        }
-    }
-    pub fn span(&self) -> Span {
-        match self {
-            Self::Expression(e) => e.span(),
-            Self::PrivateIdentifier(e) => e.span,
-        }
-    }
-}
-
-impl<'a, 'b> Format<'a> for BinaryishLeft<'a, 'b> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            Self::Expression(expr) => expr.format(p),
-            Self::PrivateIdentifier(ident) => ident.format(p),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum BinaryishOperator {

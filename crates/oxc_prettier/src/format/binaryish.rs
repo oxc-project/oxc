@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
-    binaryish::{BinaryishLeft, BinaryishOperator},
+    binaryish::BinaryishOperator,
     comments::CommentFlags,
     doc::{Doc, DocBuilder, Group},
     group, line, space, ss, Format, Prettier,
@@ -9,7 +10,7 @@ use crate::{
 
 pub(super) fn print_binaryish_expression<'a>(
     p: &mut Prettier<'a>,
-    left: BinaryishLeft<'a, '_>,
+    left: &Expression<'a>,
     operator: BinaryishOperator,
     right: &Expression<'a>,
 ) -> Doc<'a> {
@@ -18,19 +19,25 @@ pub(super) fn print_binaryish_expression<'a>(
 
 fn print_binaryish_expressions<'a>(
     p: &mut Prettier<'a>,
-    left: BinaryishLeft<'a, '_>,
+    left: &Expression<'a>,
     operator: BinaryishOperator,
     right: &Expression<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
-    if left.operator().is_some_and(|left_operator| operator.should_flatten(left_operator)) {
+    let left_operator = match left {
+        Expression::LogicalExpression(e) => Some(BinaryishOperator::LogicalOperator(e.operator)),
+        Expression::BinaryExpression(e) => Some(BinaryishOperator::BinaryOperator(e.operator)),
+        _ => None,
+    };
+
+    if left_operator.is_some_and(|left_operator| operator.should_flatten(left_operator)) {
         parts.push(match left {
-            BinaryishLeft::Expression(Expression::BinaryExpression(e)) => {
-                print_binaryish_expressions(p, (&e.left).into(), e.operator.into(), &e.right)
+            Expression::BinaryExpression(e) => {
+                print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right)
             }
-            BinaryishLeft::Expression(Expression::LogicalExpression(e)) => {
-                print_binaryish_expressions(p, (&e.left).into(), e.operator.into(), &e.right)
+            Expression::LogicalExpression(e) => {
+                print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right)
             }
             _ => unreachable!(),
         });
