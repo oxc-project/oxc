@@ -392,7 +392,7 @@ Compatibility: 238/562 (42.35%)
 ### strings
 * strings/escaped.js
 * strings/multiline-literal.js
-* strings/strings.js
+* strings/non-octal-eight-and-nine.js
 * strings/template-literals.js
 
 ### switch
