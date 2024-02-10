@@ -323,6 +323,52 @@ pub(crate) use safe_byte_match_table;
 /// }
 /// ```
 ///
+/// Can also add a block to decide whether to continue searching for some matches:
+///
+/// ```
+/// impl<'a> Lexer<'a> {
+///   fn eat_stuff(&mut self) -> bool {
+///     // SAFETY: It is unsafe to use `continue_if`. See requirements below.
+///     unsafe {
+///       byte_search! {
+///         lexer: self,
+///         table: NOT_STUFF_TABLE,
+///         continue_if: |matched_byte, pos| {
+///           // Matching byte found. Decide whether it's really a match.
+///           // NB: `lexer.source` has NOT been updated at this point.
+///           // SAFETY: If return `true` to continue searching, must NOT alter `pos`.
+///           if matched_byte == 0xE2 {
+///             // Only match a specific Unicode char (in this case 0xE2, 0x80, 0xA8)
+///             unsafe { pos.add(1).read() != 0x80 || pos.add(2).read() != 0xA8) }
+///           } else {
+///             // All others do match. `handle_match` is executed.
+///             false
+///           }
+///         },
+///         handle_match: |matched_byte| {
+///           // Matching byte has been found and `continue_if` returned `false` for it.
+///           // `matched_byte` is `u8` value of first byte which matched the table.
+///           // `lexer.source` is now positioned on first matching byte.
+///           // Handle the next matching byte (deal with any special cases).
+///           // Value this block evaluates to will be returned from enclosing function.
+///           true
+///         },
+///         handle_eof: || {
+///           // No bytes from start position to end of source matched the table.
+///           // `lexer.source` is now positioned at EOF.
+///           // Handle EOF in some way.
+///           // Value this block evaluates to will be returned from enclosing function.
+///           false
+///         },
+///       };
+///     }
+///
+///     // This is unreachable.
+///     // Macro always exits current function with a `return` statement.
+///   }
+/// }
+/// ```
+///
 /// NB: The macro always causes enclosing function to return.
 /// It creates `return` statements with the value that `handle_match` / `handle_eof` blocks evaluate to.
 /// After the `byte_search!` macro is unreachable.
@@ -353,6 +399,33 @@ macro_rules! byte_search {
             lexer: $lexer,
             table: $table,
             start: start,
+            continue_if: |__byte, pos| false,
+            handle_match: |$match_byte, $match_start| $match_handler,
+            handle_eof: |$eof_start| $eof_handler,
+        }
+    }};
+
+    // Standard version with `continue_if`.
+    // `start` is calculated from current position of `lexer.source`.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
+        handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
+        handle_eof: |$eof_start:ident| $eof_handler:expr,
+    ) => {{
+        // User has free access to change `$pos` in `continue_if`.
+        // They must satisfy safety requirements explained above.
+        #[inline]
+        unsafe fn unsafe_noop() {}
+        unsafe_noop();
+
+        let start = $lexer.source.position();
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            start: start,
+            continue_if: |$continue_byte, $pos| $should_continue,
             handle_match: |$match_byte, $match_start| $match_handler,
             handle_eof: |$eof_start| $eof_handler,
         }
@@ -370,16 +443,43 @@ macro_rules! byte_search {
             lexer: $lexer,
             table: $table,
             start: $start,
+            continue_if: |__byte, pos| false,
             handle_match: |$match_byte, __start| $match_handler,
             handle_eof: |__start| $eof_handler,
         }
     };
+
+    // Provide your own `start` position, and `continue_if`
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        start: $start:ident,
+        continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
+        handle_match: |$match_byte:ident| $match_handler:expr,
+        handle_eof: || $eof_handler:expr,
+    ) => {{
+        // User has free access to change `$pos` in `continue_if`.
+        // They must satisfy safety requirements explained above.
+        #[inline]
+        unsafe fn unsafe_noop() {}
+        unsafe_noop();
+
+        byte_search! {
+            lexer: $lexer,
+            table: $table,
+            start: $start,
+            continue_if: |$continue_byte, $pos| $should_continue,
+            handle_match: |$match_byte, __start| $match_handler,
+            handle_eof: |__start| $eof_handler,
+        }
+    }};
 
     // Actual implementation
     (
         lexer: $lexer:ident,
         table: $table:ident,
         start: $start:ident,
+        continue_if: |$continue_byte:ident, $pos:ident| $should_continue:expr,
         handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
         handle_eof: |$eof_start:ident| $eof_handler:expr,
     ) => {{
@@ -393,33 +493,45 @@ macro_rules! byte_search {
         // to unsafe functions in this function with `unsafe {}`.
         $table.use_table();
 
-        let mut pos = $start;
+        let mut $pos = $start;
         #[allow(unused_unsafe)] // Silence warnings if macro called in unsafe code
         loop {
-            if pos.addr() <= $lexer.source.end_for_batch_search_addr() {
+            if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
                 // The compiler unrolls this loop.
                 // SAFETY:
-                // `pos.addr() > lexer.source.end_for_batch_search_addr()` check above ensures there are
+                // `$pos.addr() > lexer.source.end_for_batch_search_addr()` check above ensures there are
                 // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
-                // So calls to `pos.read()` and `pos.add(1)` in this loop cannot go out of bounds.
+                // So calls to `$pos.read()` and `$pos.add(1)` in this loop cannot go out of bounds.
                 for _i in 0..crate::lexer::search::SEARCH_BATCH_SIZE {
-                    // SAFETY: `pos` cannot go out of bounds in this loop (see above).
-                    let $match_byte = unsafe { pos.read() };
+                    // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
+                    let $match_byte = unsafe { $pos.read() };
                     if $table.matches($match_byte) {
                         // Found match.
-                        // Advance `lexer.source`'s position up to `pos`, consuming unmatched bytes.
+                        // Check if should continue.
+                        {
+                            let $continue_byte = $match_byte;
+                            if $should_continue {
+                                // Not a match after all - continue searching.
+                                // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                                // See above about UTF-8 character boundaries invariant.
+                                $pos = unsafe { $pos.add(1) };
+                                continue;
+                            }
+                        }
+
+                        // Advance `lexer.source`'s position up to `$pos`, consuming unmatched bytes.
                         // SAFETY: See above about UTF-8 character boundaries invariant.
-                        $lexer.source.set_position(pos);
+                        $lexer.source.set_position($pos);
 
                         let $match_start = $start;
                         return $match_handler;
                     }
 
                     // No match - continue searching
-                    // SAFETY: `pos` cannot go out of bounds in this loop (see above).
+                    // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
                     // Also see above about UTF-8 character boundaries invariant.
-                    pos = unsafe { pos.add(1) };
+                    $pos = unsafe { $pos.add(1) };
                 }
                 // No match in batch - loop round and searching next batch
             } else {
@@ -430,14 +542,26 @@ macro_rules! byte_search {
                 // to remove that problem.
                 return crate::lexer::cold_branch(|| {
                     let end_addr = $lexer.source.end_addr();
-                    while pos.addr() < end_addr {
+                    while $pos.addr() < end_addr {
                         // SAFETY: `pos` is not at end of source, so safe to read a byte
-                        let $match_byte = unsafe { pos.read() };
+                        let $match_byte = unsafe { $pos.read() };
                         if $table.matches($match_byte) {
                             // Found match.
+                            // Check if should continue.
+                            {
+                                let $continue_byte = $match_byte;
+                                if $should_continue {
+                                    // Not a match after all - continue searching.
+                                    // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
+                                    // See above about UTF-8 character boundaries invariant.
+                                    $pos = unsafe { $pos.add(1) };
+                                    continue;
+                                }
+                            }
+
                             // Advance `lexer.source`'s position up to `pos`, consuming unmatched bytes.
                             // SAFETY: See above about UTF-8 character boundaries invariant.
-                            $lexer.source.set_position(pos);
+                            $lexer.source.set_position($pos);
 
                             let $match_start = $start;
                             return $match_handler;
@@ -446,12 +570,12 @@ macro_rules! byte_search {
                         // No match - continue searching
                         // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                         // See above about UTF-8 character boundaries invariant.
-                        pos = unsafe { pos.add(1) };
+                        $pos = unsafe { $pos.add(1) };
                     }
 
                     // EOF.
                     // Advance `lexer.source`'s position to end of file.
-                    $lexer.source.set_position(pos);
+                    $lexer.source.set_position($pos);
 
                     let $eof_start = $start;
                     $eof_handler
