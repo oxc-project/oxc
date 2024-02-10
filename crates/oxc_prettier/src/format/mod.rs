@@ -1359,7 +1359,9 @@ impl<'a> Format<'a> for RegExpLiteral {
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            Doc::Str(string::print_string(p, self.value.as_str(), p.options.single_quote))
+            let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
+            // TODO: implement `makeString` from prettier/src/utils/print-string.js
+            Doc::Str(string::print_string(p, raw, p.options.single_quote))
         })
     }
 }
