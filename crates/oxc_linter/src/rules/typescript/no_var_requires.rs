@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::{get_declaration_of_variable, is_global_require_call}, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
