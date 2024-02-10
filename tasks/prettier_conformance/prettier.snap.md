@@ -1,4 +1,4 @@
-Compatibility: 236/562 (41.99%)
+Compatibility: 237/562 (42.17%)
 
 # Failed
 
@@ -31,9 +31,6 @@ Compatibility: 236/562 (41.99%)
 * arrows/issue-1389-curry.js
 * arrows/long-call-no-args.js
 * arrows/parens.js
-
-### arrows/newline-before-arrow
-* arrows/newline-before-arrow/newline-before-arrow.js
 
 ### assignment
 * assignment/binaryish.js

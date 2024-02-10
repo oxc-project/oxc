@@ -1003,9 +1003,12 @@ impl<'a> ParserImpl<'a> {
             && self.peek_kind().is_binding_identifier()
             && !self.peek_token().is_on_new_line
             && self.nth_at(2, Kind::Arrow)
-            && !self.nth(2).is_on_new_line
         {
             self.bump_any(); // bump async
+            let arrow_token = self.peek_token();
+            if arrow_token.is_on_new_line {
+                self.error(diagnostics::NoLineBreakIsAllowedBeforeArrow(arrow_token.span()));
+            }
             self.parse_single_param_function_expression(span, true, false)
         } else {
             self.parse_assignment_expression()
