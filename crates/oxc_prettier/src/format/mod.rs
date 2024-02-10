@@ -1673,7 +1673,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
         wrap!(p, self, BinaryExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
@@ -1689,12 +1689,14 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, PrivateInExpression, {
-            binaryish::print_binaryish_expression(
+            array![
                 p,
-                (&self.left).into(),
-                self.operator.into(),
-                &self.right,
-            )
+                format!(p, self.left),
+                space!(),
+                ss!(self.operator.as_str()),
+                space!(),
+                format!(p, self.right)
+            ]
         })
     }
 }
@@ -1704,7 +1706,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
         wrap!(p, self, LogicalExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
