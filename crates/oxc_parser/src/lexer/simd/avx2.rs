@@ -50,7 +50,6 @@ impl LookupTable {
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
     #[allow(
-        non_snake_case,
         overflowing_literals,
         clippy::cast_sign_loss,
         clippy::ptr_as_ptr,
@@ -63,6 +62,7 @@ impl LookupTable {
         let bits = _mm256_and_si256(_mm256_shuffle_epi8(self.arf, cols), rbms);
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());
         let r = _mm256_movemask_epi8(v) as u32;
+        // unmatched bits are 1, so we need to count the leading zeros
         r.trailing_ones() as usize
     }
 }
