@@ -1556,7 +1556,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
         wrap!(p, self, PropertyKey, {
             // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
-            let need_quote = p.options.quote_props.is_consistent()
+            let need_quote = p.options.quote_props.consistent()
                 && match p.parent_parent_kind() {
                     Some(AstKind::ObjectExpression(a)) => a.properties.iter().any(|x| match x {
                         ObjectPropertyKind::ObjectProperty(p) => {
@@ -1584,16 +1584,20 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
                 PropertyKey::Expression(expr) => match expr {
                     Expression::StringLiteral(literal) => {
-                        let unquote = if need_quote {
-                            false
+                        // This does not pass quotes/objects.js
+                        // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
+                        // but `is_identifier_name` uses the latest unicode version.
+                        if is_identifier_name(literal.value.as_str())
+                            && (p.options.quote_props.as_needed()
+                                || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
+                        {
+                            string!(p, literal.value.as_str())
                         } else {
-                            is_identifier_name(literal.value.as_str())
-                        };
-
-                        if !unquote || p.options.quote_props.is_preserve() {
-                            literal.format(p)
-                        } else {
-                            p.str(literal.value.as_str())
+                            Doc::Str(string::print_string(
+                                p,
+                                literal.value.as_str(),
+                                p.options.single_quote,
+                            ))
                         }
                     }
                     Expression::NumberLiteral(literal) => {

@@ -126,10 +126,15 @@ pub enum QuoteProps {
 }
 
 impl QuoteProps {
-    pub fn is_preserve(self) -> bool {
+    pub fn as_needed(self) -> bool {
+        matches!(self, Self::AsNeeded)
+    }
+
+    pub fn preserve(self) -> bool {
         matches!(self, Self::Preserve)
     }
-    pub fn is_consistent(self) -> bool {
+
+    pub fn consistent(self) -> bool {
         matches!(self, Self::Consistent)
     }
 }
