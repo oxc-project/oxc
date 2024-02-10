@@ -80,9 +80,5 @@ pub(super) fn print_block_body<'a>(
         ));
     }
 
-    if is_root {
-        parts.extend(hardline!());
-    }
-
     Some(Doc::Array(parts))
 }
