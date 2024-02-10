@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 150
+expression: prefer_equality_matcher
+---
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:17]
+ 1 │ expect(a !== b).toBe(true)
+   ·                 ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:17]
+ 1 │ expect(a !== b).toBe(false)
+   ·                 ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:26]
+ 1 │ expect(a !== b).resolves.toBe(true)
+   ·                          ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:26]
+ 1 │ expect(a !== b).resolves.toBe(false)
+   ·                          ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:21]
+ 1 │ expect(a !== b).not.toBe(true)
+   ·                     ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:21]
+ 1 │ expect(a !== b).not.toBe(false)
+   ·                     ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:30]
+ 1 │ expect(a !== b).resolves.not.toBe(true)
+   ·                              ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
+  ⚠ eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.
+   ╭─[prefer_equality_matcher.tsx:1:30]
+ 1 │ expect(a !== b).resolves.not.toBe(false)
+   ·                              ────
+   ╰────
+  help: Prefer using one of the equality matchers instead
+
