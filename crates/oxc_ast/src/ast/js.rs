@@ -392,6 +392,12 @@ pub enum ArrayExpressionElement<'a> {
     Elision(Span),
 }
 
+impl<'a> ArrayExpressionElement<'a> {
+    pub fn is_elision(&self) -> bool {
+        matches!(self, Self::Elision(_))
+    }
+}
+
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
