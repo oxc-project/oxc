@@ -1,11 +1,10 @@
-Compatibility: 237/562 (42.17%)
+Compatibility: 238/562 (42.35%)
 
 # Failed
 
 ### arrays
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
-* arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
 * arrays/numbers2.js
