@@ -381,3 +381,26 @@ pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'
 
     Some(ident.name.as_str())
 }
+
+/// Check if the given [IdentifierReference] is a global reference.
+/// Such as `window`, `document`, `globalThis`, etc.
+pub fn is_global_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+    let symbol_table = ctx.semantic().symbols();
+    let Some(reference_id) = ident.reference_id.get() else {
+        return false;
+    };
+    let reference = symbol_table.get_reference(reference_id);
+    reference.symbol_id().is_none()
+}
+
+pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> bool {
+    if call_expr.arguments.len() != 1 {
+        return false;
+    }
+
+    if let Expression::Identifier(id_ref) = &call_expr.callee {
+        id_ref.name == "require" && is_global_reference(id_ref, ctx)
+    } else {
+        false
+    }
+}

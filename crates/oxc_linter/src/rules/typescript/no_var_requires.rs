@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
@@ -41,7 +41,7 @@ impl Rule for NoVarRequires {
         }
         let AstKind::CallExpression(expr) = node.kind() else { return };
 
-        if expr.is_require_call() && no_local_require_declaration(&expr.callee, ctx) {
+        if is_global_require_call(expr, ctx) {
             // If the parent is an expression statement => this is a top level require()
             // Or, if the parent is a chain expression (require?.()) and
             // the grandparent is an expression statement => this is a top level require()
@@ -68,11 +68,6 @@ impl Rule for NoVarRequires {
             }
         }
     }
-}
-
-fn no_local_require_declaration(expr: &Expression, ctx: &LintContext) -> bool {
-    let Expression::Identifier(ident) = expr else { return true };
-    get_declaration_of_variable(ident, ctx).is_none()
 }
 
 #[test]
