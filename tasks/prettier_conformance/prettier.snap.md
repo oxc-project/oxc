@@ -1,4 +1,4 @@
-Compatibility: 238/562 (42.35%)
+Compatibility: 240/562 (42.70%)
 
 # Failed
 
@@ -115,7 +115,7 @@ Compatibility: 238/562 (42.35%)
 * comments/before-comma.js
 * comments/binary-expressions-block-comments.js
 * comments/binary-expressions-parens.js
-* comments/binary-expressions.js
+* comments/binary-expressions-single-comments.js
 * comments/blank.js
 * comments/break-continue-statements.js
 * comments/call_comment.js
@@ -398,7 +398,6 @@ Compatibility: 238/562 (42.35%)
 ### switch
 * switch/comments.js
 * switch/comments2.js
-* switch/switch.js
 
 ### template
 * template/call.js
@@ -466,9 +465,6 @@ Compatibility: 238/562 (42.35%)
 ### unicode
 * unicode/combining-characters.js
 * unicode/nbsp-jsx.js
-
-### while
-* while/indent.js
 
 ### yield
 * yield/jsx-without-parenthesis.js
