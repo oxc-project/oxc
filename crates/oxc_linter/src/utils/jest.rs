@@ -37,7 +37,7 @@ const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "pending"
 ];
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum JestFnKind {
     Expect,
     General(JestGeneralFnKind),
