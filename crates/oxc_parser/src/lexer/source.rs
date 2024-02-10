@@ -230,8 +230,15 @@ impl<'a> Source<'a> {
     #[allow(clippy::cast_possible_truncation)]
     #[inline]
     pub(super) fn offset(&self) -> u32 {
+        self.offset_of(self.position())
+    }
+
+    /// Get offset of `pos`.
+    #[allow(clippy::cast_possible_truncation)]
+    #[inline]
+    pub(super) fn offset_of(&self, pos: SourcePosition) -> u32 {
         // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
-        (self.ptr as usize - self.start as usize) as u32
+        (pos.addr() - self.start as usize) as u32
     }
 
     /// Move current position back by `n` bytes.
@@ -520,6 +527,27 @@ impl<'a> SourcePosition<'a> {
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         debug_assert!(!self.ptr.is_null());
         *self.ptr.as_ref().unwrap_unchecked()
+    }
+
+    /// Read 2 bytes from this `SourcePosition`.
+    ///
+    /// # SAFETY
+    /// Caller must ensure `SourcePosition` is no later than 2 bytes before end of source text.
+    /// i.e. if source length is 10, `self` must be on position 8 max.
+    #[allow(dead_code)]
+    #[inline]
+    pub(super) unsafe fn read2(self) -> [u8; 2] {
+        // SAFETY:
+        // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
+        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
+        // `Source` conceptually holds the source text `&str`, which guarantees to mutable references
+        // to the same memory can exist, as that would violate Rust's aliasing rules.
+        // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
+        // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
+        debug_assert!(!self.ptr.is_null());
+        #[allow(clippy::ptr_as_ptr)]
+        let p = self.ptr as *const [u8; 2];
+        *p.as_ref().unwrap_unchecked()
     }
 }
 
