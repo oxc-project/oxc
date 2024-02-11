@@ -211,4 +211,4 @@ jobs:
             npm publish $package/ --tag latest --provenance --access public
           done
           # publish root package last
-          npm publish npm/oxc-parser/ --tag latest --provenance --access public
+          npm publish npm/oxc-parser/ --provenance --access public # --tag latest
