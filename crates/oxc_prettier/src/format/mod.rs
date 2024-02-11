@@ -10,6 +10,7 @@ mod arrow_function;
 mod assignment;
 mod binaryish;
 mod block;
+mod call_arguments;
 mod call_expression;
 mod class;
 mod function;
