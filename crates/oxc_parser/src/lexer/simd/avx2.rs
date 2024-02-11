@@ -8,15 +8,15 @@ use itertools::Itertools;
 
 const ALIGNMENT: usize = 32;
 
-pub struct LookupTable {
+pub struct LookupTable<const N: usize> {
     table: __m256i, // for cols lookup
     arf: __m256i,   // for rows lookup
     lsh: __m256i,   // for shifting
 }
 
-impl LookupTable {
+impl<const N: usize> LookupTable<N> {
     #[allow(non_snake_case, overflowing_literals)]
-    pub fn new(delimiters: &[u8]) -> Self {
+    pub fn new(delimiters: [u8; N]) -> Self {
         // SAFETY:
         // delimiters must be an ASCII character and checked by `tabulate`
         unsafe {
@@ -96,7 +96,7 @@ impl LookupTable {
 //     p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
 #[inline]
 #[allow(clippy::cast_possible_truncation)]
-unsafe fn tabulate(delimiters: &[u8]) -> __m256i {
+unsafe fn tabulate<const N: usize>(delimiters: [u8; N]) -> __m256i {
     let mut table = [false; 128];
     for delimiter in delimiters {
         debug_assert!(*delimiter < 128, "delimiter must be an ASCII character");

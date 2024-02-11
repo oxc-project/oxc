@@ -7,13 +7,13 @@ impl<'a> Lexer<'a> {
     pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
         let mut builder = AutoCow::new(self);
         while !self.source.is_eof() {
-            let Position { offset, alignment } = string_literal_lookup(&self.source);
-
-            if offset == alignment {
-                // no delimiter found in this 32 bytes
-                self.source.advance(offset);
+            let Position { offset, actual_len, .. } = string_literal_lookup(&self.source);
+            let offset = if let Some(offset) = offset {
+                offset
+            } else {
+                self.source.advance(actual_len);
                 continue;
-            }
+            };
             let matched = self.source.nth(offset);
             self.source.advance(offset);
             match matched {
@@ -43,8 +43,7 @@ impl<'a> Lexer<'a> {
                 }
             }
         }
-        // add padding to the end of the source
-        todo!()
+        Kind::Undetermined
     }
 
     /// Save the string if it is escaped

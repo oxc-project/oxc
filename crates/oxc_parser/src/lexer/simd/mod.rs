@@ -10,7 +10,9 @@ use once_cell::sync::Lazy;
 
 pub(crate) struct Position {
     // the offset of the first found delimiter
-    pub(crate) offset: usize,
+    pub(crate) offset: Option<usize>,
+    //  the number of actual remaining bytes in the source
+    pub(crate) actual_len: usize,
     // the maximum length of each segment, in avx2, it's 32 bytes
     pub(crate) alignment: usize,
 }
@@ -28,25 +30,21 @@ pub(crate) fn string_literal_lookup(source: &Source) -> Position {
 }
 
 #[cfg(target_arch = "aarch64")]
-static NEON_STRING_LITERAL_LOOKUP_TABLE: Lazy<swar::LookupTable> =
-    Lazy::new(|| swar::LookupTable::new(&[b'\r', b'\n', b'"', b'\'', b'\\']));
+static NEON_STRING_LITERAL_LOOKUP_TABLE: Lazy<neon::LookupTable> =
+    Lazy::new(|| neon::LookupTable::new(&[b'\r', b'\n', b'"', b'\'', b'\\']));
 
 #[cfg(target_arch = "aarch64")]
 pub(crate) fn string_literal_lookup(source: &Source) -> Position {
-    Position {
-        offset: NEON_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source),
-        alignment: swar::ALIGNMENT,
-    }
+    let (offset, actual_len) = NEON_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
+    Position { offset, actual_len, alignment: neon::ALIGNMENT }
 }
 
 #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-static SWAR_STRING_LITERAL_LOOKUP_TABLE: Lazy<swar::LookupTable> =
-    Lazy::new(|| swar::LookupTable::new(&[b'\r', b'\n', b'"', b'\'', b'\\']));
+static SWAR_STRING_LITERAL_LOOKUP_TABLE: Lazy<swar::LookupTable<5>> =
+    Lazy::new(|| swar::LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']));
 
 #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
 pub(crate) fn string_literal_lookup(source: &Source) -> Position {
-    Position {
-        offset: SWAR_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source),
-        alignment: swar::ALIGNMENT,
-    }
+    let (offset, actual_len) = SWAR_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
+    Position { offset, actual_len, alignment: swar::ALIGNMENT }
 }

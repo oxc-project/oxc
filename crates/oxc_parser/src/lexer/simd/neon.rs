@@ -10,7 +10,7 @@ impl LookupTable {
     }
 
     #[inline]
-    pub fn match_vectored(&self, source: &Source) -> usize {
+    pub fn match_vectored(&self, source: &Source) -> (Option<usize>, usize) {
         todo!()
     }
 }

@@ -1,6 +1,8 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
 use crate::MAX_LEN;
+use std::mem::MaybeUninit;
+use std::ptr;
 
 use std::{marker::PhantomData, slice, str};
 
@@ -119,6 +121,39 @@ impl<'a> Source<'a> {
         unsafe {
             self.ptr = self.ptr.add(advance);
         }
+    }
+
+    /// Peek next `N` bytes of source without consuming it.
+    /// also the `N` is the length to pad the peeked bytes to.
+    /// returns None if the peeked bytes would be EOF.
+    /// returns Some((array, actual_length)) if the peeked bytes is not EOF.
+    #[inline]
+    pub(super) fn peek_n_with_padding<const N: usize>(&self) -> Option<([u8; N], usize)> {
+        let remaining_len = self.remaining_len();
+        if remaining_len == 0 {
+            return None;
+        }
+        // unintialized array to save CPU cycles
+        let mut dst = MaybeUninit::<[u8; N]>::uninit();
+        let mut actual_len = 0;
+        if remaining_len < N {
+            let padding = N - remaining_len;
+            actual_len = remaining_len;
+            unsafe {
+                // copy the remaining bytes to the array
+                ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr() as *mut _, remaining_len);
+                const PADDING: u8 = u8::MAX;
+                // write the padding bytes to the end of the array
+                ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
+            }
+        } else {
+            actual_len = N;
+            unsafe {
+                // copy the remaining bytes to the array
+                ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr() as *mut _, N);
+            }
+        }
+        Some((unsafe { dst.assume_init() }, actual_len))
     }
 
     /// Get the nth byte from ptr of the source text
