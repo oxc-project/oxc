@@ -100,7 +100,7 @@ macro_rules! group {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group($crate::doc::Group::new(temp_vec, false))
+            Doc::Group($crate::doc::Group::new(temp_vec))
         }
     };
 }
@@ -129,7 +129,7 @@ macro_rules! group_break {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group($crate::doc::Group::new(temp_vec, true))
+            Doc::Group($crate::doc::Group::new(temp_vec).with_break(true))
         }
     };
 }

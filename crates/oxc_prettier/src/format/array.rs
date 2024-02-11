@@ -116,7 +116,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     parts.push(softline!());
     parts.push(ss!("]"));
     let should_break = should_break(array);
-    Doc::Group(Group::new(parts, should_break).with_id(id))
+    Doc::Group(Group::new(parts).with_break(should_break).with_id(id))
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
