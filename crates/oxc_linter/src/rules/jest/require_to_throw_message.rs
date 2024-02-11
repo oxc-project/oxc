@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(require-to-throw-message): Require a message for `toThrow()`.")]
+#[error("eslint-plugin-jest(require-to-throw-message): Require a message for {0:?}.")]
 #[diagnostic(severity(warning), help("Add an error message to {0:?}"))]
 struct RequireToThrowMessageDiagnostic(pub String, #[label] pub Span);
 
