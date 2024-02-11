@@ -6,7 +6,7 @@ use crate::{
     array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     doc::{Doc, DocBuilder, Fill, Group},
-    group, hardline, if_break, indent, line, softline, ss, Prettier,
+    group, hardline, if_break, line, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -99,24 +99,36 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     };
 
     let mut parts = p.vec();
-    let elements = if should_use_concise_formatting {
-        print_array_elements_concisely(p, array, trailing_comma_fn)
-    } else {
-        let trailing_comma = trailing_comma_fn(p);
-        array!(p, print_elements(p, array), trailing_comma)
-    };
-    let parts_inner = if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None)
-    {
-        indent!(p, softline!(), elements, dangling_comments)
-    } else {
-        indent!(p, softline!(), elements)
-    };
-    parts.push(ss!("["));
-    parts.push(parts_inner);
-    parts.push(softline!());
-    parts.push(ss!("]"));
-    let should_break = should_break(array);
-    Doc::Group(Group::new(parts).with_break(should_break).with_id(id))
+
+    parts.push(Doc::Group(
+        Group::new({
+            let mut group = p.vec();
+            group.push(ss!("["));
+            group.push({
+                Doc::Indent({
+                    let mut indent_parts = p.vec();
+                    indent_parts.push(softline!());
+                    indent_parts.push(if should_use_concise_formatting {
+                        print_array_elements_concisely(p, array, trailing_comma_fn)
+                    } else {
+                        let trailing_comma = trailing_comma_fn(p);
+                        array!(p, print_array_elements(p, array), trailing_comma)
+                    });
+                    if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None) {
+                        indent_parts.push(dangling_comments);
+                    };
+                    indent_parts
+                })
+            });
+            group.push(softline!());
+            group.push(ss!("]"));
+            group
+        })
+        .with_break(should_break(array))
+        .with_id(id),
+    ));
+
+    Doc::Array(parts)
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -127,7 +139,7 @@ fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -
     )
 }
 
-fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let mut parts = p.vec();
     match array {
         Array::ArrayExpression(array) => {
@@ -154,21 +166,20 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             }
         }
         Array::ArrayPattern(array_pat) => {
+            let len = array_pat.elements.len();
+            let has_rest = array_pat.rest.is_some();
             for (i, element) in array_pat.elements.iter().enumerate() {
-                if i > 0 && i < array_pat.elements.len() {
-                    parts.push(ss!(","));
-                    parts.push(line!());
-                }
-
                 if let Some(binding_pat) = element {
-                    parts.push(binding_pat.format(p));
+                    parts.push(group!(p, binding_pat.format(p)));
                 }
-            }
-
-            if let Some(rest) = &array_pat.rest {
+                if i == len - 1 && !has_rest {
+                    break;
+                }
                 parts.push(ss!(","));
                 parts.push(line!());
-                parts.push(rest.format(p));
+            }
+            if let Some(rest) = &array_pat.rest {
+                parts.push(group!(p, rest.format(p)));
             }
         }
         Array::ArrayAssignmentTarget(array_pat) => {
@@ -235,7 +246,7 @@ where
         }
         _ => {
             // TODO: implement
-            array!(p, print_elements(p, array), trailing_comma_fn(p));
+            array!(p, print_array_elements(p, array), trailing_comma_fn(p));
         }
     }
 

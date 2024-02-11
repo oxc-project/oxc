@@ -172,7 +172,10 @@ impl<'a> ParserImpl<'a> {
 
         let modifier = self.parse_class_element_modifiers(false);
 
-        let accessor = self.peek_kind().is_class_element_name_start() && self.eat(Kind::Accessor);
+        let accessor = {
+            let token = self.peek_token();
+            !token.is_on_new_line && token.kind.is_class_element_name_start()
+        } && self.eat(Kind::Accessor);
 
         let accessibility = modifier.accessibility();
 
