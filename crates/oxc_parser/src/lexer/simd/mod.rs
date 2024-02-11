@@ -48,3 +48,42 @@ pub(crate) fn string_literal_lookup(source: &Source) -> Position {
     let (offset, actual_len) = SWAR_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
     Position { offset, actual_len, alignment: swar::ALIGNMENT }
 }
+
+// Create an ascii table with given delimiters, only fill
+// in the given delimiters with 1, leave other positions as 0.
+// then return a vector with each columns
+// For example:
+// delimiter = '\r'
+// table[0][13] = 1
+// the 13th element of returned vector is 1 0 0 0 0 0 0 0,
+// due to the use of little-endian layout in AVX2 and ARM, so the result
+// is 0x01
+//
+//     0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+//
+//  0  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//                                   \n       \r
+//  1  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//  2  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     \w !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /
+//  3  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?
+//  4  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+//  5  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _
+//  6  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+//  7  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//     p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
+#[inline]
+#[allow(clippy::cast_possible_truncation)]
+fn tabulate<const N: usize>(delimiters: [u8; N]) -> [u8; 16] {
+    let mut table = [0u8; 16];
+    for d in delimiters {
+        debug_assert!(d < 128, "delimiter must be an ASCII character");
+        let (col, row) = (d & 0x0F, d >> 4);
+        table[col as usize] |= 1 << row;
+    }
+    table
+}
