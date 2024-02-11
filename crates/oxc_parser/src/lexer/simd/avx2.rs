@@ -52,13 +52,18 @@ impl<const N: usize> LookupTable<N> {
     #[allow(overflowing_literals, clippy::cast_sign_loss)]
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = _mm256_lddqu_si256(ptr.cast());
-        let rbms = _mm256_shuffle_epi8(self.table, data);
-        let cols = _mm256_and_si256(self.lsh, _mm256_srli_epi16(data, 4));
-        let bits = _mm256_and_si256(_mm256_shuffle_epi8(self.arf, cols), rbms);
+        // lower 4 bits of each byte in data are the column index
+        let col = _mm256_shuffle_epi8(self.table, data);
+        // higher 4 bits of each byte in data are the row index
+        let row_idx = _mm256_and_si256(self.lsh, _mm256_srli_epi16(data, 4));
+        let row = _mm256_shuffle_epi8(self.arf, row_idx);
+        let bits = _mm256_and_si256(row, col);
+        // unmatched element's all bits are 0
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());
         let r = _mm256_movemask_epi8(v) as u32;
         // unmatched bits are 1, so we need to count the leading zeros
         let unmatched = r.trailing_ones() as usize;
+        // reach the end of the segment, so no delimiter found
         if unmatched == ALIGNMENT {
             None
         } else {
