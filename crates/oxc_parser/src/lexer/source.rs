@@ -1,8 +1,9 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
 use crate::MAX_LEN;
-use std::mem::MaybeUninit;
 use std::ptr;
+use std::slice::from_raw_parts;
+use std::{borrow::Cow, mem::MaybeUninit};
 
 use std::{marker::PhantomData, slice, str};
 
@@ -108,12 +109,6 @@ impl<'a> Source<'a> {
         self.end as usize - self.ptr as usize
     }
 
-    /// Converts remaining to a raw pointer.
-    #[inline]
-    pub(super) fn as_ptr(&self) -> *const u8 {
-        self.ptr
-    }
-
     /// Advance the internal cursor of the slice.
     #[inline]
     pub(super) fn advance(&mut self, advance: usize) {
@@ -128,38 +123,35 @@ impl<'a> Source<'a> {
     /// returns None if the peeked bytes would be EOF.
     /// returns Some((array, actual_length)) if the peeked bytes is not EOF.
     #[inline]
-    pub(super) fn peek_n_with_padding<const N: usize>(&self) -> Option<([u8; N], usize)> {
+    pub(super) fn peek_n_with_padding<const N: usize>(&self) -> Option<(Cow<'_, [u8; N]>, usize)> {
+        const PADDING: u8 = u8::MAX;
         let remaining_len = self.remaining_len();
         if remaining_len == 0 {
             return None;
         }
-        // unintialized array to save CPU cycles
-        let mut dst = MaybeUninit::<[u8; N]>::uninit();
-        let mut actual_len = 0;
         if remaining_len < N {
             let padding = N - remaining_len;
-            actual_len = remaining_len;
+            // unintialized array to save CPU cycles
+            let mut dst = MaybeUninit::<[u8; N]>::uninit();
             unsafe {
                 // copy the remaining bytes to the array
                 ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr() as *mut _, remaining_len);
-                const PADDING: u8 = u8::MAX;
                 // write the padding bytes to the end of the array
                 ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
             }
+            Some((Cow::Owned(unsafe { dst.assume_init() }), remaining_len))
         } else {
-            actual_len = N;
-            unsafe {
-                // copy the remaining bytes to the array
-                ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr() as *mut _, N);
-            }
+            let bytes = unsafe { from_raw_parts(self.ptr, N) };
+            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
         }
-        Some((unsafe { dst.assume_init() }, actual_len))
     }
 
     /// Get the nth byte from ptr of the source text
     #[inline]
     pub(super) fn nth(&self, nth: usize) -> u8 {
         debug_assert!(self.remaining_len() >= nth, "nth byte out of bounds");
+        // SAFETY:
+        // `nth` guaranteed to be within bounds of remaining source text.
         unsafe { *self.ptr.add(nth) }
     }
 
