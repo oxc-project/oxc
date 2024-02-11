@@ -1,3 +1,4 @@
+//! SWAR: SIMD Within A Register
 use crate::lexer::source::Source;
 
 pub(crate) const ALIGNMENT: usize = core::mem::size_of::<usize>();

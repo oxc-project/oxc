@@ -23,7 +23,7 @@ impl<const N: usize> LookupTable<N> {
             let table = tabulate(delimiters);
             let table = _mm256_lddqu_si256(table.as_ptr().cast());
             // arf: 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001
-            // for match each row of the table, be like a mask
+            // for input data match each row of the table, be like a mask
             #[rustfmt::skip]
             let arf = _mm256_setr_epi8(
                 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
@@ -63,10 +63,13 @@ impl<const N: usize> LookupTable<N> {
         let row = _mm256_shuffle_epi8(self.arf, row_idx);
         // row & col returns the matched delimiter in the table
         let bits = _mm256_and_si256(row, col);
-        // unmatched element's all bits are 0
+        // unmatched element's bits are 0b00000000
+        // so, compare with zero, v[x] = 0b11111111 if the element x is unmatched
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());
+        // get the leading bit of each byte, v = 0b000000001000...
+        // if the byte is unmatched, the corresponding location in `r` is 1, opposite the bit is 0
         let r = _mm256_movemask_epi8(v) as u32;
-        // unmatched bits are 1, so we need to count the leading zeros
+        // unmatched bits are 1, so we need to count the trailing ones(little-endian)
         let unmatched = r.trailing_ones() as usize;
         // reach the end of the segment, so no delimiter found
         if unmatched == ALIGNMENT {
