@@ -136,7 +136,7 @@ pub(super) fn print_object_properties<'a>(
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            Doc::Group(Group::new(parts, should_break))
+            Doc::Group(Group::new(parts).with_break(should_break))
         }
     };
 

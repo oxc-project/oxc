@@ -34,7 +34,7 @@ pub(super) fn print_binaryish_expression<'a>(
     // indented accordingly. We should indent sub-expressions where the first case isn't indented.
     let should_not_indent = matches!(parent_kind, AstKind::ReturnStatement(_));
     if should_not_indent {
-        return Doc::Group(Group::new(parts, false));
+        return Doc::Group(Group::new(parts));
     }
 
     let first_group_index = parts.iter().position(|part| {
@@ -56,7 +56,7 @@ pub(super) fn print_binaryish_expression<'a>(
         }
     }
     group.push(Doc::Indent(rest));
-    Doc::Group(Group::new(group, false))
+    Doc::Group(Group::new(group))
 }
 
 fn print_binaryish_expressions<'a>(
@@ -115,7 +115,7 @@ fn print_binaryish_expressions<'a>(
     }
 
     parts.push(if should_group {
-        Doc::Group(Group::new(right, should_break))
+        Doc::Group(Group::new(right).with_break(should_break))
     } else {
         Doc::Array(right)
     });

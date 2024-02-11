@@ -103,7 +103,7 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if p.args.expand_first_arg {
-        Doc::Group(Group::new(parts, false))
+        Doc::Group(Group::new(parts))
     } else {
         Doc::Array(parts)
     }
