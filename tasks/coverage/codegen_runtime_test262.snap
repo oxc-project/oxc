@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 19407/19407 (100.00%)
-Positive Passed: 19239/19407 (99.13%)
+Positive Passed: 19258/19407 (99.23%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -206,7 +206,7 @@ Expect to run correctly: "language/expressions/class/cpn-class-expr-fields-metho
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
 Expect to run correctly: "language/expressions/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
@@ -246,24 +246,6 @@ But got a runtime error: Test262Error: p1 constructor is %Promise% Expected Same
 
 Expect to run correctly: "language/expressions/dynamic-import/eval-self-once-module.js"
 But got a runtime error: Test262Error: global property was defined and incremented only once Expected SameValue(«2», «1») to be true
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-get-with-error.js"
-But got a runtime error: Test262Error: Expected an error, but observed no error
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-abrupt.js"
-But got a runtime error: Test262Error: Expected promise to be rejected, but promise was fulfilled.
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-enumeration-enumerable.js"
-But got a runtime error: Test262Error: Expected SameValue(«0», «1») to be true
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-non-object.js"
-But got a runtime error: Test262Error: Promise for null was not rejected.
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-abrupt.js"
-But got a runtime error: Test262Error: Expected promise to be rejected, but it was fulfilled
-
-Expect to run correctly: "language/expressions/dynamic-import/import-attributes/2nd-param-with-value-non-string.js"
-But got a runtime error: Test262Error: Promise for undefined was not rejected.
 
 Expect to run correctly: "language/expressions/dynamic-import/imported-self-update.js"
 But got a runtime error: Test262Error: updated value, direct binding Expected SameValue(«0», «1») to be true
@@ -328,41 +310,8 @@ But got a runtime error: Test262Error: descriptor should be enumerable; descript
 Expect to run correctly: "language/global-code/decl-var.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/import/import-attributes/json-extensibility-array.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-extensibility-object.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-idempotency.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-array.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-boolean.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-null.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-number.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-object.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-value-string.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
-Expect to run correctly: "language/import/import-attributes/json-via-namespace.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
-
 Expect to run correctly: "language/module-code/eval-self-once.js"
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
-
-Expect to run correctly: "language/module-code/import-attributes/import-attribute-empty.js"
-But got a runtime error: SyntaxError: Unexpected token 'with'
 
 Expect to run correctly: "language/module-code/instn-iee-bndng-cls.js"
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
@@ -433,12 +382,6 @@ But got a runtime error: Test262Error: Expected a ReferenceError to be thrown bu
 Expect to run correctly: "language/module-code/verify-dfs.js"
 But got a runtime error: Test262Error: Expected SameValue(«B», «A») to be true
 
-Expect to run correctly: "language/statements/async-generator/yield-star-promise-not-unwrapped.js"
-But got a runtime error: Test262Error: yield* should not unwrap promises from manually-implemented async iterators Expected SameValue(«unwrapped value», «[object Promise]») to be true
-
-Expect to run correctly: "language/statements/async-generator/yield-star-return-then-getter-ticks.js"
-But got a runtime error: Test262Error: Expected [start, tick 1, tick 2, get then, tick 3, get return, get then] and [start, tick 1, get then, tick 2, get return, get then, tick 3] to have the same contents. Ticks for return with thenable getter
-
 Expect to run correctly: "language/statements/class/cpn-class-decl-accessors-computed-property-name-from-arrow-function-expression.js"
 But got a runtime error: Test262Error: Expected SameValue(«undefined», «1») to be true
 
@@ -476,7 +419,7 @@ Expect to run correctly: "language/statements/class/cpn-class-decl-fields-method
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
 Expect to run correctly: "language/statements/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier
+But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/statements/class/subclass/default-constructor-spread-override.js"
 But got a runtime error: Test262Error: @@iterator invoked

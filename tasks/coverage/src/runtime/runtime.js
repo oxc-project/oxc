@@ -1,6 +1,7 @@
 import vm from "node:vm"
 import path from "node:path"
 import fs from "node:fs"
+import process from "node:process";
 import { createServer } from "node:http";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
@@ -119,10 +120,12 @@ const server = createServer((req, res) => {
     });
     req.on('end', async () => {
       const options = JSON.parse(body)
-      let result
       try {
-        result = await runCodeInHarness(options);
+        await runCodeInHarness(options);
       } catch (err) {
+        if (parseInt(process.version.split('.')[0].replace("v", "")) < 20) {
+          return res.end('Please upgrade the Node.js version to 20 or later.')
+        }
         return res.end(err.toString());
       }
   
