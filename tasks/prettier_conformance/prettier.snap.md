@@ -1,4 +1,4 @@
-Compatibility: 239/562 (42.53%)
+Compatibility: 240/562 (42.70%)
 
 # Failed
 
@@ -107,7 +107,6 @@ Compatibility: 239/562 (42.53%)
 * classes/property.js
 
 ### classes-private-fields
-* classes-private-fields/private_fields.js
 * classes-private-fields/with_comments.js
 
 ### comments
