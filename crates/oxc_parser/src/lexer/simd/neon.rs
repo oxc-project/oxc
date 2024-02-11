@@ -1,5 +1,5 @@
 use super::tabulate;
-use crate::lexer::source::Source;
+use crate::{lexer::source::Source, parser_parse::UniquePromise};
 use core::arch::aarch64::*;
 
 pub(crate) const ALIGNMENT: usize = 16;
@@ -78,4 +78,17 @@ unsafe fn offsetz(x: uint8x16_t) -> usize {
     } else {
         16
     }
+}
+
+#[test]
+fn neon_match() {
+    let table = LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']);
+    let unique = UniquePromise::new_for_tests();
+    let source = Source::new(
+        r#""hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!""#,
+        unique,
+    );
+    let (offset, actual_len) = table.match_vectored(&source);
+    assert_eq!(offset, Some(0));
+    assert_eq!(actual_len, ALIGNMENT);
 }

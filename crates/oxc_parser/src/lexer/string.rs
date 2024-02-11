@@ -156,49 +156,6 @@ macro_rules! handle_string_literal_escape {
 }
 
 impl<'a> Lexer<'a> {
-    /// 12.9.4 String Literals
-    pub(super) fn read_string_literal(&mut self, delimiter: char) -> Kind {
-        let mut builder = AutoCow::new(self);
-        while !self.source.is_eof() {
-            let Position { offset, actual_len, .. } = string_literal_lookup(&self.source);
-            let offset = if let Some(offset) = offset {
-                offset
-            } else {
-                self.source.advance(actual_len);
-                continue;
-            };
-            let matched = self.source.nth(offset);
-            self.source.advance(offset);
-            match matched {
-                b'\r' | b'\n' => {
-                    self.error(diagnostics::UnterminatedString(self.unterminated_range()));
-                    return Kind::Undetermined;
-                }
-                c @ (b'"' | b'\'') => {
-                    if c as char == delimiter {
-                        self.save_string(builder.has_escape(), builder.finish_without_push(self));
-                        return Kind::Str;
-                    }
-                    builder.push_matching(c as char);
-                }
-                b'\\' => {
-                    let start = self.offset() - 1;
-                    let text = builder.get_mut_string_without_current_ascii_char(self);
-                    let mut is_valid_escape_sequence = true;
-                    self.read_string_escape_sequence(text, false, &mut is_valid_escape_sequence);
-                    if !is_valid_escape_sequence {
-                        let range = Span::new(start, self.offset());
-                        self.error(diagnostics::InvalidEscapeSequence(range));
-                    }
-                }
-                c => {
-                    builder.push_matching(c as char);
-                }
-            }
-        }
-        Kind::Undetermined
-    }
-
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.
