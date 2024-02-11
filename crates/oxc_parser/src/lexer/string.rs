@@ -154,6 +154,8 @@ macro_rules! handle_string_literal_escape {
 }
 
 impl<'a> Lexer<'a> {
+    /// 12.9.4 String Literals
+
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.
