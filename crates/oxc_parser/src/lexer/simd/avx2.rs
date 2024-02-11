@@ -9,9 +9,9 @@ use crate::lexer::source::Source;
 pub(crate) const ALIGNMENT: usize = 32;
 
 pub struct LookupTable<const N: usize> {
-    table: __m256i, // for cols lookup
-    arf: __m256i,   // for rows lookup
-    lsh: __m256i,   // for shifting
+    table: __m256i,
+    arf: __m256i,
+    lsh: __m256i,
 }
 
 impl<const N: usize> LookupTable<N> {
@@ -22,6 +22,8 @@ impl<const N: usize> LookupTable<N> {
         unsafe {
             let table = tabulate(delimiters);
             let table = _mm256_lddqu_si256(table.as_ptr().cast());
+            // arf: 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001
+            // for match each row of the table, be like a mask
             #[rustfmt::skip]
             let arf = _mm256_setr_epi8(
                 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
@@ -53,10 +55,13 @@ impl<const N: usize> LookupTable<N> {
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = _mm256_lddqu_si256(ptr.cast());
         // lower 4 bits of each byte in data are the column index
+        // get the table column of each data byte
         let col = _mm256_shuffle_epi8(self.table, data);
         // higher 4 bits of each byte in data are the row index
         let row_idx = _mm256_and_si256(self.lsh, _mm256_srli_epi16(data, 4));
+        // get the table row of each data byte
         let row = _mm256_shuffle_epi8(self.arf, row_idx);
+        // row & col returns the matched delimiter in the table
         let bits = _mm256_and_si256(row, col);
         // unmatched element's all bits are 0
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());

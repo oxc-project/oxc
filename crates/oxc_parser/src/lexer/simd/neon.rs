@@ -31,6 +31,8 @@ impl<const N: usize> LookupTable<N> {
         }
     }
 
+    // same with avx2, but none doesn't have a _mm256_movemask_epi8 instruction
+    // so, we need to use a different approach(offsetz)
     #[inline]
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = vld1q_u8(ptr);
