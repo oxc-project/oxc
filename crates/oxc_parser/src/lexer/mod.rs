@@ -95,6 +95,9 @@ pub struct Lexer<'a> {
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+
+    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
+    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
 #[allow(clippy::unused_self)]
@@ -124,6 +127,7 @@ impl<'a> Lexer<'a> {
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
+            multi_line_comment_end_finder: None,
         }
     }
 
