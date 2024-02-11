@@ -5,7 +5,7 @@ use core::arch::x86_64::*;
 
 use crate::lexer::source::Source;
 
-const ALIGNMENT: usize = 32;
+pub(crate) const ALIGNMENT: usize = 32;
 
 pub struct LookupTable<const N: usize> {
     table: __m256i, // for cols lookup
@@ -39,7 +39,7 @@ impl<const N: usize> LookupTable<N> {
             let ptr = seg.as_ptr();
             // SAFETY:
             // seg is aligned and has ALIGNMENT bytes
-            (unsafe { self.match_delimiters_32_avx(seg) }, actual_len)
+            (unsafe { self.match_delimiters_32_avx(ptr) }, actual_len)
         } else {
             (None, 0)
         }
@@ -47,14 +47,9 @@ impl<const N: usize> LookupTable<N> {
 
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    #[allow(
-        overflowing_literals,
-        clippy::cast_sign_loss,
-        clippy::ptr_as_ptr,
-        clippy::cast_ptr_alignment
-    )]
+    #[allow(overflowing_literals, clippy::cast_sign_loss)]
     unsafe fn match_delimiters_32_avx(&self, ptr: *const u8) -> Option<usize> {
-        let data = _mm256_lddqu_si256(ptr as *const _);
+        let data = _mm256_lddqu_si256(ptr.cast());
         let rbms = _mm256_shuffle_epi8(self.table, data);
         let cols = _mm256_and_si256(self.lsh, _mm256_srli_epi16(data, 4));
         let bits = _mm256_and_si256(_mm256_shuffle_epi8(self.arf, cols), rbms);

@@ -15,3 +15,7 @@ impl<const N: usize> LookupTable<N> {
         todo!()
     }
 }
+
+const fn build_bitmap<const N: usize>(delimiters: [u8; N]) -> ([u8; 16], [u8; 16]) {
+    todo!()
+}
