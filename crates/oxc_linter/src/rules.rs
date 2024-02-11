@@ -143,6 +143,7 @@ mod jest {
     pub mod prefer_called_with;
     pub mod prefer_equality_matcher;
     pub mod prefer_todo;
+    pub mod require_to_throw_message;
     pub mod valid_describe_callback;
     pub mod valid_expect;
     pub mod valid_title;
@@ -431,6 +432,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_called_with,
     jest::prefer_equality_matcher,
     jest::prefer_todo,
+    jest::require_to_throw_message,
     jest::valid_describe_callback,
     jest::valid_expect,
     jest::valid_title,
