@@ -84,7 +84,7 @@ fn template() {
 
     test("await tag`x`", "await tag`x`;\n");
     test("await (tag`x`)", "await tag`x`;\n");
-    // test("(await tag)`x`", "(await tag)`x`;\n");
+    test("(await tag)`x`", "(await tag)`x`;\n");
 
     test("await tag`${x}`", "await tag`${x}`;\n");
     test("await (tag`${x}`)", "await tag`${x}`;\n");
@@ -92,13 +92,13 @@ fn template() {
 
     test("new tag`x`", "new tag`x`();\n");
     test("new (tag`x`)", "new tag`x`();\n");
-    // test("new tag()`x`", "new tag()`x`;\n");
-    // test("(new tag)`x`", "new tag()`x`;\n");
+    test("new tag()`x`", "new tag()`x`;\n");
+    test("(new tag)`x`", "new tag()`x`;\n");
 
     test("new tag`${x}`", "new tag`${x}`();\n");
     test("new (tag`${x}`)", "new tag`${x}`();\n");
-    // test("new tag()`${x}`", "new tag()`${x}`;\n");
-    // test("(new tag)`${x}`", "new tag()`${x}`;\n");
+    test("new tag()`${x}`", "new tag()`${x}`;\n");
+    test("(new tag)`${x}`", "new tag()`${x}`;\n");
 }
 
 #[test]
