@@ -1775,7 +1775,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.tag.gen_expr(p, Precedence::Call, Context::default());
+        self.tag.gen_expr(p, Precedence::Postfix, Context::default());
         self.quasi.gen(p, ctx);
     }
 }
