@@ -35,6 +35,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         parts_inner.push(node.format(p));
 
         if !p.options.semi
+            && node.is_property()
             && should_print_semicolon_after_class_property(node, class_body.body.get(i + 1))
         {
             parts_inner.push(ss!(";"));

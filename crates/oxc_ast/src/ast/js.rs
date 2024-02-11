@@ -2000,6 +2000,15 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    pub fn is_property(&self) -> bool {
+        matches!(
+            self,
+            Self::PropertyDefinition(_)
+                | Self::AccessorProperty(_)
+                | Self::TSAbstractPropertyDefinition(_)
+        )
+    }
+
     pub fn is_ts_empty_body_function(&self) -> bool {
         match self {
             Self::PropertyDefinition(_)
