@@ -8,14 +8,14 @@ expression: require_to_throw_message
  1 │ expect(() => { throw new Error('a'); }).toThrow();
    ·                                         ───────
    ╰────
-  help: Add an error message to "toThrow"()
+  help: Add an error message to "toThrow"
 
   ⚠ eslint-plugin-jest(require-to-throw-message): Require a message for `toThrow()`.
    ╭─[require_to_throw_message.tsx:1:41]
  1 │ expect(() => { throw new Error('a'); }).toThrowError();
    ·                                         ────────────
    ╰────
-  help: Add an error message to "toThrowError"()
+  help: Add an error message to "toThrowError"
 
   ⚠ eslint-plugin-jest(require-to-throw-message): Require a message for `toThrow()`.
    ╭─[require_to_throw_message.tsx:4:61]
@@ -24,7 +24,7 @@ expression: require_to_throw_message
    ·                                                             ───────
  5 │                     await expect(throwErrorAsync()).rejects.toThrowError();
    ╰────
-  help: Add an error message to "toThrow"()
+  help: Add an error message to "toThrow"
 
   ⚠ eslint-plugin-jest(require-to-throw-message): Require a message for `toThrow()`.
    ╭─[require_to_throw_message.tsx:5:61]
@@ -33,5 +33,5 @@ expression: require_to_throw_message
    ·                                                             ────────────
  6 │                 })
    ╰────
-  help: Add an error message to "toThrowError"()
+  help: Add an error message to "toThrowError"
 
