@@ -4,7 +4,6 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 use crate::lexer::source::Source;
-use itertools::Itertools;
 
 const ALIGNMENT: usize = 32;
 
@@ -100,20 +99,15 @@ impl<const N: usize> LookupTable<N> {
 //     p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
 #[inline]
 #[allow(clippy::cast_possible_truncation)]
-unsafe fn tabulate<const N: usize>(delimiters: [u8; N]) -> __m256i {
+unsafe fn tabulate<const N: usize>(delimiters: [u8; N]) -> [i8; 16] {
     let mut table = [false; 128];
     for delimiter in delimiters {
-        debug_assert!(*delimiter < 128, "delimiter must be an ASCII character");
-        table[*delimiter as usize] = true;
+        debug_assert!(delimiter < 128, "delimiter must be an ASCII character");
+        table[delimiter as usize] = true;
     }
 
-    let mut table_iter = (0..16)
+    let [e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15] = [0; 16]
         .map(|i| (0..8).rev().fold(0, |acc, j| (acc << 1) | u32::from(table[i * 8 + j])) as i8);
-
-    // itertools only support 12 elements tuple, so we need to split it into two parts
-    let (e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11) =
-        table_iter.next_tuple().unwrap();
-    let (e12, e13, e14, e15) = table_iter.next_tuple().unwrap();
     #[rustfmt::skip]
     _mm256_setr_epi8(
         e00, e01, e02, e03, e04, e05, e06, e07, e08, e09, e10, e11, e12, e13, e14, e15,

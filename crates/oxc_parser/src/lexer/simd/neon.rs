@@ -1,4 +1,5 @@
 use crate::lexer::source::Source;
+use core::arch::aarch64::*;
 
 pub(crate) const ALIGNMENT: usize = 16;
 
