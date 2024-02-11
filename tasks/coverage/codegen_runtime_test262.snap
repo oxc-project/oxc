@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 19407/19407 (100.00%)
-Positive Passed: 19258/19407 (99.23%)
+Positive Passed: 19260/19407 (99.24%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -204,9 +204,6 @@ But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
 Expect to run correctly: "language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-function-expression.js"
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
-
-Expect to run correctly: "language/expressions/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js"
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
@@ -417,9 +414,6 @@ But got a runtime error: TypeError: c[(intermediate value)] is not a function
 
 Expect to run correctly: "language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-function-expression.js"
 But got a runtime error: TypeError: c[(intermediate value)] is not a function
-
-Expect to run correctly: "language/statements/class/elements/field-definition-accessor-no-line-terminator.js"
-But got a runtime error: SyntaxError: Unexpected identifier '$'
 
 Expect to run correctly: "language/statements/class/subclass/default-constructor-spread-override.js"
 But got a runtime error: Test262Error: @@iterator invoked
