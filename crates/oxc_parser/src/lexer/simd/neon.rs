@@ -2,10 +2,10 @@ use crate::lexer::source::Source;
 
 pub(crate) const ALIGNMENT: usize = 16;
 
-pub struct LookupTable {}
+pub struct LookupTable<const N: usize> {}
 
-impl LookupTable {
-    pub fn new(delimiters: &[u8]) -> Self {
+impl<const N: usize> LookupTable<N> {
+    pub fn new(delimiters: [u8; N]) -> Self {
         todo!()
     }
 

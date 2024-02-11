@@ -34,17 +34,16 @@ impl<const N: usize> LookupTable<N> {
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter
-    // source length must be at least 32 bytes
     #[inline]
-    pub fn match_vectored(&self, source: &Source) -> usize {
-        debug_assert!(
-            source.remaining_len() >= ALIGNMENT,
-            "source length must be at least {ALIGNMENT} bytes",
-        );
-        let ptr = source.as_ptr();
-        // SAFETY:
-        // we have checked that the source length is at least 32 bytes
-        unsafe { self.match_delimiters_32_avx(ptr) }
+    pub fn match_vectored(&self, source: &Source) -> (Option<usize>, usize) {
+        if let Some((seg, actual_len)) = source.peek_n_with_padding::<ALIGNMENT>() {
+            let ptr = seg.as_ptr();
+            // SAFETY:
+            // seg is aligned and has ALIGNMENT bytes
+            (unsafe { self.match_delimiters_32_avx(seg) }, actual_len)
+        } else {
+            (None, 0)
+        }
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter
@@ -55,7 +54,7 @@ impl<const N: usize> LookupTable<N> {
         clippy::ptr_as_ptr,
         clippy::cast_ptr_alignment
     )]
-    unsafe fn match_delimiters_32_avx(&self, ptr: *const u8) -> usize {
+    unsafe fn match_delimiters_32_avx(&self, ptr: *const u8) -> Option<usize> {
         let data = _mm256_lddqu_si256(ptr as *const _);
         let rbms = _mm256_shuffle_epi8(self.table, data);
         let cols = _mm256_and_si256(self.lsh, _mm256_srli_epi16(data, 4));
@@ -63,7 +62,12 @@ impl<const N: usize> LookupTable<N> {
         let v = _mm256_cmpeq_epi8(bits, _mm256_setzero_si256());
         let r = _mm256_movemask_epi8(v) as u32;
         // unmatched bits are 1, so we need to count the leading zeros
-        r.trailing_ones() as usize
+        let unmatched = r.trailing_ones() as usize;
+        if unmatched == ALIGNMENT {
+            None
+        } else {
+            Some(unmatched)
+        }
     }
 }
 
