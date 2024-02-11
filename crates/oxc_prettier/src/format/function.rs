@@ -33,13 +33,14 @@ pub(super) fn print_function<'a>(
     if let Some(id) = &func.id {
         parts.push(p.str(id.name.as_str()));
     }
-    let params_doc = if should_group_function_parameters(func) {
-        group!(p, func.params.format(p))
-    } else {
-        func.params.format(p)
-    };
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
-    parts.push(group!(p, params_doc));
+    parts.push(group!(p, {
+        if should_group_function_parameters(func) {
+            group!(p, func.params.format(p))
+        } else {
+            func.params.format(p)
+        }
+    }));
     if let Some(body) = &func.body {
         parts.push(space!());
         parts.push(body.format(p));
