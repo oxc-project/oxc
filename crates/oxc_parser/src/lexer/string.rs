@@ -1,5 +1,3 @@
-use super::simd::{string_literal_lookup, Position};
-use super::AutoCow;
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
